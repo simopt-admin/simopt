@@ -8,6 +8,8 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from typing import Callable
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
@@ -71,14 +73,21 @@ class DualSourcing(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "DUALSOURCING"
-        self.n_rngs = 1
-        self.n_responses = 3
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "DUALSOURCING"
+
+    @property
+    def n_rngs(self) -> int:
+        return 1
+
+    @property
+    def n_responses(self) -> int:
+        return 3
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "n_days": {
                 "description": "number of days to simulate",
                 "datatype": int,
@@ -140,7 +149,10 @@ class DualSourcing(Model):
                 "default": 50,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "n_days": self.check_n_days,
             "initial_inv": self.check_initial_inv,
             "cost_reg": self.check_cost_reg,
@@ -154,7 +166,9 @@ class DualSourcing(Model):
             "order_level_reg": self.check_order_level_reg,
             "order_level_exp": self.check_order_level_exp,
         }
-        # Set factors of the simulation model
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors

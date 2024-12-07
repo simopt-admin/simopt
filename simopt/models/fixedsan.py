@@ -8,7 +8,7 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Callable, Final
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -50,13 +50,21 @@ class FixedSAN(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "FIXEDSAN"
-        self.n_rngs = 1
-        self.n_responses = 1
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "FIXEDSAN"
+
+    @property
+    def n_rngs(self) -> int:
+        return 1
+
+    @property
+    def n_responses(self) -> int:
+        return 1
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "num_arcs": {
                 "description": "number of arcs",
                 "datatype": int,
@@ -73,12 +81,17 @@ class FixedSAN(Model):
                 "default": (1,) * NUM_ARCS,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "num_arcs": self.check_num_arcs,
             "num_nodes": self.check_num_nodes,
             "arc_means": self.check_arc_means,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     def check_num_arcs(self) -> bool:

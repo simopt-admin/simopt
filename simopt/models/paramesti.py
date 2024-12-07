@@ -9,6 +9,7 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 import math
+from typing import Callable
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -46,13 +47,21 @@ class ParameterEstimation(Model):
     base.model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "PARAMESTI"
-        self.n_rngs = 2
-        self.n_responses = 1
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "PARAMESTI"
+
+    @property
+    def n_rngs(self) -> int:
+        return 2
+
+    @property
+    def n_responses(self) -> int:
+        return 1
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "xstar": {
                 "description": "x^*, the unknown parameter that maximizes g(x)",
                 "datatype": list,
@@ -64,8 +73,13 @@ class ParameterEstimation(Model):
                 "default": [1, 1],
             },
         }
-        self.check_factor_list = {"xstar": self.check_xstar, "x": self.check_x}
-        # Set factors of the simulation model.
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {"xstar": self.check_xstar, "x": self.check_x}
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     def check_xstar(self) -> bool:

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from typing import Callable
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -656,7 +657,11 @@ class Problem(ABC):
     def check_factor_list(self, value: dict) -> None:
         self.__check_factor_list = value
 
-    def __init__(self, fixed_factors: dict | None = None, model_fixed_factors: dict | None = None) -> None:
+    def __init__(
+        self,
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
         """Initialize a problem object.
 
         Parameters
@@ -1231,31 +1236,34 @@ class Model(ABC):
     """
 
     @property
+    @abstractmethod
     def name(self) -> str:
         """Name of model."""
-        return self.__name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        self.__name = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def n_rngs(self) -> int:
         """Number of random-number generators used to run a simulation replication."""
-        return self.__n_rngs
-
-    @n_rngs.setter
-    def n_rngs(self, value: int) -> None:
-        self.__n_rngs = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def n_responses(self) -> int:
         """Number of responses (performance measures)."""
-        return self.__n_responses
+        raise NotImplementedError
 
-    @n_responses.setter
-    def n_responses(self, value: int) -> None:
-        self.__n_responses = value
+    @property
+    @abstractmethod
+    def specifications(self) -> dict[str, dict]:
+        """Details of each factor (for GUI, data validation, and defaults)."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def check_factor_list(self) -> dict[str, Callable]:
+        """Switch case for checking factor simulatability."""
+        raise NotImplementedError
 
     @property
     def factors(self) -> dict:
@@ -1263,26 +1271,10 @@ class Model(ABC):
         return self.__factors
 
     @factors.setter
-    def factors(self, value: dict) -> None:
+    def factors(self, value: dict | None) -> None:
+        if value is None:
+            value = {}
         self.__factors = value
-
-    @property
-    def specifications(self) -> dict:
-        """Details of each factor (for GUI, data validation, and defaults)."""
-        return self.__specifications
-
-    @specifications.setter
-    def specifications(self, value: dict) -> None:
-        self.__specifications = value
-
-    @property
-    def check_factor_list(self) -> dict:
-        """Switch case for checking factor simulatability."""
-        return self.__check_factor_list
-
-    @check_factor_list.setter
-    def check_factor_list(self, value: dict) -> None:
-        self.__check_factor_list = value
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize a model object.
@@ -1293,15 +1285,13 @@ class Model(ABC):
             Dictionary of user-specified model factors.
 
         """
-        # Set default values for optional parameters.
-        if fixed_factors is None:
-            fixed_factors = {}
-        # Set factors of the simulation model.
-        # Fill in missing factors with default values.
+        # Add all the fixed factors to the model
         self.factors = fixed_factors
-        for key in self.specifications:
-            if key not in fixed_factors:
-                self.factors[key] = self.specifications[key]["default"]
+        all_factors = set(self.specifications.keys())
+        present_factors = set(self.factors.keys())
+        missing_factors = all_factors - present_factors
+        for key in missing_factors:
+            self.factors[key] = self.specifications[key]["default"]
 
     def __eq__(self, other: object) -> bool:
         """Check if two models are equivalent.

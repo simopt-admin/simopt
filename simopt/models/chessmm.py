@@ -8,7 +8,7 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Callable, Final
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -51,13 +51,21 @@ class ChessMatchmaking(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "CHESS"
-        self.n_rngs = 2
-        self.n_responses = 2
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "CHESS"
+
+    @property
+    def n_rngs(self) -> int:
+        return 2
+
+    @property
+    def n_responses(self) -> int:
+        return 2
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "elo_mean": {
                 "description": "mean of normal distribution for Elo rating",
                 "datatype": float,
@@ -86,14 +94,19 @@ class ChessMatchmaking(Model):
                 "default": MAX_ALLOWABLE_DIFF,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "elo_mean": self.check_elo_mean,
             "elo_sd": self.check_elo_sd,
             "poisson_rate": self.check_poisson_rate,
             "num_players": self.check_num_players,
             "allowable_diff": self.check_allowable_diff,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     def check_elo_mean(self) -> None:

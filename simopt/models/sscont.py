@@ -10,6 +10,7 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 from math import sqrt
+from typing import Callable
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -71,14 +72,21 @@ class SSCont(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "SSCONT"
-        self.n_rngs = 2
-        self.n_responses = 7
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "SSCONT"
+
+    @property
+    def n_rngs(self) -> int:
+        return 2
+
+    @property
+    def n_responses(self) -> int:
+        return 7
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "demand_mean": {
                 "description": "mean of exponentially distributed demand in each period",
                 "datatype": float,
@@ -130,7 +138,10 @@ class SSCont(Model):
                 "default": 20,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "demand_mean": self.check_demand_mean,
             "lead_mean": self.check_lead_mean,
             "backorder_cost": self.check_backorder_cost,
@@ -142,7 +153,9 @@ class SSCont(Model):
             "n_days": self.check_n_days,
             "warmup": self.check_warmup,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors

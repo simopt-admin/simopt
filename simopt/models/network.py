@@ -8,7 +8,7 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Callable, Final
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -47,14 +47,21 @@ class Network(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "NETWORK"
-        self.n_rngs = 3
-        self.n_responses = 1
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "NETWORK"
+
+    @property
+    def n_rngs(self) -> int:
+        return 3
+
+    @property
+    def n_responses(self) -> int:
+        return 1
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "process_prob": {
                 "description": "probability that a message will go through a particular network i",
                 "datatype": list,
@@ -102,7 +109,9 @@ class Network(Model):
             },
         }
 
-        self.check_factor_list = {
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "process_prob": self.check_process_prob,
             "cost_process": self.check_cost_process,
             "cost_time": self.check_cost_time,
@@ -113,7 +122,9 @@ class Network(Model):
             "n_messages": self.check_n_messages,
             "n_networks": self.check_n_networks,
         }
-        # Set factors of the simulation model
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors

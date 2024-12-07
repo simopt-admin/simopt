@@ -7,6 +7,8 @@ evaluated with noise.
 
 from __future__ import annotations
 
+from typing import Callable
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
@@ -42,22 +44,34 @@ class ExampleModel(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "EXAMPLE"
-        self.n_rngs = 1
-        self.n_responses = 1
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "EXAMPLE"
+
+    @property
+    def n_rngs(self) -> int:
+        return 1
+
+    @property
+    def n_responses(self) -> int:
+        return 1
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "x": {
                 "description": "point to evaluate",
                 "datatype": tuple,
                 "default": (2.0, 2.0),
             }
         }
-        self.check_factor_list = {"x": self.check_x}
-        # Set factors of the simulation model.
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {"x": self.check_x}
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     def check_x(self) -> bool:

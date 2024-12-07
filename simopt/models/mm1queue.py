@@ -8,6 +8,8 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from typing import Callable
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
@@ -49,13 +51,21 @@ class MM1Queue(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "MM1"
-        self.n_rngs = 2
-        self.n_responses = 3
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "MM1"
+
+    @property
+    def n_rngs(self) -> int:
+        return 2
+
+    @property
+    def n_responses(self) -> int:
+        return 3
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "lambda": {
                 "description": "rate parameter of interarrival time distribution",
                 "datatype": float,
@@ -82,14 +92,19 @@ class MM1Queue(Model):
                 "default": 50,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "lambda": self.check_lambda,
             "mu": self.check_mu,
             "epsilon": self.check_epsilon,
             "warmup": self.check_warmup,
             "people": self.check_people,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     def check_lambda(self) -> bool:

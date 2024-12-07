@@ -7,7 +7,7 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 import math as math
-from typing import Final
+from typing import Callable, Final
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -53,16 +53,21 @@ class AmusementPark(Model):
 
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        """Initialize the Amusement Park Model."""
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "AMUSEMENTPARK"
-        self.n_rngs = 3
-        self.n_responses = 4
-        self.factors = fixed_factors
-        # TODO: update transition_probabilities to scale with number of attractions
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "AMUSEMENTPARK"
+
+    @property
+    def n_rngs(self) -> int:
+        return 3
+
+    @property
+    def n_responses(self) -> int:
+        return 4
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "park_capacity": {
                 "description": "The total number of tourists waiting for \
                                 attractions that can be maintained through \
@@ -126,7 +131,10 @@ class AmusementPark(Model):
             },
         }
 
-        self.check_factor_list = {
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        """Switch case for checking factor simulatability."""
+        return {
             "park_capacity": self.check_park_capacity,
             "number_attractions": self.check_number_attractions,
             "time_open": self.check_time_open,
@@ -137,7 +145,9 @@ class AmusementPark(Model):
             "erlang_shape": self.check_erlang_shape,
             "erlang_scale": self.check_erlang_scale,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors.

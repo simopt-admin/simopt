@@ -7,6 +7,8 @@ A detailed description of the model/problem can be found `here <https://simopt.r
 
 from __future__ import annotations
 
+from typing import Callable
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
@@ -44,14 +46,21 @@ class CntNV(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "CNTNEWS"
-        self.n_rngs = 1
-        self.n_responses = 1
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "CNTNEWS"
+
+    @property
+    def n_rngs(self) -> int:
+        return 1
+
+    @property
+    def n_responses(self) -> int:
+        return 1
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "purchase_price": {
                 "description": "purchasing cost per unit",
                 "datatype": float,
@@ -83,7 +92,10 @@ class CntNV(Model):
                 "default": 20.0,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "purchase_price": self.check_purchase_price,
             "sales_price": self.check_sales_price,
             "salvage_price": self.check_salvage_price,
@@ -91,7 +103,9 @@ class CntNV(Model):
             "Burr_c": self.check_burr_c,
             "Burr_k": self.check_burr_k,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     def check_purchase_price(self) -> None:

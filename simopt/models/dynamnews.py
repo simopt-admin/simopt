@@ -8,7 +8,7 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Callable, Final
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -49,14 +49,21 @@ class DynamNews(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "DYNAMNEWS"
-        self.n_rngs = 1
-        self.n_responses = 4
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "DYNAMNEWS"
+
+    @property
+    def n_rngs(self) -> int:
+        return 1
+
+    @property
+    def n_responses(self) -> int:
+        return 4
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "num_prod": {
                 "description": "number of products",
                 "datatype": int,
@@ -93,7 +100,10 @@ class DynamNews(Model):
                 "default": [5] * NUM_PRODUCTS,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "num_prod": self.check_num_prod,
             "num_customer": self.check_num_customer,
             "c_utility": self.check_c_utility,
@@ -102,7 +112,9 @@ class DynamNews(Model):
             "price": self.check_price,
             "cost": self.check_cost,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     def check_num_prod(self) -> bool:

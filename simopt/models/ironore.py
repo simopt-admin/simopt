@@ -13,6 +13,7 @@ Changed get_random_solution quantiles
 from __future__ import annotations
 
 from math import copysign, sqrt
+from typing import Callable
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -52,14 +53,21 @@ class IronOre(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "IRONORE"
-        self.n_rngs = 1
-        self.n_responses = 3
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "IRONORE"
+
+    @property
+    def n_rngs(self) -> int:
+        return 1
+
+    @property
+    def n_responses(self) -> int:
+        return 3
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "mean_price": {
                 "description": "mean iron ore price per unit",
                 "datatype": float,
@@ -127,7 +135,9 @@ class IronOre(Model):
             },
         }
 
-        self.check_factor_list = {
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "mean_price": self.check_mean_price,
             "max_price": self.check_max_price,
             "min_price": self.check_min_price,
@@ -142,7 +152,9 @@ class IronOre(Model):
             "price_sell": self.check_price_sell,
             "n_days": self.check_n_days,
         }
-        # Set factors of the simulation model
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors

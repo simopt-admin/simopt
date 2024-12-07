@@ -8,6 +8,8 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from typing import Callable
+
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
@@ -60,14 +62,21 @@ class TableAllocation(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "TABLEALLOCATION"
-        self.n_rngs = 3
-        self.n_responses = 2
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "TABLEALLOCATION"
+
+    @property
+    def n_rngs(self) -> int:
+        return 3
+
+    @property
+    def n_responses(self) -> int:
+        return 2
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "n_hours": {
                 "description": "number of hours to simulate",
                 "datatype": float,
@@ -104,7 +113,10 @@ class TableAllocation(Model):
                 "default": [10, 5, 4, 2],
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "n_hours": self.check_n_hours,
             "capacity": self.check_capacity,
             "table_cap": self.check_table_cap,
@@ -113,7 +125,9 @@ class TableAllocation(Model):
             "table_revenue": self.check_table_revenue,
             "num_tables": self.check_num_tables,
         }
-        # Set factors of the simulation model
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
