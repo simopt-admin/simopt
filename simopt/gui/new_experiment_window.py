@@ -1966,6 +1966,16 @@ class NewExperimentWindow(Toplevel):
             width = max_width * header_font_size * 0.8 + 10
             self.design_tree.column(column, width=int(width))
 
+        # Add a vertical scrollbar
+        # It's scrollable without one, but it isn't intuitive
+        self.design_tree_scroll_y = ttk.Scrollbar(
+            master=master_frame,
+            orient="vertical",
+            command=self.design_tree.yview,
+        )
+        self.design_tree_scroll_y.grid(row=0, column=1, sticky="ns")
+        self.design_tree.configure(yscrollcommand=self.design_tree_scroll_y.set)
+
         # Add a horizontal scrollbar
         self.design_tree_scroll_x = ttk.Scrollbar(
             master=master_frame,
@@ -1980,7 +1990,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons["gen_design.add"] = ttk.Button(
             master=self.tk_frames["gen_design.display"],
         )
-        self.tk_buttons["gen_design.add"].grid(row=2, column=0, sticky="nsew")
+        self.tk_buttons["gen_design.add"].grid(row=2, column=0, sticky="nsew", columnspan=2)
         self.tk_buttons["gen_design.add"].grid_remove()
         # Button to close the design tree (without adding)
         self.tk_buttons["gen_design.close"] = ttk.Button(
@@ -1988,7 +1998,7 @@ class NewExperimentWindow(Toplevel):
             text="Close design tree",
             command=self._hide_gen_design,
         )
-        self.tk_buttons["gen_design.close"].grid(row=3, column=0, sticky="nsew")
+        self.tk_buttons["gen_design.close"].grid(row=3, column=0, sticky="nsew", columnspan=2)
 
     def __read_in_generated_design(self) -> pd.DataFrame:
         # Get the design table from the treeview
