@@ -52,40 +52,28 @@ class Solver(ABC):
         self.__name = value
 
     @property
+    @abstractmethod
     def objective_type(self) -> str:
         """Description of objective types: "single" or "multi"."""
-        return self.__objective_type
-
-    @objective_type.setter
-    def objective_type(self, value: str) -> None:
-        self.__objective_type = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def constraint_type(self) -> str:
         """Description of constraints types: "unconstrained", "box", "deterministic", "stochastic"."""
-        return self.__constraint_type
-
-    @constraint_type.setter
-    def constraint_type(self, value: str) -> None:
-        self.__constraint_type = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def variable_type(self) -> str:
         """Description of variable types: "discrete", "continuous", "mixed"."""
-        return self.__variable_type
-
-    @variable_type.setter
-    def variable_type(self, value: str) -> None:
-        self.__variable_type = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def gradient_needed(self) -> bool:
         """True if gradient of objective function is needed, otherwise False."""
-        return self.__gradient_needed
-
-    @gradient_needed.setter
-    def gradient_needed(self, value: bool) -> None:
-        self.__gradient_needed = value
+        raise NotImplementedError
 
     @property
     def factors(self) -> dict:
@@ -93,19 +81,18 @@ class Solver(ABC):
         return self.__factors
 
     @factors.setter
-    def factors(self, value: dict) -> None:
+    def factors(self, value: dict | None) -> None:
+        if value is None:
+            value = {}
         self.__factors = value
 
     @property
+    @abstractmethod
     def specifications(
         self,
-    ) -> dict[str, dict[str, str | type | int | float | bool]]:
+    ) -> dict[str, dict]:
         """Details of each factor (for GUI, data validation, and defaults)."""
-        return self.__specifications
-
-    @specifications.setter
-    def specifications(self, value: dict) -> None:
-        self.__specifications = value
+        raise NotImplementedError
 
     @property
     def rng_list(self) -> list[MRG32k3a]:
@@ -126,15 +113,12 @@ class Solver(ABC):
         self.__solution_progenitor_rngs = value
 
     @property
-    def check_factor_list(self) -> dict:
+    @abstractmethod
+    def check_factor_list(self) -> dict[str, Callable]:
         """Dictionary of functions to check if a factor is permissible."""
-        return self.__check_factor_list
+        raise NotImplementedError
 
-    @check_factor_list.setter
-    def check_factor_list(self, value: dict) -> None:
-        self.__check_factor_list = value
-
-    def __init__(self, fixed_factors: dict | None = None) -> None:
+    def __init__(self, name: str, fixed_factors: dict | None = None) -> None:
         """Initialize a solver object.
 
         Parameters
@@ -143,14 +127,14 @@ class Solver(ABC):
             Dictionary of user-specified solver factors.
 
         """
-        if fixed_factors is None:
-            fixed_factors = {}
-        # Set factors of the solver.
-        # Fill in missing factors with default values.
+        self.name = name
+        # Add all the fixed factors to the solver
         self.factors = fixed_factors
-        for key in self.specifications:
-            if key not in fixed_factors:
-                self.factors[key] = self.specifications[key]["default"]
+        all_factors = set(self.specifications.keys())
+        present_factors = set(self.factors.keys())
+        missing_factors = all_factors - present_factors
+        for factor in missing_factors:
+            self.factors[factor] = self.specifications[factor]["default"]
 
     def __eq__(self, other: object) -> bool:
         """Check if two solvers are equivalent.
