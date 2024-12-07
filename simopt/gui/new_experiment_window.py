@@ -475,13 +475,35 @@ class NewExperimentWindow(Toplevel):
         self.tk_frames["ntbk"].grid_propagate(False)
         self.tk_frames["ntbk"].grid_columnconfigure(0, weight=1)
         self.tk_frames["ntbk"].grid_rowconfigure(1, weight=1)
-        self.tk_labels["ntbk.header"] = ttk.Label(
-            self.tk_frames["ntbk"],
+        self.tk_frames["ntbk.header"] = ttk.Frame(self.tk_frames["ntbk"])
+        self.tk_frames["ntbk.header"].grid(row=0, column=0, sticky="nsew")
+        self.tk_frames["ntbk.header"].grid_columnconfigure(0, weight=1)
+        self.tk_labels["ntbk.header.title"] = ttk.Label(
+            self.tk_frames["ntbk.header"],
             text="Create Problems/Solvers",
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.tk_labels["ntbk.header"].grid(row=0, column=0, sticky="nsew")
+        self.tk_labels["ntbk.header.title"].grid(row=0, column=0, sticky="nsew")
+        self.tk_separators["ntbk.header.sep"] = ttk.Separator(
+            self.tk_frames["ntbk.header"], orient="vertical"
+        )
+        self.tk_separators["ntbk.header.sep"].grid(
+            row=0, column=1, sticky="ns", padx=10
+        )
+        attribute_desc = "Objective: Single [S] | Multiple [M]\n"
+        attribute_desc += "Constraint: Unconstrained [U] | Box [B] | Deterministic [D] | Stochastic [S]\n"
+        attribute_desc += "Variable: Discrete [D] | Continuous [C] | Integer [I]\n"
+        attribute_desc += "Gradient Available: True [G] | False [N]\n"
+        attribute_desc += "incompatible problems/solvers will be unselectable"
+        self.tk_labels["ntbk.header.attr_desc"] = ttk.Label(
+            self.tk_frames["ntbk.header"],
+            text=attribute_desc,
+            anchor="center",
+        )
+        self.tk_labels["ntbk.header.attr_desc"].grid(
+            row=0, column=2, sticky="nsew"
+        )
         self.tk_notebooks["ntbk.ps_adding"] = ttk.Notebook(
             self.tk_frames["ntbk"]
         )
