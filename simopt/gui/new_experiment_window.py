@@ -48,7 +48,9 @@ class NewExperimentWindow(Toplevel):
     def __init__(self, root: tk.Tk) -> None:
         """Initialize New Experiment Window."""
         super().__init__(
-            root, title="Simulation Optimization Experiments", exit_on_close=True
+            root,
+            title="Simulation Optimization Experiments",
+            exit_on_close=True,
         )
 
         self.center_window(0.8)
@@ -492,7 +494,9 @@ class NewExperimentWindow(Toplevel):
         )
         attribute_desc = "Objective: Single [S] | Multiple [M]\n"
         attribute_desc += "Constraint: Unconstrained [U] | Box [B] | Deterministic [D] | Stochastic [S]\n"
-        attribute_desc += "Variable: Discrete [D] | Continuous [C] | Integer [I]\n"
+        attribute_desc += (
+            "Variable: Discrete [D] | Continuous [C] | Integer [I]\n"
+        )
         attribute_desc += "Gradient Available: True [G] | False [N]\n"
         attribute_desc += "incompatible problems/solvers will be unselectable"
         self.tk_labels["ntbk.header.attr_desc"] = ttk.Label(
