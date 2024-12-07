@@ -223,16 +223,27 @@ class NewExperimentWindow(Toplevel):
             window=self.tk_frames["exps.list_canvas.list"],
             anchor="nw",
         )
-        self.tk_scrollbars["exps.list_canvas"] = ttk.Scrollbar(
+        self.tk_scrollbars["exps.list_canvas_vert"] = ttk.Scrollbar(
             self.tk_frames["exps.list_canvas"],
             orient="vertical",
             command=self.tk_canvases["exps.list_canvas"].yview,
         )
         self.tk_canvases["exps.list_canvas"].config(
-            yscrollcommand=self.tk_scrollbars["exps.list_canvas"].set
+            yscrollcommand=self.tk_scrollbars["exps.list_canvas_vert"].set
         )
-        self.tk_scrollbars["exps.list_canvas"].grid(
+        self.tk_scrollbars["exps.list_canvas_vert"].grid(
             row=0, column=1, sticky="ns"
+        )
+        self.tk_scrollbars["exps.list_canvas_horiz"] = ttk.Scrollbar(
+            self.tk_frames["exps.list_canvas"],
+            orient="horizontal",
+            command=self.tk_canvases["exps.list_canvas"].xview,
+        )
+        self.tk_canvases["exps.list_canvas"].config(
+            xscrollcommand=self.tk_scrollbars["exps.list_canvas_horiz"].set
+        )
+        self.tk_scrollbars["exps.list_canvas_horiz"].grid(
+            row=1, column=0, sticky="ew"
         )
         self.tk_frames["exps.fields"] = ttk.Frame(
             self.tk_frames["exps"],
@@ -253,7 +264,7 @@ class NewExperimentWindow(Toplevel):
             command=self.open_plotting_window,
         )
         self.tk_buttons["exps.fields.open_plot_win"].grid(
-            row=1, column=0, sticky="ew"
+            row=2, column=0, sticky="ew"
         )
         self.tk_buttons["exps.fields.load_exp"] = ttk.Button(
             self.tk_frames["exps.fields"],
@@ -261,7 +272,7 @@ class NewExperimentWindow(Toplevel):
             command=self.load_experiment,
         )
         self.tk_buttons["exps.fields.load_exp"].grid(
-            row=2, column=0, sticky="ew"
+            row=3, column=0, sticky="ew"
         )
 
     def _initialize_current_experiment_frame(self) -> None:
@@ -327,16 +338,31 @@ class NewExperimentWindow(Toplevel):
             window=self.tk_frames["curr_exp.lists.problems"],
             anchor="nw",
         )
-        self.tk_scrollbars["curr_exp.lists.problems"] = ttk.Scrollbar(
+        self.tk_scrollbars["curr_exp.lists.problems_vert"] = ttk.Scrollbar(
             self.tk_frames["curr_exp.lists"],
             orient="vertical",
             command=self.tk_canvases["curr_exp.lists.problems"].yview,
         )
         self.tk_canvases["curr_exp.lists.problems"].config(
-            yscrollcommand=self.tk_scrollbars["curr_exp.lists.problems"].set
+            yscrollcommand=self.tk_scrollbars[
+                "curr_exp.lists.problems_vert"
+            ].set
         )
-        self.tk_scrollbars["curr_exp.lists.problems"].grid(
+        self.tk_scrollbars["curr_exp.lists.problems_vert"].grid(
             row=1, column=1, sticky="ns"
+        )
+        self.tk_scrollbars["curr_exp.lists.problems_horiz"] = ttk.Scrollbar(
+            self.tk_frames["curr_exp.lists"],
+            orient="horizontal",
+            command=self.tk_canvases["curr_exp.lists.problems"].xview,
+        )
+        self.tk_canvases["curr_exp.lists.problems"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "curr_exp.lists.problems_horiz"
+            ].set
+        )
+        self.tk_scrollbars["curr_exp.lists.problems_horiz"].grid(
+            row=2, column=0, sticky="ew"
         )
         self.__update_problem_list_scroll_region()
 
@@ -354,16 +380,29 @@ class NewExperimentWindow(Toplevel):
             window=self.tk_frames["curr_exp.lists.solvers"],
             anchor="nw",
         )
-        self.tk_scrollbars["curr_exp.lists.solvers"] = ttk.Scrollbar(
+        self.tk_scrollbars["curr_exp.lists.solvers_vert"] = ttk.Scrollbar(
             self.tk_frames["curr_exp.lists"],
             orient="vertical",
             command=self.tk_canvases["curr_exp.lists.solvers"].yview,
         )
         self.tk_canvases["curr_exp.lists.solvers"].config(
-            yscrollcommand=self.tk_scrollbars["curr_exp.lists.solvers"].set
+            yscrollcommand=self.tk_scrollbars["curr_exp.lists.solvers_vert"].set
         )
-        self.tk_scrollbars["curr_exp.lists.solvers"].grid(
+        self.tk_scrollbars["curr_exp.lists.solvers_vert"].grid(
             row=1, column=4, sticky="ns"
+        )
+        self.tk_scrollbars["curr_exp.lists.solvers_horiz"] = ttk.Scrollbar(
+            self.tk_frames["curr_exp.lists"],
+            orient="horizontal",
+            command=self.tk_canvases["curr_exp.lists.solvers"].xview,
+        )
+        self.tk_canvases["curr_exp.lists.solvers"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "curr_exp.lists.solvers_horiz"
+            ].set
+        )
+        self.tk_scrollbars["curr_exp.lists.solvers_horiz"].grid(
+            row=2, column=3, sticky="ew"
         )
         self.__update_solver_list_scroll_region()
 
@@ -482,18 +521,42 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.problem.factors"].grid(
             row=1, column=0, sticky="nsew", columnspan=2
         )
-        self.tk_scrollbars["ntbk.ps_adding.problem.factors"] = ttk.Scrollbar(
-            self.tk_frames["ntbk.ps_adding.problem"],
-            orient="vertical",
-            command=self.tk_canvases["ntbk.ps_adding.problem.factors"].yview,
+        self.tk_scrollbars["ntbk.ps_adding.problem.factors_vert"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.problem"],
+                orient="vertical",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.problem.factors"
+                ].yview,
+            )
         )
         self.tk_canvases["ntbk.ps_adding.problem.factors"].config(
             yscrollcommand=self.tk_scrollbars[
-                "ntbk.ps_adding.problem.factors"
+                "ntbk.ps_adding.problem.factors_vert"
             ].set
         )
-        self.tk_scrollbars["ntbk.ps_adding.problem.factors"].grid(
+        self.tk_scrollbars["ntbk.ps_adding.problem.factors_vert"].grid(
             row=1, column=2, sticky="ns"
+        )
+        self.tk_scrollbars["ntbk.ps_adding.problem.factors_horiz"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.problem"],
+                orient="horizontal",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.problem.factors"
+                ].xview,
+            )
+        )
+        self.tk_canvases["ntbk.ps_adding.problem.factors"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.problem.factors_horiz"
+            ].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.problem.factors_horiz"].grid(
+            row=2,
+            column=0,
+            sticky="ew",
+            columnspan=2,
         )
         self.__update_problem_factor_scroll_region()
 
@@ -532,18 +595,35 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.solver.factors"].grid(
             row=1, column=0, sticky="nsew", columnspan=2
         )
-        self.tk_scrollbars["ntbk.ps_adding.solver.factors"] = ttk.Scrollbar(
-            self.tk_frames["ntbk.ps_adding.solver"],
-            orient="vertical",
-            command=self.tk_canvases["ntbk.ps_adding.solver.factors"].yview,
+        self.tk_scrollbars["ntbk.ps_adding.solver.factors_vert"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.solver"],
+                orient="vertical",
+                command=self.tk_canvases["ntbk.ps_adding.solver.factors"].yview,
+            )
         )
         self.tk_canvases["ntbk.ps_adding.solver.factors"].config(
             yscrollcommand=self.tk_scrollbars[
-                "ntbk.ps_adding.solver.factors"
+                "ntbk.ps_adding.solver.factors_vert"
             ].set
         )
-        self.tk_scrollbars["ntbk.ps_adding.solver.factors"].grid(
+        self.tk_scrollbars["ntbk.ps_adding.solver.factors_vert"].grid(
             row=1, column=2, sticky="ns"
+        )
+        self.tk_scrollbars["ntbk.ps_adding.solver.factors_horiz"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.solver"],
+                orient="horizontal",
+                command=self.tk_canvases["ntbk.ps_adding.solver.factors"].xview,
+            )
+        )
+        self.tk_canvases["ntbk.ps_adding.solver.factors"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.solver.factors_horiz"
+            ].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.solver.factors_horiz"].grid(
+            row=2, column=0, sticky="ew", columnspan=2
         )
         self.__update_solver_factor_scroll_region()
 
@@ -966,18 +1046,39 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.quick_add.problems"].grid(
             row=2, column=0, sticky="nsew"
         )
-        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems"] = ttk.Scrollbar(
-            self.tk_frames["ntbk.ps_adding.quick_add"],
-            orient="vertical",
-            command=self.tk_canvases["ntbk.ps_adding.quick_add.problems"].yview,
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems_vert"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.quick_add"],
+                orient="vertical",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.quick_add.problems"
+                ].yview,
+            )
         )
         self.tk_canvases["ntbk.ps_adding.quick_add.problems"].config(
             yscrollcommand=self.tk_scrollbars[
-                "ntbk.ps_adding.quick_add.problems"
+                "ntbk.ps_adding.quick_add.problems_vert"
             ].set
         )
-        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems"].grid(
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems_vert"].grid(
             row=2, column=1, sticky="ns"
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems_horiz"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.quick_add"],
+                orient="horizontal",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.quick_add.problems"
+                ].xview,
+            )
+        )
+        self.tk_canvases["ntbk.ps_adding.quick_add.problems"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.quick_add.problems_horiz"
+            ].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.problems_horiz"].grid(
+            row=3, column=0, sticky="ew"
         )
 
         self.tk_canvases["ntbk.ps_adding.quick_add.solvers"] = tk.Canvas(
@@ -986,18 +1087,39 @@ class NewExperimentWindow(Toplevel):
         self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].grid(
             row=2, column=3, sticky="nsew"
         )
-        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers"] = ttk.Scrollbar(
-            self.tk_frames["ntbk.ps_adding.quick_add"],
-            orient="vertical",
-            command=self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].yview,
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers_vert"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.quick_add"],
+                orient="vertical",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.quick_add.solvers"
+                ].yview,
+            )
         )
         self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].config(
             yscrollcommand=self.tk_scrollbars[
-                "ntbk.ps_adding.quick_add.solvers"
+                "ntbk.ps_adding.quick_add.solvers_vert"
             ].set
         )
-        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers"].grid(
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers_vert"].grid(
             row=2, column=4, sticky="ns"
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers_horiz"] = (
+            ttk.Scrollbar(
+                self.tk_frames["ntbk.ps_adding.quick_add"],
+                orient="horizontal",
+                command=self.tk_canvases[
+                    "ntbk.ps_adding.quick_add.solvers"
+                ].xview,
+            )
+        )
+        self.tk_canvases["ntbk.ps_adding.quick_add.solvers"].config(
+            xscrollcommand=self.tk_scrollbars[
+                "ntbk.ps_adding.quick_add.solvers_horiz"
+            ].set
+        )
+        self.tk_scrollbars["ntbk.ps_adding.quick_add.solvers_horiz"].grid(
+            row=3, column=3, sticky="ew"
         )
 
         # create master frame inside the canvas
