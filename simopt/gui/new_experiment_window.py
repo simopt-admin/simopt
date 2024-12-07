@@ -2498,8 +2498,7 @@ class NewExperimentWindow(Toplevel):
         self.experiment_defaults_window.title(
             "Simopt Graphical User Interface - Experiment Options Defaults"
         )
-        self.center_window(0.8)
-        self.set_style()
+        self.experiment_defaults_window.center_window(0.8)
 
         self.main_frame = tk.Frame(master=self.experiment_defaults_window)
         self.main_frame.grid(row=0, column=0)
