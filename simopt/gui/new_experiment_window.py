@@ -485,27 +485,37 @@ class NewExperimentWindow(Toplevel):
             anchor="center",
             font=nametofont("TkHeadingFont"),
         )
-        self.tk_labels["ntbk.header.title"].grid(row=0, column=0, sticky="nsew")
+        self.tk_labels["ntbk.header.title"].grid(
+            row=0, column=0, rowspan=2, sticky="nsew"
+        )
         self.tk_separators["ntbk.header.sep"] = ttk.Separator(
             self.tk_frames["ntbk.header"], orient="vertical"
         )
         self.tk_separators["ntbk.header.sep"].grid(
-            row=0, column=1, sticky="ns", padx=10
+            row=0, column=1, rowspan=2, sticky="ns", padx=10
         )
-        attribute_desc = "Objective: Single [S] | Multiple [M]\n"
-        attribute_desc += "Constraint: Unconstrained [U] | Box [B] | Deterministic [D] | Stochastic [S]\n"
-        attribute_desc += (
-            "Variable: Discrete [D] | Continuous [C] | Integer [I]\n"
-        )
-        attribute_desc += "Gradient Available: True [G] | False [N]\n"
-        attribute_desc += "incompatible problems/solvers will be unselectable"
+        attr_desc_lines = [
+            "Objective: Single [S] | Multiple [M]",
+            "Constraint: Unconstrained [U] | Box [B] | Deterministic [D] | Stochastic [S]",
+            "Variable: Discrete [D] | Continuous [C] | Mixed [M]",
+            "Gradient Available: True [G] | False [N]",
+        ]
+        attribute_desc = "\n".join(attr_desc_lines)
         self.tk_labels["ntbk.header.attr_desc"] = ttk.Label(
             self.tk_frames["ntbk.header"],
             text=attribute_desc,
-            anchor="center",
+            anchor="nw",
         )
         self.tk_labels["ntbk.header.attr_desc"].grid(
             row=0, column=2, sticky="nsew"
+        )
+        self.tk_labels["ntbk.header.incomp_desc"] = ttk.Label(
+            self.tk_frames["ntbk.header"],
+            text="incompatible problems/solvers will be unselectable",
+            anchor="center",
+        )
+        self.tk_labels["ntbk.header.incomp_desc"].grid(
+            row=1, column=2, sticky="nsew"
         )
         self.tk_notebooks["ntbk.ps_adding"] = ttk.Notebook(
             self.tk_frames["ntbk"]
