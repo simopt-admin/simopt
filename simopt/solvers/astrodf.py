@@ -21,7 +21,14 @@ import numpy as np
 from numpy.linalg import norm, pinv
 from scipy.optimize import NonlinearConstraint, minimize
 
-from simopt.base import Problem, Solution, Solver
+from simopt.base import (
+    ConstraintType,
+    ObjectiveType,
+    Problem,
+    Solution,
+    Solver,
+    VariableType,
+)
 
 
 class ASTRODF(Solver):
@@ -61,16 +68,16 @@ class ASTRODF(Solver):
     """
 
     @property
-    def objective_type(self) -> str:
-        return "single"
+    def objective_type(self) -> ObjectiveType:
+        return ObjectiveType.SINGLE
 
     @property
-    def constraint_type(self) -> str:
-        return "box"
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.BOX
 
     @property
-    def variable_type(self) -> str:
-        return "continuous"
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
 
     @property
     def gradient_needed(self) -> bool:

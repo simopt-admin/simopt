@@ -10,7 +10,14 @@ from __future__ import annotations
 
 from typing import Callable
 
-from simopt.base import Problem, Solution, Solver
+from simopt.base import (
+    ConstraintType,
+    ObjectiveType,
+    Problem,
+    Solution,
+    Solver,
+    VariableType,
+)
 
 
 class RandomSearch(Solver):
@@ -53,16 +60,16 @@ class RandomSearch(Solver):
     """
 
     @property
-    def objective_type(self) -> str:
-        return "single"
+    def objective_type(self) -> ObjectiveType:
+        return ObjectiveType.SINGLE
 
     @property
-    def constraint_type(self) -> str:
-        return "stochastic"
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.STOCHASTIC
 
     @property
-    def variable_type(self) -> str:
-        return "mixed"
+    def variable_type(self) -> VariableType:
+        return VariableType.MIXED
 
     @property
     def gradient_needed(self) -> bool:

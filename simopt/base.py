@@ -5,10 +5,35 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from enum import Enum
 from typing import Callable
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+
+class ObjectiveType(Enum):
+    """Enum class for objective types."""
+
+    SINGLE = 1
+    MULTI = 2
+
+
+class ConstraintType(Enum):
+    """Enum class for constraint types."""
+
+    UNCONSTRAINED = 1
+    BOX = 2
+    DETERMINISTIC = 3
+    STOCHASTIC = 4
+
+
+class VariableType(Enum):
+    """Enum class for variable types."""
+
+    DISCRETE = 1
+    CONTINUOUS = 2
+    MIXED = 3
 
 
 class Solver(ABC):
@@ -53,19 +78,19 @@ class Solver(ABC):
 
     @property
     @abstractmethod
-    def objective_type(self) -> str:
+    def objective_type(self) -> ObjectiveType:
         """Description of objective types: "single" or "multi"."""
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def constraint_type(self) -> str:
+    def constraint_type(self) -> ConstraintType:
         """Description of constraints types: "unconstrained", "box", "deterministic", "stochastic"."""
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def variable_type(self) -> str:
+    def variable_type(self) -> VariableType:
         """Description of variable types: "discrete", "continuous", "mixed"."""
         raise NotImplementedError
 
