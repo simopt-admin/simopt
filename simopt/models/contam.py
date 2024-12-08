@@ -13,7 +13,7 @@ from typing import Callable, Final
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
-from simopt.base import Model, Problem
+from simopt.base import ConstraintType, Model, Problem, VariableType
 
 NUM_STAGES: Final[int] = 5
 
@@ -285,70 +285,111 @@ class ContaminationTotalCostDisc(Problem):
     base.Problem
     """
 
-    def __init__(
-        self,
-        name: str = "CONTAM-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        # Handle default arguments.
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-        # Set problem attributes.
-        self.name = name
-        self.n_objectives = 1
-        self.minmax = (-1,)
-        self.constraint_type = "stochastic"
-        self.variable_type = "discrete"
-        self.gradient_available = True
-        self.optimal_value = None
-        self.optimal_solution = None
-        self.model_default_factors = {}
-        self.model_decision_factors = {"prev_decision"}
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stockastic_constraints(self) -> int:
+        return self.model.factors["stages"]
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.STOCHASTIC
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.DISCRETE
+
+    @property
+    def gradient_available(self) -> bool:
+        return True
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"prev_decision"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
                 "default": (1,) * NUM_STAGES,
             },
             "budget": {
-                "description": "max # of replications for a solver to take.",
+                "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000,
             },
             "prev_cost": {
-                "description": "cost of prevention in each stage",
+                "description": "cost of prevention",
                 "datatype": list,
                 "default": [1] * NUM_STAGES,
             },
             "error_prob": {
-                "description": "allowable error probability in each stage",
+                "description": "error probability",
                 "datatype": list,
                 "default": [0.2] * NUM_STAGES,
             },
             "upper_thres": {
-                "description": "upper limit of amount of contamination in each stage",
+                "description": "upper limit of amount of contamination",
                 "datatype": list,
                 "default": [0.1] * NUM_STAGES,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
             "prev_cost": self.check_prev_cost,
             "error_prob": self.check_error_prob,
             "upper_thres": self.check_upper_thres,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = Contamination(self.model_fixed_factors)
-        self.dim = self.model.factors["stages"]
-        self.n_stochastic_constraints = self.model.factors["stages"]
-        self.lower_bounds = (0,) * self.model.factors["stages"]
-        self.upper_bounds = (1,) * self.model.factors["stages"]
+
+    @property
+    def dim(self) -> int:
+        return self.model.factors["stages"]
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0,) * self.model.factors["stages"]
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (1,) * self.model.factors["stages"]
+
+    def __init__(
+        self,
+        name: str = "CONTAM-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=Contamination,
+        )
 
     def check_prev_cost(self) -> bool:
         if len(self.factors["prev_cost"]) != self.dim:
@@ -635,30 +676,49 @@ class ContaminationTotalCostCont(Problem):
     base.Problem
     """
 
-    def __init__(
-        self,
-        name: str = "CONTAM-2",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        # Handle default arguments.
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-        # Set problem attributes.
-        self.name = name
-        self.n_objectives = 1
-        self.minmax = (-1,)
-        self.constraint_type = "stochastic"
-        self.variable_type = "continuous"
-        self.gradient_available = True
-        self.optimal_value = None
-        self.optimal_solution = None
-        self.model_default_factors = {}
-        self.model_decision_factors = {"prev_decision"}
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stockastic_constraints(self) -> int:
+        return self.model.factors["stages"]
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.STOCHASTIC
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return True
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"prev_decision"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
@@ -685,20 +745,42 @@ class ContaminationTotalCostCont(Problem):
                 "default": [0.1] * NUM_STAGES,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
             "prev_cost": self.check_prev_cost,
             "error_prob": self.check_error_prob,
             "upper_thres": self.check_upper_thres,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = Contamination(self.model_fixed_factors)
-        self.dim = self.model.factors["stages"]
-        self.n_stochastic_constraints = self.model.factors["stages"]
-        self.lower_bounds = (0,) * self.model.factors["stages"]
-        self.upper_bounds = (1,) * self.model.factors["stages"]
+
+    @property
+    def dim(self) -> int:
+        return self.model.factors["stages"]
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0,) * self.model.factors["stages"]
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (1,) * self.model.factors["stages"]
+
+    def __init__(
+        self,
+        name: str = "CONTAM-2",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=Contamination,
+        )
 
     def check_initial_solution(self) -> bool:
         if len(self.factors["initial_solution"]) != self.dim:

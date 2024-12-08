@@ -13,7 +13,7 @@ from typing import Callable, Final
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
-from simopt.base import Model, Problem
+from simopt.base import ConstraintType, Model, Problem, VariableType
 
 NUM_FACILITIES: Final[int] = 3
 
@@ -261,31 +261,50 @@ class FacilitySizingTotalCost(Problem):
     base.Problem
     """
 
-    def __init__(
-        self,
-        name: str = "FACSIZE-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        # Handle default arguments.
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-        # Set problem attributes.
-        self.name = name
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 1
-        self.minmax = (-1,)
-        self.constraint_type = "stochastic"
-        self.variable_type = "continuous"
-        self.gradient_available = True
-        self.optimal_value = None
-        self.optimal_solution = None  # (185, 185, 185)
-        self.model_default_factors = {}
-        self.model_decision_factors = {"capacity"}
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 1
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.STOCHASTIC
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return True
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        # return (185, 185, 185)
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"capacity"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
@@ -307,18 +326,41 @@ class FacilitySizingTotalCost(Problem):
                 "default": 0.05,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
             "installation_costs": self.check_installation_costs,
             "epsilon": self.check_epsilon,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = FacilitySize(self.model_fixed_factors)
-        self.dim = self.model.factors["n_fac"]
-        self.lower_bounds = (0,) * self.model.factors["n_fac"]
-        self.upper_bounds = (np.inf,) * self.model.factors["n_fac"]
+
+    @property
+    def dim(self) -> int:
+        return self.model.factors["n_fac"]
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (np.inf,) * self.dim
+
+    def __init__(
+        self,
+        name: str = "FACSIZE-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=FacilitySize,
+        )
 
     def check_installation_costs(self) -> bool:
         if (
@@ -612,31 +654,50 @@ class FacilitySizingMaxService(Problem):
     base.Problem
     """
 
-    def __init__(
-        self,
-        name: str = "FACSIZE-2",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        # Handle default arguments.
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-        # Set problem attributes.
-        self.name = name
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (1,)
-        self.constraint_type = "deterministic"
-        self.variable_type = "continuous"
-        self.gradient_available = False
-        self.optimal_value = None
-        self.optimal_solution = None  # (175, 179, 143)
-        self.model_default_factors = {}
-        self.model_decision_factors = {"capacity"}
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 0
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.DETERMINISTIC
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return False
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        # return (175, 179, 143)
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"capacity"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
@@ -658,18 +719,41 @@ class FacilitySizingMaxService(Problem):
                 "default": 500.0,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
             "installation_costs": self.check_installation_costs,
             "installation_budget": self.check_installation_budget,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = FacilitySize(self.model_fixed_factors)
-        self.dim = self.model.factors["n_fac"]
-        self.lower_bounds = (0,) * self.model.factors["n_fac"]
-        self.upper_bounds = (np.inf,) * self.model.factors["n_fac"]
+
+    @property
+    def dim(self) -> int:
+        return self.model.factors["n_fac"]
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (np.inf,) * self.dim
+
+    def __init__(
+        self,
+        name: str = "FACSIZE-2",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=FacilitySize,
+        )
 
     def check_installation_costs(self) -> bool:
         if (

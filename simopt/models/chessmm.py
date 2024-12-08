@@ -14,7 +14,7 @@ import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 from scipy import special
 
-from simopt.base import Model, Problem
+from simopt.base import ConstraintType, Model, Problem, VariableType
 
 MEAN_ELO: Final[int] = 1200
 MAX_ALLOWABLE_DIFF: Final[int] = 150
@@ -287,34 +287,49 @@ class ChessAvgDifference(Problem):
     base.Problem
     """
 
-    def __init__(
-        self,
-        name: str = "CHESS-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        # Handle default arguments.
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-        # Set problem attributes.
-        self.name = name
-        self.dim = 1
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 1
-        self.minmax = (-1,)
-        self.constraint_type = "stochastic"
-        self.variable_type = "continuous"
-        self.lower_bounds = (0,)
-        self.upper_bounds = (2400,)
-        self.gradient_available = False
-        self.optimal_value = None
-        self.optimal_solution = None
-        self.model_default_factors = {}
-        self.model_decision_factors = {"allowable_diff"}
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 1
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.STOCHASTIC
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return False
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set:
+        return {"allowable_diff"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
@@ -331,14 +346,37 @@ class ChessAvgDifference(Problem):
                 "default": 5.0,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
             "upper_time": self.check_upper_time,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = ChessMatchmaking(self.model_fixed_factors)
+
+    @property
+    def dim(self) -> int:
+        return 1
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0,)
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (2400,)
+
+    def __init__(
+        self,
+        name: str = "CHESS-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name, fixed_factors, model_fixed_factors, ChessMatchmaking
+        )
 
     def check_upper_time(self) -> None:
         if self.factors["upper_time"] <= 0:
