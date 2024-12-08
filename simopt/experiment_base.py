@@ -2860,21 +2860,18 @@ def check_common_problem_and_reference(
         raise TypeError(error_msg)
 
     problem_list = [experiment.problem for experiment in experiments]
-    if len(set(problem_list)) != 1:
-        raise ValueError(
-            "At least two experiments have different problem instances."
-        )
+    problem_err_msg = "All experiments must have the same problem."
+    assert all(
+        elem == problem_list[0] for elem in problem_list
+    ), problem_err_msg
+
     x0_list = [experiment.x0 for experiment in experiments]
-    if len(set(x0_list)) != 1:
-        raise ValueError(
-            "At least two experiments have different starting solutions."
-        )
+    x0_err_msg = "All experiments must have the same starting solution."
+    assert all(elem == x0_list[0] for elem in x0_list), x0_err_msg
+
     xstar_list = [experiment.xstar for experiment in experiments]
-    if len(set(xstar_list)) != 1:
-        raise ValueError(
-            "At least two experiments have different optimal solutions."
-        )
-    return
+    xstar_err_msg = "All experiments must have the same optimal solution."
+    assert all(elem == xstar_list[0] for elem in xstar_list), xstar_err_msg
 
 
 def plot_progress_curves(
