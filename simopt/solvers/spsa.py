@@ -138,7 +138,7 @@ class SPSA(Solver):
             "eval_pct": self.check_eval_pct,
             "iter_pct": self.check_iter_pct,
         }
-    
+
     def __init__(
         self, name: str = "SPSA", fixed_factors: dict | None = None
     ) -> None:

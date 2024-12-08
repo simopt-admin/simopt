@@ -136,7 +136,7 @@ class ChessMatchmaking(Model):
             raise ValueError(
                 "The maximum mallowable different between Elo ratings must be greater than 0."
             )
-    
+
     def check_simulatable_factors(self) -> bool:
         # No factors need cross-checked
         return True

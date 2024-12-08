@@ -214,8 +214,12 @@ class IronOre(Model):
             raise ValueError("n_days must be greater than or equal to 1.")
 
     def check_simulatable_factors(self):
-        if (self.factors["min_price"] > self.factors["mean_price"]) or (self.factors["mean_price"] > self.factors["max_price"]):
-            raise ValueError("mean_price must be greater than or equal to min_price and less than or equal to max_price.")
+        if (self.factors["min_price"] > self.factors["mean_price"]) or (
+            self.factors["mean_price"] > self.factors["max_price"]
+        ):
+            raise ValueError(
+                "mean_price must be greater than or equal to min_price and less than or equal to max_price."
+            )
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -282,7 +286,9 @@ class IronOre(Model):
                     )
             # If production is not currently underway...
             else:
-                if ((mkt_price[day] >= self.factors["price_prod"]) and (stock[day] < self.factors["inven_stop"])):
+                if (mkt_price[day] >= self.factors["price_prod"]) and (
+                    stock[day] < self.factors["inven_stop"]
+                ):
                     producing[day] = 1
                     prod[day] = min(
                         self.factors["max_prod_perday"],

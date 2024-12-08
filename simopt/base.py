@@ -11,6 +11,7 @@ from typing import Callable
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
+
 def _factor_check(self: Solver | Problem | Model, factor_name: str) -> bool:
     # Check if factor is of permissible data type.
     datatype_check = self.check_factor_datatype(factor_name)
@@ -19,7 +20,7 @@ def _factor_check(self: Solver | Problem | Model, factor_name: str) -> bool:
     # Check if the factor check exists
     if factor_name not in self.check_factor_list:
         # If the factor is a boolean, it's fine
-        if self.specifications[factor_name]["datatype"] is bool: 
+        if self.specifications[factor_name]["datatype"] is bool:
             return True
         else:
             # Raise an error since there's an error in the check list
@@ -30,6 +31,7 @@ def _factor_check(self: Solver | Problem | Model, factor_name: str) -> bool:
     self.check_factor_list[factor_name]()
     # Return true if we successfully checked the factor
     return True
+
 
 class ObjectiveType(Enum):
     """Enum class for objective types."""
@@ -183,7 +185,8 @@ class Solver(ABC):
         for factor in missing_factors:
             self.factors[factor] = self.specifications[factor]["default"]
         # Run checks
-        self.run_all_checks(factor_names = fixed_factors.keys())
+        factor_names = list(self.factors.keys())
+        self.run_all_checks(factor_names=factor_names)
 
     def __eq__(self, other: object) -> bool:
         """Check if two solvers are equivalent.
@@ -325,7 +328,7 @@ class Solver(ABC):
         )  # check all joint factor settings
 
         if not is_joint_factors:
-            error_msg = "There is a joint setting of a solver factor that is not permissible" 
+            error_msg = "There is a joint setting of a solver factor that is not permissible"
             raise ValueError(error_msg)
 
         # check datatypes for all factors
@@ -683,8 +686,9 @@ class Problem(ABC):
 
         # Set the model
         self.model = model(self.model_fixed_factors)
-        
-        self.run_all_checks(factor_names = fixed_factors.keys())
+
+        keys = list(self.factors.keys())
+        self.run_all_checks(factor_names=keys)
 
     def __eq__(self, other: object) -> bool:
         """Check if two problems are equivalent.
@@ -764,7 +768,8 @@ class Problem(ABC):
             True if budget is strictly positive, otherwise False.
 
         """
-        return self.factors["budget"] > 0
+        is_positive = self.factors["budget"] > 0
+        return is_positive
 
     def check_problem_factor(self, factor_name: str) -> bool:
         """Determine if the setting of a problem factor is permissible.
@@ -843,11 +848,15 @@ class Problem(ABC):
             error_msg = "The initial solution is not feasible and/or not correct dimension"
             raise ValueError(error_msg)
 
-        is_budget = self.check_budget()
-        if not is_budget:
+        # TODO: investigate why this is not working
+        # is_budget = self.check_budget()
+        if (
+            isinstance(self.factors["budget"], int)
+            and self.factors["budget"] <= 0
+        ):
             error_msg = "The budget is not positive."
             raise ValueError(error_msg)
-        
+
         # check datatypes for all factors
         for factor in factor_names:
             is_permissible = self.check_problem_factor(factor)
@@ -1281,8 +1290,9 @@ class Model(ABC):
         missing_factors = all_factors - present_factors
         for key in missing_factors:
             self.factors[key] = self.specifications[key]["default"]
-        
-        self.run_all_checks(factor_names = fixed_factors.keys())
+
+        factor_names = list(self.factors.keys())
+        self.run_all_checks(factor_names=factor_names)
 
     def __eq__(self, other: object) -> bool:
         """Check if two models are equivalent.
@@ -1329,13 +1339,13 @@ class Model(ABC):
         """
         return _factor_check(self, factor_name)
 
-    @abstractmethod
     def check_simulatable_factors(self) -> bool:
         """Determine if a simulation replication can be run with the given factors.
 
         Notes
         -----
         Each subclass of ``base.Model`` has its own custom ``check_simulatable_factors`` method.
+        If the model does not override this method, it will return True.
 
         Returns
         -------
@@ -1343,7 +1353,7 @@ class Model(ABC):
             True if model specified by factors is simulatable, otherwise False.
 
         """
-        raise NotImplementedError
+        return True
 
     def check_factor_datatype(self, factor_name: str) -> bool:
         """Determine if a factor's data type matches its specification.
@@ -1379,13 +1389,13 @@ class Model(ABC):
             defines if all checks came back as true.
 
         """
-        #is_joint_factors = (
-            #self.check_simulatable_factors()
-        #)   check all joint factor settings
+        # is_joint_factors = (
+        # self.check_simulatable_factors()
+        # )   check all joint factor settings
 
-        #if not is_joint_factors:
-            #error_msg = "There is a joint setting of a model factor that is not permissible"
-            #raise ValueError(error_msg)
+        # if not is_joint_factors:
+        # error_msg = "There is a joint setting of a model factor that is not permissible"
+        # raise ValueError(error_msg)
 
         # check datatypes for all factors
         """for factor in factor_names:

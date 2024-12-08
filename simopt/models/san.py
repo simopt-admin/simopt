@@ -107,24 +107,26 @@ class SAN(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_nodes(self):
+    def check_num_nodes(self) -> None:
         if self.factors["num_nodes"] <= 0:
             raise ValueError("num_nodes must be greater than 0.")
 
-    def dfs(self, graph, start, visited=None):
+    def dfs(self, graph: dict[int, set], start: int, visited:set | None = None) -> set:
         if visited is None:
             visited = set()
         visited.add(start)
 
-        for next in graph[start] - visited:
-            self.dfs(graph, next, visited)
+        for next_point in graph[start] - visited:
+            self.dfs(graph, next_point, visited)
         return visited
 
-    def check_arcs(self):
+    def check_arcs(self) -> bool:
         if len(self.factors["arcs"]) <= 0:
             raise ValueError("The length of arcs must be greater than 0.")
         # Check graph is connected.
-        graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
+        graph = {
+            node: set() for node in range(1, self.factors["num_nodes"] + 1)
+        }
         for a in self.factors["arcs"]:
             graph[a[0]].add(a[1])
         visited = self.dfs(graph, 1)
@@ -132,15 +134,18 @@ class SAN(Model):
             return True
         return False
 
-    def check_arc_means(self):
+    def check_arc_means(self) -> bool:
         positive = True
         for x in list(self.factors["arc_means"]):
             positive = positive and (x > 0)
         return positive
-    
-    def check_simulatable_factors(self):
+
+    def check_simulatable_factors(self) -> bool:
         if len(self.factors["arc_means"]) != len(self.factors["arcs"]):
-            raise ValueError("The length of arc_means must be equal to the length of arcs.")
+            raise ValueError(
+                "The length of arc_means must be equal to the length of arcs."
+            )
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -408,11 +413,12 @@ class SANLongestPath(Problem):
             model=SAN,
         )
 
-    def check_arc_costs(self):
+    def check_arc_costs(self) -> bool:
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive and x > 0
-        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) and positive
+        matching_len = len(self.factors["arc_costs"]) == len(self.model.factors["arcs"])
+        return positive and matching_len
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """

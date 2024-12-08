@@ -112,7 +112,7 @@ class FacilitySize(Model):
             np.linalg.cholesky(np.matrix(self.factors["cov"]))
             return True
         except np.linalg.linalg.LinAlgError as err:
-            if 'Matrix is not positive definite' in err.message:
+            if "Matrix is not positive definite" in err.message:
                 return False
             else:
                 raise
@@ -367,16 +367,25 @@ class FacilitySizingTotalCost(Problem):
         )
 
     def check_installation_costs(self):
-        if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
-            raise ValueError("The length of installation_costs must equal n_fac.")
+        if (
+            len(self.factors["installation_costs"])
+            != self.model.factors["n_fac"]
+        ):
+            raise ValueError(
+                "The length of installation_costs must equal n_fac."
+            )
         elif any([elem < 0 for elem in self.factors["installation_costs"]]):
-            raise ValueError("All elements in installation_costs must be greater than or equal to 0.")
+            raise ValueError(
+                "All elements in installation_costs must be greater than or equal to 0."
+            )
         else:
             return True
 
     def check_epsilon(self):
         if 0 > self.factors["epsilon"] or self.factors["epsilon"] > 1:
-            raise ValueError("epsilon must be greater than or equal to 0 and less than or equal to 1.")
+            raise ValueError(
+                "epsilon must be greater than or equal to 0 and less than or equal to 1."
+            )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """

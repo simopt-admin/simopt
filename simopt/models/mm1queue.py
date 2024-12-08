@@ -378,7 +378,7 @@ class MM1MinMeanSojournTime(Problem):
                 "default": 0.1,
             },
         }
-    
+
     @property
     def check_factor_list(self) -> dict[str, Callable]:
         return {
@@ -412,9 +412,9 @@ class MM1MinMeanSojournTime(Problem):
             model_fixed_factors=model_fixed_factors,
             model=MM1Queue,
         )
-        
+
     def check_cost(self):
-        if self.factors["cost"] <=0:
+        if self.factors["cost"] <= 0:
             raise ValueError("cost must be greater than 0.")
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:

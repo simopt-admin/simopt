@@ -82,22 +82,23 @@ class ParameterEstimation(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_xstar(self):
+    def check_xstar(self) -> None:
         if any(xstar_i <= 0 for xstar_i in self.factors["xstar"]):
             raise ValueError("All elements in xstar must be greater than 0.")
 
-    def check_x(self):
+    def check_x(self) -> None:
         if any(x_i <= 0 for x_i in self.factors["x"]):
             raise ValueError("All elements in x must be greater than 0.")
 
     def check_simulatable_factors(self) -> bool:
         # Check for dimension of x and xstar.
-        if len(self.factors["x"]) != 2:
+        x_len = len(self.factors["x"])
+        xstar_len = len(self.factors["xstar"])
+        if x_len != 2:
             raise ValueError("The length of x must equal 2.")
-        elif len(self.factors["xstar"]) != 2:
+        elif xstar_len != 2:
             raise ValueError("The length of xstar must equal 2.")
-        else:
-            return True
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -266,7 +267,7 @@ class ParamEstiMaxLogLik(Problem):
         return {
             "initial_solution": {
                 "description": "initial solution",
-                "datatype": list,
+                "datatype": tuple,
                 "default": (1, 1),
             },
             "budget": {

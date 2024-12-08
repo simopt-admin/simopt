@@ -126,7 +126,7 @@ class Contamination(Model):
 
     def check_contam_rate_alpha(self):
         if self.factors["contam_rate_alpha"] <= 0:
-         raise ValueError("contam_rate_alpha must be greater than 0.")
+            raise ValueError("contam_rate_alpha must be greater than 0.")
 
     def check_contam_rate_beta(self):
         if self.factors["contam_rate_beta"] <= 0:
@@ -158,12 +158,16 @@ class Contamination(Model):
 
     def check_prev_decision(self):
         if any(u < 0 or u > 1 for u in self.factors["prev_decision"]):
-            raise ValueError("All elements in prev_decision must be between 0 and 1.")
+            raise ValueError(
+                "All elements in prev_decision must be between 0 and 1."
+            )
 
     def check_simulatable_factors(self) -> bool:
         # Check for matching number of stages.
         if len(self.factors["prev_decision"]) != self.factors["stages"]:
-            raise ValueError("The number of stages must be equal to the length of the previous decision tuple.")
+            raise ValueError(
+                "The number of stages must be equal to the length of the previous decision tuple."
+            )
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -818,7 +822,7 @@ class ContaminationTotalCostCont(Problem):
 
     def check_simulatable_factors(self) -> bool:
         if len(self.lower_bounds) != self.dim:
-            return False 
+            return False
         elif len(self.upper_bounds) != self.dim:
             return False
         else:

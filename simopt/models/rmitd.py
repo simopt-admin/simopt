@@ -131,8 +131,12 @@ class RMITD(Model):
             raise ValueError("All elements in prices must be greater than 0.")
 
     def check_demand_means(self):
-        if any(demand_mean <= 0 for demand_mean in self.factors["demand_means"]):
-            raise ValueError("All elements in demand_means must be greater than 0.")
+        if any(
+            demand_mean <= 0 for demand_mean in self.factors["demand_means"]
+        ):
+            raise ValueError(
+                "All elements in demand_means must be greater than 0."
+            )
 
     def check_cost(self):
         if self.factors["cost"] <= 0:
@@ -151,26 +155,58 @@ class RMITD(Model):
             raise ValueError("initial_inventory must be greater than 0.")
 
     def check_reservation_qtys(self):
-        if any(reservation_qty <= 0 for reservation_qty in self.factors["reservation_qtys"]):
-            raise ValueError("All elements in reservation_qtys must be greater than 0.")
+        if any(
+            reservation_qty <= 0
+            for reservation_qty in self.factors["reservation_qtys"]
+        ):
+            raise ValueError(
+                "All elements in reservation_qtys must be greater than 0."
+            )
 
     def check_simulatable_factors(self) -> bool:
         # Check for matching number of periods.
         if len(self.factors["prices"]) != self.factors["time_horizon"]:
-            raise ValueError("The length of prices must be equal to time_horizon.")
+            raise ValueError(
+                "The length of prices must be equal to time_horizon."
+            )
         elif len(self.factors["demand_means"]) != self.factors["time_horizon"]:
-            raise ValueError("The length of demand_means must be equal to time_horizon.")
-        elif len(self.factors["reservation_qtys"]) != self.factors["time_horizon"] - 1:
-            raise ValueError("The length of reservation_qtys must be equal to the time_horizon minus 1.")
+            raise ValueError(
+                "The length of demand_means must be equal to time_horizon."
+            )
+        elif (
+            len(self.factors["reservation_qtys"])
+            != self.factors["time_horizon"] - 1
+        ):
+            raise ValueError(
+                "The length of reservation_qtys must be equal to the time_horizon minus 1."
+            )
         # Check that first reservation level is less than initial inventory.
-        elif self.factors["initial_inventory"] < self.factors["reservation_qtys"][0]:
-            raise ValueError("The initial_inventory must be greater than or equal to the first element in reservation_qtys.")
+        elif (
+            self.factors["initial_inventory"]
+            < self.factors["reservation_qtys"][0]
+        ):
+            raise ValueError(
+                "The initial_inventory must be greater than or equal to the first element in reservation_qtys."
+            )
         # Check for non-increasing reservation levels.
-        elif any(self.factors["reservation_qtys"][idx] < self.factors["reservation_qtys"][idx + 1] for idx in range(self.factors["time_horizon"] - 2)):
-            raise ValueError("Each value in reservation_qtys must be greater than the next value in the list.")
+        elif any(
+            self.factors["reservation_qtys"][idx]
+            < self.factors["reservation_qtys"][idx + 1]
+            for idx in range(self.factors["time_horizon"] - 2)
+        ):
+            raise ValueError(
+                "Each value in reservation_qtys must be greater than the next value in the list."
+            )
         # Check that gamma_shape*gamma_scale = 1.
-        elif np.isclose(self.factors["gamma_shape"] * self.factors["gamma_scale"], 1) is False:
-            raise ValueError("gamma_shape times gamma_scale should be close to 1.")
+        elif (
+            np.isclose(
+                self.factors["gamma_shape"] * self.factors["gamma_scale"], 1
+            )
+            is False
+        ):
+            raise ValueError(
+                "gamma_shape times gamma_scale should be close to 1."
+            )
         else:
             return True
 

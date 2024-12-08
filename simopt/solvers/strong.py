@@ -111,7 +111,7 @@ class STRONG(Solver):
             "delta_T": {
                 "description": "initial size of trust region",
                 "datatype": float,
-                "default": 2.0
+                "default": 2.0,
             },
             "eta_0": {
                 "description": "constant for accepting",
@@ -149,6 +149,7 @@ class STRONG(Solver):
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "crn_across_solns": self.check_crn_across_solns,
+            "n0": self.check_n0,
             "n_r": self.check_n_r,
             "sensitivity": self.check_sensitivity,
             "delta_threshold": self.check_delta_threshold,
@@ -158,6 +159,7 @@ class STRONG(Solver):
             "gamma_1": self.check_gamma_1,
             "gamma_2": self.check_gamma_2,
             "lambda": self.check_lambda,
+            "lambda_2": self.check_lambda_2,
         }
 
     def __init__(
@@ -166,17 +168,15 @@ class STRONG(Solver):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-    def check_lambda_2(self):
-        if self.factors["lambda_2"]<1:
-            raise ValueError("lambda_2 must be greater than or equal to 1.")
-    
-    def check_n0(self):
-        if self.factors["n0"]<=0:
+    def check_n0(self) -> None:
+        if self.factors["n0"] <= 0:
             raise ValueError("n0 must be greater than 0.")
 
     def check_n_r(self):
         if self.factors["n_r"] <= 0:
-            raise ValueError("The number of replications taken at each solution must be greater than 0.")
+            raise ValueError(
+                "The number of replications taken at each solution must be greater than 0."
+            )
 
     def check_sensitivity(self):
         if self.factors["sensitivity"] <= 0:
@@ -186,7 +186,7 @@ class STRONG(Solver):
         if self.factors["delta_threshold"] <= 0:
             raise ValueError("delta_threshold must be greater than 0.")
 
-    def check_delta_T(self):
+    def check_delta_t(self):
         if self.factors["delta_T"] <= self.factors["delta_threshold"]:
             raise ValueError("delta_T must be greater than delta_threshold")
 
@@ -195,7 +195,10 @@ class STRONG(Solver):
             raise ValueError("eta_0 must be between 0 and 1.")
 
     def check_eta_1(self):
-        if self.factors["eta_1"] >= 1 or self.factors["eta_1"] <= self.factors["eta_0"]:
+        if (
+            self.factors["eta_1"] >= 1
+            or self.factors["eta_1"] <= self.factors["eta_0"]
+        ):
             raise ValueError("eta_1 must be between eta_0 and 1.")
 
     def check_gamma_1(self):
@@ -209,6 +212,11 @@ class STRONG(Solver):
     def check_lambda(self):
         if self.factors["lambda"] <= 1:
             raise ValueError("lambda must be greater than 1.")
+
+    def check_lambda_2(self):
+        # TODO: Check if this is the correct condition.
+        if self.factors["lambda_2"] <= 1:
+            raise ValueError("lambda_2 must be greater than 1.")
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """

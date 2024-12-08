@@ -2530,9 +2530,6 @@ class NewExperimentWindow(Toplevel):
         self.__update_exp_list_scroll_region()
 
     def run_experiment(self, experiment_name: str) -> None:
-        
-        self.experiment_defaults_button.config(state="disable")
-        
         # get experiment object from master dict
         experiment = self.root_experiment_dict[experiment_name]
 

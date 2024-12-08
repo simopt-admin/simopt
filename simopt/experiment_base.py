@@ -6849,20 +6849,20 @@ def create_design(
         design_table = new_design_table
 
     design_list = create_design_list_from_table(design_table)
-        
+
     # check factors for each design point
     for dp in design_list:
         if class_type == "solver":
             # initialize temporary solver to run factor checks
-            temp = solver_directory[name](fixed_factors=dp) 
+            temp = solver_directory[name](fixed_factors=dp)
         if class_type == "model":
             # initialize temporary model to run factor checks
-            temp = model_directory[name](fixed_factors=dp) 
+            temp = model_directory[name](fixed_factors=dp)
             # run check function on temp model
-            temp.run_all_checks(factor_names = dp.keys()) 
+            temp.run_all_checks(factor_names=dp.keys())
         if class_type == "problem":
             # seperate problem and model factors in dp
-            problem_factor_names =design_object.specifications.keys()
+            problem_factor_names = design_object.specifications.keys()
             problem_factors = {}
             model_factors = {}
             for factor in dp:
@@ -6871,7 +6871,9 @@ def create_design(
                 else:
                     model_factors[factor] = dp[factor]
             # initialize temporary problem to run factor checks
-            temp_problem = problem_directory[name](fixed_factors=problem_factors, model_fixed_factors=model_factors) 
+            temp_problem = problem_directory[name](
+                fixed_factors=problem_factors, model_fixed_factors=model_factors
+            )
             # initialize temporary model to run factor checks
             temp_model = temp_problem.model
 
