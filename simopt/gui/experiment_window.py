@@ -3866,8 +3866,8 @@ class PostProcessingWindow(Toplevel):
             and self.crn_across_macroreps_var.get()
             in self.crn_across_macroreps_list
             and (
-                self.meta
-                and self.n_norm_postreps_entry.get().isnumeric()
+                (self.meta
+                and self.n_norm_postreps_entry.get().isnumeric())
                 or not self.meta
             )
         ):

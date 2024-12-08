@@ -290,7 +290,7 @@ class ContaminationTotalCostDisc(Problem):
         return 1
 
     @property
-    def n_stockastic_constraints(self) -> int:
+    def n_stochastic_constraints(self) -> int:
         return self.model.factors["stages"]
 
     @property
@@ -681,7 +681,7 @@ class ContaminationTotalCostCont(Problem):
         return 1
 
     @property
-    def n_stockastic_constraints(self) -> int:
+    def n_stochastic_constraints(self) -> int:
         return self.model.factors["stages"]
 
     @property

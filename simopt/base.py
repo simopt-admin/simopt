@@ -143,7 +143,7 @@ class Solver(ABC):
         """Dictionary of functions to check if a factor is permissible."""
         raise NotImplementedError
 
-    def __init__(self, name: str, fixed_factors: dict | None = None) -> None:
+    def __init__(self, name: str = "", fixed_factors: dict | None = None) -> None:
         """Initialize a solver object.
 
         Parameters
@@ -152,6 +152,7 @@ class Solver(ABC):
             Dictionary of user-specified solver factors.
 
         """
+        assert len(name) > 0, "Name must be specified."
         self.name = name
         # Add all the fixed factors to the solver
         self.factors = fixed_factors
@@ -626,10 +627,10 @@ class Problem(ABC):
 
     def __init__(
         self,
-        name: str,
-        fixed_factors: dict | None,
-        model_fixed_factors: dict | None,
-        model: Callable[..., Model],
+        name: str = "",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+        model: Callable[..., Model] | None = None,
     ) -> None:
         """Initialize a problem object.
 
@@ -641,6 +642,9 @@ class Problem(ABC):
             Subset of user-specified non-decision factors to pass through to the model.
 
         """
+        assert len(name) > 0, "Name must be specified."
+        assert model is not None, "Model must be specified."
+
         # Assign the name of the problem
         self.name = name
 
