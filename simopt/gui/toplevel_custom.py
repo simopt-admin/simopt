@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 from tkinter import ttk
 from tkinter.font import nametofont
@@ -44,6 +45,9 @@ class Toplevel(tk.Toplevel):
         # the screen.
         width = self.winfo_screenwidth()
         font_medium = int(width / 200)
+        if sys.platform == "darwin":
+            win_to_mac_scaling = 1.375
+            font_medium = int(font_medium * win_to_mac_scaling)
         font_large = int(font_medium * 1.2)
         font_small = int(font_medium * 0.8)
 
