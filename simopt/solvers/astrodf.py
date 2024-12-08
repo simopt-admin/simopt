@@ -21,7 +21,14 @@ import numpy as np
 from numpy.linalg import norm, pinv
 from scipy.optimize import NonlinearConstraint, minimize
 
-from simopt.base import Problem, Solution, Solver
+from simopt.base import (
+    ConstraintType,
+    ObjectiveType,
+    Problem,
+    Solution,
+    Solver,
+    VariableType,
+)
 
 
 class ASTRODF(Solver):
@@ -60,26 +67,25 @@ class ASTRODF(Solver):
     base.Solver
     """
 
-    def __init__(
-        self, name: str = "ASTRODF", fixed_factors: dict | None = None
-    ) -> None:
-        """
-        Initialize the ASTRO-DF solver.
-        Arguments
-        ---------
-        name : str
-            user-specified name for solver
-        fixed_factors : dict
-            fixed_factors of the solver
-        """
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_needed = False
-        self.specifications = {
+    @property
+    def objective_type(self) -> ObjectiveType:
+        return ObjectiveType.SINGLE
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_needed(self) -> bool:
+        return False
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "crn_across_solns": {
                 "description": "use CRN across solutions",
                 "datatype": bool,
@@ -126,8 +132,10 @@ class ASTRODF(Solver):
                 "default": 0.1,
             },
         }
-        # TODO: fix so we don't have to type ignore the check_crn_across_solns
-        self.check_factor_list: dict[str, Callable[[], None]] = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "crn_across_solns": self.check_crn_across_solns,  # type: ignore
             "eta_1": self.check_eta_1,
             "eta_2": self.check_eta_2,
@@ -136,7 +144,21 @@ class ASTRODF(Solver):
             "lambda_min": self.check_lambda_min,
             "ps_sufficient_reduction": self.check_ps_sufficient_reduction,
         }
-        super().__init__(fixed_factors)
+
+    def __init__(
+        self, name: str = "ASTRODF", fixed_factors: dict | None = None
+    ) -> None:
+        """
+        Initialize the ASTRO-DF solver.
+        Arguments
+        ---------
+        name : str
+            user-specified name for solver
+        fixed_factors : dict
+            fixed_factors of the solver
+        """
+        # Let the base class handle default arguments.
+        super().__init__(name, fixed_factors)
 
     def check_eta_1(self) -> None:
         if self.factors["eta_1"] <= 0:

@@ -7,12 +7,12 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 import math as math
-from typing import Final
+from typing import Callable, Final
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
-from simopt.base import Model, Problem
+from simopt.base import ConstraintType, Model, Problem, VariableType
 
 PARK_CAPACITY: Final[int] = 350
 NUM_ATTRACTIONS: Final[int] = 7
@@ -53,16 +53,21 @@ class AmusementPark(Model):
 
     """
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        """Initialize the Amusement Park Model."""
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "AMUSEMENTPARK"
-        self.n_rngs = 3
-        self.n_responses = 4
-        self.factors = fixed_factors
-        # TODO: update transition_probabilities to scale with number of attractions
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "AMUSEMENTPARK"
+
+    @property
+    def n_rngs(self) -> int:
+        return 3
+
+    @property
+    def n_responses(self) -> int:
+        return 4
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "park_capacity": {
                 "description": "The total number of tourists waiting for \
                                 attractions that can be maintained through \
@@ -126,7 +131,10 @@ class AmusementPark(Model):
             },
         }
 
-        self.check_factor_list = {
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        """Switch case for checking factor simulatability."""
+        return {
             "park_capacity": self.check_park_capacity,
             "number_attractions": self.check_number_attractions,
             "time_open": self.check_time_open,
@@ -137,7 +145,9 @@ class AmusementPark(Model):
             "erlang_shape": self.check_erlang_shape,
             "erlang_scale": self.check_erlang_scale,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors.
@@ -493,6 +503,81 @@ class AmusementParkMinDepart(Problem):
 
     """
 
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 0
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.DETERMINISTIC
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.DISCRETE
+
+    @property
+    def gradient_available(self) -> bool:
+        return False
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"queue_capacities"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
+            "initial_solution": {
+                "description": "Initial solution from which solvers start.",
+                "datatype": tuple,
+                "default": (PARK_CAPACITY - NUM_ATTRACTIONS + 1,)
+                + (1,) * (NUM_ATTRACTIONS - 1),
+            },
+            "budget": {
+                "description": "Max # of replications for a solver to take.",
+                "datatype": int,
+                "default": 100,
+            },
+        }
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
+            "initial_solution": self.check_initial_solution,
+            "budget": self.check_budget,
+        }
+
+    @property
+    def dim(self) -> int:
+        return self.model.factors["number_attractions"]
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (self.model.factors["park_capacity"],) * self.dim
+
     def __init__(
         self,
         name: str = "AMUSEMENTPARK-1",
@@ -511,50 +596,12 @@ class AmusementParkMinDepart(Problem):
             subset of user-specified non-decision factors to pass through to the model
 
         """
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-
-        self.name = name
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (-1,)
-        self.constraint_type = "deterministic"
-        self.variable_type = "discrete"
-        self.gradient_available = False
-        self.optimal_value = None
-        self.optimal_solution = None
-        self.model_default_factors = {}
-        self.model_decision_factors = {"queue_capacities"}
-        self.factors = fixed_factors
-        self.specifications = {
-            "initial_solution": {
-                "description": "Initial solution from which solvers start.",
-                "datatype": tuple,
-                "default": (PARK_CAPACITY - NUM_ATTRACTIONS + 1,)
-                + (1,) * (NUM_ATTRACTIONS - 1),
-            },
-            "budget": {
-                "description": "Max # of replications for a solver to take.",
-                "datatype": int,
-                "default": 100,
-            },
-        }
-        self.check_factor_list = {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-        }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and overwritten defaults.
-        self.model = AmusementPark(self.model_fixed_factors)
-        self.dim = self.model.factors["number_attractions"]
-        self.lower_bounds = tuple(
-            0 for _ in range(self.model.factors["number_attractions"])
-        )
-        self.upper_bounds = tuple(
-            self.model.factors["park_capacity"]
-            for _ in range(self.model.factors["number_attractions"])
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=AmusementPark,
         )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict[str, tuple]:

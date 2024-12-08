@@ -23,7 +23,7 @@ import seaborn as sns
 from mrg32k3a.mrg32k3a import MRG32k3a
 from scipy.stats import norm
 
-from simopt.base import Problem, Solution, Solver
+from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
 from simopt.directory import (
     model_directory,
     problem_directory,
@@ -1001,57 +1001,51 @@ class ProblemSolver:
             Error message in the event problem and solver are incompatible.
 
         """
-        error_str = ""
+        # make a string builder
+        error_messages = []
         # Check number of objectives.
         if (
-            self.solver.objective_type == "single"
+            self.solver.objective_type == ObjectiveType.SINGLE
             and self.problem.n_objectives > 1
         ):
-            error_str += "Solver cannot solve a multi-objective problem.\n"
+            error_message = "Solver cannot solve a multi-objective problem"
+            error_messages.append(error_message)
         elif (
-            self.solver.objective_type == "multi"
+            self.solver.objective_type == ObjectiveType.MULTI
             and self.problem.n_objectives == 1
         ):
-            error_str += "Multi-objective solver being run on a single-objective problem.\n"
+            error_message = "Solver cannot solve a single-objective problem"
+            error_messages.append(error_message)
         # Check constraint types.
-        constraint_types = [
-            "unconstrained",
-            "box",
-            "deterministic",
-            "stochastic",
-        ]
-        if constraint_types.index(
-            self.solver.constraint_type
-        ) < constraint_types.index(self.problem.constraint_type):
-            error_str += (
-                "Solver can handle upto "
-                + self.solver.constraint_type
-                + " constraints, but problem has "
-                + self.problem.constraint_type
-                + " constraints.\n"
-            )
+        if (
+            self.solver.constraint_type.value
+            < self.problem.constraint_type.value
+        ):
+            solver_str = self.solver.constraint_type.name.lower()
+            problem_str = self.problem.constraint_type.name.lower()
+            error_message = f"Solver can handle {solver_str} constraints, but problem has {problem_str} constraints."
+            error_messages.append(error_message)
         # Check variable types.
         if (
-            self.solver.variable_type == "discrete"
-            and self.problem.variable_type != "discrete"
+            self.solver.variable_type == VariableType.DISCRETE
+            and self.problem.variable_type != VariableType.DISCRETE
         ):
-            error_str += (
-                "Solver is for discrete variables but problem variables are "
-                + self.problem.variable_type
-                + ".\n"
-            )
+            problem_type = self.problem.variable_type.name.lower()
+            error_message = f"Solver is for discrete variables but problem variables are {problem_type}."
+            error_messages.append(error_message)
         elif (
-            self.solver.variable_type == "continuous"
-            and self.problem.variable_type != "continuous"
+            self.solver.variable_type == VariableType.CONTINUOUS
+            and self.problem.variable_type != VariableType.CONTINUOUS
         ):
-            error_str += (
-                "Solver is for continuous variables but problem variables are "
-                + self.problem.variable_type
-                + ".\n"
-            )
+            problem_type = self.problem.variable_type.name.lower()
+            error_message = f"Solver is for continuous variables but problem variables are {problem_type}."
+            error_messages.append(error_message)
         # Check for existence of gradient estimates.
         if self.solver.gradient_needed and not self.problem.gradient_available:
-            error_str += "Gradient-based solver does not have access to gradient for this problem.\n"
+            error_message = "Solver requires gradient estimates but problem does not have them."
+            error_messages.append(error_message)
+        # Strip trailing newline character.
+        error_str = "\n".join(error_messages)
         return error_str
 
     def run(self, n_macroreps: int) -> None:

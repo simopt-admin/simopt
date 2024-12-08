@@ -10,10 +10,19 @@ A detailed description of the solver can be found `here <https://simopt.readthed
 
 from __future__ import annotations
 
+from typing import Callable
+
 import numpy as np
 from numpy.linalg import norm
 
-from simopt.base import Problem, Solution, Solver
+from simopt.base import (
+    ConstraintType,
+    ObjectiveType,
+    Problem,
+    Solution,
+    Solver,
+    VariableType,
+)
 
 
 class ALOE(Solver):
@@ -54,17 +63,25 @@ class ALOE(Solver):
     base.Solver
     """
 
-    def __init__(
-        self, name: str = "ALOE", fixed_factors: dict | None = None
-    ) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_needed = False
-        self.specifications = {
+    @property
+    def objective_type(self) -> ObjectiveType:
+        return ObjectiveType.SINGLE
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_needed(self) -> bool:
+        return False
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
@@ -111,7 +128,10 @@ class ALOE(Solver):
                 "default": 2,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "crn_across_solns": self.check_crn_across_solns,
             "r": self.check_r,
             "theta": self.check_theta,
@@ -122,7 +142,12 @@ class ALOE(Solver):
             "sensitivity": self.check_sensitivity,
             "lambda": self.check_lambda,
         }
-        super().__init__(fixed_factors)
+
+    def __init__(
+        self, name: str = "ALOE", fixed_factors: dict | None = None
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(name, fixed_factors)
 
     def check_r(self) -> None:
         if self.factors["r"] <= 0:

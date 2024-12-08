@@ -8,7 +8,16 @@ A detailed description of the solver can be found `here <https://simopt.readthed
 
 from __future__ import annotations
 
-from simopt.base import Problem, Solution, Solver
+from typing import Callable
+
+from simopt.base import (
+    ConstraintType,
+    ObjectiveType,
+    Problem,
+    Solution,
+    Solver,
+    VariableType,
+)
 
 
 class RandomSearch(Solver):
@@ -50,15 +59,25 @@ class RandomSearch(Solver):
     base.Solver
     """
 
-    def __init__(
-        self, name: str = "RNDSRCH", fixed_factors: dict | None = None
-    ) -> None:
-        self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "stochastic"
-        self.variable_type = "mixed"
-        self.gradient_needed = False
-        self.specifications = {
+    @property
+    def objective_type(self) -> ObjectiveType:
+        return ObjectiveType.SINGLE
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.STOCHASTIC
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.MIXED
+
+    @property
+    def gradient_needed(self) -> bool:
+        return False
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
@@ -70,11 +89,19 @@ class RandomSearch(Solver):
                 "default": 10,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "crn_across_solns": self.check_crn_across_solns,
             "sample_size": self.check_sample_size,
         }
-        super().__init__(fixed_factors)
+
+    def __init__(
+        self, name: str = "RNDSRCH", fixed_factors: dict | None = None
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(name, fixed_factors)
 
     def check_sample_size(self) -> None:
         if self.factors["sample_size"] <= 0:

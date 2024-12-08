@@ -7,10 +7,18 @@ Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for op
 from __future__ import annotations
 
 import sys
+from typing import Callable
 
 import numpy as np
 
-from simopt.base import Problem, Solution, Solver
+from simopt.base import (
+    ConstraintType,
+    ObjectiveType,
+    Problem,
+    Solution,
+    Solver,
+    VariableType,
+)
 
 
 class SPSA(Solver):
@@ -51,15 +59,25 @@ class SPSA(Solver):
     base.Solver
     """
 
-    def __init__(
-        self, name: str = "SPSA", fixed_factors: dict | None = None
-    ) -> None:
-        self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_needed = False
-        self.specifications = {
+    @property
+    def objective_type(self) -> ObjectiveType:
+        return ObjectiveType.SINGLE
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_needed(self) -> bool:
+        return False
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
@@ -106,7 +124,10 @@ class SPSA(Solver):
                 "default": 0.1,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "alpha": self.check_alpha,
             "gamma": self.check_gamma,
             "step": self.check_step,
@@ -116,7 +137,12 @@ class SPSA(Solver):
             "eval_pct": self.check_eval_pct,
             "iter_pct": self.check_iter_pct,
         }
-        super().__init__(fixed_factors)
+
+    def __init__(
+        self, name: str = "SPSA", fixed_factors: dict | None = None
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(name, fixed_factors)
 
     def check_alpha(self) -> None:
         if self.factors["alpha"] <= 0:
