@@ -124,42 +124,51 @@ class Contamination(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_contam_rate_alpha(self) -> bool:
-        return self.factors["contam_rate_alpha"] > 0
+    def check_contam_rate_alpha(self) -> None:
+        if self.factors["contam_rate_alpha"] <= 0:
+            raise ValueError("contam_rate_alpha must be greater than 0.")
 
-    def check_contam_rate_beta(self) -> bool:
-        return self.factors["contam_rate_beta"] > 0
+    def check_contam_rate_beta(self) -> None:
+        if self.factors["contam_rate_beta"] <= 0:
+            raise ValueError("contam_rate_beta must be greater than 0.")
 
-    def check_restore_rate_alpha(self) -> bool:
-        return self.factors["restore_rate_alpha"] > 0
+    def check_restore_rate_alpha(self) -> None:
+        if self.factors["restore_rate_alpha"] <= 0:
+            raise ValueError("restore_rate_alpha must be greater than 0.")
 
-    def check_restore_rate_beta(self) -> bool:
-        return self.factors["restore_rate_beta"] > 0
+    def check_restore_rate_beta(self) -> None:
+        if self.factors["restore_rate_beta"] <= 0:
+            raise ValueError("restore_rate_beta must be greater than 0.")
 
-    def check_initial_rate_alpha(self) -> bool:
-        return self.factors["initial_rate_alpha"] > 0
+    def check_initial_rate_alpha(self) -> None:
+        if self.factors["initial_rate_alpha"] <= 0:
+            raise ValueError("initial_rate_alpha must be greater than 0.")
 
-    def check_initial_rate_beta(self) -> bool:
-        return self.factors["initial_rate_beta"] > 0
+    def check_initial_rate_beta(self) -> None:
+        if self.factors["initial_rate_beta"] <= 0:
+            raise ValueError("initial_rate_beta must be greater than 0.")
 
-    def check_prev_cost(self) -> bool:
-        cost_above_zero: list[bool] = [
-            cost > 0 for cost in self.factors["prev_cost"]
-        ]
-        return all(cost_above_zero)
+    def check_prev_cost(self) -> None:
+        if any(cost <= 0 for cost in self.factors["prev_cost"]):
+            raise ValueError("All costs in prev_cost must be greater than 0.")
 
-    def check_stages(self) -> bool:
-        return self.factors["stages"] > 0
+    def check_stages(self) -> None:
+        if self.factors["stages"] <= 0:
+            raise ValueError("Stages must be greater than 0.")
 
-    def check_prev_decision(self) -> bool:
-        between_0_and_1: list[bool] = [
-            0 <= u <= 1 for u in self.factors["prev_decision"]
-        ]
-        return all(between_0_and_1)
+    def check_prev_decision(self) -> None:
+        if any(u < 0 or u > 1 for u in self.factors["prev_decision"]):
+            raise ValueError(
+                "All elements in prev_decision must be between 0 and 1."
+            )
 
     def check_simulatable_factors(self) -> bool:
         # Check for matching number of stages.
-        return len(self.factors["prev_decision"]) == self.factors["stages"]
+        if len(self.factors["prev_decision"]) != self.factors["stages"]:
+            raise ValueError(
+                "The number of stages must be equal to the length of the previous decision tuple."
+            )
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -813,12 +822,12 @@ class ContaminationTotalCostCont(Problem):
         return len(self.factors["upper_thres"]) == self.dim
 
     def check_simulatable_factors(self) -> bool:
-        if len(self.lower_bounds) != self.dim:
-            return False
-        elif len(self.upper_bounds) != self.dim:
-            return False
-        else:
-            return True
+        lower_len = len(self.lower_bounds)
+        upper_len = len(self.upper_bounds)
+        if lower_len != upper_len or lower_len != self.dim:
+            error_msg = f"Lower bounds: {lower_len}, Upper bounds: {upper_len}, Dim: {self.dim}"
+            raise ValueError(error_msg)
+        return True
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """

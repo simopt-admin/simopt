@@ -128,66 +128,104 @@ class Network(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_process_prob(self) -> bool:
+    def check_process_prob(self) -> None:
         # Make sure probabilities are between 0 and 1.
         # Make sure probabilities sum up to 1.
-        return (
-            all([1.0 >= prob_i >= 0 for prob_i in self.factors["process_prob"]])
-            and round(sum(self.factors["process_prob"]), 10) == 1.0
-        )
+        if (
+            any(
+                [
+                    1.0 < prob_i or prob_i < 0
+                    for prob_i in self.factors["process_prob"]
+                ]
+            )
+            or round(sum(self.factors["process_prob"]), 10) != 1.0
+        ):
+            raise ValueError(
+                "All elements in process_prob must be between 0 and 1 and the sum of all of the elements in process_prob must equal 1."
+            )
 
-    def check_cost_process(self) -> bool:
-        return all(cost_i > 0 for cost_i in self.factors["cost_process"])
+    def check_cost_process(self) -> None:
+        if any(cost_i <= 0 for cost_i in self.factors["cost_process"]):
+            raise ValueError(
+                "All elements in cost_process must be greater than 0."
+            )
 
-    def check_cost_time(self) -> bool:
-        return all(cost_time_i > 0 for cost_time_i in self.factors["cost_time"])
+    def check_cost_time(self) -> None:
+        if any(cost_time_i <= 0 for cost_time_i in self.factors["cost_time"]):
+            raise ValueError(
+                "All elements in cost_time must be greater than 0."
+            )
 
-    def check_mode_transit_time(self) -> bool:
-        return all(
-            transit_time_i > 0
+    def check_mode_transit_time(self) -> None:
+        if any(
+            transit_time_i <= 0
             for transit_time_i in self.factors["mode_transit_time"]
-        )
+        ):
+            raise ValueError(
+                "All elements in mode_transit_time must be greater than 0."
+            )
 
-    def check_lower_limits_transit_time(self) -> bool:
-        return all(
-            lower_i > 0 for lower_i in self.factors["lower_limits_transit_time"]
-        )
+    def check_lower_limits_transit_time(self) -> None:
+        if any(
+            lower_i <= 0
+            for lower_i in self.factors["lower_limits_transit_time"]
+        ):
+            raise ValueError(
+                "All elements in lower_limits_transit_time must be greater than 0."
+            )
 
-    def check_upper_limits_transit_time(self) -> bool:
-        return all(
-            upper_i > 0 for upper_i in self.factors["upper_limits_transit_time"]
-        )
+    def check_upper_limits_transit_time(self) -> None:
+        if any(
+            upper_i <= 0
+            for upper_i in self.factors["upper_limits_transit_time"]
+        ):
+            raise ValueError(
+                "All elements in upper_limits_transit_time must be greater than 0."
+            )
 
-    def check_arrival_rate(self) -> bool:
-        return self.factors["arrival_rate"] > 0
+    def check_arrival_rate(self) -> None:
+        if self.factors["arrival_rate"] <= 0:
+            raise ValueError("arrival_rate must be greater than 0.")
 
-    def check_n_messages(self) -> bool:
-        return self.factors["n_messages"] > 0
+    def check_n_messages(self) -> None:
+        if self.factors["n_messages"] <= 0:
+            raise ValueError("n_messages must be greater than 0.")
 
-    def check_n_networks(self) -> bool:
-        return self.factors["n_networks"] > 0
+    def check_n_networks(self) -> None:
+        if self.factors["n_networks"] <= 0:
+            raise ValueError("n_networks must be greater than 0.")
 
     def check_simulatable_factors(self) -> bool:
         if len(self.factors["process_prob"]) != self.factors["n_networks"]:
-            return False
+            raise ValueError(
+                "The length of process_prob must equal n_networks."
+            )
         elif len(self.factors["cost_process"]) != self.factors["n_networks"]:
-            return False
+            raise ValueError(
+                "The length of cost_process must equal n_networks."
+            )
         elif len(self.factors["cost_time"]) != self.factors["n_networks"]:
-            return False
+            raise ValueError("The length of cost_time must equal n_networks.")
         elif (
             len(self.factors["mode_transit_time"]) != self.factors["n_networks"]
         ):
-            return False
+            raise ValueError(
+                "The length of mode_transit_time must equal n_networks."
+            )
         elif (
             len(self.factors["lower_limits_transit_time"])
             != self.factors["n_networks"]
         ):
-            return False
+            raise ValueError(
+                "The length of lower_limits_transit_time must equal n_networks."
+            )
         elif (
             len(self.factors["upper_limits_transit_time"])
             != self.factors["n_networks"]
         ):
-            return False
+            raise ValueError(
+                "The length of upper_limits_transit_time must equal n_networks."
+            )
         elif any(
             [
                 self.factors["mode_transit_time"][i]
@@ -195,7 +233,9 @@ class Network(Model):
                 for i in range(self.factors["n_networks"])
             ]
         ):
-            return False
+            raise ValueError(
+                "The mode_transit time must be greater than or equal to the corresponding lower_limits_transit_time for each network."
+            )
         elif any(
             [
                 self.factors["upper_limits_transit_time"][i]
@@ -203,7 +243,9 @@ class Network(Model):
                 for i in range(self.factors["n_networks"])
             ]
         ):
-            return False
+            raise ValueError(
+                "The mode_transit time must be less than or equal to the corresponding upper_limits_transit_time for each network."
+            )
         else:
             return True
 

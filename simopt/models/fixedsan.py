@@ -94,19 +94,19 @@ class FixedSAN(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_arcs(self) -> bool:
-        return self.factors["num_arcs"] > 0
+    def check_num_arcs(self) -> None:
+        if self.factors["num_arcs"] <= 0:
+            raise ValueError("num_arcs must be greater than 0.")
 
-    def check_num_nodes(self) -> bool:
-        return self.factors["num_nodes"] > 0
+    def check_num_nodes(self) -> None:
+        if self.factors["num_nodes"] <= 0:
+            raise ValueError("num_nodes must be greater than 0.")
 
     def check_arc_means(self) -> bool:
-        positive = True
         for x in list(self.factors["arc_means"]):
-            positive = positive & x > 0
-        return (
-            len(self.factors["arc_means"]) != self.factors["num_arcs"]
-        ) & positive
+            if x <= 0:
+                return False
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -385,10 +385,10 @@ class FixedSANLongestPath(Problem):
     def check_arc_costs(self) -> bool:
         positive = True
         for x in list(self.factors["arc_costs"]):
-            positive = positive & x > 0
+            positive = positive and x > 0
         return (
             len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]
-        ) & positive
+        ) and positive
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """

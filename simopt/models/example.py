@@ -78,9 +78,6 @@ class ExampleModel(Model):
         # Assume f(x) can be evaluated at any x in R^d.
         return True
 
-    def check_simulatable_factors(self) -> bool:
-        return True
-
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Evaluate a deterministic function f(x) with stochastic noise.

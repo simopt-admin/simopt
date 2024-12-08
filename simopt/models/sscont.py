@@ -159,39 +159,50 @@ class SSCont(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_demand_mean(self) -> bool:
-        return self.factors["demand_mean"] > 0
+    def check_demand_mean(self) -> None:
+        if self.factors["demand_mean"] <= 0:
+            raise ValueError("demand_mean must be greater than 0.")
 
-    def check_lead_mean(self) -> bool:
-        return self.factors["lead_mean"] > 0
+    def check_lead_mean(self) -> None:
+        if self.factors["lead_mean"] <= 0:
+            raise ValueError("lead_mean must be greater than 0.")
 
-    def check_backorder_cost(self) -> bool:
-        return self.factors["backorder_cost"] > 0
+    def check_backorder_cost(self) -> None:
+        if self.factors["backorder_cost"] <= 0:
+            raise ValueError("backorder_cost must be greater than 0.")
 
-    def check_holding_cost(self) -> bool:
-        return self.factors["holding_cost"] > 0
+    def check_holding_cost(self) -> None:
+        if self.factors["holding_cost"] <= 0:
+            raise ValueError("holding_cost must be greater than 0.")
 
-    def check_fixed_cost(self) -> bool:
-        return self.factors["fixed_cost"] > 0
+    def check_fixed_cost(self) -> None:
+        if self.factors["fixed_cost"] <= 0:
+            raise ValueError("fixed_cost must be greater than 0.")
 
-    def check_variable_cost(self) -> bool:
-        return self.factors["variable_cost"] > 0
+    def check_variable_cost(self) -> None:
+        if self.factors["variable_cost"] <= 0:
+            raise ValueError("variable_cost must be greater than 0.")
 
-    def check_s(self) -> bool:
-        return self.factors["s"] > 0
+    def check_s(self) -> None:
+        if self.factors["s"] <= 0:
+            raise ValueError("s must be greater than 0.")
 
-    # TODO: refactor to change variable names from s and S since it's confusing
-    def check_S(self) -> bool:  # noqa: N802
-        return self.factors["S"] > 0
+    def check_S(self) -> None:  # noqa: N802
+        if self.factors["S"] <= 0:
+            raise ValueError("S must be greater than 0.")
 
-    def check_n_days(self) -> bool:
-        return self.factors["n_days"] >= 1
+    def check_n_days(self) -> None:
+        if self.factors["n_days"] < 1:
+            raise ValueError("n_days must be greater than or equal to 1.")
 
-    def check_warmup(self) -> bool:
-        return self.factors["warmup"] >= 0
+    def check_warmup(self) -> None:
+        if self.factors["warmup"] < 0:
+            raise ValueError("warmup must be greater than or equal to 0.")
 
     def check_simulatable_factors(self) -> bool:
-        return self.factors["s"] < self.factors["S"]
+        if self.factors["s"] >= self.factors["S"]:
+            raise ValueError("s must be less than S.")
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """

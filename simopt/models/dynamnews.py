@@ -117,37 +117,54 @@ class DynamNews(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_prod(self) -> bool:
-        return self.factors["num_prod"] > 0
+    def check_num_prod(self) -> None:
+        if self.factors["num_prod"] <= 0:
+            raise ValueError("num_prod must be greater than 0.")
 
-    def check_num_customer(self) -> bool:
-        return self.factors["num_customer"] > 0
+    def check_num_customer(self) -> None:
+        if self.factors["num_customer"] <= 0:
+            raise ValueError("num_customer must be greater than 0.")
 
-    def check_c_utility(self) -> bool:
-        return len(self.factors["c_utility"]) == self.factors["num_prod"]
+    def check_c_utility(self) -> None:
+        if len(self.factors["c_utility"]) != self.factors["num_prod"]:
+            raise ValueError(
+                "The length of c_utility must be equal to num_prod."
+            )
 
-    def check_init_level(self) -> bool:
-        return all(np.array(self.factors["init_level"]) >= 0) & (
-            len(self.factors["init_level"]) == self.factors["num_prod"]
-        )
+    def check_init_level(self) -> None:
+        if any(np.array(self.factors["init_level"]) < 0) or (
+            len(self.factors["init_level"]) != self.factors["num_prod"]
+        ):
+            raise ValueError(
+                "The length of init_level must be equal to num_prod and every element in init_level must be greater than or equal to zero."
+            )
 
-    def check_mu(self) -> bool:
-        return True
+    def check_mu(self) -> None:
+        # TODO: figure out if mu has any constraints
+        pass
 
-    def check_price(self) -> bool:
-        return all(np.array(self.factors["price"]) >= 0) & (
-            len(self.factors["price"]) == self.factors["num_prod"]
-        )
+    def check_price(self) -> None:
+        if any(np.array(self.factors["price"]) < 0) or (
+            len(self.factors["price"]) != self.factors["num_prod"]
+        ):
+            raise ValueError(
+                "The length of price must be equal to num_prod and every element in price must be greater than or equal to zero."
+            )
 
-    def check_cost(self) -> bool:
-        return all(np.array(self.factors["cost"]) >= 0) & (
-            len(self.factors["cost"]) == self.factors["num_prod"]
-        )
+    def check_cost(self) -> None:
+        if any(np.array(self.factors["cost"]) < 0) or (
+            len(self.factors["cost"]) != self.factors["num_prod"]
+        ):
+            raise ValueError(
+                "The length of cost must be equal to num_prod and every element in cost must be greater than or equal to 0."
+            )
 
     def check_simulatable_factors(self) -> bool:
-        return all(
-            np.subtract(self.factors["price"], self.factors["cost"]) >= 0
-        )
+        if any(np.subtract(self.factors["price"], self.factors["cost"]) < 0):
+            raise ValueError(
+                "Each element in price must be greater than its corresponding element in cost."
+            )
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """

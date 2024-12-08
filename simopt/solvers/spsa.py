@@ -128,6 +128,7 @@ class SPSA(Solver):
     @property
     def check_factor_list(self) -> dict[str, Callable]:
         return {
+            "crn_across_solns": self.check_crn_across_solns,
             "alpha": self.check_alpha,
             "gamma": self.check_gamma,
             "step": self.check_step,
@@ -175,7 +176,8 @@ class SPSA(Solver):
             raise ValueError("eval_pct must be between 0 and 1.")
 
     def check_iter_pct(self) -> None:
-        return 0 < self.factors["iter_pct"] <= 1
+        if 0 >= self.factors["iter_pct"] or self.factors["iter_pct"] > 1:
+            raise ValueError("iter_pct must be between 0 and 1.")
 
     def check_problem_factors(self) -> bool:
         # Check divisibility for the for loop.

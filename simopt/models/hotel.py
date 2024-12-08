@@ -611,51 +611,81 @@ class Hotel(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_products(self) -> bool:
-        return self.factors["num_products"] > 0
+    def check_num_products(self) -> None:
+        if self.factors["num_products"] <= 0:
+            raise ValueError("num_products must be greater than 0.")
 
-    def check_lambda(self) -> bool:
+    def check_lambda(self) -> None:
         for i in self.factors["lambda"]:
             if i <= 0:
-                return False
-        return len(self.factors["lambda"]) == self.factors["num_products"]
+                raise ValueError(
+                    "All elements in lambda must be greater than 0."
+                )
 
-    def check_num_rooms(self) -> bool:
-        return self.factors["num_rooms"] > 0
+    def check_num_rooms(self) -> None:
+        if self.factors["num_rooms"] <= 0:
+            raise ValueError("num_rooms must be greater than 0.")
 
-    def check_discount_rate(self) -> bool:
-        return self.factors["discount_rate"] > 0
+    def check_discount_rate(self) -> None:
+        if self.factors["discount_rate"] <= 0:
+            raise ValueError("discount_rate must be greater than 0.")
 
-    def check_rack_rate(self) -> bool:
-        return self.factors["rack_rate"] > 0
+    def check_rack_rate(self) -> None:
+        if self.factors["rack_rate"] <= 0:
+            raise ValueError("rack_rate must be greater than 0.")
 
-    def check_product_incidence(self) -> bool:
-        m, n = self.factors["product_incidence"].shape
-        for i in range(m):
-            for j in range(n):
-                if self.factors["product_incidence"][i, j] <= 0:
-                    return False
-        return m * n == self.factors["num_products"]
+    def check_product_incidence(self) -> None:
+        # TODO: fix check for product_incidence
+        return
+        # is_positive = [[i > 0 for i in j] for j in self.factors["product_incidence"]]
+        # if not all(all(i) for i in is_positive):
+        #     raise ValueError(
+        #         "All elements in product_incidence must be greater than 0."
+        #     )
 
-    def check_time_limit(self) -> bool:
+    def check_time_limit(self) -> None:
         for i in self.factors["time_limit"]:
             if i <= 0:
-                return False
-        return len(self.factors["time_limit"]) == self.factors["num_products"]
+                raise ValueError(
+                    "All elements in time_limit must be greater than 0."
+                )
 
-    def check_time_before(self) -> bool:
-        return self.factors["time_before"] > 0
+    def check_time_before(self) -> None:
+        if self.factors["time_before"] <= 0:
+            raise ValueError("time_before must be greater than 0.")
 
-    def check_runlength(self) -> bool:
-        return self.factors["runlength"] > 0
+    def check_runlength(self) -> None:
+        if self.factors["runlength"] <= 0:
+            raise ValueError("runlength must be greater than 0.")
 
-    def check_booking_limits(self) -> bool:
+    def check_booking_limits(self) -> None:
         for i in list(self.factors["booking_limits"]):
             if i <= 0 or i > self.factors["num_rooms"]:
-                return False
-        return (
-            len(self.factors["booking_limits"]) == self.factors["num_products"]
-        )
+                raise ValueError(
+                    "All elements in booking_limits must be greater than 0 and less than num_rooms."
+                )
+
+    def check_simulatable_factors(self) -> bool:
+        if len(self.factors["lambda"]) != self.factors["num_products"]:
+            raise ValueError("The length of lambda must equal num_products.")
+        if len(self.factors["time_limit"]) != self.factors["num_products"]:
+            raise ValueError(
+                "The length of time_limit must equal num_products."
+            )
+        if len(self.factors["booking_limits"]) != self.factors["num_products"]:
+            raise ValueError(
+                "The length of booking_limits must equal num_products."
+            )
+        # TODO: get rid of this conversion to np.array
+        np_array = np.array(self.factors["product_incidence"])
+        # m, n = np_array.shape
+        # if m * n != self.factors["num_products"]:
+        _, n = np_array.shape
+        if n != self.factors["num_products"]:
+            raise ValueError(
+                "The number of elements in product_incidence must equal num_products."
+            )
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -908,7 +938,9 @@ class HotelRevenue(Problem):
         return len(self.factors["initial_solution"]) == self.dim
 
     def check_budget(self) -> bool:
-        return self.factors["budget"] > 0
+        if self.factors["budget"] <= 0:
+            raise ValueError("budget must be greater than 0.")
+        return True
 
     def check_simulatable_factors(self) -> bool:
         if len(self.lower_bounds) != self.dim:

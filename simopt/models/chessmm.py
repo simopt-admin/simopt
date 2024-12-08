@@ -137,6 +137,10 @@ class ChessMatchmaking(Model):
                 "The maximum mallowable different between Elo ratings must be greater than 0."
             )
 
+    def check_simulatable_factors(self) -> bool:
+        # No factors need cross-checked
+        return True
+
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
