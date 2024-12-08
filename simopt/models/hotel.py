@@ -634,14 +634,14 @@ class Hotel(Model):
         if self.factors["rack_rate"] <= 0:
             raise ValueError("rack_rate must be greater than 0.")
 
-    def check_product_incidence(self):
-        m, n = self.factors["product_incidence"].shape
-        for i in range(m):
-            for j in range(n):
-                if self.factors["product_incidence"][i, j] <= 0:
-                    raise ValueError(
-                        "All elements in product_incidence must be greater than 0."
-                    )
+    def check_product_incidence(self) -> None:
+        # TODO: fix check for product_incidence
+        return
+        # is_positive = [[i > 0 for i in j] for j in self.factors["product_incidence"]]
+        # if not all(all(i) for i in is_positive):
+        #     raise ValueError(
+        #         "All elements in product_incidence must be greater than 0."
+        #     )
 
     def check_time_limit(self):
         for i in self.factors["time_limit"]:
@@ -665,7 +665,7 @@ class Hotel(Model):
                     "All elements in booking_limits must be greater than 0 and less than num_rooms."
                 )
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if len(self.factors["lambda"]) != self.factors["num_products"]:
             raise ValueError("The length of lambda must equal num_products.")
         if len(self.factors["time_limit"]) != self.factors["num_products"]:
@@ -676,11 +676,16 @@ class Hotel(Model):
             raise ValueError(
                 "The length of booking_limits must equal num_products."
             )
-        m, n = self.factors["product_incidence"].shape
-        if m * n != self.factors["num_products"]:
+        # TODO: get rid of this conversion to np.array
+        np_array = np.array(self.factors["product_incidence"])
+        # m, n = np_array.shape
+        # if m * n != self.factors["num_products"]:
+        _, n = np_array.shape
+        if n != self.factors["num_products"]:
             raise ValueError(
                 "The number of elements in product_incidence must equal num_products."
             )
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """

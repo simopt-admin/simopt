@@ -213,13 +213,14 @@ class IronOre(Model):
         if self.factors["n_days"] < 1:
             raise ValueError("n_days must be greater than or equal to 1.")
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if (self.factors["min_price"] > self.factors["mean_price"]) or (
             self.factors["mean_price"] > self.factors["max_price"]
         ):
             raise ValueError(
                 "mean_price must be greater than or equal to min_price and less than or equal to max_price."
             )
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """

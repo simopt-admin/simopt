@@ -103,7 +103,7 @@ class FacilitySize(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_mean_vec(self):
+    def check_mean_vec(self) -> None:
         if any(mean <= 0 for mean in self.factors["mean_vec"]):
             raise ValueError("All elements in mean_vec must be greater than 0.")
 
@@ -116,17 +116,16 @@ class FacilitySize(Model):
                 return False
             else:
                 raise
-        return
 
-    def check_capacity(self):
+    def check_capacity(self) -> None:
         if len(self.factors["capacity"]) != self.factors["n_fac"]:
             raise ValueError("The length of capacity must equal n_fac.")
 
-    def check_n_fac(self):
+    def check_n_fac(self) -> None:
         if self.factors["n_fac"] <= 0:
             raise ValueError("n_fac must be greater than 0.")
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if len(self.factors["capacity"]) != self.factors["n_fac"]:
             raise ValueError("The length of capacity must be equal to n_fac.")
         elif len(self.factors["mean_vec"]) != self.factors["n_fac"]:

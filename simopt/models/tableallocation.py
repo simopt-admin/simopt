@@ -164,7 +164,7 @@ class TableAllocation(Model):
                 "Each element in num_tables must be greater than or equal to 0."
             )
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if len(self.factors["num_tables"]) != len(self.factors["table_cap"]):
             raise ValueError(
                 "The length of num_tables must be equal to the length of table_cap."

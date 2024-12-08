@@ -158,11 +158,12 @@ class DynamNews(Model):
                 "The length of cost must be equal to num_prod and every element in cost must be greater than or equal to 0."
             )
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if any(np.subtract(self.factors["price"], self.factors["cost"]) < 0):
             raise ValueError(
                 "Each element in price must be greater than its corresponding element in cost."
             )
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """

@@ -168,6 +168,7 @@ class Contamination(Model):
             raise ValueError(
                 "The number of stages must be equal to the length of the previous decision tuple."
             )
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -821,12 +822,14 @@ class ContaminationTotalCostCont(Problem):
         return len(self.factors["upper_thres"]) == self.dim
 
     def check_simulatable_factors(self) -> bool:
-        if len(self.lower_bounds) != self.dim:
-            return False
-        elif len(self.upper_bounds) != self.dim:
-            return False
-        else:
-            return True
+        lower_len = len(self.lower_bounds)
+        upper_len = len(self.upper_bounds)
+        if lower_len != upper_len or lower_len != self.dim:
+            error_msg = (
+                f"Lower bounds: {lower_len}, Upper bounds: {upper_len}, Dim: {self.dim}"
+            )
+            raise ValueError(error_msg)
+        return True
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """

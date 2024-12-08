@@ -199,9 +199,10 @@ class SSCont(Model):
         if self.factors["warmup"] < 0:
             raise ValueError("warmup must be greater than or equal to 0.")
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if self.factors["s"] >= self.factors["S"]:
             raise ValueError("s must be less than S.")
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """

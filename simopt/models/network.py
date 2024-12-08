@@ -195,7 +195,7 @@ class Network(Model):
         if self.factors["n_networks"] <= 0:
             raise ValueError("n_networks must be greater than 0.")
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if len(self.factors["process_prob"]) != self.factors["n_networks"]:
             raise ValueError(
                 "The length of process_prob must equal n_networks."

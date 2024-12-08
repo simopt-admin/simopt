@@ -126,11 +126,6 @@ class MM1Queue(Model):
     def check_epsilon(self) -> bool:
         return self.factors["epsilon"] > 0
 
-    def check_simulatable_factors(self) -> bool:
-        # demo for condition that queue must be stable
-        # return self.factors["mu"] > self.factors["lambda"]
-        return True
-
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.

@@ -1369,10 +1369,10 @@ class Model(ABC):
             True if factor is of specified data type, otherwise False.
 
         """
-        is_right_type = isinstance(
-            self.factors[factor_name],
-            self.specifications[factor_name]["datatype"],
-        )
+        datatype = self.specifications[factor_name]["datatype"]
+        if datatype is float:
+            datatype = (int, float)
+        is_right_type = isinstance(self.factors[factor_name], datatype)
         return is_right_type
 
     def run_all_checks(self, factor_names: list[str]) -> bool:
@@ -1389,16 +1389,16 @@ class Model(ABC):
             defines if all checks came back as true.
 
         """
-        # is_joint_factors = (
-        # self.check_simulatable_factors()
-        # )   check all joint factor settings
+        is_joint_factors = (
+            self.check_simulatable_factors()
+        )  # check all joint factor settings
 
-        # if not is_joint_factors:
-        # error_msg = "There is a joint setting of a model factor that is not permissible"
-        # raise ValueError(error_msg)
+        if not is_joint_factors:
+            error_msg = "There is a joint setting of a model factor that is not permissible"
+            raise ValueError(error_msg)
 
         # check datatypes for all factors
-        """for factor in factor_names:
+        for factor in factor_names:
             is_right_type = self.check_factor_datatype(factor)
             if not is_right_type:
                 error_msg = (
@@ -1411,7 +1411,7 @@ class Model(ABC):
                 error_msg = f"Model factor {factor} is not permissible."
                 raise ValueError(error_msg)
 
-        return True"""
+        return True
 
     @abstractmethod
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
