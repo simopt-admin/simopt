@@ -14,7 +14,7 @@ from typing import Callable
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
-from simopt.base import Model, Problem
+from simopt.base import ConstraintType, Model, Problem, VariableType
 
 
 class ParameterEstimation(Model):
@@ -216,32 +216,51 @@ class ParamEstiMaxLogLik(Problem):
     base.Problem
     """
 
-    def __init__(
-        self,
-        name: str = "PARAMESTI-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        # Handle default arguments.
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-        # Set problem attributes.
-        self.name = name
-        self.dim = 2
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (1,)
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.lower_bounds = (0.1, 0.1)
-        self.upper_bounds = (10, 10)
-        self.gradient_available = False
-        self.model_default_factors = {}
-        self.model_decision_factors = {"x"}
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 0
+
+    @property
+    def minmax(self) -> tuple:
+        return (1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return False
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        solution = self.model.factors["xstar"]
+        assert isinstance(solution, (tuple, type(None)))
+        return solution
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"x"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": list,
@@ -253,15 +272,39 @@ class ParamEstiMaxLogLik(Problem):
                 "default": 1000,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = ParameterEstimation(self.model_fixed_factors)
-        self.optimal_solution: list = self.model.factors["xstar"]
-        self.optimal_value = None
+
+    @property
+    def dim(self) -> int:
+        return 2
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0.1,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (10,) * self.dim
+
+    def __init__(
+        self,
+        name: str = "PARAMESTI-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=ParameterEstimation,
+        )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """

@@ -13,7 +13,7 @@ from typing import Callable, Final
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
 
-from simopt.base import Model, Problem
+from simopt.base import ConstraintType, Model, Problem, VariableType
 
 # TODO: figure out if this should ever be anything other than 13
 NUM_ARCS: Final[int] = 13
@@ -288,31 +288,49 @@ class FixedSANLongestPath(Problem):
     base.Problem
     """
 
-    def __init__(
-        self,
-        name: str = "FIXEDSAN-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        # Handle default arguments.
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-        # Set problem attributes.
-        self.name = name
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (-1,)
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_available = True
-        self.optimal_value = None
-        self.optimal_solution = None
-        self.model_default_factors = {}
-        self.model_decision_factors = {"arc_means"}
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 0
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return True
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"arc_means"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
@@ -329,17 +347,40 @@ class FixedSANLongestPath(Problem):
                 "default": (1,) * 13,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
             "arc_costs": self.check_arc_costs,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = FixedSAN(self.model_fixed_factors)
-        self.dim = self.model.factors["num_arcs"]
-        self.lower_bounds = (1e-2,) * self.dim
-        self.upper_bounds = (np.inf,) * self.dim
+
+    @property
+    def dim(self) -> int:
+        return self.model.factors["num_arcs"]
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (1e-2,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (np.inf,) * self.dim
+
+    def __init__(
+        self,
+        name: str = "FIXEDSAN-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=FixedSAN,
+        )
 
     def check_arc_costs(self) -> bool:
         positive = True
