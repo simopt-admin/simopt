@@ -247,7 +247,8 @@ class ParamEstiMaxLogLik(Problem):
     @property
     def optimal_solution(self) -> tuple | None:
         solution = self.model.factors["xstar"]
-        assert isinstance(solution, (tuple, type(None)))
+        if isinstance(solution, list):
+            return tuple(solution)
         return solution
 
     @property
