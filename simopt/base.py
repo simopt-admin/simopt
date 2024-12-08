@@ -143,7 +143,9 @@ class Solver(ABC):
         """Dictionary of functions to check if a factor is permissible."""
         raise NotImplementedError
 
-    def __init__(self, name: str = "", fixed_factors: dict | None = None) -> None:
+    def __init__(
+        self, name: str = "", fixed_factors: dict | None = None
+    ) -> None:
         """Initialize a solver object.
 
         Parameters
