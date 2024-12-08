@@ -172,53 +172,53 @@ class DualSourcing(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_n_days(self):
+    def check_n_days(self) -> None:
         if self.factors["n_days"] < 1:
             raise ValueError("n_days must be greater than or equal to 1.")
 
-    def check_initial_inv(self):
+    def check_initial_inv(self) -> None:
         if self.factors["initial_inv"] < 0:
             raise ValueError("initial_inv must be greater than or equal to 0.")
 
-    def check_cost_reg(self):
+    def check_cost_reg(self) -> None:
         if self.factors["cost_reg"] <= 0:
             raise ValueError("cost_reg must be greater than 0.")
 
-    def check_cost_exp(self):
+    def check_cost_exp(self) -> None:
         if self.factors["cost_exp"] <= 0:
             raise ValueError("cost_exp must be greater than 0.")
 
-    def check_lead_reg(self):
+    def check_lead_reg(self) -> None:
         if self.factors["lead_reg"] < 0:
             raise ValueError("lead_reg must be greater than or equal to 0.")
 
-    def check_lead_exp(self):
+    def check_lead_exp(self) -> None:
         if self.factors["lead_exp"] < 0:
             raise ValueError("lead_exp must be greater than or equal to 0.")
 
-    def check_holding_cost(self):
+    def check_holding_cost(self) -> None:
         if self.factors["holding_cost"] <= 0:
             raise ValueError("holding_cost must be greater than 0.")
 
-    def check_penalty_cost(self):
+    def check_penalty_cost(self) -> None:
         if self.factors["penalty_cost"] <= 0:
             raise ValueError("penalty_cost must be greater than 0.")
 
-    def check_st_dev(self):
+    def check_st_dev(self) -> None:
         if self.factors["st_dev"] <= 0:
             raise ValueError("st-dev must be greater than 0.")
 
-    def check_mu(self):
+    def check_mu(self) -> None:
         if self.factors["mu"] <= 0:
             raise ValueError("mu must be greater than 0.")
 
-    def check_order_level_reg(self):
+    def check_order_level_reg(self) -> None:
         if self.factors["order_level_reg"] < 0:
             raise ValueError(
                 "order_level_reg must be greater than or equal to 0."
             )
 
-    def check_order_level_exp(self):
+    def check_order_level_exp(self) -> None:
         if self.factors["order_level_exp"] < 0:
             raise ValueError(
                 "order_level_exp must be greater than or equal to 0."

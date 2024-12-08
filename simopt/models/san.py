@@ -111,7 +111,9 @@ class SAN(Model):
         if self.factors["num_nodes"] <= 0:
             raise ValueError("num_nodes must be greater than 0.")
 
-    def dfs(self, graph: dict[int, set], start: int, visited:set | None = None) -> set:
+    def dfs(
+        self, graph: dict[int, set], start: int, visited: set | None = None
+    ) -> set:
         if visited is None:
             visited = set()
         visited.add(start)
@@ -417,7 +419,9 @@ class SANLongestPath(Problem):
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive and x > 0
-        matching_len = len(self.factors["arc_costs"]) == len(self.model.factors["arcs"])
+        matching_len = len(self.factors["arc_costs"]) == len(
+            self.model.factors["arcs"]
+        )
         return positive and matching_len
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:

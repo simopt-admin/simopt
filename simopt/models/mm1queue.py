@@ -107,19 +107,19 @@ class MM1Queue(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_lambda(self):
+    def check_lambda(self) -> None:
         if self.factors["lambda"] <= 0:
             raise ValueError("lambda must be greater than 0.")
 
-    def check_mu(self):
+    def check_mu(self) -> None:
         if self.factors["mu"] <= 0:
             raise ValueError("mu must be greater than 0.")
 
-    def check_warmup(self):
+    def check_warmup(self) -> None:
         if self.factors["warmup"] < 0:
             raise ValueError("warmup must be greater than or equal to 0.")
 
-    def check_people(self):
+    def check_people(self) -> None:
         if self.factors["people"] < 1:
             raise ValueError("people must be greater than or equal to 1.")
 
@@ -408,7 +408,7 @@ class MM1MinMeanSojournTime(Problem):
             model=MM1Queue,
         )
 
-    def check_cost(self):
+    def check_cost(self) -> None:
         if self.factors["cost"] <= 0:
             raise ValueError("cost must be greater than 0.")
 

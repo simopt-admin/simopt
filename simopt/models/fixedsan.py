@@ -382,7 +382,7 @@ class FixedSANLongestPath(Problem):
             model=FixedSAN,
         )
 
-    def check_arc_costs(self):
+    def check_arc_costs(self) -> bool:
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive and x > 0

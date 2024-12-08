@@ -165,51 +165,51 @@ class IronOre(Model):
             )
         return True
 
-    def check_max_price(self):
+    def check_max_price(self) -> None:
         if self.factors["max_price"] <= 0:
             raise ValueError("max_price must be greater than 0.")
 
-    def check_min_price(self):
+    def check_min_price(self) -> None:
         if self.factors["min_price"] < 0:
             raise ValueError("min_price must be greater than or equal to 0.")
 
-    def check_capacity(self):
+    def check_capacity(self) -> None:
         if self.factors["capacity"] < 0:
             raise ValueError("capacity must be greater than or equal to 0.")
 
-    def check_st_dev(self):
+    def check_st_dev(self) -> None:
         if self.factors["st_dev"] <= 0:
             raise ValueError("st_dev must be greater than 0.")
 
-    def check_holding_cost(self):
+    def check_holding_cost(self) -> None:
         if self.factors["holding_cost"] <= 0:
             raise ValueError("holding_cost must be greater than 0.")
 
-    def check_prod_cost(self):
+    def check_prod_cost(self) -> None:
         if self.factors["prod_cost"] <= 0:
             raise ValueError("prod_cost must be greater than 0.")
 
-    def check_max_prod_perday(self):
+    def check_max_prod_perday(self) -> None:
         if self.factors["max_prod_perday"] <= 0:
             raise ValueError("max_prod_perday must be greater than 0.")
 
-    def check_price_prod(self):
+    def check_price_prod(self) -> None:
         if self.factors["price_prod"] <= 0:
             raise ValueError("price_prod must be greater than 0.")
 
-    def check_inven_stop(self):
+    def check_inven_stop(self) -> None:
         if self.factors["inven_stop"] <= 0:
             raise ValueError("inven_stop must be greater than 0.")
 
-    def check_price_stop(self):
+    def check_price_stop(self) -> None:
         if self.factors["price_stop"] <= 0:
             raise ValueError("price_stop must be greater than 0.")
 
-    def check_price_sell(self):
+    def check_price_sell(self) -> None:
         if self.factors["price_sell"] <= 0:
             raise ValueError("price_sell must be greater than 0.")
 
-    def check_n_days(self):
+    def check_n_days(self) -> None:
         if self.factors["n_days"] < 1:
             raise ValueError("n_days must be greater than or equal to 1.")
 

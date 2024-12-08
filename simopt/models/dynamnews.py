@@ -117,21 +117,21 @@ class DynamNews(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_prod(self):
+    def check_num_prod(self) -> None:
         if self.factors["num_prod"] <= 0:
             raise ValueError("num_prod must be greater than 0.")
 
-    def check_num_customer(self):
+    def check_num_customer(self) -> None:
         if self.factors["num_customer"] <= 0:
             raise ValueError("num_customer must be greater than 0.")
 
-    def check_c_utility(self):
+    def check_c_utility(self) -> None:
         if len(self.factors["c_utility"]) != self.factors["num_prod"]:
             raise ValueError(
                 "The length of c_utility must be equal to num_prod."
             )
 
-    def check_init_level(self):
+    def check_init_level(self) -> None:
         if any(np.array(self.factors["init_level"]) < 0) or (
             len(self.factors["init_level"]) != self.factors["num_prod"]
         ):
@@ -139,10 +139,11 @@ class DynamNews(Model):
                 "The length of init_level must be equal to num_prod and every element in init_level must be greater than or equal to zero."
             )
 
-    def check_mu(self):
-        return True
+    def check_mu(self) -> None:
+        # TODO: figure out if mu has any constraints
+        pass
 
-    def check_price(self):
+    def check_price(self) -> None:
         if any(np.array(self.factors["price"]) < 0) or (
             len(self.factors["price"]) != self.factors["num_prod"]
         ):
@@ -150,7 +151,7 @@ class DynamNews(Model):
                 "The length of price must be equal to num_prod and every element in price must be greater than or equal to zero."
             )
 
-    def check_cost(self):
+    def check_cost(self) -> None:
         if any(np.array(self.factors["cost"]) < 0) or (
             len(self.factors["cost"]) != self.factors["num_prod"]
         ):

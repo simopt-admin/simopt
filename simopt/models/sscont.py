@@ -159,43 +159,43 @@ class SSCont(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_demand_mean(self):
+    def check_demand_mean(self) -> None:
         if self.factors["demand_mean"] <= 0:
             raise ValueError("demand_mean must be greater than 0.")
 
-    def check_lead_mean(self):
+    def check_lead_mean(self) -> None:
         if self.factors["lead_mean"] <= 0:
             raise ValueError("lead_mean must be greater than 0.")
 
-    def check_backorder_cost(self):
+    def check_backorder_cost(self) -> None:
         if self.factors["backorder_cost"] <= 0:
             raise ValueError("backorder_cost must be greater than 0.")
 
-    def check_holding_cost(self):
+    def check_holding_cost(self) -> None:
         if self.factors["holding_cost"] <= 0:
             raise ValueError("holding_cost must be greater than 0.")
 
-    def check_fixed_cost(self):
+    def check_fixed_cost(self) -> None:
         if self.factors["fixed_cost"] <= 0:
             raise ValueError("fixed_cost must be greater than 0.")
 
-    def check_variable_cost(self):
+    def check_variable_cost(self) -> None:
         if self.factors["variable_cost"] <= 0:
             raise ValueError("variable_cost must be greater than 0.")
 
-    def check_s(self):
+    def check_s(self) -> None:
         if self.factors["s"] <= 0:
             raise ValueError("s must be greater than 0.")
 
-    def check_S(self):
+    def check_S(self) -> None:  # noqa: N802
         if self.factors["S"] <= 0:
             raise ValueError("S must be greater than 0.")
 
-    def check_n_days(self):
+    def check_n_days(self) -> None:
         if self.factors["n_days"] < 1:
             raise ValueError("n_days must be greater than or equal to 1.")
 
-    def check_warmup(self):
+    def check_warmup(self) -> None:
         if self.factors["warmup"] < 0:
             raise ValueError("warmup must be greater than or equal to 0.")
 

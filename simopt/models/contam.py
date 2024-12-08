@@ -124,39 +124,39 @@ class Contamination(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_contam_rate_alpha(self):
+    def check_contam_rate_alpha(self) -> None:
         if self.factors["contam_rate_alpha"] <= 0:
             raise ValueError("contam_rate_alpha must be greater than 0.")
 
-    def check_contam_rate_beta(self):
+    def check_contam_rate_beta(self) -> None:
         if self.factors["contam_rate_beta"] <= 0:
             raise ValueError("contam_rate_beta must be greater than 0.")
 
-    def check_restore_rate_alpha(self):
+    def check_restore_rate_alpha(self) -> None:
         if self.factors["restore_rate_alpha"] <= 0:
             raise ValueError("restore_rate_alpha must be greater than 0.")
 
-    def check_restore_rate_beta(self):
+    def check_restore_rate_beta(self) -> None:
         if self.factors["restore_rate_beta"] <= 0:
             raise ValueError("restore_rate_beta must be greater than 0.")
 
-    def check_initial_rate_alpha(self):
+    def check_initial_rate_alpha(self) -> None:
         if self.factors["initial_rate_alpha"] <= 0:
             raise ValueError("initial_rate_alpha must be greater than 0.")
 
-    def check_initial_rate_beta(self):
+    def check_initial_rate_beta(self) -> None:
         if self.factors["initial_rate_beta"] <= 0:
             raise ValueError("initial_rate_beta must be greater than 0.")
 
-    def check_prev_cost(self):
+    def check_prev_cost(self) -> None:
         if any(cost <= 0 for cost in self.factors["prev_cost"]):
             raise ValueError("All costs in prev_cost must be greater than 0.")
 
-    def check_stages(self):
+    def check_stages(self) -> None:
         if self.factors["stages"] <= 0:
             raise ValueError("Stages must be greater than 0.")
 
-    def check_prev_decision(self):
+    def check_prev_decision(self) -> None:
         if any(u < 0 or u > 1 for u in self.factors["prev_decision"]):
             raise ValueError(
                 "All elements in prev_decision must be between 0 and 1."
@@ -825,9 +825,7 @@ class ContaminationTotalCostCont(Problem):
         lower_len = len(self.lower_bounds)
         upper_len = len(self.upper_bounds)
         if lower_len != upper_len or lower_len != self.dim:
-            error_msg = (
-                f"Lower bounds: {lower_len}, Upper bounds: {upper_len}, Dim: {self.dim}"
-            )
+            error_msg = f"Lower bounds: {lower_len}, Upper bounds: {upper_len}, Dim: {self.dim}"
             raise ValueError(error_msg)
         return True
 

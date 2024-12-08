@@ -611,26 +611,26 @@ class Hotel(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_products(self):
+    def check_num_products(self) -> None:
         if self.factors["num_products"] <= 0:
             raise ValueError("num_products must be greater than 0.")
 
-    def check_lambda(self):
+    def check_lambda(self) -> None:
         for i in self.factors["lambda"]:
             if i <= 0:
                 raise ValueError(
                     "All elements in lambda must be greater than 0."
                 )
 
-    def check_num_rooms(self):
+    def check_num_rooms(self) -> None:
         if self.factors["num_rooms"] <= 0:
             raise ValueError("num_rooms must be greater than 0.")
 
-    def check_discount_rate(self):
+    def check_discount_rate(self) -> None:
         if self.factors["discount_rate"] <= 0:
             raise ValueError("discount_rate must be greater than 0.")
 
-    def check_rack_rate(self):
+    def check_rack_rate(self) -> None:
         if self.factors["rack_rate"] <= 0:
             raise ValueError("rack_rate must be greater than 0.")
 
@@ -643,22 +643,22 @@ class Hotel(Model):
         #         "All elements in product_incidence must be greater than 0."
         #     )
 
-    def check_time_limit(self):
+    def check_time_limit(self) -> None:
         for i in self.factors["time_limit"]:
             if i <= 0:
                 raise ValueError(
                     "All elements in time_limit must be greater than 0."
                 )
 
-    def check_time_before(self):
+    def check_time_before(self) -> None:
         if self.factors["time_before"] <= 0:
             raise ValueError("time_before must be greater than 0.")
 
-    def check_runlength(self):
+    def check_runlength(self) -> None:
         if self.factors["runlength"] <= 0:
             raise ValueError("runlength must be greater than 0.")
 
-    def check_booking_limits(self):
+    def check_booking_limits(self) -> None:
         for i in list(self.factors["booking_limits"]):
             if i <= 0 or i > self.factors["num_rooms"]:
                 raise ValueError(
@@ -934,14 +934,15 @@ class HotelRevenue(Problem):
             model=Hotel,
         )
 
-    def check_initial_solution(self):
+    def check_initial_solution(self) -> bool:
         return len(self.factors["initial_solution"]) == self.dim
 
-    def check_budget(self):
+    def check_budget(self) -> bool:
         if self.factors["budget"] <= 0:
             raise ValueError("budget must be greater than 0.")
+        return True
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if len(self.lower_bounds) != self.dim:
             return False
         elif len(self.upper_bounds) != self.dim:

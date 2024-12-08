@@ -128,7 +128,7 @@ class Network(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_process_prob(self):
+    def check_process_prob(self) -> None:
         # Make sure probabilities are between 0 and 1.
         # Make sure probabilities sum up to 1.
         if (
@@ -144,19 +144,19 @@ class Network(Model):
                 "All elements in process_prob must be between 0 and 1 and the sum of all of the elements in process_prob must equal 1."
             )
 
-    def check_cost_process(self):
+    def check_cost_process(self) -> None:
         if any(cost_i <= 0 for cost_i in self.factors["cost_process"]):
             raise ValueError(
                 "All elements in cost_process must be greater than 0."
             )
 
-    def check_cost_time(self):
+    def check_cost_time(self) -> None:
         if any(cost_time_i <= 0 for cost_time_i in self.factors["cost_time"]):
             raise ValueError(
                 "All elements in cost_time must be greater than 0."
             )
 
-    def check_mode_transit_time(self):
+    def check_mode_transit_time(self) -> None:
         if any(
             transit_time_i <= 0
             for transit_time_i in self.factors["mode_transit_time"]
@@ -165,7 +165,7 @@ class Network(Model):
                 "All elements in mode_transit_time must be greater than 0."
             )
 
-    def check_lower_limits_transit_time(self):
+    def check_lower_limits_transit_time(self) -> None:
         if any(
             lower_i <= 0
             for lower_i in self.factors["lower_limits_transit_time"]
@@ -174,7 +174,7 @@ class Network(Model):
                 "All elements in lower_limits_transit_time must be greater than 0."
             )
 
-    def check_upper_limits_transit_time(self):
+    def check_upper_limits_transit_time(self) -> None:
         if any(
             upper_i <= 0
             for upper_i in self.factors["upper_limits_transit_time"]
@@ -183,15 +183,15 @@ class Network(Model):
                 "All elements in upper_limits_transit_time must be greater than 0."
             )
 
-    def check_arrival_rate(self):
+    def check_arrival_rate(self) -> None:
         if self.factors["arrival_rate"] <= 0:
             raise ValueError("arrival_rate must be greater than 0.")
 
-    def check_n_messages(self):
+    def check_n_messages(self) -> None:
         if self.factors["n_messages"] <= 0:
             raise ValueError("n_messages must be greater than 0.")
 
-    def check_n_networks(self):
+    def check_n_networks(self) -> None:
         if self.factors["n_networks"] <= 0:
             raise ValueError("n_networks must be greater than 0.")
 

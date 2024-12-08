@@ -107,7 +107,7 @@ class FacilitySize(Model):
         if any(mean <= 0 for mean in self.factors["mean_vec"]):
             raise ValueError("All elements in mean_vec must be greater than 0.")
 
-    def check_cov(self):
+    def check_cov(self) -> bool:
         try:
             np.linalg.cholesky(np.matrix(self.factors["cov"]))
             return True
@@ -365,7 +365,7 @@ class FacilitySizingTotalCost(Problem):
             model=FacilitySize,
         )
 
-    def check_installation_costs(self):
+    def check_installation_costs(self) -> None:
         if (
             len(self.factors["installation_costs"])
             != self.model.factors["n_fac"]
@@ -377,10 +377,8 @@ class FacilitySizingTotalCost(Problem):
             raise ValueError(
                 "All elements in installation_costs must be greater than or equal to 0."
             )
-        else:
-            return True
 
-    def check_epsilon(self):
+    def check_epsilon(self) -> None:
         if 0 > self.factors["epsilon"] or self.factors["epsilon"] > 1:
             raise ValueError(
                 "epsilon must be greater than or equal to 0 and less than or equal to 1."

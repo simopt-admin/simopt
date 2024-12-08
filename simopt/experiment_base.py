@@ -6875,7 +6875,8 @@ def create_design(
                 fixed_factors=problem_factors, model_fixed_factors=model_factors
             )
             # initialize temporary model to run factor checks
-            temp_model = temp_problem.model
+            model_factor_names = list(temp_problem.model.specifications.keys())
+            temp_problem.model.run_all_checks(factor_names=model_factor_names)
 
     # Write extra design information to design table.
     design_table.insert(0, "design_num", range(len(design_table)))

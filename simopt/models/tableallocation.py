@@ -131,34 +131,34 @@ class TableAllocation(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_n_hours(self):
+    def check_n_hours(self) -> None:
         if self.factors["n_hours"] <= 0:
             raise ValueError("n_hours must be greater than 0.")
 
-    def check_capacity(self):
+    def check_capacity(self) -> None:
         if self.factors["capacity"] <= 0:
             raise ValueError("capacity must be greater than 0.")
 
-    def check_table_cap(self):
+    def check_table_cap(self) -> None:
         if self.factors["table_cap"] <= [0, 0, 0, 0]:
             raise ValueError(
                 "All elements in table_cap must be greater than 0."
             )
 
-    def check_lambda(self):
+    def check_lambda(self) -> bool:
         return self.factors["lambda"] >= [0] * max(self.factors["table_cap"])
 
-    def check_service_time_means(self):
+    def check_service_time_means(self) -> bool:
         return self.factors["service_time_means"] > [0] * max(
             self.factors["table_cap"]
         )
 
-    def check_table_revenue(self):
+    def check_table_revenue(self) -> bool:
         return self.factors["table_revenue"] >= [0] * max(
             self.factors["table_cap"]
         )
 
-    def check_num_tables(self):
+    def check_num_tables(self) -> None:
         if self.factors["num_tables"] < [0, 0, 0, 0]:
             raise ValueError(
                 "Each element in num_tables must be greater than or equal to 0."

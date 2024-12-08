@@ -122,15 +122,15 @@ class RMITD(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_time_horizon(self):
+    def check_time_horizon(self) -> None:
         if self.factors["time_horizon"] <= 0:
             raise ValueError("time_horizon must be greater than 0.")
 
-    def check_prices(self):
+    def check_prices(self) -> None:
         if any(price <= 0 for price in self.factors["prices"]):
             raise ValueError("All elements in prices must be greater than 0.")
 
-    def check_demand_means(self):
+    def check_demand_means(self) -> None:
         if any(
             demand_mean <= 0 for demand_mean in self.factors["demand_means"]
         ):
@@ -138,23 +138,23 @@ class RMITD(Model):
                 "All elements in demand_means must be greater than 0."
             )
 
-    def check_cost(self):
+    def check_cost(self) -> None:
         if self.factors["cost"] <= 0:
             raise ValueError("cost must be greater than 0.")
 
-    def check_gamma_shape(self):
+    def check_gamma_shape(self) -> None:
         if self.factors["gamma_shape"] <= 0:
             raise ValueError("gamma_shape must be greater than 0.")
 
-    def check_gamma_scale(self):
+    def check_gamma_scale(self) -> None:
         if self.factors["gamma_scale"] <= 0:
             raise ValueError("gamma_scale must be greater than 0.")
 
-    def check_initial_inventory(self):
+    def check_initial_inventory(self) -> None:
         if self.factors["initial_inventory"] <= 0:
             raise ValueError("initial_inventory must be greater than 0.")
 
-    def check_reservation_qtys(self):
+    def check_reservation_qtys(self) -> None:
         if any(
             reservation_qty <= 0
             for reservation_qty in self.factors["reservation_qtys"]

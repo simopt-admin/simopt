@@ -172,48 +172,48 @@ class STRONG(Solver):
         if self.factors["n0"] <= 0:
             raise ValueError("n0 must be greater than 0.")
 
-    def check_n_r(self):
+    def check_n_r(self) -> None:
         if self.factors["n_r"] <= 0:
             raise ValueError(
                 "The number of replications taken at each solution must be greater than 0."
             )
 
-    def check_sensitivity(self):
+    def check_sensitivity(self) -> None:
         if self.factors["sensitivity"] <= 0:
             raise ValueError("sensitivity must be greater than 0.")
 
-    def check_delta_threshold(self):
+    def check_delta_threshold(self) -> None:
         if self.factors["delta_threshold"] <= 0:
             raise ValueError("delta_threshold must be greater than 0.")
 
-    def check_delta_t(self):
+    def check_delta_t(self) -> None:
         if self.factors["delta_T"] <= self.factors["delta_threshold"]:
             raise ValueError("delta_T must be greater than delta_threshold")
 
-    def check_eta_0(self):
+    def check_eta_0(self) -> None:
         if self.factors["eta_0"] <= 0 or self.factors["eta_0"] >= 1:
             raise ValueError("eta_0 must be between 0 and 1.")
 
-    def check_eta_1(self):
+    def check_eta_1(self) -> None:
         if (
             self.factors["eta_1"] >= 1
             or self.factors["eta_1"] <= self.factors["eta_0"]
         ):
             raise ValueError("eta_1 must be between eta_0 and 1.")
 
-    def check_gamma_1(self):
+    def check_gamma_1(self) -> None:
         if self.factors["gamma_1"] <= 0 or self.factors["gamma_1"] >= 1:
             raise ValueError("gamma_1 must be between 0 and 1.")
 
-    def check_gamma_2(self):
+    def check_gamma_2(self) -> None:
         if self.factors["gamma_2"] <= 1:
             raise ValueError("gamma_2 must be greater than 1.")
 
-    def check_lambda(self):
+    def check_lambda(self) -> None:
         if self.factors["lambda"] <= 1:
             raise ValueError("lambda must be greater than 1.")
 
-    def check_lambda_2(self):
+    def check_lambda_2(self) -> None:
         # TODO: Check if this is the correct condition.
         if self.factors["lambda_2"] <= 1:
             raise ValueError("lambda_2 must be greater than 1.")
