@@ -23,7 +23,7 @@ import seaborn as sns
 from mrg32k3a.mrg32k3a import MRG32k3a
 from scipy.stats import norm
 
-from simopt.base import Problem, Solution, Solver
+from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
 from simopt.directory import (
     model_directory,
     problem_directory,
@@ -315,7 +315,7 @@ def mean_of_curves(curves: list[Curve]) -> Curve:
         [x_val for curve in curves for x_val in curve.x_vals]
     )
     mean_y_vals = [
-        float(np.mean([curve.lookup(x_val) for curve in curves]))
+        float(np.mean([curve.lookup(float(x_val)) for curve in curves]))
         for x_val in unique_x_vals
     ]
     mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)
@@ -509,14 +509,13 @@ def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
         error_msg = "curve_2 must be a Curve object."
         raise TypeError(error_msg)
 
-    unique_x_vals = np.unique(curve_1.x_vals + curve_2.x_vals)
+    unique_x_vals_np = np.unique(curve_1.x_vals + curve_2.x_vals)
+    unique_x_vals = [float(x_val) for x_val in unique_x_vals_np]
     difference_y_vals = [
         (curve_1.lookup(x_val) - curve_2.lookup(x_val))
         for x_val in unique_x_vals
     ]
-    difference_curve = Curve(
-        x_vals=unique_x_vals.tolist(), y_vals=difference_y_vals
-    )
+    difference_curve = Curve(x_vals=unique_x_vals, y_vals=difference_y_vals)
     return difference_curve
 
 
@@ -553,7 +552,6 @@ def max_difference_of_curves(curve_1: Curve, curve_2: Curve) -> float:
     return max_diff
 
 
-# TODO: investigate all_est_objective's numpy array [numpy array] typing
 class ProblemSolver:
     """Base class for running one solver on one problem.
 
@@ -842,11 +840,6 @@ class ProblemSolver:
     def has_postnormalized(self, has_postnormalized: bool) -> None:
         self.__has_postnormalized = has_postnormalized
 
-    # Set the minimum number of CPU cores for multiprocessing to be enabled
-    CPU_COUNT_LIMIT = 2
-    # Set the maximum number of active threads to be running at once
-    ACTIVE_THREAD_LIMIT_DEFAULT = 4
-
     def __init__(
         self,
         solver_name: str | None = None,
@@ -945,6 +938,7 @@ class ProblemSolver:
         self.has_run = False
         self.has_postreplicated = False
         self.has_postnormalized = False
+        self.xstar = ()
 
         # Initialize solver.
         if isinstance(solver, Solver):  # Method 2
@@ -996,17 +990,6 @@ class ProblemSolver:
         else:
             self.file_name_path = file_name_path
 
-        # Set the maximum number of active threads to be running at once
-        # Set to either 4 (if CPU can't be determined) or the number of cores * 2 (accounting for threads)
-        cpu_count = os.cpu_count()
-        if cpu_count is None or (
-            isinstance(cpu_count, int) and cpu_count < self.CPU_COUNT_LIMIT
-        ):
-            self.active_thread_limit = self.ACTIVE_THREAD_LIMIT_DEFAULT
-        # If we can determine CPU Count, set the thread limit to the number of virtual cores
-        else:
-            self.active_thread_limit = cpu_count * 2
-
     # TODO: Convert this to throwing exceptions?
     # TODO: Convert this functionality to run automatically
     def check_compatibility(self) -> str:
@@ -1018,57 +1001,51 @@ class ProblemSolver:
             Error message in the event problem and solver are incompatible.
 
         """
-        error_str = ""
+        # make a string builder
+        error_messages = []
         # Check number of objectives.
         if (
-            self.solver.objective_type == "single"
+            self.solver.objective_type == ObjectiveType.SINGLE
             and self.problem.n_objectives > 1
         ):
-            error_str += "Solver cannot solve a multi-objective problem.\n"
+            error_message = "Solver cannot solve a multi-objective problem"
+            error_messages.append(error_message)
         elif (
-            self.solver.objective_type == "multi"
+            self.solver.objective_type == ObjectiveType.MULTI
             and self.problem.n_objectives == 1
         ):
-            error_str += "Multi-objective solver being run on a single-objective problem.\n"
+            error_message = "Solver cannot solve a single-objective problem"
+            error_messages.append(error_message)
         # Check constraint types.
-        constraint_types = [
-            "unconstrained",
-            "box",
-            "deterministic",
-            "stochastic",
-        ]
-        if constraint_types.index(
-            self.solver.constraint_type
-        ) < constraint_types.index(self.problem.constraint_type):
-            error_str += (
-                "Solver can handle upto "
-                + self.solver.constraint_type
-                + " constraints, but problem has "
-                + self.problem.constraint_type
-                + " constraints.\n"
-            )
+        if (
+            self.solver.constraint_type.value
+            < self.problem.constraint_type.value
+        ):
+            solver_str = self.solver.constraint_type.name.lower()
+            problem_str = self.problem.constraint_type.name.lower()
+            error_message = f"Solver can handle {solver_str} constraints, but problem has {problem_str} constraints."
+            error_messages.append(error_message)
         # Check variable types.
         if (
-            self.solver.variable_type == "discrete"
-            and self.problem.variable_type != "discrete"
+            self.solver.variable_type == VariableType.DISCRETE
+            and self.problem.variable_type != VariableType.DISCRETE
         ):
-            error_str += (
-                "Solver is for discrete variables but problem variables are "
-                + self.problem.variable_type
-                + ".\n"
-            )
+            problem_type = self.problem.variable_type.name.lower()
+            error_message = f"Solver is for discrete variables but problem variables are {problem_type}."
+            error_messages.append(error_message)
         elif (
-            self.solver.variable_type == "continuous"
-            and self.problem.variable_type != "continuous"
+            self.solver.variable_type == VariableType.CONTINUOUS
+            and self.problem.variable_type != VariableType.CONTINUOUS
         ):
-            error_str += (
-                "Solver is for continuous variables but problem variables are "
-                + self.problem.variable_type
-                + ".\n"
-            )
+            problem_type = self.problem.variable_type.name.lower()
+            error_message = f"Solver is for continuous variables but problem variables are {problem_type}."
+            error_messages.append(error_message)
         # Check for existence of gradient estimates.
         if self.solver.gradient_needed and not self.problem.gradient_available:
-            error_str += "Gradient-based solver does not have access to gradient for this problem.\n"
+            error_message = "Solver requires gradient estimates but problem does not have them."
+            error_messages.append(error_message)
+        # Strip trailing newline character.
+        error_str = "\n".join(error_messages)
         return error_str
 
     def run(self, n_macroreps: int) -> None:
@@ -1161,9 +1138,7 @@ class ProblemSolver:
 
         # Save ProblemSolver object to .pickle file if specified.
         if self.create_pickle:
-            file_name = self.file_name_path.split(EXPERIMENT_DIR)[-1].split(
-                "\\"
-            )[-1]
+            file_name = os.path.basename(self.file_name_path)
             self.record_experiment_results(file_name=file_name)
 
     def run_multithread(self, mrep: int) -> tuple:
@@ -1343,9 +1318,7 @@ class ProblemSolver:
 
         # Save ProblemSolver object to .pickle file if specified.
         if self.create_pickle:
-            file_name = self.file_name_path.split(EXPERIMENT_DIR)[-1].split(
-                "\\"
-            )[-1]
+            file_name = os.path.basename(self.file_name_path)
             self.record_experiment_results(file_name=file_name)
 
     def post_replicate_multithread(self, mrep: int) -> tuple:
@@ -1936,7 +1909,7 @@ def post_normalize(
     #     Stream 0: reserved for post-replications.
     baseline_rngs = [
         MRG32k3a(s_ss_sss_index=[0, rng_index, 0])
-        for rng_index in range(experiment.problem.model.n_rngs)
+        for rng_index in range(ref_experiment.problem.model.n_rngs)
     ]
     x0 = ref_experiment.problem.factors["initial_solution"]
     if proxy_init_val is not None:
@@ -2022,7 +1995,7 @@ def post_normalize(
             )
         best_experiment_idx = np.argmax(best_est_objectives)
         best_experiment = experiments[best_experiment_idx]
-        best_exp_best_est_objectives = np.zeros(experiment.n_macroreps)
+        best_exp_best_est_objectives = np.zeros(ref_experiment.n_macroreps)
         for mrep in range(best_experiment.n_macroreps):
             best_exp_best_est_objectives[mrep] = np.max(
                 best_experiment.problem.minmax[0]
@@ -2030,7 +2003,7 @@ def post_normalize(
             )
         best_mrep = np.argmax(best_exp_best_est_objectives)
         best_budget_idx = np.argmax(
-            experiment.problem.minmax[0]
+            ref_experiment.problem.minmax[0]
             * np.array(best_experiment.all_est_objectives[best_mrep])
         )
         xstar = best_experiment.all_recommended_xs[best_mrep][best_budget_idx]
@@ -2080,10 +2053,25 @@ def post_normalize(
                 )
             )
             # Normalize by initial optimality gap.
-            norm_est_objectives = [
-                (est_objective - opt_obj_val) / initial_opt_gap
-                for est_objective in est_objectives
-            ]
+            if initial_opt_gap == 0:
+                print(
+                    "Warning: Divide by zero during post-normalization (initial_opt_gap is 0)."
+                )
+                norm_est_objectives = []
+                for est_objective in est_objectives:
+                    est_diff = est_objective - opt_obj_val
+                    # Follow IEEE 754 standard for division by zero.
+                    if est_diff < 0:
+                        norm_est_objectives.append(-np.inf)
+                    elif est_diff > 0:
+                        norm_est_objectives.append(np.inf)
+                    else:
+                        norm_est_objectives.append(np.nan)
+            else:
+                norm_est_objectives = [
+                    (est_objective - opt_obj_val) / initial_opt_gap
+                    for est_objective in est_objectives
+                ]
             frac_intermediate_budgets = [
                 budget / experiment.problem.factors["budget"]
                 for budget in experiment.all_intermediate_budgets[mrep]
@@ -2098,9 +2086,7 @@ def post_normalize(
 
         # Save ProblemSolver object to .pickle file if specified.
         if create_pair_pickles:
-            file_name = experiment.file_name_path.split(EXPERIMENT_DIR)[
-                -1
-            ].split("\\")[-1]
+            file_name = os.path.basename(experiment.file_name_path)
             experiment.record_experiment_results(file_name=file_name)
 
 
@@ -2347,10 +2333,14 @@ def bootstrap_procedure(
             bias_correction=True,
             overall_estimator=estimator,
         )
-        # Get the first and second float from the computed bootstrap.
-        # Assuming the value we want is in the first index of both lists.
-        float_1 = computed_bootstrap[0][0][0]
-        float_2 = computed_bootstrap[1][0][0]
+        # Get the first and second float values from the computed bootstrap.
+        float_1 = computed_bootstrap[0]
+        float_2 = computed_bootstrap[1]
+        # Keep indexing into them until they are floats.
+        while not isinstance(float_1, (int, float)):
+            float_1 = float_1[0]
+        while not isinstance(float_2, (int, float)):
+            float_2 = float_2[0]
         return float_1, float_2
     else:
         # Functional returns a curve.
@@ -2363,11 +2353,12 @@ def bootstrap_procedure(
                 ]
             )
         )
-        bs_conf_int_lower_bound_list = []
-        bs_conf_int_upper_bound_list = []
+        bs_conf_int_lower_bound_list: list[np.ndarray] = []
+        bs_conf_int_upper_bound_list: list[np.ndarray] = []
         for budget in unique_budget_list:
+            budget_float = float(budget)
             bootstrap_subreplications = [
-                curve.lookup(budget) for curve in bootstrap_replications
+                curve.lookup(budget_float) for curve in bootstrap_replications
             ]
             if estimator is None:
                 error_msg = "Estimator must be provided for functional that returns a curve."
@@ -2375,7 +2366,7 @@ def bootstrap_procedure(
             if isinstance(estimator, (int, float)):
                 error_msg = "Estimator must be a Curve object for functional that returns a curve."
                 raise ValueError(error_msg)
-            sub_estimator = estimator.lookup(budget)
+            sub_estimator = estimator.lookup(budget_float)
             bs_conf_int_lower_bound, bs_conf_int_upper_bound = (
                 compute_bootstrap_conf_int(
                     bootstrap_subreplications,
@@ -2386,11 +2377,16 @@ def bootstrap_procedure(
             )
             bs_conf_int_lower_bound_list.append(bs_conf_int_lower_bound)
             bs_conf_int_upper_bound_list.append(bs_conf_int_upper_bound)
+        # Create the curves for the lower and upper bounds of the bootstrap
+        # confidence intervals.
+        unique_budget_list_floats = [float(val) for val in unique_budget_list]
+        lower_bound_list = [float(val) for val in bs_conf_int_lower_bound_list]
         bs_conf_int_lower_bounds = Curve(
-            x_vals=unique_budget_list, y_vals=bs_conf_int_lower_bound_list
+            x_vals=unique_budget_list_floats, y_vals=lower_bound_list
         )
+        upper_bound_list = [float(val) for val in bs_conf_int_upper_bound_list]
         bs_conf_int_upper_bounds = Curve(
-            x_vals=unique_budget_list, y_vals=bs_conf_int_upper_bound_list
+            x_vals=unique_budget_list_floats, y_vals=upper_bound_list
         )
         return bs_conf_int_lower_bounds, bs_conf_int_upper_bounds
 
@@ -2698,6 +2694,11 @@ def compute_bootstrap_conf_int(
         q_upper = 1 - (1 - conf_level) / 2
     bs_conf_int_lower_bound = np.quantile(observations, q=q_lower)
     bs_conf_int_upper_bound = np.quantile(observations, q=q_upper)
+    # Sometimes quantile returns a scalar, so convert to array.
+    if not isinstance(bs_conf_int_lower_bound, np.ndarray):
+        bs_conf_int_lower_bound = np.array([bs_conf_int_lower_bound])
+    if not isinstance(bs_conf_int_upper_bound, np.ndarray):
+        bs_conf_int_upper_bound = np.array([bs_conf_int_upper_bound])
     return bs_conf_int_lower_bound, bs_conf_int_upper_bound
 
 
@@ -2796,6 +2797,10 @@ def report_max_halfwidth(
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
+    # Make sure there's something in the list
+    if len(curve_pairs) == 0:
+        error_msg = "No curve pairs to report on."
+        raise ValueError(error_msg)
 
     # Compute max halfwidth of bootstrap confidence intervals.
     min_lower_bound = np.inf
@@ -2849,21 +2854,18 @@ def check_common_problem_and_reference(
         raise TypeError(error_msg)
 
     problem_list = [experiment.problem for experiment in experiments]
-    if len(set(problem_list)) != 1:
-        raise ValueError(
-            "At least two experiments have different problem instances."
-        )
+    problem_err_msg = "All experiments must have the same problem."
+    assert all(
+        elem == problem_list[0] for elem in problem_list
+    ), problem_err_msg
+
     x0_list = [experiment.x0 for experiment in experiments]
-    if len(set(x0_list)) != 1:
-        raise ValueError(
-            "At least two experiments have different starting solutions."
-        )
+    x0_err_msg = "All experiments must have the same starting solution."
+    assert all(elem == x0_list[0] for elem in x0_list), x0_err_msg
+
     xstar_list = [experiment.xstar for experiment in experiments]
-    if len(set(xstar_list)) != 1:
-        raise ValueError(
-            "At least two experiments have different optimal solutions."
-        )
-    return
+    xstar_err_msg = "All experiments must have the same optimal solution."
+    assert all(elem == xstar_list[0] for elem in xstar_list), xstar_err_msg
 
 
 def plot_progress_curves(
@@ -2877,7 +2879,7 @@ def plot_progress_curves(
     plot_conf_ints: bool = True,
     print_max_hw: bool = True,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -2963,8 +2965,8 @@ def plot_progress_curves(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
-        error_msg = "Legend location must be a string."
+    if not isinstance(legend_loc, (str, type(None))):
+        error_msg = "Legend location must be a string or None."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
         error_msg = "Extension must be a string."
@@ -2989,6 +2991,9 @@ def plot_progress_curves(
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
 
+    if legend_loc is None:
+        legend_loc = "best"
+
     # Check if problems are the same with the same x0 and x*.
     check_common_problem_and_reference(experiments)
     file_list = []
@@ -3006,11 +3011,11 @@ def plot_progress_curves(
             plot_title=plot_title,
         )
         solver_curve_handles = []
-        if print_max_hw:
-            curve_pairs = []
+        curve_pairs = []
         for exp_idx in range(n_experiments):
             experiment = experiments[exp_idx]
             color_str = "C" + str(exp_idx)
+            estimator = None
             if plot_type == "all":
                 # Plot all estimated progress curves.
                 if normalize:
@@ -3105,6 +3110,7 @@ def plot_progress_curves(
                 budget=experiment.problem.factors["budget"],
                 beta=beta,
             )
+            estimator = None
             if plot_type == "all":
                 # Plot all estimated progress curves.
                 if normalize:
@@ -3189,7 +3195,7 @@ def plot_solvability_cdfs(
     plot_conf_ints: bool = True,
     print_max_hw: bool = True,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -3261,8 +3267,8 @@ def plot_solvability_cdfs(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
-        error_msg = "Legend location must be a string."
+    if not isinstance(legend_loc, (str, type(None))):
+        error_msg = "Legend location must be a string or None."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
         error_msg = "Extension must be a string."
@@ -3284,6 +3290,9 @@ def plot_solvability_cdfs(
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
 
+    if legend_loc is None:
+        legend_loc = "best"
+
     # Check if problems are the same with the same x0 and x*.
     check_common_problem_and_reference(experiments)
     file_list = []
@@ -3299,8 +3308,7 @@ def plot_solvability_cdfs(
             plot_title=plot_title,
         )
         solver_curve_handles = []
-        if print_max_hw:
-            curve_pairs = []
+        curve_pairs = []
         for exp_idx in range(n_experiments):
             experiment = experiments[exp_idx]
             color_str = "C" + str(exp_idx)
@@ -3553,6 +3561,7 @@ def plot_area_scatterplots(
         # TODO: Build up capability to print max half-width.
         # if print_max_hw:
         #     curve_pairs = []
+        handle = None
         for solver_idx in range(n_solvers):
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
@@ -3652,6 +3661,7 @@ def plot_area_scatterplots(
             )
             # if print_max_hw:
             #     curve_pairs = []
+            experiment = None
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
                 # Plot mean and standard deviation of area under progress curve.
@@ -3721,16 +3731,17 @@ def plot_area_scatterplots(
                         color="C0",
                         marker="o",
                     )
-            file_list.append(
-                save_plot(
-                    solver_name=experiment.solver.name,
-                    problem_name=problem_set_name,
-                    plot_type="area",
-                    normalize=True,
-                    ext=ext,
-                    save_as_pickle=save_as_pickle,
+            if experiment is not None:
+                file_list.append(
+                    save_plot(
+                        solver_name=experiment.solver.name,
+                        problem_name=problem_set_name,
+                        plot_type="area",
+                        normalize=True,
+                        ext=ext,
+                        save_as_pickle=save_as_pickle,
+                    )
                 )
-            )
     return file_list
 
 
@@ -3753,7 +3764,7 @@ def plot_solvability_profiles(
     beta: float = 0.5,
     ref_solver: str | None = None,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -3865,7 +3876,7 @@ def plot_solvability_profiles(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
+    if not isinstance(legend_loc, (str, type(None))):
         error_msg = "Legend location must be a string."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
@@ -3893,6 +3904,9 @@ def plot_solvability_profiles(
     if not 0 < beta < 1:
         error_msg = "Beta quantile must be in (0, 1)."
         raise ValueError(error_msg)
+
+    if legend_loc is None:
+        legend_loc = "best"
 
     file_list = []
     # Set up plot.
@@ -3933,8 +3947,7 @@ def plot_solvability_profiles(
                 solve_tol=solve_tol,
                 plot_title=plot_title,
             )
-        if print_max_hw:
-            curve_pairs = []
+        curve_pairs = []
         solver_names = [
             solver_experiments[0].solver.name
             for solver_experiments in experiments
@@ -3947,6 +3960,7 @@ def plot_solvability_profiles(
             # For each problem compute the cdf or quantile of solve times.
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
+                sub_curve = None
                 if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
                     sub_curve = cdf_of_curves_crossing_times(
                         curves=experiment.progress_curves, threshold=solve_tol
@@ -3960,7 +3974,8 @@ def plot_solvability_profiles(
                         threshold=solve_tol,
                         beta=beta,
                     )
-                solver_sub_curves.append(sub_curve)
+                if sub_curve is not None:
+                    solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
             # Exploit the fact that each solvability profile is an average of more basic curves.
             solver_curve = mean_of_curves(solver_sub_curves)
@@ -3976,7 +3991,7 @@ def plot_solvability_profiles(
                             experiments=[experiments[solver_idx]],
                             n_bootstraps=n_bootstraps,
                             conf_level=conf_level,
-                            plot_type=plot_type,
+                            plot_type=plot_type,  # type: ignore
                             solve_tol=solve_tol,
                             beta=beta,
                             estimator=solver_curve,
@@ -4074,7 +4089,7 @@ def plot_solvability_profiles(
                                 ],
                                 n_bootstraps=n_bootstraps,
                                 conf_level=conf_level,
-                                plot_type=plot_type,
+                                plot_type=plot_type,  # type: ignore
                                 solve_tol=solve_tol,
                                 beta=beta,
                                 estimator=diff_solver_curve,
@@ -4149,6 +4164,7 @@ def plot_solvability_profiles(
             # For each problem compute the cdf or quantile of solve times.
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
+                sub_curve = None
                 if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
                     sub_curve = cdf_of_curves_crossing_times(
                         curves=experiment.progress_curves, threshold=solve_tol
@@ -4162,7 +4178,8 @@ def plot_solvability_profiles(
                         threshold=solve_tol,
                         beta=beta,
                     )
-                solver_sub_curves.append(sub_curve)
+                if sub_curve is not None:
+                    solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
             # Exploit the fact that each solvability profile is an average of more basic curves.
             solver_curve = mean_of_curves(solver_sub_curves)
@@ -4196,7 +4213,7 @@ def plot_solvability_profiles(
                             experiments=[experiments[solver_idx]],
                             n_bootstraps=n_bootstraps,
                             conf_level=conf_level,
-                            plot_type=plot_type,
+                            plot_type=plot_type,  # type: ignore
                             solve_tol=solve_tol,
                             beta=beta,
                             estimator=solver_curve,
@@ -4298,7 +4315,7 @@ def plot_solvability_profiles(
                                 ],
                                 n_bootstraps=n_bootstraps,
                                 conf_level=conf_level,
-                                plot_type=plot_type,
+                                plot_type=plot_type,  # type: ignore
                                 solve_tol=solve_tol,
                                 beta=beta,
                                 estimator=diff_solver_curve,
@@ -4498,8 +4515,7 @@ def plot_terminal_progress(
                 y="Terminal",
                 data=terminal_data_df,
                 inner="stick",
-                scale="width",
-                showmeans=True,
+                density_norm="width",
                 cut=0.1,
             )
             if normalize:
@@ -4575,7 +4591,7 @@ def plot_terminal_scatterplots(
     experiments: list[list[ProblemSolver]],
     all_in_one: float = True,
     plot_title: str | None = None,
-    legend_loc: str = "best",
+    legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
@@ -4641,7 +4657,7 @@ def plot_terminal_scatterplots(
     if not isinstance(plot_title, (str, type(None))):
         error_msg = "Plot title must be a string or None."
         raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
+    if not isinstance(legend_loc, (str, type(None))):
         error_msg = "Legend location must be a string."
         raise TypeError(error_msg)
     if not isinstance(ext, str):
@@ -4656,6 +4672,9 @@ def plot_terminal_scatterplots(
     if not isinstance(problem_set_name, str):
         error_msg = "Problem set name must be a string."
         raise TypeError(error_msg)
+
+    if legend_loc is None:
+        legend_loc = "best"
 
     file_list = []
     # Set up plot.
@@ -4674,6 +4693,7 @@ def plot_terminal_scatterplots(
             for solver_experiments in experiments
         ]
         solver_curve_handles = []
+        handle = None
         for solver_idx in range(n_solvers):
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
@@ -4716,6 +4736,7 @@ def plot_terminal_scatterplots(
                 solver_name=ref_experiment.solver.name,
                 problem_name=problem_set_name,
             )
+            experiment = None
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
                 # Plot mean and standard deviation of terminal progress.
@@ -4730,16 +4751,17 @@ def plot_terminal_scatterplots(
                     color="C0",
                     marker="o",
                 )
-            file_list.append(
-                save_plot(
-                    solver_name=experiment.solver.name,
-                    problem_name=problem_set_name,
-                    plot_type="terminal_scatter",
-                    normalize=True,
-                    ext=ext,
-                    save_as_pickle=save_as_pickle,
+            if experiment is not None:
+                file_list.append(
+                    save_plot(
+                        solver_name=experiment.solver.name,
+                        problem_name=problem_set_name,
+                        plot_type="terminal_scatter",
+                        normalize=True,
+                        ext=ext,
+                        save_as_pickle=save_as_pickle,
+                    )
                 )
-            )
     return file_list
 
 
@@ -5073,10 +5095,8 @@ def save_plot(
     if not isinstance(normalize, bool):
         error_msg = "Normalize must be a boolean."
         raise TypeError(error_msg)
-    if (
-        not isinstance(extra, (float, list, type(None)))
-        or isinstance(extra, list)
-        and not all(isinstance(e, float) for e in extra)
+    if not isinstance(extra, (float, list, type(None))) or (
+        isinstance(extra, list) and not all(isinstance(e, float) for e in extra)
     ):
         error_msg = "Extra must be a float, list of floats, or None."
         raise TypeError(error_msg)
@@ -5433,46 +5453,40 @@ class ProblemsSolvers:
 
         """
         # Type checking
-        if (
-            not isinstance(solver_factors, (list, type(None)))
-            or isinstance(solver_factors, list)
+        if not isinstance(solver_factors, (list, type(None))) or (
+            isinstance(solver_factors, list)
             and not all(isinstance(dp, dict) for dp in solver_factors)
         ):
             error_msg = "Solver factors must be a list of dictionaries or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(problem_factors, (list, type(None)))
-            or isinstance(problem_factors, list)
+        if not isinstance(problem_factors, (list, type(None))) or (
+            isinstance(problem_factors, list)
             and not all(isinstance(dp, dict) for dp in problem_factors)
         ):
             error_msg = (
                 "Problem factors must be a list of dictionaries or None."
             )
             raise TypeError(error_msg)
-        if (
-            not isinstance(solver_names, (list, type(None)))
-            or isinstance(solver_names, list)
+        if not isinstance(solver_names, (list, type(None))) or (
+            isinstance(solver_names, list)
             and not all(isinstance(name, str) for name in solver_names)
         ):
             error_msg = "Solver names must be a list of strings or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(problem_names, (list, type(None)))
-            or isinstance(problem_names, list)
+        if not isinstance(problem_names, (list, type(None))) or (
+            isinstance(problem_names, list)
             and not all(isinstance(name, str) for name in problem_names)
         ):
             error_msg = "Problem names must be a list of strings or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(solver_renames, (list, type(None)))
-            or isinstance(solver_renames, list)
+        if not isinstance(solver_renames, (list, type(None))) or (
+            isinstance(solver_renames, list)
             and not all(isinstance(name, str) for name in solver_renames)
         ):
             error_msg = "Solver renames must be a list of strings or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(problem_renames, (list, type(None)))
-            or isinstance(problem_renames, list)
+        if not isinstance(problem_renames, (list, type(None))) or (
+            isinstance(problem_renames, list)
             and not all(isinstance(name, str) for name in problem_renames)
         ):
             error_msg = "Problem renames must be a list of strings or None."
@@ -5480,23 +5494,20 @@ class ProblemsSolvers:
         if not isinstance(fixed_factors_filename, (str, type(None))):
             error_msg = "Fixed factors filename must be a string or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(solvers, (list, type(None)))
-            or isinstance(solvers, list)
+        if not isinstance(solvers, (list, type(None))) or (
+            isinstance(solvers, list)
             and not all(isinstance(solver, Solver) for solver in solvers)
         ):
             error_msg = "Solvers must be a list of Solver objects or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(problems, (list, type(None)))
-            or isinstance(problems, list)
+        if not isinstance(problems, (list, type(None))) or (
+            isinstance(problems, list)
             and not all(isinstance(problem, Problem) for problem in problems)
         ):
             error_msg = "Problems must be a list of Problem objects or None."
             raise TypeError(error_msg)
-        if (
-            not isinstance(experiments, (list, type(None)))
-            or isinstance(experiments, list)
+        if not isinstance(experiments, (list, type(None))) or (
+            isinstance(experiments, list)
             and not all(
                 isinstance(experiment_list, list)
                 for experiment_list in experiments
@@ -5525,8 +5536,12 @@ class ProblemsSolvers:
         self.create_pair_pickles = create_pair_pickles
         if experiment_name is not None:
             self.file_header = f"{experiment_name}_"
+            self.experiment_name = experiment_name
         else:
             self.file_header = ""
+            self.experiment_name = ""
+        # For some reason some of these variables weren't being assigned to the
+        # class attributes. TODO: Fix this.
 
         output_dir = os.path.join(EXPERIMENT_DIR, "outputs")
         if not os.path.exists(output_dir):
@@ -6583,6 +6598,21 @@ def validate_gem_install(design_type: str, installed_via_wsl: bool) -> str:
         raise ValueError(error_msg)
 
 
+def create_design_list_from_table(design_table: pd.DataFrame) -> list:
+    # Create list of solver or problem objects for each dp using design_table.
+    design_list = []
+    dp_dict = design_table.to_dict(
+        orient="list"
+    )  # Creates dictonary of table to convert values to proper datatypes.
+    for dp in range(len(design_table)):
+        dp_factors = {}
+        for factor in dp_dict:
+            factor_str = str(dp_dict[factor][dp])
+            dp_factors[factor] = ast.literal_eval(factor_str)
+        design_list.append(dp_factors)
+    return design_list
+
+
 def create_design(
     name: str,
     factor_headers: list[str],
@@ -6697,15 +6727,6 @@ def create_design(
             raise ValueError(error_msg)
         design_object = model_directory[name]()
 
-    # Check if Ruby is installed on the system.
-    installed_via_wsl: bool = validate_ruby_install()
-    # if installed_via_wsl:
-    #     print("Detected Ruby on WSL.")
-    # else:
-    #     print("Detected Ruby on the system path.")
-    # Check if the datafarming gem is installed
-    command_file: str = validate_gem_install(design_type, installed_via_wsl)
-
     # Make directory to store the current design file.
     data_farming_path = os.path.join(EXPERIMENT_DIR, "data_farming")
     if not os.path.exists(data_farming_path):
@@ -6722,48 +6743,65 @@ def create_design(
     if os.path.exists(design_file):
         os.remove(design_file)
 
-    # Create solver factor design from .txt file of factor settings.
-    if installed_via_wsl:
-        # Replace the drive letter with the WSL equivalent
-        windows_drive_letter = os.path.splitdrive(data_farming_path)[0]
-        linux_drive_letter = f"/mnt/{windows_drive_letter.strip(':').lower()}"
-        source_file_wsl = source_file.replace(
-            windows_drive_letter, linux_drive_letter
+    # Only run the Ruby script if there are factors to change
+    if len(factor_headers) > 0:
+        # Check if Ruby is installed on the system.
+        installed_via_wsl: bool = validate_ruby_install()
+        # Check if the datafarming gem is installed
+        command_file: str = validate_gem_install(design_type, installed_via_wsl)
+
+        # Create solver factor design from .txt file of factor settings.
+        if installed_via_wsl:
+            # Replace the drive letter with the WSL equivalent
+            windows_drive_letter = os.path.splitdrive(data_farming_path)[0]
+            linux_drive_letter = (
+                f"/mnt/{windows_drive_letter.strip(':').lower()}"
+            )
+            source_file_wsl = source_file.replace(
+                windows_drive_letter, linux_drive_letter
+            )
+            design_file_wsl = design_file.replace(
+                windows_drive_letter, linux_drive_letter
+            )
+            # Replace backslashes with forward slashes
+            source_file_wsl = source_file_wsl.replace("\\", "/")
+            design_file_wsl = design_file_wsl.replace("\\", "/")
+            command = f"{command_file} -s {n_stacks} {source_file_wsl} > {design_file_wsl}"
+            command = f'wsl -e bash -lic "{command}"'
+        else:
+            command = (
+                f"{command_file} -s {n_stacks} {source_file} > {design_file}"
+            )
+        completed_process = subprocess.run(
+            command, capture_output=True, shell=True
         )
-        design_file_wsl = design_file.replace(
-            windows_drive_letter, linux_drive_letter
-        )
-        # Replace backslashes with forward slashes
-        source_file_wsl = source_file_wsl.replace("\\", "/")
-        design_file_wsl = design_file_wsl.replace("\\", "/")
-        command = f"{command_file} -s {n_stacks} {source_file_wsl} > {design_file_wsl}"
-        command = f'wsl -e bash -lic "{command}"'
+        # If the design file doesn't exist, there was an error in the Ruby script.
+        if not os.path.exists(design_file):
+            error_msg = completed_process.stderr.decode("utf-8")
+            raise Exception(
+                f"Ruby script did not complete successfully.\nError:\n{error_msg}"
+            )
+
+        # Read in design matrix from .txt file. Result is a pandas DataFrame.
+        try:
+            design_table = pd.read_csv(
+                design_file,
+                header=None,
+                delimiter="\t",
+                encoding="utf-8",
+            )
+        except pd.errors.EmptyDataError:
+            error_msg = "Error in Ruby script. No data in design file.\nMake sure to select factors for data farming."
+            raise Exception(error_msg) from pd.errors.EmptyDataError
+        design_table.columns = factor_headers  # Add factor headers names to dt.
     else:
-        command = f"{command_file} -s {n_stacks} {source_file} > {design_file}"
-    completed_process = subprocess.run(command, capture_output=True, shell=True)
-    # If the design file doesn't exist, there was an error in the Ruby script.
-    if not os.path.exists(design_file):
-        error_msg = completed_process.stderr.decode("utf-8")
-        raise Exception(
-            f"Ruby script did not complete successfully.\nError:\n{error_msg}"
-        )
-
-    # Read in design matrix from .txt file. Result is a pandas DataFrame.
-    try:
-        design_table = pd.read_csv(
-            design_file,
-            header=None,
-            delimiter="\t",
-            encoding="utf-8",
-        )
-    except pd.errors.EmptyDataError:
-        error_msg = "Error in Ruby script. No data in design file.\nMake sure to select factors for data farming."
-        raise Exception(error_msg) from pd.errors.EmptyDataError
-
-    design_table.columns = factor_headers  # Add factor headers names to dt.
+        # Grab one key/value pair from the specifications
+        first_item = design_object.specifications
+        # Create a DataFrame with the key/value pair
+        design_table = pd.DataFrame(first_item, index=[0])
 
     # Combine model and problem specifications for problems
-    if class_type == "problem":
+    if isinstance(design_object, Problem):
         specifications = {
             **design_object.specifications,
             **design_object.model.specifications,
@@ -6771,13 +6809,13 @@ def create_design(
     else:
         specifications = design_object.specifications
 
-    for factor in (
-        specifications
-    ):  # Add default values to str dict for unspecified factors.
+    # Add default values to str dict for unspecified factors.
+    for factor in specifications:
         default = specifications[factor].get("default")
         if factor not in fixed_factors and factor not in factor_headers:
             fixed_factors[factor] = default
-    # Add fixed factors to dt.
+
+    # Add all the fixed factors to the design table
     for factor in fixed_factors:
         design_table[factor] = str(
             fixed_factors[factor]
@@ -6810,17 +6848,7 @@ def create_design(
 
         design_table = new_design_table
 
-    # Create list of solver or problem objects for each dp using design_table.
-    design_list = []
-    dp_dict = design_table.to_dict(
-        orient="list"
-    )  # Creates dictonary of table to convert values to proper datatypes.
-    for dp in range(len(design_table)):
-        dp_factors = {}
-        for factor in dp_dict:
-            factor_str = str(dp_dict[factor][dp])
-            dp_factors[factor] = ast.literal_eval(factor_str)
-        design_list.append(dp_factors)
+    design_list = create_design_list_from_table(design_table)
         
     # check factors for each design point
     for dp in design_list:
@@ -6846,9 +6874,6 @@ def create_design(
             temp_problem = problem_directory[name](fixed_factors=problem_factors, model_fixed_factors=model_factors) 
             # initialize temporary model to run factor checks
             temp_model = temp_problem.model
-
-
-    # print("Design List", design_list, sep="\n\t")
 
     # Write extra design information to design table.
     design_table.insert(0, "design_num", range(len(design_table)))

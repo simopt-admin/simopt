@@ -1934,7 +1934,7 @@ class ExperimentWindow(Toplevel):
 
         self.postrep_window = Toplevel(self)
         self.center_window(0.8)
-        self.set_theme()
+        self.set_style()
 
         self.postrep_window.title("Post-Processing Page")
         self.app = PostProcessingWindow(
@@ -1988,7 +1988,7 @@ class ExperimentWindow(Toplevel):
         # self.crossdesign_window = tk.Tk()
         self.crossdesign_window = Toplevel(self)
         self.center_window(0.8)
-        self.set_theme()
+        self.set_style()
         self.crossdesign_window.title("Cross-Design Problem-Solver Group")
         self.cross_app = CrossDesignWindow(self.crossdesign_window, self)
 
@@ -1997,7 +1997,7 @@ class ExperimentWindow(Toplevel):
     def datafarming_function(self) -> None:
         self.datafarming_window = Toplevel(self)
         self.center_window(0.8)
-        self.set_theme()
+        self.set_style()
         self.datafarming_window.title("Data Farming")
         self.datafarming_app = DataFarmingWindow(self.datafarming_window, self)
 
@@ -2128,7 +2128,7 @@ class ExperimentWindow(Toplevel):
 
         self.postrep_window = Toplevel(self)
         self.center_window(0.8)
-        self.set_theme()
+        self.set_style()
         self.postrep_window.title("Plotting Page")
         PlotWindow(
             self.postrep_window,
@@ -2167,7 +2167,7 @@ class ExperimentWindow(Toplevel):
         # calls postprocessing window
         self.postrep_window = Toplevel(self)
         self.center_window(0.8)
-        self.set_theme()
+        self.set_style()
         self.postrep_window.title("Post-Processing and Post-Normalization Page")
         self.app = PostProcessingWindow(
             self.postrep_window, self.selected, self.selected, self, True
@@ -2277,7 +2277,7 @@ class ExperimentWindow(Toplevel):
     def post_normal_all_function(self) -> None:
         self.postrep_window = Toplevel(self)
         self.center_window(0.8)
-        self.set_theme()
+        self.set_style()
         self.postrep_window.title("Post-Normalization Page")
         self.app = PostNormalWindow(
             self.postrep_window, self.post_norm_exp_list, self
@@ -3619,7 +3619,7 @@ class PostNormalWindow(Toplevel):
 
             self.postrep_window = Toplevel(self)
             self.postrep_window.center_window(0.8)
-            self.postrep_window.set_theme()
+            self.postrep_window.set_style()
             self.postrep_window.title("Plotting Page")
             self.destroy()
             PlotWindow(
@@ -3866,8 +3866,8 @@ class PostProcessingWindow(Toplevel):
             and self.crn_across_macroreps_var.get()
             in self.crn_across_macroreps_list
             and (
-                self.meta
-                and self.n_norm_postreps_entry.get().isnumeric()
+                (self.meta
+                and self.n_norm_postreps_entry.get().isnumeric())
                 or not self.meta
             )
         ):

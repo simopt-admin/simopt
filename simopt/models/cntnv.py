@@ -7,9 +7,12 @@ A detailed description of the model/problem can be found `here <https://simopt.r
 
 from __future__ import annotations
 
+from typing import Callable
+
 import numpy as np
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import ConstraintType, Model, Problem, VariableType
 
 
 class CntNV(Model):
@@ -43,14 +46,21 @@ class CntNV(Model):
     base.Model
     """
 
-    def __init__(self, fixed_factors: dict | None = None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "CNTNEWS"
-        self.n_rngs = 1
-        self.n_responses = 1
-        self.factors = fixed_factors
-        self.specifications = {
+    @property
+    def name(self) -> str:
+        return "CNTNEWS"
+
+    @property
+    def n_rngs(self) -> int:
+        return 1
+
+    @property
+    def n_responses(self) -> int:
+        return 1
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "purchase_price": {
                 "description": "purchasing cost per unit",
                 "datatype": float,
@@ -82,42 +92,51 @@ class CntNV(Model):
                 "default": 20.0,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "purchase_price": self.check_purchase_price,
             "sales_price": self.check_sales_price,
             "salvage_price": self.check_salvage_price,
             "order_quantity": self.check_order_quantity,
-            "Burr_c": self.check_Burr_c,
-            "Burr_k": self.check_Burr_k,
+            "Burr_c": self.check_burr_c,
+            "Burr_k": self.check_burr_k,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_purchase_price(self):
+    def check_purchase_price(self) -> None:
         if self.factors["purchase_price"] <= 0:
             raise ValueError("Purchasing cost per unit must be greater than 0.")
 
-    def check_sales_price(self):
+    def check_sales_price(self) -> None:
         if self.factors["sales_price"] <= 0:
             raise ValueError("Sales price per unit must be greater than 0.")
 
-    def check_salvage_price(self):
+    def check_salvage_price(self) -> None:
         if self.factors["salvage_price"] <= 0:
             raise ValueError("Salvage cost per unit must be greater than 0.")
 
-    def check_order_quantity(self):
+    def check_order_quantity(self) -> None:
         if self.factors["order_quantity"] <= 0:
             raise ValueError("Order quantity must be greater than 0.")
 
-    def check_Burr_c(self):
+    def check_burr_c(self) -> None:
         if self.factors["Burr_c"] <= 0:
-            raise ValueError("Burr Type XII cdf shape parameter must be greater than 0.")
+            raise ValueError(
+                "Burr Type XII cdf shape parameter must be greater than 0."
+            )
 
-    def check_Burr_k(self):
+    def check_burr_k(self) -> None:
         if self.factors["Burr_k"] <= 0:
-            raise ValueError("Burr Type XII cdf shape parameter must be greater than 0.")            
+            raise ValueError(
+                "Burr Type XII cdf shape parameter must be greater than 0."
+            )
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         if (
             self.factors["salvage_price"]
             < self.factors["purchase_price"]
@@ -125,7 +144,9 @@ class CntNV(Model):
         ):
             return True
         else:
-            raise ValueError("The salvage cost per unit must be less than the purchasing cost per unit, which must be less than the sales price per unit.")
+            raise ValueError(
+                "The salvage cost per unit must be greater than the purchasing cost per unit, which must be greater than the sales price per unit."
+            )
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
@@ -267,40 +288,57 @@ class CntNVMaxProfit(Problem):
     base.Problem
     """
 
-    def __init__(
-        self,
-        name: str = "CNTNEWS-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-        self.name = name
-        self.dim = 1
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (1,)
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.lower_bounds = (0,)
-        self.upper_bounds = (np.inf,)
-        self.gradient_available = True
-        self.optimal_value = None
-        self.optimal_solution = (
-            None  # (0.1878,)  # TO DO: Generalize to function of factors.
-        )
-        self.model_default_factors = {
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 0
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return True
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        # TODO: Generalize to function of factors.
+        # return (0.1878,)
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {
             "purchase_price": 5.0,
             "sales_price": 9.0,
             "salvage_price": 1.0,
             "Burr_c": 2.0,
             "Burr_k": 20.0,
         }
-        self.model_decision_factors = {"order_quantity"}
-        self.factors = fixed_factors
-        self.specifications = {
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"order_quantity"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
@@ -312,13 +350,39 @@ class CntNVMaxProfit(Problem):
                 "default": 1000,
             },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and overwritten defaults.
-        self.model = CntNV(self.model_fixed_factors)
+
+    @property
+    def dim(self) -> int:
+        return 1
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0,)
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (np.inf,)
+
+    def __init__(
+        self,
+        name: str = "CNTNEWS-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=CntNV,
+        )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
@@ -388,7 +452,7 @@ class CntNVMaxProfit(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
     def deterministic_objectives_and_gradients(
@@ -433,8 +497,8 @@ class CntNVMaxProfit(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:

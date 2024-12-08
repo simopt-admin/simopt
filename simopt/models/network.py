@@ -5,11 +5,17 @@ Simulate messages being processed in a queueing network.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/network.html>`__.
 """
+
 from __future__ import annotations
 
+from typing import Callable, Final
+
 import numpy as np
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import ConstraintType, Model, Problem, VariableType
+
+NUM_NETWORKS: Final = 10
 
 
 class Network(Model):
@@ -40,60 +46,72 @@ class Network(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
-        self.name = "NETWORK"
-        self.n_rngs = 3
-        self.n_responses = 1
-        self.factors = fixed_factors
-        self.specifications = {
+
+    @property
+    def name(self) -> str:
+        return "NETWORK"
+
+    @property
+    def n_rngs(self) -> int:
+        return 3
+
+    @property
+    def n_responses(self) -> int:
+        return 1
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "process_prob": {
                 "description": "probability that a message will go through a particular network i",
                 "datatype": list,
-                "default": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+                "default": [0.1] * NUM_NETWORKS,
             },
             "cost_process": {
                 "description": "message processing cost of network i",
                 "datatype": list,
-                "default": [1, 1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 7, 1 / 8, 1 / 9, 1 / 10]
+                "default": [0.1 / (x + 1) for x in range(NUM_NETWORKS)],
             },
             "cost_time": {
                 "description": "cost for the length of time a message spends in a network i per each unit of time",
                 "datatype": list,
-                "default": [0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005]
+                "default": [0.005] * NUM_NETWORKS,
             },
             "mode_transit_time": {
                 "description": "mode time of transit for network i following a triangular distribution",
                 "datatype": list,
-                "default": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                "default": [x + 1 for x in range(NUM_NETWORKS)],
             },
             "lower_limits_transit_time": {
                 "description": "lower limits for the triangular distribution for the transit time",
                 "datatype": list,
-                "default": [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]
+                "default": [0.5 + x for x in range(NUM_NETWORKS)],
             },
             "upper_limits_transit_time": {
                 "description": "upper limits for the triangular distribution for the transit time",
                 "datatype": list,
-                "default": [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5]
+                "default": [1.5 + x for x in range(NUM_NETWORKS)],
             },
             "arrival_rate": {
                 "description": "arrival rate of messages following a Poisson process",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "n_messages": {
                 "description": "number of messages that arrives and needs to be routed",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "n_networks": {
                 "description": "number of networks",
                 "datatype": int,
-                "default": 10
+                "default": NUM_NETWORKS,
             },
         }
 
-        self.check_factor_list = {
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "process_prob": self.check_process_prob,
             "cost_process": self.check_cost_process,
             "cost_time": self.check_cost_time,
@@ -104,7 +122,9 @@ class Network(Model):
             "n_messages": self.check_n_messages,
             "n_networks": self.check_n_networks,
         }
-        # Set factors of the simulation model
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
@@ -166,7 +186,7 @@ class Network(Model):
         else:
             return True
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -190,13 +210,27 @@ class Network(Model):
         network_rng = rng_list[1]
         transit_rng = rng_list[2]
         # Generate all interarrival, network routes, and service times before the simulation run.
-        arrival_times = [arrival_rng.expovariate(self.factors["arrival_rate"])
-                         for _ in range(total_arrivals)]
-        network_routes = network_rng.choices(range(self.factors["n_networks"]), weights=self.factors["process_prob"], k=total_arrivals)
-        service_times = [transit_rng.triangular(low=self.factors["lower_limits_transit_time"][network_routes[i]],
-                                                high=self.factors["upper_limits_transit_time"][network_routes[i]],
-                                                mode=self.factors["mode_transit_time"][network_routes[i]])
-                         for i in range(total_arrivals)]
+        arrival_times = [
+            arrival_rng.expovariate(self.factors["arrival_rate"])
+            for _ in range(total_arrivals)
+        ]
+        network_routes = network_rng.choices(
+            range(self.factors["n_networks"]),
+            weights=self.factors["process_prob"],
+            k=total_arrivals,
+        )
+        service_times = [
+            transit_rng.triangular(
+                low=self.factors["lower_limits_transit_time"][
+                    network_routes[i]
+                ],
+                high=self.factors["upper_limits_transit_time"][
+                    network_routes[i]
+                ],
+                mode=self.factors["mode_transit_time"][network_routes[i]],
+            )
+            for i in range(total_arrivals)
+        ]
         # Create matrix storing times and metrics for each message:
         #     column 0 : arrival time to queue;
         #     column 1 : network route;
@@ -227,18 +261,30 @@ class Network(Model):
                 # With a message in line, message i's service completion time will be calculated using Lindley's recursion method.
                 # We first choose the maximum between the arrival time of message i and the last in line message's service completion time.
                 # We then add message's i service time to this value.
-                message_mat[i, 3] = max(message_mat[i, 0], message_mat[last_in_line[network], 3]) + message_mat[i, 2]
+                message_mat[i, 3] = (
+                    max(
+                        message_mat[i, 0], message_mat[last_in_line[network], 3]
+                    )
+                    + message_mat[i, 2]
+                )
             # Calculate other statistics.
             message_mat[i, 4] = message_mat[i, 3] - message_mat[i, 0]
             message_mat[i, 5] = message_mat[i, 4] - message_mat[i, 2]
             message_mat[i, 6] = self.factors["cost_process"][network]
-            message_mat[i, 7] = self.factors["cost_time"][network] * message_mat[i, 4]
+            message_mat[i, 7] = (
+                self.factors["cost_time"][network] * message_mat[i, 4]
+            )
             message_mat[i, 8] = message_mat[i, 6] + message_mat[i, 7]
             last_in_line[network] = i
         # Compute total costs for the simulation run.
         total_cost = sum(message_mat[:, 8])
         responses = {"total_cost": total_cost}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -310,43 +356,96 @@ class NetworkMinTotalCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "NETWORK-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
-        self.name = name
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (-1,)
-        self.constraint_type = "deterministic"
-        self.variable_type = "continuous"
-        self.gradient_available = False
-        self.optimal_value = None
-        self.optimal_solution = None
-        self.model_default_factors = {}
-        self.model_decision_factors = {"process_prob"}
-        self.factors = fixed_factors
-        self.specifications = {
+
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 0
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.DETERMINISTIC
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return False
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"process_prob"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1)
+                "default": (0.1,) * NUM_NETWORKS,
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+            },
         }
-        self.check_factor_list = {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
-        }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and overwritten defaults.
-        self.model = Network(self.model_fixed_factors)
-        self.dim = self.model.factors["n_networks"]
-        self.lower_bounds = tuple([0 for _ in range(self.model.factors["n_networks"])])
-        self.upper_bounds = tuple([1 for _ in range(self.model.factors["n_networks"])])
 
-    def vector_to_factor_dict(self, vector):
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
+            "initial_solution": self.check_initial_solution,
+            "budget": self.check_budget,
+        }
+
+    @property
+    def dim(self) -> int:
+        return self.model.factors["n_networks"]
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (1,) * self.dim
+
+    def __init__(
+        self,
+        name: str = "NETWORK-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=Network,
+        )
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -363,7 +462,7 @@ class NetworkMinTotalCost(Problem):
         factor_dict = {"process_prob": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -381,7 +480,7 @@ class NetworkMinTotalCost(Problem):
         vector = tuple(factor_dict["process_prob"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -399,7 +498,7 @@ class NetworkMinTotalCost(Problem):
         objectives = (response_dict["total_cost"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -414,10 +513,12 @@ class NetworkMinTotalCost(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -434,10 +535,12 @@ class NetworkMinTotalCost(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = (0, ) * self.model.factors["n_networks"]
+        det_objectives_gradients = (0,) * self.model.factors["n_networks"]
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.
@@ -456,11 +559,11 @@ class NetworkMinTotalCost(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic
         constraints.
@@ -479,9 +582,9 @@ class NetworkMinTotalCost(Problem):
         box_feasible = super().check_deterministic_constraints(x)
         # Check constraint that probabilities sum to one.
         probability_feasible = round(sum(x), 10) == 1.0
-        return box_feasible * probability_feasible
+        return box_feasible and probability_feasible
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -496,8 +599,9 @@ class NetworkMinTotalCost(Problem):
             vector of decision variables
         """
         # Generating a random pmf with length equal to number of networks.
-        x = rand_sol_rng.continuous_random_vector_from_simplex(n_elements=self.model.factors["n_networks"],
-                                                               summation=1.0,
-                                                               exact_sum=True
-                                                               )
-        return x
+        x = rand_sol_rng.continuous_random_vector_from_simplex(
+            n_elements=self.model.factors["n_networks"],
+            summation=1.0,
+            exact_sum=True,
+        )
+        return tuple(x)

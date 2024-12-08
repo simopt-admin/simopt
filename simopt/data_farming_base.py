@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import ast
 import csv
-from enum import Enum
 import itertools
 import os
 import subprocess
 from copy import deepcopy
+from enum import Enum
 from typing import Literal
 
 import numpy as np
@@ -16,14 +16,15 @@ import pandas as pd
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 from simopt.base import Model
-
 from simopt.directory import model_directory, solver_directory
-from simopt.experiment_base import ProblemSolver, post_normalize, EXPERIMENT_DIR
+from simopt.experiment_base import EXPERIMENT_DIR, ProblemSolver, post_normalize
 
 DATA_FARMING_DIR = os.path.join(EXPERIMENT_DIR, "data_farming")
 
+
 class DesignType(Enum):
     nolhs = "nolhs"
+
 
 class DesignPoint:
     """Base class for design points represented as dictionaries of factors.
@@ -266,7 +267,9 @@ class DataFarmingExperiment:
         if design_filepath is None:
             # Create model factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
-            filepath_core = os.path.join(DATA_FARMING_DIR, factor_settings_filename)
+            filepath_core = os.path.join(
+                DATA_FARMING_DIR, factor_settings_filename
+            )
             source_filepath = filepath_core + ".txt"
             design_filepath = filepath_core + "_design.txt"
             command = f"stack_{design_type}.rb -s {stacks} {source_filepath} > {design_filepath}"
@@ -495,9 +498,8 @@ class DataFarmingMetaExperiment:
         if not isinstance(solver_name, (str, type(None))):
             error_msg = "solver_name must be a string."
             raise TypeError(error_msg)
-        if (
-            not isinstance(solver_factor_headers, (list, type(None)))
-            or isinstance(solver_factor_headers, list)
+        if not isinstance(solver_factor_headers, (list, type(None))) or (
+            isinstance(solver_factor_headers, list)
             and not all(
                 isinstance(header, str) for header in solver_factor_headers
             )
@@ -617,6 +619,7 @@ class DataFarmingMetaExperiment:
                 )
                 if (
                     factor not in solver_fixed_str
+                    and solver_factor_headers is not None
                     and factor not in solver_factor_headers
                 ):
                     print("default from df base", default)
@@ -740,13 +743,12 @@ class DataFarmingMetaExperiment:
             # solver_name = second_row[-1*num_extra_col]
             row_index = 0
 
+            solver_name = ""
             for row in reader:
                 solver_name = row[-1 * num_extra_col]
                 dp = row[1 : -1 * num_extra_col]
                 dp_index = 0
-                self.solver_object = solver_directory[
-                    solver_name
-                ]()  # make this less bulky later
+                self.solver_object = solver_directory[solver_name]()
                 for factor in all_solver_factor_names:
                     solver_factors_str[factor] = dp[dp_index]
                     dp_index += 1
@@ -761,6 +763,8 @@ class DataFarmingMetaExperiment:
                 row_index += 1
 
             self.n_design_pts = len(solver_factors_across_design)
+            if self.n_design_pts == 0:
+                raise ValueError("No design points found in csv file.")
             for i in range(self.n_design_pts):
                 # Create design point on problem solver
 
@@ -904,9 +908,8 @@ class DataFarmingMetaExperiment:
 
         """
         # Type checking
-        if (
-            not isinstance(solve_tols, (list, type(None)))
-            or isinstance(solve_tols, list)
+        if not isinstance(solve_tols, (list, type(None))) or (
+            isinstance(solve_tols, list)
             and not all(isinstance(tol, float) for tol in solve_tols)
         ):
             error_msg = "solve_tols must be a list of floats."

@@ -1,10 +1,13 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter.font import nametofont
+from typing import Final
 
 from simopt.gui.data_farming_window import DataFarmingWindow
-from simopt.gui.experiment_window import ExperimentWindow
 from simopt.gui.new_experiment_window import NewExperimentWindow
 from simopt.gui.toplevel_custom import Toplevel
+
+FONT_SCALE: Final[float] = 1.5
 
 
 class MainMenuWindow(Toplevel):
@@ -22,83 +25,91 @@ class MainMenuWindow(Toplevel):
         super().__init__(
             root, title="SimOpt GUI - Main Menu", exit_on_close=True
         )
-        self.center_window(0.8)  # 80% scaling
+        # Set the size of the window to XX% of the screen size
+        size_percent = 50
+        self.center_window(size_percent/100.0)
 
-        self.menu_frame = tk.Frame(master=self)
-        self.menu_frame.pack(anchor="center")
+        self.menu_frame = ttk.Frame(master=self)
+        self.menu_frame.pack(anchor="center", expand=True)
 
-        font_scale = 1.5
-        header_font = nametofont("TkHeadingFont").copy()
-        header_font.configure(size=int(header_font.cget("size") * font_scale))
-        option_font = nametofont("TkMenuFont").copy()
-        option_font.configure(size=int(option_font.cget("size") * font_scale))
+        # Create new style for the labels and buttons
+        self.set_main_menu_style_changes()
 
-        self.title_label = tk.Label(
+        self.title_label = ttk.Label(
             master=self.menu_frame,
             text="Welcome to SimOpt Library Graphic User Interface",
-            font=header_font,
             justify="center",
         )
-        self.title_label.grid(row=0, column=0, pady=20)
+        self.title_label.grid(row=0, column=0, pady=10, sticky="nsew")
 
-        # Button to open original main window to run experiments across solvers & problems
-        self.experiment_button = tk.Button(
-            master=self.menu_frame,
-            text="Run Single Problem-Solver Experiment",
-            font=option_font,
-            command=self.open_experiment_window,
+        self.separator = ttk.Separator(
+            master=self.menu_frame, orient="horizontal"
         )
-        self.experiment_button.grid(row=1, column=0, pady=10, sticky="nsew")
-        self.experiment_button.configure(background="light gray")
+        self.separator.grid(row=1, column=0, pady=10, sticky="nsew")
 
         # Button to open model data farming window
-        self.datafarm_model_button = tk.Button(
+        self.datafarm_model_button = ttk.Button(
             master=self.menu_frame,
             text="Data Farm Models",
-            font=option_font,
             command=self.open_model_datafarming,
         )
-        self.datafarm_model_button.grid(row=2, column=0, pady=10, sticky="nsew")
-        self.datafarm_model_button.configure(background="light gray")
-
-        # # Button to open solver & problem data farming window
-        # self.datafarm_prob_sol_button = tk.Button(
-        #     master=self.menu_frame,
-        #     text="Solver Data Farming",
-        #     font=option_font,
-        #     command=self.open_prob_sol_datafarming,
-        # )
-        # self.datafarm_prob_sol_button.grid(row=3, column=0, pady=10, sticky="nsew")
-        # self.datafarm_prob_sol_button.configure(background="light gray")
+        self.datafarm_model_button.grid(
+            row=2,
+            column=0,
+            pady=10,
+            sticky="nsew",
+            ipadx=20,
+            ipady=20,
+        )
 
         # Button to open new experiment window
-        self.new_experiment_button = tk.Button(
+        self.new_experiment_button = ttk.Button(
             master=self.menu_frame,
-            text="Data Farm Solvers, Problems, and Models",
-            font=option_font,
+            text="Simulation Optimization Experiments",
             command=self.open_new_experiment,
         )
-        self.new_experiment_button.grid(row=4, column=0, pady=10, sticky="nsew")
-        self.new_experiment_button.configure(background="light gray")
+        self.new_experiment_button.grid(
+            row=3,
+            column=0,
+            pady=10,
+            sticky="nsew",
+            ipadx=20,
+            ipady=20,
+        )
 
-        # Open the new experiment window and hide the main menu window
-        # self.open_new_experiment()
-        # self.withdraw()
+        # Prevent window from getting launched in the background
+        self.lift()
 
-    def open_experiment_window(self) -> None:
-        """Open the experiment window."""
-        ExperimentWindow(self.root)
-        # Configure the exit button to close the window and close the menu
+    def set_main_menu_style_changes(self) -> None:
+        self.header_font = nametofont("TkHeadingFont").copy()
+        header_font_size = self.header_font.cget("size")
+        scaled_header_font_size = int(header_font_size * FONT_SCALE)
+        self.header_font.configure(size=scaled_header_font_size)
+        self.style.configure("TLabel", font=self.header_font)
+
+        self.option_font = nametofont("TkTextFont").copy()
+        option_font_size = self.option_font.cget("size")
+        scaled_option_font_size = int(option_font_size * FONT_SCALE)
+        self.option_font.configure(size=scaled_option_font_size)
+        self.style.configure("TButton", font=self.option_font)
+
+    def reset_main_menu_style_changes(self) -> None:
+        """Reset the style of the buttons."""
+        self.style.configure("TLabel", font=nametofont("TkTextFont"))
+        self.style.configure("TButton", font=nametofont("TkTextFont"))
+
+    def __open_window(self, class_name: type) -> None:
+        """Open a new window."""
+        self.reset_main_menu_style_changes()
+        new_window = class_name(self.root)
         self.destroy()
+        # Bring new window to front
+        new_window.lift()
 
     def open_model_datafarming(self) -> None:
         """Open the model data farming window."""
-        DataFarmingWindow(self.root)
-        # Configure the exit button to close the window and close the menu
-        self.destroy()
+        self.__open_window(DataFarmingWindow)
 
     def open_new_experiment(self) -> None:
         """Open the new experiment window."""
-        NewExperimentWindow(self.root)
-        # Configure the exit button to close the window and close the menu
-        self.destroy()
+        self.__open_window(NewExperimentWindow)

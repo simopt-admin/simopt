@@ -36,7 +36,7 @@ class DFFactor(ABC):
 
     @property
     @abstractmethod
-    def default_eval(self) -> any:
+    def default_eval(self) -> object:
         """Evaluated default value of the factor."""
         raise NotImplementedError
 
@@ -46,7 +46,7 @@ class DFFactor(ABC):
         return None
 
     @property
-    def include_default_state(self) -> Literal["normal", "disabled", None]:
+    def include_default_state(self) -> Literal["normal", "readonly", "disabled", None]:
         """Whether or not the default field is enabled."""
         if self.include is None:
             return None
@@ -55,7 +55,7 @@ class DFFactor(ABC):
         return "normal"
 
     @property
-    def include_datafarm_state(self) -> Literal["normal", "disabled", None]:
+    def include_datafarm_state(self) -> Literal["normal", "readonly", "disabled", None]:
         """Whether or not the datafarm fields are enabled."""
         if self.include is None:
             return None
@@ -91,17 +91,13 @@ class DFFactor(ABC):
         """
         self.__name = tk.StringVar(value=name)
         self.__description = tk.StringVar(value=description)
-        self.__include = None
-        self.__minimum = None
-        self.__maximum = None
-        self.__num_decimals = None
 
-    def get_name_label(self, frame: tk.Frame) -> tk.Label:
+    def get_name_label(self, frame: ttk.Frame) -> tk.Label:
         """Get the name label of the factor.
 
         Parameters
         ----------
-        frame : tk.Frame
+        frame : ttk.Frame
             The frame the entry will be placed in
 
         Returns
@@ -118,12 +114,12 @@ class DFFactor(ABC):
             )
         return self.lbl_name
 
-    def get_description_label(self, frame: tk.Frame) -> tk.Label:
+    def get_description_label(self, frame: ttk.Frame) -> tk.Label:
         """Get the description label of the factor.
 
         Parameters
         ----------
-        frame : tk.Frame
+        frame : ttk.Frame
             The frame the entry will be placed in
 
         Returns
@@ -137,16 +133,17 @@ class DFFactor(ABC):
                 master=frame,
                 text=self.description.get(),
                 justify=tk.LEFT,
-                wraplength=300,
+                anchor=tk.W,
+                wraplength=200,
             )
         return self.lbl_description
 
-    def get_type_label(self, frame: tk.Frame) -> tk.Label:
+    def get_type_label(self, frame: ttk.Frame) -> tk.Label:
         """Get the type label of the factor.
 
         Parameters
         ----------
-        frame : tk.Frame
+        frame : ttk.Frame
             The frame the entry will be placed in
 
         Returns
@@ -159,16 +156,18 @@ class DFFactor(ABC):
             self.lbl_type = tk.Label(
                 master=frame,
                 text=self.type.get(),
-                justify=tk.LEFT,
+                justify=tk.CENTER,
+                anchor=tk.W,
+                width=1,
             )
         return self.lbl_type
 
-    def get_default_entry(self, frame: tk.Frame) -> ttk.Entry:
+    def get_default_entry(self, frame: ttk.Frame) -> ttk.Entry:
         """Get the default entry of the factor.
 
         Parameters
         ----------
-        frame : tk.Frame
+        frame : ttk.Frame
             The frame the entry will be placed in
 
         Returns
@@ -183,15 +182,16 @@ class DFFactor(ABC):
                 state=str(self.include_default_state),
                 textvariable=self.default,
                 justify=tk.RIGHT,
+                width=1,
             )
         return self.ent_default
 
-    def get_include_checkbutton(self, frame: tk.Frame) -> tk.Checkbutton | None:
+    def get_include_checkbutton(self, frame: ttk.Frame) -> tk.Checkbutton | None:
         """Get the include checkbutton of the factor.
 
         Parameters
         ----------
-        frame : tk.Frame
+        frame : ttk.Frame
             The frame the entry will be placed in
 
         Returns
@@ -210,12 +210,12 @@ class DFFactor(ABC):
             )
         return self.chk_include
 
-    def get_minimum_entry(self, frame: tk.Frame) -> ttk.Entry | None:
+    def get_minimum_entry(self, frame: ttk.Frame) -> ttk.Entry | None:
         """Get the minimum entry of the factor.
 
         Parameters
         ----------
-        frame : tk.Frame
+        frame : ttk.Frame
             The frame the entry will be placed in
 
         Returns
@@ -232,15 +232,16 @@ class DFFactor(ABC):
                 state=str(self.include_datafarm_state),
                 textvariable=self.minimum,
                 justify=tk.RIGHT,
+                width=1,
             )
         return self.ent_minimum
 
-    def get_maximum_entry(self, frame: tk.Frame) -> ttk.Entry | None:
+    def get_maximum_entry(self, frame: ttk.Frame) -> ttk.Entry | None:
         """Get the maximum entry of the factor.
 
         Parameters
         ----------
-        frame : tk.Frame
+        frame : ttk.Frame
             The frame the entry will be placed in
 
         Returns
@@ -257,15 +258,16 @@ class DFFactor(ABC):
                 state=str(self.include_datafarm_state),
                 textvariable=self.maximum,
                 justify=tk.RIGHT,
+                width=1,
             )
         return self.ent_maximum
 
-    def get_num_decimals_entry(self, frame: tk.Frame) -> ttk.Entry | None:
+    def get_num_decimals_entry(self, frame: ttk.Frame) -> ttk.Entry | None:
         """Get the number of decimals entry of the factor.
 
         Parameters
         ----------
-        frame : tk.Frame
+        frame : ttk.Frame
             The frame the entry will be placed in
 
         Returns
@@ -282,6 +284,7 @@ class DFFactor(ABC):
                 state=str(self.include_datafarm_state),
                 textvariable=self.num_decimals,
                 justify=tk.RIGHT,
+                width=1,
             )
         return self.ent_num_decimals
 
@@ -328,13 +331,35 @@ class DFBoolean(DFFactor):
         return self.__default
 
     @default.setter
-    def default(self, default: tk.BooleanVar) -> None:
+    def default(self, default: tk.Variable) -> None:
+        if not isinstance(default, tk.BooleanVar):
+            error_msg = "Default value must be a BooleanVar."
+            raise ValueError(error_msg)
         self.__default = default
 
     @property
     def default_eval(self) -> bool:
         """Evaluated default value of the factor."""
         return self.default.get()
+    
+    @property
+    def include_default_state(self) -> Literal["readonly", "disabled", None]:
+        """Whether or not the default field is enabled."""
+        if self.include is None:
+            return None
+        if self.include.get():
+            return "disabled"
+        return "readonly"
+
+    @property
+    def include_datafarm_state(self) -> Literal["readonly", "disabled", None]:
+        """Whether or not the datafarm fields are enabled."""
+        if self.include is None:
+            return None
+        if self.include.get():
+            return "readonly"
+        return "disabled"
+
 
     def __init__(self, name: str, description: str, default: bool) -> None:
         """Initialize the boolean factor class.
@@ -353,12 +378,12 @@ class DFBoolean(DFFactor):
         self.default = tk.BooleanVar(value=default)
         self.__include = tk.BooleanVar(value=False)
 
-    def get_default_entry(self, frame: tk.Frame) -> ttk.Entry:
+    def get_default_entry(self, frame: ttk.Frame) -> ttk.Entry:
         """Get the default entry of the factor.
 
         Parameters
         ----------
-        frame : tk.Frame
+        frame : ttk.Frame
             The frame the entry will be placed in
 
         Returns
@@ -375,9 +400,15 @@ class DFBoolean(DFFactor):
                 textvariable=self.default,
                 values=["True", "False"],
                 justify=tk.LEFT,
+                width=1,
             )
             self.ent_default.current(0 if self.default.get() else 1)
         return self.ent_default
+    
+    def _toggle_fields(self) -> None:
+        super()._toggle_fields()
+        if self.ent_default.state() != ["disabled"]:
+            self.ent_default.state(["readonly"])
 
 
 class DFInteger(DFFactor):
@@ -394,7 +425,10 @@ class DFInteger(DFFactor):
         return self.__default
 
     @default.setter
-    def default(self, default: tk.IntVar) -> None:
+    def default(self, default: tk.Variable) -> None:
+        if not isinstance(default, tk.IntVar):
+            error_msg = "Default value must be an IntVar."
+            raise ValueError(error_msg)
         self.__default = default
 
     @property
@@ -464,7 +498,10 @@ class DFFloat(DFFactor):
         return self.__default
 
     @default.setter
-    def default(self, default: tk.DoubleVar) -> None:
+    def default(self, default: tk.Variable) -> None:
+        if not isinstance(default, tk.DoubleVar):
+            error_msg = "Default value must be a DoubleVar."
+            raise ValueError(error_msg)
         self.__default = default
 
     @property
@@ -527,9 +564,32 @@ class DFFloat(DFFactor):
         self.__include = tk.BooleanVar(value=False)
         self.__minimum = tk.DoubleVar(value=default)
         self.__maximum = tk.DoubleVar(value=default)
-        num_decimals = str(default)[::-1].find(".")
+        num_decimals = self.__find_num_decimals(default)
         self.__num_decimals = tk.IntVar(value=num_decimals)
 
+    def __find_num_decimals(self, value: float) -> int:
+        """Find the number of decimals in a float value.
+
+        Parameters
+        ----------
+        value : float
+            The float value to find the number of decimals in
+
+        Returns
+        -------
+        int
+            The number of decimals in the float value
+
+        """
+        # Case 1: Decimal point in value
+        if "." in str(value):
+            return len(str(value).split(".")[1])
+        # Case 2: No decimal point in value, but xe-y format
+        elif "e-" in str(value):
+            return int(str(value).split("e-")[1])
+        # Case 3: No decimal point and not in xe-y format
+        return 0
+        
 
 class DFTuple(DFFactor):
     """Class to store tuple factors for problems and solvers."""
@@ -545,7 +605,10 @@ class DFTuple(DFFactor):
         return self.__default
 
     @default.setter
-    def default(self, default: tk.StringVar) -> None:
+    def default(self, default: tk.Variable) -> None:
+        if not isinstance(default, tk.StringVar):
+            error_msg = "Default value must be a StringVar."
+            raise ValueError(error_msg)
         self.__default = default
 
     @property
@@ -589,7 +652,10 @@ class DFList(DFFactor):
         return self.__default
 
     @default.setter
-    def default(self, default: tk.StringVar) -> None:
+    def default(self, default: tk.Variable) -> None:
+        if not isinstance(default, tk.StringVar):
+            error_msg = "Default value must be a StringVar."
+            raise ValueError(error_msg)
         self.__default = default
 
     @property

@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from enum import Enum
+from typing import Callable
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -28,6 +30,30 @@ def _factor_check(self: Solver | Problem | Model, factor_name: str) -> bool:
     self.check_factor_list[factor_name]()
     # Return true if we successfully checked the factor
     return True
+
+class ObjectiveType(Enum):
+    """Enum class for objective types."""
+
+    SINGLE = 1
+    MULTI = 2
+
+
+class ConstraintType(Enum):
+    """Enum class for constraint types."""
+
+    UNCONSTRAINED = 1
+    BOX = 2
+    DETERMINISTIC = 3
+    STOCHASTIC = 4
+
+
+class VariableType(Enum):
+    """Enum class for variable types."""
+
+    DISCRETE = 1
+    CONTINUOUS = 2
+    MIXED = 3
+
 
 class Solver(ABC):
     """Base class to implement simulation-optimization solvers.
@@ -64,70 +90,59 @@ class Solver(ABC):
     def name(self) -> str:
         """Name of solver."""
         return self.__name
-    
+
     @name.setter
     def name(self, value: str) -> None:
         self.__name = value
 
     @property
-    def objective_type(self) -> str:
+    @abstractmethod
+    def objective_type(self) -> ObjectiveType:
         """Description of objective types: "single" or "multi"."""
-        return self.__objective_type
-    
-    @objective_type.setter
-    def objective_type(self, value: str) -> None:
-        self.__objective_type = value
+        raise NotImplementedError
 
     @property
-    def constraint_type(self) -> str:
+    @abstractmethod
+    def constraint_type(self) -> ConstraintType:
         """Description of constraints types: "unconstrained", "box", "deterministic", "stochastic"."""
-        return self.__constraint_type
-    
-    @constraint_type.setter
-    def constraint_type(self, value: str) -> None:
-        self.__constraint_type = value
+        raise NotImplementedError
 
     @property
-    def variable_type(self) -> str:
+    @abstractmethod
+    def variable_type(self) -> VariableType:
         """Description of variable types: "discrete", "continuous", "mixed"."""
-        return self.__variable_type
-    
-    @variable_type.setter
-    def variable_type(self, value: str) -> None:
-        self.__variable_type = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def gradient_needed(self) -> bool:
         """True if gradient of objective function is needed, otherwise False."""
-        return self.__gradient_needed
-    
-    @gradient_needed.setter
-    def gradient_needed(self, value: bool) -> None:
-        self.__gradient_needed = value
+        raise NotImplementedError
 
     @property
     def factors(self) -> dict:
         """Changeable factors (i.e., parameters) of the solver."""
         return self.__factors
-    
+
     @factors.setter
-    def factors(self, value: dict) -> None:
+    def factors(self, value: dict | None) -> None:
+        if value is None:
+            value = {}
         self.__factors = value
 
     @property
-    def specifications(self) -> dict[str, dict[str, str | type | int | float | bool]]:
+    @abstractmethod
+    def specifications(
+        self,
+    ) -> dict[str, dict]:
         """Details of each factor (for GUI, data validation, and defaults)."""
-        return self.__specifications
-    
-    @specifications.setter
-    def specifications(self, value: dict) -> None:
-        self.__specifications = value
+        raise NotImplementedError
 
     @property
     def rng_list(self) -> list[MRG32k3a]:
         """List of RNGs used for the solver's internal purposes."""
         return self.__rng_list
-    
+
     @rng_list.setter
     def rng_list(self, value: list[MRG32k3a]) -> None:
         self.__rng_list = value
@@ -136,21 +151,20 @@ class Solver(ABC):
     def solution_progenitor_rngs(self) -> list[MRG32k3a]:
         """List of RNGs used as a baseline for simulating solutions."""
         return self.__solution_progenitor_rngs
-    
+
     @solution_progenitor_rngs.setter
     def solution_progenitor_rngs(self, value: list[MRG32k3a]) -> None:
         self.__solution_progenitor_rngs = value
 
     @property
-    def check_factor_list(self) -> dict:
+    @abstractmethod
+    def check_factor_list(self) -> dict[str, Callable]:
         """Dictionary of functions to check if a factor is permissible."""
-        return self.__check_factor_list
-    
-    @check_factor_list.setter
-    def check_factor_list(self, value: dict) -> None:
-        self.__check_factor_list = value
+        raise NotImplementedError
 
-    def __init__(self, fixed_factors: dict) -> None:
+    def __init__(
+        self, name: str = "", fixed_factors: dict | None = None
+    ) -> None:
         """Initialize a solver object.
 
         Parameters
@@ -159,27 +173,34 @@ class Solver(ABC):
             Dictionary of user-specified solver factors.
 
         """
-        # Set factors of the solver.
-        # Fill in missing factors with default values.
+        assert len(name) > 0, "Name must be specified."
+        self.name = name
+        # Add all the fixed factors to the solver
         self.factors = fixed_factors
-        for key in self.specifications:
-            if key not in fixed_factors:
-                self.factors[key] = self.specifications[key]["default"]      
+        all_factors = set(self.specifications.keys())
+        present_factors = set(self.factors.keys())
+        missing_factors = all_factors - present_factors
+        for factor in missing_factors:
+            self.factors[factor] = self.specifications[factor]["default"]
+        # Run checks
         self.run_all_checks(factor_names = fixed_factors.keys())
-    def __eq__(self, other: Solver) -> bool:
+
+    def __eq__(self, other: object) -> bool:
         """Check if two solvers are equivalent.
 
         Parameters
         ----------
-        other : ``base.Solver``
-            Other Solver object to compare to self.
+        other : object
+            Other object to compare to self.
 
         Returns
         -------
         bool
-            True if the two solvers are equivalent, otherwise False.
+            True if the two objects are equivalent, otherwise False.
 
         """
+        if not isinstance(other, Solver):
+            return False
         return type(self) is type(other) and self.factors == other.factors
 
     def __hash__(self) -> int:
@@ -490,121 +511,85 @@ class Problem(ABC):
         self.__name = value
 
     @property
+    @abstractmethod
     def dim(self) -> int:
         """Number of decision variables."""
-        return self.__dim
-    
-    @dim.setter
-    def dim(self, value: int) -> None:
-        self.__dim = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def n_objectives(self) -> int:
         """Number of objectives."""
-        return self.__n_objectives
-    
-    @n_objectives.setter
-    def n_objectives(self, value: int) -> None:
-        self.__n_objectives = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def n_stochastic_constraints(self) -> int:
         """Number of stochastic constraints."""
-        return self.__n_stochastic_constraints
-    
-    @n_stochastic_constraints.setter
-    def n_stochastic_constraints(self, value: int) -> None:
-        self.__n_stochastic_constraints = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def minmax(self) -> tuple[int]:
         """Indicators of maximization (+1) or minimization (-1) for each objective."""
-        return self.__minmax
-    
-    @minmax.setter
-    def minmax(self, value: tuple[int]) -> None:
-        self.__minmax = value
+        raise NotImplementedError
 
     @property
-    def constraint_type(self) -> str:
+    @abstractmethod
+    def constraint_type(self) -> ConstraintType:
         """Description of constraints types: "unconstrained", "box", "deterministic", "stochastic"."""
-        return self.__constraint_type
-    
-    @constraint_type.setter
-    def constraint_type(self, value: str) -> None:
-        self.__constraint_type = value
+        raise NotImplementedError
 
     @property
-    def variable_type(self) -> str:
+    @abstractmethod
+    def variable_type(self) -> VariableType:
         """Description of variable types: "discrete", "continuous", "mixed"."""
-        return self.__variable_type
-    
-    @variable_type.setter
-    def variable_type(self, value: str) -> None:
-        self.__variable_type = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def lower_bounds(self) -> tuple:
         """Lower bound for each decision variable."""
-        return self.__lower_bounds
-
-    @lower_bounds.setter
-    def lower_bounds(self, value: tuple) -> None:
-        self.__lower_bounds = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def upper_bounds(self) -> tuple:
         """Upper bound for each decision variable."""
-        return self.__upper_bounds
-
-    @upper_bounds.setter
-    def upper_bounds(self, value: tuple) -> None:
-        self.__upper_bounds = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def gradient_available(self) -> bool:
         """True if direct gradient of objective function is available, otherwise False."""
-        return self.__gradient_available
-    
-    @gradient_available.setter
-    def gradient_available(self, value: bool) -> None:
-        self.__gradient_available = value
+        raise NotImplementedError
 
     @property
-    def optimal_value(self) -> float:
+    @abstractmethod
+    def optimal_value(self) -> float | None:
         """Optimal objective function value."""
-        return self.__optimal_value
-
-    @optimal_value.setter
-    def optimal_value(self, value: float) -> None:
-        self.__optimal_value = value
+        raise NotImplementedError
 
     @property
-    def optimal_solution(self) -> tuple:
+    @abstractmethod
+    def optimal_solution(self) -> tuple | None:
         """Optimal solution."""
-        return self.__optimal_solution
-
-    @optimal_solution.setter
-    def optimal_solution(self, value: tuple) -> None:
-        self.__optimal_solution = value
+        raise NotImplementedError
 
     @property
     def model(self) -> Model:
         """Associated simulation model that generates replications."""
         return self.__model
-    
+
     @model.setter
     def model(self, value: Model) -> None:
         self.__model = value
 
     @property
+    @abstractmethod
     def model_default_factors(self) -> dict:
         """Default values for overriding model-level default factors."""
-        return self.__model_default_factors
-
-    @model_default_factors.setter
-    def model_default_factors(self, value: dict) -> None:
-        self.__model_default_factors = value
+        raise NotImplementedError
 
     @property
     def model_fixed_factors(self) -> dict:
@@ -612,17 +597,16 @@ class Problem(ABC):
         return self.__model_fixed_factors
 
     @model_fixed_factors.setter
-    def model_fixed_factors(self, value: dict) -> None:
+    def model_fixed_factors(self, value: dict | None) -> None:
+        if value is None:
+            value = {}
         self.__model_fixed_factors = value
 
     @property
+    @abstractmethod
     def model_decision_factors(self) -> set[str]:
         """Set of keys for factors that are decision variables."""
-        return self.__model_decision_factors
-
-    @model_decision_factors.setter
-    def model_decision_factors(self, value: set[str]) -> None:
-        self.__model_decision_factors = value
+        raise NotImplementedError
 
     @property
     def rng_list(self) -> list[MRG32k3a]:
@@ -639,29 +623,30 @@ class Problem(ABC):
         return self.__factors
 
     @factors.setter
-    def factors(self, value: dict) -> None:
+    def factors(self, value: dict | None) -> None:
+        if value is None:
+            value = {}
         self.__factors = value
 
     @property
+    @abstractmethod
     def specifications(self) -> dict:
         """Details of each factor (for GUI, data validation, and defaults)."""
-        return self.__specifications
-
-    @specifications.setter
-    def specifications(self, value: dict) -> None:
-        self.__specifications = value
+        raise NotImplementedError
 
     @property
-    # @abstractmethod
+    @abstractmethod
     def check_factor_list(self) -> dict:
         """Dictionary of functions to check if a factor is permissible."""
-        return self.__check_factor_list
+        raise NotImplementedError
 
-    @check_factor_list.setter
-    def check_factor_list(self, value: dict) -> None:
-        self.__check_factor_list = value
-
-    def __init__(self, fixed_factors: dict, model_fixed_factors: dict) -> None:
+    def __init__(
+        self,
+        name: str = "",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+        model: Callable[..., Model] | None = None,
+    ) -> None:
         """Initialize a problem object.
 
         Parameters
@@ -672,30 +657,41 @@ class Problem(ABC):
             Subset of user-specified non-decision factors to pass through to the model.
 
         """
-        # Set factors of the problem.
-        # Fill in missing factors with default values.
+        assert len(name) > 0, "Name must be specified."
+        assert model is not None, "Model must be specified."
+
+        # Assign the name of the problem
+        self.name = name
+
+        # Add all the fixed factors to the problem
         self.factors = fixed_factors
-        for key in self.specifications:
-            if key not in fixed_factors:
-                self.factors[key] = self.specifications[key]["default"]
-        # Set subset of factors of the simulation model.
-        # Fill in missing model factors with problem-level default values.
-        for key in self.model_default_factors:
-            if key not in model_fixed_factors:
-                model_fixed_factors[key] = self.model_default_factors[key]
+        all_factors = set(self.specifications.keys())
+        present_factors = set(self.factors.keys())
+        missing_factors = all_factors - present_factors
+        for factor in missing_factors:
+            self.factors[factor] = self.specifications[factor]["default"]
+
+        # Add all the fixed factors to the model
         self.model_fixed_factors = model_fixed_factors
+        all_model_factors = set(self.model_default_factors.keys())
+        present_model_factors = set(self.model_fixed_factors.keys())
+        missing_model_factors = all_model_factors - present_model_factors
+        for factor in missing_model_factors:
+            self.model_fixed_factors[factor] = self.model_default_factors[
+                factor
+            ]
+
+        # Set the model
+        self.model = model(self.model_fixed_factors)
         
-        #super().__init__()
-        
-        # run all check functions
         self.run_all_checks(factor_names = fixed_factors.keys())
-        
-    def __eq__(self, other: Problem) -> bool:
+
+    def __eq__(self, other: object) -> bool:
         """Check if two problems are equivalent.
 
         Parameters
         ----------
-        other : ``base.Problem``
+        other : object
             Other ``base.Problem`` objects to compare to self.
 
         Returns
@@ -704,6 +700,8 @@ class Problem(ABC):
             True if the two problems are equivalent, otherwise False.
 
         """
+        if not isinstance(other, Problem):
+            return False
         if type(self) is type(other) and self.factors == other.factors:
             # Check if non-decision-variable factors of models are the same.
             non_decision_factors = (
@@ -756,7 +754,6 @@ class Problem(ABC):
         #     decision_variables=self.factors["initial_solution"]
         # )
         return True
-
 
     def check_budget(self) -> bool:
         """Check if budget is strictly positive.
@@ -991,13 +988,13 @@ class Problem(ABC):
         raise NotImplementedError
 
     def deterministic_objectives_and_gradients(
-        self, decision_variables: tuple
+        self, x: tuple
     ) -> tuple[tuple, tuple]:
         """Compute deterministic components of objectives for a solution `x`.
 
         Parameters
         ----------
-        decision_variables : tuple
+        x : tuple
             Vector of decision variables.
 
         Returns
@@ -1015,13 +1012,13 @@ class Problem(ABC):
         return det_objectives, det_objectives_gradients
 
     def deterministic_stochastic_constraints_and_gradients(
-        self, decision_variables: tuple
+        self, x: tuple
     ) -> tuple[tuple, tuple]:
         """Compute deterministic components of stochastic constraints for a solution `x`.
 
         Parameters
         ----------
-        decision_variables : tuple
+        x : tuple
             Vector of decision variables.
 
         Returns
@@ -1038,14 +1035,12 @@ class Problem(ABC):
         )
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(
-        self, decision_variables: tuple
-    ) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """Check if a solution `x` satisfies the problem's deterministic constraints.
 
         Parameters
         ----------
-        decision_variables : tuple
+        x : tuple
             Vector of decision variables.
 
         Returns
@@ -1058,10 +1053,8 @@ class Problem(ABC):
         return bool(
             np.prod(
                 [
-                    self.lower_bounds[idx]
-                    <= decision_variables[idx]
-                    <= self.upper_bounds[idx]
-                    for idx in range(len(decision_variables))
+                    self.lower_bounds[idx] <= x[idx] <= self.upper_bounds[idx]
+                    for idx in range(len(x))
                 ]
             )
         )
@@ -1119,6 +1112,7 @@ class Problem(ABC):
             # Generate one replication at x.
             responses, gradients = self.model.replicate(solution.rng_list)
             # Convert gradient subdictionaries to vectors mapping to decision variables.
+            vector_gradients = {}
             if self.gradient_available:
                 vector_gradients = {
                     keys: self.factor_dict_to_vector_gradients(gradient_dict)
@@ -1135,16 +1129,22 @@ class Problem(ABC):
                 )
             ]
             if self.gradient_available:
-                solution.objectives_gradients[solution.n_reps] = [
-                    [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
-                    for stoch_obj, det_obj in zip(
-                        self.response_dict_to_objectives_gradients(
-                            vector_gradients
-                        ),
-                        solution.det_objectives_gradients,
-                    )
-                ]
-                # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
+                # print(self.response_dict_to_objectives_gradients(vector_gradients))
+                # print(solution.det_objectives_gradients)
+                # TODO: Ensure that this never happens
+                if "vector_gradients" not in locals():
+                    raise ValueError("vector_gradients not defined")
+                else:
+                    solution.objectives_gradients[solution.n_reps] = [
+                        [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
+                        for stoch_obj, det_obj in zip(
+                            self.response_dict_to_objectives_gradients(
+                                vector_gradients
+                            ),
+                            solution.det_objectives_gradients,
+                        )
+                    ]
+                    # solution.objectives_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_obj, det_obj)] for stoch_obj, det_obj in zip(self.response_dict_to_objectives(vector_gradients), solution.det_objectives_gradients)]
             if (
                 self.n_stochastic_constraints > 0
                 and solution.stoch_constraints is not None
@@ -1225,31 +1225,34 @@ class Model(ABC):
     """
 
     @property
+    @abstractmethod
     def name(self) -> str:
         """Name of model."""
-        return self.__name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        self.__name = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def n_rngs(self) -> int:
         """Number of random-number generators used to run a simulation replication."""
-        return self.__n_rngs
-
-    @n_rngs.setter
-    def n_rngs(self, value: int) -> None:
-        self.__n_rngs = value
+        raise NotImplementedError
 
     @property
+    @abstractmethod
     def n_responses(self) -> int:
         """Number of responses (performance measures)."""
-        return self.__n_responses
+        raise NotImplementedError
 
-    @n_responses.setter
-    def n_responses(self, value: int) -> None:
-        self.__n_responses = value
+    @property
+    @abstractmethod
+    def specifications(self) -> dict[str, dict]:
+        """Details of each factor (for GUI, data validation, and defaults)."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def check_factor_list(self) -> dict[str, Callable]:
+        """Switch case for checking factor simulatability."""
+        raise NotImplementedError
 
     @property
     def factors(self) -> dict:
@@ -1257,28 +1260,12 @@ class Model(ABC):
         return self.__factors
 
     @factors.setter
-    def factors(self, value: dict) -> None:
+    def factors(self, value: dict | None) -> None:
+        if value is None:
+            value = {}
         self.__factors = value
 
-    @property
-    def specifications(self) -> dict:
-        """Details of each factor (for GUI, data validation, and defaults)."""
-        return self.__specifications
-
-    @specifications.setter
-    def specifications(self, value: dict) -> None:
-        self.__specifications = value
-
-    @property
-    def check_factor_list(self) -> dict:
-        """Switch case for checking factor simulatability."""
-        return self.__check_factor_list
-
-    @check_factor_list.setter
-    def check_factor_list(self, value: dict) -> None:
-        self.__check_factor_list = value
-
-    def __init__(self, fixed_factors: dict) -> None:
+    def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize a model object.
 
         Parameters
@@ -1287,23 +1274,23 @@ class Model(ABC):
             Dictionary of user-specified model factors.
 
         """
-        # Set factors of the simulation model.
-        # Fill in missing factors with default values.
+        # Add all the fixed factors to the model
         self.factors = fixed_factors
-        for key in self.specifications:
-            if key not in fixed_factors:
-                self.factors[key] = self.specifications[key]["default"]
-                
-        # run all check functions
-        self.run_all_checks(factor_names = fixed_factors.keys())
+        all_factors = set(self.specifications.keys())
+        present_factors = set(self.factors.keys())
+        missing_factors = all_factors - present_factors
+        for key in missing_factors:
+            self.factors[key] = self.specifications[key]["default"]
         
-    def __eq__(self, other: Model) -> bool:
+        self.run_all_checks(factor_names = fixed_factors.keys())
+
+    def __eq__(self, other: object) -> bool:
         """Check if two models are equivalent.
 
         Parameters
         ----------
-        other : ``base.Model``
-            Other ``base.Model`` object to compare to self.
+        other : object
+            Other object to compare to self.
 
         Returns
         -------
@@ -1311,6 +1298,8 @@ class Model(ABC):
             True if the two models are equivalent, otherwise False.
 
         """
+        if not isinstance(other, Model):
+            return False
         return type(self) is type(other) and self.factors == other.factors
 
     def __hash__(self) -> int:
