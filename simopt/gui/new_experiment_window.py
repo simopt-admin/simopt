@@ -3240,7 +3240,7 @@ class NewExperimentWindow(Toplevel):
 
         # solver selection (treeview)
         self.solver_tree_frame = tk.Frame(
-            master=self.plot_selection_frame, width=500, height=250
+            master=self.plot_selection_frame, width=300, height=300
         )  # frame just to hold solver tree
         self.solver_tree_frame.grid(
             row=3, column=0, columnspan=2, padx=10, pady=10, sticky="nsew"
@@ -3307,7 +3307,7 @@ class NewExperimentWindow(Toplevel):
 
         # problem selection (treeview)
         self.problem_tree_frame = tk.Frame(
-            master=self.plot_selection_frame, width=500, height=250
+            master=self.plot_selection_frame, width=300, height=300
         )
         self.problem_tree_frame.grid(
             row=3, column=3, columnspan=2, padx=10, pady=10, sticky="nsew"
@@ -3489,6 +3489,10 @@ class NewExperimentWindow(Toplevel):
         )
         self.del_header.grid(row=0, column=4)
 
+        # If there's only one experiment, load it
+        if len(postnorm_experiments) == 1:
+            self.update_plot_menu(postnorm_experiments[0])
+
     def refresh_experiments(self) -> None:
         # find experiments that have been postnormalized
         postnorm_experiments = []  # list to hold names of all experiments that have been postnormalized
@@ -3503,6 +3507,9 @@ class NewExperimentWindow(Toplevel):
                 label=exp,
                 command=lambda value=exp: self.update_plot_menu(value),
             )
+        # If there's only one experiment, load it
+        if len(postnorm_experiments) == 1:
+            self.update_plot_menu(postnorm_experiments[0])
 
     def update_plot_window_scroll(self, event: tk.Event) -> None:
         self.plotting_canvas.configure(
@@ -3515,6 +3522,8 @@ class NewExperimentWindow(Toplevel):
             experiment_name = tk_experiment_name
         else:
             experiment_name = tk_experiment_name.get()
+        # Set the dropdown to the selected experiment
+        self.experiment_var.set(experiment_name)
 
         self.plot_solver_options = [
             "All"
@@ -3554,6 +3563,7 @@ class NewExperimentWindow(Toplevel):
             self.solver_tree.delete(child)
 
         # create first column of solver tree view
+        self.solver_tree.heading("#0", text="#")
         self.solver_tree.column("#0", width=75)
         if self.all_same_solver:
             columns = [
@@ -3590,7 +3600,7 @@ class NewExperimentWindow(Toplevel):
             self.problem_tree.delete(child)
 
         # create first column of problem tree view
-        self.problem_tree.heading("#0", text="Problem #")
+        self.problem_tree.heading("#0", text="#")
         self.problem_tree.column("#0", width=75)
         if self.all_same_problem:
             factors = list(
@@ -4278,7 +4288,7 @@ class NewExperimentWindow(Toplevel):
         self.plot_button = ttk.Button(
             master=self.plot_options_frame, text="Plot", command=self.plot
         )
-        self.plot_button.grid(row=2, column=0)
+        self.plot_button.grid(row=2, column=0, sticky="nsew")
 
     def disable_legend(
         self, is_enabled_tk: tk.StringVar
