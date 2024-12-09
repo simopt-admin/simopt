@@ -18,8 +18,9 @@ Several papers have discussed the development of SimOpt and experiments run on t
 ### Python
 - The [`master branch`](https://github.com/simopt-admin/simopt/tree/master) contains the source code for the latest stable release of the testbed
 - The [`development branch`](https://github.com/simopt-admin/simopt/tree/development) contains the latest code for the testbed, but may contain more bugs than the master branch
+
 ### Matlab
-***NOTE**: MATLAB versions of this testbed are no longer supported*
+> ⚠️ MATLAB versions of this testbed are no longer supported
 - The [`matlab branch`](https://github.com/simopt-admin/simopt/tree/matlab) contains a previous stable version of the testbed written in MATLAB
 
 ## Documentation
@@ -28,36 +29,36 @@ Full documentation for the source code can be found on our **[readthedocs page](
 [![Documentation Status](https://readthedocs.org/projects/simopt/badge/?version=latest)](https://simopt.readthedocs.io/en/latest/?badge=latest)
 
 ## Getting Started
-The most straightforward way to interact with the library is to [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository. Alternatively, you can choose to install the library as a Python package; see the sections titled **Package** and **Basic Example** below for more details about this option.
-
-Download a copy of the cloned repository to your local machine and navigate to the `simopt` folder in your preferred integrated development environment (IDE). You will need to make sure that you have the following dependencies installed: Python 3, `numpy`, `scipy`, `matplotlib`, `pandas`, `seaborn`, and `mrg32k3a`. Run the command ``` python -m pip install numpy scipy matplotlib pandas seaborn mrg32k3a``` to install them from the terminal.
-
-The `demo` folder contains a handful of useful scripts that can be easily modified, as directed in the comments.
-
-* `demo_model.py`: Run multiple replications of a simulation model and report its responses.
-
-* `demo_problem.py`: Run multiple replications of a given solution for an SO problem and report its objective function values and left-hand sides of stochastic constraints.
-
-* `demo_problem_solver.py`: Run multiple macroreplications of a solver on a problem, save the outputs to a .pickle file in the `experiments/outputs` folder, and save plots of the results to .png files in the `experiments/plots` folder.
-
-* `demo_problems_solvers.py`: Run multiple macroreplications of groups of problem-solver pairs and save the outputs and plots.
-
-* `demo_data_farming_model.py`: Create a design over model factors, run multiple replications at each design point, and save the results to a comma separated value (.csv) file in the `data_farming_experiments` folder.
-
-* `demo_san-sscont-ironorecont_experiment`: Run multiple solvers on multiple versions of (s, S) inventory, iron ore, and stochastic activiy network problems and produce plots.
-
-## Graphical User Interface (GUI) - User Guide
-
-### Requirements/Installation
+### Requirements
 - Python >= 3.8
-- Ruby >= 3.0
+- Ruby >= 3.0 (only needed for datafarming)
     - Included on MacOS, but Windows users will need to grab it from [here](https://rubyinstaller.org/)
-- `datafarming` gem < 2.0
-    - Can be installed via `gem install datafarming -v 1.4` once Ruby is installed/configured
+- `datafarming` gem < 2.0 (only needed for datafarming)
+    - This can be installed via `gem install datafarming -v 1.4` once Ruby is installed/configured
     - If experiencing issues, make sure that you are not using version 2.0 or later as that release does not include the required file(s)
 - Python packages for `numpy`, `scipy`, `matplotlib`, `pandas`, `seaborn`, `sphinx`, `mrg32k3a`
     - If using conda/miniconda, run `conda env create -f environment.yml` to create the `simopt` environment. Then run `conda activate simopt` to load the environment
     - Otherwise, run `pip install numpy scipy matplotlib pandas seaborn sphinx mrg32k3a`
+
+### Downloading Source Code
+There are two ways to download a copy of the source code onto your machine:
+1. Download the code in a zip file by clicking the green `<> Code` button above repo contents and clicking the `Download ZIP` option, then unzip the code to a folder on your computer. This does not require `git` to be installed but makes downloading updates to the repository more challenging.
+2. [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) the branch you'd like to download to a folder on your computer. This requires `git` to be installed but makes downloading updates to the repository much easier.
+
+If you do not need the source code for SimOpt, you may install the library as a Python package instead. See the [Package](#package) and [Basic Example](#basic-example) sections for more details about this option.
+
+The `demo` folder contains a handful of useful scripts that can be easily modified, as directed in the comments:
+
+| File                                     | Description |
+| ---------------------------------------- | ----------- |
+| `demo_model.py`                          | Run multiple replications of a simulation model and report its responses |
+| `demo_problem.py`                        | Run multiple replications of a given solution for an SO problem and report its objective function values and left-hand sides of stochastic constraints |
+| `demo_problem_solver.py`                 | Run multiple macroreplications of a solver on a problem, save the outputs to a `.pickle` file in the `experiments/outputs` folder, and save plots of the results to `.png` files in the `experiments/plots` folder |
+| `demo_problems_solvers.py`               | Run multiple macroreplications of groups of problem-solver pairs and save the outputs and plots |
+| `demo_data_farming_model.py`             | Create a design over model factors, run multiple replications at each design point, and save the results to a comma separated value (`.csv`) file in the `data_farming_experiments` folder |
+| `demo_san-sscont-ironorecont_experiment` | Run multiple solvers on multiple versions of (s, S) inventory, iron ore, and stochastic activiy network problems and produce plots |
+
+## Graphical User Interface (GUI) - User Guide
 
 ### Overview
 To open the GUI, run `python -m simopt`
@@ -70,7 +71,6 @@ From the GUI, you can create a specified **problem-solver pair** or a **problem-
 
 At the bottom of the main page, there is a workspace containing all **problem-solver pair**s and **problem-solver group**s. The first tab lists the **problem-solver pair**s ready to be run or post-replicated, the second tab lists the **problem-solver group**s made from the cross-design or by generating a **problem-solver group** from partial set of **problem-solver pair** in the first tab, and the third tab lists those **problem-solver pair**s that are ready to be post-normalized and prepared for plotting.
 
-
 #### 1. Creating a **problem-solver pair**
 This is the main way to add **problem-solver pair**s to the queue in the workspace.
 1. First, select a solver from the "Solver" dropdown list. Each of the solvers has an abbreviation for the type of problems the solver can handle. Once a solver is selected, the "Problem" list will be sorted and show only the problems that work with the selected solver.
@@ -80,7 +80,7 @@ This is the main way to add **problem-solver pair**s to the queue in the workspa
 Each problem has an abbreviation indicating which types of solver is compatible to solve it. The letters in the abbreviation stand for:
 
 | Objective    | Constraint        | Variable       | Direct Gradient Observations |
-|--------------|-------------------|----------------|------------------------------|
+| ------------ | ----------------- | -------------- | ---------------------------- |
 | Single (S)   | Unconstrained (U) | Discrete (D)   | Available (G)                |
 | Multiple (M) | Box (B)           | Continuous (C) | Not Available (N)            |
 |              | Deterministic (D) | Mixed (M)      |                              |
