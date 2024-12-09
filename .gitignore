@@ -1,5 +1,6 @@
 # SimOpt-specific paths
 experiments/
+test/test_.*.py
 
 # The following is from GitHub's Python .gitignore template
 # https://github.com/github/gitignore/blob/main/Python.gitignore
