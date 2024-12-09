@@ -2565,6 +2565,7 @@ class NewExperimentWindow(Toplevel):
             text=title_text,
             font=nametofont("TkHeadingFont"),
             justify="center",
+            anchor="center",
         )
         self.title_label.grid(row=0, column=0, columnspan=2, sticky="ew")
 
@@ -2731,10 +2732,10 @@ class NewExperimentWindow(Toplevel):
             textvariable=self.solve_tol_4_var,
             justify="center",
         )
-        self.solve_tol_1_entry.grid(row=0, column=0, padx=5, sticky="ew")
-        self.solve_tol_2_entry.grid(row=0, column=1, padx=5, sticky="ew")
-        self.solve_tol_3_entry.grid(row=0, column=2, padx=5, sticky="ew")
-        self.solve_tol_4_entry.grid(row=0, column=3, padx=5, sticky="ew")
+        self.solve_tol_1_entry.grid(row=0, column=0, padx=2, sticky="ew")
+        self.solve_tol_2_entry.grid(row=0, column=1, padx=2, sticky="ew")
+        self.solve_tol_3_entry.grid(row=0, column=2, padx=2, sticky="ew")
+        self.solve_tol_4_entry.grid(row=0, column=3, padx=2, sticky="ew")
 
         # set options as default for future experiments
         self.set_as_default_button = ttk.Button(
@@ -2769,6 +2770,9 @@ class NewExperimentWindow(Toplevel):
             solve_tol_4,
         ]
         self.solve_tols_default = [float(tol) for tol in tols]
+
+        # Close the window
+        self.experiment_defaults_window.destroy()
 
     # Functionally the same as the below function, but for boolean values
     def _find_option_setting_bool(
