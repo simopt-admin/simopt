@@ -1,0 +1,15 @@
+name: "ruff format checking"
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest 
+    steps:
+    - uses: astral-sh/ruff-action@v2
+      with:
+        args: "format --check"
