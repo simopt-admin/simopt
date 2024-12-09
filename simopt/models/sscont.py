@@ -6,12 +6,16 @@ with continuous inventory.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/sscont.html>`__.
 """
+
 from __future__ import annotations
 
-import numpy as np
 from math import sqrt
-from simopt.base import Model, Problem
+from typing import Callable
+
+import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import ConstraintType, Model, Problem, VariableType
 
 
 class SSCont(Model):
@@ -67,64 +71,77 @@ class SSCont(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
-        self.name = "SSCONT"
-        self.n_rngs = 2
-        self.n_responses = 7
-        self.factors = fixed_factors
-        self.specifications = {
+
+    @property
+    def name(self) -> str:
+        return "SSCONT"
+
+    @property
+    def n_rngs(self) -> int:
+        return 2
+
+    @property
+    def n_responses(self) -> int:
+        return 7
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "demand_mean": {
                 "description": "mean of exponentially distributed demand in each period",
                 "datatype": float,
-                "default": 100.0
+                "default": 100.0,
             },
             "lead_mean": {
                 "description": "mean of Poisson distributed order lead time",
                 "datatype": float,
-                "default": 6.0
+                "default": 6.0,
             },
             "backorder_cost": {
                 "description": "cost per unit of demand not met with in-stock inventory",
                 "datatype": float,
-                "default": 4.0
+                "default": 4.0,
             },
             "holding_cost": {
                 "description": "holding cost per unit per period",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "fixed_cost": {
                 "description": "order fixed cost",
                 "datatype": float,
-                "default": 36.0
+                "default": 36.0,
             },
             "variable_cost": {
                 "description": "order variable cost per unit",
                 "datatype": float,
-                "default": 2.0
+                "default": 2.0,
             },
             "s": {
                 "description": "inventory threshold for placing order",
                 "datatype": float,
-                "default": 1000.0
+                "default": 1000.0,
             },
             "S": {
                 "description": "max inventory",
                 "datatype": float,
-                "default": 2000.0
+                "default": 2000.0,
             },
             "n_days": {
                 "description": "number of periods to simulate",
                 "datatype": int,
-                "default": 100
+                "default": 100,
             },
             "warmup": {
                 "description": "number of periods as warmup before collecting statistics",
                 "datatype": int,
-                "default": 20
-            }
+                "default": 20,
+            },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "demand_mean": self.check_demand_mean,
             "lead_mean": self.check_lead_mean,
             "backorder_cost": self.check_backorder_cost,
@@ -134,46 +151,60 @@ class SSCont(Model):
             "s": self.check_s,
             "S": self.check_S,
             "n_days": self.check_n_days,
-            "warmup": self.check_warmup
+            "warmup": self.check_warmup,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_demand_mean(self):
-        return self.factors["demand_mean"] > 0
+    def check_demand_mean(self) -> None:
+        if self.factors["demand_mean"] <= 0:
+            raise ValueError("demand_mean must be greater than 0.")
 
-    def check_lead_mean(self):
-        return self.factors["lead_mean"] > 0
+    def check_lead_mean(self) -> None:
+        if self.factors["lead_mean"] <= 0:
+            raise ValueError("lead_mean must be greater than 0.")
 
-    def check_backorder_cost(self):
-        return self.factors["backorder_cost"] > 0
+    def check_backorder_cost(self) -> None:
+        if self.factors["backorder_cost"] <= 0:
+            raise ValueError("backorder_cost must be greater than 0.")
 
-    def check_holding_cost(self):
-        return self.factors["holding_cost"] > 0
+    def check_holding_cost(self) -> None:
+        if self.factors["holding_cost"] <= 0:
+            raise ValueError("holding_cost must be greater than 0.")
 
-    def check_fixed_cost(self):
-        return self.factors["fixed_cost"] > 0
+    def check_fixed_cost(self) -> None:
+        if self.factors["fixed_cost"] <= 0:
+            raise ValueError("fixed_cost must be greater than 0.")
 
-    def check_variable_cost(self):
-        return self.factors["variable_cost"] > 0
+    def check_variable_cost(self) -> None:
+        if self.factors["variable_cost"] <= 0:
+            raise ValueError("variable_cost must be greater than 0.")
 
-    def check_s(self):
-        return self.factors["s"] > 0
+    def check_s(self) -> None:
+        if self.factors["s"] <= 0:
+            raise ValueError("s must be greater than 0.")
 
-    def check_S(self):
-        return self.factors["S"] > 0
+    def check_S(self) -> None:  # noqa: N802
+        if self.factors["S"] <= 0:
+            raise ValueError("S must be greater than 0.")
 
-    def check_n_days(self):
-        return self.factors["n_days"] >= 1
+    def check_n_days(self) -> None:
+        if self.factors["n_days"] < 1:
+            raise ValueError("n_days must be greater than or equal to 1.")
 
-    def check_warmup(self):
-        return self.factors["warmup"] >= 0
+    def check_warmup(self) -> None:
+        if self.factors["warmup"] < 0:
+            raise ValueError("warmup must be greater than or equal to 0.")
 
-    def check_simulatable_factors(self):
-        return self.factors["s"] < self.factors["S"]
+    def check_simulatable_factors(self) -> bool:
+        if self.factors["s"] >= self.factors["S"]:
+            raise ValueError("s must be less than S.")
+        return True
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -208,7 +239,10 @@ class SSCont(Model):
         demand_rng = rng_list[0]
         lead_rng = rng_list[1]
         # Generate exponential random demands.
-        demands = [demand_rng.expovariate(1/self.factors["demand_mean"]) for _ in range(self.factors["n_days"] + self.factors["warmup"])]
+        demands = [
+            demand_rng.expovariate(1 / self.factors["demand_mean"])
+            for _ in range(self.factors["n_days"] + self.factors["warmup"])
+        ]
         # Initialize starting and ending inventories for each period.
         start_inv = np.zeros(self.factors["n_days"] + self.factors["warmup"])
         start_inv[0] = self.factors["s"]  # Start with s units at period 0.
@@ -218,55 +252,124 @@ class SSCont(Model):
         #   - Inventory position each period.
         #   - Amount of product ordered in each period.
         #   - Amount of product outstanding in each period.
-        orders_received = np.zeros(self.factors["n_days"] + self.factors["warmup"])
+        orders_received = np.zeros(
+            self.factors["n_days"] + self.factors["warmup"]
+        )
         inv_pos = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        orders_placed = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        orders_outstanding = np.zeros(self.factors["n_days"] + self.factors["warmup"])
+        orders_placed = np.zeros(
+            self.factors["n_days"] + self.factors["warmup"]
+        )
+        orders_outstanding = np.zeros(
+            self.factors["n_days"] + self.factors["warmup"]
+        )
         # Run simulation over time horizon.
         for day in range(self.factors["n_days"] + self.factors["warmup"]):
             # Calculate end-of-period inventory on hand and inventory position.
             end_inv[day] = start_inv[day] - demands[day]
             inv_pos[day] = end_inv[day] + orders_outstanding[day]
             # Place orders, keeping track of outstanding orders and when they will be received.
-            orders_placed[day] = np.max(((inv_pos[day] < self.factors["s"]) * (self.factors["S"] - inv_pos[day])), 0)
+            orders_placed[day] = np.max(
+                (
+                    (inv_pos[day] < self.factors["s"])
+                    * (self.factors["S"] - inv_pos[day])
+                ),
+                0,
+            )
             if orders_placed[day] > 0:
                 lead = lead_rng.poissonvariate(self.factors["lead_mean"])
                 for future_day in range(day + 1, day + lead + 1):
-                    if future_day < self.factors["n_days"] + self.factors["warmup"]:
-                        orders_outstanding[future_day] = orders_outstanding[future_day] + orders_placed[day]
-                if day + lead + 1 < self.factors["n_days"] + self.factors["warmup"]:
-                    orders_received[day + lead + 1] = orders_received[day + lead + 1] + orders_placed[day]
+                    if (
+                        future_day
+                        < self.factors["n_days"] + self.factors["warmup"]
+                    ):
+                        orders_outstanding[future_day] = (
+                            orders_outstanding[future_day] + orders_placed[day]
+                        )
+                if (
+                    day + lead + 1
+                    < self.factors["n_days"] + self.factors["warmup"]
+                ):
+                    orders_received[day + lead + 1] = (
+                        orders_received[day + lead + 1] + orders_placed[day]
+                    )
             # Calculate starting inventory for next period.
             if day < self.factors["n_days"] + self.factors["warmup"] - 1:
                 start_inv[day + 1] = end_inv[day] + orders_received[day + 1]
         # Calculate responses from simulation data.
-        order_rate = np.mean(orders_placed[self.factors["warmup"]:] > 0)
-        stockout_rate = np.mean(end_inv[self.factors["warmup"]:] < 0)
-        avg_order_costs = np.mean(self.factors["fixed_cost"] * (orders_placed[self.factors["warmup"]:] > 0) +
-                                  self.factors["variable_cost"] * orders_placed[self.factors["warmup"]:])
-        avg_holding_costs = np.mean(self.factors["holding_cost"] * end_inv[self.factors["warmup"]:] * [end_inv[self.factors["warmup"]:] > 0])
-        on_time_rate = 1 - np.sum(np.min(np.vstack((demands[self.factors["warmup"]:], demands[self.factors["warmup"]:] - start_inv[self.factors["warmup"]:])), axis=0)
-                                  * ((demands[self.factors["warmup"]:] - start_inv[self.factors["warmup"]:]) > 0))/np.sum(demands[self.factors["warmup"]:])
-        avg_backorder_costs = self.factors["backorder_cost"]*(1 - on_time_rate)*np.sum(demands[self.factors["warmup"]:])/float(self.factors["n_days"])
-        if np.array(np.where(end_inv[self.factors["warmup"]:] < 0)).size == 0:
+        order_rate = np.mean(orders_placed[self.factors["warmup"] :] > 0)
+        stockout_rate = np.mean(end_inv[self.factors["warmup"] :] < 0)
+        avg_order_costs = np.mean(
+            self.factors["fixed_cost"]
+            * (orders_placed[self.factors["warmup"] :] > 0)
+            + self.factors["variable_cost"]
+            * orders_placed[self.factors["warmup"] :]
+        )
+        avg_holding_costs = np.mean(
+            self.factors["holding_cost"]
+            * end_inv[self.factors["warmup"] :]
+            * [end_inv[self.factors["warmup"] :] > 0]
+        )
+        on_time_rate = 1 - np.sum(
+            np.min(
+                np.vstack(
+                    (
+                        demands[self.factors["warmup"] :],
+                        demands[self.factors["warmup"] :]
+                        - start_inv[self.factors["warmup"] :],
+                    )
+                ),
+                axis=0,
+            )
+            * (
+                (
+                    demands[self.factors["warmup"] :]
+                    - start_inv[self.factors["warmup"] :]
+                )
+                > 0
+            )
+        ) / np.sum(demands[self.factors["warmup"] :])
+        avg_backorder_costs = (
+            self.factors["backorder_cost"]
+            * (1 - on_time_rate)
+            * np.sum(demands[self.factors["warmup"] :])
+            / float(self.factors["n_days"])
+        )
+        if np.array(np.where(end_inv[self.factors["warmup"] :] < 0)).size == 0:
             avg_stockout = 0
         else:
-            avg_stockout = -np.mean(end_inv[self.factors["warmup"]:][np.where(end_inv[self.factors["warmup"]:] < 0)])
-        if np.array(np.where(orders_placed[self.factors["warmup"]:] > 0)).size == 0:
+            avg_stockout = -np.mean(
+                end_inv[self.factors["warmup"] :][
+                    np.where(end_inv[self.factors["warmup"] :] < 0)
+                ]
+            )
+        if (
+            np.array(np.where(orders_placed[self.factors["warmup"] :] > 0)).size
+            == 0
+        ):
             avg_order = 0
         else:
-            avg_order = np.mean(orders_placed[self.factors["warmup"]:][np.where(orders_placed[self.factors["warmup"]:] > 0)])
+            avg_order = np.mean(
+                orders_placed[self.factors["warmup"] :][
+                    np.where(orders_placed[self.factors["warmup"] :] > 0)
+                ]
+            )
         # Compose responses and gradients.
-        responses = {"avg_backorder_costs": avg_backorder_costs,
-                     "avg_order_costs": avg_order_costs,
-                     "avg_holding_costs": avg_holding_costs,
-                     "on_time_rate": on_time_rate,
-                     "order_rate": order_rate,
-                     "stockout_rate": stockout_rate,
-                     "avg_stockout": avg_stockout,
-                     "avg_order": avg_order
-                     }
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {
+            "avg_backorder_costs": avg_backorder_costs,
+            "avg_order_costs": avg_order_costs,
+            "avg_holding_costs": avg_holding_costs,
+            "on_time_rate": on_time_rate,
+            "order_rate": order_rate,
+            "stockout_rate": stockout_rate,
+            "avg_stockout": avg_stockout,
+            "avg_order": avg_order,
+        }
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -342,46 +445,96 @@ class SSContMinCost(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "SSCONT-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
-        self.name = name
-        self.dim = 2
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (-1,)
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.lower_bounds = (0, 0)
-        self.upper_bounds = (np.inf, np.inf)
-        self.gradient_available = False
-        self.optimal_value = None
-        self.optimal_solution = None
-        self.model_default_factors = {
-            "demand_mean": 100.0,
-            "lead_mean": 6.0
-            }
-        self.model_decision_factors = {"s", "S"}
-        self.factors = fixed_factors
-        self.specifications = {
+
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 0
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return False
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {"demand_mean": 100.0, "lead_mean": 6.0}
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"s", "S"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution from which solvers start",
                 "datatype": tuple,
-                "default": (600, 600)
+                "default": (600, 600),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+            },
         }
-        self.check_factor_list = {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
-        }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and overwritten defaults.
-        self.model = SSCont(self.model_fixed_factors)
 
-    def vector_to_factor_dict(self, vector):
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
+            "initial_solution": self.check_initial_solution,
+            "budget": self.check_budget,
+        }
+
+    @property
+    def dim(self) -> int:
+        return 2
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (np.inf,) * self.dim
+
+    def __init__(
+        self,
+        name: str = "SSCONT-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=SSCont,
+        )
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -395,13 +548,10 @@ class SSContMinCost(Problem):
         factor_dict : dict
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "s": vector[0],
-            "S": vector[0] + vector[1]
-        }
+        factor_dict = {"s": vector[0], "S": vector[0] + vector[1]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -419,7 +569,7 @@ class SSContMinCost(Problem):
         vector = (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -434,10 +584,14 @@ class SSContMinCost(Problem):
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["avg_backorder_costs"] + response_dict["avg_order_costs"] + response_dict["avg_holding_costs"],)
+        objectives = (
+            response_dict["avg_backorder_costs"]
+            + response_dict["avg_order_costs"]
+            + response_dict["avg_holding_costs"],
+        )
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -452,10 +606,12 @@ class SSContMinCost(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -475,7 +631,9 @@ class SSContMinCost(Problem):
         det_objectives_gradients = ((0,),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.
@@ -493,11 +651,11 @@ class SSContMinCost(Problem):
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic
         constraints.
@@ -512,9 +670,9 @@ class SSContMinCost(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return (x[0] >= 0 and x[1] >= 0)
+        return x[0] >= 0 and x[1] >= 0
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -533,8 +691,14 @@ class SSContMinCost(Problem):
         # x = tuple(sorted([rand_sol_rng.lognormalvariate(600,1),rand_sol_rng.lognormalvariate(600,1)], key = float))
         mu_d = self.model_default_factors["demand_mean"]
         mu_l = self.model_default_factors["lead_mean"]
-        x = (rand_sol_rng.lognormalvariate(mu_d*mu_l/3,mu_d*mu_l+2*sqrt(2*mu_d**2*mu_l)),
-             rand_sol_rng.lognormalvariate(mu_d*mu_l/3,mu_d*mu_l+2*sqrt(2*mu_d**2*mu_l)))
+        x = (
+            rand_sol_rng.lognormalvariate(
+                mu_d * mu_l / 3, mu_d * mu_l + 2 * sqrt(2 * mu_d**2 * mu_l)
+            ),
+            rand_sol_rng.lognormalvariate(
+                mu_d * mu_l / 3, mu_d * mu_l + 2 * sqrt(2 * mu_d**2 * mu_l)
+            ),
+        )
         return x
 
 

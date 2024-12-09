@@ -5,12 +5,19 @@ Simulate matching of chess players on an online platform.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/chessmm.html>`__.
 """
+
 from __future__ import annotations
 
+from typing import Callable, Final
+
 import numpy as np
-from scipy import special
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+from scipy import special
+
+from simopt.base import ConstraintType, Model, Problem, VariableType
+
+MEAN_ELO: Final[int] = 1200
+MAX_ALLOWABLE_DIFF: Final[int] = 150
 
 
 class ChessMatchmaking(Model):
@@ -43,63 +50,98 @@ class ChessMatchmaking(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
-        self.name = "CHESS"
-        self.n_rngs = 2
-        self.n_responses = 2
-        self.specifications = {
+
+    @property
+    def name(self) -> str:
+        return "CHESS"
+
+    @property
+    def n_rngs(self) -> int:
+        return 2
+
+    @property
+    def n_responses(self) -> int:
+        return 2
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "elo_mean": {
                 "description": "mean of normal distribution for Elo rating",
                 "datatype": float,
-                "default": 1200.0
+                "default": MEAN_ELO,
             },
             "elo_sd": {
                 "description": "standard deviation of normal distribution for Elo rating",
                 "datatype": float,
-                "default": 1200 / (np.sqrt(2) * special.erfcinv(1 / 50))
+                "default": round(
+                    MEAN_ELO / (np.sqrt(2) * special.erfcinv(1 / 50)), 1
+                ),
             },
             "poisson_rate": {
                 "description": "rate of Poisson process for player arrivals",
                 "datatype": float,
-                "default": 1.0
+                "default": 1.0,
             },
             "num_players": {
                 "description": "number of players",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "allowable_diff": {
                 "description": "maximum allowable difference between Elo ratings",
                 "datatype": float,
-                "default": 150.0
-            }
+                "default": MAX_ALLOWABLE_DIFF,
+            },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "elo_mean": self.check_elo_mean,
             "elo_sd": self.check_elo_sd,
             "poisson_rate": self.check_poisson_rate,
             "num_players": self.check_num_players,
-            "allowable_diff": self.check_allowable_diff
+            "allowable_diff": self.check_allowable_diff,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_elo_mean(self):
-        return self.factors["elo_mean"] > 0
+    def check_elo_mean(self) -> None:
+        if self.factors["elo_mean"] <= 0:
+            raise ValueError(
+                "Mean of normal distribution for Elo rating must be greater than 0."
+            )
 
-    def check_elo_sd(self):
-        return self.factors["elo_sd"] > 0
+    def check_elo_sd(self) -> None:
+        if self.factors["elo_sd"] <= 0:
+            raise ValueError(
+                "Standard deviation of normal distribution for Elo rating must be greater than 0."
+            )
 
-    def check_poisson_rate(self):
-        return self.factors["poisson_rate"] > 0
+    def check_poisson_rate(self) -> None:
+        if self.factors["poisson_rate"] <= 0:
+            raise ValueError(
+                "Rate of Poisson process for player arrivals must be greater than 0."
+            )
 
-    def check_num_players(self):
-        return self.factors["num_players"] > 0
+    def check_num_players(self) -> None:
+        if self.factors["num_players"] <= 0:
+            raise ValueError("Number of players must be greater than 0.")
 
-    def check_allowable_diff(self):
-        return self.factors["allowable_diff"] > 0
+    def check_allowable_diff(self) -> None:
+        if self.factors["allowable_diff"] <= 0:
+            raise ValueError(
+                "The maximum mallowable different between Elo ratings must be greater than 0."
+            )
 
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def check_simulatable_factors(self) -> bool:
+        # No factors need cross-checked
+        return True
+
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -127,17 +169,24 @@ class ChessMatchmaking(Model):
         total_diff = 0
         elo_diffs = []
         # Simulate arrival and matching and players.
-        for player in range(self.factors["num_players"]):
+        for _ in range(self.factors["num_players"]):
             # Generate interarrival time of the player.
             time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
             # Generate rating of the player via acceptance/rejection (not truncation).
-            player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+            player_rating = elo_rng.normalvariate(
+                self.factors["elo_mean"], self.factors["elo_sd"]
+            )
             while player_rating < 0 or player_rating > 2400:
-                player_rating = elo_rng.normalvariate(self.factors["elo_mean"], self.factors["elo_sd"])
+                player_rating = elo_rng.normalvariate(
+                    self.factors["elo_mean"], self.factors["elo_sd"]
+                )
             # Attempt to match the incoming player with waiting players in FIFO manner.
             old_total = total_diff
             for p in range(len(waiting_players)):
-                if abs(player_rating - waiting_players[p]) <= self.factors["allowable_diff"]:
+                if (
+                    abs(player_rating - waiting_players[p])
+                    <= self.factors["allowable_diff"]
+                ):
                     total_diff += abs(player_rating - waiting_players[p])
                     elo_diffs.append(abs(player_rating - waiting_players[p]))
                     del waiting_players[p]
@@ -147,11 +196,22 @@ class ChessMatchmaking(Model):
             # If incoming player is not matched, add them to the waiting pool.
             if old_total == total_diff:
                 waiting_players.append(player_rating)
+        # If there weren't any matches, the elo_diffs list will be empty.
+        # This throws some warnings, so we'll add a 0 to the list.
+        # TODO: Check to see if there is a better way to handle this.
+        if not elo_diffs:
+            elo_diffs.append(0)
         # Compose responses and gradients.
-        responses = {"avg_diff": np.mean(elo_diffs),
-                     "avg_wait_time": np.mean(wait_times)
-                     }
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {
+            "avg_diff": np.mean(elo_diffs),
+            "avg_wait_time": np.mean(wait_times),
+        }
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -230,50 +290,103 @@ class ChessAvgDifference(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "CHESS-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
-        self.name = name
-        self.dim = 1
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 1
-        self.minmax = (-1,)
-        self.constraint_type = "stochastic"
-        self.variable_type = "continuous"
-        self.lower_bounds = (0,)
-        self.upper_bounds = (2400,)
-        self.gradient_available = False
-        self.optimal_value = None
-        self.optimal_solution = None
-        self.model_default_factors = {}
-        self.model_decision_factors = {"allowable_diff"}
-        self.factors = fixed_factors
-        self.specifications = {
+
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 1
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.STOCHASTIC
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return False
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set:
+        return {"allowable_diff"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (150,)
+                "default": (MAX_ALLOWABLE_DIFF,),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
+                "default": 1000,
             },
             "upper_time": {
                 "description": "upper bound on wait time",
                 "datatype": float,
-                "default": 5.0
-            }
+                "default": 5.0,
+            },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
             "upper_time": self.check_upper_time,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = ChessMatchmaking(self.model_fixed_factors)
 
-    def check_upper_time(self):
-        return self.factors["upper_time"] > 0
+    @property
+    def dim(self) -> int:
+        return 1
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (0,)
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (2400,)
+
+    def __init__(
+        self,
+        name: str = "CHESS-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name, fixed_factors, model_fixed_factors, ChessMatchmaking
+        )
+
+    def check_upper_time(self) -> None:
+        if self.factors["upper_time"] <= 0:
+            raise ValueError(
+                "The upper bound on wait time must be greater than 0."
+            )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
@@ -289,9 +402,7 @@ class ChessAvgDifference(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "allowable_diff": vector[0]
-        }
+        factor_dict = {"allowable_diff": vector[0]}
         return factor_dict
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
@@ -348,7 +459,9 @@ class ChessAvgDifference(Problem):
         stoch_constraints = (response_dict["avg_wait_time"],)
         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints for a solution `x`.
 
@@ -368,7 +481,9 @@ class ChessAvgDifference(Problem):
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -385,7 +500,7 @@ class ChessAvgDifference(Problem):
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
-        det_objectives_gradients = None
+        det_objectives_gradients = ()
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
@@ -402,7 +517,8 @@ class ChessAvgDifference(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return x >= 0
+        is_greater_than_zero: list[bool] = [x_val > 0 for x_val in x]
+        return all(is_greater_than_zero)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """

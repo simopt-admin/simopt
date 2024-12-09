@@ -55,7 +55,7 @@ output_filename = "cntnews_data_farming_output"
 myexperiment = DataFarmingExperiment(model_name=model_name,
                                      factor_settings_filename=factor_settings_filename,
                                      factor_headers=factor_headers,
-                                     design_filename=design_filename,
+                                     design_filepath=design_filename,
                                      model_fixed_factors={}
                                      )
 

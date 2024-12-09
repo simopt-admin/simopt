@@ -68,7 +68,7 @@ mysolution.attach_rngs(rng_list, copy=False)
 
 # Simulate a fixed number of replications (n_reps) at the solution x.
 n_reps = 10
-myproblem.simulate(mysolution, m=n_reps)
+myproblem.simulate(mysolution, num_macroreps=n_reps)
 
 # Print results to console.
 print(f"Ran {n_reps} replications of the {myproblem.name} problem at solution x = {x}.\n")

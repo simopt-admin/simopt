@@ -266,15 +266,15 @@ def main():
     CI_param = True
     alpha = 0.2
 
-    plot_solvability_profiles(experiments, plot_type="cdf_solvability", solve_tol=alpha, all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
-    plot_solvability_profiles(experiments, plot_type="quantile_solvability", solve_tol=alpha, beta=0.5, all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
-    plot_solvability_profiles(experiments=experiments, plot_type="diff_cdf_solvability", solve_tol=alpha, ref_solver="ASTRO-DF", all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
-    plot_solvability_profiles(experiments=experiments, plot_type="diff_quantile_solvability", solve_tol=alpha, beta=0.5, ref_solver="ASTRO-DF", all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
-    plot_area_scatterplots(experiments, all_in_one=True, plot_CIs=CI_param, print_max_hw=CI_param)
+    plot_solvability_profiles(experiments, plot_type="cdf_solvability", solve_tol=alpha, all_in_one=True, plot_conf_ints=CI_param, print_max_hw=CI_param)
+    plot_solvability_profiles(experiments, plot_type="quantile_solvability", solve_tol=alpha, beta=0.5, all_in_one=True, plot_conf_ints=CI_param, print_max_hw=CI_param)
+    plot_solvability_profiles(experiments=experiments, plot_type="diff_cdf_solvability", solve_tol=alpha, ref_solver="ASTRO-DF", all_in_one=True, plot_conf_ints=CI_param, print_max_hw=CI_param)
+    plot_solvability_profiles(experiments=experiments, plot_type="diff_quantile_solvability", solve_tol=alpha, beta=0.5, ref_solver="ASTRO-DF", all_in_one=True, plot_conf_ints=CI_param, print_max_hw=CI_param)
+    plot_area_scatterplots(experiments, all_in_one=True, plot_conf_ints=CI_param, print_max_hw=CI_param)
     plot_terminal_scatterplots(experiments, all_in_one=True)
 
     for i in range(n_problems):
-        plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=CI_param, print_max_hw=True)
+        plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_conf_ints=CI_param, print_max_hw=True)
         plot_terminal_progress([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=True, all_in_one=True)
         # plot_solvability_cdfs([experiments[solver_idx][i] for solver_idx in range(n_solvers)], solve_tol=0.2,  all_in_one=True, plot_CIs=True, print_max_hw=True)
 
@@ -283,9 +283,9 @@ def main():
 
     plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(3, 4)], plot_type="all", all_in_one=True, normalize=False)
 
-    plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_CIs=True, print_max_hw=False, normalize=True)
+    plot_progress_curves([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_conf_ints=True, print_max_hw=False, normalize=True)
 
-    plot_solvability_cdfs(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)], solve_tol=0.2, all_in_one=True, plot_CIs=True, print_max_hw=False)
+    plot_solvability_cdfs(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)], solve_tol=0.2, all_in_one=True, plot_conf_ints=True, print_max_hw=False)
 
     plot_terminal_progress([experiments[solver_idx][0] for solver_idx in range(n_solvers)], plot_type="violin", normalize=False, all_in_one=True)
 
