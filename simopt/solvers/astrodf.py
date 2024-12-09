@@ -402,7 +402,7 @@ class ASTRODF(Solver):
                 elif i == 0:
                     sample_size = incumbent_solution.n_reps
                     sig2 = incumbent_solution.objectives_var[0]
-                    np.linalg.trace(incumbent_solution.objectives_gradients_var)
+                    np.trace(incumbent_solution.objectives_gradients_var)
                     # adaptive sampling
                     while True:
                         stopping = self.get_stopping_time(
@@ -425,7 +425,7 @@ class ASTRODF(Solver):
                         if delta_power == 0:
                             sig2 = max(
                                 sig2,
-                                np.linalg.trace(
+                                np.trace(
                                     incumbent_solution.objectives_gradients_var
                                 ),
                             )
@@ -452,7 +452,7 @@ class ASTRODF(Solver):
                     if delta_power == 0:
                         sig2 = max(
                             sig2,
-                            np.linalg.trace(
+                            np.trace(
                                 visited_pts_list[
                                     f_index
                                 ].objectives_gradients_var
@@ -480,7 +480,7 @@ class ASTRODF(Solver):
                         if delta_power == 0:
                             sig2 = max(
                                 sig2,
-                                np.linalg.trace(
+                                np.trace(
                                     visited_pts_list[
                                         f_index
                                     ].objectives_gradients_var
@@ -511,9 +511,7 @@ class ASTRODF(Solver):
                         if delta_power == 0:
                             sig2 = max(
                                 sig2,
-                                np.linalg.trace(
-                                    new_solution.objectives_gradients_var
-                                ),
+                                np.trace(new_solution.objectives_gradients_var),
                             )
                         stopping = self.get_stopping_time(
                             pilot_run,
@@ -737,9 +735,7 @@ class ASTRODF(Solver):
                 if delta_power == 0:
                     sig2 = max(
                         sig2,
-                        np.linalg.trace(
-                            incumbent_solution.objectives_gradients_var
-                        ),
+                        np.trace(incumbent_solution.objectives_gradients_var),
                     )
                 stopping = self.get_stopping_time(
                     pilot_run,
@@ -877,9 +873,7 @@ class ASTRODF(Solver):
             if delta_power == 0:
                 sig2 = max(
                     sig2,
-                    np.linalg.trace(
-                        candidate_solution.objectives_gradients_var
-                    ),
+                    np.trace(candidate_solution.objectives_gradients_var),
                 )
             stopping = self.get_stopping_time(
                 pilot_run, sig2, delta_k, kappa, problem.dim, delta_power
