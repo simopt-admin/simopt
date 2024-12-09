@@ -3189,24 +3189,14 @@ class NewExperimentWindow(Toplevel):
         self.plot_selection_frame.grid_rowconfigure(3, weight=1)
         self.plot_selection_frame.grid(row=1, column=0, sticky="nsew")
 
-        # load plot button
-        self.load_plot_button = ttk.Button(
-            master=self.plot_selection_frame,
-            text="Load Plot from Pickle",
-            command=self.load_plot,
-        )
-        self.load_plot_button.grid(
-            row=0, column=0, columnspan=2, sticky="ew", padx=10
-        )
-
         # refresh experiment button
         self.refresh_button = ttk.Button(
             master=self.plot_selection_frame,
-            text="Refresh Experiments",
+            text="Refresh Experiment Dropdown Options",
             command=self.refresh_experiments,
         )
         self.refresh_button.grid(
-            row=0, column=3, columnspan=2, sticky="ew", padx=10
+            row=0, column=0, columnspan=5, sticky="ew", padx=10
         )
 
         self.experiment_selection_frame = tk.Frame(
@@ -3431,21 +3421,30 @@ class NewExperimentWindow(Toplevel):
             text="Created Plots by Experiment",
             font=nametofont("TkHeadingFont"),
         )
-        self.workspace_label.grid(row=0, column=0)
+        self.workspace_label.grid(row=0, column=0, padx=20, pady=10)
+        # load plot button
+        self.load_plot_button = ttk.Button(
+            master=self.plotting_workspace_frame,
+            text="Load Plot from Pickle",
+            command=self.load_plot,
+        )
+        self.load_plot_button.grid(
+            row=0, column=1, padx=20, pady=10
+        )
         # view selected plots button
         self.view_selected_plots_button = ttk.Button(
             master=self.plotting_workspace_frame,
             text="View Selected Plots",
             command=self.view_selected_plots,
         )
-        self.view_selected_plots_button.grid(row=0, column=1, padx=20)
+        self.view_selected_plots_button.grid(row=0, column=2, padx=20, pady=10)
         # view all plots button
         self.view_all_plots_button = ttk.Button(
             master=self.plotting_workspace_frame,
             text="View All Created Plots",
             command=self.view_all_plots,
         )
-        self.view_all_plots_button.grid(row=0, column=2, padx=20)
+        self.view_all_plots_button.grid(row=0, column=3, padx=20)
         # empty notebook to hold plots
         self.plot_notebook = ttk.Notebook(self.plotting_workspace_frame)
         self.plot_notebook.grid(row=1, column=0, columnspan=3)
