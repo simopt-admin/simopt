@@ -1,7 +1,6 @@
 ![SimOpt Logo](.github/resources/logo_full.png)
 
 ## About the Project
-
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
 
 For the purposes of this project, we define simulation as a very general technique for estimating statistical measures of complex systems. A system is modeled as if the probability distributions of the underlying random variables were known. Realizations of these random variables are then drawn randomly from these distributions. Each replication gives one observation of the system response, i.e., an evaluation of the objective function or stochastic constraints. By simulating a system in this fashion for multiple replications and aggregating the responses, one can compute statistics and use them for evaluation and design.
@@ -31,14 +30,16 @@ Full documentation for the source code can be found on our **[readthedocs page](
 ## Getting Started
 ### Requirements
 - Python >= 3.8
-- Ruby >= 3.0 (only needed for datafarming)
+    - To check your Python version, open a terminal and run `python --version`. If you see a message along the lines of `Command not found`, then you likely don't have Python installed. If you know you have it installed but are getting a `Command not found` error, then you may need to [add Python to your PATH](https://realpython.com/add-python-to-path/).
+    - For new installs, [Miniconda or Anaconda](https://www.anaconda.com/download) is recommended ([read about the differences between Miniconda and Anaconda](https://docs.anaconda.com/distro-or-miniconda/)). If you already have a compatible IDE (such as VS Code), we've found that Miniconda will work fine at 1/10 of the size of Anaconda. It is ***highly recommended*** to check the box during installation to add Python/Miniconda/Anaconda to your system PATH.
+- Ruby >= 3.0 (required for datafarming)
     - Included on MacOS, but Windows users will need to grab it from [here](https://rubyinstaller.org/)
-- `datafarming` gem < 2.0 (only needed for datafarming)
+- `datafarming` gem < 2.0 (required for datafarming)
     - This can be installed via `gem install datafarming -v 1.4` once Ruby is installed/configured
-    - If experiencing issues, make sure that you are not using version 2.0 or later as that release does not include the required file(s)
-- Python packages for `numpy`, `scipy`, `matplotlib`, `pandas`, `seaborn`, `sphinx`, `mrg32k3a`
+    - If experiencing issues, make sure that you are not using version 2.0 or later as those releases does not include the required files
+- Python packages for `numpy`, `scipy`, `matplotlib`, `pandas`, `seaborn`, `sphinx`, `mrg32k3a`, and `jupyter`
     - If using conda/miniconda, run `conda env create -f environment.yml` to create the `simopt` environment. Then run `conda activate simopt` to load the environment
-    - Otherwise, run `pip install numpy scipy matplotlib pandas seaborn sphinx mrg32k3a`
+    - Otherwise, run `pip install numpy scipy matplotlib pandas seaborn sphinx mrg32k3a jupyter`
 
 ### Downloading Source Code
 There are two ways to download a copy of the source code onto your machine:
@@ -96,7 +97,6 @@ Each problem has an abbreviation indicating which types of solver is compatible 
 8.  The number of macroreplications can be modified in the top-left corner. The default is 10.
 9.  Select the "Add **problem-solver pair**" button, which only appears when a solver and problem is selected. The **problem-solver pair** will be added in the "Queue of **problem-solver pair**s."
 
-
 #### 2. Loading a **problem-solver pair** from a file
 Instead of creating a **problem-solver pair** from scratch, you can load one from a \*.pickle file:
 1. In the top left corner, click "Load a **problem-solver pair**". Your file system will pop up, and you can navigate to and select an appropriate \*.pickle file. The GUI will throw an error if the selected file is not a \*.pickle file.
@@ -118,7 +118,6 @@ of problems and solvers with their default factors.
 The second is converting a list of **problem-solver pair**s into a **problem-solver group** by a cross-design: 
 1. Select the **problem-solver pair**s of interest from the "Queue of **problem-solver pair**s". 
 2. Clicking the "Convert to a **problem-solver group**" button. This will complete the cross-design for the partial list and create a new row in the "Queue of **problem-solver group**s".
-
 
 ### Running a **problem-solver pair** or a **problem-solver group** 
 To run a **problem-solver pair** or a **problem-solver group**, click the "Run" button in the "Queue of **problem-solver pair**s" or "Queue of **problem-solver group**s". Once the **problem-solver pair** or **problem-solver group** has been run, the "Run" button becomes disabled.
@@ -148,7 +147,6 @@ The type of plots that are currently available in the GUI are: Mean Progress Cur
 5. All plots will show in the plotting queue, along with information about their parameters and where the file is saved.
 6. To view one plot, click "View Plot." All plots can be viewed together by clicking "See All Plots" at the bottom of the page.
 7. To return to the main page, click the red "x" in the top-left corner of the window.
-
 
 ## Package
 The `simoptlib` package is available to download through the Python Packaging Index (PyPI) and can be installed from the terminal with the following command:
