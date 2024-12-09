@@ -3146,10 +3146,8 @@ class NewExperimentWindow(Toplevel):
 
         # page title
         self.title_frame = tk.Frame(master=self.plot_main_frame)
-        self.title_frame.grid(row=0, column=0, columnspan=3)
+        self.title_frame.grid(row=0, column=0, columnspan=5, sticky="nsew")
         self.title_frame.grid_columnconfigure(0, weight=1)
-        self.title_frame.grid_columnconfigure(2, weight=1)
-        self.title_frame.grid_rowconfigure(1, weight=1)
         self.title_label = ttk.Label(
             master=self.title_frame,
             text="Welcome to the Plotting Page of SimOpt.",
@@ -3189,24 +3187,18 @@ class NewExperimentWindow(Toplevel):
         self.plot_selection_frame.grid_rowconfigure(3, weight=1)
         self.plot_selection_frame.grid(row=1, column=0, sticky="nsew")
 
-        # refresh experiment button
-        self.refresh_button = ttk.Button(
-            master=self.plot_selection_frame,
-            text="Refresh Experiment Dropdown Options",
-            command=self.refresh_experiments,
-        )
-        self.refresh_button.grid(
-            row=0, column=0, columnspan=5, sticky="ew", padx=10
-        )
-
         self.experiment_selection_frame = tk.Frame(
-            master=self.plot_selection_frame, width=10
+            master=self.plot_selection_frame
         )
-        self.experiment_selection_frame.grid(row=1, column=0, columnspan=5)
+        self.experiment_selection_frame.grid(
+            row=0, column=0, columnspan=5, sticky="nsew"
+        )
         self.experiment_selection_frame.grid_columnconfigure(1, weight=1)
         self.experiment_selection_label = ttk.Label(
-            master=self.experiment_selection_frame,
-            text="Experiment:",
+            self.experiment_selection_frame,
+            text="Selected Experiment:",
+            justify="right",
+            anchor="e",
         )
         self.experiment_selection_label.grid(
             row=0, column=0, sticky="ew", padx=10
@@ -3227,6 +3219,15 @@ class NewExperimentWindow(Toplevel):
             command=self.update_plot_menu,
         )
         self.experiment_menu.grid(row=0, column=1, sticky="ew", padx=10)
+        # refresh experiment button
+        self.refresh_button = ttk.Button(
+            self.experiment_selection_frame,
+            text="Refresh Dropdown",
+            command=self.refresh_experiments,
+        )
+        self.refresh_button.grid(
+            row=0, column=2, sticky="ew", padx=10
+        )
 
         self.select_plot_solvers_label = ttk.Label(
             master=self.plot_selection_frame,
