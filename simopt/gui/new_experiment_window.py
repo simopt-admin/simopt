@@ -3550,7 +3550,8 @@ class NewExperimentWindow(Toplevel):
         self.all_same_problem = problem_set_len == total_prob_len
 
         # clear previous values in the solver tree
-        self._destroy_widget_children(self.solver_tree)
+        for child in self.solver_tree.get_children():
+            self.solver_tree.delete(child)
 
         # create first column of solver tree view
         self.solver_tree.column("#0", width=75)
@@ -3584,8 +3585,9 @@ class NewExperimentWindow(Toplevel):
                     "", index, text=str(index), values=[solver.name]
                 )
 
-        # clear previous values in the problem tree
-        self._destroy_widget_children(self.problem_tree)
+        # Clear the problem tree
+        for child in self.problem_tree.get_children():
+            self.problem_tree.delete(child)
 
         # create first column of problem tree view
         self.problem_tree.heading("#0", text="Problem #")
