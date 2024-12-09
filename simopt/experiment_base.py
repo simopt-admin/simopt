@@ -1908,7 +1908,13 @@ def post_normalize(
     # Create, initialize, and attach RNGs for model.
     #     Stream 0: reserved for post-replications.
     baseline_rngs = [
-        MRG32k3a(s_ss_sss_index=[0, rng_index, 0])
+        MRG32k3a(
+            s_ss_sss_index=[
+                0,
+                ref_experiment.problem.model.n_rngs + rng_index,
+                0,
+            ]
+        )
         for rng_index in range(ref_experiment.problem.model.n_rngs)
     ]
     x0 = ref_experiment.problem.factors["initial_solution"]
