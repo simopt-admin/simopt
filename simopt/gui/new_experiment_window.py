@@ -3183,7 +3183,7 @@ class NewExperimentWindow(Toplevel):
         self.plot_selection_frame.grid_columnconfigure(3, weight=0)
         self.plot_selection_frame.grid_columnconfigure(4, weight=0)
         self.plot_selection_frame.grid_rowconfigure(3, weight=1)
-        self.plot_selection_frame.grid(row=1, column=0)
+        self.plot_selection_frame.grid(row=1, column=0, sticky="nsew")
 
         # load plot button
         self.load_plot_button = ttk.Button(
@@ -3248,7 +3248,7 @@ class NewExperimentWindow(Toplevel):
             master=self.plot_selection_frame, width=500, height=250
         )  # frame just to hold solver tree
         self.solver_tree_frame.grid(
-            row=3, column=0, columnspan=2, padx=10, pady=10
+            row=3, column=0, columnspan=2, padx=10, pady=10, sticky="nsew"
         )
         self.solver_tree_frame.grid_rowconfigure(0, weight=1)
         self.solver_tree_frame.grid_columnconfigure(0, weight=1)
@@ -3317,7 +3317,7 @@ class NewExperimentWindow(Toplevel):
             master=self.plot_selection_frame, width=500, height=250
         )
         self.problem_tree_frame.grid(
-            row=3, column=3, columnspan=2, padx=10, pady=10
+            row=3, column=3, columnspan=2, padx=10, pady=10, sticky="nsew"
         )
         self.problem_tree_frame.grid_rowconfigure(0, weight=1)
         self.problem_tree_frame.grid_columnconfigure(0, weight=1)
@@ -3987,6 +3987,32 @@ class NewExperimentWindow(Toplevel):
             )
             self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
+            # reference solver
+            self.ref_solver_label = ttk.Label(
+                master=self.more_options_frame,
+                text="Solver to use for difference benchmark",
+            )
+            self.ref_solver_label.grid(row=1, column=0)
+            # set none if no solvers selected yet
+            self.ref_solver_var = tk.StringVar()
+            solver_options = []
+            if len(self.selected_solvers) == 0:
+                solver_display = "No solvers selected"
+            else:
+                solver_display = None
+                for solver in self.selected_solvers:
+                    solver_options.append(solver.name)
+                    solver_display = solver_options[0]
+                    self.ref_solver_var.set(solver_display)
+            self.ref_solver_menu = ttk.OptionMenu(
+                self.more_options_frame,
+                self.ref_solver_var,
+                solver_display,
+                *solver_options,
+            )
+            self.ref_solver_menu.grid(row=1, column=1)
+            self.ref_solver_menu.configure(state="disabled")
+
             # select subplot type
             self.subplot_type_label = ttk.Label(
                 master=self.more_options_frame,
@@ -4088,33 +4114,6 @@ class NewExperimentWindow(Toplevel):
             )
             self.beta_entry.grid(row=8, column=1)
             self.beta_entry.configure(state="disabled")
-
-            # reference solver
-            self.ref_solver_label = ttk.Label(
-                master=self.more_options_frame,
-                text="Solver to use for difference benchmark",
-            )
-            self.ref_solver_label.grid(row=9, column=0)
-
-            # set none if no solvers selected yet
-            self.ref_solver_var = tk.StringVar()
-            solver_options = []
-            if len(self.selected_solvers) == 0:
-                solver_display = "No solvers selected"
-            else:
-                solver_display = None
-                for solver in self.selected_solvers:
-                    solver_options.append(solver.name)
-                    solver_display = solver_options[0]
-                    self.ref_solver_var.set(solver_display)
-            self.ref_solver_menu = ttk.OptionMenu(
-                self.more_options_frame,
-                self.ref_solver_var,
-                solver_display,
-                *solver_options,
-            )
-            self.ref_solver_menu.grid(row=9, column=1)
-            self.ref_solver_menu.configure(state="disabled")
 
             # legend location
             self.legend_label = ttk.Label(
