@@ -60,9 +60,14 @@ The `demo` folder contains a handful of useful scripts that can be easily modifi
 
 ## Graphical User Interface (GUI) - User Guide
 
-### Overview
-To open the GUI, run `python -m simopt`
+### Main Menu
+To open the GUI, run `python -m simopt`. This will launch the main menu. From the menu, you will be given 2 options:
+1. Open the `Data Farm Models` window
+2. Open the `Simulation Optimization Experiments` window ([read more](#simulation-optimization-experiments))
 
+### Simulation Optimization Experiments
+
+#### Overview
 From the GUI, you can create a specified **problem-solver pair** or a **problem-solver group**, run macroreplications, and generate plots. The main page provides ways to create or continue working with experiments:
 
 1. Create an individual **problem-solver pair** with customized problem and solver factors.
@@ -144,38 +149,44 @@ The type of plots that are currently available in the GUI are: Mean Progress Cur
 6. To view one plot, click "View Plot." All plots can be viewed together by clicking "See All Plots" at the bottom of the page.
 7. To return to the main page, click the red "x" in the top-left corner of the window.
 
+
 ## Package
 The `simoptlib` package is available to download through the Python Packaging Index (PyPI) and can be installed from the terminal with the following command:
 ```
 python -m pip install simoptlib
 ```
-## Basic Example
 
+## Basic Example
 After installing `simoptlib`, the package's main modules can be imported from the Python console (or in code):
 ```
 import simopt
 from simopt import models, solvers, experiment_base
 ```
+
 The following snippet of code will run 10 macroreplications of the Random Search solver ("RNDSRCH") on the Continuous Newsvendor problem ("CNTNEWS-1"):
 ```
 myexperiment = simopt.experiment_base.ProblemSolver("RNDSRCH", "CNTNEWS-1")
 myexperiment.run(n_macroreps=10)
 ```
+
 The results will be saved to a .pickle file in a folder called `experiments/outputs`. To post-process the results, by taking, for example 200 postreplications at each recommended solution, run the following:
 ```
 myexperiment.post_replicate(n_postreps=200)
 simopt.experiment_base.post_normalize([myexperiment], n_postreps_init_opt=200)
 ```
+
 A .txt file summarizing the progress of the solver on each macroreplication can be produced:
 ```    
 myexperiment.log_experiment_results()
 ```
+
 A .txt file called `RNDSRCH_on_CNTNEWS-1_experiment_results.txt` will be saved in a folder called `experiments/logs`.
 
 One can then plot the mean progress curve of the solver (with confidence intervals) with the objective function values shown on the y-axis:
 ```
 simopt.experiment_base.plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
 ```
+
 The Python scripts in the `demo` folder provide more guidance on how to run common experiments using the library.
 
 One can also use the SimOpt graphical user interface by running the following from the terminal:
