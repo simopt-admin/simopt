@@ -1,6 +1,8 @@
-# Welcome to 2023 Winter Simulation Conference SimOpt Workshop!
+![SimOpt Logo](../.github/resources/logo_full_magnifying_glass.png)
 
-The SimOpt Workshop is taking place in-person in Conference Room 14 on Sunday, December 10 from 9am-noon.
+# Welcome to 2024 Winter Simulation Conference SimOpt Workshop!
+
+The SimOpt Workshop is taking place in-person in Grand 2 on Sunday, December 15 from 9am-noon.
 
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
 
@@ -9,43 +11,38 @@ The most-up-to-date publication about this library is [Eckman et al. (2023)](htt
 ## Before Workshop
 Before attending the workshop please follow the instructions below:
 
-1. Check to see if you have a python interpreter (with `ipykernel` for Jupyter notebooks) installed.
-* Linux/macOS: open a Terminal Window and type the following command:
-`python3 --version`
-If you see something like
-`Python 3.6.13 :: Anaconda custom (x86_64)`
-then you have python installed. If you get a message like
-`Command not found`
-then you don’t.
-* Windows: open a command prompt and run the following command:
-`py -3 --version`
+1. Install Python, Ruby, and required dependencies [as detailed in the README](https://github.com/simopt-admin/simopt/blob/master/README.md#getting-started)
 
-2. If you don’t have a python interpreter installed, then download from [Anaconda](https://www.anaconda.com/products/distribution). Anaconda provides not just a Python interpreter, but many useful libraries and tools for data science.
+3. Install Microsoft's [Visual Studio Code (VS Code) IDE](https://code.visualstudio.com).
 
-3. Install [VS Code](https://code.visualstudio.com).
-
-4. Next, install the [Python extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python) from the Visual Studio Marketplace.
+4. Next, install the [Python extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python) from the Visual Studio Marketplace. This will automatically install the Pylance (intellisense) and Python Debugger extensions as well.
 
 5. To work with Python in Jupyter Notebooks, you must activate an Anaconda environment in VS Code, or another Python environment in which you've installed the [Jupyter package](https://pypi.org/project/jupyter/). To select an environment, use the **Python: Select Interpreter** command from the Command Palette `(⇧⌘P)`.
 
-6. On your local hard drive, create a folder simopt-folder somewhere convenient.
+6. On your local hard drive, create a folder named `simopt_workspace` somewhere convenient.
 
-7. In VSCode, go to the File menu and select “Open Folder…” and open the folder you created. That folder will become your VSCode workspace.
+7. In VS Code, go to the File menu and select “Open Folder…” and open the folder you created. That folder will become your VSCode workspace.
 
 8. Test the python interpreter:
 * In the Explorer panel of VSCode editor click on the New File icon, and type `hello.py`.
 ![screen-addfile](./figs/screen-addfile.png)
-* In the new file in the next panel, type
-  * `msg = "Hello World"`
-  * `print(msg)`
+* In the new file in the next panel, type:
+ ```python
+msg = "Hello World"
+print(msg)
+```
+
 * Hit run (the triangular play button) at the top right corner of the file.
 ![screen-py](./figs/screen-py.png)
 
 9. Test the jupyter interpreter:
 * In the VS Code editor, click on the add new file icon, and type `hello.ipynb`.
-* In the new notebook file, type
-  * `msg = "Hello World"`
-  * `print(msg)`
+* In the new notebook file, type:
+ ```python
+msg = "Hello World"
+print(msg)
+```
+
 * Hit run icon  on the left side of the block in the notebook.
 ![screen-ipy](./figs/screen-ipy.png)
 * You may get a dialog box asking you to install the ipykernel for python notebooks. If so, then perform the following step (recall Step 5), but otherwise, go on to Step 10 below.
@@ -60,7 +57,7 @@ then you don’t.
 
   * Then run the following commands to install the simopt package and open the GUI.
     * `python -m pip install simoptlib`
-    * `python -m simopt.GUI`
+    * `python -m simopt`
 
   * A pop-up window with the GUI should open. You can close it.
 
