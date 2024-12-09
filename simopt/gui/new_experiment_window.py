@@ -3417,6 +3417,8 @@ class NewExperimentWindow(Toplevel):
         self.plotting_workspace_frame.grid(
             row=3, column=0, columnspan=3, sticky="nsew"
         )
+        self.plotting_workspace_frame.grid_rowconfigure(1, weight=1)
+        self.plotting_workspace_frame.grid_columnconfigure(0, weight=1)
         self.workspace_label = ttk.Label(
             master=self.plotting_workspace_frame,
             text="Created Plots by Experiment",
@@ -3448,7 +3450,7 @@ class NewExperimentWindow(Toplevel):
         self.view_all_plots_button.grid(row=0, column=3, padx=20)
         # empty notebook to hold plots
         self.plot_notebook = ttk.Notebook(self.plotting_workspace_frame)
-        self.plot_notebook.grid(row=1, column=0, columnspan=3)
+        self.plot_notebook.grid(row=1, column=0, columnspan=4, sticky="nsew")
 
         # loaded plots tab
         self.loaded_plots_frame = ttk.Frame(self.plot_notebook)
@@ -3686,8 +3688,8 @@ class NewExperimentWindow(Toplevel):
                 text="Quantile Probability (0.0-1.0)",
             )
             self.beta_label.grid(row=4, column=0)
-            self.beta_var = tk.StringVar()
-            self.beta_var.set("0.5")  # default value
+            self.beta_var = tk.DoubleVar()
+            self.beta_var.set(0.5)
             self.beta_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.beta_var
             )
@@ -3713,8 +3715,8 @@ class NewExperimentWindow(Toplevel):
                 text="Number Bootstrap Samples",
             )
             self.boot_label.grid(row=5, column=0)
-            self.boot_var = tk.StringVar()
-            self.boot_var.set("100")  # default value
+            self.boot_var = tk.IntVar()
+            self.boot_var.set(100)
             self.boot_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.boot_var
             )
@@ -3727,8 +3729,8 @@ class NewExperimentWindow(Toplevel):
                 text="Confidence Level (0.0-1.0)",
             )
             self.con_level_label.grid(row=6, column=0)
-            self.con_level_var = tk.StringVar()
-            self.con_level_var.set("0.95")  # default value
+            self.con_level_var = tk.DoubleVar()
+            self.con_level_var.set(0.95)
             self.con_level_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.con_level_var
             )
@@ -3805,8 +3807,8 @@ class NewExperimentWindow(Toplevel):
                 text="Solve Tolerance",
             )
             self.solve_tol_label.grid(row=2, column=0)
-            self.solve_tol_var = tk.StringVar()
-            self.solve_tol_var.set("0.1")  # default value
+            self.solve_tol_var = tk.DoubleVar()
+            self.solve_tol_var.set(0.1)
             self.solve_tol_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.solve_tol_var
             )
@@ -3818,8 +3820,8 @@ class NewExperimentWindow(Toplevel):
                 text="Number Bootstrap Samples",
             )
             self.boot_label.grid(row=3, column=0)
-            self.boot_var = tk.StringVar()
-            self.boot_var.set("100")  # default value
+            self.boot_var = tk.IntVar()
+            self.boot_var.set(100)
             self.boot_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.boot_var
             )
@@ -3831,8 +3833,8 @@ class NewExperimentWindow(Toplevel):
                 text="Confidence Level (0.0-1.0)",
             )
             self.con_level_label.grid(row=4, column=0)
-            self.con_level_var = tk.StringVar()
-            self.con_level_var.set("0.95")  # default value
+            self.con_level_var = tk.DoubleVar()
+            self.con_level_var.set(0.95)
             self.con_level_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.con_level_var
             )
@@ -3905,8 +3907,8 @@ class NewExperimentWindow(Toplevel):
                 text="Number Bootstrap Samples",
             )
             self.boot_label.grid(row=2, column=0)
-            self.boot_var = tk.StringVar()
-            self.boot_var.set("100")  # default value
+            self.boot_var = tk.IntVar()
+            self.boot_var.set(100)
             self.boot_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.boot_var
             )
@@ -3918,8 +3920,8 @@ class NewExperimentWindow(Toplevel):
                 text="Confidence Level (0.0-1.0)",
             )
             self.con_level_label.grid(row=3, column=0)
-            self.con_level_var = tk.StringVar()
-            self.con_level_var.set("0.95")  # default value
+            self.con_level_var = tk.DoubleVar()
+            self.con_level_var.set(0.95)
             self.con_level_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.con_level_var
             )
@@ -4042,8 +4044,8 @@ class NewExperimentWindow(Toplevel):
                 text="Number Bootstrap Samples",
             )
             self.boot_label.grid(row=3, column=0)
-            self.boot_var = tk.StringVar()
-            self.boot_var.set("100")  # default value
+            self.boot_var = tk.IntVar()
+            self.boot_var.set(100)
             self.boot_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.boot_var
             )
@@ -4055,8 +4057,8 @@ class NewExperimentWindow(Toplevel):
                 text="Confidence Level (0.0-1.0)",
             )
             self.con_level_label.grid(row=4, column=0)
-            self.con_level_var = tk.StringVar()
-            self.con_level_var.set("0.95")  # default value
+            self.con_level_var = tk.DoubleVar()
+            self.con_level_var.set(0.95)
             self.con_level_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.con_level_var
             )
@@ -4094,8 +4096,8 @@ class NewExperimentWindow(Toplevel):
                 text="Solve Tolerance",
             )
             self.solve_tol_label.grid(row=7, column=0)
-            self.solve_tol_var = tk.StringVar()
-            self.solve_tol_var.set("0.1")  # default value
+            self.solve_tol_var = tk.DoubleVar()
+            self.solve_tol_var.set(0.1)
             self.solve_tol_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.solve_tol_var
             )
@@ -4491,7 +4493,7 @@ class NewExperimentWindow(Toplevel):
                     prob_list[i].problem.name
                 )  # should all be the same
 
-            self.add_plot(
+            self.add_plot_to_notebook(
                 file_paths=file_path,
                 solver_names=solver_names,
                 problem_names=problem_names,
@@ -4558,7 +4560,7 @@ class NewExperimentWindow(Toplevel):
                     prob_list[i].problem.name
                 )  # should all be the same
 
-            self.add_plot(
+            self.add_plot_to_notebook(
                 file_paths=file_path,
                 solver_names=solver_names,
                 problem_names=problem_names,
@@ -4622,7 +4624,7 @@ class NewExperimentWindow(Toplevel):
                 )  # get name of first solver since should all be the same
                 problem_names.append(problem_set_name)
 
-        self.add_plot(
+        self.add_plot_to_notebook(
             file_paths=file_path,
             solver_names=solver_names,
             problem_names=problem_names,
@@ -4676,7 +4678,7 @@ class NewExperimentWindow(Toplevel):
                     prob_list[i].problem.name
                 )  # should all be the same
 
-            self.add_plot(
+            self.add_plot_to_notebook(
                 file_paths=file_path,
                 solver_names=solver_names,
                 problem_names=problem_names,
@@ -4721,7 +4723,7 @@ class NewExperimentWindow(Toplevel):
                     exp_sublist[i][0].solver.name
                 )  # get name of first solver since should all be the same
                 problem_names.append(problem_set_name)
-        self.add_plot(
+        self.add_plot_to_notebook(
             file_paths=file_path,
             solver_names=solver_names,
             problem_names=problem_names,
@@ -4793,6 +4795,7 @@ class NewExperimentWindow(Toplevel):
                 ext=ext,
                 solver_set_name=solver_set_name,
                 problem_set_name=problem_set_name,
+                solve_tol=solve_tol,
             )
 
         else:  # performing a difference solvability profile
@@ -4813,6 +4816,7 @@ class NewExperimentWindow(Toplevel):
                 ext=ext,
                 solver_set_name=solver_set_name,
                 problem_set_name=problem_set_name,
+                solve_tol=solve_tol,
             )
         # get plot info and call add plot
         file_path = [
@@ -4832,7 +4836,7 @@ class NewExperimentWindow(Toplevel):
                 )  # get name of first solver since should all be the same
                 problem_names.append(problem_set_name)
 
-        self.add_plot(
+        self.add_plot_to_notebook(
             file_paths=file_path,
             solver_names=solver_names,
             problem_names=problem_names,
@@ -4870,7 +4874,7 @@ class NewExperimentWindow(Toplevel):
             # Call the appropriate plot function
             plot_types[self.plot_type]()
 
-    def add_plot(
+    def add_plot_to_notebook(
         self,
         file_paths: list[str],
         solver_names: list[str],
@@ -4973,15 +4977,18 @@ class NewExperimentWindow(Toplevel):
                 text=self.plot_type,
             )
             type_label.grid(row=row, column=3, padx=5)
-            view_button = tk.Button(
+            view_button = ttk.Button(
                 master=tab_frame,
                 text="View/Edit",
                 command=lambda fp=file_path: self.view_plot(fp),
             )
             view_button.grid(row=row, column=4, padx=5)
+            screen_width = self.winfo_screenwidth()
+            wrap_length = screen_width // 5
             path_label = ttk.Label(
                 master=tab_frame,
                 text=file_path,
+                wraplength=wrap_length
             )
             path_label.grid(row=row, column=5, padx=5)
             para_label = ttk.Label(
@@ -4989,7 +4996,7 @@ class NewExperimentWindow(Toplevel):
                 text=para_display,
             )
             para_label.grid(row=row, column=6, padx=5)
-            del_button = tk.Button(
+            del_button = ttk.Button(
                 master=tab_frame,
                 text="Delete",
                 command=lambda r=row,
