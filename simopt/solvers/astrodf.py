@@ -556,6 +556,7 @@ class ASTRODF(Solver):
         intermediate_budgets: list,
         kappa: float,
         incumbent_solution: Solution,
+        h_k: list,
     ) -> tuple[
         float,
         float,
@@ -566,6 +567,7 @@ class ASTRODF(Solver):
         float,
         Solution,
         list[Solution],
+        list[list],
     ]:
         """
         Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
@@ -580,7 +582,8 @@ class ASTRODF(Solver):
         lambda_max = budget_limit - expended_budget
         # lambda_max = budget_limit / (15 * sqrt(problem.dim))
         gradient_availability = problem.gradient_available
-        h = np.identity(problem.dim)
+        # uncomment the next line to avoid Hessian updating
+        # h_k = np.identity(problem.dim)
         # determine power of delta in adaptive sampling rule
         if self.factors["crn_across_solns"] == True:
             if gradient_availability: delta_power = 0
@@ -624,7 +627,7 @@ class ASTRODF(Solver):
         if gradient_availability:
             fval = np.ones(2*problem.dim+1)* -1 * problem.minmax[0] * incumbent_solution.objectives_mean
             grad = -1 * problem.minmax[0] * incumbent_solution.objectives_gradients_mean[0]
-            hessian = h
+            hessian = h_k
         else:
         # build the local model with interpolation (subproblem)
             (
@@ -656,6 +659,7 @@ class ASTRODF(Solver):
             # print("np.dot(np.multiply(grad, Hessian), grad) "+str(np.dot(np.multiply(grad, hessian), grad)))
             # print("np.dot(np.dot(grad, hessian), grad) "+str(np.dot(np.dot(grad, hessian), grad)))
             if gradient_availability:
+                print("hessian "+str(hessian))
                 check_positive_definite = np.dot(np.dot(grad, hessian), grad)
             else:
                 check_positive_definite = np.dot(np.multiply(grad, hessian), grad)
@@ -666,6 +670,9 @@ class ASTRODF(Solver):
                 # print("tau "+str(tau))
             grad = np.reshape(grad, (1, problem.dim))[0]
             candidate_x = incumbent_x - tau * delta_k * grad / norm(grad)
+            if norm(incumbent_x - candidate_x) > 0:
+                print("incumbent_x "+str(incumbent_x))
+                print("candidate_x "+str(candidate_x))
             
         else:
             # Search engine - solve subproblem
@@ -720,14 +727,13 @@ class ASTRODF(Solver):
         # else:
         # calculate success ratio
         fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
-        # print("fval_tilde "+str(fval_tilde))
         # replace the candidate x if the interpolation set has lower objective function value and with sufficient reduction (pattern search)
         # also if the candidate solution's variance is high that could be caused by stopping early due to exhausting budget
         # print("cv "+str(candidate_solution.objectives_var/(candidate_solution.n_reps * candidate_solution.objectives_mean ** 2)))
         # print("fval[0] - min(fval) "+str(fval[0] - min(fval)))
         if (gradient_availability == False and 
             ((min(fval) < fval_tilde) and ((fval[0] - min(fval)) >= self.factors["ps_sufficient_reduction"] * delta_k**2)
-            or (candidate_solution.objectives_var/(candidate_solution.n_reps * candidate_solution.objectives_mean ** 2) > 0.75))
+            or ((candidate_solution.objectives_var/(candidate_solution.n_reps * candidate_solution.objectives_mean ** 2))[0] > 0.75))
         ):
             fval_tilde = min(fval)
             candidate_x = y_var[fval.index(min(fval))][0]
@@ -737,7 +743,6 @@ class ASTRODF(Solver):
         s = np.array(candidate_x - incumbent_x)
         if gradient_availability:
             model_reduction = -np.dot(s, grad)-0.5*np.dot(np.dot(s, hessian), s)
-            # print("model reduction "+str(model_reduction))
         else:
             model_reduction = self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(s, q)
         if model_reduction <= 0:
@@ -756,14 +761,11 @@ class ASTRODF(Solver):
             if rho >= eta_2: delta_k = min(gamma_1 * delta_k, delta_max)
             if gradient_availability:
                 candidate_grad = -1 * problem.minmax[0] * candidate_solution.objectives_gradients_mean[0]
-                y_k = candidate_grad - grad #np.clip(candidate_grad - grad, 1e-5, np.inf)
-                s_k = candidate_x - incumbent_x
+                y_k = np.array(candidate_grad - grad) #np.clip(candidate_grad - grad, 1e-5, np.inf)
                 # Compute the intermediate terms for the SMW update
-                r_k = 1.0 / (y_k @ s_k)
-                h_s_k = h @ s_k
-                
-                # Update the Hessian using SMW formula
-                h = h + np.outer(y_k, y_k) * r_k - np.outer(h_s_k, h_s_k) / (s_k @ h_s_k)
+                r_k = 1.0 / (y_k @ s)
+                h_s_k = h_k @ s
+                h_k = h_k + (np.outer(y_k, y_k) * r_k - np.outer(h_s_k, h_s_k) / (s @ h_s_k))
         # unsuccessful: shrink and reject
         else:
             delta_k = min(gamma_2 * delta_k, delta_max)
@@ -782,6 +784,7 @@ class ASTRODF(Solver):
             kappa,
             incumbent_solution,
             visited_pts_list,
+            h_k
         )
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
@@ -825,16 +828,18 @@ class ASTRODF(Solver):
             ]
         # TODO: update this so that it could be used for problems with decision variables at varying scales!
         delta_max = max(delta_max_arr)
-
+        print("delta_max  "+str(delta_max))
         # Reset iteration and data storage arrays
         visited_pts_list = []
         k = 0
         delta_k = 10 ** (ceil(log(delta_max * 2, 10) - 1) / problem.dim)
+        print("initial delta "+str(delta_k))
         incumbent_x: tuple[int | float, ...] = problem.factors["initial_solution"]
         expended_budget, kappa = 0, 0
         recommended_solns, intermediate_budgets = [], []
         incumbent_solution = self.create_new_solution(tuple(incumbent_x), problem)
-
+        h_k = np.identity(problem.dim)
+        
         while expended_budget < budget:
             k += 1
             (
@@ -847,6 +852,7 @@ class ASTRODF(Solver):
                 kappa,
                 incumbent_solution,
                 visited_pts_list,
+                h_k
             ) = self.iterate(
                 k,
                 delta_k,
@@ -860,6 +866,7 @@ class ASTRODF(Solver):
                 intermediate_budgets,
                 kappa,
                 incumbent_solution,
+                h_k
             )
 
         return recommended_solns, intermediate_budgets
