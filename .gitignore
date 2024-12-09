@@ -2,6 +2,9 @@
 experiments/
 test/test_.*.py
 
+# MacOS
+.DS_Store
+
 # The following is from GitHub's Python .gitignore template
 # https://github.com/github/gitignore/blob/main/Python.gitignore
 
