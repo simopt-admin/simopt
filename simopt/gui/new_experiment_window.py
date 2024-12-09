@@ -3122,7 +3122,7 @@ class NewExperimentWindow(Toplevel):
         self.plot_main_frame.grid_columnconfigure(0, weight=1)
         self.plot_main_frame.grid_columnconfigure(1, weight=1)
         # self.plot_main_frame.grid(row=0, column =0)
-        self.plot_options_frame = tk.Frame(master=self.plot_main_frame)
+        self.plot_options_frame = tk.Frame(self.plot_main_frame)
         self.more_options_frame = tk.Frame(self.plot_options_frame)
         self.plotting_workspace_frame = tk.Frame(self.plot_main_frame)
 
@@ -3142,15 +3142,18 @@ class NewExperimentWindow(Toplevel):
 
         # page title
         self.title_frame = tk.Frame(master=self.plot_main_frame)
-        self.title_frame.grid(row=0, column=0, columnspan=2)
+        self.title_frame.grid(row=0, column=0, columnspan=3)
         self.title_frame.grid_columnconfigure(0, weight=1)
-        self.title_frame.grid_columnconfigure(1, weight=1)
+        self.title_frame.grid_columnconfigure(2, weight=1)
+        self.title_frame.grid_rowconfigure(1, weight=1)
         self.title_label = ttk.Label(
             master=self.title_frame,
             text="Welcome to the Plotting Page of SimOpt.",
             font=nametofont("TkHeadingFont"),
+            anchor="center",
+            justify="center",
         )
-        self.title_label.grid(row=0, column=0, columnspan=3)
+        self.title_label.grid(row=0, column=0, sticky="nsew")
         subtitle_lines = [
             "Select Solvers and Problems to Plot from Experiments that have been Post-Normalized.",
             "Solver/Problem factors will only be displayed if all solvers/problems within the experiment are the same.",
@@ -3159,31 +3162,17 @@ class NewExperimentWindow(Toplevel):
         self.subtitle_label = ttk.Label(
             master=self.title_frame,
             text=subtitle,
+            anchor="center",
+            justify="center",
         )
-        self.subtitle_label.grid(row=1, column=0, columnspan=2)
+        self.subtitle_label.grid(row=1, column=0, sticky="nsew")
 
         self.plot_header_divider = ttk.Separator(
             master=self.title_frame, orient="horizontal"
         )
         self.plot_header_divider.grid(
-            row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=10
+            row=2, column=0, sticky="nsew", padx=10, pady=10
         )
-
-        # load plot button
-        self.load_plot_button = ttk.Button(
-            master=self.title_frame,
-            text="Load Plot from Pickle",
-            command=self.load_plot,
-        )
-        self.load_plot_button.grid(row=3, column=0, sticky="ew", padx=10)
-
-        # refresh experiment button
-        self.refresh_button = ttk.Button(
-            master=self.title_frame,
-            text="Refresh Experiments",
-            command=self.refresh_experiments,
-        )
-        self.refresh_button.grid(row=3, column=1, sticky="ew", padx=10)
 
         # experiment selection
         self.plot_selection_frame = tk.Frame(
@@ -3193,13 +3182,40 @@ class NewExperimentWindow(Toplevel):
         self.plot_selection_frame.grid_columnconfigure(1, weight=0)
         self.plot_selection_frame.grid_columnconfigure(3, weight=0)
         self.plot_selection_frame.grid_columnconfigure(4, weight=0)
+        self.plot_selection_frame.grid_rowconfigure(3, weight=1)
         self.plot_selection_frame.grid(row=1, column=0)
-        self.experiment_selection_label = ttk.Label(
+
+        # load plot button
+        self.load_plot_button = ttk.Button(
             master=self.plot_selection_frame,
-            text="Select Experiment:",
+            text="Load Plot from Pickle",
+            command=self.load_plot,
+        )
+        self.load_plot_button.grid(
+            row=0, column=0, columnspan=2, sticky="ew", padx=10
+        )
+
+        # refresh experiment button
+        self.refresh_button = ttk.Button(
+            master=self.plot_selection_frame,
+            text="Refresh Experiments",
+            command=self.refresh_experiments,
+        )
+        self.refresh_button.grid(
+            row=0, column=3, columnspan=2, sticky="ew", padx=10
+        )
+
+        self.experiment_selection_frame = tk.Frame(
+            master=self.plot_selection_frame, width=10
+        )
+        self.experiment_selection_frame.grid(row=1, column=0, columnspan=5)
+        self.experiment_selection_frame.grid_columnconfigure(1, weight=1)
+        self.experiment_selection_label = ttk.Label(
+            master=self.experiment_selection_frame,
+            text="Experiment:",
         )
         self.experiment_selection_label.grid(
-            row=0, column=0, columnspan=2, sticky="e", padx=10
+            row=0, column=0, sticky="ew", padx=10
         )
         # find experiments that have been postnormalized
         postnorm_experiments = []  # list to hold names of all experiments that have been postnormalized
@@ -3210,26 +3226,13 @@ class NewExperimentWindow(Toplevel):
                 postnorm_experiments.append(exp_name)
         self.experiment_var = tk.StringVar()
         self.experiment_menu = ttk.OptionMenu(
-            self.plot_selection_frame,
+            self.experiment_selection_frame,
             self.experiment_var,
-            "Experiment",
+            "[Select an Experiment]",
             *postnorm_experiments,
             command=self.update_plot_menu,
         )
-        self.experiment_menu.grid(
-            row=0, column=3, columnspan=2, sticky="ew", padx=10
-        )
-
-        # solver selection (treeview)
-        self.solver_tree_frame = tk.Frame(
-            master=self.plot_selection_frame, width=500, height=250
-        )  # frame just to hold solver tree
-        self.solver_tree_frame.grid(
-            row=2, column=0, columnspan=2, padx=10, pady=10
-        )
-        self.solver_tree_frame.grid_rowconfigure(0, weight=1)
-        self.solver_tree_frame.grid_columnconfigure(0, weight=1)
-        self.solver_tree_frame.grid_propagate(False)
+        self.experiment_menu.grid(row=0, column=1, sticky="ew", padx=10)
 
         self.select_plot_solvers_label = ttk.Label(
             master=self.plot_selection_frame,
@@ -3237,8 +3240,19 @@ class NewExperimentWindow(Toplevel):
             anchor="center",
         )
         self.select_plot_solvers_label.grid(
-            row=1, column=0, sticky="ew", columnspan=2
+            row=2, column=0, sticky="ew", columnspan=2
         )
+
+        # solver selection (treeview)
+        self.solver_tree_frame = tk.Frame(
+            master=self.plot_selection_frame, width=500, height=250
+        )  # frame just to hold solver tree
+        self.solver_tree_frame.grid(
+            row=3, column=0, columnspan=2, padx=10, pady=10
+        )
+        self.solver_tree_frame.grid_rowconfigure(0, weight=1)
+        self.solver_tree_frame.grid_columnconfigure(0, weight=1)
+        self.solver_tree_frame.grid_propagate(False)
         self.solver_tree = ttk.Treeview(master=self.solver_tree_frame)
         self.solver_tree.grid(row=0, column=0, sticky="nsew")
         self.style = ttk.Style()
@@ -3267,7 +3281,7 @@ class NewExperimentWindow(Toplevel):
             # command=self.select_all_solvers,
         )
         self.select_all_solvers_button.grid(
-            row=3, column=0, padx=10, pady=10, sticky="ew"
+            row=4, column=0, padx=10, pady=10, sticky="ew"
         )
         # Deselect all button
         self.deselect_all_solvers_button = ttk.Button(
@@ -3276,16 +3290,26 @@ class NewExperimentWindow(Toplevel):
             # command=self.deselect_all_solvers,
         )
         self.deselect_all_solvers_button.grid(
-            row=3, column=1, padx=10, pady=10, sticky="ew"
+            row=4, column=1, padx=10, pady=10, sticky="ew"
         )
         # TODO: remove any mention of this variable
         self.all_solvers_var = tk.BooleanVar()
 
+        # Problem/Solver divider
         self.problem_solver_divider = ttk.Separator(
             master=self.plot_selection_frame, orient="vertical"
         )
         self.problem_solver_divider.grid(
-            row=1, column=2, rowspan=3, sticky="ns", padx=10
+            row=2, column=2, rowspan=3, sticky="ns", padx=10
+        )
+
+        self.select_plot_problems_label = ttk.Label(
+            master=self.plot_selection_frame,
+            text="Problem Selection",
+            anchor="center",
+        )
+        self.select_plot_problems_label.grid(
+            row=2, column=3, sticky="ew", columnspan=2
         )
 
         # problem selection (treeview)
@@ -3293,19 +3317,11 @@ class NewExperimentWindow(Toplevel):
             master=self.plot_selection_frame, width=500, height=250
         )
         self.problem_tree_frame.grid(
-            row=2, column=3, columnspan=2, padx=10, pady=10
+            row=3, column=3, columnspan=2, padx=10, pady=10
         )
         self.problem_tree_frame.grid_rowconfigure(0, weight=1)
         self.problem_tree_frame.grid_columnconfigure(0, weight=1)
         self.problem_tree_frame.grid_propagate(False)
-        self.select_plot_problems_label = ttk.Label(
-            master=self.plot_selection_frame,
-            text="Problem Selection",
-            anchor="center",
-        )
-        self.select_plot_problems_label.grid(
-            row=1, column=3, sticky="ew", columnspan=2
-        )
         self.problem_tree = ttk.Treeview(master=self.problem_tree_frame)
         self.problem_tree.grid(row=0, column=0, sticky="nsew")
         self.style = ttk.Style()
@@ -3333,7 +3349,7 @@ class NewExperimentWindow(Toplevel):
             # command=self.select_all_problems,
         )
         self.select_all_problems_button.grid(
-            row=3, column=3, padx=10, pady=10, sticky="ew"
+            row=4, column=3, padx=10, pady=10, sticky="ew"
         )
         # Deselect all button
         self.deselect_all_problems_button = ttk.Button(
@@ -3342,7 +3358,7 @@ class NewExperimentWindow(Toplevel):
             # command=self.deselect_all_problems,
         )
         self.deselect_all_problems_button.grid(
-            row=3, column=4, padx=10, pady=10, sticky="ew"
+            row=4, column=4, padx=10, pady=10, sticky="ew"
         )
         # TODO: remove any mention of this variable
         self.all_problems_var = tk.BooleanVar()
@@ -3367,13 +3383,20 @@ class NewExperimentWindow(Toplevel):
             "Terminal Scatter Plot",
         ]
 
+        self.experiment_plotting_divider = ttk.Separator(
+            master=self.plot_main_frame, orient="vertical"
+        )
+        self.experiment_plotting_divider.grid(
+            row=1, column=1, sticky="ns", padx=10
+        )
+
         # plot options
-        self.plot_options_frame.grid(row=2, column=0, columnspan=2)
+        self.plot_options_frame.grid(row=1, column=2, sticky="nsew")
         self.plot_type_label = ttk.Label(
             master=self.plot_options_frame,
             text="Select Plot Type",
         )
-        self.plot_type_label.grid(row=0, column=0)
+        self.plot_type_label.grid(row=0, column=0, sticky="n", padx=10)
         self.plot_type_var = tk.StringVar()
         plot_types = [
             "Solvability CDF",
@@ -3392,8 +3415,17 @@ class NewExperimentWindow(Toplevel):
         )
         self.plot_type_menu.grid(row=0, column=1)
 
+        self.plotting_workspace_divider = ttk.Separator(
+            master=self.plot_main_frame, orient="horizontal"
+        )
+        self.plotting_workspace_divider.grid(
+            row=2, column=0, columnspan=3, sticky="ew", padx=10, pady=10
+        )
+
         # blank plotting workspace
-        self.plotting_workspace_frame.grid(row=3, column=0, columnspan=2)
+        self.plotting_workspace_frame.grid(
+            row=3, column=0, columnspan=3, sticky="nsew"
+        )
         self.workspace_label = ttk.Label(
             master=self.plotting_workspace_frame,
             text="Created Plots by Experiment",
@@ -3456,8 +3488,6 @@ class NewExperimentWindow(Toplevel):
         self.del_header.grid(row=0, column=4)
 
     def refresh_experiments(self) -> None:
-        self.experiment_menu.destroy()
-
         # find experiments that have been postnormalized
         postnorm_experiments = []  # list to hold names of all experiments that have been postnormalized
         for exp_name in self.root_experiment_dict:
@@ -3465,14 +3495,12 @@ class NewExperimentWindow(Toplevel):
             status = experiment.check_postnormalize()
             if status:
                 postnorm_experiments.append(exp_name)
-        self.experiment_menu = ttk.OptionMenu(
-            self.plot_selection_frame,
-            self.experiment_var,
-            "Experiment",
-            *postnorm_experiments,
-            command=self.update_plot_menu,
-        )
-        self.experiment_menu.grid(row=0, column=1)
+        self.experiment_menu["menu"].delete(0, "end")
+        for exp in postnorm_experiments:
+            self.experiment_menu["menu"].add_command(
+                label=exp,
+                command=lambda value=exp: self.update_plot_menu(value),
+            )
 
     def update_plot_window_scroll(self, event: tk.Event) -> None:
         self.plotting_canvas.configure(
@@ -3623,14 +3651,16 @@ class NewExperimentWindow(Toplevel):
 
         self.ref_menu_created = False  # reset to false
 
+        description_wrap_length = 500
+
         if plot_type == "Progress Curve":
-            # plot description
             description = "Plot individual or aggregate progress curves for one or more solvers on a single problem."
             self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # select subplot type
             self.subplot_type_label = ttk.Label(
@@ -3765,8 +3795,9 @@ class NewExperimentWindow(Toplevel):
             self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # solve tol entry
             self.solve_tol_label = ttk.Label(
@@ -3860,13 +3891,13 @@ class NewExperimentWindow(Toplevel):
             self.legend_menu.grid(row=7, column=1)
 
         if plot_type == "Area Scatter Plot":
-            # plot description
             description = "Plot a scatter plot of mean and standard deviation of area under progress curves."
             self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # num bootstraps entry
             self.boot_label = ttk.Label(
@@ -3948,13 +3979,13 @@ class NewExperimentWindow(Toplevel):
 
         if plot_type == "Solvability Profile":
             self.ref_menu_created = True  # track that menu exists
-            # plot description
             description = "Plot the (difference of) solvability profiles for each solver on a set of problems."
             self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # select subplot type
             self.subplot_type_label = ttk.Label(
@@ -4113,12 +4144,13 @@ class NewExperimentWindow(Toplevel):
 
         if plot_type == "Terminal Progress":
             # plot description
-            description = "Plot individual or aggregate terminal progress for one or more solvers on a single problem. Each unique selected problem will produce its own plot. "
+            description = "Plot individual or aggregate terminal progress for one or more solvers on a single problem. Each unique selected problem will produce its own plot."
             self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # select subplot type
             self.subplot_type_label = ttk.Label(
@@ -4151,13 +4183,13 @@ class NewExperimentWindow(Toplevel):
             self.normalize_menu.grid(row=3, column=1)
 
         if plot_type == "Terminal Scatter Plot":
-            # plot description
             description = "Plot a scatter plot of mean and standard deviation of terminal progress."
             self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # legend location
             self.legend_label = ttk.Label(
