@@ -14,6 +14,7 @@ This version does not require a delta_max, instead it estimates the maximum step
 
 from __future__ import annotations
 
+import sys
 from math import ceil, log
 from typing import Callable
 
@@ -822,7 +823,18 @@ class ASTRODF(Solver):
                 )
                 # print("tau "+str(tau))
             grad = np.reshape(grad, (1, problem.dim))[0]
-            candidate_x = incumbent_x - tau * delta_k * grad / norm(grad)
+            grad_norm = norm(grad)
+            if grad_norm == 0:
+                warning_msg = "Warning: Division by 0 in ASTRO-DF solver (norm(grad) == 0)."
+                print(warning_msg, file=sys.stderr)
+                # TODO: figure out how to handle this
+                # Normally, DB0 errors would result in +-inf, but we have to
+                # add the result to incumbent_x, so we can't have inf values
+                candidate_x = [0.0]
+            else:
+                product = tau * delta_k * grad
+                adjustment = product / grad_norm
+                candidate_x = incumbent_x - adjustment
             # if norm(incumbent_x - candidate_x) > 0:
             #     print("incumbent_x " + str(incumbent_x))
             #     print("candidate_x " + str(candidate_x))
@@ -953,7 +965,15 @@ class ASTRODF(Solver):
                     candidate_grad - grad
                 )  # np.clip(candidate_grad - grad, 1e-5, np.inf)
                 # Compute the intermediate terms for the SMW update
-                r_k = 1.0 / (y_k @ s)
+                y_ks = y_k @ s
+                if y_ks == 0:
+                    warning_msg = (
+                        "Warning: Division by 0 in ASTRO-DF solver (y_ks == 0)."
+                    )
+                    print(warning_msg, file=sys.stderr)
+                    r_k = 0
+                else:
+                    r_k = 1.0 / (y_k @ s)
                 h_s_k = h_k @ s
                 h_k = h_k + (
                     np.outer(y_k, y_k) * r_k
