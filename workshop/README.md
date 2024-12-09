@@ -1,3 +1,5 @@
+![SimOpt Logo](../.github/resources/logo_full_magnifying_glass.png)
+
 # Welcome to 2024 Winter Simulation Conference SimOpt Workshop!
 
 The SimOpt Workshop is taking place in-person in Grand 2 on Sunday, December 15 from 9am-noon.
