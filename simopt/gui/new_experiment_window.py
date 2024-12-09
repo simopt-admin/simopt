@@ -2560,11 +2560,12 @@ class NewExperimentWindow(Toplevel):
         # Title label
         title_text = "Default experiment options for all experiments."
         title_text += "\nAny changes made will affect all future and current un-run or processed experiments."
-        self.title_label = tk.Label(
+        self.title_label = ttk.Label(
             master=self.main_frame,
             text=title_text,
             font=nametofont("TkHeadingFont"),
             justify="center",
+            anchor="center",
         )
         self.title_label.grid(row=0, column=0, columnspan=2, sticky="ew")
 
@@ -2581,7 +2582,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.macro_rep_var = tk.IntVar()
         self.macro_rep_var.set(self.macro_default)
-        self.macro_rep_entry = tk.Entry(
+        self.macro_rep_entry = ttk.Entry(
             master=self.main_frame,
             textvariable=self.macro_rep_var,
             width=10,
@@ -2599,7 +2600,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.post_rep_var = tk.IntVar()
         self.post_rep_var.set(self.post_default)
-        self.post_rep_entry = tk.Entry(
+        self.post_rep_entry = ttk.Entry(
             master=self.main_frame,
             textvariable=self.post_rep_var,
             width=10,
@@ -2651,7 +2652,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.init_post_rep_var = tk.IntVar()
         self.init_post_rep_var.set(self.init_default)
-        self.init_post_rep_entry = tk.Entry(
+        self.init_post_rep_entry = ttk.Entry(
             master=self.main_frame,
             textvariable=self.init_post_rep_var,
             width=10,
@@ -2711,30 +2712,30 @@ class NewExperimentWindow(Toplevel):
         self.solve_tol_2_var.set(str(self.solve_tols_default[1]))
         self.solve_tol_3_var.set(str(self.solve_tols_default[2]))
         self.solve_tol_4_var.set(str(self.solve_tols_default[3]))
-        self.solve_tol_1_entry = tk.Entry(
+        self.solve_tol_1_entry = ttk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_1_var,
             justify="center",
         )
-        self.solve_tol_2_entry = tk.Entry(
+        self.solve_tol_2_entry = ttk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_2_var,
             justify="center",
         )
-        self.solve_tol_3_entry = tk.Entry(
+        self.solve_tol_3_entry = ttk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_3_var,
             justify="center",
         )
-        self.solve_tol_4_entry = tk.Entry(
+        self.solve_tol_4_entry = ttk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_4_var,
             justify="center",
         )
-        self.solve_tol_1_entry.grid(row=0, column=0, padx=5, sticky="ew")
-        self.solve_tol_2_entry.grid(row=0, column=1, padx=5, sticky="ew")
-        self.solve_tol_3_entry.grid(row=0, column=2, padx=5, sticky="ew")
-        self.solve_tol_4_entry.grid(row=0, column=3, padx=5, sticky="ew")
+        self.solve_tol_1_entry.grid(row=0, column=0, padx=2, sticky="ew")
+        self.solve_tol_2_entry.grid(row=0, column=1, padx=2, sticky="ew")
+        self.solve_tol_3_entry.grid(row=0, column=2, padx=2, sticky="ew")
+        self.solve_tol_4_entry.grid(row=0, column=3, padx=2, sticky="ew")
 
         # set options as default for future experiments
         self.set_as_default_button = ttk.Button(
@@ -2769,6 +2770,9 @@ class NewExperimentWindow(Toplevel):
             solve_tol_4,
         ]
         self.solve_tols_default = [float(tol) for tol in tols]
+
+        # Close the window
+        self.experiment_defaults_window.destroy()
 
     # Functionally the same as the below function, but for boolean values
     def _find_option_setting_bool(
@@ -2834,7 +2838,7 @@ class NewExperimentWindow(Toplevel):
         self.main_frame.grid(row=0, column=0)
 
         # Title label
-        self.title_label = tk.Label(
+        self.title_label = ttk.Label(
             master=self.main_frame,
             text=f"Options for {experiment_name}.",
             font=nametofont("TkHeadingFont"),
@@ -2842,14 +2846,14 @@ class NewExperimentWindow(Toplevel):
         self.title_label.grid(row=0, column=0, sticky="nsew")
 
         # Macro replication number input
-        self.macro_rep_label = tk.Label(
+        self.macro_rep_label = ttk.Label(
             master=self.main_frame,
             text="Number of macro-replications of the solver run on the problem",
         )
         self.macro_rep_label.grid(row=1, column=0)
         self.macro_rep_var = tk.IntVar()
         self.macro_rep_var.set(n_macroreps)
-        self.macro_rep_entry = tk.Entry(
+        self.macro_rep_entry = ttk.Entry(
             master=self.main_frame,
             textvariable=self.macro_rep_var,
             width=10,
@@ -2858,14 +2862,14 @@ class NewExperimentWindow(Toplevel):
         self.macro_rep_entry.grid(row=1, column=1)
 
         # Post replication number input
-        self.post_rep_label = tk.Label(
+        self.post_rep_label = ttk.Label(
             master=self.main_frame,
             text="Number of post-replications",
         )
         self.post_rep_label.grid(row=2, column=0)
         self.post_rep_var = tk.IntVar()
         self.post_rep_var.set(n_postreps)
-        self.post_rep_entry = tk.Entry(
+        self.post_rep_entry = ttk.Entry(
             master=self.main_frame,
             textvariable=self.post_rep_var,
             width=10,
@@ -2874,7 +2878,7 @@ class NewExperimentWindow(Toplevel):
         self.post_rep_entry.grid(row=2, column=1)
 
         # CRN across budget
-        self.crn_budget_label = tk.Label(
+        self.crn_budget_label = ttk.Label(
             master=self.main_frame,
             text="Use CRN on post-replications for solutions recommended at different times?",
         )
@@ -2887,7 +2891,7 @@ class NewExperimentWindow(Toplevel):
         self.crn_budget_opt.grid(row=3, column=1)
 
         # CRN across macroreps
-        self.crn_macro_label = tk.Label(
+        self.crn_macro_label = ttk.Label(
             master=self.main_frame,
             text="Use CRN on post-replications for solutions recommended on different macro-replications?",
         )
@@ -2900,14 +2904,14 @@ class NewExperimentWindow(Toplevel):
         self.crn_macro_opt.grid(row=4, column=1)
 
         # Post reps at inital & optimal solution input
-        self.init_post_rep_label = tk.Label(
+        self.init_post_rep_label = ttk.Label(
             master=self.main_frame,
             text="Number of post-replications at initial and optimal solutions",
         )
         self.init_post_rep_label.grid(row=5, column=0)
         self.init_post_rep_var = tk.IntVar()
         self.init_post_rep_var.set(n_initreps)
-        self.init_post_rep_entry = tk.Entry(
+        self.init_post_rep_entry = ttk.Entry(
             master=self.main_frame,
             textvariable=self.init_post_rep_var,
             width=10,
@@ -2916,7 +2920,7 @@ class NewExperimentWindow(Toplevel):
         self.init_post_rep_entry.grid(row=5, column=1)
 
         # CRN across init solutions
-        self.crn_init_label = tk.Label(
+        self.crn_init_label = ttk.Label(
             master=self.main_frame,
             text="Use CRN on post-replications for initial and optimal solution?",
         )
@@ -2929,7 +2933,7 @@ class NewExperimentWindow(Toplevel):
         self.crn_init_opt.grid(row=6, column=1)
 
         # solve tols
-        self.solve_tols_label = tk.Label(
+        self.solve_tols_label = ttk.Label(
             master=self.main_frame,
             text="Relative optimality gap(s) definining when a problem is solved; must be between 0 & 1, list in increasing order.",
         )
@@ -2948,25 +2952,25 @@ class NewExperimentWindow(Toplevel):
         self.solve_tol_2_var.set(solve_tol_2_str)
         self.solve_tol_3_var.set(solve_tol_3_str)
         self.solve_tol_4_var.set(solve_tol_4_str)
-        self.solve_tol_1_entry = tk.Entry(
+        self.solve_tol_1_entry = ttk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_1_var,
             width=5,
             justify="right",
         )
-        self.solve_tol_2_entry = tk.Entry(
+        self.solve_tol_2_entry = ttk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_2_var,
             width=5,
             justify="right",
         )
-        self.solve_tol_3_entry = tk.Entry(
+        self.solve_tol_3_entry = ttk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_3_var,
             width=5,
             justify="right",
         )
-        self.solve_tol_4_entry = tk.Entry(
+        self.solve_tol_4_entry = ttk.Entry(
             master=self.solve_tols_frame,
             textvariable=self.solve_tol_4_var,
             width=5,
@@ -3078,13 +3082,7 @@ class NewExperimentWindow(Toplevel):
         self.plotting_window = Toplevel(self.root)
         self.plotting_window.center_window(0.8)
 
-        self.plotting_window.title(
-            "Simopt Graphical User Interface - Experiment Plots"
-        )
-        # Set the screen width and height
-        # Scaled down slightly so the whole window fits on the screen
-        self.center_window(0.8)
-        self.set_style()
+        self.plotting_window.title("Plot Experiments")
 
         # Configure the grid layout to expand properly
         self.plotting_window.grid_rowconfigure(0, weight=1)
@@ -3128,7 +3126,7 @@ class NewExperimentWindow(Toplevel):
         self.plot_main_frame.grid_columnconfigure(0, weight=1)
         self.plot_main_frame.grid_columnconfigure(1, weight=1)
         # self.plot_main_frame.grid(row=0, column =0)
-        self.plot_options_frame = tk.Frame(master=self.plot_main_frame)
+        self.plot_options_frame = tk.Frame(self.plot_main_frame)
         self.more_options_frame = tk.Frame(self.plot_options_frame)
         self.plotting_workspace_frame = tk.Frame(self.plot_main_frame)
 
@@ -3148,35 +3146,37 @@ class NewExperimentWindow(Toplevel):
 
         # page title
         self.title_frame = tk.Frame(master=self.plot_main_frame)
-        self.title_frame.grid(row=0, column=0)
-        self.title_label = tk.Label(
+        self.title_frame.grid(row=0, column=0, columnspan=3)
+        self.title_frame.grid_columnconfigure(0, weight=1)
+        self.title_frame.grid_columnconfigure(2, weight=1)
+        self.title_frame.grid_rowconfigure(1, weight=1)
+        self.title_label = ttk.Label(
             master=self.title_frame,
             text="Welcome to the Plotting Page of SimOpt.",
             font=nametofont("TkHeadingFont"),
+            anchor="center",
+            justify="center",
         )
-        self.title_label.grid(row=0, column=0)
-        subtitle = "Select Solvers and Problems to Plot from Experiments that have been Post-Normalized. \n Solver/Problem factors will only be displayed if all solvers/problems within the experiment are the same."
-        self.subtitle_label = tk.Label(
+        self.title_label.grid(row=0, column=0, sticky="nsew")
+        subtitle_lines = [
+            "Select Solvers and Problems to Plot from Experiments that have been Post-Normalized.",
+            "Solver/Problem factors will only be displayed if all solvers/problems within the experiment are the same.",
+        ]
+        subtitle = "\n".join(subtitle_lines)
+        self.subtitle_label = ttk.Label(
             master=self.title_frame,
             text=subtitle,
+            anchor="center",
+            justify="center",
         )
-        self.subtitle_label.grid(row=1, column=0, columnspan=2)
+        self.subtitle_label.grid(row=1, column=0, sticky="nsew")
 
-        # load plot button
-        self.load_plot_button = tk.Button(
-            master=self.title_frame,
-            text="Load Plot from Pickle",
-            command=self.load_plot,
+        self.plot_header_divider = ttk.Separator(
+            master=self.title_frame, orient="horizontal"
         )
-        self.load_plot_button.grid(row=2, column=0)
-
-        # refresh experiment button
-        self.refresh_button = tk.Button(
-            master=self.title_frame,
-            text="Refresh Experiments",
-            command=self.refresh_experiments,
+        self.plot_header_divider.grid(
+            row=2, column=0, sticky="nsew", padx=10, pady=10
         )
-        self.refresh_button.grid(row=2, column=1)
 
         # experiment selection
         self.plot_selection_frame = tk.Frame(
@@ -3184,12 +3184,43 @@ class NewExperimentWindow(Toplevel):
         )
         self.plot_selection_frame.grid_columnconfigure(0, weight=0)
         self.plot_selection_frame.grid_columnconfigure(1, weight=0)
-        self.plot_selection_frame.grid(row=1, column=0)
-        self.experiment_selection_label = tk.Label(
+        self.plot_selection_frame.grid_columnconfigure(3, weight=0)
+        self.plot_selection_frame.grid_columnconfigure(4, weight=0)
+        self.plot_selection_frame.grid_rowconfigure(3, weight=1)
+        self.plot_selection_frame.grid(row=1, column=0, sticky="nsew")
+
+        # load plot button
+        self.load_plot_button = ttk.Button(
             master=self.plot_selection_frame,
-            text="Select Experiment",
+            text="Load Plot from Pickle",
+            command=self.load_plot,
         )
-        self.experiment_selection_label.grid(row=0, column=0)
+        self.load_plot_button.grid(
+            row=0, column=0, columnspan=2, sticky="ew", padx=10
+        )
+
+        # refresh experiment button
+        self.refresh_button = ttk.Button(
+            master=self.plot_selection_frame,
+            text="Refresh Experiments",
+            command=self.refresh_experiments,
+        )
+        self.refresh_button.grid(
+            row=0, column=3, columnspan=2, sticky="ew", padx=10
+        )
+
+        self.experiment_selection_frame = tk.Frame(
+            master=self.plot_selection_frame, width=10
+        )
+        self.experiment_selection_frame.grid(row=1, column=0, columnspan=5)
+        self.experiment_selection_frame.grid_columnconfigure(1, weight=1)
+        self.experiment_selection_label = ttk.Label(
+            master=self.experiment_selection_frame,
+            text="Experiment:",
+        )
+        self.experiment_selection_label.grid(
+            row=0, column=0, sticky="ew", padx=10
+        )
         # find experiments that have been postnormalized
         postnorm_experiments = []  # list to hold names of all experiments that have been postnormalized
         for exp_name in self.root_experiment_dict:
@@ -3199,30 +3230,33 @@ class NewExperimentWindow(Toplevel):
                 postnorm_experiments.append(exp_name)
         self.experiment_var = tk.StringVar()
         self.experiment_menu = ttk.OptionMenu(
-            self.plot_selection_frame,
+            self.experiment_selection_frame,
             self.experiment_var,
-            "Experiment",
+            "[Select an Experiment]",
             *postnorm_experiments,
             command=self.update_plot_menu,
         )
-        self.experiment_menu.grid(row=0, column=1)
+        self.experiment_menu.grid(row=0, column=1, sticky="ew", padx=10)
+
+        self.select_plot_solvers_label = ttk.Label(
+            master=self.plot_selection_frame,
+            text="Solver Selection",
+            anchor="center",
+        )
+        self.select_plot_solvers_label.grid(
+            row=2, column=0, sticky="ew", columnspan=2
+        )
 
         # solver selection (treeview)
         self.solver_tree_frame = tk.Frame(
             master=self.plot_selection_frame, width=500, height=250
         )  # frame just to hold solver tree
         self.solver_tree_frame.grid(
-            row=2, column=0, columnspan=2, padx=10, pady=10
+            row=3, column=0, columnspan=2, padx=10, pady=10, sticky="nsew"
         )
         self.solver_tree_frame.grid_rowconfigure(0, weight=1)
         self.solver_tree_frame.grid_columnconfigure(0, weight=1)
         self.solver_tree_frame.grid_propagate(False)
-
-        self.select_plot_solvers_label = tk.Label(
-            master=self.plot_selection_frame,
-            text="Select Solver(s)",
-        )
-        self.select_plot_solvers_label.grid(row=1, column=0)
         self.solver_tree = ttk.Treeview(master=self.solver_tree_frame)
         self.solver_tree.grid(row=0, column=0, sticky="nsew")
         self.style = ttk.Style()
@@ -3244,31 +3278,52 @@ class NewExperimentWindow(Toplevel):
         self.solver_tree.configure(xscrollcommand=solver_xscrollbar.set)
         solver_xscrollbar.grid(row=1, column=0, sticky="ew")
 
-        # plot all solvers checkbox
-        self.all_solvers_var = tk.BooleanVar()
-        self.all_solvers_check = tk.Checkbutton(
+        # Select all button
+        self.select_all_solvers_button = ttk.Button(
             master=self.plot_selection_frame,
-            variable=self.all_solvers_var,
-            text="Plot all solvers from this experiment",
-            command=self.toggle_all_solvers_selected,
+            text="Select All Solvers",
+            command=self.select_all_solvers,
         )
-        self.all_solvers_check.grid(row=4, column=0, columnspan=2)
+        self.select_all_solvers_button.grid(
+            row=4, column=0, padx=10, pady=10, sticky="ew"
+        )
+        # Deselect all button
+        self.deselect_all_solvers_button = ttk.Button(
+            master=self.plot_selection_frame,
+            text="Deselect All Solvers",
+            command=self.deselect_all_solvers,
+        )
+        self.deselect_all_solvers_button.grid(
+            row=4, column=1, padx=10, pady=10, sticky="ew"
+        )
+
+        # Problem/Solver divider
+        self.problem_solver_divider = ttk.Separator(
+            master=self.plot_selection_frame, orient="vertical"
+        )
+        self.problem_solver_divider.grid(
+            row=2, column=2, rowspan=3, sticky="ns", padx=10
+        )
+
+        self.select_plot_problems_label = ttk.Label(
+            master=self.plot_selection_frame,
+            text="Problem Selection",
+            anchor="center",
+        )
+        self.select_plot_problems_label.grid(
+            row=2, column=3, sticky="ew", columnspan=2
+        )
 
         # problem selection (treeview)
         self.problem_tree_frame = tk.Frame(
             master=self.plot_selection_frame, width=500, height=250
         )
         self.problem_tree_frame.grid(
-            row=6, column=0, columnspan=2, padx=10, pady=10
+            row=3, column=3, columnspan=2, padx=10, pady=10, sticky="nsew"
         )
         self.problem_tree_frame.grid_rowconfigure(0, weight=1)
         self.problem_tree_frame.grid_columnconfigure(0, weight=1)
         self.problem_tree_frame.grid_propagate(False)
-        self.select_plot_problems_label = tk.Label(
-            master=self.plot_selection_frame,
-            text="Select Problem(s)",
-        )
-        self.select_plot_problems_label.grid(row=5, column=0)
         self.problem_tree = ttk.Treeview(master=self.problem_tree_frame)
         self.problem_tree.grid(row=0, column=0, sticky="nsew")
         self.style = ttk.Style()
@@ -3289,15 +3344,24 @@ class NewExperimentWindow(Toplevel):
         self.problem_tree.configure(xscrollcommand=problem_xscrollbar.set)
         problem_xscrollbar.grid(row=1, column=0, sticky="ew")
 
-        # plot all problems checkbox
-        self.all_problems_var = tk.BooleanVar()
-        self.all_problems_check = tk.Checkbutton(
+        # Select all button
+        self.select_all_problems_button = ttk.Button(
             master=self.plot_selection_frame,
-            variable=self.all_problems_var,
-            text="Plot all problems from this experiment",
-            command=self.toggle_all_problems_selected,
+            text="Select All Problems",
+            command=self.select_all_problems,
         )
-        self.all_problems_check.grid(row=8, column=0, columnspan=2)
+        self.select_all_problems_button.grid(
+            row=4, column=3, padx=10, pady=10, sticky="ew"
+        )
+        # Deselect all button
+        self.deselect_all_problems_button = ttk.Button(
+            master=self.plot_selection_frame,
+            text="Deselect All Problems",
+            command=self.deselect_all_problems,
+        )
+        self.deselect_all_problems_button.grid(
+            row=4, column=4, padx=10, pady=10, sticky="ew"
+        )
 
         self.plot_types_inputs = [
             "cdf_solvability",
@@ -3319,13 +3383,20 @@ class NewExperimentWindow(Toplevel):
             "Terminal Scatter Plot",
         ]
 
+        self.experiment_plotting_divider = ttk.Separator(
+            master=self.plot_main_frame, orient="vertical"
+        )
+        self.experiment_plotting_divider.grid(
+            row=1, column=1, sticky="ns", padx=10
+        )
+
         # plot options
-        self.plot_options_frame.grid(row=1, column=1)
-        self.plot_type_label = tk.Label(
+        self.plot_options_frame.grid(row=1, column=2, sticky="nsew")
+        self.plot_type_label = ttk.Label(
             master=self.plot_options_frame,
             text="Select Plot Type",
         )
-        self.plot_type_label.grid(row=0, column=0)
+        self.plot_type_label.grid(row=0, column=0, sticky="n", padx=10)
         self.plot_type_var = tk.StringVar()
         plot_types = [
             "Solvability CDF",
@@ -3344,23 +3415,32 @@ class NewExperimentWindow(Toplevel):
         )
         self.plot_type_menu.grid(row=0, column=1)
 
+        self.plotting_workspace_divider = ttk.Separator(
+            master=self.plot_main_frame, orient="horizontal"
+        )
+        self.plotting_workspace_divider.grid(
+            row=2, column=0, columnspan=3, sticky="ew", padx=10, pady=10
+        )
+
         # blank plotting workspace
-        self.plotting_workspace_frame.grid(row=2, column=0, columnspan=2)
-        self.workspace_label = tk.Label(
+        self.plotting_workspace_frame.grid(
+            row=3, column=0, columnspan=3, sticky="nsew"
+        )
+        self.workspace_label = ttk.Label(
             master=self.plotting_workspace_frame,
             text="Created Plots by Experiment",
             font=nametofont("TkHeadingFont"),
         )
         self.workspace_label.grid(row=0, column=0)
         # view selected plots button
-        self.view_selected_plots_button = tk.Button(
+        self.view_selected_plots_button = ttk.Button(
             master=self.plotting_workspace_frame,
             text="View Selected Plots",
             command=self.view_selected_plots,
         )
         self.view_selected_plots_button.grid(row=0, column=1, padx=20)
         # view all plots button
-        self.view_all_plots_button = tk.Button(
+        self.view_all_plots_button = ttk.Button(
             master=self.plotting_workspace_frame,
             text="View All Created Plots",
             command=self.view_all_plots,
@@ -3371,36 +3451,36 @@ class NewExperimentWindow(Toplevel):
         self.plot_notebook.grid(row=1, column=0, columnspan=3)
 
         # loaded plots tab
-        self.loaded_plots_frame = tk.Frame(self.plot_notebook)
+        self.loaded_plots_frame = ttk.Frame(self.plot_notebook)
         self.plot_notebook.add(
             self.loaded_plots_frame, text="Loaded Plots & Copies"
         )
 
-        self.select_header = tk.Label(
+        self.select_header = ttk.Label(
             master=self.loaded_plots_frame,
             text="Select Plot(s)",
             font=nametofont("TkHeadingFont"),
         )
         self.select_header.grid(row=0, column=0)
-        self.plot_name_header = tk.Label(
+        self.plot_name_header = ttk.Label(
             master=self.loaded_plots_frame,
             text="Plot Name",
             font=nametofont("TkHeadingFont"),
         )
         self.plot_name_header.grid(row=0, column=1)
-        self.view_header = tk.Label(
+        self.view_header = ttk.Label(
             master=self.loaded_plots_frame,
             text="View/Edit",
             font=nametofont("TkHeadingFont"),
         )
         self.view_header.grid(row=0, column=2, pady=10)
-        self.file_path_header = tk.Label(
+        self.file_path_header = ttk.Label(
             master=self.loaded_plots_frame,
             text="File Location",
             font=nametofont("TkHeadingFont"),
         )
         self.file_path_header.grid(row=0, column=3)
-        self.del_header = tk.Label(
+        self.del_header = ttk.Label(
             master=self.loaded_plots_frame,
             text="Delete Plot",
             font=nametofont("TkHeadingFont"),
@@ -3408,8 +3488,6 @@ class NewExperimentWindow(Toplevel):
         self.del_header.grid(row=0, column=4)
 
     def refresh_experiments(self) -> None:
-        self.experiment_menu.destroy()
-
         # find experiments that have been postnormalized
         postnorm_experiments = []  # list to hold names of all experiments that have been postnormalized
         for exp_name in self.root_experiment_dict:
@@ -3417,14 +3495,12 @@ class NewExperimentWindow(Toplevel):
             status = experiment.check_postnormalize()
             if status:
                 postnorm_experiments.append(exp_name)
-        self.experiment_menu = ttk.OptionMenu(
-            self.plot_selection_frame,
-            self.experiment_var,
-            "Experiment",
-            *postnorm_experiments,
-            command=self.update_plot_menu,
-        )
-        self.experiment_menu.grid(row=0, column=1)
+        self.experiment_menu["menu"].delete(0, "end")
+        for exp in postnorm_experiments:
+            self.experiment_menu["menu"].add_command(
+                label=exp,
+                command=lambda value=exp: self.update_plot_menu(value),
+            )
 
     def update_plot_window_scroll(self, event: tk.Event) -> None:
         self.plotting_canvas.configure(
@@ -3556,7 +3632,7 @@ class NewExperimentWindow(Toplevel):
         self.plot_type = plot_type
 
         # all in one entry (option is present for all plot types)
-        self.all_label = tk.Label(
+        self.all_label = ttk.Label(
             master=self.more_options_frame,
             text="Plot all solvers together?",
         )
@@ -3575,17 +3651,19 @@ class NewExperimentWindow(Toplevel):
 
         self.ref_menu_created = False  # reset to false
 
+        description_wrap_length = 500
+
         if plot_type == "Progress Curve":
-            # plot description
             description = "Plot individual or aggregate progress curves for one or more solvers on a single problem."
-            self.plot_description = tk.Label(
+            self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # select subplot type
-            self.subplot_type_label = tk.Label(
+            self.subplot_type_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Type",
             )
@@ -3603,21 +3681,21 @@ class NewExperimentWindow(Toplevel):
             self.subplot_type_menu.grid(row=2, column=1)
 
             # beta entry
-            self.beta_label = tk.Label(
+            self.beta_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Quantile Probability (0.0-1.0)",
             )
             self.beta_label.grid(row=4, column=0)
             self.beta_var = tk.StringVar()
             self.beta_var.set("0.5")  # default value
-            self.beta_entry = tk.Entry(
+            self.beta_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.beta_var
             )
             self.beta_entry.grid(row=4, column=1)
             self.beta_entry.configure(state="disabled")
 
             # normalize entry
-            self.normalize_label = tk.Label(
+            self.normalize_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Normalize Optimality Gaps?",
             )
@@ -3630,35 +3708,35 @@ class NewExperimentWindow(Toplevel):
             self.normalize_menu.grid(row=3, column=1)
 
             # num bootstraps entry
-            self.boot_label = tk.Label(
+            self.boot_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Number Bootstrap Samples",
             )
             self.boot_label.grid(row=5, column=0)
             self.boot_var = tk.StringVar()
             self.boot_var.set("100")  # default value
-            self.boot_entry = tk.Entry(
+            self.boot_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.boot_var
             )
             self.boot_entry.grid(row=5, column=1)
             self.boot_entry.configure(state="disabled")
 
             # confidence level entry
-            self.con_level_label = tk.Label(
+            self.con_level_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Confidence Level (0.0-1.0)",
             )
             self.con_level_label.grid(row=6, column=0)
             self.con_level_var = tk.StringVar()
             self.con_level_var.set("0.95")  # default value
-            self.con_level_entry = tk.Entry(
+            self.con_level_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.con_level_var
             )
             self.con_level_entry.grid(row=6, column=1)
             self.con_level_entry.configure(state="disabled")
 
             # plot CIs entry
-            self.plot_CI_label = tk.Label(
+            self.plot_CI_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Plot Confidence Intervals?",
             )
@@ -3672,7 +3750,7 @@ class NewExperimentWindow(Toplevel):
             self.plot_CI_menu.configure(state="disabled")
 
             # plot max HW entry
-            self.plot_hw_label = tk.Label(
+            self.plot_hw_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Plot Max Halfwidth?",
             )
@@ -3686,7 +3764,7 @@ class NewExperimentWindow(Toplevel):
             self.plot_hw_menu.configure(state="disabled")
 
             # legend location
-            self.legend_label = tk.Label(
+            self.legend_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Legend Location",
             )
@@ -3714,53 +3792,54 @@ class NewExperimentWindow(Toplevel):
         if plot_type == "Solvability CDF":
             # plot description
             description = "Plot the solvability cdf for one or more solvers on a single problem."
-            self.plot_description = tk.Label(
+            self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # solve tol entry
-            self.solve_tol_label = tk.Label(
+            self.solve_tol_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Solve Tolerance",
             )
             self.solve_tol_label.grid(row=2, column=0)
             self.solve_tol_var = tk.StringVar()
             self.solve_tol_var.set("0.1")  # default value
-            self.solve_tol_entry = tk.Entry(
+            self.solve_tol_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.solve_tol_var
             )
             self.solve_tol_entry.grid(row=2, column=1)
 
             # num bootstraps entry
-            self.boot_label = tk.Label(
+            self.boot_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Number Bootstrap Samples",
             )
             self.boot_label.grid(row=3, column=0)
             self.boot_var = tk.StringVar()
             self.boot_var.set("100")  # default value
-            self.boot_entry = tk.Entry(
+            self.boot_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.boot_var
             )
             self.boot_entry.grid(row=3, column=1)
 
             # confidence level entry
-            self.con_level_label = tk.Label(
+            self.con_level_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Confidence Level (0.0-1.0)",
             )
             self.con_level_label.grid(row=4, column=0)
             self.con_level_var = tk.StringVar()
             self.con_level_var.set("0.95")  # default value
-            self.con_level_entry = tk.Entry(
+            self.con_level_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.con_level_var
             )
             self.con_level_entry.grid(row=4, column=1)
 
             # plot CIs entry
-            self.plot_CI_label = tk.Label(
+            self.plot_CI_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Plot Confidence Intervals?",
             )
@@ -3773,7 +3852,7 @@ class NewExperimentWindow(Toplevel):
             self.plot_CI_menu.grid(row=5, column=1)
 
             # plot max HW entry
-            self.plot_hw_label = tk.Label(
+            self.plot_hw_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Plot Max Halfwidth?",
             )
@@ -3786,7 +3865,7 @@ class NewExperimentWindow(Toplevel):
             self.plot_hw_menu.grid(row=6, column=1)
 
             # legend location
-            self.legend_label = tk.Label(
+            self.legend_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Legend Location",
             )
@@ -3812,42 +3891,42 @@ class NewExperimentWindow(Toplevel):
             self.legend_menu.grid(row=7, column=1)
 
         if plot_type == "Area Scatter Plot":
-            # plot description
             description = "Plot a scatter plot of mean and standard deviation of area under progress curves."
-            self.plot_description = tk.Label(
+            self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # num bootstraps entry
-            self.boot_label = tk.Label(
+            self.boot_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Number Bootstrap Samples",
             )
             self.boot_label.grid(row=2, column=0)
             self.boot_var = tk.StringVar()
             self.boot_var.set("100")  # default value
-            self.boot_entry = tk.Entry(
+            self.boot_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.boot_var
             )
             self.boot_entry.grid(row=2, column=1)
 
             # confidence level entry
-            self.con_level_label = tk.Label(
+            self.con_level_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Confidence Level (0.0-1.0)",
             )
             self.con_level_label.grid(row=3, column=0)
             self.con_level_var = tk.StringVar()
             self.con_level_var.set("0.95")  # default value
-            self.con_level_entry = tk.Entry(
+            self.con_level_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.con_level_var
             )
             self.con_level_entry.grid(row=3, column=1)
 
             # plot CIs entry
-            self.plot_CI_label = tk.Label(
+            self.plot_CI_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Plot Confidence Intervals?",
             )
@@ -3860,7 +3939,7 @@ class NewExperimentWindow(Toplevel):
             self.plot_CI_menu.grid(row=4, column=1)
 
             # plot max HW entry
-            self.plot_hw_label = tk.Label(
+            self.plot_hw_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Plot Max Halfwidth?",
             )
@@ -3873,7 +3952,7 @@ class NewExperimentWindow(Toplevel):
             self.plot_hw_menu.grid(row=5, column=1)
 
             # legend location
-            self.legend_label = tk.Label(
+            self.legend_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Legend Location",
             )
@@ -3900,16 +3979,42 @@ class NewExperimentWindow(Toplevel):
 
         if plot_type == "Solvability Profile":
             self.ref_menu_created = True  # track that menu exists
-            # plot description
             description = "Plot the (difference of) solvability profiles for each solver on a set of problems."
-            self.plot_description = tk.Label(
+            self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
+
+            # reference solver
+            self.ref_solver_label = ttk.Label(
+                master=self.more_options_frame,
+                text="Solver to use for difference benchmark",
+            )
+            self.ref_solver_label.grid(row=1, column=0)
+            # set none if no solvers selected yet
+            self.ref_solver_var = tk.StringVar()
+            solver_options = []
+            if len(self.selected_solvers) == 0:
+                solver_display = "No solvers selected"
+            else:
+                solver_display = None
+                for solver in self.selected_solvers:
+                    solver_options.append(solver.name)
+                    solver_display = solver_options[0]
+                    self.ref_solver_var.set(solver_display)
+            self.ref_solver_menu = ttk.OptionMenu(
+                self.more_options_frame,
+                self.ref_solver_var,
+                solver_display,
+                *solver_options,
+            )
+            self.ref_solver_menu.grid(row=1, column=1)
+            self.ref_solver_menu.configure(state="disabled")
 
             # select subplot type
-            self.subplot_type_label = tk.Label(
+            self.subplot_type_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Type",
             )
@@ -3932,33 +4037,33 @@ class NewExperimentWindow(Toplevel):
             self.subplot_type_menu.grid(row=2, column=1)
 
             # num bootstraps entry
-            self.boot_label = tk.Label(
+            self.boot_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Number Bootstrap Samples",
             )
             self.boot_label.grid(row=3, column=0)
             self.boot_var = tk.StringVar()
             self.boot_var.set("100")  # default value
-            self.boot_entry = tk.Entry(
+            self.boot_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.boot_var
             )
             self.boot_entry.grid(row=3, column=1)
 
             # confidence level entry
-            self.con_level_label = tk.Label(
+            self.con_level_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Confidence Level (0.0-1.0)",
             )
             self.con_level_label.grid(row=4, column=0)
             self.con_level_var = tk.StringVar()
             self.con_level_var.set("0.95")  # default value
-            self.con_level_entry = tk.Entry(
+            self.con_level_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.con_level_var
             )
             self.con_level_entry.grid(row=4, column=1)
 
             # plot CIs entry
-            self.plot_CI_label = tk.Label(
+            self.plot_CI_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Plot Confidence Intervals?",
             )
@@ -3971,7 +4076,7 @@ class NewExperimentWindow(Toplevel):
             self.plot_CI_menu.grid(row=5, column=1)
 
             # plot max HW entry
-            self.plot_hw_label = tk.Label(
+            self.plot_hw_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Plot Max Halfwidth?",
             )
@@ -3984,61 +4089,34 @@ class NewExperimentWindow(Toplevel):
             self.plot_hw_menu.grid(row=6, column=1)
 
             # solve tol entry
-            self.solve_tol_label = tk.Label(
+            self.solve_tol_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Solve Tolerance",
             )
             self.solve_tol_label.grid(row=7, column=0)
             self.solve_tol_var = tk.StringVar()
             self.solve_tol_var.set("0.1")  # default value
-            self.solve_tol_entry = tk.Entry(
+            self.solve_tol_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.solve_tol_var
             )
             self.solve_tol_entry.grid(row=7, column=1)
 
             # beta entry (quantile size)
-            self.beta_label = tk.Label(
+            self.beta_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Quantile Probability (0.0-1.0)",
             )
             self.beta_label.grid(row=8, column=0)
             self.beta_var = tk.StringVar()
             self.beta_var.set("0.5")  # default value
-            self.beta_entry = tk.Entry(
+            self.beta_entry = ttk.Entry(
                 master=self.more_options_frame, textvariable=self.beta_var
             )
             self.beta_entry.grid(row=8, column=1)
             self.beta_entry.configure(state="disabled")
 
-            # reference solver
-            self.ref_solver_label = tk.Label(
-                master=self.more_options_frame,
-                text="Solver to use for difference benchmark",
-            )
-            self.ref_solver_label.grid(row=9, column=0)
-
-            # set none if no solvers selected yet
-            self.ref_solver_var = tk.StringVar()
-            solver_options = []
-            if len(self.selected_solvers) == 0:
-                solver_display = "No solvers selected"
-            else:
-                solver_display = None
-                for solver in self.selected_solvers:
-                    solver_options.append(solver.name)
-                    solver_display = solver_options[0]
-                    self.ref_solver_var.set(solver_display)
-            self.ref_solver_menu = ttk.OptionMenu(
-                self.more_options_frame,
-                self.ref_solver_var,
-                solver_display,
-                *solver_options,
-            )
-            self.ref_solver_menu.grid(row=9, column=1)
-            self.ref_solver_menu.configure(state="disabled")
-
             # legend location
-            self.legend_label = tk.Label(
+            self.legend_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Legend Location",
             )
@@ -4065,15 +4143,16 @@ class NewExperimentWindow(Toplevel):
 
         if plot_type == "Terminal Progress":
             # plot description
-            description = "Plot individual or aggregate terminal progress for one or more solvers on a single problem. Each unique selected problem will produce its own plot. "
-            self.plot_description = tk.Label(
+            description = "Plot individual or aggregate terminal progress for one or more solvers on a single problem. Each unique selected problem will produce its own plot."
+            self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # select subplot type
-            self.subplot_type_label = tk.Label(
+            self.subplot_type_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Type",
             )
@@ -4090,7 +4169,7 @@ class NewExperimentWindow(Toplevel):
             self.subplot_type_menu.grid(row=2, column=1)
 
             # normalize entry
-            self.normalize_label = tk.Label(
+            self.normalize_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Normalize Optimality Gaps?",
             )
@@ -4103,16 +4182,16 @@ class NewExperimentWindow(Toplevel):
             self.normalize_menu.grid(row=3, column=1)
 
         if plot_type == "Terminal Scatter Plot":
-            # plot description
             description = "Plot a scatter plot of mean and standard deviation of terminal progress."
-            self.plot_description = tk.Label(
+            self.plot_description = ttk.Label(
                 master=self.more_options_frame,
                 text=description,
+                wraplength=description_wrap_length,
             )
-            self.plot_description.grid(row=0, column=0, columnspan=2)
+            self.plot_description.grid(row=0, column=0, columnspan=2, pady=20)
 
             # legend location
-            self.legend_label = tk.Label(
+            self.legend_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Legend Location",
             )
@@ -4141,14 +4220,14 @@ class NewExperimentWindow(Toplevel):
         new_row = self.more_options_frame.grid_size()[1]
 
         # solver and problem set names
-        self.solver_set_label = tk.Label(
+        self.solver_set_label = ttk.Label(
             master=self.more_options_frame,
             text="Solver Group Name to be Used in Title",
         )
         self.solver_set_label.grid(row=new_row, column=0)
         self.solver_set_var = tk.StringVar()
         self.solver_set_var.set("SOLVER_SET")
-        self.solver_set_entry = tk.Entry(
+        self.solver_set_entry = ttk.Entry(
             master=self.more_options_frame, textvariable=self.solver_set_var
         )
         self.solver_set_entry.grid(row=new_row, column=1)
@@ -4161,14 +4240,14 @@ class NewExperimentWindow(Toplevel):
             "Solvability Profile",
             "Area Scatter Plot",
         ]:
-            self.problem_set_label = tk.Label(
+            self.problem_set_label = ttk.Label(
                 master=self.more_options_frame,
                 text="Problem Group Name to be Used in Title",
             )
             self.problem_set_label.grid(row=new_row + 1, column=0)
             self.problem_set_var = tk.StringVar()
             self.problem_set_var.set("PROBLEM_SET")
-            self.problem_set_entry = tk.Entry(
+            self.problem_set_entry = ttk.Entry(
                 master=self.more_options_frame,
                 textvariable=self.problem_set_var,
             )
@@ -4178,7 +4257,7 @@ class NewExperimentWindow(Toplevel):
             )  # set disabled unlass all in is true
 
         # file extension
-        self.ext_label = tk.Label(
+        self.ext_label = ttk.Label(
             master=self.more_options_frame,
             text="Save image as:",
         )
@@ -4260,52 +4339,42 @@ class NewExperimentWindow(Toplevel):
             self.plot_CI_menu.configure(state="disabled")
             self.plot_hw_menu.configure(state="disabled")
 
-    def toggle_all_solvers_selected(self) -> None:
-        all_solvers = self.all_solvers_var.get()
-        if all_solvers:
-            self.solver_tree.selection_set(self.solver_tree.get_children())
-        else:
-            self.solver_tree.selection_remove(self.solver_tree.get_children())
+    def select_all_solvers(self) -> None:
+        self.solver_tree.selection_set(self.solver_tree.get_children())
+
+    def deselect_all_solvers(self) -> None:
+        self.solver_tree.selection_remove(self.solver_tree.get_children())
+
+    def select_all_problems(self) -> None:
+        self.problem_tree.selection_set(self.problem_tree.get_children())
+
+    def deselect_all_problems(self) -> None:
+        self.problem_tree.selection_remove(self.problem_tree.get_children())
 
     def select_solver(
         self, _: tk.Event
     ) -> None:  # upddates solver list and options menu for reference solver when relevant
-        all_solvers = self.all_solvers_var.get()
-        if all_solvers:
-            self.selected_solvers = self.plot_experiment.solvers
-        else:  # get selected solvers from treeview
-            selected_items = self.solver_tree.selection()
-            self.selected_solvers = []
-            for item in selected_items:
-                solver_index = int(self.solver_tree.item(item, "text"))
-                solver = self.plot_experiment.solvers[
-                    solver_index
-                ]  # get corresponding solver from experiment
-                self.selected_solvers.append(solver)
+        selected_items = self.solver_tree.selection()
+        self.selected_solvers = []
+        for item in selected_items:
+            solver_index = int(self.solver_tree.item(item, "text"))
+            solver = self.plot_experiment.solvers[
+                solver_index
+            ]  # get corresponding solver from experiment
+            self.selected_solvers.append(solver)
 
         if self.ref_menu_created:  # if reference solver menu exists update menu
             self.update_ref_solver()
 
-    def toggle_all_problems_selected(self) -> None:
-        all_problems = self.all_problems_var.get()
-        if all_problems:
-            self.problem_tree.selection_set(self.problem_tree.get_children())
-        else:
-            self.problem_tree.selection_remove(self.problem_tree.get_children())
-
     def select_problem(self, _: tk.Event) -> None:
-        all_problems = self.all_problems_var.get()
-        if all_problems:
-            self.selected_problems = self.plot_experiment.problems
-        else:  # get selected problems from treeview
-            selected_items = self.problem_tree.selection()
-            self.selected_problems = []
-            for item in selected_items:
-                problem_index = int(self.problem_tree.item(item, "text"))
-                problem = self.plot_experiment.problems[
-                    problem_index
-                ]  # get corresponding problem from experiment
-                self.selected_problems.append(problem)
+        selected_items = self.problem_tree.selection()
+        self.selected_problems = []
+        for item in selected_items:
+            problem_index = int(self.problem_tree.item(item, "text"))
+            problem = self.plot_experiment.problems[
+                problem_index
+            ]  # get corresponding problem from experiment
+            self.selected_problems.append(problem)
 
     def update_ref_solver(self) -> None:
         saved_solver = (
@@ -4818,49 +4887,49 @@ class NewExperimentWindow(Toplevel):
             )
 
             # set up tab first time it is created
-            select_header = tk.Label(
+            select_header = ttk.Label(
                 master=tab_frame,
                 text="Select Plot(s)",
                 font=nametofont("TkDefaultFont"),
             )
             select_header.grid(row=0, column=0)
-            solver_header = tk.Label(
+            solver_header = ttk.Label(
                 master=tab_frame,
                 text="Solver(s)",
                 font=nametofont("TkDefaultFont"),
             )
             solver_header.grid(row=0, column=1)
-            problem_header = tk.Label(
+            problem_header = ttk.Label(
                 master=tab_frame,
                 text="Problem(s)",
                 font=nametofont("TkDefaultFont"),
             )
             problem_header.grid(row=0, column=2)
-            type_header = tk.Label(
+            type_header = ttk.Label(
                 master=tab_frame,
                 text="Plot Type",
                 font=nametofont("TkDefaultFont"),
             )
             type_header.grid(row=0, column=3)
-            view_header = tk.Label(
+            view_header = ttk.Label(
                 master=tab_frame,
                 text="View/Edit",
                 font=nametofont("TkDefaultFont"),
             )
             view_header.grid(row=0, column=4, pady=10)
-            file_path_header = tk.Label(
+            file_path_header = ttk.Label(
                 master=tab_frame,
                 text="File Location",
                 font=nametofont("TkDefaultFont"),
             )
             file_path_header.grid(row=0, column=5)
-            parameters_header = tk.Label(
+            parameters_header = ttk.Label(
                 master=tab_frame,
                 text="Plot Parameters",
                 font=nametofont("TkDefaultFont"),
             )
             parameters_header.grid(row=0, column=6)
-            del_header = tk.Label(
+            del_header = ttk.Label(
                 master=tab_frame,
                 text="Delete Plot",
                 font=nametofont("TkDefaultFont"),
@@ -4889,17 +4958,17 @@ class NewExperimentWindow(Toplevel):
             )
             check.grid(row=row, column=0, padx=5)
             self.plot_check_vars[file_path] = self.plot_check_var
-            solver_label = tk.Label(
+            solver_label = ttk.Label(
                 master=tab_frame,
                 text=solver_names[index],
             )
             solver_label.grid(row=row, column=1, padx=5)
-            problem_label = tk.Label(
+            problem_label = ttk.Label(
                 master=tab_frame,
                 text=problem_names[index],
             )
             problem_label.grid(row=row, column=2, padx=5)
-            type_label = tk.Label(
+            type_label = ttk.Label(
                 master=tab_frame,
                 text=self.plot_type,
             )
@@ -4910,12 +4979,12 @@ class NewExperimentWindow(Toplevel):
                 command=lambda fp=file_path: self.view_plot(fp),
             )
             view_button.grid(row=row, column=4, padx=5)
-            path_label = tk.Label(
+            path_label = ttk.Label(
                 master=tab_frame,
                 text=file_path,
             )
             path_label.grid(row=row, column=5, padx=5)
-            para_label = tk.Label(
+            para_label = ttk.Label(
                 master=tab_frame,
                 text=para_display,
             )
@@ -4980,7 +5049,7 @@ class NewExperimentWindow(Toplevel):
         )
         check.grid(row=row, column=0, padx=5)
         self.plot_check_vars[image_path] = self.plot_check_var
-        plot_name_label = tk.Label(
+        plot_name_label = ttk.Label(
             master=self.loaded_plots_frame,
             text=title,
         )
@@ -4991,7 +5060,7 @@ class NewExperimentWindow(Toplevel):
             command=lambda fp=image_path: self.view_plot(fp),
         )
         view_button.grid(row=row, column=2, padx=5)
-        path_label = tk.Label(
+        path_label = ttk.Label(
             master=self.loaded_plots_frame,
             text=image_path,
         )
@@ -5066,7 +5135,7 @@ class NewExperimentWindow(Toplevel):
         self.image_frame.grid(row=0, column=0)
         plot_image = Image.open(file_path)
         plot_photo = ImageTk.PhotoImage(plot_image)
-        plot_display = tk.Label(master=self.image_frame, image=plot_photo)
+        plot_display = ttk.Label(master=self.image_frame, image=plot_photo)
         plot_display.image = plot_photo
         plot_display.grid(row=0, column=0, padx=10, pady=10)
 
@@ -5180,7 +5249,7 @@ class NewExperimentWindow(Toplevel):
                 photo.destroy()
             plot_image = Image.open(file_path)
             plot_photo = ImageTk.PhotoImage(plot_image)
-            plot_display = tk.Label(master=image_frame, image=plot_photo)
+            plot_display = ttk.Label(master=image_frame, image=plot_photo)
             plot_display.image = plot_photo
             plot_display.grid(row=0, column=0, padx=10, pady=10)
         else:
@@ -5206,7 +5275,7 @@ class NewExperimentWindow(Toplevel):
             )
             check.grid(row=row, column=0, padx=5)
             self.plot_check_vars[extended_path_name] = self.plot_check_var
-            plot_name_label = tk.Label(
+            plot_name_label = ttk.Label(
                 master=self.loaded_plots_frame,
                 text=title,
             )
@@ -5217,7 +5286,7 @@ class NewExperimentWindow(Toplevel):
                 command=lambda fp=extended_path_name: self.view_plot(fp),
             )
             view_button.grid(row=row, column=2, padx=5)
-            path_label = tk.Label(
+            path_label = ttk.Label(
                 master=self.loaded_plots_frame,
                 text=extended_path_name,
             )
@@ -5265,25 +5334,25 @@ class NewExperimentWindow(Toplevel):
         alignment = ax.title.get_ha()
 
         # display current information in entry widgets
-        self.title_label = tk.Label(
+        self.title_label = ttk.Label(
             master=self.edit_title_window,
             text="Plot Title",
         )
         self.title_label.grid(row=0, column=0)
         self.title_var = tk.StringVar()
         self.title_var.set(str(title))
-        self.title_entry = tk.Entry(
+        self.title_entry = ttk.Entry(
             master=self.edit_title_window, textvariable=self.title_var, width=50
         )
         self.title_entry.grid(row=0, column=1, padx=10)
         description = r"Use \n to represent a new line in the title"
-        self.title_description_label = tk.Label(
+        self.title_description_label = ttk.Label(
             master=self.edit_title_window,
             text=description,
         )
         self.title_description_label.grid(row=0, column=2, padx=10)
 
-        self.font_label = tk.Label(
+        self.font_label = ttk.Label(
             master=self.edit_title_window,
             text="Title Font",
         )
@@ -5295,19 +5364,19 @@ class NewExperimentWindow(Toplevel):
         )
         self.font_menu.grid(row=1, column=1, padx=10)
 
-        self.font_size_label = tk.Label(
+        self.font_size_label = ttk.Label(
             master=self.edit_title_window,
             text="Font Size",
         )
         self.font_size_label.grid(row=2, column=0)
         self.font_size_var = tk.StringVar()
         self.font_size_var.set(font_size)
-        self.font_size_entry = tk.Entry(
+        self.font_size_entry = ttk.Entry(
             master=self.edit_title_window, textvariable=self.font_size_var
         )
         self.font_size_entry.grid(row=2, column=1, padx=10)
 
-        self.font_style_label = tk.Label(
+        self.font_style_label = ttk.Label(
             master=self.edit_title_window,
             text="Font Style",
         )
@@ -5322,7 +5391,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.font_style_menu.grid(row=3, column=1, padx=10)
 
-        self.font_weight_label = tk.Label(
+        self.font_weight_label = ttk.Label(
             master=self.edit_title_window,
             text="Font Weight",
         )
@@ -5337,7 +5406,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.font_weight_menu.grid(row=4, column=1, padx=10)
 
-        self.font_color_label = tk.Label(
+        self.font_color_label = ttk.Label(
             master=self.edit_title_window,
             text="Font Color",
         )
@@ -5352,19 +5421,19 @@ class NewExperimentWindow(Toplevel):
         )
         self.font_color_menu.grid(row=5, column=1, padx=10)
 
-        self.position_x_label = tk.Label(
+        self.position_x_label = ttk.Label(
             master=self.edit_title_window,
             text="X Position \n (determines centerpoint of title)",
         )
         self.position_x_label.grid(row=7, column=0)
         self.position_x_var = tk.StringVar()
         self.position_x_var.set(title_position[0])
-        self.position_x_entry = tk.Entry(
+        self.position_x_entry = ttk.Entry(
             master=self.edit_title_window, textvariable=self.position_x_var
         )
         self.position_x_entry.grid(row=7, column=1, padx=10)
 
-        self.align_label = tk.Label(
+        self.align_label = ttk.Label(
             master=self.edit_title_window,
             text="Alignment",
         )
@@ -5456,7 +5525,7 @@ class NewExperimentWindow(Toplevel):
         self.edit_x_axis_window.geometry("800x500")
 
         # select axis
-        self.select_axis_label = tk.Label(
+        self.select_axis_label = ttk.Label(
             master=self.edit_x_axis_window,
             text="Select Axis",
         )
@@ -5531,27 +5600,27 @@ class NewExperimentWindow(Toplevel):
             space = "none"
 
         # display current information in entry widgets
-        self.x_title_label = tk.Label(
+        self.x_title_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text=f"{axis_display}-Axis Title",
         )
         self.x_title_label.grid(row=0, column=0)
         self.x_title_var = tk.StringVar()
         self.x_title_var.set(label)
-        self.x_title_entry = tk.Entry(
+        self.x_title_entry = ttk.Entry(
             master=self.edit_x_axis_frame,
             textvariable=self.x_title_var,
             width=50,
         )
         self.x_title_entry.grid(row=0, column=1)
         description = r"Use \n to represent a new line in the title"
-        self.x_title_description_label = tk.Label(
+        self.x_title_description_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text=description,
         )
         self.x_title_description_label.grid(row=0, column=2, padx=10)
 
-        self.x_font_label = tk.Label(
+        self.x_font_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text="Title Font",
         )
@@ -5566,19 +5635,19 @@ class NewExperimentWindow(Toplevel):
         )
         self.x_font_menu.grid(row=1, column=1, padx=10)
 
-        self.x_font_size_label = tk.Label(
+        self.x_font_size_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text="Font Size",
         )
         self.x_font_size_label.grid(row=2, column=0)
         self.x_font_size_var = tk.StringVar()
         self.x_font_size_var.set(font_size)
-        self.x_font_size_entry = tk.Entry(
+        self.x_font_size_entry = ttk.Entry(
             master=self.edit_x_axis_frame, textvariable=self.x_font_size_var
         )
         self.x_font_size_entry.grid(row=2, column=1, padx=10)
 
-        self.x_font_style_label = tk.Label(
+        self.x_font_style_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text="Font Style",
         )
@@ -5593,7 +5662,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.x_font_style_menu.grid(row=3, column=1, padx=10)
 
-        self.x_font_weight_label = tk.Label(
+        self.x_font_weight_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text="Font Weight",
         )
@@ -5608,7 +5677,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.x_font_weight_menu.grid(row=4, column=1, padx=10)
 
-        self.x_font_color_label = tk.Label(
+        self.x_font_color_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text="Font Color",
         )
@@ -5623,7 +5692,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.x_font_color_menu.grid(row=5, column=1, padx=10)
 
-        self.align_label = tk.Label(
+        self.align_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text="Title Alignment",
         )
@@ -5636,7 +5705,7 @@ class NewExperimentWindow(Toplevel):
         self.align_menu.grid(row=6, column=1, padx=10)
 
         if axis == "Y-Axis":
-            self.x_scale_label = tk.Label(
+            self.x_scale_label = ttk.Label(
                 master=self.edit_x_axis_frame,
                 text=f"{axis_display}-Axis Scale",
             )
@@ -5653,38 +5722,38 @@ class NewExperimentWindow(Toplevel):
         else:
             self.x_scale_var = None
 
-        self.min_x_label = tk.Label(
+        self.min_x_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text=f"Min {axis_display} Value",
         )
         self.min_x_label.grid(row=8, column=0)
         self.min_x_var = tk.StringVar()
         self.min_x_var.set(limits[0])
-        self.min_x_entry = tk.Entry(
+        self.min_x_entry = ttk.Entry(
             master=self.edit_x_axis_frame, textvariable=self.min_x_var
         )
         self.min_x_entry.grid(row=8, column=1, padx=10)
 
-        self.max_x_label = tk.Label(
+        self.max_x_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text=f"Max {axis_display} Value",
         )
         self.max_x_label.grid(row=9, column=0)
         self.max_x_var = tk.StringVar()
         self.max_x_var.set(limits[1])
-        self.max_x_entry = tk.Entry(
+        self.max_x_entry = ttk.Entry(
             master=self.edit_x_axis_frame, textvariable=self.max_x_var
         )
         self.max_x_entry.grid(row=9, column=1, padx=10)
 
-        self.x_space_label = tk.Label(
+        self.x_space_label = ttk.Label(
             master=self.edit_x_axis_frame,
             text=f"Space Between {axis_display} Ticks",
         )
         self.x_space_label.grid(row=10, column=0)
         self.x_space_var = tk.StringVar()
         self.x_space_var.set(space)
-        self.x_space_entry = tk.Entry(
+        self.x_space_entry = ttk.Entry(
             master=self.edit_x_axis_frame, textvariable=self.x_space_var
         )
         self.x_space_entry.grid(row=10, column=1, padx=10)
@@ -5854,7 +5923,7 @@ class NewExperimentWindow(Toplevel):
             v_alignment = "center"
             alpha = ""
 
-        self.text_label = tk.Label(
+        self.text_label = ttk.Label(
             master=self.edit_text_frame,
             text="Plot Caption",
         )
@@ -5863,7 +5932,7 @@ class NewExperimentWindow(Toplevel):
         self.text_entry.grid(row=0, column=1, padx=10)
         self.text_entry.insert(tk.END, description)
 
-        self.text_font_label = tk.Label(
+        self.text_font_label = ttk.Label(
             master=self.edit_text_frame,
             text="Font Family",
         )
@@ -5878,7 +5947,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_font_menu.grid(row=1, column=1, padx=10)
 
-        self.text_font_size_label = tk.Label(
+        self.text_font_size_label = ttk.Label(
             master=self.edit_text_frame,
             text="Font Size",
         )
@@ -5886,12 +5955,12 @@ class NewExperimentWindow(Toplevel):
         self.text_font_size_var = tk.StringVar()
         font_size_str = str(font_size)
         self.text_font_size_var.set(font_size_str)
-        self.text_font_size_entry = tk.Entry(
+        self.text_font_size_entry = ttk.Entry(
             master=self.edit_text_frame, textvariable=self.text_font_size_var
         )
         self.text_font_size_entry.grid(row=2, column=1, padx=10)
 
-        self.text_font_style_label = tk.Label(
+        self.text_font_style_label = ttk.Label(
             master=self.edit_text_frame,
             text="Font Style",
         )
@@ -5906,7 +5975,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_font_style_menu.grid(row=3, column=1, padx=10)
 
-        self.text_font_weight_label = tk.Label(
+        self.text_font_weight_label = ttk.Label(
             master=self.edit_text_frame,
             text="Font Weight",
         )
@@ -5922,7 +5991,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_font_weight_menu.grid(row=4, column=1, padx=10)
 
-        self.text_font_color_label = tk.Label(
+        self.text_font_color_label = ttk.Label(
             master=self.edit_text_frame,
             text="Font Color",
         )
@@ -5938,7 +6007,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_font_color_menu.grid(row=5, column=1, padx=10)
 
-        self.text_align_label = tk.Label(
+        self.text_align_label = ttk.Label(
             master=self.edit_text_frame,
             text="Horizontal Alignment",
         )
@@ -5955,7 +6024,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_align_menu.grid(row=6, column=1, padx=10)
 
-        self.text_valign_label = tk.Label(
+        self.text_valign_label = ttk.Label(
             master=self.edit_text_frame,
             text="Vertical Alignment",
         )
@@ -5972,7 +6041,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.text_valign_menu.grid(row=7, column=1, padx=10)
 
-        self.text_position_x_label = tk.Label(
+        self.text_position_x_label = ttk.Label(
             master=self.edit_text_frame,
             text="Description X Position \n (can be + or -)",
         )
@@ -5980,12 +6049,12 @@ class NewExperimentWindow(Toplevel):
         self.text_position_x_var = tk.StringVar()
         position_x_str = str(position[0])
         self.text_position_x_var.set(position_x_str)
-        self.text_position_x_entry = tk.Entry(
+        self.text_position_x_entry = ttk.Entry(
             master=self.edit_text_frame, textvariable=self.text_position_x_var
         )
         self.text_position_x_entry.grid(row=8, column=1, padx=10)
 
-        self.text_position_y_label = tk.Label(
+        self.text_position_y_label = ttk.Label(
             master=self.edit_text_frame,
             text="Description Y Position \n (can be + or -)",
         )
@@ -5993,12 +6062,12 @@ class NewExperimentWindow(Toplevel):
         self.text_position_y_var = tk.StringVar()
         position_y_str = str(position[1])
         self.text_position_y_var.set(position_y_str)
-        self.text_position_y_entry = tk.Entry(
+        self.text_position_y_entry = ttk.Entry(
             master=self.edit_text_frame, textvariable=self.text_position_y_var
         )
         self.text_position_y_entry.grid(row=9, column=1, padx=10)
 
-        self.background_color_label = tk.Label(
+        self.background_color_label = ttk.Label(
             master=self.edit_text_frame,
             text="Background Color",
         )
@@ -6014,7 +6083,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.background_color_menu.grid(row=10, column=1, padx=10)
 
-        self.border_color_label = tk.Label(
+        self.border_color_label = ttk.Label(
             master=self.edit_text_frame,
             text="Border Color",
         )
@@ -6032,7 +6101,7 @@ class NewExperimentWindow(Toplevel):
         )
         self.border_color_menu.grid(row=11, column=1, padx=10)
 
-        self.border_weight_label = tk.Label(
+        self.border_weight_label = ttk.Label(
             master=self.edit_text_frame,
             text="Border Weight",
         )
@@ -6040,12 +6109,12 @@ class NewExperimentWindow(Toplevel):
         self.border_weight_var = tk.StringVar()
         line_width_str = str(line_width)
         self.border_weight_var.set(line_width_str)
-        self.border_weight_menu = tk.Entry(
+        self.border_weight_menu = ttk.Entry(
             master=self.edit_text_frame, textvariable=self.border_weight_var
         )
         self.border_weight_menu.grid(row=12, column=1, padx=10)
 
-        self.alpha_label = tk.Label(
+        self.alpha_label = ttk.Label(
             master=self.edit_text_frame,
             text="Transparency",
         )
@@ -6053,7 +6122,7 @@ class NewExperimentWindow(Toplevel):
         self.alpha_var = tk.StringVar()
         alpha_str = str(alpha)
         self.alpha_var.set(alpha_str)
-        self.alpha_menu = tk.Entry(
+        self.alpha_menu = ttk.Entry(
             master=self.edit_text_frame, textvariable=self.alpha_var
         )
         self.alpha_menu.grid(row=13, column=1, padx=10)
@@ -6148,19 +6217,19 @@ class NewExperimentWindow(Toplevel):
             fig = pickle.load(f)
         dpi = fig.get_dpi()  # get current dpi
 
-        self.dpi_label = tk.Label(
+        self.dpi_label = ttk.Label(
             master=self.edit_image_frame,
             text="DPI (dots per square inch)",
         )
         self.dpi_label.grid(row=0, column=0)
         self.dpi_var = tk.StringVar()
         self.dpi_var.set(dpi)
-        self.dpi_entry = tk.Entry(
+        self.dpi_entry = ttk.Entry(
             master=self.edit_image_frame, textvariable=self.dpi_var
         )
         self.dpi_entry.grid(row=0, column=1, padx=10)
 
-        self.ext_label = tk.Label(
+        self.ext_label = ttk.Label(
             master=self.edit_image_frame,
             text="Font Family",
         )
@@ -6213,7 +6282,7 @@ class NewExperimentWindow(Toplevel):
                 photo.destroy()
             plot_image = Image.open(save_path)
             plot_photo = ImageTk.PhotoImage(plot_image)
-            plot_display = tk.Label(master=image_frame, image=plot_photo)
+            plot_display = ttk.Label(master=image_frame, image=plot_photo)
             plot_display.image = plot_photo
             plot_display.grid(row=0, column=0, padx=10, pady=10)
 
@@ -6242,7 +6311,7 @@ class NewExperimentWindow(Toplevel):
             )
             check.grid(row=row, column=0, padx=5)
             self.plot_check_vars[extended_path_name] = self.plot_check_var
-            plot_name_label = tk.Label(
+            plot_name_label = ttk.Label(
                 master=self.loaded_plots_frame,
                 text=title,
             )
@@ -6253,7 +6322,7 @@ class NewExperimentWindow(Toplevel):
                 command=lambda fp=extended_path_name: self.view_plot(fp),
             )
             view_button.grid(row=row, column=2, padx=5)
-            path_label = tk.Label(
+            path_label = ttk.Label(
                 master=self.loaded_plots_frame,
                 text=extended_path_name,
             )
@@ -6328,7 +6397,7 @@ class NewExperimentWindow(Toplevel):
         ) in self.plot_check_vars:  # get file path of all created plots
             plot_image = Image.open(image_path)
             plot_photo = ImageTk.PhotoImage(plot_image)
-            plot_display = tk.Label(
+            plot_display = ttk.Label(
                 master=self.view_all_frame, image=plot_photo
             )
             plot_display.image = plot_photo
@@ -6406,7 +6475,7 @@ class NewExperimentWindow(Toplevel):
             for image_path in selected_plots:
                 plot_image = Image.open(image_path)
                 plot_photo = ImageTk.PhotoImage(plot_image)
-                plot_display = tk.Label(
+                plot_display = ttk.Label(
                     master=self.view_frame, image=plot_photo
                 )
                 plot_display.image = plot_photo

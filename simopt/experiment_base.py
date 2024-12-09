@@ -234,7 +234,7 @@ class Curve:
         self,
         color_str: str = "C0",
         curve_type: Literal["regular", "conf_bound"] = "regular",
-    ) -> list[mpl_lines.Line2D]:
+    ) -> mpl_lines.Line2D:
         """Plot a curve.
 
         Parameters
@@ -246,7 +246,7 @@ class Curve:
 
         Returns
         -------
-        list [``matplotlib.lines.Line2D``]
+        ``matplotlib.lines.Line2D``
             Curve handle, to use when creating legends.
 
         Raises
@@ -273,7 +273,7 @@ class Curve:
         elif curve_type == "conf_bound":
             linestyle = "--"
             linewidth = 1
-        handle = plt.step(
+        (handle,) = plt.step(
             self.x_vals,
             self.y_vals,
             color=color_str,
@@ -4517,6 +4517,7 @@ def plot_terminal_progress(
                 inner="stick",
                 density_norm="width",
                 cut=0.1,
+                hue="Solvers",
             )
             if normalize:
                 plt.ylabel("Terminal Progress")
