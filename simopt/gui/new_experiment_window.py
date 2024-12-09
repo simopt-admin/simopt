@@ -5,7 +5,7 @@ import tkinter as tk
 from abc import ABCMeta
 from tkinter import filedialog, messagebox, ttk
 from tkinter.font import nametofont
-from typing import Callable, Final, Literal
+from typing import Callable, Final, Literal, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -942,14 +942,14 @@ class NewExperimentWindow(Toplevel):
         )
 
     def add_problem_to_curr_exp(
-        self, unique_name: str, problem_list: list[list]
+        self, unique_name: str, problem_list: "list[list]"
     ) -> None:
         self.root_problem_dict[unique_name] = problem_list
         self.add_problem_to_curr_exp_list(unique_name)
         self.__update_solver_dropdown()
 
     def add_solver_to_curr_exp(
-        self, unique_name: str, solver_list: list[list]
+        self, unique_name: str, solver_list: "list[list]"
     ) -> None:
         self.root_solver_dict[unique_name] = solver_list
         self.add_solver_to_curr_exp_list(unique_name)
@@ -1579,7 +1579,7 @@ class NewExperimentWindow(Toplevel):
     def __insert_factors(
         self,
         frame: ttk.Frame,
-        factor_dict: dict[str, DFFactor],
+        factor_dict: "dict[str, DFFactor]",
         first_row: int = 2,
     ) -> int:
         """Insert the factors into the frame.
@@ -1609,7 +1609,9 @@ class NewExperimentWindow(Toplevel):
             factor_obj = factor_dict[factor_name]
             # Make a list of functions that will return the widgets for each
             # column in the frame
-            column_functions: list[Callable[[ttk.Frame], tk.Widget | None]] = [
+            column_functions: list[
+                Callable[[ttk.Frame], Union[tk.Widget, None]]
+            ] = [
                 factor_obj.get_name_label,
                 factor_obj.get_description_label,
                 factor_obj.get_type_label,
@@ -1746,7 +1748,7 @@ class NewExperimentWindow(Toplevel):
         return self.__get_unique_name(self.root_solver_dict, base_name)
 
     def __show_data_farming_core(
-        self, base_object: Solver | Problem, frame: ttk.Frame
+        self, base_object: Union[Solver, Problem], frame: ttk.Frame
     ) -> None:
         """Show data farming options for a solver or problem.
 
@@ -1942,9 +1944,9 @@ class NewExperimentWindow(Toplevel):
 
     def display_design_tree(
         self,
-        csv_filename: str | None = None,
-        design_table: pd.DataFrame | None = None,
-        master_frame: ttk.Frame | None = None,
+        csv_filename: Union[str, None] = None,
+        design_table: Union[pd.DataFrame, None] = None,
+        master_frame: Union[ttk.Frame, None] = None,
     ) -> None:
         if csv_filename is None and design_table is None:
             error_msg = "Either csv_filename or dataframe must be provided."
@@ -2111,7 +2113,7 @@ class NewExperimentWindow(Toplevel):
         # Hide the design tree
         self._hide_gen_design()
 
-    def __view_design(self, design_list: list[list]) -> None:
+    def __view_design(self, design_list: "list[list]") -> None:
         # Create an empty dataframe to display the design tree
         column_names = list(design_list[0][0].keys())
         num_rows = len(design_list)
@@ -2349,7 +2351,7 @@ class NewExperimentWindow(Toplevel):
             self.update()
             # Run the function
             try:
-                function(name)
+                function(name)  # type: ignore
                 # Set the name to include the updated status
                 name_label = self.tk_labels[lbl_name]
                 name_label.configure(text=name + "\n(" + future_tense + ")")
@@ -2778,7 +2780,7 @@ class NewExperimentWindow(Toplevel):
     def _find_option_setting_bool(
         self,
         exp_name: str,
-        search_dict: dict[str, tk.StringVar],
+        search_dict: "dict[str, tk.StringVar]",
         default_val: bool,
     ) -> bool:
         if exp_name in search_dict:
@@ -2792,7 +2794,7 @@ class NewExperimentWindow(Toplevel):
     def _find_option_setting_int(
         self,
         exp_name: str,
-        search_dict: dict[str, tk.IntVar],
+        search_dict: "dict[str, tk.IntVar]",
         default_val: int,
     ) -> int:
         if exp_name in search_dict:
@@ -3225,9 +3227,7 @@ class NewExperimentWindow(Toplevel):
             text="Refresh Dropdown",
             command=self.refresh_experiments,
         )
-        self.refresh_button.grid(
-            row=0, column=2, sticky="ew", padx=10
-        )
+        self.refresh_button.grid(row=0, column=2, sticky="ew", padx=10)
 
         self.select_plot_solvers_label = ttk.Label(
             master=self.plot_selection_frame,
@@ -3431,9 +3431,7 @@ class NewExperimentWindow(Toplevel):
             text="Load Plot from Pickle",
             command=self.load_plot,
         )
-        self.load_plot_button.grid(
-            row=0, column=1, padx=20, pady=10
-        )
+        self.load_plot_button.grid(row=0, column=1, padx=20, pady=10)
         # view selected plots button
         self.view_selected_plots_button = ttk.Button(
             master=self.plotting_workspace_frame,
@@ -4423,7 +4421,7 @@ class NewExperimentWindow(Toplevel):
         ]:  # disable if not correct plot type
             self.ref_solver_menu.configure(state="disabled")
 
-    def __get_plot_experiment_sublist(self) -> list[list[ProblemSolver]]:
+    def __get_plot_experiment_sublist(self) -> "list[list[ProblemSolver]]":
         # get selected solvers & problems
         exp_sublist = []  # sublist of experiments to be plotted (each index represents a group of problems over a single solver)
         for solver in self.selected_solvers:
@@ -4888,10 +4886,10 @@ class NewExperimentWindow(Toplevel):
 
     def add_plot_to_notebook(
         self,
-        file_paths: list[str],
-        solver_names: list[str],
-        problem_names: list[str],
-        parameters: dict | None = None,
+        file_paths: "list[str]",
+        solver_names: "list[str]",
+        problem_names: "list[str]",
+        parameters: Union[dict, None] = None,
     ) -> None:
         # add new tab for exp if applicable
         exp_name = self.experiment_var.get()
@@ -4998,9 +4996,7 @@ class NewExperimentWindow(Toplevel):
             screen_width = self.winfo_screenwidth()
             wrap_length = screen_width // 5
             path_label = ttk.Label(
-                master=tab_frame,
-                text=file_path,
-                wraplength=wrap_length
+                master=tab_frame, text=file_path, wraplength=wrap_length
             )
             path_label.grid(row=row, column=5, padx=5)
             para_label = ttk.Label(
@@ -5023,7 +5019,7 @@ class NewExperimentWindow(Toplevel):
                 self.plot_notebook.select(index)
 
     def delete_plot(
-        self, row: int, frame: tk.Frame, file_path: os.PathLike | str
+        self, row: int, frame: tk.Frame, file_path: Union[os.PathLike, str]
     ) -> None:
         for widget in frame.winfo_children():  # remove plot from list display
             info = widget.grid_info()
@@ -5097,7 +5093,7 @@ class NewExperimentWindow(Toplevel):
         self.plot_notebook.select(0)
 
     def view_plot(
-        self, file_path: os.PathLike | str
+        self, file_path: Union[os.PathLike, str]
     ) -> None:  # this window also allows for the editing of individual plots by accessing the created pickle file
         # create new window
         self.view_single_window = tk.Toplevel(self)
@@ -5251,8 +5247,8 @@ class NewExperimentWindow(Toplevel):
     def save_plot_changes(
         self,
         fig: plt.Figure,
-        pickle_path: os.PathLike | str,
-        file_path: os.PathLike | str,
+        pickle_path: Union[str, os.PathLike],
+        file_path: Union[str, os.PathLike],
         image_frame: tk.Frame,
         copy: bool = False,
     ) -> None:
@@ -5323,7 +5319,7 @@ class NewExperimentWindow(Toplevel):
             self.plot_notebook.select(0)
 
     def edit_plot_title(
-        self, file_path: os.PathLike | str, image_frame: tk.Frame
+        self, file_path: Union[os.PathLike, str], image_frame: tk.Frame
     ) -> None:
         # create new window
         self.edit_title_window = tk.Toplevel(self)
@@ -5488,8 +5484,8 @@ class NewExperimentWindow(Toplevel):
     def save_title_changes(
         self,
         fig: plt.figure,
-        pickle_path: os.PathLike | str,
-        file_path: os.PathLike | str,
+        pickle_path: Union[str, os.PathLike],
+        file_path: Union[str, os.PathLike],
         image_frame: tk.Frame,
         copy: bool = False,
     ) -> None:
@@ -5534,7 +5530,7 @@ class NewExperimentWindow(Toplevel):
         self.edit_title_window.destroy()  # close editing window
 
     def edit_plot_x_axis(
-        self, file_path: os.PathLike | str, image_frame: tk.Frame
+        self, file_path: Union[str, os.PathLike], image_frame: tk.Frame
     ) -> None:  # actualy edits both axes
         # create new window
         self.edit_x_axis_window = tk.Toplevel(self)
@@ -5567,7 +5563,7 @@ class NewExperimentWindow(Toplevel):
     def show_axis_options(
         self,
         axis: Literal["X-Axis", "Y-Axis"],
-        file_path: os.PathLike | str,
+        file_path: Union[str, os.PathLike],
         image_frame: tk.Frame,
     ) -> None:
         self._destroy_widget_children(self.edit_x_axis_frame)
@@ -5798,8 +5794,8 @@ class NewExperimentWindow(Toplevel):
     def save_x_axis_changes(
         self,
         fig: plt.figure,
-        pickle_path: os.PathLike | str,
-        file_path: os.PathLike | str,
+        pickle_path: Union[str, os.PathLike],
+        file_path: Union[str, os.PathLike],
         image_frame: tk.Frame,
         axis: Literal["X-Axis", "Y-Axis"],
         copy: bool = False,
@@ -5871,7 +5867,7 @@ class NewExperimentWindow(Toplevel):
         self.edit_x_axis_window.destroy()
 
     def edit_plot_text(
-        self, file_path: os.PathLike | str, image_frame: tk.Frame
+        self, file_path: Union[str, os.PathLike], image_frame: tk.Frame
     ) -> None:
         # create new window
         self.edit_text_window = tk.Toplevel(self)
@@ -6166,8 +6162,8 @@ class NewExperimentWindow(Toplevel):
     def save_text_changes(
         self,
         fig: plt.figure,
-        pickle_path: os.PathLike | str,
-        file_path: os.PathLike | str,
+        pickle_path: Union[str, os.PathLike],
+        file_path: Union[str, os.PathLike],
         image_frame: tk.Frame,
         text: Text,
         copy: bool = False,
@@ -6218,7 +6214,7 @@ class NewExperimentWindow(Toplevel):
         self.edit_text_window.destroy()
 
     def edit_plot_image(
-        self, file_path: os.PathLike | str, image_frame: tk.Frame
+        self, file_path: Union[str, os.PathLike], image_frame: tk.Frame
     ) -> None:
         # create new window
         self.edit_image_window = tk.Toplevel(self)
@@ -6280,8 +6276,8 @@ class NewExperimentWindow(Toplevel):
     def save_image_changes(
         self,
         fig: plt.figure,
-        pickle_path: os.PathLike | str,
-        file_path: os.PathLike | str,
+        pickle_path: Union[str, os.PathLike],
+        file_path: Union[str, os.PathLike],
         image_frame: tk.Frame,
         copy: bool = False,
     ) -> None:
