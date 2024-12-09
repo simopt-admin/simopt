@@ -4517,6 +4517,7 @@ def plot_terminal_progress(
                 inner="stick",
                 density_norm="width",
                 cut=0.1,
+                hue="Solvers",
             )
             if normalize:
                 plt.ylabel("Terminal Progress")

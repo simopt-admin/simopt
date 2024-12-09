@@ -3282,7 +3282,7 @@ class NewExperimentWindow(Toplevel):
         self.select_all_solvers_button = ttk.Button(
             master=self.plot_selection_frame,
             text="Select All Solvers",
-            # command=self.select_all_solvers,
+            command=self.select_all_solvers,
         )
         self.select_all_solvers_button.grid(
             row=4, column=0, padx=10, pady=10, sticky="ew"
@@ -3291,13 +3291,11 @@ class NewExperimentWindow(Toplevel):
         self.deselect_all_solvers_button = ttk.Button(
             master=self.plot_selection_frame,
             text="Deselect All Solvers",
-            # command=self.deselect_all_solvers,
+            command=self.deselect_all_solvers,
         )
         self.deselect_all_solvers_button.grid(
             row=4, column=1, padx=10, pady=10, sticky="ew"
         )
-        # TODO: remove any mention of this variable
-        self.all_solvers_var = tk.BooleanVar()
 
         # Problem/Solver divider
         self.problem_solver_divider = ttk.Separator(
@@ -3350,7 +3348,7 @@ class NewExperimentWindow(Toplevel):
         self.select_all_problems_button = ttk.Button(
             master=self.plot_selection_frame,
             text="Select All Problems",
-            # command=self.select_all_problems,
+            command=self.select_all_problems,
         )
         self.select_all_problems_button.grid(
             row=4, column=3, padx=10, pady=10, sticky="ew"
@@ -3359,13 +3357,11 @@ class NewExperimentWindow(Toplevel):
         self.deselect_all_problems_button = ttk.Button(
             master=self.plot_selection_frame,
             text="Deselect All Problems",
-            # command=self.deselect_all_problems,
+            command=self.deselect_all_problems,
         )
         self.deselect_all_problems_button.grid(
             row=4, column=4, padx=10, pady=10, sticky="ew"
         )
-        # TODO: remove any mention of this variable
-        self.all_problems_var = tk.BooleanVar()
 
         self.plot_types_inputs = [
             "cdf_solvability",
@@ -4343,52 +4339,42 @@ class NewExperimentWindow(Toplevel):
             self.plot_CI_menu.configure(state="disabled")
             self.plot_hw_menu.configure(state="disabled")
 
-    def toggle_all_solvers_selected(self) -> None:
-        all_solvers = self.all_solvers_var.get()
-        if all_solvers:
-            self.solver_tree.selection_set(self.solver_tree.get_children())
-        else:
-            self.solver_tree.selection_remove(self.solver_tree.get_children())
+    def select_all_solvers(self) -> None:
+        self.solver_tree.selection_set(self.solver_tree.get_children())
+
+    def deselect_all_solvers(self) -> None:
+        self.solver_tree.selection_remove(self.solver_tree.get_children())
+
+    def select_all_problems(self) -> None:
+        self.problem_tree.selection_set(self.problem_tree.get_children())
+
+    def deselect_all_problems(self) -> None:
+        self.problem_tree.selection_remove(self.problem_tree.get_children())
 
     def select_solver(
         self, _: tk.Event
     ) -> None:  # upddates solver list and options menu for reference solver when relevant
-        all_solvers = self.all_solvers_var.get()
-        if all_solvers:
-            self.selected_solvers = self.plot_experiment.solvers
-        else:  # get selected solvers from treeview
-            selected_items = self.solver_tree.selection()
-            self.selected_solvers = []
-            for item in selected_items:
-                solver_index = int(self.solver_tree.item(item, "text"))
-                solver = self.plot_experiment.solvers[
-                    solver_index
-                ]  # get corresponding solver from experiment
-                self.selected_solvers.append(solver)
+        selected_items = self.solver_tree.selection()
+        self.selected_solvers = []
+        for item in selected_items:
+            solver_index = int(self.solver_tree.item(item, "text"))
+            solver = self.plot_experiment.solvers[
+                solver_index
+            ]  # get corresponding solver from experiment
+            self.selected_solvers.append(solver)
 
         if self.ref_menu_created:  # if reference solver menu exists update menu
             self.update_ref_solver()
 
-    def toggle_all_problems_selected(self) -> None:
-        all_problems = self.all_problems_var.get()
-        if all_problems:
-            self.problem_tree.selection_set(self.problem_tree.get_children())
-        else:
-            self.problem_tree.selection_remove(self.problem_tree.get_children())
-
     def select_problem(self, _: tk.Event) -> None:
-        all_problems = self.all_problems_var.get()
-        if all_problems:
-            self.selected_problems = self.plot_experiment.problems
-        else:  # get selected problems from treeview
-            selected_items = self.problem_tree.selection()
-            self.selected_problems = []
-            for item in selected_items:
-                problem_index = int(self.problem_tree.item(item, "text"))
-                problem = self.plot_experiment.problems[
-                    problem_index
-                ]  # get corresponding problem from experiment
-                self.selected_problems.append(problem)
+        selected_items = self.problem_tree.selection()
+        self.selected_problems = []
+        for item in selected_items:
+            problem_index = int(self.problem_tree.item(item, "text"))
+            problem = self.plot_experiment.problems[
+                problem_index
+            ]  # get corresponding problem from experiment
+            self.selected_problems.append(problem)
 
     def update_ref_solver(self) -> None:
         saved_solver = (
