@@ -1,7 +1,7 @@
 import tkinter as tk
 from abc import ABC, abstractmethod
 from tkinter import ttk
-from typing import Literal
+from typing import Literal, Union
 
 
 class DFFactor(ABC):
@@ -41,12 +41,14 @@ class DFFactor(ABC):
         raise NotImplementedError
 
     @property
-    def include(self) -> tk.BooleanVar | None:
+    def include(self) -> Union[tk.BooleanVar, None]:
         """Whether to include the factor in the experiment."""
         return None
 
     @property
-    def include_default_state(self) -> Literal["normal", "readonly", "disabled", None]:
+    def include_default_state(
+        self,
+    ) -> Literal["normal", "readonly", "disabled", None]:
         """Whether or not the default field is enabled."""
         if self.include is None:
             return None
@@ -55,7 +57,9 @@ class DFFactor(ABC):
         return "normal"
 
     @property
-    def include_datafarm_state(self) -> Literal["normal", "readonly", "disabled", None]:
+    def include_datafarm_state(
+        self,
+    ) -> Literal["normal", "readonly", "disabled", None]:
         """Whether or not the datafarm fields are enabled."""
         if self.include is None:
             return None
@@ -64,17 +68,17 @@ class DFFactor(ABC):
         return "disabled"
 
     @property
-    def minimum(self) -> tk.IntVar | tk.DoubleVar | None:
+    def minimum(self) -> Union[tk.IntVar, tk.DoubleVar, None]:
         """The minimum value of the factor."""
         return None
 
     @property
-    def maximum(self) -> tk.IntVar | tk.DoubleVar | None:
+    def maximum(self) -> Union[tk.IntVar, tk.DoubleVar, None]:
         """The maximum value of the factor."""
         return None
 
     @property
-    def num_decimals(self) -> tk.IntVar | None:
+    def num_decimals(self) -> Union[tk.IntVar, None]:
         """The number of decimals of the factor."""
         return None
 
@@ -186,7 +190,9 @@ class DFFactor(ABC):
             )
         return self.ent_default
 
-    def get_include_checkbutton(self, frame: ttk.Frame) -> tk.Checkbutton | None:
+    def get_include_checkbutton(
+        self, frame: ttk.Frame
+    ) -> Union[tk.Checkbutton, None]:
         """Get the include checkbutton of the factor.
 
         Parameters
@@ -210,7 +216,7 @@ class DFFactor(ABC):
             )
         return self.chk_include
 
-    def get_minimum_entry(self, frame: ttk.Frame) -> ttk.Entry | None:
+    def get_minimum_entry(self, frame: ttk.Frame) -> Union[ttk.Entry, None]:
         """Get the minimum entry of the factor.
 
         Parameters
@@ -236,7 +242,7 @@ class DFFactor(ABC):
             )
         return self.ent_minimum
 
-    def get_maximum_entry(self, frame: ttk.Frame) -> ttk.Entry | None:
+    def get_maximum_entry(self, frame: ttk.Frame) -> Union[ttk.Entry, None]:
         """Get the maximum entry of the factor.
 
         Parameters
@@ -262,7 +268,9 @@ class DFFactor(ABC):
             )
         return self.ent_maximum
 
-    def get_num_decimals_entry(self, frame: ttk.Frame) -> ttk.Entry | None:
+    def get_num_decimals_entry(
+        self, frame: ttk.Frame
+    ) -> Union[ttk.Entry, None]:
         """Get the number of decimals entry of the factor.
 
         Parameters
@@ -341,7 +349,7 @@ class DFBoolean(DFFactor):
     def default_eval(self) -> bool:
         """Evaluated default value of the factor."""
         return self.default.get()
-    
+
     @property
     def include_default_state(self) -> Literal["readonly", "disabled", None]:
         """Whether or not the default field is enabled."""
@@ -359,7 +367,6 @@ class DFBoolean(DFFactor):
         if self.include.get():
             return "readonly"
         return "disabled"
-
 
     def __init__(self, name: str, description: str, default: bool) -> None:
         """Initialize the boolean factor class.
@@ -404,7 +411,7 @@ class DFBoolean(DFFactor):
             )
             self.ent_default.current(0 if self.default.get() else 1)
         return self.ent_default
-    
+
     def _toggle_fields(self) -> None:
         super()._toggle_fields()
         if self.ent_default.state() != ["disabled"]:
@@ -589,7 +596,7 @@ class DFFloat(DFFactor):
             return int(str(value).split("e-")[1])
         # Case 3: No decimal point and not in xe-y format
         return 0
-        
+
 
 class DFTuple(DFFactor):
     """Class to store tuple factors for problems and solvers."""
@@ -685,7 +692,7 @@ class DFList(DFFactor):
         self.__default = tk.StringVar(value=str(default))
 
 
-def spec_dict_to_df_dict(spec_dict: dict[str, dict]) -> dict[str, DFFactor]:
+def spec_dict_to_df_dict(spec_dict: "dict[str, dict]") -> "dict[str, DFFactor]":
     """Convert a dictionary of specifications to a dictionary of datafarm factors.
 
     Parameters

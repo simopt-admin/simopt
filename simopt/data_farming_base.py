@@ -366,7 +366,7 @@ class DataFarmingExperiment:
 
         """
         # Type checking
-        if not isinstance(csv_filename, (str | os.PathLike)):
+        if not isinstance(csv_filename, (str, os.PathLike)):
             error_msg = "csv_filename must be a string or path-like object."
             raise TypeError(error_msg)
 
