@@ -830,7 +830,7 @@ class ASTRODF(Solver):
                 # TODO: figure out how to handle this
                 # Normally, DB0 errors would result in +-inf, but we have to
                 # add the result to incumbent_x, so we can't have inf values
-                candidate_x = [0.0]
+                candidate_x = incumbent_x
             else:
                 product = tau * delta_k * grad
                 adjustment = product / grad_norm
