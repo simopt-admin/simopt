@@ -40,11 +40,17 @@ class Toplevel(tk.Toplevel):
         self.style = ttk.Style()
         # Configure the default fonts based on screen size
         # https://tkinter-docs.readthedocs.io/en/latest/generic/fonts.html
-        # Scale by width because it's easy to scroll vertically, but scrolling
-        # horizontally is a pain. This way, the text will always fit on
-        # the screen.
         width = self.winfo_screenwidth()
-        font_medium = int(width / 200)
+        height = self.winfo_screenheight()
+        # If it's wider than 16:9 (like 21:9 or 32:9), use the height to
+        # calculate the equivalent width
+        if (width / height) > (16 / 9):
+            width = height * (16 / 9)
+        # Otherwise, we're good with just using the width
+        # Target a 1920x1080 screen
+        scale =  width / 1920
+
+        font_medium = int(12 * scale)
         if sys.platform == "darwin":
             win_to_mac_scaling = 1.375
             font_medium = int(font_medium * win_to_mac_scaling)
