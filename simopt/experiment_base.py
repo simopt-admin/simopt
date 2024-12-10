@@ -6007,7 +6007,7 @@ class ProblemsSolvers:
             )
             file.write("\nProblems:\n\n")
             for i in range(self.n_problems):
-                file.write(f"{self.problem_renames[i]}\n\t")
+                file.write(f"{self.problem_names[i]}\n\t")
                 # Write model factors for each problem.
                 file.write("Model Factors:\n")
                 for key, value in self.problems[i].model.factors.items():
@@ -6026,7 +6026,7 @@ class ProblemsSolvers:
             file.write("\nSolvers:\n\n")
             # Write solver factors for each solver.
             for j in range(self.n_solvers):
-                file.write(f"{self.solver_renames[j]}\n\t")
+                file.write(f"{self.solver_names[j]}\n\t")
                 file.write("Solver Factors:\n")
                 for key, value in self.solvers[
                     j
