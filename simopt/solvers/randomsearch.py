@@ -5,9 +5,19 @@ Randomly sample solutions from the feasible region.
 Can handle stochastic constraints.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/randomsearch.html>`__.
 """
+
 from __future__ import annotations
 
-from simopt.base import Solver, Problem, Solution
+from typing import Callable
+
+from simopt.base import (
+    ConstraintType,
+    ObjectiveType,
+    Problem,
+    Solution,
+    Solver,
+    VariableType,
+)
 
 
 class RandomSearch(Solver):
@@ -48,34 +58,56 @@ class RandomSearch(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name: str = "RNDSRCH", fixed_factors: dict = {}):
-        self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "stochastic"
-        self.variable_type = "mixed"
-        self.gradient_needed = False
-        self.specifications = {
+
+    @property
+    def objective_type(self) -> ObjectiveType:
+        return ObjectiveType.SINGLE
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.STOCHASTIC
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.MIXED
+
+    @property
+    def gradient_needed(self) -> bool:
+        return False
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": True
+                "default": True,
             },
             "sample_size": {
                 "description": "sample size per solution",
                 "datatype": int,
-                "default": 10
-            }
+                "default": 10,
+            },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "crn_across_solns": self.check_crn_across_solns,
-            "sample_size": self.check_sample_size
+            "sample_size": self.check_sample_size,
         }
-        super().__init__(fixed_factors)
 
-    def check_sample_size(self):
-        return self.factors["sample_size"] > 0
+    def __init__(
+        self, name: str = "RNDSRCH", fixed_factors: dict | None = None
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(name, fixed_factors)
 
-    def solve(self, problem: "Problem") -> tuple[list["Solution"], list[int]]:
+    def check_sample_size(self) -> None:
+        if self.factors["sample_size"] <= 0:
+            raise ValueError("Sample size must be greater than 0.")
+
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
 
@@ -99,6 +131,7 @@ class RandomSearch(Solver):
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         # Sequentially generate random solutions and simulate them.
+        best_solution = None
         while expended_budget < problem.factors["budget"]:
             if expended_budget == 0:
                 # Start at initial solution and record as best.
@@ -116,9 +149,15 @@ class RandomSearch(Solver):
             expended_budget += self.factors["sample_size"]
             # Check for improvement relative to incumbent best solution.
             # Also check for feasibility w.r.t. stochastic constraints.
-            if (problem.minmax * new_solution.objectives_mean
-                    > problem.minmax * best_solution.objectives_mean and
-                    all(new_solution.stoch_constraints_mean[idx] <= 0 for idx in range(problem.n_stochastic_constraints))):
+            if (
+                best_solution is not None
+                and problem.minmax * new_solution.objectives_mean
+                > problem.minmax * best_solution.objectives_mean
+                and all(
+                    new_solution.stoch_constraints_mean[idx] <= 0
+                    for idx in range(problem.n_stochastic_constraints)
+                )
+            ):
                 # If better, record incumbent solution as best.
                 best_solution = new_solution
                 recommended_solns.append(new_solution)

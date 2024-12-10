@@ -4,11 +4,15 @@ Summary
 Simulate a synthetic problem with a deterministic objective function
 evaluated with noise.
 """
+
 from __future__ import annotations
 
+from typing import Callable
+
 import numpy as np
-from simopt.base import Model, Problem
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import ConstraintType, Model, Problem, VariableType
 
 
 class ExampleModel(Model):
@@ -39,32 +43,42 @@ class ExampleModel(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors: dict = {}):
-        self.name = "EXAMPLE"
-        self.n_rngs = 1
-        self.n_responses = 1
-        self.factors = fixed_factors
-        self.specifications = {
+
+    @property
+    def name(self) -> str:
+        return "EXAMPLE"
+
+    @property
+    def n_rngs(self) -> int:
+        return 1
+
+    @property
+    def n_responses(self) -> int:
+        return 1
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "x": {
                 "description": "point to evaluate",
                 "datatype": tuple,
-                "default": (2.0, 2.0)
+                "default": (2.0, 2.0),
             }
         }
-        self.check_factor_list = {
-            "x": self.check_x
-        }
-        # Set factors of the simulation model.
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {"x": self.check_x}
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_x(self):
+    def check_x(self) -> bool:
         # Assume f(x) can be evaluated at any x in R^d.
         return True
 
-    def check_simulatable_factors(self):
-        return True
-
-    def replicate(self, rng_list: list["MRG32k3a"]) -> tuple[dict, dict]:
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Evaluate a deterministic function f(x) with stochastic noise.
 
@@ -162,45 +176,109 @@ class ExampleProblem(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name: str = "EXAMPLE-1", fixed_factors: dict = {}, model_fixed_factors: dict = {}):
-        self.name = name
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (-1,)
-        self.constraint_type = "unconstrained"
-        self.variable_type = "continuous"
-        self.gradient_available = True
-        self.model_default_factors = {}
-        self.model_fixed_factors = {}
-        self.model_decision_factors = {"x"}
-        self.factors = fixed_factors
-        self.specifications = {
+
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return 0
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.UNCONSTRAINED
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return True
+
+    @property
+    def optimal_value(self) -> float | None:
+        # Change if f is changed
+        # TODO: figure out what f is
+        return 0.0
+
+    @property
+    def optimal_solution(self) -> tuple:
+        # Change if f is changed
+        # TODO: figure out what f is
+        return (0,) * self.dim
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_fixed_factors(self) -> dict:
+        return {}
+
+    @model_fixed_factors.setter
+    def model_fixed_factors(self, value: dict | None) -> None:
+        # TODO: figure out if fixed factors should change
+        pass
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"x"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (2.0, 2.0)
+                "default": (2.0, 2.0),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+            },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        self.dim = len(self.factors["initial_solution"])
-        self.lower_bounds = (-np.inf,) * self.dim
-        self.upper_bounds = (np.inf,) * self.dim
-        # Instantiate model with fixed factors and overwritten defaults.
-        self.model = ExampleModel(self.model_fixed_factors)
-        self.optimal_value = (0,)  # Change if f is changed.
-        self.optimal_solution = (0,) * self.dim  # Change if f is changed.
 
+    @property
+    def dim(self) -> int:
+        return len(self.factors["initial_solution"])
 
-    def vector_to_factor_dict(self, vector):
+    @property
+    def lower_bounds(self) -> tuple:
+        return (-np.inf,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (np.inf,) * self.dim
+
+    def __init__(
+        self,
+        name: str = "EXAMPLE-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=None,
+            model=ExampleModel,
+        )
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -211,15 +289,13 @@ class ExampleProblem(Problem):
 
         Returns
         -------
-        factor_dict : dictionary
+        dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "x": vector[:]
-        }
+        factor_dict = {"x": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -231,13 +307,13 @@ class ExampleProblem(Problem):
 
         Returns
         -------
-        vector : tuple
+        tuple
             vector of values associated with decision variables
         """
         vector = tuple(factor_dict["x"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -249,13 +325,13 @@ class ExampleProblem(Problem):
 
         Returns
         -------
-        objectives : tuple
+        tuple
             vector of objectives
         """
         objectives = (response_dict["est_f(x)"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -267,13 +343,13 @@ class ExampleProblem(Problem):
 
         Returns
         -------
-        stoch_constraints : tuple
+        tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -284,16 +360,18 @@ class ExampleProblem(Problem):
 
         Returns
         -------
-        det_objectives : tuple
+        tuple
             vector of deterministic components of objectives
-        det_objectives_gradients : tuple
+        tuple
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
         det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints
         for a solution `x`.
@@ -305,17 +383,17 @@ class ExampleProblem(Problem):
 
         Returns
         -------
-        det_stoch_constraints : tuple
+        tuple
             vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
+        tuple
             vector of gradients of deterministic components of
             stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = ()
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic
         constraints.
@@ -327,14 +405,14 @@ class ExampleProblem(Problem):
 
         Returns
         -------
-        satisfies : bool
+        bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
         # Superclass method will check box constraints.
         # Can add other constraints here.
         return super().check_deterministic_constraints(x)
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -345,9 +423,15 @@ class ExampleProblem(Problem):
 
         Returns
         -------
-        x : tuple
+        tuple
             vector of decision variables
         """
         # x = tuple([rand_sol_rng.uniform(-2, 2) for _ in range(self.dim)])
-        x = tuple(rand_sol_rng.mvnormalvariate(mean_vec=np.zeros(self.dim), cov=np.eye(self.dim), factorized=False))
+        x = tuple(
+            rand_sol_rng.mvnormalvariate(
+                mean_vec=np.zeros(self.dim),
+                cov=np.eye(self.dim),
+                factorized=False,
+            )
+        )
         return x
