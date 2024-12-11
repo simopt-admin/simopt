@@ -115,7 +115,7 @@ class ASTRODF(Solver):
             "lambda_min": {
                 "description": "minimum sample size",
                 "datatype": int,
-                "default": 4,
+                "default": 5,
             },
             "easy_solve": {
                 "description": "solve the subproblem approximately with Cauchy point",
@@ -403,7 +403,6 @@ class ASTRODF(Solver):
                 elif i == 0:
                     sample_size = incumbent_solution.n_reps
                     sig2 = incumbent_solution.objectives_var[0]
-                    np.trace(incumbent_solution.objectives_gradients_var)
                     # adaptive sampling
                     while True:
                         stopping = self.get_stopping_time(
@@ -423,13 +422,6 @@ class ASTRODF(Solver):
                         expended_budget += 1
                         sample_size += 1
                         sig2 = incumbent_solution.objectives_var[0]
-                        if delta_power == 0:
-                            sig2 = max(
-                                sig2,
-                                np.trace(
-                                    incumbent_solution.objectives_gradients_var
-                                ),
-                            )
                     fval.append(
                         -1
                         * problem.minmax[0]
@@ -450,15 +442,6 @@ class ASTRODF(Solver):
                 ):
                     sample_size = visited_pts_list[f_index].n_reps
                     sig2 = visited_pts_list[f_index].objectives_var[0]
-                    if delta_power == 0:
-                        sig2 = max(
-                            sig2,
-                            np.trace(
-                                visited_pts_list[
-                                    f_index
-                                ].objectives_gradients_var
-                            ),
-                        )
                     # adaptive sampling
                     while True:
                         stopping = self.get_stopping_time(
@@ -478,15 +461,6 @@ class ASTRODF(Solver):
                         expended_budget += 1
                         sample_size += 1
                         sig2 = visited_pts_list[f_index].objectives_var[0]
-                        if delta_power == 0:
-                            sig2 = max(
-                                sig2,
-                                np.trace(
-                                    visited_pts_list[
-                                        f_index
-                                    ].objectives_gradients_var
-                                ),
-                            )
                     fval.append(
                         -1
                         * problem.minmax[0]
@@ -509,11 +483,6 @@ class ASTRODF(Solver):
                         expended_budget += 1
                         sample_size += 1
                         sig2 = new_solution.objectives_var[0]
-                        if delta_power == 0:
-                            sig2 = max(
-                                sig2,
-                                np.trace(new_solution.objectives_gradients_var),
-                            )
                         stopping = self.get_stopping_time(
                             pilot_run,
                             sig2,
@@ -723,9 +692,6 @@ class ASTRODF(Solver):
 
             # adaptive sampling
             while True:
-                problem.simulate(incumbent_solution, 1)
-                expended_budget += 1
-                sample_size += 1
                 if gradient_availability:
                     rhs_for_kappa = norm(
                         incumbent_solution.objectives_gradients_mean[0]
@@ -760,9 +726,36 @@ class ASTRODF(Solver):
                     )
                     # print("kappa "+str(kappa))
                     break
+                else:
+                    problem.simulate(incumbent_solution, 1)
+                    expended_budget += 1
+                    sample_size += 1
 
             recommended_solns.append(incumbent_solution)
             intermediate_budgets.append(expended_budget)
+        elif self.factors["crn_across_solns"]: # since incument was only evaluated with the sample size of previous incumbent, here we compute its adaptive sample size
+            sample_size = incumbent_solution.n_reps
+            # adaptive sampling
+            while True:
+                sig2 = incumbent_solution.objectives_var[0]
+                if delta_power == 0:
+                    sig2 = max(
+                        sig2,
+                        np.trace(incumbent_solution.objectives_gradients_var),
+                    )
+                stopping = self.get_stopping_time(
+                    pilot_run, sig2, delta_k, kappa, problem.dim, delta_power
+                )
+                if (
+                    sample_size >= min(stopping, lambda_max)
+                    or expended_budget >= budget_limit
+                ):
+                    break
+                else:
+                    problem.simulate(incumbent_solution, 1)
+                    expended_budget += 1
+                    sample_size += 1
+                    
 
         # use Taylor expansion if gradient available
         if gradient_availability:
@@ -825,11 +818,11 @@ class ASTRODF(Solver):
             grad = np.reshape(grad, (1, problem.dim))[0]
             grad_norm = norm(grad)
             if grad_norm == 0:
-                warning_msg = "Warning: Division by 0 in ASTRO-DF solver (norm(grad) == 0)."
-                print(warning_msg, file=sys.stderr)
-                # TODO: figure out how to handle this
-                # Normally, DB0 errors would result in +-inf, but we have to
-                # add the result to incumbent_x, so we can't have inf values
+                # warning_msg = "Warning: Division by 0 in ASTRO-DF solver (norm(grad) == 0)."
+                # print(warning_msg, file=sys.stderr)
+                # # TODO: figure out how to handle this
+                # # Normally, DB0 errors would result in +-inf, but we have to
+                # # add the result to incumbent_x, so we can't have inf values
                 candidate_x = incumbent_x
             else:
                 product = tau * delta_k * grad
@@ -873,30 +866,41 @@ class ASTRODF(Solver):
         )
         visited_pts_list.append(candidate_solution)
 
-        # pilot run and adaptive sampling
-        problem.simulate(candidate_solution, pilot_run)
-        expended_budget += pilot_run
-        sample_size = pilot_run
-        while True:
-            problem.simulate(candidate_solution, 1)
-            expended_budget += 1
-            sample_size += 1
-            sig2 = candidate_solution.objectives_var[0]
-            if delta_power == 0:
-                sig2 = max(
-                    sig2,
-                    np.trace(candidate_solution.objectives_gradients_var),
+        # if we use crn, then the candidate solution has the same sample size as the incumbent solution
+        if self.factors["crn_across_solns"]:
+            problem.simulate(candidate_solution, incumbent_solution.n_reps)
+            expended_budget += incumbent_solution.n_reps
+        else:
+            # pilot run and adaptive sampling
+            problem.simulate(candidate_solution, pilot_run)
+            expended_budget += pilot_run
+            sample_size = pilot_run
+            while True:
+                # if gradient_availability:
+                #     # print("incumbent_solution.objectives_gradients_var[0] "+str(candidate_solution.objectives_gradients_var[0]))
+                #     while norm(candidate_solution.objectives_gradients_var[0]) == 0 and candidate_solution.n_reps < max(pilot_run, lambda_max/100):
+                #         problem.simulate(candidate_solution, 1)
+                #         expended_budget += 1
+                #         sample_size += 1
+                sig2 = candidate_solution.objectives_var[0]
+                if delta_power == 0:
+                    sig2 = max(
+                        sig2,
+                        np.trace(candidate_solution.objectives_gradients_var),
+                    )
+                stopping = self.get_stopping_time(
+                    pilot_run, sig2, delta_k, kappa, problem.dim, delta_power
                 )
-            stopping = self.get_stopping_time(
-                pilot_run, sig2, delta_k, kappa, problem.dim, delta_power
-            )
-            # print("stopping "+str(stopping))
-            if (
-                sample_size >= min(stopping, lambda_max)
-                or expended_budget >= budget_limit
-            ):
-                break
-
+                if (
+                    sample_size >= min(stopping, lambda_max)
+                    or expended_budget >= budget_limit
+                ):
+                    break
+                else:
+                    problem.simulate(candidate_solution, 1)
+                    expended_budget += 1
+                    sample_size += 1
+                    
         # TODO: make sure the solution whose estimated objevtive is abrupted bc of budget is not added to the list of recommended solutions, unless the error is negligible ...
         # if (expended_budget >= budget_limit) and (sample_size < stopping):
         #     final_ob = fval[0]
