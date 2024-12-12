@@ -318,7 +318,7 @@ def mean_of_curves(curves: list[Curve]) -> Curve:
         float(np.mean([curve.lookup(float(x_val)) for curve in curves]))
         for x_val in unique_x_vals
     ]
-    mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)
+    mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)  # type: ignore
     return mean_curve
 
 
@@ -362,7 +362,8 @@ def quantile_of_curves(curves: list[Curve], beta: float) -> Curve:
         for x_val in unique_x_vals
     ]
     quantile_curve = Curve(
-        x_vals=unique_x_vals.tolist(), y_vals=quantile_y_vals
+        x_vals=unique_x_vals.tolist(),  # type: ignore
+        y_vals=quantile_y_vals,
     )
     return quantile_curve
 
@@ -1105,7 +1106,7 @@ class ProblemSolver:
         self.solver.attach_rngs(rng_list)
 
         # Start a timer
-        self.function_start = time.time()
+        function_start = time.time()
 
         print("Starting macroreplications in parallel")
         with Pool() as process_pool:
@@ -1118,6 +1119,10 @@ class ProblemSolver:
                 # Update status bar here
                 result.wait(1)
 
+            print(
+                f"Finished running {n_macroreps} macroreplications in {round(time.time() - function_start, 3)} seconds."
+            )
+
             # Grab all the data out of the result
             for mrep in range(n_macroreps):
                 (
@@ -1125,12 +1130,6 @@ class ProblemSolver:
                     self.all_intermediate_budgets[mrep],
                     self.timings[mrep],
                 ) = result.get()[mrep]
-        print(
-            f"Finished running {n_macroreps} macroreplications in {round(time.time() - self.function_start, 3)} seconds."
-        )
-
-        # Delete stuff we don't need to save
-        del self.function_start
 
         self.has_run = True
         self.has_postreplicated = False
