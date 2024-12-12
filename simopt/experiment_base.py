@@ -6518,7 +6518,7 @@ def validate_ruby_install() -> bool:
 
     # If we're here, Ruby is not installed on the system or on WSL
     # Raise an exception
-    error_msg = "Ruby is not installed on the system or is not on the system path. Please install Ruby or add it to the system path."
+    error_msg = "Ruby is not installed on the system or is not on the system path. Please install Ruby or add it to the system path. If you just installed Ruby, you may need to restart your terminal/IDE."
     raise Exception(error_msg)
 
 
@@ -6594,10 +6594,11 @@ def validate_gem_install(design_type: str, installed_via_wsl: bool) -> str:
             )
             error_msg += f" This can be done by running: `{command_prefix}gem install datafarming -v 1.4{command_suffix}`"
             raise Exception(error_msg)
-        # Not totally sure what error to catch here, in theory it should only
-        # ever error due to the datafarming gem not being installed or having
-        # an incompatible version
-        error_msg = "An error occurred while checking if the datafarming gem is installed."
+        # We get here if the gem is installed and the version is correct, but
+        # we still can't run the stack script. This is likely due to the gem
+        # not being in the system path. We'll let the user know that they need
+        # to restart their terminal/IDE.
+        error_msg = "Ruby was able to detect the datafarming gem, but was unable to run the stack script. If you just installed the datafarming gem, it may be necessary to restart your terminal/IDE."
         raise Exception(error_msg)
     else:
         error_msg = "Invalid design type."
