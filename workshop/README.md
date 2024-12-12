@@ -55,9 +55,10 @@ print(msg)
     * `python -m venv venv`
     * `venv\Scripts\activate` or on a Mac, `source venv/bin/activate`
 
-  * Then run the following commands to install the simopt package and open the GUI.
+  * Then run the following commands to install the simopt package and open the GUI:
     * `python -m pip install simoptlib`
     * `python -m simopt`
+      * This may take a few minutes on the first launch to build the necessary dependency caches before the GUI is displayed. Subsequent launches will not have this issue.
 
   * A pop-up window with the GUI should open. You can close it.
 
