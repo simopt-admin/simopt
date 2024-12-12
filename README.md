@@ -34,7 +34,7 @@ Full documentation for the source code can be found on our **[readthedocs page](
 - Python >= 3.8
     - To check your Python version, open a terminal and run `python --version`. If you see a message along the lines of `Command not found`, then you likely don't have Python installed. If you know you have it installed but are getting a `Command not found` error, then you may need to [add Python to your PATH](https://realpython.com/add-python-to-path/).
     - For new installs, [Miniconda or Anaconda](https://www.anaconda.com/download) is recommended ([read about the differences between Miniconda and Anaconda](https://docs.anaconda.com/distro-or-miniconda/)). If you already have a compatible IDE (such as VS Code), we've found that Miniconda will work fine at 1/10 of the size of Anaconda. It is ***highly recommended*** to check the box during installation to add Python/Miniconda/Anaconda to your system PATH.
-- Ruby >= 3.0 (required for datafarming)
+- Ruby >= 2.5 (required for datafarming)
     - Included on MacOS, but Windows users will need to grab it from [here](https://rubyinstaller.org/).
 - `datafarming` gem < 2.0 (required for datafarming)
     - This can be installed via `gem install datafarming -v 1.4` once Ruby is installed/configured.

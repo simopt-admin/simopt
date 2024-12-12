@@ -318,7 +318,7 @@ def mean_of_curves(curves: list[Curve]) -> Curve:
         float(np.mean([curve.lookup(float(x_val)) for curve in curves]))
         for x_val in unique_x_vals
     ]
-    mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)
+    mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)  # type: ignore
     return mean_curve
 
 
@@ -362,7 +362,8 @@ def quantile_of_curves(curves: list[Curve], beta: float) -> Curve:
         for x_val in unique_x_vals
     ]
     quantile_curve = Curve(
-        x_vals=unique_x_vals.tolist(), y_vals=quantile_y_vals
+        x_vals=unique_x_vals.tolist(),  # type: ignore
+        y_vals=quantile_y_vals,
     )
     return quantile_curve
 
@@ -1105,7 +1106,7 @@ class ProblemSolver:
         self.solver.attach_rngs(rng_list)
 
         # Start a timer
-        self.function_start = time.time()
+        function_start = time.time()
 
         print("Starting macroreplications in parallel")
         with Pool() as process_pool:
@@ -1118,6 +1119,10 @@ class ProblemSolver:
                 # Update status bar here
                 result.wait(1)
 
+            print(
+                f"Finished running {n_macroreps} macroreplications in {round(time.time() - function_start, 3)} seconds."
+            )
+
             # Grab all the data out of the result
             for mrep in range(n_macroreps):
                 (
@@ -1125,12 +1130,6 @@ class ProblemSolver:
                     self.all_intermediate_budgets[mrep],
                     self.timings[mrep],
                 ) = result.get()[mrep]
-        print(
-            f"Finished running {n_macroreps} macroreplications in {round(time.time() - self.function_start, 3)} seconds."
-        )
-
-        # Delete stuff we don't need to save
-        del self.function_start
 
         self.has_run = True
         self.has_postreplicated = False
@@ -6519,7 +6518,7 @@ def validate_ruby_install() -> bool:
 
     # If we're here, Ruby is not installed on the system or on WSL
     # Raise an exception
-    error_msg = "Ruby is not installed on the system or is not on the system path. Please install Ruby or add it to the system path."
+    error_msg = "Ruby is not installed on the system or is not on the system path. Please install Ruby or add it to the system path. If you just installed Ruby, you may need to restart your terminal/IDE."
     raise Exception(error_msg)
 
 
@@ -6595,10 +6594,11 @@ def validate_gem_install(design_type: str, installed_via_wsl: bool) -> str:
             )
             error_msg += f" This can be done by running: `{command_prefix}gem install datafarming -v 1.4{command_suffix}`"
             raise Exception(error_msg)
-        # Not totally sure what error to catch here, in theory it should only
-        # ever error due to the datafarming gem not being installed or having
-        # an incompatible version
-        error_msg = "An error occurred while checking if the datafarming gem is installed."
+        # We get here if the gem is installed and the version is correct, but
+        # we still can't run the stack script. This is likely due to the gem
+        # not being in the system path. We'll let the user know that they need
+        # to restart their terminal/IDE.
+        error_msg = "Ruby was able to detect the datafarming gem, but was unable to run the stack script. If you just installed the datafarming gem, it may be necessary to restart your terminal/IDE."
         raise Exception(error_msg)
     else:
         error_msg = "Invalid design type."
