@@ -132,6 +132,11 @@ class ASTRODF(Solver):
                 "datatype": float,
                 "default": 0.1,
             },
+            "use_gradients": {
+                "description": "if direct gradient observations are available, use them",
+                "datatype": bool,
+                "default": True,
+            },
         }
 
     @property
@@ -480,9 +485,6 @@ class ASTRODF(Solver):
 
                     # adaptive sampling
                     while True:
-                        problem.simulate(new_solution, 1)
-                        expended_budget += 1
-                        sample_size += 1
                         sig2 = new_solution.objectives_var[0]
                         stopping = self.get_stopping_time(
                             pilot_run,
@@ -497,6 +499,10 @@ class ASTRODF(Solver):
                             or expended_budget >= budget
                         ):
                             break
+                        problem.simulate(new_solution, 1)
+                        expended_budget += 1
+                        sample_size += 1
+                        
                     fval.append(
                         -1 * problem.minmax[0] * new_solution.objectives_mean
                     )
@@ -665,7 +671,7 @@ class ASTRODF(Solver):
         # h_k = np.identity(problem.dim)
         # determine power of delta in adaptive sampling rule
         if self.factors["crn_across_solns"]:
-            if gradient_availability:
+            if gradient_availability and self.factors["use_gradients"]:
                 delta_power = 0
             else:
                 delta_power = 2
@@ -691,7 +697,7 @@ class ASTRODF(Solver):
 
             # adaptive sampling
             while True:
-                if gradient_availability:
+                if gradient_availability and self.factors["use_gradients"]:
                     rhs_for_kappa = norm(
                         incumbent_solution.objectives_gradients_mean[0]
                     )
@@ -725,10 +731,9 @@ class ASTRODF(Solver):
                     )
                     # print("kappa "+str(kappa))
                     break
-                else:
-                    problem.simulate(incumbent_solution, 1)
-                    expended_budget += 1
-                    sample_size += 1
+                problem.simulate(incumbent_solution, 1)
+                expended_budget += 1
+                sample_size += 1
 
             recommended_solns.append(incumbent_solution)
             intermediate_budgets.append(expended_budget)
@@ -758,7 +763,7 @@ class ASTRODF(Solver):
                     sample_size += 1
 
         # use Taylor expansion if gradient available
-        if gradient_availability:
+        if gradient_availability and self.factors["use_gradients"]:
             fval = (
                 np.ones(2 * problem.dim + 1)
                 * -1
@@ -801,7 +806,7 @@ class ASTRODF(Solver):
             # TODO: why do we need this? Check model reduction calculation too.
             # print("np.dot(np.multiply(grad, Hessian), grad) "+str(np.dot(np.multiply(grad, hessian), grad)))
             # print("np.dot(np.dot(grad, hessian), grad) "+str(np.dot(np.dot(grad, hessian), grad)))
-            if gradient_availability:
+            if gradient_availability and self.factors["use_gradients"]:
                 # print("hessian " + str(hessian))
                 check_positive_definite = np.dot(np.dot(grad, hessian), grad)
             else:
@@ -874,7 +879,7 @@ class ASTRODF(Solver):
             expended_budget += pilot_run
             sample_size = pilot_run
             while True:
-                # if gradient_availability:
+                # if gradient_availability and self.factors["use_gradients"]:
                 #     # print("incumbent_solution.objectives_gradients_var[0] "+str(candidate_solution.objectives_gradients_var[0]))
                 #     while norm(candidate_solution.objectives_gradients_var[0]) == 0 and candidate_solution.n_reps < max(pilot_run, lambda_max/100):
                 #         problem.simulate(candidate_solution, 1)
@@ -936,7 +941,7 @@ class ASTRODF(Solver):
         candidate_x_arr = np.array(candidate_x)
         incumbent_x_arr = np.array(incumbent_x)
         s = np.subtract(candidate_x_arr, incumbent_x_arr)
-        if gradient_availability:
+        if gradient_availability and self.factors["use_gradients"]:
             model_reduction = -np.dot(s, grad) - 0.5 * np.dot(
                 np.dot(s, hessian), s
             )
@@ -960,7 +965,7 @@ class ASTRODF(Solver):
             # very successful: expand
             if rho >= eta_2:
                 delta_k = min(gamma_1 * delta_k, delta_max)
-            if gradient_availability:
+            if gradient_availability and self.factors["use_gradients"]:
                 candidate_grad = (
                     -1
                     * problem.minmax[0]
