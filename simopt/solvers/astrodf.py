@@ -502,7 +502,7 @@ class ASTRODF(Solver):
                         problem.simulate(new_solution, 1)
                         expended_budget += 1
                         sample_size += 1
-                        
+
                     fval.append(
                         -1 * problem.minmax[0] * new_solution.objectives_mean
                     )
@@ -989,7 +989,7 @@ class ASTRODF(Solver):
                     h_k
                     + np.outer(y_k, y_k) * r_k
                     - np.outer(h_s_k, h_s_k) / (s @ h_s_k)
-                ) # type: ignore
+                )  # type: ignore
         # unsuccessful: shrink and reject
         else:
             delta_k = min(gamma_2 * delta_k, delta_max)
@@ -1094,7 +1094,7 @@ class ASTRODF(Solver):
                 intermediate_budgets,
                 kappa,
                 incumbent_solution,
-                h_k, # type: ignore
+                h_k,  # type: ignore
             )
 
         return recommended_solns, intermediate_budgets
