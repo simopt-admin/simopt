@@ -1462,11 +1462,13 @@ class NewExperimentWindow(Toplevel):
         # Open file dialog to select design file
         # Pickle files only, but all files can be selected (in case someone
         # forgets to change file type)
-        # NOTE: For some reason we use both .pickle and .pkl extensions so we
-        # need to make sure we accept both
+        # NOTE: Trying to accept both .pickle and .pkl files using
+        # "*.pickle;*.pkl" causes Python to crash on MacOS but works fine on
+        # Windows. As long as we only have one pickle file extension, we
+        # should be fine.
         # TODO: standardize Pickle file extension (see GitHub issue #71)
         experiment_file = filedialog.askopenfilename(
-            filetypes=[("Pickle files", "*.pickle;*.pkl"), ("All files", "*.*")]
+            filetypes=[("Pickle files", "*.pickle"), ("All files", "*.*")]
         )
         # Exit w/o message if no file selected
         if experiment_file == "" or not experiment_file:
