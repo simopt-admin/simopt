@@ -2338,16 +2338,37 @@ class NewExperimentWindow(Toplevel):
         bttn_text_run_all = "Run All\nRemaining Steps"
         bttn_text_run = "Run\nExperiment"
 
+        def disable_button(name: str) -> None:
+            if name in self.tk_buttons:
+                self.tk_buttons[name].configure(state="disabled")
+            else:
+                raise ValueError(f"Button {name} not found.")
+
+        def enable_button(name: str) -> None:
+            if name in self.tk_buttons:
+                self.tk_buttons[name].configure(state="normal")
+            else:
+                raise ValueError(f"Button {name} not found.")
+
         def action(name: str, step: int = 0) -> bool:
             # Lookup all the verbage for the current step
             past_tense, present_tense, future_tense, function = bttn_text_steps[
                 step
             ]
+            # Keep a list of all the buttons that need to be disabled
+            # Using a list lets us loop through them nicely :)
+            buttons = [
+                action_bttn_name,
+                all_bttn_name,
+                opt_bttn_name,
+                del_bttn_name,
+            ]
             # Get the buttons and update them for the current step
+            for button in buttons:
+                disable_button(button)
+            # Update the button text
             action_button = self.tk_buttons[action_bttn_name]
-            all_button = self.tk_buttons[all_bttn_name]
-            action_button.configure(text=present_tense, state="disabled")
-            all_button.configure(state="disabled")
+            action_button.configure(text=present_tense)
             self.update()
             # Run the function
             try:
@@ -2357,23 +2378,34 @@ class NewExperimentWindow(Toplevel):
                 name_label.configure(text=name + "\n(" + future_tense + ")")
                 # If there are more steps, setup the next step
                 if step < len(bttn_text_steps) - 1:
-                    # Figure out what the next step is
+                    # Enable all the buttons
+                    for button in buttons:
+                        enable_button(button)
+                    # Update the action button to the next step
                     next_past_tense, _, _, _ = bttn_text_steps[step + 1]
                     action_button.configure(
                         text=next_past_tense,
-                        state="normal",
                         command=lambda: action(name, step + 1),
                     )
-                    all_button.configure(state="normal")
                 else:
+                    # Update the action button to show we're done
                     action_button.configure(text="Done")
+                    # Enable the non-running buttons
+                    for button in buttons:
+                        if (
+                            button is not action_bttn_name
+                            and button is not all_bttn_name
+                        ):
+                            enable_button(button)
                 return True
 
             except Exception as e:
                 messagebox.showerror("Error", str(e))
-                # Set the button text back to past tense and reactivate buttons
+                # Enable the buttons
+                for button in buttons:
+                    enable_button(button)
+                # Set the button text back to past tense and reactivate
                 action_button.configure(text=past_tense, state="normal")
-                all_button.configure(state="normal")
                 return False
 
         def all_actions(name: str) -> None:
