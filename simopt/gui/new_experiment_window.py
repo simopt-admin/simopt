@@ -2306,7 +2306,10 @@ class NewExperimentWindow(Toplevel):
             self.tk_buttons[button].configure(state="normal")
 
     def __update_action_button(
-        self, experiment_name: str, text: str, command: Callable | None = None
+        self,
+        experiment_name: str,
+        text: str,
+        command: Union[Callable, None] = None,
     ) -> None:
         name_base: Final[str] = "exp." + experiment_name
         action_bttn_name: Final[str] = name_base + ".action"
