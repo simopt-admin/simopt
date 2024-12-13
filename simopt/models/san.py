@@ -68,6 +68,7 @@ class SAN(Model):
                 "description": "number of nodes",
                 "datatype": int,
                 "default": 9,
+                "isDatafarmable": False
             },
             "arcs": {
                 "description": "list of arcs",
@@ -373,6 +374,7 @@ class SANLongestPath(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000,
+                "isDatafarmable": False
             },
             "arc_costs": {
                 "description": "Cost associated to each arc.",

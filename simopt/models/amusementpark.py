@@ -79,6 +79,7 @@ class AmusementPark(Model):
                 "description": "The number of attractions in the park.",
                 "datatype": int,
                 "default": NUM_ATTRACTIONS,
+                "isDatafarmable": False
             },
             "time_open": {
                 "description": "The number of minutes per day the park is open.",
@@ -556,6 +557,7 @@ class AmusementParkMinDepart(Problem):
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 100,
+                "isDatafarmable": False
             },
         }
 
