@@ -340,6 +340,7 @@ class FixedSANLongestPath(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000,
+                "isDatafarmable": False
             },
             "arc_costs": {
                 "description": "cost associated to each arc",

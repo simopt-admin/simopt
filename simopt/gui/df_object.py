@@ -491,6 +491,54 @@ class DFInteger(DFFactor):
         self.__maximum = tk.IntVar(value=default)
 
 
+class DFIntegerNonDatafarmable(DFFactor):
+    """Class to store non-datafarmable integer factors for problems and solvers."""
+
+    @property
+    def type(self) -> tk.StringVar:
+        """The type of the factor."""
+        return tk.StringVar(value="int")
+
+    @property
+    def default(self) -> tk.IntVar:
+        """The default value of the factor."""
+        return self.__default
+
+    @default.setter
+    def default(self, default: tk.Variable) -> None:
+        if not isinstance(default, tk.IntVar):
+            error_msg = "Default value must be an IntVar."
+            raise ValueError(error_msg)
+        self.__default = default
+
+    @property
+    def default_eval(self) -> int:
+        """Evaluated default value of the factor."""
+        try:
+            return int(self.default.get())
+        except ValueError:
+            raise ValueError(
+                f"Default value for {self.name.get()} must be an integer."
+            ) from None
+
+    def __init__(self, name: str, description: str, default: int) -> None:
+        """Initialize the
+
+        Parameters
+        ----------
+        name : str
+            The name of the factor
+        description : str
+            The description of the factor
+        default : list
+            The default value of the factor
+
+        """
+        appended_description = "[Non-Datafarmable] " + description
+        super().__init__(name, appended_description)
+        self.__default = tk.IntVar(value=default)
+
+
 class DFFloat(DFFactor):
     """Class to store float factors for problems and solvers."""
 
@@ -748,8 +796,15 @@ def spec_to_df(spec_name: str, spec: dict) -> DFFactor:
         list: DFList,
     }
 
-    # Create the factor object
-    if f_type in df_factor_map:
+    # Check to see if we have a non-datafarmable integer
+    if (
+        f_type is int
+        and "isDatafarmable" in spec
+        and not spec["isDatafarmable"]
+    ):
+        return DFIntegerNonDatafarmable(spec_name, f_description, f_default)
+    # Otherwise, just use the default mapping
+    elif f_type in df_factor_map:
         return df_factor_map[f_type](spec_name, f_description, f_default)
     else:
         raise NotImplementedError(

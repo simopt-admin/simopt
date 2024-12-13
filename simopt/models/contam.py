@@ -737,6 +737,7 @@ class ContaminationTotalCostCont(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000,
+                "isDatafarmable": False
             },
             "prev_cost": {
                 "description": "cost of prevention",

@@ -1,6 +1,7 @@
 import os
 import pickle
 import re
+import threading
 import tkinter as tk
 from abc import ABCMeta
 from tkinter import filedialog, messagebox, ttk
@@ -1461,11 +1462,13 @@ class NewExperimentWindow(Toplevel):
         # Open file dialog to select design file
         # Pickle files only, but all files can be selected (in case someone
         # forgets to change file type)
-        # NOTE: For some reason we use both .pickle and .pkl extensions so we
-        # need to make sure we accept both
+        # NOTE: Trying to accept both .pickle and .pkl files using
+        # "*.pickle;*.pkl" causes Python to crash on MacOS but works fine on
+        # Windows. As long as we only have one pickle file extension, we
+        # should be fine.
         # TODO: standardize Pickle file extension (see GitHub issue #71)
         experiment_file = filedialog.askopenfilename(
-            filetypes=[("Pickle files", "*.pickle;*.pkl"), ("All files", "*.*")]
+            filetypes=[("Pickle files", "*.pickle"), ("All files", "*.*")]
         )
         # Exit w/o message if no file selected
         if experiment_file == "" or not experiment_file:
@@ -2280,6 +2283,180 @@ class NewExperimentWindow(Toplevel):
         self.__update_problem_dropdown()
         self.__update_solver_dropdown()
 
+    def __spawn_new_thread(self, function: Callable) -> threading.Thread:
+        thread = threading.Thread(target=function)
+        thread.start()
+        return thread
+
+    def __disable_exp_buttons(self, experiment_name: str) -> None:
+        name_base: Final[str] = "exp." + experiment_name
+        # Get all the buttons
+        buttons = [bttn for bttn in self.tk_buttons if name_base in bttn]
+        # Disable all buttons (except view)
+        for button in buttons:
+            if not button.endswith(".view"):
+                self.tk_buttons[button].configure(state="disabled")
+
+    def __enable_exp_buttons(self, experiment_name: str) -> None:
+        name_base: Final[str] = "exp." + experiment_name
+        # Get all the buttons
+        buttons = [bttn for bttn in self.tk_buttons if name_base in bttn]
+        # Enable all buttons
+        for button in buttons:
+            self.tk_buttons[button].configure(state="normal")
+
+    def __update_action_button(
+        self, experiment_name: str, text: str, command: Callable | None = None
+    ) -> None:
+        name_base: Final[str] = "exp." + experiment_name
+        action_bttn_name: Final[str] = name_base + ".action"
+        if command is None:
+            self.tk_buttons[action_bttn_name].configure(text=text)
+        else:
+            self.tk_buttons[action_bttn_name].configure(
+                text=text, command=command
+            )
+
+    def __update_experiment_label(
+        self, experiment_name: str, status: str
+    ) -> None:
+        name_base: Final[str] = "exp." + experiment_name
+        lbl_name: Final[str] = name_base + ".name"
+        text = f"{experiment_name}\n({status})"
+        self.tk_labels[lbl_name].configure(text=text)
+
+    def __run_experiment_gui(self, experiment_name: str) -> None:
+        # Setup
+        self.__disable_exp_buttons(experiment_name)
+        self.__update_experiment_label(experiment_name, "Running")
+        # Try to run the experiment
+        try:
+            self.run_experiment(experiment_name)
+            # If successful, update the label and button
+            self.__update_experiment_label(experiment_name, "Ran")
+            self.__update_action_button(
+                experiment_name,
+                "Post-Replicate",
+                lambda exp_name=experiment_name: self.__post_process_gui_thread(
+                    exp_name
+                ),
+            )
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            self.__update_experiment_label(experiment_name, "Initialized")
+        # Enable the buttons
+        self.__enable_exp_buttons(experiment_name)
+
+    def __run_experiment_gui_thread(
+        self, experiment_name: str
+    ) -> threading.Thread:
+        return self.__spawn_new_thread(
+            lambda: self.__run_experiment_gui(experiment_name)
+        )
+
+    def __post_process_gui(self, experiment_name: str) -> None:
+        # Setup
+        self.__disable_exp_buttons(experiment_name)
+        self.__update_experiment_label(experiment_name, "Post-Processing")
+        # Try to run the post-processing
+        try:
+            self.post_process(experiment_name)
+            # If successful, update the label and button
+            self.__update_experiment_label(experiment_name, "Post-Processed")
+            self.__update_action_button(
+                experiment_name,
+                "Post-Replicated",
+                lambda exp_name=experiment_name: self.__post_normalize_gui_thread(
+                    exp_name
+                ),
+            )
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            self.__update_experiment_label(experiment_name, "Ran")
+        # Enable the buttons
+        self.__enable_exp_buttons(experiment_name)
+
+    def __post_process_gui_thread(
+        self, experiment_name: str
+    ) -> threading.Thread:
+        return self.__spawn_new_thread(
+            lambda: self.__post_process_gui(experiment_name)
+        )
+
+    def __post_normalize_gui(self, experiment_name: str) -> None:
+        # Setup
+        self.__disable_exp_buttons(experiment_name)
+        self.__update_experiment_label(experiment_name, "Post-Normalizing")
+        # Try to run the post-normalization
+        try:
+            self.post_normalize(experiment_name)
+            # If successful, update the label and button
+            self.__update_experiment_label(experiment_name, "Post-Normalized")
+            self.__update_action_button(
+                experiment_name,
+                "Log Results",
+                lambda exp_name=experiment_name: self.__log_results_gui_thread(
+                    exp_name
+                ),
+            )
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            # If the post-normalization fails, revert to the post-process button
+            self.__update_experiment_label(experiment_name, "Post-Processed")
+        # Enable the buttons
+        self.__enable_exp_buttons(experiment_name)
+
+    def __post_normalize_gui_thread(
+        self, experiment_name: str
+    ) -> threading.Thread:
+        return self.__spawn_new_thread(
+            lambda: self.__post_normalize_gui(experiment_name)
+        )
+
+    def __log_results_gui(self, experiment_name: str) -> None:
+        # Setup
+        self.__disable_exp_buttons(experiment_name)
+        self.__update_experiment_label(experiment_name, "Logging")
+        # Try to log the experiment
+        try:
+            self.post_normalize(experiment_name)
+            # If successful, update the label and button
+            self.__update_experiment_label(experiment_name, "Logged")
+            self.__update_action_button(experiment_name, "All Steps\nComplete")
+            # Update the all button to reflect that all steps are done
+            all_bttn_name: Final[str] = "exp." + experiment_name + ".all"
+            self.tk_buttons[all_bttn_name].configure(text="All Steps\nComplete")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            self.__update_experiment_label(experiment_name, "Post-Normalized")
+        # Enable the buttons that don't relate to running the experiment
+        name_base: Final[str] = "exp." + experiment_name
+        buttons = [bttn for bttn in self.tk_buttons if name_base in bttn]
+        for button in buttons:
+            if not button.endswith(".action") and not button.endswith(".all"):
+                self.tk_buttons[button].configure(state="normal")
+
+    def __log_results_gui_thread(
+        self, experiment_name: str
+    ) -> threading.Thread:
+        return self.__spawn_new_thread(
+            lambda: self.__log_results_gui(experiment_name)
+        )
+
+    def __all_action_gui(self, experiment_name: str) -> None:
+        # None of these steps do anything if they've already been done
+        self.__run_experiment_gui(experiment_name)
+        self.__post_process_gui(experiment_name)
+        self.__post_normalize_gui(experiment_name)
+        self.__log_results_gui(experiment_name)
+
+    def __all_actions_gui_thread(
+        self, experiment_name: str
+    ) -> threading.Thread:
+        return self.__spawn_new_thread(
+            lambda: self.__all_action_gui(experiment_name)
+        )
+
     def add_exp_row(
         self, experiment_name: str, is_imported: bool = False
     ) -> None:
@@ -2289,25 +2466,6 @@ class NewExperimentWindow(Toplevel):
 
         # Format:
         # (past_tense, present_tense, future_tense, function)
-        bttn_text_steps: Final[
-            list[tuple[str, str, str, Callable[[str], None]]]
-        ] = [
-            ("Run", "Running", "Ran", self.run_experiment),
-            (
-                "Post-Replicate",
-                "Post-Replicating",
-                "Post-Replicated",
-                self.post_process,
-            ),
-            (
-                "Post-Normalize",
-                "Post-Normalizing",
-                "Post-Normalized",
-                self.post_normalize,
-            ),
-            ("Log Results", "Logging", "Logged", self.log_results),
-        ]
-
         name_base: Final[str] = "exp." + experiment_name
         lbl_name: Final[str] = name_base + ".name"
         action_bttn_name: Final[str] = name_base + ".action"
@@ -2337,49 +2495,6 @@ class NewExperimentWindow(Toplevel):
 
         bttn_text_run_all = "Run All\nRemaining Steps"
         bttn_text_run = "Run\nExperiment"
-
-        def action(name: str, step: int = 0) -> bool:
-            # Lookup all the verbage for the current step
-            past_tense, present_tense, future_tense, function = bttn_text_steps[
-                step
-            ]
-            # Get the buttons and update them for the current step
-            action_button = self.tk_buttons[action_bttn_name]
-            all_button = self.tk_buttons[all_bttn_name]
-            action_button.configure(text=present_tense, state="disabled")
-            all_button.configure(state="disabled")
-            self.update()
-            # Run the function
-            try:
-                function(name)  # type: ignore
-                # Set the name to include the updated status
-                name_label = self.tk_labels[lbl_name]
-                name_label.configure(text=name + "\n(" + future_tense + ")")
-                # If there are more steps, setup the next step
-                if step < len(bttn_text_steps) - 1:
-                    # Figure out what the next step is
-                    next_past_tense, _, _, _ = bttn_text_steps[step + 1]
-                    action_button.configure(
-                        text=next_past_tense,
-                        state="normal",
-                        command=lambda: action(name, step + 1),
-                    )
-                    all_button.configure(state="normal")
-                else:
-                    action_button.configure(text="Done")
-                return True
-
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
-                # Set the button text back to past tense and reactivate buttons
-                action_button.configure(text=past_tense, state="normal")
-                all_button.configure(state="normal")
-                return False
-
-        def all_actions(name: str) -> None:
-            for step in range(len(bttn_text_steps)):
-                if not action(name, step):
-                    break
 
         def view(experiment_name: str) -> None:
             # Check if there's an experiment in progress
@@ -2472,7 +2587,9 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[action_bttn_name] = ttk.Button(
             master=list_frame,
             text=bttn_text_run,
-            command=lambda name=experiment_name: action(name),
+            command=lambda name=experiment_name: self.__run_experiment_gui_thread(
+                name
+            ),
         )
         self.tk_buttons[action_bttn_name].grid(
             row=row_idx, column=1, padx=5, pady=5, sticky="nsew"
@@ -2481,7 +2598,9 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons[all_bttn_name] = ttk.Button(
             master=list_frame,
             text=bttn_text_run_all,
-            command=lambda name=experiment_name: all_actions(name),
+            command=lambda name=experiment_name: self.__all_actions_gui_thread(
+                name
+            ),
         )
         self.tk_buttons[all_bttn_name].grid(
             row=row_idx, column=2, padx=5, pady=5, sticky="nsew"

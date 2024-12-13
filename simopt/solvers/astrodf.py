@@ -132,6 +132,11 @@ class ASTRODF(Solver):
                 "datatype": float,
                 "default": 0.1,
             },
+            "use_gradients": {
+                "description": "if direct gradient observations are available, use them",
+                "datatype": bool,
+                "default": True,
+            },
         }
 
     @property
@@ -469,8 +474,9 @@ class ASTRODF(Solver):
                     interpolation_solns.append(visited_pts_list[f_index])
                 # for new points, run the simulation with pilot run
                 else:
+                    decision_vars = tuple(var_y[i][0])
                     new_solution = self.create_new_solution(
-                        tuple(var_y[i][0]), problem
+                        decision_vars, problem
                     )
                     visited_pts_list.append(new_solution)
                     problem.simulate(new_solution, pilot_run)
@@ -479,9 +485,6 @@ class ASTRODF(Solver):
 
                     # adaptive sampling
                     while True:
-                        problem.simulate(new_solution, 1)
-                        expended_budget += 1
-                        sample_size += 1
                         sig2 = new_solution.objectives_var[0]
                         stopping = self.get_stopping_time(
                             pilot_run,
@@ -496,6 +499,10 @@ class ASTRODF(Solver):
                             or expended_budget >= budget
                         ):
                             break
+                        problem.simulate(new_solution, 1)
+                        expended_budget += 1
+                        sample_size += 1
+
                     fval.append(
                         -1 * problem.minmax[0] * new_solution.objectives_mean
                     )
@@ -659,12 +666,14 @@ class ASTRODF(Solver):
         lambda_min: int = self.factors["lambda_min"]
         lambda_max = budget_limit - expended_budget
         # lambda_max = budget_limit / (15 * sqrt(problem.dim))
-        gradient_availability = problem.gradient_available
+        enable_gradient = (
+            problem.gradient_available and self.factors["use_gradients"]
+        )
         # uncomment the next line to avoid Hessian updating
         # h_k = np.identity(problem.dim)
         # determine power of delta in adaptive sampling rule
         if self.factors["crn_across_solns"]:
-            if gradient_availability:
+            if enable_gradient:
                 delta_power = 0
             else:
                 delta_power = 2
@@ -679,9 +688,7 @@ class ASTRODF(Solver):
             - 1
         )
         if k == 1:
-            incumbent_solution = self.create_new_solution(
-                tuple(incumbent_x), problem
-            )
+            incumbent_solution = self.create_new_solution(incumbent_x, problem)
             if len(visited_pts_list) == 0:
                 visited_pts_list.append(incumbent_solution)
 
@@ -692,7 +699,7 @@ class ASTRODF(Solver):
 
             # adaptive sampling
             while True:
-                if gradient_availability:
+                if enable_gradient:
                     rhs_for_kappa = norm(
                         incumbent_solution.objectives_gradients_mean[0]
                     )
@@ -726,14 +733,15 @@ class ASTRODF(Solver):
                     )
                     # print("kappa "+str(kappa))
                     break
-                else:
-                    problem.simulate(incumbent_solution, 1)
-                    expended_budget += 1
-                    sample_size += 1
+                problem.simulate(incumbent_solution, 1)
+                expended_budget += 1
+                sample_size += 1
 
             recommended_solns.append(incumbent_solution)
             intermediate_budgets.append(expended_budget)
-        elif self.factors["crn_across_solns"]: # since incument was only evaluated with the sample size of previous incumbent, here we compute its adaptive sample size
+        elif self.factors[
+            "crn_across_solns"
+        ]:  # since incument was only evaluated with the sample size of previous incumbent, here we compute its adaptive sample size
             sample_size = incumbent_solution.n_reps
             # adaptive sampling
             while True:
@@ -755,10 +763,9 @@ class ASTRODF(Solver):
                     problem.simulate(incumbent_solution, 1)
                     expended_budget += 1
                     sample_size += 1
-                    
 
         # use Taylor expansion if gradient available
-        if gradient_availability:
+        if enable_gradient:
             fval = (
                 np.ones(2 * problem.dim + 1)
                 * -1
@@ -801,7 +808,7 @@ class ASTRODF(Solver):
             # TODO: why do we need this? Check model reduction calculation too.
             # print("np.dot(np.multiply(grad, Hessian), grad) "+str(np.dot(np.multiply(grad, hessian), grad)))
             # print("np.dot(np.dot(grad, hessian), grad) "+str(np.dot(np.dot(grad, hessian), grad)))
-            if gradient_availability:
+            if enable_gradient:
                 # print("hessian " + str(hessian))
                 check_positive_definite = np.dot(np.dot(grad, hessian), grad)
             else:
@@ -817,12 +824,8 @@ class ASTRODF(Solver):
                 # print("tau "+str(tau))
             grad = np.reshape(grad, (1, problem.dim))[0]
             grad_norm = norm(grad)
+            # Make sure we don't divide by 0
             if grad_norm == 0:
-                # warning_msg = "Warning: Division by 0 in ASTRO-DF solver (norm(grad) == 0)."
-                # print(warning_msg, file=sys.stderr)
-                # # TODO: figure out how to handle this
-                # # Normally, DB0 errors would result in +-inf, but we have to
-                # # add the result to incumbent_x, so we can't have inf values
                 candidate_x = incumbent_x
             else:
                 product = tau * delta_k * grad
@@ -854,16 +857,18 @@ class ASTRODF(Solver):
 
         # print("problem.lower_bounds "+str(problem.lower_bounds))
         # handle the box constraints
+        new_candidate_list = []
         for i in range(problem.dim):
             if candidate_x[i] <= problem.lower_bounds[i]:
-                candidate_x[i] = problem.lower_bounds[i] + 0.01
+                new_candidate_list.append(problem.lower_bounds[i] + 0.01)
             elif candidate_x[i] >= problem.upper_bounds[i]:
-                candidate_x[i] = problem.upper_bounds[i] - 0.01
+                new_candidate_list.append(problem.upper_bounds[i] - 0.01)
+            else:
+                new_candidate_list.append(candidate_x[i])
+        candidate_x = tuple(new_candidate_list)
 
         # store the solution (and function estimate at it) to the subproblem as a candidate for the next iterate
-        candidate_solution = self.create_new_solution(
-            tuple(candidate_x), problem
-        )
+        candidate_solution = self.create_new_solution(candidate_x, problem)
         visited_pts_list.append(candidate_solution)
 
         # if we use crn, then the candidate solution has the same sample size as the incumbent solution
@@ -876,7 +881,7 @@ class ASTRODF(Solver):
             expended_budget += pilot_run
             sample_size = pilot_run
             while True:
-                # if gradient_availability:
+                # if enable_gradient:
                 #     # print("incumbent_solution.objectives_gradients_var[0] "+str(candidate_solution.objectives_gradients_var[0]))
                 #     while norm(candidate_solution.objectives_gradients_var[0]) == 0 and candidate_solution.n_reps < max(pilot_run, lambda_max/100):
                 #         problem.simulate(candidate_solution, 1)
@@ -900,7 +905,7 @@ class ASTRODF(Solver):
                     problem.simulate(candidate_solution, 1)
                     expended_budget += 1
                     sample_size += 1
-                    
+
         # TODO: make sure the solution whose estimated objevtive is abrupted bc of budget is not added to the list of recommended solutions, unless the error is negligible ...
         # if (expended_budget >= budget_limit) and (sample_size < stopping):
         #     final_ob = fval[0]
@@ -911,7 +916,7 @@ class ASTRODF(Solver):
         # also if the candidate solution's variance is high that could be caused by stopping early due to exhausting budget
         # print("cv "+str(candidate_solution.objectives_var/(candidate_solution.n_reps * candidate_solution.objectives_mean ** 2)))
         # print("fval[0] - min(fval) "+str(fval[0] - min(fval)))
-        if not gradient_availability and (
+        if not enable_gradient and (
             (
                 (min(fval) < fval_tilde)
                 and (
@@ -931,19 +936,22 @@ class ASTRODF(Solver):
             )
         ):
             fval_tilde = min(fval)
-            candidate_x = y_var[fval.index(min(fval))][0]
-            candidate_solution = interpolation_solns[fval.index(min(fval))]
+            candidate_x = y_var[fval.index(min(fval))][0]  # type: ignore
+            candidate_solution = interpolation_solns[fval.index(min(fval))]  # type: ignore
 
         # compute the success ratio rho
-        s = np.array(candidate_x - incumbent_x)
-        if gradient_availability:
+        candidate_x_arr = np.array(candidate_x)
+        incumbent_x_arr = np.array(incumbent_x)
+        s = np.subtract(candidate_x_arr, incumbent_x_arr)
+        if enable_gradient:
             model_reduction = -np.dot(s, grad) - 0.5 * np.dot(
                 np.dot(s, hessian), s
             )
         else:
             model_reduction = self.evaluate_model(
-                np.zeros(problem.dim), q
-            ) - self.evaluate_model(s, q)
+                np.zeros(problem.dim),
+                q,  # type: ignore
+            ) - self.evaluate_model(s, q)  # type: ignore
         if model_reduction <= 0:
             rho = 0
         else:
@@ -959,7 +967,7 @@ class ASTRODF(Solver):
             # very successful: expand
             if rho >= eta_2:
                 delta_k = min(gamma_1 * delta_k, delta_max)
-            if gradient_availability:
+            if enable_gradient:
                 candidate_grad = (
                     -1
                     * problem.minmax[0]
@@ -979,10 +987,11 @@ class ASTRODF(Solver):
                 else:
                     r_k = 1.0 / (y_k @ s)
                 h_s_k = h_k @ s
-                h_k = h_k + (
-                    np.outer(y_k, y_k) * r_k
+                h_k = (
+                    h_k
+                    + np.outer(y_k, y_k) * r_k
                     - np.outer(h_s_k, h_s_k) / (s @ h_s_k)
-                )
+                )  # type: ignore
         # unsuccessful: shrink and reject
         else:
             delta_k = min(gamma_2 * delta_k, delta_max)
@@ -1059,7 +1068,7 @@ class ASTRODF(Solver):
         incumbent_solution = self.create_new_solution(
             tuple(incumbent_x), problem
         )
-        h_k = np.identity(problem.dim)
+        h_k = np.identity(problem.dim).tolist()
 
         while expended_budget < budget:
             k += 1
@@ -1087,7 +1096,7 @@ class ASTRODF(Solver):
                 intermediate_budgets,
                 kappa,
                 incumbent_solution,
-                h_k,
+                h_k,  # type: ignore
             )
 
         return recommended_solns, intermediate_budgets
