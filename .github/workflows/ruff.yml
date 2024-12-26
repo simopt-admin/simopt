@@ -1,4 +1,4 @@
-name: "ruff format checking"
+name: "Ruff CI"
 
 on:
   push:
@@ -7,14 +7,24 @@ on:
     branches: [ "master" , "development" ]
 
 jobs:
-  lint:
+  linter:
     runs-on: ubuntu-latest 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Run Ruff format checking
+    - name: Ruff linting check
+      uses: astral-sh/ruff-action@v2
+      with:
+        args: "check --no-fix"
+
+  formatter:
+    runs-on: ubuntu-latest 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Ruff formatting check
       uses: astral-sh/ruff-action@v2
       with:
         args: "format --check"
-        src: "./simopt"
