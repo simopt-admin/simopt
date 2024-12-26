@@ -11,7 +11,7 @@ The most-up-to-date publication about this library is [Eckman et al. (2023)](htt
 ## Before Workshop
 Before attending the workshop please follow the instructions below:
 
-1. Install Python, Ruby, and required dependencies [as detailed in the README](https://github.com/simopt-admin/simopt/blob/master/README.md#getting-started)
+1. Install Python, Ruby, and required dependencies [as detailed in the README](https://github.com/simopt-admin/simopt/blob/master/README.md#getting-started). (Please note that the Ruby installation is only needed for a small portion of the workshop; if you encounter issues with installing Ruby, you can still fully follow along.)
 
 3. Install Microsoft's [Visual Studio Code (VS Code) IDE](https://code.visualstudio.com).
 
