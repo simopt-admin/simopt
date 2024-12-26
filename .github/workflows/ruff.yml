@@ -10,9 +10,6 @@ jobs:
   lint:
     runs-on: ubuntu-latest 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
     - name: Run Ruff format checking
       uses: astral-sh/ruff-action@v2
       with:
