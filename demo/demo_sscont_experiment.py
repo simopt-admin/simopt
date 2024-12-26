@@ -22,7 +22,7 @@ from simopt.experiment_base import (
 )
 
 
-def main():
+def main() -> None:
     # Default values of the (s, S) model:
     # "demand_mean": 100.0
     # "lead_mean": 6.0
@@ -42,9 +42,9 @@ def main():
     rs_sample_sizes = [10, 50]
 
     # RUNNING AND POST-PROCESSING EXPERIMENTS
-    M = 10
-    N = 100
-    L = 200
+    num_macroreps = 10
+    num_postreps = 100
+    num_postnorms = 200
     # Loop over problem instances.
     for dm in demand_means:
         for lm in lead_means:
@@ -72,9 +72,9 @@ def main():
                     model_fixed_factors=model_fixed_factors,
                 )
                 # Run experiment with M.
-                new_experiment.run(n_macroreps=M)
+                new_experiment.run(n_macroreps=num_macroreps)
                 # Post replicate experiment with N.
-                new_experiment.post_replicate(n_postreps=N)
+                new_experiment.post_replicate(n_postreps=num_postreps)
                 experiments_same_problem.append(new_experiment)
 
             # Setup and run ASTRO-DF.
@@ -88,9 +88,9 @@ def main():
                 model_fixed_factors=model_fixed_factors,
             )
             # Run experiment with M.
-            new_experiment.run(n_macroreps=M)
+            new_experiment.run(n_macroreps=num_macroreps)
             # Post replicate experiment with N.
-            new_experiment.post_replicate(n_postreps=N)
+            new_experiment.post_replicate(n_postreps=num_postreps)
             experiments_same_problem.append(new_experiment)
 
             # Setup and run Nelder-Mead.
@@ -102,9 +102,9 @@ def main():
                 model_fixed_factors=model_fixed_factors,
             )
             # Run experiment withM.
-            new_experiment.run(n_macroreps=M)
+            new_experiment.run(n_macroreps=num_macroreps)
             # Post replicate experiment with N.
-            new_experiment.post_replicate(n_postreps=N)
+            new_experiment.post_replicate(n_postreps=num_postreps)
             experiments_same_problem.append(new_experiment)
 
             # Setup and run STRONG.=
@@ -116,15 +116,15 @@ def main():
                 model_fixed_factors=model_fixed_factors,
             )
             # Run experiment with M.
-            new_experiment.run(n_macroreps=M)
+            new_experiment.run(n_macroreps=num_macroreps)
             # Post replicate experiment with N.
-            new_experiment.post_replicate(n_postreps=N)
+            new_experiment.post_replicate(n_postreps=num_postreps)
             experiments_same_problem.append(new_experiment)
 
             # Post-normalize experiments with L.
             # Provide NO proxies for f(x0), f(x*), or f(x).
             post_normalize(
-                experiments=experiments_same_problem, n_postreps_init_opt=L
+                experiments=experiments_same_problem, n_postreps_init_opt=num_postnorms
             )
 
     # LOAD DATA FROM .PICKLE FILES TO PREPARE FOR PLOTTING.

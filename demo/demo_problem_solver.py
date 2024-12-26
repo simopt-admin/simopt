@@ -6,13 +6,12 @@ macroreplications of the solver on the problem.
 
 import sys
 import os.path as o
-import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))) # type:ignore
 
 # Import the ProblemSolver class and other useful functions
-from simopt.experiment_base import ProblemSolver, read_experiment_results, post_normalize, plot_progress_curves, plot_solvability_cdfs
+from simopt.experiment_base import ProblemSolver, post_normalize, plot_progress_curves, plot_solvability_cdfs
 
-def main():
+def main() -> None:
     # !! When testing a new solver/problem, first go to directory.py.
     # There you should add the import statement and an entry in the respective
     # dictionary (or dictionaries).

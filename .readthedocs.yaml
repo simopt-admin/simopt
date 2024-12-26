@@ -9,6 +9,5 @@ build:
   tools:
     python: miniconda-latest
 
-
 conda:
   environment: environment.yml

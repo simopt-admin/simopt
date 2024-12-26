@@ -10,7 +10,7 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 
 from simopt.experiment_base import create_design, ProblemsSolvers
 
-def main():
+def main() -> None:
     # Specify the name of the solver as it appears in directory.py
     solver_name = "ASTRODF"
     # Specify the name of the problem as it appears in directory.py
@@ -83,12 +83,12 @@ def main():
 
     # create solver name list for ProblemsSolvers (do not edit)
     solver_names = []
-    for i in range(len(solver_design_list)): 
+    for _ in range(len(solver_design_list)): 
         solver_names.append(solver_name)
         
     # create proble name list for ProblemsSolvers (do not edit)
     problem_names = []
-    for i in range(len(model_design_list)): 
+    for _ in range(len(model_design_list)): 
         problem_names.append(problem_name)
 
     # Create ProblemsSovlers experiment with solver and model design

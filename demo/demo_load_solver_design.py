@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 This script is intended to help with loading a design of solver factors
 to run on one or more problems. If more than one problem are used a cross-design of problems
@@ -18,7 +16,7 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 from simopt.experiment_base import  ProblemsSolvers
 import pandas as pd
 
-def main():
+def main() -> None:
     # run this script in the terminal from the simopt directory
     solver_name = 'RNDSRCH' # name of solver that design was created on
     problem_names = ['SSCONT-1', 'SAN-1'] # list of problem names for solver design to be run on (if more than one version of same problem, repeat name)
@@ -51,7 +49,7 @@ def main():
 
     dp_list = [] # list of all design points
 
-    for index, row in design_table.iterrows():
+    for _, row in design_table.iterrows():
         dp = {} #dictionary of current dp
         for factor in design_factor_names:
             dp[factor] = row[factor] 
@@ -64,7 +62,7 @@ def main():
         
     n_dp = len(dp_list)
     solver_names = []
-    for i in range(n_dp):
+    for _ in range(n_dp):
         solver_names.append(solver_name)
         
     experiment = ProblemsSolvers(solver_factors= dp_list,

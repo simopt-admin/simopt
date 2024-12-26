@@ -192,8 +192,8 @@ class Contamination(Model):
         contam_rng = rng_list[0]
         restore_rng = rng_list[1]
         # Generate rates with beta distribution.
-        X = np.zeros(self.factors["stages"])
-        X[0] = restore_rng.betavariate(
+        levels = np.zeros(self.factors["stages"])
+        levels[0] = restore_rng.betavariate(
             alpha=self.factors["initial_rate_alpha"],
             beta=self.factors["initial_rate_beta"],
         )
@@ -207,9 +207,9 @@ class Contamination(Model):
                 alpha=self.factors["restore_rate_alpha"],
                 beta=self.factors["restore_rate_beta"],
             )
-            X[i] = c * (1 - u[i]) * (1 - X[i - 1]) + (1 - r * u[i]) * X[i - 1]
+            levels[i] = c * (1 - u[i]) * (1 - levels[i - 1]) + (1 - r * u[i]) * levels[i - 1]
         # Compose responses and gradients.
-        responses = {"level": X}
+        responses = {"level": levels}
         gradients = {
             response_key: {
                 factor_key: np.nan for factor_key in self.specifications

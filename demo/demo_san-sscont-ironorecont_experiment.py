@@ -7,12 +7,11 @@ Produces plots appearing in the INFORMS Journal on Computing submission.
 """
 import sys
 import os.path as o
-import os
 sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))) # type:ignore
 
 from simopt.experiment_base import ProblemSolver, plot_area_scatterplots, post_normalize, plot_progress_curves, plot_solvability_cdfs, read_experiment_results, plot_solvability_profiles, plot_terminal_scatterplots, plot_terminal_progress
 
-def main():
+def main() -> None:
     # Problems factors used in experiments
     # SAN
     all_random_costs = [(1, 2, 2, 7, 17, 7, 2, 13, 1, 9, 18, 16, 7),
@@ -49,15 +48,15 @@ def main():
     inven_stops = [1000, 10000]
 
     # RUNNING AND POST-PROCESSING EXPERIMENTS
-    M = 10
-    N = 100
-    L = 200
+    num_macroreps = 10
+    num_postreps = 100
+    num_postnorms = 200
 
 
     # Five solvers.
     solvers = ["RNDSRCH_ss=10", "RNDSRCH_ss=50", "ASTRODF", "NELDMD", "STRONG"]
     # Two versions of random search with varying sample sizes.
-    rs_sample_sizes = [10, 50]
+    # rs_sample_sizes = [10, 50]
     # ASTRODF factors
     delta_max = 200.0
 
@@ -94,14 +93,14 @@ def main():
                                         model_fixed_factors=model_fixed_factors
                                         )
             # Run experiment with M.
-            new_experiment.run(n_macroreps=M)
+            new_experiment.run(n_macroreps=num_macroreps)
             # Post replicate experiment with N.
-            new_experiment.post_replicate(n_postreps=N)
+            new_experiment.post_replicate(n_postreps=num_postreps)
             experiments_same_problem.append(new_experiment)
 
         # Post-normalize experiments with L.
         # Provide NO proxies for f(x0), f(x*), or f(x).
-        post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=L)
+        post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=num_postnorms)
 
     # Second problem: SSCONT
     for dm in demand_means:
@@ -137,14 +136,14 @@ def main():
                                             model_fixed_factors=model_fixed_factors
                                             )
                 # Run experiment with M.
-                new_experiment.run(n_macroreps=M)
+                new_experiment.run(n_macroreps=num_macroreps)
                 # Post replicate experiment with N.
-                new_experiment.post_replicate(n_postreps=N)
+                new_experiment.post_replicate(n_postreps=num_postreps)
                 experiments_same_problem.append(new_experiment)
 
             # Post-normalize experiments with L.
             # Provide NO proxies for f(x0), f(x*), or f(x).
-            post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=L)
+            post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=num_postnorms)
 
     # Third problem: IRONORECONT
     for sd in st_devs:
@@ -180,14 +179,14 @@ def main():
                                                 model_fixed_factors=model_fixed_factors
                                                 )
                     # Run experiment with M.
-                    new_experiment.run(n_macroreps=M)
+                    new_experiment.run(n_macroreps=num_macroreps)
                     # Post replicate experiment with N.
-                    new_experiment.post_replicate(n_postreps=N)
+                    new_experiment.post_replicate(n_postreps=num_postreps)
                     experiments_same_problem.append(new_experiment)
 
                 # Post-normalize experiments with L.
                 # Provide NO proxies for f(x0), f(x*), or f(x).
-                post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=L)
+                post_normalize(experiments=experiments_same_problem, n_postreps_init_opt=num_postnorms)
 
     # LOAD DATA FROM .PICKLE FILES TO PREPARE FOR PLOTTING.
 
@@ -263,18 +262,18 @@ def main():
     n_solvers = len(experiments)
     n_problems = len(experiments[0])
 
-    CI_param = True
+    enable_confidence_intervals = True
     alpha = 0.2
 
-    plot_solvability_profiles(experiments, plot_type="cdf_solvability", solve_tol=alpha, all_in_one=True, plot_conf_ints=CI_param, print_max_hw=CI_param)
-    plot_solvability_profiles(experiments, plot_type="quantile_solvability", solve_tol=alpha, beta=0.5, all_in_one=True, plot_conf_ints=CI_param, print_max_hw=CI_param)
-    plot_solvability_profiles(experiments=experiments, plot_type="diff_cdf_solvability", solve_tol=alpha, ref_solver="ASTRO-DF", all_in_one=True, plot_conf_ints=CI_param, print_max_hw=CI_param)
-    plot_solvability_profiles(experiments=experiments, plot_type="diff_quantile_solvability", solve_tol=alpha, beta=0.5, ref_solver="ASTRO-DF", all_in_one=True, plot_conf_ints=CI_param, print_max_hw=CI_param)
-    plot_area_scatterplots(experiments, all_in_one=True, plot_conf_ints=CI_param, print_max_hw=CI_param)
+    plot_solvability_profiles(experiments, plot_type="cdf_solvability", solve_tol=alpha, all_in_one=True, plot_conf_ints=enable_confidence_intervals, print_max_hw=enable_confidence_intervals)
+    plot_solvability_profiles(experiments, plot_type="quantile_solvability", solve_tol=alpha, beta=0.5, all_in_one=True, plot_conf_ints=enable_confidence_intervals, print_max_hw=enable_confidence_intervals)
+    plot_solvability_profiles(experiments=experiments, plot_type="diff_cdf_solvability", solve_tol=alpha, ref_solver="ASTRO-DF", all_in_one=True, plot_conf_ints=enable_confidence_intervals, print_max_hw=enable_confidence_intervals)
+    plot_solvability_profiles(experiments=experiments, plot_type="diff_quantile_solvability", solve_tol=alpha, beta=0.5, ref_solver="ASTRO-DF", all_in_one=True, plot_conf_ints=enable_confidence_intervals, print_max_hw=enable_confidence_intervals)
+    plot_area_scatterplots(experiments, all_in_one=True, plot_conf_ints=enable_confidence_intervals, print_max_hw=enable_confidence_intervals)
     plot_terminal_scatterplots(experiments, all_in_one=True)
 
     for i in range(n_problems):
-        plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_conf_ints=CI_param, print_max_hw=True)
+        plot_progress_curves([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="mean", all_in_one=True, plot_conf_ints=enable_confidence_intervals, print_max_hw=True)
         plot_terminal_progress([experiments[solver_idx][i] for solver_idx in range(n_solvers)], plot_type="violin", normalize=True, all_in_one=True)
         # plot_solvability_cdfs([experiments[solver_idx][i] for solver_idx in range(n_solvers)], solve_tol=0.2,  all_in_one=True, plot_CIs=True, print_max_hw=True)
 

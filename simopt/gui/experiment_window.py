@@ -3655,7 +3655,7 @@ class PostProcessingWindow(Toplevel):
     def __init__(
         self,
         root: tk.Tk,
-        myexperiment,
+        myexperiment: ProblemSolver,
         experiment_list: list,
         main_window: tk.Tk,
         meta: bool = False,

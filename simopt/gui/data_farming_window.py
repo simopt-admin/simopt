@@ -1219,7 +1219,7 @@ class DataFarmingWindow(Toplevel):
             factor_datatype = self.model_object.specifications[factor].get(
                 "datatype"
             )
-            factor_isDatafarmable = self.model_object.specifications[factor].get(
+            is_datafarmable_factor = self.model_object.specifications[factor].get(
                 "isDatafarmable"
             )
             factor_include = check_values[factor_index]
@@ -1229,7 +1229,7 @@ class DataFarmingWindow(Toplevel):
             if factor_include:
                 self.factor_names.append(factor)
 
-                if factor_datatype in (float, int) and factor_isDatafarmable is not False:
+                if factor_datatype in (float, int) and is_datafarmable_factor is not False:
                     factor_min = str(min_values[maxmin_index])
                     factor_max = str(max_values[maxmin_index])
                     maxmin_index += 1

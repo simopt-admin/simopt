@@ -10,7 +10,7 @@ sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."
 
 from simopt.experiment_base import create_design, ProblemsSolvers # type:ignore
 
-def main():
+def main() -> None:
     # Specify the name of the problem as it appears in directory.py
     problem_name = "CNTNEWS-1"
     # Specify the name of the model as it appears in directory.py
@@ -81,7 +81,7 @@ def main():
         
     # create proble name list for ProblemsSolvers (do not edit)
     problem_names = []
-    for i in range(len(model_design_list)): 
+    for _ in range(len(model_design_list)): 
         problem_names.append(problem_name)
 
     # Create ProblemsSovlers experiment with solver and model design
