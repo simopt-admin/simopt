@@ -10,6 +10,11 @@ jobs:
   lint:
     runs-on: ubuntu-latest 
     steps:
-    - uses: astral-sh/ruff-action@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run Ruff format checking
+      uses: astral-sh/ruff-action@v2
       with:
         args: "format --check ."
+      working-directory: ${{ github.workspace }}
