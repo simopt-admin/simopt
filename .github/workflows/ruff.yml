@@ -2,9 +2,9 @@ name: "ruff format checking"
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "development" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master" , "development" ]
 
 jobs:
   lint:
@@ -12,7 +12,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-      
+
     - name: Run Ruff format checking
       uses: astral-sh/ruff-action@v2
       with:
