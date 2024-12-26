@@ -92,7 +92,7 @@ class DualSourcing(Model):
                 "description": "number of days to simulate",
                 "datatype": int,
                 "default": 1000,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
             "initial_inv": {
                 "description": "initial inventory",
@@ -468,7 +468,7 @@ class DualSourcingMinCost(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
         }
 

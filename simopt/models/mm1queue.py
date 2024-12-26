@@ -366,7 +366,7 @@ class MM1MinMeanSojournTime(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
             "cost": {
                 "description": "cost for increasing service rate",

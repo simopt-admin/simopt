@@ -124,7 +124,8 @@ def main() -> None:
             # Post-normalize experiments with L.
             # Provide NO proxies for f(x0), f(x*), or f(x).
             post_normalize(
-                experiments=experiments_same_problem, n_postreps_init_opt=num_postnorms
+                experiments=experiments_same_problem,
+                n_postreps_init_opt=num_postnorms,
             )
 
     # LOAD DATA FROM .PICKLE FILES TO PREPARE FOR PLOTTING.
@@ -384,6 +385,7 @@ def main() -> None:
     #                           beta=0.5,
     #                           ref_solver="ASTRO-DF"
     #                           )
+
 
 if __name__ == "__main__":
     main()

@@ -6,24 +6,27 @@ macroreplications at each version of the solver. Outputs are printed to a file.
 
 import sys
 import os.path as o
-sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), "..")))  # type:ignore
+
+sys.path.append(
+    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
+)  # type:ignore
 
 from simopt.experiment_base import create_design, ProblemsSolvers
+
 
 def main() -> None:
     # Specify the name of the solver as it appears in directory.py
     solver_name = "ASTRODF"
     # list of problem names for solver design to be run on (if more than one version of same problem, repeat name)
     # Specify the name of the problem as it appears in directory.py
-    problem_names = ['SSCONT-1', 'SAN-1']
+    problem_names = ["SSCONT-1", "SAN-1"]
 
     # Specify the names of the sovler factors (in order) that will be varied.
-    solver_factor_headers = ["eta_1", "eta_2", "lambda_min" ]
-
+    solver_factor_headers = ["eta_1", "eta_2", "lambda_min"]
 
     # OPTIONAL: factors chosen for cross design
     # factor name followed by list containing factor values to cross design over
-    solver_cross_design_factors = {'crn_across_solns': [True, False]} 
+    solver_cross_design_factors = {"crn_across_solns": [True, False]}
 
     # OPTIONAL: Provide additional overrides for solver default factors.
     # If empty, default factor settings are used.
@@ -31,8 +34,11 @@ def main() -> None:
     # OPTIONAL: Provide additional overrides for problem default factors.
     # If empty, default factor settings are used.
     # list of dictionaries that provide fixed factors for problems when you don't want to use the default values
-    # if you want to use all default values use empty dictionary, order must match problem names 
-    problem_fixed_factors = [{'budget': 2000, 'demand_mean': 90.0, 'fixed_cost':25},{'budget': 500}]
+    # if you want to use all default values use empty dictionary, order must match problem names
+    problem_fixed_factors = [
+        {"budget": 2000, "demand_mean": 90.0, "fixed_cost": 25},
+        {"budget": 500},
+    ]
 
     # Provide the name of a file  .txt locatated in the datafarming_experiments folder containing
     # the following:
@@ -64,26 +70,27 @@ def main() -> None:
     crn_across_init_opt = True  # Default
 
     # Create DataFarmingExperiment object for sovler design
-    solver_design_list = create_design(name=solver_name,
-                    factor_headers=solver_factor_headers,
-                    factor_settings_filename=solver_factor_settings_filename,
-                    n_stacks=solver_n_stacks,
-                    fixed_factors=solver_fixed_factors, #optional
-                    cross_design_factors= solver_cross_design_factors, #optional
-                    )
+    solver_design_list = create_design(
+        name=solver_name,
+        factor_headers=solver_factor_headers,
+        factor_settings_filename=solver_factor_settings_filename,
+        n_stacks=solver_n_stacks,
+        fixed_factors=solver_fixed_factors,  # optional
+        cross_design_factors=solver_cross_design_factors,  # optional
+    )
 
     # create solver name list for ProblemsSolvers (do not edit)
     solver_names = []
     for _ in range(len(solver_design_list)):
         solver_names.append(solver_name)
-        
 
     # Create ProblemsSovlers experiment with solver and model design
-    experiment = ProblemsSolvers(solver_factors = solver_design_list,
-                                problem_factors = problem_fixed_factors,
-                                solver_names = solver_names,
-                                problem_names = problem_names
-                                )
+    experiment = ProblemsSolvers(
+        solver_factors=solver_design_list,
+        problem_factors=problem_fixed_factors,
+        solver_names=solver_names,
+        problem_names=problem_names,
+    )
 
     # check compatibility of selected solvers and problems
     experiment.check_compatibility()
@@ -92,16 +99,21 @@ def main() -> None:
     experiment.run(n_macroreps)
 
     # Postprocess the experimental results from each design point.
-    experiment.post_replicate(n_postreps=n_postreps,
-                            crn_across_budget=crn_across_budget,
-                            crn_across_macroreps=crn_across_macroreps)
-    experiment.post_normalize(n_postreps_init_opt=n_postreps_init_opt,
-                            crn_across_init_opt=crn_across_init_opt)
+    experiment.post_replicate(
+        n_postreps=n_postreps,
+        crn_across_budget=crn_across_budget,
+        crn_across_macroreps=crn_across_macroreps,
+    )
+    experiment.post_normalize(
+        n_postreps_init_opt=n_postreps_init_opt,
+        crn_across_init_opt=crn_across_init_opt,
+    )
 
     # Record and log results
     experiment.record_group_experiment_results()
     experiment.log_group_experiment_results()
     experiment.report_group_statistics()
+
 
 if __name__ == "__main__":
     main()

@@ -131,13 +131,13 @@ class SSCont(Model):
                 "description": "number of periods to simulate",
                 "datatype": int,
                 "default": 100,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
             "warmup": {
                 "description": "number of periods as warmup before collecting statistics",
                 "datatype": int,
                 "default": 20,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
         }
 
@@ -500,7 +500,7 @@ class SSContMinCost(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
         }
 

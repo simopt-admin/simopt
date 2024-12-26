@@ -207,7 +207,10 @@ class Contamination(Model):
                 alpha=self.factors["restore_rate_alpha"],
                 beta=self.factors["restore_rate_beta"],
             )
-            levels[i] = c * (1 - u[i]) * (1 - levels[i - 1]) + (1 - r * u[i]) * levels[i - 1]
+            levels[i] = (
+                c * (1 - u[i]) * (1 - levels[i - 1])
+                + (1 - r * u[i]) * levels[i - 1]
+            )
         # Compose responses and gradients.
         responses = {"level": levels}
         gradients = {
@@ -737,7 +740,7 @@ class ContaminationTotalCostCont(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 10000,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
             "prev_cost": {
                 "description": "cost of prevention",
