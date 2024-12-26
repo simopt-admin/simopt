@@ -12,4 +12,4 @@ jobs:
     steps:
     - uses: astral-sh/ruff-action@v2
       with:
-        args: "format --check"
+        args: "format --check ."
