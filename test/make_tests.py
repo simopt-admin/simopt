@@ -94,9 +94,11 @@ def create_test(problem_name: str, solver_name: str) -> None:
     template = template.replace(
         b"{{PROGRESS_CURVES}}", str(myexperiment.progress_curves).encode()
     )
+    problem_name_title = problem_name.title()
+    solver_name_title = solver_name.title()
     template = template.replace(
-        b"TEST_PROBLEM_SOLVER",
-        ("test_" + file_problem_name + "_" + file_solver_name).encode(),
+        b"TestProblemSolver",
+        ("Test" + problem_name_title + solver_name_title).encode(),
     )  # Replace the class name
 
     # Write the new test into the new file
