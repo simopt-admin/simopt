@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "SimOpt"
-copyright = "2021, simopt-admin"
+copyright = "2021, simopt-admin"  # noqa: A001
 author = "simopt-admin"
 
 # The full version, including alpha/beta/rc tags

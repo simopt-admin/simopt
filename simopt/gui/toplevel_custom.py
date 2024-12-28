@@ -48,7 +48,7 @@ class Toplevel(tk.Toplevel):
             width = height * (16 / 9)
         # Otherwise, we're good with just using the width
         # Target a 1920x1080 screen
-        scale =  width / 1920
+        scale = width / 1920
 
         font_medium = int(12 * scale)
         if sys.platform == "darwin":

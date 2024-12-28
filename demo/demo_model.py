@@ -6,7 +6,10 @@ sets up pseudorandom number generators, and runs one or more replications.
 
 import sys
 import os.path as o
-sys.path.append(o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))) # type:ignore
+
+sys.path.append(
+    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
+)  # type:ignore
 
 # Import random number generator.
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -30,6 +33,7 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 # Working example for MM1 model.
 # -----------------------------------------------
 from simopt.models.mm1queue import MM1Queue
+
 fixed_factors = {"lambda": 3.0, "mu": 8.0}
 mymodel = MM1Queue(fixed_factors)
 # -----------------------------------------------
@@ -39,9 +43,13 @@ mymodel = MM1Queue(fixed_factors)
 # Check that all factors describe a simulatable model.
 # Check fixed factors individually.
 for key, value in mymodel.factors.items():
-    print(f"The factor {key} is set as {value}. Is this simulatable? {bool(mymodel.check_simulatable_factor(key))}.")
+    print(
+        f"The factor {key} is set as {value}. Is this simulatable? {bool(mymodel.check_simulatable_factor(key))}."
+    )
 # Check all factors collectively.
-print(f"Is the specified model simulatable? {bool(mymodel.check_simulatable_factors())}.")
+print(
+    f"Is the specified model simulatable? {bool(mymodel.check_simulatable_factors())}."
+)
 
 # Create a list of RNG objects for the simulation model to use when
 # running replications.

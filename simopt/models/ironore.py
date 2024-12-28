@@ -132,7 +132,7 @@ class IronOre(Model):
                 "description": "number of days to simulate",
                 "datatype": int,
                 "default": 365,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
         }
 
@@ -450,7 +450,7 @@ class IronOreMaxRev(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 1000,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
         }
 

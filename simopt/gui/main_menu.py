@@ -27,7 +27,7 @@ class MainMenuWindow(Toplevel):
         )
         # Set the size of the window to XX% of the screen size
         size_percent = 50
-        self.center_window(size_percent/100.0)
+        self.center_window(size_percent / 100.0)
 
         self.menu_frame = ttk.Frame(master=self)
         self.menu_frame.pack(anchor="center", expand=True)

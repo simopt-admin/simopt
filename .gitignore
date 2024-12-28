@@ -2,6 +2,9 @@
 experiments/
 test/test_.*.py
 
+# VS Code environment
+.vscode/
+
 # MacOS
 .DS_Store
 

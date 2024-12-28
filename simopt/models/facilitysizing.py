@@ -87,7 +87,7 @@ class FacilitySize(Model):
                 "description": "number of facilities",
                 "datatype": int,
                 "default": NUM_FACILITIES,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
         }
 
@@ -318,7 +318,7 @@ class FacilitySizingTotalCost(Problem):
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
                 "default": 10000,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
             "installation_costs": {
                 "description": "Cost to install a unit of capacity at each facility.",

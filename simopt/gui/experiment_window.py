@@ -3655,7 +3655,7 @@ class PostProcessingWindow(Toplevel):
     def __init__(
         self,
         root: tk.Tk,
-        myexperiment,
+        myexperiment: ProblemSolver,
         experiment_list: list,
         main_window: tk.Tk,
         meta: bool = False,
@@ -3866,8 +3866,7 @@ class PostProcessingWindow(Toplevel):
             and self.crn_across_macroreps_var.get()
             in self.crn_across_macroreps_list
             and (
-                (self.meta
-                and self.n_norm_postreps_entry.get().isnumeric())
+                (self.meta and self.n_norm_postreps_entry.get().isnumeric())
                 or not self.meta
             )
         ):
