@@ -10,8 +10,8 @@ from simopt.experiment_base import ProblemSolver, post_normalize
 #       with assertEqual as these should not change between runs.
 
 
-class TEST_PROBLEM_SOLVER(unittest.TestCase):
-    def setUp(self):
+class TestProblemSolver(unittest.TestCase):
+    def setUp(self) -> None:
         # Expected values
         self.expected_problem_name = "{{PROBLEM_NAME}}"
         self.expected_solver_name = "{{SOLVER_NAME}}"
@@ -70,7 +70,7 @@ class TEST_PROBLEM_SOLVER(unittest.TestCase):
             + ")",
         )
 
-    def test_run(self):
+    def test_run(self) -> None:
         # Check actual run results against expected
         self.myexperiment.run(n_macroreps=self.num_macroreps)
         self.assertEqual(
@@ -95,11 +95,15 @@ class TEST_PROBLEM_SOLVER(unittest.TestCase):
                 + " do not match.",
             )
             # For each list of recommended solutions
-            for list in range(len(self.myexperiment.all_recommended_xs[mrep])):
+            for sol_list_idx in range(
+                len(self.myexperiment.all_recommended_xs[mrep])
+            ):
                 # Check to make sure the tuples are the same length
                 self.assertEqual(
-                    len(self.myexperiment.all_recommended_xs[mrep][list]),
-                    len(self.expected_all_recommended_xs[mrep][list]),
+                    len(
+                        self.myexperiment.all_recommended_xs[mrep][sol_list_idx]
+                    ),
+                    len(self.expected_all_recommended_xs[mrep][sol_list_idx]),
                     "Recommended solutions for problem "
                     + self.expected_problem_name
                     + " and solver "
@@ -107,16 +111,22 @@ class TEST_PROBLEM_SOLVER(unittest.TestCase):
                     + " do not match at mrep "
                     + str(mrep)
                     + " and index "
-                    + str(list)
+                    + str(sol_list_idx)
                     + ".",
                 )
                 # For each tuple of recommended solutions
-                for tuple in range(
-                    len(self.myexperiment.all_recommended_xs[mrep][list])
+                for sol_idx in range(
+                    len(
+                        self.myexperiment.all_recommended_xs[mrep][sol_list_idx]
+                    )
                 ):
                     self.assertAlmostEqual(
-                        self.myexperiment.all_recommended_xs[mrep][list][tuple],
-                        self.expected_all_recommended_xs[mrep][list][tuple],
+                        self.myexperiment.all_recommended_xs[mrep][
+                            sol_list_idx
+                        ][sol_idx],
+                        self.expected_all_recommended_xs[mrep][sol_list_idx][
+                            sol_idx
+                        ],
                         5,
                         "Recommended solutions for problem "
                         + self.expected_problem_name
@@ -125,9 +135,9 @@ class TEST_PROBLEM_SOLVER(unittest.TestCase):
                         + " do not match at mrep "
                         + str(mrep)
                         + " and index "
-                        + str(list)
+                        + str(sol_list_idx)
                         + " and tuple "
-                        + str(tuple)
+                        + str(sol_idx)
                         + ".",
                     )
             # Check to make sure the list lengths are the same
@@ -141,13 +151,15 @@ class TEST_PROBLEM_SOLVER(unittest.TestCase):
                 + " do not match.",
             )
             # For each list of intermediate budgets
-            for list in range(
+            for sol_list_idx in range(
                 len(self.myexperiment.all_intermediate_budgets[mrep])
             ):
                 # Check the values in the list
                 self.assertAlmostEqual(
-                    self.myexperiment.all_intermediate_budgets[mrep][list],
-                    self.expected_all_intermediate_budgets[mrep][list],
+                    self.myexperiment.all_intermediate_budgets[mrep][
+                        sol_list_idx
+                    ],
+                    self.expected_all_intermediate_budgets[mrep][sol_list_idx],
                     5,
                     "Intermediate budgets for problem "
                     + self.expected_problem_name
@@ -156,11 +168,11 @@ class TEST_PROBLEM_SOLVER(unittest.TestCase):
                     + " do not match at mrep "
                     + str(mrep)
                     + " and index "
-                    + str(list)
+                    + str(sol_list_idx)
                     + ".",
                 )
 
-    def test_post_replicate(self):
+    def test_post_replicate(self) -> None:
         # Simulate results from the run method
         self.myexperiment = ProblemSolver(
             self.expected_solver_name, self.expected_problem_name
@@ -195,11 +207,13 @@ class TEST_PROBLEM_SOLVER(unittest.TestCase):
                 + " do not match.",
             )
             # For each list in the estimated objectives
-            for list in range(len(self.myexperiment.all_est_objectives[mrep])):
+            for objective_idx in range(
+                len(self.myexperiment.all_est_objectives[mrep])
+            ):
                 # Check the values in the list
                 self.assertAlmostEqual(
-                    self.myexperiment.all_est_objectives[mrep][list],
-                    self.expected_all_est_objectives[mrep][list],
+                    self.myexperiment.all_est_objectives[mrep][objective_idx],
+                    self.expected_all_est_objectives[mrep][objective_idx],
                     5,
                     "Estimated objectives for problem "
                     + self.expected_problem_name
@@ -208,11 +222,11 @@ class TEST_PROBLEM_SOLVER(unittest.TestCase):
                     + " do not match at mrep "
                     + str(mrep)
                     + " and index "
-                    + str(list)
+                    + str(objective_idx)
                     + ".",
                 )
 
-    def test_post_normalize(self):
+    def test_post_normalize(self) -> None:
         # Simulate results from the post_replicate method
         self.myexperiment = ProblemSolver(
             self.expected_solver_name, self.expected_problem_name

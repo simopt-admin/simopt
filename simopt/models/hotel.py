@@ -898,7 +898,7 @@ class HotelRevenue(Problem):
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
                 "default": 100,
-                "isDatafarmable": False
+                "isDatafarmable": False,
             },
         }
 

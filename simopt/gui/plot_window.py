@@ -4,7 +4,7 @@ from functools import partial
 from tkinter import Listbox, Scrollbar, ttk
 from tkinter.constants import MULTIPLE
 from tkinter.font import nametofont
-from typing import Literal
+from typing import Literal, Union
 
 from PIL import Image, ImageTk
 
@@ -13,6 +13,7 @@ from simopt.directory import (
     solver_unabbreviated_directory,
 )
 from simopt.experiment_base import (
+    ProblemSolver,
     plot_area_scatterplots,
     plot_progress_curves,
     plot_solvability_cdfs,
@@ -42,7 +43,7 @@ class PlotWindow(Toplevel):
         root: tk.Tk,
         main_window: tk.Tk,
         experiment_list: list,
-        meta_list=None,
+        meta_list: Union[list[ProblemSolver], None] = None,
     ) -> None:
         """Initialize the Plot_Window class.
 
