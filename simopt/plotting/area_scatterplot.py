@@ -79,7 +79,7 @@ class AreaScatterplot(PlottingBase):
 
     def __init__(
         self,
-        experiments: list[list[ProblemSolver]],
+        experiments: list[ProblemSolver],
         all_in_one: bool = True,
         title: str | None = None,
         n_bootstraps: int = 100,

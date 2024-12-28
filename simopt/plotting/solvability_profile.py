@@ -130,7 +130,7 @@ class SolvabilityProfile(PlottingBase):
 
     def __init__(
         self,
-        experiments: list[list[ProblemSolver]],
+        experiments: list[ProblemSolver],
         plot_type: PlottingTypes,
         all_in_one: bool = True,
         title: str | None = None,

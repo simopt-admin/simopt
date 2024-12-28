@@ -1,26 +1,29 @@
 from abc import abstractmethod
 
+from matplotlib.figure import Figure
+
 from simopt.experiment_base import ProblemSolver
 
 
 class PlottingBase:
     @property
-    def experiments(self) -> list[list[ProblemSolver]]:
+    def plot(self) -> Figure | None:
+        return self._plot
+    
+    @plot.setter
+    def plot(self, value: Figure | None) -> None:
+        self._plot = value
+
+    @property
+    def experiments(self) -> list[ProblemSolver]:
         return self._experiments
 
     @experiments.setter
-    def experiments(self, value: list[list[ProblemSolver]]) -> None:
-        # Check that the value is a list of lists of ProblemSolver objects
+    def experiments(self, value: list[ProblemSolver]) -> None:
         try:
             assert isinstance(value, list)
             assert all(
-                isinstance(problem_solver_list, list)
-                for problem_solver_list in value
-            )
-            assert all(
-                isinstance(problem_solver, ProblemSolver)
-                for problem_solver_list in value
-                for problem_solver in problem_solver_list
+                isinstance(experiment, ProblemSolver) for experiment in value
             )
         except TypeError as e:
             raise ValueError(
@@ -47,23 +50,29 @@ class PlottingBase:
         if not isinstance(value, str):
             raise ValueError("The title value must be a string.")
         self._title = value
+    
+    @property
+    def file_list(self) -> list[str]:
+        return self._file_list
 
     def __init__(
         self,
-        experiments: list[list[ProblemSolver]],
+        experiments: list[ProblemSolver],
         all_in_one: bool,
         title: str | None,
     ) -> None:
         self.experiments = experiments
         self.all_in_one = all_in_one
         self.title = title
+        self._file_list = []
+        self._plot = None
 
     @abstractmethod
     def generate_plot(self) -> None:
         pass
 
-    def save_to_pickle(self, filename: str) -> None:
-        pass
+    def save_to_pickle(self, filename: str) -> list[str]:
+        return []
 
     def load_from_pickle(self, filename: str) -> None:
         pass

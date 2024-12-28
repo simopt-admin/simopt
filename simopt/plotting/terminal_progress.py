@@ -42,7 +42,7 @@ class TerminalProgress(PlottingBase):
 
     def __init__(
         self,
-        experiments: list[list[ProblemSolver]],
+        experiments: list[ProblemSolver],
         all_in_one: bool,
         title: str | None,
         plot_type: PlottingType,

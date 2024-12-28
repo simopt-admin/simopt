@@ -2847,7 +2847,7 @@ def check_common_problem_and_reference(
     Raises
     ------
     TypeError
-    ValueError
+    AssertionError
         If at least two experiments have different problem instances, starting solutions, or optimal solutions.
 
     """
