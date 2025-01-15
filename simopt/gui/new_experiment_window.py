@@ -1911,9 +1911,11 @@ class NewExperimentWindow(Toplevel):
             )
 
         except Exception as e:
+            # Strip all ANSI codes from the error message
+            error_msg = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", str(e))
             messagebox.showerror(
                 "Error",
-                f"An error occurred while creating the design: {e}",
+                f"An error occurred while creating the design: {error_msg}",
             )
             return
 
