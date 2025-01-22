@@ -2860,9 +2860,9 @@ def check_common_problem_and_reference(
 
     problem_list = [experiment.problem for experiment in experiments]
     problem_err_msg = "All experiments must have the same problem."
-    assert all(
-        elem == problem_list[0] for elem in problem_list
-    ), problem_err_msg
+    assert all(elem == problem_list[0] for elem in problem_list), (
+        problem_err_msg
+    )
 
     x0_list = [experiment.x0 for experiment in experiments]
     x0_err_msg = "All experiments must have the same starting solution."
@@ -6773,12 +6773,10 @@ def create_design(
             # Replace backslashes with forward slashes
             source_file_wsl = source_file_wsl.replace("\\", "/")
             design_file_wsl = design_file_wsl.replace("\\", "/")
-            command = f"{command_file} -s {n_stacks} {source_file_wsl} > {design_file_wsl}"
+            command = f"{command_file} -s {n_stacks} '{source_file_wsl}' > '{design_file_wsl}'"
             command = f'wsl -e bash -lic "{command}"'
         else:
-            command = (
-                f"{command_file} -s {n_stacks} {source_file} > {design_file}"
-            )
+            command = f"{command_file} -s {n_stacks} '{source_file}' > '{design_file}'"
         completed_process = subprocess.run(
             command, capture_output=True, shell=True
         )
