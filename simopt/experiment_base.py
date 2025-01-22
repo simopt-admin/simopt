@@ -6745,6 +6745,9 @@ def create_design(
     design_file = os.path.join(
         data_farming_path, f"{factor_settings_filename}_design.txt"
     )
+    # Add apostrophes to the paths to avoid issues with spaces in the path
+    source_file = f'"{source_file}"'
+    design_file = f'"{design_file}"'
     # If the dest file already exists, delete it
     # TODO: investigate if this may cause issues with multiple concurrent designs
     if os.path.exists(design_file):
