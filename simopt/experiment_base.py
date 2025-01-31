@@ -1267,6 +1267,7 @@ class ProblemSolver:
         self.crn_across_macroreps = crn_across_macroreps
         # Initialize variables
         self.all_post_replicates = [[] for _ in range(self.n_macroreps)]
+        self.all_stoch_constraints = [[] for _ in range(self.n_macroreps)]
         for mrep in range(self.n_macroreps):
             self.all_post_replicates[mrep] = [] * len(
                 self.all_intermediate_budgets[mrep]
@@ -1288,7 +1289,7 @@ class ProblemSolver:
 
             # Grab all the data out of the result
             for mrep in range(self.n_macroreps):
-                self.all_post_replicates[mrep], self.timings[mrep] = (
+                self.all_post_replicates[mrep], self.timings[mrep], self.all_stoch_constraints[mrep] = (
                     result.get()[mrep]
                 )
 
@@ -1376,6 +1377,7 @@ class ProblemSolver:
 
         # Create an empty list for each budget
         post_replicates = []
+        stoch_constraints = []
         # Loop over all recommended solutions.
         for budget_index in range(len(self.all_intermediate_budgets[mrep])):
             x = self.all_recommended_xs[mrep][budget_index]
@@ -1394,12 +1396,14 @@ class ProblemSolver:
             post_replicates.append(
                 list(fresh_soln.objectives[: fresh_soln.n_reps][:, 0])
             )  # 0 <- assuming only one objective
+            # save stoch constraint information
+            stoch_constraints.append(fresh_soln.stoch_constraints[: fresh_soln.n_reps])
         toc = time.perf_counter()
         runtime = toc - tic
         print(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
 
         # Return tuple (post_replicates, runtime)
-        return (post_replicates, runtime)
+        return (post_replicates, runtime, stoch_constraints)
 
     def bootstrap_sample(
         self, bootstrap_rng: MRG32k3a, normalize: bool = True
@@ -1586,6 +1590,39 @@ class ProblemSolver:
                     )
                     bootstrap_curves.append(new_objective_curve)
         return bootstrap_curves
+    
+    def compute_feasibility_score(self, score : str = "inf_norm") -> tuple:
+        """
+        
+
+        Parameters
+        ----------
+        score : str
+            type of feasiblity score to compute. OPTIONS: 'inf_norm'.
+
+        Returns
+        -------
+        tuple
+            DESCRIPTION. 
+
+        """
+        if score == 'inf_norm':
+            feas_all_mreps = []
+            for mrep in self.all_stoch_constraints:
+                terminal_lhs = mrep[-1] #gets last lhs value of each constraint for every post rep
+                avg = np.mean(terminal_lhs,axis=0) # returns avg of terminal lhs value for each constraint
+                # test if all elements are non-negative
+                is_feasible = np.all(avg<=0)
+                if is_feasible:
+                    feas_score = -1*np.max(avg)
+                else:
+                    feas_score = -1*np.max(avg)
+                feas_all_mreps.append(feas_score)
+        
+        
+        return(feas_all_mreps)
+                
+      
 
     def record_experiment_results(self, file_name: os.PathLike | str) -> None:
         """Save ``experiment_base.ProblemSolver`` object to .pickle file.
@@ -3750,6 +3787,108 @@ def plot_area_scatterplots(
     return file_list
 
 
+def plot_feasibility_scatterplots(
+        experiments : list[
+            list[ProblemSolver()]],
+        plot_type: Literal[
+            "inf_norm"
+        ],
+        plot_title: str | None = None,
+        legend_loc: str | None = None,
+        ext: str = ".png",
+        save_as_pickle: bool = False
+) -> list[str | os.PathLike]:
+    """Plot the feasibility of one solver problem pair. (for now)
+
+    Parameters
+    ----------
+    experiments : list [list [``experiment_base.ProblemSolver``]]
+        Problem-solver pairs used to produce plots.
+    plot_type : str
+        String indicating which type of plot to produce:
+            "feasibility" : plot feasibility of each macro rep (for now)
+    plot_title : str, optional
+        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+    legend_loc : str, default="best"
+        specificies location of legend
+    ext: str, default = '.png'
+         Extension to add to image file path to change file type
+    save_as_pickle: bool, default = False
+         True if plot should be saved to pickle file, False otherwise.
+
+    Returns
+    -------
+    file_list : list [str]
+        List compiling path names for plots produced.
+
+    Raises
+    ------
+    TypeError
+    ValueError
+
+    """
+    # define legend location
+    if legend_loc is None:
+        legend_loc = "best"
+
+    file_list = []
+    # Set up plot.
+    n_solvers = len(experiments)
+    n_problems = len(experiments[0]) 
+
+    for solver_idx in range(n_solvers):
+        ref_experiment = experiments[solver_idx][0]
+        setup_plot(
+            plot_type="feasibility_scatter",
+            solver_name=ref_experiment.solver.name,
+            problem_name=ref_experiment.problem.name, # this part only works for currently using one problem 
+            normalize=False
+        )
+        experiment = None
+        for problem_idx in range(n_problems):
+            experiment = experiments[solver_idx][problem_idx]
+            # Compute terminal feasibility scores
+            feas_score = experiment.compute_feasibility_score(score="inf_norm") # gives list of feasibility scores for each macrorep
+            mreps = list(range(experiment.n_macroreps)) # temp plot over macroreps
+            # Plot mean and of terminal progress.
+            terminals = [
+                curve.y_vals[-1] for curve in experiment.progress_curves
+            ]
+            
+            print('feas', feas_score)
+            print('term', terminals)
+            
+            
+            # edit plot
+            handle = plt.scatter(
+                x=terminals,
+                y=feas_score,
+                color="C0",
+                marker="o",
+                
+            )
+
+            
+        if experiment is not None:
+            file_list.append(
+                save_plot(
+                    solver_name=experiment.solver.name,
+                    problem_name=experiment.problem.name,
+                    plot_type="feasibility_scatter",
+                    ext=ext,
+                    normalize=False,
+                    save_as_pickle=save_as_pickle,
+                )
+            )
+    return file_list 
+        
+        
+
+
+
+
+
+
 def plot_solvability_profiles(
     experiments: list[
         list[ProblemSolver]
@@ -4785,6 +4924,7 @@ def setup_plot(
         "box",
         "violin",
         "terminal_scatter",
+        "feasibility_scatter",
     ],
     solver_name: str = "SOLVER SET",
     problem_name: str = "PROBLEM SET",
@@ -4884,6 +5024,7 @@ def setup_plot(
         "box",
         "violin",
         "terminal_scatter",
+        "feasibility_scatter", 
     ]:
         error_msg = f"Plot type '{plot_type}' is not recognized."
         raise ValueError(error_msg)
@@ -4903,6 +5044,12 @@ def setup_plot(
             plt.xlim((0, 1))
             plt.ylim((-0.1, 1.1))
             plt.tick_params(axis="both", which="major", labelsize=12)
+            
+    # changes start here
+    elif plot_type == "feasibility_scatter":
+        plt.ylabel("Feasibility Score", size=14)
+    # end of changes
+        
     else:
         plt.ylabel("Objective Function Value", size=14)
         if plot_type != "box" and plot_type != "violin":
@@ -4992,6 +5139,12 @@ def setup_plot(
         # plt.xlim((0, 1))
         # plt.ylim((0, 0.5))
         title = f"{solver_name}\nTerminal Progress"
+    # more changes start here
+    elif plot_type == "feasibility_scatter":
+        plt.xlabel("Fraction of Initial Optimality Gap", size=14)
+        plt.tick_params(axis="both", which="major", labelsize=12)
+        title = f"{solver_name} on {problem_name} Feasibility Scores"
+    # end changes here
     else:
         error_msg = f"'{plot_type}' is not implemented."
         raise NotImplementedError(error_msg)
@@ -5017,6 +5170,7 @@ def save_plot(
         "box",
         "violin",
         "terminal_scatter",
+        "feasibility_scatter"
     ],
     normalize: bool,
     extra: float | list[float] | None = None,
@@ -5095,6 +5249,7 @@ def save_plot(
         "box",
         "violin",
         "terminal_scatter",
+        "feasibility_scatter"
     ]:
         error_msg = f"Plot type '{plot_type}' is not recognized."
         raise ValueError(error_msg)
@@ -5161,6 +5316,8 @@ def save_plot(
         plot_name = "terminal_violin"
     elif plot_type == "terminal_scatter":
         plot_name = "terminal_scatter"
+    elif plot_type == "feasibility_scatter":
+        plot_name = "feasibility_scatter"
     else:
         raise NotImplementedError(f"'{plot_type}' is not implemented.")
 

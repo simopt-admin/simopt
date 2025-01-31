@@ -30,7 +30,7 @@ from simopt.models.mm1queue import MM1MinMeanSojournTime, MM1Queue
 from simopt.models.network import Network, NetworkMinTotalCost
 from simopt.models.paramesti import ParamEstiMaxLogLik, ParameterEstimation
 from simopt.models.rmitd import RMITD, RMITDMaxRevenue
-from simopt.models.san import SAN, SANLongestPath
+from simopt.models.san import SAN, SANLongestPath, SANLongestPathStochastic
 from simopt.models.sscont import SSCont, SSContMinCost
 from simopt.models.tableallocation import TableAllocation, TableAllocationMaxRev
 
@@ -80,6 +80,7 @@ problem_directory: dict[str, type[Problem]] = {
     "CONTAM-2": ContaminationTotalCostCont,
     "CHESS-1": ChessAvgDifference,
     "SAN-1": SANLongestPath,
+    "SAN-2": SANLongestPathStochastic,
     "HOTEL-1": HotelRevenue,
     "TABLEALLOCATION-1": TableAllocationMaxRev,
     "PARAMESTI-1": ParamEstiMaxLogLik,
@@ -104,6 +105,7 @@ problem_unabbreviated_directory: dict[str, type[Problem]] = {
     "Min Total Cost for Continuous Contamination (SSCN)": ContaminationTotalCostCont,
     "Min Avg Difference for Chess Matchmaking (SSCN)": ChessAvgDifference,
     "Min Mean Longest Path for Stochastic Activity Network (SBCG)": SANLongestPath,
+    "Min Mean Longest Path for Stochastic Activity Network Utilizing Stochastic Constraints (SBCG)": SANLongestPathStochastic,
     "Max Revenue for Hotel Booking (SBDN)": HotelRevenue,
     "Max Revenue for Restaurant Table Allocation (SDDN)": TableAllocationMaxRev,
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": ParamEstiMaxLogLik,
@@ -147,6 +149,7 @@ model_problem_unabbreviated_directory: dict[str, str] = {
     "Min Total Cost for Continuous Contamination (SSCN)": "CONTAM",
     "Min Avg Difference for Chess Matchmaking (SSCN)": "CHESS",
     "Min Mean Longest Path for Stochastic Activity Network (SBCG)": "SAN",
+    "Min Mean Longest Path for Stochastic Activity Network Utilizing Stochastic Constraints (SBCG)": "SAN",
     "Max Revenue for Hotel Booking (SBDN)": "HOTEL",
     "Max Revenue for Restaurant Table Allocation (SDDN)": "TABLEALLOCATION",
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": "PARAMESTI",
@@ -170,6 +173,7 @@ model_problem_class_directory: dict[str, type[Model]] = {
     "Min Total Cost for Continuous Contamination (SSCN)": Contamination,
     "Min Avg Difference for Chess Matchmaking (SSCN)": ChessMatchmaking,
     "Min Mean Longest Path for Stochastic Activity Network (SBCG)": SAN,
+    "Min Mean Longest Path for Stochastic Activity Network Utilizing Stochastic Constraints (SBCG)": SAN,
     "Max Revenue for Hotel Booking (SBDN)": Hotel,
     "Max Revenue for Restaurant Table Allocation (SDDN)": TableAllocation,
     "Max Log Likelihood for Gamma Parameter Estimation (SBCN)": ParameterEstimation,

@@ -16,6 +16,7 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
 
 NUM_ARCS: Final[int] = 13
+CONST_NODES : Final[list] = [3,8]
 
 
 class SAN(Model):
@@ -219,25 +220,45 @@ class SAN(Model):
                     )
                     prev[j - 1] = vi
         longest_path = path_length[self.factors["num_nodes"] - 1]
-
         # Calculate the IPA gradient w.r.t. arc means.
         # If an arc is on the longest path, the component of the gradient
         # is the length of the length of that arc divided by its mean.
         # If an arc is not on the longest path, the component of the gradient is zero.
-        gradient = np.zeros(len(self.factors["arcs"]))
-        current = topo_order[-1]
-        backtrack = int(prev[self.factors["num_nodes"] - 1])
-        while current != topo_order[0]:
-            idx = self.factors["arcs"].index((backtrack, current))
-            gradient[idx] = (
-                arc_length[str((backtrack, current))]
-                / (self.factors["arc_means"][idx])
-            )
-            current = backtrack
-            backtrack = int(prev[backtrack - 1])
+        all_gradients = []
+        for node in topo_order:
+            gradient = np.zeros(len(self.factors["arcs"]))
+            current = node
+            backtrack = int(prev[node-1])
+            while current != topo_order[0]:
+                idx = self.factors["arcs"].index((backtrack, current))
+                gradient[idx] = (
+                    arc_length[str((backtrack, current))]
+                    / (self.factors["arc_means"][idx])
+                )
+                current = backtrack
+                backtrack = int(prev[backtrack - 1])
+            all_gradients.append(gradient)
+        
+        
+        
+        # gradient = np.zeros(len(self.factors["arcs"]))
+        # current = topo_order[-1]
+        # backtrack = int(prev[self.factors["num_nodes"] - 1])
+        # while current != topo_order[0]:
+        #     idx = self.factors["arcs"].index((backtrack, current))
+        #     gradient[idx] = (
+        #         arc_length[str((backtrack, current))]
+        #         / (self.factors["arc_means"][idx])
+        #     )
+        #     current = backtrack
+        #     backtrack = int(prev[backtrack - 1])
 
         # Compose responses and gradients.
-        responses = {"longest_path_length": longest_path}
+        responses = {"longest_path_length": longest_path,
+                     "longest_path_to_all_nodes": path_length,
+                     "topo_order": topo_order}
+        
+        #responses.update({f"longest_path_length_to_all_nodes": length for i, length in zip(topo_order, path_length)})
         gradients = {
             response_key: {
                 factor_key: np.zeros(len(self.specifications))
@@ -245,7 +266,8 @@ class SAN(Model):
             }
             for response_key in responses
         }
-        gradients["longest_path_length"]["arc_means"] = gradient
+        gradients["longest_path_length"]["arc_means"] = all_gradients[-1]
+        gradients["longest_path_to_all_nodes"]["arc_means"] = all_gradients
         return responses, gradients
 
 
@@ -518,6 +540,364 @@ class SANLongestPath(Problem):
         det_stoch_constraints = ()
         det_stoch_constraints_gradients = (
             (0,) * self.dim,
+        )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
+        return det_stoch_constraints, det_stoch_constraints_gradients
+
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """
+        Compute deterministic components of objectives for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_objectives : tuple
+            vector of deterministic components of objectives
+        det_objectives_gradients : tuple
+            vector of gradients of deterministic components of objectives
+        """
+        det_objectives = (
+            np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
+        )
+        det_objectives_gradients = (
+            -np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
+        )
+        return det_objectives, det_objectives_gradients
+
+    def check_deterministic_constraints(self, x: tuple) -> bool:
+        """
+        Check if a solution `x` satisfies the problem's deterministic constraints.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        satisfies : bool
+            indicates if solution `x` satisfies the deterministic constraints.
+        """
+        is_positive: list[bool] = [x_i >= 0 for x_i in x]
+        return all(is_positive)
+
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+        """
+        Generate a random solution for starting or restarting solvers.
+
+        Arguments
+        ---------
+        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
+            random-number generator used to sample a new random solution
+
+        Returns
+        -------
+        x : tuple
+            vector of decision variables
+        """
+        x = tuple(
+            [
+                rand_sol_rng.lognormalvariate(lq=0.1, uq=10)
+                for _ in range(self.dim)
+            ]
+        )
+        return x
+
+class SANLongestPathStochastic(Problem):
+    """
+    Base class to implement simulation-optimization problems.
+
+    Attributes
+    ----------
+    name : string
+        name of problem
+    dim : int
+        number of decision variables
+    n_objectives : int
+        number of objectives
+    n_stochastic_constraints : int
+        number of stochastic constraints
+    minmax : tuple of int (+/- 1)
+        indicator of maximization (+1) or minimization (-1) for each objective
+    constraint_type : string
+        description of constraints types:
+            "unconstrained", "box", "deterministic", "stochastic"
+    variable_type : string
+        description of variable types:
+            "discrete", "continuous", "mixed"
+    lower_bounds : tuple
+        lower bound for each decision variable
+    upper_bounds : tuple
+        upper bound for each decision variable
+    gradient_available : bool
+        indicates if gradient of objective function is available
+    optimal_value : tuple
+        optimal objective function value
+    optimal_solution : tuple
+        optimal solution
+    model : Model object
+        associated simulation model that generates replications
+    model_default_factors : dict
+        default values for overriding model-level default factors
+    model_fixed_factors : dict
+        combination of overriden model-level factors and defaults
+    model_decision_factors : set of str
+        set of keys for factors that are decision variables
+    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
+        list of RNGs used to generate a random initial solution
+        or a random problem instance
+    factors : dict
+        changeable factors of the problem
+            initial_solution : list
+                default initial solution from which solvers start
+            budget : int > 0
+                max number of replications (fn evals) for a solver to take
+    specifications : dict
+        details of each factor (for GUI, data validation, and defaults)
+
+    Arguments
+    ---------
+    name : str
+        user-specified name for problem
+    fixed_factors : dict
+        dictionary of user-specified problem factors
+    model_fixed factors : dict
+        subset of user-specified non-decision factors to pass through to the model
+
+    See also
+    --------
+    base.Problem
+    """
+
+    @property
+    def n_objectives(self) -> int:
+        return 1
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return len(self.factors["constraint_nodes"])
+
+    @property
+    def minmax(self) -> tuple[int]:
+        return (-1,)
+
+    @property
+    def constraint_type(self) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @property
+    def variable_type(self) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @property
+    def gradient_available(self) -> bool:
+        return True
+
+    @property
+    def optimal_value(self) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        return None
+
+    @property
+    def model_default_factors(self) -> dict:
+        return {}
+
+    @property
+    def model_decision_factors(self) -> set[str]:
+        return {"arc_means"}
+
+    @property
+    def specifications(self) -> dict[str, dict]:
+        return {
+            "initial_solution": {
+                "description": "initial solution",
+                "datatype": tuple,
+                "default": (8,) * NUM_ARCS,
+            },
+            "budget": {
+                "description": "max # of replications for a solver to take",
+                "datatype": int,
+                "default": 10000,
+                "isDatafarmable": False,
+            },
+            "arc_costs": {
+                "description": "Cost associated to each arc.",
+                "datatype": tuple,
+                "default": (1,) * NUM_ARCS,
+            },
+            "constraint_nodes": {
+                "description": "Nodes with corresponding stochastic constraints",
+                "datatype": list,
+                "default": CONST_NODES # temp hard code to 9 nodes
+            },
+            "max_length_to_node": {
+                "description": "Max length to corresponding constraint nodes",
+                "datatype": list,
+                "default":  [100]*len(CONST_NODES) 
+            }
+        }
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
+            "initial_solution": self.check_initial_solution,
+            "budget": self.check_budget,
+            "arc_costs": self.check_arc_costs,
+            "constraint_nodes": self.check_constrain_nodes,
+            "max_length_to_node": self.check_max_length_to_node
+        }
+
+    @property
+    def dim(self) -> int:
+        return len(self.model.factors["arcs"])
+
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (1e-2,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (np.inf,) * self.dim
+
+    def __init__(
+        self,
+        name: str = "SAN-2",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=SAN,
+        )
+
+    def check_arc_costs(self) -> bool:
+        positive = True
+        for x in list(self.factors["arc_costs"]):
+            positive = positive and x > 0
+        matching_len = len(self.factors["arc_costs"]) == len(
+            self.model.factors["arcs"]
+        )
+        return positive and matching_len
+    
+    def check_max_length_to_node(self)-> bool:
+        return True # auto pass for now
+    def check_constrain_nodes(self)-> bool:
+        return True # auto pass for now
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
+        """
+        Convert a vector of variables to a dictionary with factor keys
+
+        Arguments
+        ---------
+        vector : tuple
+            vector of values associated with decision variables
+
+        Returns
+        -------
+        factor_dict : dictionary
+            dictionary with factor keys and associated values
+        """
+        factor_dict = {"arc_means": vector[:]}
+        return factor_dict
+
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+        """
+        Convert a dictionary with factor keys to a vector
+        of variables.
+
+        Arguments
+        ---------
+        factor_dict : dictionary
+            dictionary with factor keys and associated values
+
+        Returns
+        -------
+        vector : tuple
+            vector of values associated with decision variables
+        """
+        vector = factor_dict["arc_means"]
+        return vector
+
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
+        """
+        Convert a dictionary with response keys to a vector
+        of objectives.
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        objectives : tuple
+            vector of objectives
+        """
+        objectives = (response_dict["longest_path_length"],)
+        return objectives
+
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
+        """
+        Convert a dictionary with response keys to a vector
+        of left-hand sides of stochastic constraints: E[Y] <= 0
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        stoch_constraints : tuple
+            vector of LHSs of stochastic constraint
+        """
+        longest_path_to_const_node = []
+        longest_path = response_dict["longest_path_to_all_nodes"]
+        topo_order = response_dict["topo_order"]
+        # get longest path only to nodes with constraints
+        for const_node in self.factors["constraint_nodes"]:
+            for idx, node in enumerate(topo_order):
+                if const_node == node:
+                    node_idx = idx
+            longest_path_to_const_node.append(longest_path[node_idx])
+
+        stoch_constraints = tuple(longest_path_to_const_node)
+        return stoch_constraints
+
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
+        """
+        Compute deterministic components of stochastic constraints for a solution `x`.
+
+        Arguments
+        ---------
+        x : tuple
+            vector of decision variables
+
+        Returns
+        -------
+        det_stoch_constraints : tuple
+            vector of deterministic components of stochastic constraints
+        det_stoch_constraints_gradients : tuple
+            vector of gradients of deterministic components of stochastic constraints
+        """
+        det_stoch_constraints = tuple( [-1* z for z in self.factors["max_length_to_node"]])
+        det_stoch_constraints_gradients = (
+            ((0,)* self.n_stochastic_constraints) * self.dim,
         )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 

@@ -17,41 +17,40 @@ from simopt.experiment_base import (
     post_normalize,
     plot_progress_curves,
     plot_solvability_cdfs,
+    plot_feasibility_scatterplots
 
 )
 
-from simopt.models.contam import Contamination, 
+from simopt.models.san import SANLongestPathStochastic, SAN
+from simopt.solvers.randomsearch import RandomSearch
+
 
 def main() -> None:
-    # !! When testing a new solver/problem, first go to directory.py.
-    # There you should add the import statement and an entry in the respective
-    # dictionary (or dictionaries).
-    # See directory.py for more details.
+    
+    constraint_nodes = [2,5]
+    
+    max_length_to_node = [2, 2]
+    
+    fixed_factors = {"constraint_nodes": constraint_nodes, "max_length_to_node": max_length_to_node}
+    
+    solver = RandomSearch()
 
-    # Specify the names of the solver and problem to test.
-    # solver_name = <solver_name>
-    # problem_name = <problem_name>
-    # These names are strings and should match those input to directory.py.
-
-    # Example with random search solver on continuous newsvendor problem.
+    problem =  SANLongestPathStochastic(fixed_factors=fixed_factors)   
+    
+    
+    
     # -----------------------------------------------
-    solver_name = "RNDSRCH"  # Random search solver
-    problem_name = "SAN-2"  # Continuous newsvendor problem
-    # -----------------------------------------------
 
-    print(f"Testing solver {solver_name} on problem {problem_name}.")
+    print(f"Testing solver {solver.name} on problem {problem.name}.")
 
     # Specify file path name for storing experiment outputs in .pickle file.
-    file_name_path = (
-        "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
-    )
-    print(f"Results will be stored as {file_name_path}.")
+
 
     # Initialize an instance of the experiment class.
-    myexperiment = ProblemSolver(solver_name, problem_name)
+    myexperiment = ProblemSolver(solver=solver, problem=problem)
 
     # Run a fixed number of macroreplications of the solver on the problem.
-    myexperiment.run(n_macroreps=2)
+    myexperiment.run(n_macroreps=10)
 
     # If the solver runs have already been performed, uncomment the
     # following pair of lines (and uncommmen the myexperiment.run(...)
@@ -60,11 +59,11 @@ def main() -> None:
 
     print("Post-processing results.")
     # Run a fixed number of postreplications at all recommended solutions.
-    myexperiment.post_replicate(n_postreps=50)
+    myexperiment.post_replicate(n_postreps=200)
     # Find an optimal solution x* for normalization.
     post_normalize([myexperiment], n_postreps_init_opt=200)
     
-
+ 
 
     print(myexperiment.compute_feasibility_score("inf_norm")) 
     #print(myexperiment.all_intermediate_budgets)
@@ -72,6 +71,9 @@ def main() -> None:
 
     # Log results.
     myexperiment.log_experiment_results()
+    
+    # plot feasibility scores
+    plot_feasibility_scatterplots([[myexperiment]], "feasibility")
 
     # print("Plotting results.")
     # # Produce basic plots of the solver on the problem.
