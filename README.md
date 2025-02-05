@@ -230,18 +230,9 @@ The core development team currently consists of
 - [**William Grochocinski**](https://github.com/Grochocinski) (North Carolina State University)
 
 ## Citation
-To cite this work, please use
-```
-@misc{simoptgithub,
-  author = {D. J. Eckman and S. G. Henderson and S. Shashaani and R. Pasupathy},
-  title = {{SimOpt}},
-  year = {2024},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/simopt-admin/simopt}},
-  commit = {21802a685ec394fed048820e692209628f40dd4e}
-}
-```
+To cite this work, please use the `CITATION.cff` file or use the built-in citation generator:
+![GitHub's built-in citation generator](https://github.com/user-attachments/assets/b8b49544-eb74-469e-aa37-68c2c0c3708b)
+
 
 ## Acknowledgments
 An earlier website for SimOpt ([http://www.simopt.org](http://www.simopt.org)) was developed through work supported by the following grants:
