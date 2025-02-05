@@ -9,23 +9,23 @@ message: >-
   metadata from this file
 type: software
 authors:
-  - given-names: Raghu
-    family-names: Pasupathy
-    email: pasupath@purdue.edu
-    affiliation: Purdue University
-  - email: sgh9@cornell.edu
-    given-names: Shane
-    family-names: Henderson
-    affiliation: Cornell University
   - given-names: David
     family-names: Eckman
     affiliation: Texas A&M University
     email: eckman@tamu.edu
+  - email: sgh9@cornell.edu
+    given-names: Shane
+    family-names: Henderson
+    affiliation: Cornell University
   - given-names: Sara
     family-names: Shashaani
     orcid: 'https://orcid.org/0000-0001-8515-5877'
     affiliation: North Carolina State University
     email: sshasha2@ncsu.edu
+  - given-names: Raghu
+    family-names: Pasupathy
+    email: pasupath@purdue.edu
+    affiliation: Purdue University
 repository-code: 'https://github.com/simopt-admin/simopt'
 url: 'https://simopt.org'
 abstract: >-
