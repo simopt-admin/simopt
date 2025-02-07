@@ -1591,14 +1591,14 @@ class ProblemSolver:
                     bootstrap_curves.append(new_objective_curve)
         return bootstrap_curves
     
-    def compute_feasibility_score(self, score : str = "inf_norm") -> tuple:
+    def compute_feasibility_score(self, score : str = "max_constraint") -> list:
         """
         
 
         Parameters
         ----------
         score : str
-            type of feasiblity score to compute. OPTIONS: 'inf_norm'.
+            type of feasiblity score to compute. OPTIONS: 'inf_norm', 'sum_constraint', 'square_sum_constraint'.
 
         Returns
         -------
@@ -1606,7 +1606,7 @@ class ProblemSolver:
             DESCRIPTION. 
 
         """
-        if score == 'inf_norm':
+        if score == 'max_constraint':
             feas_all_mreps = []
             for mrep in self.all_stoch_constraints:
                 terminal_lhs = mrep[-1] #gets last lhs value of each constraint for every post rep
@@ -1618,6 +1618,34 @@ class ProblemSolver:
                 else:
                     feas_score = -1*np.max(avg)
                 feas_all_mreps.append(feas_score)
+        elif score == 'sum_constraint':
+            feas_all_mreps = []
+            for mrep in self.all_stoch_constraints:
+                terminal_lhs = mrep[-1] #gets last lhs value of each constraint for every post rep
+                avg = np.mean(terminal_lhs,axis=0) # returns avg of terminal lhs value for each constraint
+                # test if all elements are non-negative
+                is_feasible = np.all(avg<=0)
+                if is_feasible:
+                    feas_score = -1*np.max(avg)
+                else:
+                    norm_array = np.where(avg<0, 0, avg)
+                    feas_score = -1*np.linalg.norm(norm_array,1)
+                feas_all_mreps.append(feas_score)
+        elif score == 'square_sum_constraint':
+            feas_all_mreps = []
+            for mrep in self.all_stoch_constraints:
+                terminal_lhs = mrep[-1] #gets last lhs value of each constraint for every post rep
+                avg = np.mean(terminal_lhs,axis=0) # returns avg of terminal lhs value for each constraint
+                # test if all elements are non-negative
+                is_feasible = np.all(avg<=0)
+                if is_feasible:
+                    feas_score = -1*np.max(avg)
+                else:
+                    norm_array = np.where(avg<0, 0, avg)
+                    feas_score = -1*np.linalg.norm(norm_array)
+                feas_all_mreps.append(feas_score)
+                print(avg)
+            
         
         
         return(feas_all_mreps)
@@ -3787,12 +3815,18 @@ def plot_area_scatterplots(
     return file_list
 
 
-def plot_feasibility_scatterplots(
+def plot_feasibility(
         experiments : list[
             list[ProblemSolver()]],
         plot_type: Literal[
+            "scatter",
+            "violin"
+        ],
+        score_type: Literal[
             "inf_norm"
         ],
+        all_in_one: bool = True,
+        solver_set_name: str = "SOLVER_SET",
         plot_title: str | None = None,
         legend_loc: str | None = None,
         ext: str = ".png",
@@ -3835,58 +3869,154 @@ def plot_feasibility_scatterplots(
     # Set up plot.
     n_solvers = len(experiments)
     n_problems = len(experiments[0]) 
-
-    for solver_idx in range(n_solvers):
-        ref_experiment = experiments[solver_idx][0]
-        setup_plot(
-            plot_type="feasibility_scatter",
-            solver_name=ref_experiment.solver.name,
-            problem_name=ref_experiment.problem.name, # this part only works for currently using one problem 
-            normalize=False
-        )
-        experiment = None
-        for problem_idx in range(n_problems):
-            experiment = experiments[solver_idx][problem_idx]
-            # Compute terminal feasibility scores
-            feas_score = experiment.compute_feasibility_score(score="inf_norm") # gives list of feasibility scores for each macrorep
-            mreps = list(range(experiment.n_macroreps)) # temp plot over macroreps
-            # Plot mean and of terminal progress.
-            terminals = [
-                curve.y_vals[-1] for curve in experiment.progress_curves
-            ]
-            
-            print('feas', feas_score)
-            print('term', terminals)
-            
-            
-            # edit plot
-            handle = plt.scatter(
-                x=terminals,
-                y=feas_score,
-                color="C0",
-                marker="o",
-                
-            )
-
-            
-        if experiment is not None:
-            file_list.append(
-                save_plot(
-                    solver_name=experiment.solver.name,
-                    problem_name=experiment.problem.name,
+    
+    for problem_idx in range(n_problems): # must create new plot for every different problem
+    
+        if plot_type == "scatter":
+    
+            if all_in_one: # plot all solvers together
+                ref_experiment = experiments[0][problem_idx]
+                marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
+                setup_plot(
                     plot_type="feasibility_scatter",
-                    ext=ext,
-                    normalize=False,
-                    save_as_pickle=save_as_pickle,
+                    solver_name=solver_set_name,
+                    problem_name=ref_experiment.problem.name,
+                    plot_title=plot_title,
+                    normalize=False
                 )
-            )
+                solver_names = [
+                    solver_experiments[0].solver.name
+                    for solver_experiments in experiments
+                ]
+                solver_curve_handles = []
+                handle = None
+                for solver_idx in range(n_solvers):
+                    experiment = experiments[solver_idx][problem_idx]
+                    color_str = "C" + str(solver_idx)
+                    marker_str = marker_list[
+                        solver_idx % len(marker_list)
+                    ]  # Cycle through list of marker types.
+                    # Compute terminal feasibility scores
+                    feas_score = experiment.compute_feasibility_score(score=score_type) # gives list of feasibility scores for each macrorep
+                    # Plot mean of terminal progress.
+                    terminals = [
+                        curve.y_vals[-1] for curve in experiment.progress_curves
+                    ]
+                    handle = plt.scatter(
+                        x=terminals,
+                        y=feas_score,
+                        color=color_str,
+                        marker=marker_str,
+                    )
+                    solver_curve_handles.append(handle)
+                plt.legend(
+                    handles=solver_curve_handles, labels=solver_names, loc=legend_loc
+                )
+                file_list.append(
+                    save_plot(
+                        solver_name=solver_set_name,
+                        problem_name=experiment.problem.name,
+                        plot_type="feasibility_scatter",
+                        normalize=False,
+                        plot_title=plot_title,
+                        ext=ext,
+                        save_as_pickle=save_as_pickle,
+                    )
+                )
+                
+                
+                
+            else:
+                for solver_idx in range(n_solvers):
+                    experiment = experiments[solver_idx][problem_idx]
+                    setup_plot(
+                        plot_type="feasibility_scatter",
+                        solver_name=experiment.solver.name,
+                        problem_name=experiment.problem.name, # this part only works for currently using one problem 
+                        normalize=False
+                    )
+
+                    # Compute terminal feasibility scores
+                    feas_score = experiment.compute_feasibility_score(score=score_type) # gives list of feasibility scores for each macrorep
+                    # Plot mean and of terminal progress.
+                    terminals = [
+                        curve.y_vals[-1] for curve in experiment.progress_curves
+                    ]
+                    # edit plot
+                    handle = plt.scatter(
+                        x=terminals,
+                        y=feas_score,
+                        color="C0",
+                        marker="o",
+                        
+                    )
+                    file_list.append(
+                        save_plot(
+                            solver_name=experiment.solver.name,
+                            problem_name=experiment.problem.name,
+                            plot_type="feasibility_scatter",
+                            ext=ext,
+                            normalize=False,
+                            save_as_pickle=save_as_pickle,
+                        )
+                    )
+        if plot_type == "violin":
+            
+            if all_in_one:
+                
+                ref_experiment = experiments[0][problem_idx]
+                setup_plot(
+                    plot_type="feasibility_violin",
+                    solver_name=solver_set_name,
+                    problem_name=ref_experiment.problem.name,
+                    normalize=False,
+                    plot_title=plot_title,
+                )
+                
+                feas_data = []
+                solver_names = []
+                for solver_idx in range(n_solvers):
+                    experiment = experiments[solver_idx][problem_idx]
+                    feas_data.append(experiment.compute_feasibility_score(score=score_type))
+                    solver_names.append(experiment.solver.name)
+
+
+                feas_data_dict = {
+                    "Solvers": solver_names,
+                    "Feasibility Score": feas_data,
+                }
+                feas_data_df = pd.DataFrame(feas_data_dict)
+                feas_data_df = feas_data_df.explode("Feasibility Score")
+                feas_data_df["Feasibility Score"] = pd.to_numeric(feas_data_df["Feasibility Score"], errors="coerce")
+                sns.violinplot(
+                    x="Solvers",
+                    y="Feasibility Score",
+                    data=feas_data_df,
+                    inner="stick",
+                    density_norm="width",
+                    cut=0.1,
+                    hue="Solvers",
+                )
+                
+                file_list.append(
+                    save_plot(
+                        solver_name=solver_set_name,
+                        problem_name=ref_experiment.problem.name,
+                        plot_type=plot_type,
+                        normalize=False,
+                        plot_title=plot_title,
+                        ext=ext,
+                        save_as_pickle=save_as_pickle,
+                    )
+                )
+            
+            
+            
+            
+            
     return file_list 
         
         
-
-
-
-
 
 
 def plot_solvability_profiles(
@@ -4652,6 +4782,7 @@ def plot_terminal_progress(
                 "Solvers": solver_names,
                 "Terminal": terminal_values,
             }
+            print(terminal_data_dict)
             terminal_data_df = pd.DataFrame(terminal_data_dict)
             # sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, inner="stick", scale="width", showmeans=True, bw = 0.2,  cut=2)
             sns.violinplot(
@@ -4925,6 +5056,7 @@ def setup_plot(
         "violin",
         "terminal_scatter",
         "feasibility_scatter",
+        "feasibility_violin"
     ],
     solver_name: str = "SOLVER SET",
     problem_name: str = "PROBLEM SET",
@@ -5025,6 +5157,7 @@ def setup_plot(
         "violin",
         "terminal_scatter",
         "feasibility_scatter", 
+        "feasibility_violin"
     ]:
         error_msg = f"Plot type '{plot_type}' is not recognized."
         raise ValueError(error_msg)
@@ -5046,7 +5179,7 @@ def setup_plot(
             plt.tick_params(axis="both", which="major", labelsize=12)
             
     # changes start here
-    elif plot_type == "feasibility_scatter":
+    elif plot_type in ("feasibility_scatter", "feasibiliy_violin"):
         plt.ylabel("Feasibility Score", size=14)
     # end of changes
         
@@ -5144,6 +5277,9 @@ def setup_plot(
         plt.xlabel("Fraction of Initial Optimality Gap", size=14)
         plt.tick_params(axis="both", which="major", labelsize=12)
         title = f"{solver_name} on {problem_name} Feasibility Scores"
+    elif plot_type == "feasibility_violin":
+        plt.xlabel("Solvers")
+        title = f"{solver_name} on {problem_name}"
     # end changes here
     else:
         error_msg = f"'{plot_type}' is not implemented."
@@ -5170,7 +5306,8 @@ def save_plot(
         "box",
         "violin",
         "terminal_scatter",
-        "feasibility_scatter"
+        "feasibility_scatter",
+        "feasibiliy_violin"
     ],
     normalize: bool,
     extra: float | list[float] | None = None,
@@ -5249,7 +5386,8 @@ def save_plot(
         "box",
         "violin",
         "terminal_scatter",
-        "feasibility_scatter"
+        "feasibility_scatter",
+        "feasibility_violin"
     ]:
         error_msg = f"Plot type '{plot_type}' is not recognized."
         raise ValueError(error_msg)
@@ -5318,6 +5456,8 @@ def save_plot(
         plot_name = "terminal_scatter"
     elif plot_type == "feasibility_scatter":
         plot_name = "feasibility_scatter"
+    elif plot_type == "feasibility_violin":
+        plot_name = "feasibility_violin"
     else:
         raise NotImplementedError(f"'{plot_type}' is not implemented.")
 
