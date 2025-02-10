@@ -31,37 +31,59 @@ Full documentation for the source code can be found on our **[readthedocs page](
 
 ## Getting Started
 ### Requirements
-- Python >= 3.8
-    - To check your Python version, open a terminal and run `python --version`. If you see a message along the lines of `Command not found`, then you likely don't have Python installed. If you know you have it installed but are getting a `Command not found` error, then you may need to [add Python to your PATH](https://realpython.com/add-python-to-path/).
-    - For new installs, [Miniconda or Anaconda](https://www.anaconda.com/download) is recommended ([read about the differences between Miniconda and Anaconda](https://docs.anaconda.com/distro-or-miniconda/)). If you already have a compatible IDE (such as VS Code), we've found that Miniconda will work fine at 1/10 of the size of Anaconda. It is ***highly recommended*** to check the box during installation to add Python/Miniconda/Anaconda to your system PATH.
-- Ruby >= 2.5 (required for datafarming)
-    - Included on MacOS, but Windows users will need to grab it from [here](https://rubyinstaller.org/).
-- `datafarming` gem < 2.0 (required for datafarming)
-    - This can be installed via `gem install datafarming -v 1.4` once Ruby is installed/configured.
-    - If experiencing issues, make sure that you are not using version 2.0 or later as those releases does not include the required files.
-- Python packages for `numpy`, `scipy`, `matplotlib`, `pandas`, `seaborn`, `sphinx`, `mrg32k3a`, and `jupyter`.
-    - If using conda/miniconda, run `conda env create -f environment.yml` to create the `simopt` environment. Then run `conda activate simopt` to load the environment.
-    - Otherwise, run `pip install numpy scipy matplotlib pandas seaborn sphinx mrg32k3a jupyter`.
+- [Miniconda or Anaconda](https://www.anaconda.com/download)
+    - If you already have a compatible IDE (such as VS Code), we've found that Miniconda will work fine at 1/10 of the size of Anaconda. Otherwise, you may need the Spyder IDE that comes with the full Anaconda distribution.
+- [VS Code](https://code.visualstudio.com/download) (optional)
+    - This is a lightweight IDE that is compatible with Miniconda and is recommended for running the GUI
+- [Git](https://git-scm.com/downloads) (optional)
+    - If you don't have Git installed, you can download the code as a zip file instead
 
 ### Downloading Source Code
 There are two ways to download a copy of the source code onto your machine:
 1. Download the code in a zip file by clicking the green `<> Code` button above repo contents and clicking the `Download ZIP` option, then unzip the code to a folder on your computer. This does not require `git` to be installed but makes downloading updates to the repository more challenging.
 ![image](https://github.com/user-attachments/assets/3c45804c-f8b0-48ed-b32c-a443550c6ef5)
 
-3. [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) the branch you'd like to download to a folder on your computer. This requires `git` to be installed but makes downloading updates to the repository much easier.
+1. [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) the branch you'd like to download to a folder on your computer. This requires `git` to be installed but makes downloading updates to the repository much easier.
 
 If you do not need the source code for SimOpt, you may install the library as a Python package instead. See the [Package](#package) and [Basic Example](#basic-example) sections for more details about this option.
 
 The `demo` folder contains a handful of useful scripts that can be easily modified, as directed in the comments:
 
-| File                                     | Description |
-| ---------------------------------------- | ----------- |
-| `demo_model.py`                          | Run multiple replications of a simulation model and report its responses |
-| `demo_problem.py`                        | Run multiple replications of a given solution for an SO problem and report its objective function values and left-hand sides of stochastic constraints |
+| File                                     | Description                                                                                                                                                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `demo_model.py`                          | Run multiple replications of a simulation model and report its responses                                                                                                                                           |
+| `demo_problem.py`                        | Run multiple replications of a given solution for an SO problem and report its objective function values and left-hand sides of stochastic constraints                                                             |
 | `demo_problem_solver.py`                 | Run multiple macroreplications of a solver on a problem, save the outputs to a `.pickle` file in the `experiments/outputs` folder, and save plots of the results to `.png` files in the `experiments/plots` folder |
-| `demo_problems_solvers.py`               | Run multiple macroreplications of groups of problem-solver pairs and save the outputs and plots |
-| `demo_data_farming_model.py`             | Create a design over model factors, run multiple replications at each design point, and save the results to a comma separated value (`.csv`) file in the `data_farming_experiments` folder |
-| `demo_san-sscont-ironorecont_experiment` | Run multiple solvers on multiple versions of (s, S) inventory, iron ore, and stochastic activiy network problems and produce plots |
+| `demo_problems_solvers.py`               | Run multiple macroreplications of groups of problem-solver pairs and save the outputs and plots                                                                                                                    |
+| `demo_data_farming_model.py`             | Create a design over model factors, run multiple replications at each design point, and save the results to a comma separated value (`.csv`) file in the `data_farming_experiments` folder                         |
+| `demo_san-sscont-ironorecont_experiment` | Run multiple solvers on multiple versions of (s, S) inventory, iron ore, and stochastic activiy network problems and produce plots                                                                                 |
+
+### Environment Setup
+
+After downloading the source code, you will need to configure the conda environment to run the code. This can be done by running the following command in the terminal:
+
+#### Windows (Command Prompt)
+```cmd
+setup_simopt.bat
+```
+
+#### Windows (PowerShell)
+```powershell
+cmd /c setup_simopt.bat
+```
+
+#### MacOS/Linux
+```bash
+chmod +x setup_simopt.sh && ./setup_simopt.sh
+```
+
+This script will create a new conda environment called `simopt` and install all necessary packages. To activate the environment, run the following command in the terminal:
+
+```bash
+conda activate simopt
+```
+
+If you wish to update the environment with the latest compatible packages, you can simply rerun the setup script.
 
 ## Graphical User Interface (GUI) - User Guide
 
@@ -208,18 +230,9 @@ The core development team currently consists of
 - [**William Grochocinski**](https://github.com/Grochocinski) (North Carolina State University)
 
 ## Citation
-To cite this work, please use
-```
-@misc{simoptgithub,
-  author = {D. J. Eckman and S. G. Henderson and S. Shashaani and R. Pasupathy},
-  title = {{SimOpt}},
-  year = {2024},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/simopt-admin/simopt}},
-  commit = {21802a685ec394fed048820e692209628f40dd4e}
-}
-```
+To cite this work, please use the `CITATION.cff` file or use the built-in citation generator:
+![GitHub's built-in citation generator](https://github.com/user-attachments/assets/b8b49544-eb74-469e-aa37-68c2c0c3708b)
+
 
 ## Acknowledgments
 An earlier website for SimOpt ([http://www.simopt.org](http://www.simopt.org)) was developed through work supported by the following grants:

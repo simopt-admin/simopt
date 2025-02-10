@@ -8,8 +8,8 @@ import importlib
 import itertools
 import os
 import pickle
+import platform
 import re
-import shutil
 import subprocess
 import time
 from multiprocessing import Pool
@@ -6475,15 +6475,9 @@ def make_full_metaexperiment(
     return metaexperiment
 
 
-def validate_ruby_install() -> bool:
+def validate_ruby_install() -> None:
     """
     Check if Ruby is installed on the system or is on the system path.
-
-    Returns
-    -------
-    bool
-        False is ruby is installed on the system path
-        True if ruby is installed via WSL
 
     Raises
     ------
@@ -6496,113 +6490,105 @@ def validate_ruby_install() -> bool:
         shell=True,
         capture_output=True,
     )
-    # Return false if it is
-    if results.returncode == 0:
-        return False
-
-    # If Ruby is not on the system path, check if it is installed on WSL
-    if os.name == "nt" and shutil.which("wsl") is not None:
-        # If WSL is installed, check if Ruby is installed on WSL
-        result = subprocess.run(
-            'wsl -e bash -lic "ruby -v"',
-            shell=True,
-            capture_output=True,
-        )
-        # If Ruby is installed on WSL, return True
-        if result.returncode == 0:
-            return True
-        # The internet claims that WSL will shut down automatically if not
-        # being used, so we shouldn't risk accidentally closing it while
-        # the user is using it elsewhere. The system should take care of it
-        # automatically.
-
-    # If we're here, Ruby is not installed on the system or on WSL
-    # Raise an exception
-    error_msg = "Ruby is not installed on the system or is not on the system path. Please install Ruby or add it to the system path. If you just installed Ruby, you may need to restart your terminal/IDE."
-    raise Exception(error_msg)
+    # If the return code isn't 0, then Ruby is not installed on the system
+    if results.returncode != 0:
+        error_msg = [
+            "Ruby is not installed on the system or is not on the system path.",
+            "Please install Ruby or add it to the system path.",
+            "If you just installed Ruby, you may need to restart your terminal/IDE.",
+        ]
+        error_msg = " ".join(error_msg)
+        raise Exception(error_msg)
 
 
-def validate_gem_install(design_type: str, installed_via_wsl: bool) -> str:
-    # Set command prefix based on if WSL is being used
-    if installed_via_wsl:
-        command_prefix = 'wsl -e bash -lic "'
-        command_suffix = '"'
+def lookup_datafarming_gem(design_type: str) -> str:
+    # Dictionary of all the valid design types and their corresponding scripts
+    # Windows needs .bat file equivalents to any scripts being run
+    if platform.system() == "Windows":
+        datafarming_stack = {"nolhs": "stack_nolhs.rb.bat"}
     else:
-        command_prefix = ""
-        command_suffix = ""
+        datafarming_stack = {"nolhs": "stack_nolhs.rb"}
 
-    datafarming_stack = ["nolhs"]
+    # Error if design type is not valid
+    if design_type not in datafarming_stack:
+        error_msg = "Invalid design type."
+        raise Exception(error_msg)
 
     # Check the design type
-    if design_type in datafarming_stack:
-        command = (
-            f"{command_prefix}stack_{design_type}.rb --help{command_suffix}"
-        )
-        results = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-        )
-        # If the return code is 0, then the command was successful
-        if results.returncode == 0:
-            return f"stack_{design_type}.rb"
+    datafarming_file = datafarming_stack[design_type]
+    command = f"{datafarming_file} --help"
+    results = subprocess.run(
+        command,
+        shell=True,
+        capture_output=True,
+    )
+    # If the return code is 0, then the command was successful
+    if results.returncode == 0:
+        return datafarming_file
 
-        # The command was not successful, so check to see if the gem is installed
-        # Check to see if the datafarming gem is installed
-        command = f"{command_prefix}gem list{command_suffix}"
-        results = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-        )
-        # If the return code is not 0, then the command was not successful
-        # Let's figure out what error we're throwing
-        # If the datafarming gem is not present, then tell the user
-        # that they need to install it
-        if "datafarming" not in results.stdout.decode("utf-8"):
-            error_msg = "Datafarming gem is not installed. Please install it by running:\n"
-            error_msg += f"`{command_prefix}gem install datafarming -v 1.4{command_suffix}`"
-            raise Exception(error_msg)
-        installed_gems = results.stdout.decode("utf-8").split("\n")
-        # If the datafarming gem is present, then check to see if the version is correct
-        # Strip away all the information except for version(s)
-        datafarming_gem_installs = [
-            gem.split(" ")[1]
-            for gem in installed_gems
-            if gem.startswith("datafarming ")
+    # The command was not successful, so check to see if the gem is installed
+    # Check to see if the datafarming gem is installed
+    command = "gem list"
+    results = subprocess.run(
+        command,
+        shell=True,
+        capture_output=True,
+    )
+    # If the return code is not 0, then the command was not successful
+    # Let's figure out what error we're throwing
+    # If the datafarming gem is not present, then tell the user
+    # that they need to install it
+    if "datafarming" not in results.stdout.decode("utf-8"):
+        error_msg = [
+            "Datafarming gem is not installed. Please install it by running:",
+            "gem install datafarming -v 1.4"
+            "Alternatively, you can run the setup_simopt script for your platform",
         ]
-        # Strip away anything that isn't a period or a number
-        datafarming_versions = [
-            re.sub(r"[^0-9.]", "", version)
-            for version in datafarming_gem_installs
-        ]
-        # Check for valid versions (min <= version < max)
-        min_version = "1.0.0"
-        max_version = "2.0.0"
-        version_check_results = [
-            min_version <= version < max_version
-            for version in datafarming_versions
-        ]
-        if not any(version_check_results):
-            # Write the correct error message depending on plurality
-            if len(version_check_results) == 1:
-                error_msg = f"Datafarming gem is installed, but the installed version {datafarming_versions} is not supported."
-            else:
-                error_msg = f"Datafarming gem is installed, but the installed versions {datafarming_versions.sort()} are not supported."
-            error_msg += (
-                f" Please install version {min_version} <= x < {max_version}."
-            )
-            error_msg += f" This can be done by running: `{command_prefix}gem install datafarming -v 1.4{command_suffix}`"
-            raise Exception(error_msg)
-        # We get here if the gem is installed and the version is correct, but
-        # we still can't run the stack script. This is likely due to the gem
-        # not being in the system path. We'll let the user know that they need
-        # to restart their terminal/IDE.
-        error_msg = "Ruby was able to detect the datafarming gem, but was unable to run the stack script. If you just installed the datafarming gem, it may be necessary to restart your terminal/IDE."
+        error_msg = "\n".join(error_msg)
         raise Exception(error_msg)
-    else:
-        error_msg = "Invalid design type."
-        raise ValueError(error_msg)
+    installed_gems = results.stdout.decode("utf-8").split("\n")
+    # If the datafarming gem is present, then check to see if the version is correct
+    # Strip away all the information except for version(s)
+    datafarming_gem_installs = [
+        gem.split(" ")[1]
+        for gem in installed_gems
+        if gem.startswith("datafarming ")
+    ]
+    # Strip away anything that isn't a period or a number
+    datafarming_versions = [
+        re.sub(r"[^0-9.]", "", version) for version in datafarming_gem_installs
+    ]
+    # Check for valid versions (min <= version < max)
+    min_version = "1.0.0"
+    max_version = "2.0.0"
+    version_check_results = [
+        min_version <= version < max_version for version in datafarming_versions
+    ]
+    if not any(version_check_results):
+        # Write the correct error message depending on plurality
+        error_msg = []
+        if len(version_check_results) == 1:
+            error_msg.append(
+                f"Datafarming gem is installed, but the installed version {datafarming_versions} is not supported."
+            )
+        else:
+            error_msg.append(
+                f"Datafarming gem is installed, but the installed versions {datafarming_versions} are not supported."
+            )
+        error_msg.append(
+            f"Please install version {min_version} <= x < {max_version}."
+        )
+        error_msg.append(
+            "This can be done by running: `gem install datafarming -v 1.4' or by running the setup_simopt script for your platform."
+        )
+        error_msg = " ".join(error_msg)
+        raise Exception(error_msg)
+    # We get here if the gem is installed and the version is correct, but
+    # we still can't run the stack script. This is likely due to the gem
+    # not being in the system path. We'll let the user know that they need
+    # to restart their terminal/IDE.
+    error_msg = "Ruby was able to detect the datafarming gem, but was unable to run the stack script. If you just installed the datafarming gem, it may be necessary to restart your terminal/IDE."
+    raise Exception(error_msg)
 
 
 def create_design_list_from_table(design_table: pd.DataFrame) -> list:
@@ -6753,30 +6739,14 @@ def create_design(
     # Only run the Ruby script if there are factors to change
     if len(factor_headers) > 0:
         # Check if Ruby is installed on the system.
-        installed_via_wsl: bool = validate_ruby_install()
+        validate_ruby_install()
         # Check if the datafarming gem is installed
-        command_file: str = validate_gem_install(design_type, installed_via_wsl)
+        command_file: str = lookup_datafarming_gem(design_type)
 
         # Create solver factor design from .txt file of factor settings.
-        if installed_via_wsl:
-            # Replace the drive letter with the WSL equivalent
-            windows_drive_letter = os.path.splitdrive(data_farming_path)[0]
-            linux_drive_letter = (
-                f"/mnt/{windows_drive_letter.strip(':').lower()}"
-            )
-            source_file_wsl = source_file.replace(
-                windows_drive_letter, linux_drive_letter
-            )
-            design_file_wsl = design_file.replace(
-                windows_drive_letter, linux_drive_letter
-            )
-            # Replace backslashes with forward slashes
-            source_file_wsl = source_file_wsl.replace("\\", "/")
-            design_file_wsl = design_file_wsl.replace("\\", "/")
-            command = f"{command_file} -s {n_stacks} '{source_file_wsl}' > '{design_file_wsl}'"
-            command = f'wsl -e bash -lic "{command}"'
-        else:
-            command = f"{command_file} -s {n_stacks} '{source_file}' > '{design_file}'"
+        command = (
+            f'{command_file} -s {n_stacks} "{source_file}" > "{design_file}"'
+        )
         completed_process = subprocess.run(
             command, capture_output=True, shell=True
         )
