@@ -12,5 +12,6 @@ dependencies:
   - seaborn
   - sphinx
   - pip
+  - ruff
   - pip:
     - -e .
