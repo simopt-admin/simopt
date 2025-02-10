@@ -6745,7 +6745,7 @@ def create_design(
 
         # Create solver factor design from .txt file of factor settings.
         command = (
-            f"{command_file} -s {n_stacks} \"{source_file}\" > \"{design_file}\""
+            f'{command_file} -s {n_stacks} "{source_file}" > "{design_file}"'
         )
         completed_process = subprocess.run(
             command, capture_output=True, shell=True
