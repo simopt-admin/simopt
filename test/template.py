@@ -1,5 +1,7 @@
 import unittest
 import math
+import numpy as np  # noqa: F401
+import os
 
 from simopt.experiment_base import ProblemSolver, post_normalize
 
@@ -12,40 +14,27 @@ from simopt.experiment_base import ProblemSolver, post_normalize
 
 class TestProblemSolver(unittest.TestCase):
     def setUp(self) -> None:
-        # Expected values
-        self.expected_problem_name = "{{PROBLEM_NAME}}"
-        self.expected_solver_name = "{{SOLVER_NAME}}"
-        self.expected_all_recommended_xs = "{{ALL_RECOMMENDED_XS}}"
-        self.expected_all_intermediate_budgets = "{{ALL_INTERMEDIATE_BUDGETS}}"
-        self.expected_all_est_objectives = "{{ALL_EST_OBJECTIVES}}"
-        self.expected_objective_curves = "{{OBJECTIVE_CURVES}}"
-        self.expected_progress_curves = "{{PROGRESS_CURVES}}"
+        # Load expected results from pickle
+        file = "{{FILE}}"
+        cwd = os.getcwd()
+        path = os.path.join(cwd, "test", "expected_results", file)
+        with open(path, "rb") as f:
+            import pickle
+            expected_results = pickle.load(f)
+        
+        # Get all the information we need out of it
+        self.num_macroreps = expected_results.num_macroreps
+        self.num_postreps = expected_results.num_postreps
+        self.expected_problem_name = expected_results.problem_name
+        self.expected_solver_name = expected_results.solver_name
+        self.expected_all_recommended_xs = expected_results.all_recommended_xs
+        self.expected_all_intermediate_budgets = expected_results.all_intermediate_budgets
+        self.expected_all_est_objectives = expected_results.all_est_objectives
+        self.expected_objective_curves = expected_results.objective_curves
+        self.expected_progress_curves = expected_results.progress_curves
 
-        # Convert the expected values from string to their actual types
-        self.expected_all_recommended_xs = eval(
-            self.expected_all_recommended_xs,
-            {"nan": float("nan"), "inf": float("inf")},
-        )
-        self.expected_all_intermediate_budgets = eval(
-            self.expected_all_intermediate_budgets,
-            {"nan": float("nan"), "inf": float("inf")},
-        )
-        self.expected_all_est_objectives = eval(
-            self.expected_all_est_objectives,
-            {"nan": float("nan"), "inf": float("inf")},
-        )
-        self.expected_objective_curves = eval(
-            self.expected_objective_curves,
-            {"nan": float("nan"), "inf": float("inf")},
-        )
-        self.expected_progress_curves = eval(
-            self.expected_progress_curves,
-            {"nan": float("nan"), "inf": float("inf")},
-        )
-
-        # Number of macro-replications and post-replications
-        self.num_macroreps = 24
-        self.num_postreps = 200
+        # Get rid of it to save memory
+        del expected_results
 
         # Setup the solver and experiment
         self.myexperiment = ProblemSolver(
