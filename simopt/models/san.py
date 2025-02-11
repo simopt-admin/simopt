@@ -657,6 +657,12 @@ class SANLongestPathStochastic(Problem):
                 default initial solution from which solvers start
             budget : int > 0
                 max number of replications (fn evals) for a solver to take
+            arc_costs: tuple
+                Cost associated to each arc.
+            constraint_nodes: list[int]
+                nodes with corresponding stochastic constraints
+            max_length_to_node: list[float]
+                max allowable length to each corresponding constraint node
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
@@ -736,7 +742,7 @@ class SANLongestPathStochastic(Problem):
             "constraint_nodes": {
                 "description": "Nodes with corresponding stochastic constraints",
                 "datatype": list,
-                "default": CONST_NODES # temp hard code to 9 nodes
+                "default": CONST_NODES 
             },
             "max_length_to_node": {
                 "description": "Max length to corresponding constraint nodes",
