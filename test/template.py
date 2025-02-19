@@ -2,6 +2,7 @@ import unittest
 import math
 import numpy as np  # noqa: F401
 import os
+import yaml
 
 from simopt.experiment_base import ProblemSolver, post_normalize
 
@@ -14,24 +15,28 @@ from simopt.experiment_base import ProblemSolver, post_normalize
 
 class TestProblemSolver(unittest.TestCase):
     def setUp(self) -> None:
-        # Load expected results from pickle
+        # Load expected results
         file = "{{FILE}}"
         cwd = os.getcwd()
         path = os.path.join(cwd, "test", "expected_results", file)
         with open(path, "rb") as f:
-            import pickle
-            expected_results = pickle.load(f)
-        
-        # Get all the information we need out of it
-        self.num_macroreps = expected_results.num_macroreps
-        self.num_postreps = expected_results.num_postreps
-        self.expected_problem_name = expected_results.problem_name
-        self.expected_solver_name = expected_results.solver_name
-        self.expected_all_recommended_xs = expected_results.all_recommended_xs
-        self.expected_all_intermediate_budgets = expected_results.all_intermediate_budgets
-        self.expected_all_est_objectives = expected_results.all_est_objectives
-        self.expected_objective_curves = expected_results.objective_curves
-        self.expected_progress_curves = expected_results.progress_curves
+            expected_results = yaml.load(f, Loader=yaml.Loader)
+
+        self.num_macroreps = expected_results["num_macroreps"]
+        self.num_postreps = expected_results["num_postreps"]
+        self.expected_problem_name = expected_results["problem_name"]
+        self.expected_solver_name = expected_results["solver_name"]
+        self.expected_all_recommended_xs = expected_results[
+            "all_recommended_xs"
+        ]
+        self.expected_all_intermediate_budgets = expected_results[
+            "all_intermediate_budgets"
+        ]
+        self.expected_all_est_objectives = expected_results[
+            "all_est_objectives"
+        ]
+        self.expected_objective_curves = expected_results["objective_curves"]
+        self.expected_progress_curves = expected_results["progress_curves"]
 
         # Get rid of it to save memory
         del expected_results
