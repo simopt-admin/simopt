@@ -1173,8 +1173,9 @@ class Problem(ABC):
             # Advance rngs to start of next subsubstream.
             for rng in solution.rng_list:
                 rng.advance_subsubstream()
+
+        return None
         # Update summary statistics.
-        solution.recompute_summary_statistics()
 
     def simulate_up_to(self, solutions: list[Solution], n_reps: int) -> None:
         """Simulate a list of solutions up to a given number of replications.
@@ -1604,6 +1605,132 @@ class Solution:
     def stochastic_constraints_gradients(self, value: np.ndarray) -> None:
         self.__stochastic_constraints_gradients = value
 
+    @property
+    def objectives_mean(self) -> float:
+        """Mean of objectives."""
+        return np.mean(self.objectives[: self.n_reps], axis=0)
+
+    @property
+    def objectives_var(self) -> float:
+        """Variance of objectives."""
+        if self.n_reps == 1:
+            return np.zeros(self.objectives.shape[1])
+        else:
+            return np.var(self.objectives[: self.n_reps], axis=0, ddof=1)
+
+    @property
+    def objectives_stderr(self) -> float:
+        """Standard error of objectives."""
+        if self.n_reps == 1:
+            return np.zeros(self.objectives.shape[1])
+        else:
+            return np.std(
+                    self.objectives[: self.n_reps], axis=0, ddof=1
+                ) / np.sqrt(self.n_reps)
+
+    @property
+    def objectives_cov(self) -> np.array:
+        """Covariance of objectives."""
+        if self.n_reps == 1:
+            return np.zeros(self.objectives.shape[1])
+        else:
+            return np.cov(
+                self.objectives[: self.n_reps], rowvar=False, ddof=1
+            )
+
+    @property
+    def objectives_gradients_mean(self) -> float:
+        """Mean of gradients of objectives."""
+        if self.n_reps == 1:
+            return np.zeros(self.objectives.shape[1])
+        else:
+            return np.mean(
+                self.objectives_gradients[: self.n_reps], axis=0
+            )
+
+    @property
+    def objectives_gradients_var(self) -> float:
+        """Variance of gradients of objectives."""
+        if self.n_reps == 1:
+            return np.zeros(self.objectives.shape[1])
+        else:
+            return np.var(
+                    self.objectives_gradients[: self.n_reps], axis=0, ddof=1
+                )
+
+    @property
+    def objectives_gradients_stderr(self) -> float:
+        """Standard error of gradients of objectives."""
+        if self.n_reps == 1:
+            return np.zeros(self.objectives.shape[1])
+        else:
+            return np.std(
+                    self.objectives_gradients[: self.n_reps], axis=0, ddof=1
+                ) / np.sqrt(self.n_reps)
+
+    @property
+    def objectives_gradients_cov(self) -> np.array:
+        """Covariance of gradients of objectives."""
+        if self.n_reps == 1:
+            return np.zeros(self.objectives.shape[1])
+        else:
+            return np.array(
+                    [
+                        np.cov(
+                            self.objectives_gradients[: self.n_reps, obj],
+                            rowvar=False,
+                            ddof=1,
+                        )
+                        for obj in range(len(self.det_objectives))
+                    ]
+                )
+
+    @property
+    def stoch_constraints_mean(self) -> float | None:
+        """Mean of stochastic constraints."""
+        if self.stoch_constraints is None:
+            return None
+        else:
+            return np.mean(
+                    self.stoch_constraints[: self.n_reps], axis=0
+                )
+
+    @property
+    def stoch_constraints_var(self) -> float | None:
+        """Variance of stochastic constraints."""
+        if self.stoch_constraints is None:
+            return None
+        else:
+            return np.var(
+                    self.stoch_constraints[: self.n_reps], axis=0, ddof=1
+                )
+
+    @property
+    def stoch_constraints_stderr(self) -> float:
+        """Standard error of stochastic constraints."""
+        if self.stoch_constraints is None:
+            return None
+        else:
+            return np.std(
+                    self.stoch_constraints[: self.n_reps], axis=0, ddof=1
+                ) / np.sqrt(self.n_reps)
+
+    @property
+    def stoch_constraints_cov(self) -> np.array:
+        """Covariance of stochastic constraints."""
+        if self.stoch_constraints is None:
+            return None
+        else:
+            return np.cov(
+                    self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1
+                )
+
+    # TODO: implement these properties
+    # self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
+    # self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
+    # self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
+    # self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps, stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])
+
     def __init__(self, x: tuple, problem: Problem) -> None:
         """Initialize a solution object.
 
@@ -1724,60 +1851,3 @@ class Solution:
                 self.stoch_constraints_gradients = np.zeros(
                     (pad_size, n_stochastic_constraints, self.dim)
                 )
-
-    def recompute_summary_statistics(self) -> None:
-        """Recompute summary statistics of the solution.
-
-        Notes
-        -----
-        Statistics for gradients of objectives and stochastic constraint LHSs are temporarily commented out. Under development.
-
-        """
-        self.objectives_mean = np.mean(self.objectives[: self.n_reps], axis=0)
-        if self.n_reps > 1:
-            self.objectives_var = np.var(
-                self.objectives[: self.n_reps], axis=0, ddof=1
-            )
-            self.objectives_stderr = np.std(
-                self.objectives[: self.n_reps], axis=0, ddof=1
-            ) / np.sqrt(self.n_reps)
-            self.objectives_cov = np.cov(
-                self.objectives[: self.n_reps], rowvar=False, ddof=1
-            )
-        self.objectives_gradients_mean = np.mean(
-            self.objectives_gradients[: self.n_reps], axis=0
-        )
-        if self.n_reps > 1:
-            self.objectives_gradients_var = np.var(
-                self.objectives_gradients[: self.n_reps], axis=0, ddof=1
-            )
-            self.objectives_gradients_stderr = np.std(
-                self.objectives_gradients[: self.n_reps], axis=0, ddof=1
-            ) / np.sqrt(self.n_reps)
-            self.objectives_gradients_cov = np.array(
-                [
-                    np.cov(
-                        self.objectives_gradients[: self.n_reps, obj],
-                        rowvar=False,
-                        ddof=1,
-                    )
-                    for obj in range(len(self.det_objectives))
-                ]
-            )
-        if self.stoch_constraints is not None:
-            self.stoch_constraints_mean = np.mean(
-                self.stoch_constraints[: self.n_reps], axis=0
-            )
-            self.stoch_constraints_var = np.var(
-                self.stoch_constraints[: self.n_reps], axis=0, ddof=1
-            )
-            self.stoch_constraints_stderr = np.std(
-                self.stoch_constraints[: self.n_reps], axis=0, ddof=1
-            ) / np.sqrt(self.n_reps)
-            self.stoch_constraints_cov = np.cov(
-                self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1
-            )
-            # self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
-            # self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
-            # self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
-            # self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps, stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])
