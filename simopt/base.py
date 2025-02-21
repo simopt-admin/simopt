@@ -1608,7 +1608,8 @@ class Solution:
     @property
     def objectives_mean(self) -> float:
         """Mean of objectives."""
-        return np.mean(self.objectives[: self.n_reps], axis=0)
+        result = np.mean(self.objectives[: self.n_reps], axis=0)
+        return np.round(result, 15)
 
     @property
     def objectives_var(self) -> float:
@@ -1616,7 +1617,8 @@ class Solution:
         if self.n_reps == 1:
             return np.zeros(self.objectives.shape[1])
         else:
-            return np.var(self.objectives[: self.n_reps], axis=0, ddof=1)
+            result = np.var(self.objectives[: self.n_reps], axis=0, ddof=1)
+            return np.round(result, 15)
 
     @property
     def objectives_stderr(self) -> float:
@@ -1624,9 +1626,10 @@ class Solution:
         if self.n_reps == 1:
             return np.zeros(self.objectives.shape[1])
         else:
-            return np.std(
-                    self.objectives[: self.n_reps], axis=0, ddof=1
-                ) / np.sqrt(self.n_reps)
+            result = np.std(
+                self.objectives[: self.n_reps], axis=0, ddof=1
+            ) / np.sqrt(self.n_reps)
+            return np.round(result, 15)
 
     @property
     def objectives_cov(self) -> np.array:
@@ -1634,9 +1637,7 @@ class Solution:
         if self.n_reps == 1:
             return np.zeros(self.objectives.shape[1])
         else:
-            return np.cov(
-                self.objectives[: self.n_reps], rowvar=False, ddof=1
-            )
+            return np.cov(self.objectives[: self.n_reps], rowvar=False, ddof=1)
 
     @property
     def objectives_gradients_mean(self) -> float:
@@ -1644,9 +1645,8 @@ class Solution:
         if self.n_reps == 1:
             return np.zeros(self.objectives.shape[1])
         else:
-            return np.mean(
-                self.objectives_gradients[: self.n_reps], axis=0
-            )
+            result = np.mean(self.objectives_gradients[: self.n_reps], axis=0)
+            return np.round(result, 15)
 
     @property
     def objectives_gradients_var(self) -> float:
@@ -1654,9 +1654,10 @@ class Solution:
         if self.n_reps == 1:
             return np.zeros(self.objectives.shape[1])
         else:
-            return np.var(
-                    self.objectives_gradients[: self.n_reps], axis=0, ddof=1
-                )
+            result = np.var(
+                self.objectives_gradients[: self.n_reps], axis=0, ddof=1
+            )
+            return np.round(result, 15)
 
     @property
     def objectives_gradients_stderr(self) -> float:
@@ -1664,9 +1665,10 @@ class Solution:
         if self.n_reps == 1:
             return np.zeros(self.objectives.shape[1])
         else:
-            return np.std(
-                    self.objectives_gradients[: self.n_reps], axis=0, ddof=1
-                ) / np.sqrt(self.n_reps)
+            result = np.std(
+                self.objectives_gradients[: self.n_reps], axis=0, ddof=1
+            ) / np.sqrt(self.n_reps)
+            return np.round(result, 15)
 
     @property
     def objectives_gradients_cov(self) -> np.array:
@@ -1675,15 +1677,15 @@ class Solution:
             return np.zeros(self.objectives.shape[1])
         else:
             return np.array(
-                    [
-                        np.cov(
-                            self.objectives_gradients[: self.n_reps, obj],
-                            rowvar=False,
-                            ddof=1,
-                        )
-                        for obj in range(len(self.det_objectives))
-                    ]
-                )
+                [
+                    np.cov(
+                        self.objectives_gradients[: self.n_reps, obj],
+                        rowvar=False,
+                        ddof=1,
+                    )
+                    for obj in range(len(self.det_objectives))
+                ]
+            )
 
     @property
     def stoch_constraints_mean(self) -> float | None:
@@ -1691,9 +1693,8 @@ class Solution:
         if self.stoch_constraints is None:
             return None
         else:
-            return np.mean(
-                    self.stoch_constraints[: self.n_reps], axis=0
-                )
+            result = np.mean(self.stoch_constraints[: self.n_reps], axis=0)
+            return np.round(result, 15)
 
     @property
     def stoch_constraints_var(self) -> float | None:
@@ -1701,9 +1702,10 @@ class Solution:
         if self.stoch_constraints is None:
             return None
         else:
-            return np.var(
-                    self.stoch_constraints[: self.n_reps], axis=0, ddof=1
-                )
+            result = np.var(
+                self.stoch_constraints[: self.n_reps], axis=0, ddof=1
+            )
+            return np.round(result, 15)
 
     @property
     def stoch_constraints_stderr(self) -> float:
@@ -1711,9 +1713,10 @@ class Solution:
         if self.stoch_constraints is None:
             return None
         else:
-            return np.std(
-                    self.stoch_constraints[: self.n_reps], axis=0, ddof=1
-                ) / np.sqrt(self.n_reps)
+            result = np.std(
+                self.stoch_constraints[: self.n_reps], axis=0, ddof=1
+            ) / np.sqrt(self.n_reps)
+            return np.round(result, 15)
 
     @property
     def stoch_constraints_cov(self) -> np.array:
@@ -1722,8 +1725,8 @@ class Solution:
             return None
         else:
             return np.cov(
-                    self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1
-                )
+                self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1
+            )
 
     # TODO: implement these properties
     # self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
