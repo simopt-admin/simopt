@@ -1174,9 +1174,6 @@ class Problem(ABC):
             for rng in solution.rng_list:
                 rng.advance_subsubstream()
 
-        return None
-        # Update summary statistics.
-
     def simulate_up_to(self, solutions: list[Solution], n_reps: int) -> None:
         """Simulate a list of solutions up to a given number of replications.
 
