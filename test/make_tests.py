@@ -166,7 +166,7 @@ def main() -> None:
             existing_test_files.remove(test_filename)
         if results_exist:
             existing_result_files.remove(results_filename)
-        
+
     # Remove any tests that are no longer needed
     for test_file in existing_test_files:
         if test_file.startswith("test_") and test_file.endswith(".py"):
@@ -178,6 +178,7 @@ def main() -> None:
             path = os.path.join(results_directory, result_file)
             print(f"Removing unneeded result file: {path}")
             os.remove(path)
+
 
 if __name__ == "__main__":
     main()
