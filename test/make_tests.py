@@ -8,8 +8,8 @@ import os
 from simopt.directory import problem_directory, solver_directory
 from simopt.experiment_base import ProblemSolver, post_normalize
 
-NUM_MACROREPS = 24
-NUM_POSTREPS = 200
+NUM_MACROREPS = 10
+NUM_POSTREPS = 100
 
 
 # Check compatibility of a solver with a problem
