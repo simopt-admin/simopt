@@ -19,7 +19,7 @@ from math import ceil, log
 from typing import Callable
 
 import numpy as np
-from numpy.linalg import norm, pinv
+from numpy.linalg import norm, inv, pinv
 from scipy.optimize import NonlinearConstraint, minimize
 
 from simopt.base import (
@@ -316,15 +316,13 @@ class ASTRODF(Solver):
 
         model_iterations: int = 0
         while True:
-            fval = []
             delta_k = delta * w**model_iterations
             model_iterations += 1
 
             # Calculate the distance between the center point and other design points
             distance_array = []
-            num_design_points = len(visited_pts_list)
-            for i in range(num_design_points):
-                dist_diff = np.array(visited_pts_list[i].x) - np.array(x_k)
+            for point in visited_pts_list:
+                dist_diff = np.array(point.x) - np.array(x_k)
                 distance = norm(dist_diff) - delta_k
                 # If the design point is outside the trust region, we will not reuse it (distance = -big M)
                 if distance > 0:
@@ -395,6 +393,7 @@ class ASTRODF(Solver):
             else:
                 pass
             # Evaluate the function estimate for the interpolation points
+            fval = []
             double_dim = 2 * problem.dim + 1
             for i in range(double_dim):
                 # Special cases for the first two iterations
@@ -512,6 +511,10 @@ class ASTRODF(Solver):
             # If a model gradient norm is zero, there is a possibility that the code stuck in this while loop
             if norm(grad) == 0:
                 break
+            # TODO: investigate if this can be implemented instead of checking norm(grad) == 0
+            # MAX_ITER = 100
+            # if model_iterations > MAX_ITER:
+            #     break
 
         beta_n_grad = float(beta * norm(grad))
         delta_k = min(max(beta_n_grad, delta_k), delta)
@@ -541,15 +544,21 @@ class ASTRODF(Solver):
             new_array = np.concatenate((np.ones(1), y_arr, y_arr**2))
             m_var.append(new_array)
 
-        # pinv returns the inverse of your matrix when it is available and the pseudo inverse when it isn't.
-        matrix_inverse: np.ndarray = np.matmul(pinv(m_var), fval)
+        # Try and calculate the inverse of the matrix
+        # TODO: figure out a way to prevent calculating the inverse twice
+        m_var = np.array(m_var)
+        try:
+            matrix_inverse = inv(m_var)
+        except np.linalg.LinAlgError:
+            matrix_inverse = pinv(m_var)
+        inverse_mult = np.matmul(matrix_inverse, fval)
         # Calculate gradient and hessian
         decision_var_idx = problem.dim + 1
-        grad = matrix_inverse[1:decision_var_idx]
+        grad = inverse_mult[1:decision_var_idx]
         grad = np.reshape(grad, problem.dim)
-        hessian = matrix_inverse[decision_var_idx:num_design_points]
+        hessian = inverse_mult[decision_var_idx:num_design_points]
         hessian = np.reshape(hessian, problem.dim)
-        return matrix_inverse, grad, hessian
+        return inverse_mult, grad, hessian
 
     def get_coordinate_basis_interpolation_points(
         self, x_k: tuple[int | float, ...], delta: float, problem: Problem
@@ -683,7 +692,8 @@ class ASTRODF(Solver):
             )
             - 1
         )
-        if k == 1:
+        is_first_solver_iteration = k == 1
+        if is_first_solver_iteration:
             incumbent_solution = self.create_new_solution(incumbent_x, problem)
             if len(visited_pts_list) == 0:
                 visited_pts_list.append(incumbent_solution)
@@ -703,10 +713,10 @@ class ASTRODF(Solver):
                     rhs_for_kappa = incumbent_solution.objectives_mean
                 sig2 = incumbent_solution.objectives_var[0]
                 if delta_power == 0:
-                    sig2 = max(
-                        sig2,
-                        np.trace(incumbent_solution.objectives_gradients_var),
+                    sol_trace = np.trace(
+                        incumbent_solution.objectives_gradients_var
                     )
+                    sig2 = max(sig2, sol_trace)
                 stopping = self.get_stopping_time(
                     pilot_run,
                     sig2,
@@ -735,9 +745,8 @@ class ASTRODF(Solver):
 
             recommended_solns.append(incumbent_solution)
             intermediate_budgets.append(expended_budget)
-        elif self.factors[
-            "crn_across_solns"
-        ]:  # since incument was only evaluated with the sample size of previous incumbent, here we compute its adaptive sample size
+        # since incument was only evaluated with the sample size of previous incumbent, here we compute its adaptive sample size
+        elif self.factors["crn_across_solns"]:
             sample_size = incumbent_solution.n_reps
             # adaptive sampling
             while True:
@@ -805,20 +814,21 @@ class ASTRODF(Solver):
             # print("np.dot(np.multiply(grad, Hessian), grad) "+str(np.dot(np.multiply(grad, hessian), grad)))
             # print("np.dot(np.dot(grad, hessian), grad) "+str(np.dot(np.dot(grad, hessian), grad)))
             if enable_gradient:
-                # print("hessian " + str(hessian))
-                check_positive_definite = np.dot(np.dot(grad, hessian), grad)
+                dot_a = np.dot(grad, hessian)
             else:
-                check_positive_definite = np.dot(
-                    np.multiply(grad, hessian), grad
-                )
+                dot_a = grad * hessian
+
+            check_positive_definite: float = np.dot(dot_a, grad)
+
             if check_positive_definite <= 0:
-                tau = 1
+                tau = 1.0
             else:
-                tau = min(
-                    1, norm(grad) ** 3 / (delta_k * check_positive_definite)
+                norm_ratio = norm(grad) ** 3 / (
+                    delta_k * check_positive_definite
                 )
-                # print("tau "+str(tau))
-            grad = np.reshape(grad, (1, problem.dim))[0]
+                tau = min(1.0, norm_ratio)
+
+            grad: np.ndarray = np.reshape(grad, (1, problem.dim))[0]
             grad_norm = norm(grad)
             # Make sure we don't divide by 0
             if grad_norm == 0:
@@ -855,12 +865,17 @@ class ASTRODF(Solver):
         # handle the box constraints
         new_candidate_list = []
         for i in range(problem.dim):
-            if candidate_x[i] <= problem.lower_bounds[i]:
-                new_candidate_list.append(problem.lower_bounds[i] + 0.01)
-            elif candidate_x[i] >= problem.upper_bounds[i]:
-                new_candidate_list.append(problem.upper_bounds[i] - 0.01)
-            else:
-                new_candidate_list.append(candidate_x[i])
+            candidate = float(candidate_x[i])
+            # Correct candidate if it violates the box constraints
+            lower_bound = problem.lower_bounds[i]
+            upper_bound = problem.upper_bounds[i]
+            epsilon = 0.01
+            if candidate <= lower_bound:
+                candidate = lower_bound + epsilon
+            elif candidate >= upper_bound:
+                candidate = upper_bound - epsilon
+            # Append the corrected candidate to the new candidate list
+            new_candidate_list.append(candidate)
         candidate_x = tuple(new_candidate_list)
 
         # store the solution (and function estimate at it) to the subproblem as a candidate for the next iterate
@@ -953,7 +968,8 @@ class ASTRODF(Solver):
         else:
             rho = (fval[0] - fval_tilde) / model_reduction
         # successful: accept
-        if rho >= eta_1:
+        successful = rho >= eta_1
+        if successful:
             incumbent_x = candidate_x
             incumbent_solution = candidate_solution
             final_ob = candidate_solution.objectives_mean
@@ -961,7 +977,8 @@ class ASTRODF(Solver):
             intermediate_budgets.append(expended_budget)
             delta_k = min(delta_k, delta_max)
             # very successful: expand
-            if rho >= eta_2:
+            very_successful = rho >= eta_2
+            if very_successful:
                 delta_k = min(gamma_1 * delta_k, delta_max)
             if enable_gradient:
                 candidate_grad = (
@@ -989,7 +1006,7 @@ class ASTRODF(Solver):
                     - np.outer(h_s_k, h_s_k) / (s @ h_s_k)
                 )  # type: ignore
         # unsuccessful: shrink and reject
-        else:
+        elif not successful:
             delta_k = min(gamma_2 * delta_k, delta_max)
             final_ob = fval[0]
 
@@ -1041,13 +1058,11 @@ class ASTRODF(Solver):
         # delta_max = min(self.factors["delta_max"], problem.upper_bounds[0] - problem.lower_bounds[0])
         delta_max_arr: list[float | int] = []
         for i in range(problem.dim):
-            delta_max_arr += [
-                min(
-                    max([sol[i] for sol in dummy_solns])
-                    - min([sol[i] for sol in dummy_solns]),
-                    problem.upper_bounds[0] - problem.lower_bounds[0],
-                )
-            ]
+            min_soln = min([sol[i] for sol in dummy_solns])
+            max_soln = max([sol[i] for sol in dummy_solns])
+            soln_range = max_soln - min_soln
+            bounds_range = problem.upper_bounds[i] - problem.lower_bounds[i]
+            delta_max_arr += [min(soln_range, bounds_range)]
         # TODO: update this so that it could be used for problems with decision variables at varying scales!
         delta_max = max(delta_max_arr)
         # print("delta_max  " + str(delta_max))
@@ -1068,7 +1083,7 @@ class ASTRODF(Solver):
         while expended_budget < budget:
             iteration_count += 1
             (
-                final_ob,
+                _,
                 delta_k,
                 recommended_solns,
                 intermediate_budgets,
