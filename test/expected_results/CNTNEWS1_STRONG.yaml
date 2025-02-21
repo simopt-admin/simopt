@@ -1,0 +1,252 @@
+all_est_objectives:
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+all_intermediate_budgets:
+- &id011
+  - 10
+  - 1000
+- &id013
+  - 10
+  - 1000
+- &id014
+  - 10
+  - 1000
+- &id015
+  - 10
+  - 1000
+- &id016
+  - 10
+  - 1000
+- &id017
+  - 10
+  - 1000
+- &id018
+  - 10
+  - 1000
+- &id019
+  - 10
+  - 1000
+- &id020
+  - 10
+  - 1000
+- &id021
+  - 10
+  - 1000
+all_recommended_xs:
+- - &id001 !!python/tuple
+    - 0
+  - *id001
+- - &id002 !!python/tuple
+    - 0
+  - *id002
+- - &id003 !!python/tuple
+    - 0
+  - *id003
+- - &id004 !!python/tuple
+    - 0
+  - *id004
+- - &id005 !!python/tuple
+    - 0
+  - *id005
+- - &id006 !!python/tuple
+    - 0
+  - *id006
+- - &id007 !!python/tuple
+    - 0
+  - *id007
+- - &id008 !!python/tuple
+    - 0
+  - *id008
+- - &id009 !!python/tuple
+    - 0
+  - *id009
+- - &id010 !!python/tuple
+    - 0
+  - *id010
+num_macroreps: 10
+num_postreps: 100
+objective_curves:
+- !!python/tuple
+  - *id011
+  - - !!python/object/apply:numpy._core.multiarray.scalar
+      - &id012 !!python/object/apply:numpy.dtype
+        args:
+        - f8
+        - false
+        - true
+        state: !!python/tuple
+        - 3
+        - <
+        - null
+        - null
+        - null
+        - -1
+        - -1
+        - 0
+      - !!binary |
+        AAAAAAAAAAA=
+    - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+- !!python/tuple
+  - *id013
+  - - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+    - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+- !!python/tuple
+  - *id014
+  - - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+    - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+- !!python/tuple
+  - *id015
+  - - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+    - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+- !!python/tuple
+  - *id016
+  - - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+    - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+- !!python/tuple
+  - *id017
+  - - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+    - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+- !!python/tuple
+  - *id018
+  - - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+    - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+- !!python/tuple
+  - *id019
+  - - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+    - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+- !!python/tuple
+  - *id020
+  - - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+    - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+- !!python/tuple
+  - *id021
+  - - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+    - !!python/object/apply:numpy._core.multiarray.scalar
+      - *id012
+      - !!binary |
+        AAAAAAAAAAA=
+problem_name: CNTNEWS-1
+progress_curves:
+- !!python/tuple
+  - - 0.01
+    - 1.0
+  - - .nan
+    - .nan
+- !!python/tuple
+  - - 0.01
+    - 1.0
+  - - .nan
+    - .nan
+- !!python/tuple
+  - - 0.01
+    - 1.0
+  - - .nan
+    - .nan
+- !!python/tuple
+  - - 0.01
+    - 1.0
+  - - .nan
+    - .nan
+- !!python/tuple
+  - - 0.01
+    - 1.0
+  - - .nan
+    - .nan
+- !!python/tuple
+  - - 0.01
+    - 1.0
+  - - .nan
+    - .nan
+- !!python/tuple
+  - - 0.01
+    - 1.0
+  - - .nan
+    - .nan
+- !!python/tuple
+  - - 0.01
+    - 1.0
+  - - .nan
+    - .nan
+- !!python/tuple
+  - - 0.01
+    - 1.0
+  - - .nan
+    - .nan
+- !!python/tuple
+  - - 0.01
+    - 1.0
+  - - .nan
+    - .nan
+solver_name: STRONG

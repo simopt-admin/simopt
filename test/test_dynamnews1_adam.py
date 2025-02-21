@@ -13,10 +13,10 @@ from simopt.experiment_base import ProblemSolver, post_normalize
 #       with assertEqual as these should not change between runs.
 
 
-class TestProblemSolver(unittest.TestCase):
+class TestDynamnews1Adam(unittest.TestCase):
     def setUp(self) -> None:
         # Load expected results
-        file = "{{FILE}}"
+        file = "DYNAMNEWS1_ADAM.yaml"
         cwd = os.getcwd()
         path = os.path.join(cwd, "test", "expected_results", file)
         with open(path, "rb") as f:
