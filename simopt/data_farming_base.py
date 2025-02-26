@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import csv
 import itertools
+import logging
 import os
 import subprocess
 from copy import deepcopy
@@ -622,7 +623,7 @@ class DataFarmingMetaExperiment:
                     and solver_factor_headers is not None
                     and factor not in solver_factor_headers
                 ):
-                    print("default from df base", default)
+                    logging.info("default from df base", default)
                     solver_fixed_str[factor] = str(default)
 
             # all_solver_factor_names = solver_factor_headers + list(
@@ -660,7 +661,7 @@ class DataFarmingMetaExperiment:
                         [new_design_table, working_design_table],
                         ignore_index=True,
                     )
-                    print(new_design_table)
+                    logging.info(new_design_table)
 
                 design_table = new_design_table
 
@@ -797,10 +798,10 @@ class DataFarmingMetaExperiment:
             experiment = self.design[design_pt_index]
 
             if getattr(experiment, "n_macroreps", None) != n_macroreps:
-                print("Running Design Point " + str(design_pt_index) + ".")
+                logging.info("Running Design Point " + str(design_pt_index) + ".")
                 experiment.clear_run()
-                print(experiment.solver.name)
-                print(experiment.problem.name)
+                logging.info(experiment.solver.name)
+                logging.info(experiment.problem.name)
                 experiment.run(n_macroreps)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
@@ -850,7 +851,7 @@ class DataFarmingMetaExperiment:
                 or getattr(experiment, "crn_across_macroreps", None)
                 != crn_across_macroreps
             ):
-                print(
+                logging.info(
                     "Post-processing Design Point " + str(design_pt_index) + "."
                 )
                 experiment.clear_postreplicate()

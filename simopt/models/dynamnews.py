@@ -221,7 +221,7 @@ class DynamNews(Model):
             for j in instock:
                 if utility[t][j + 1] > utility[t][int(itembought[t])]:
                     itembought[t] = j + 1
-            # print("item bought", int(itembought[t]))
+            # logging.info("item bought", int(itembought[t]))
             if itembought[t] != 0:
                 inventory[int(itembought[t] - 1)] -= 1
 

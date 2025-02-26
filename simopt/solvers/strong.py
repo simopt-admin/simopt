@@ -9,6 +9,7 @@ A detailed description of the solver can be found
 
 from __future__ import annotations
 
+import logging
 import math
 import sys
 from typing import Callable, Literal
@@ -326,7 +327,7 @@ class STRONG(Solver):
                 )
                 r_diff = r_old - r_new
                 if r_diff == 0:
-                    print(
+                    logging.info(
                         "Warning: Division by zero in STRONG solver (r_diff == 0 (Step I_3))",
                         file=sys.stderr,
                     )
@@ -433,7 +434,7 @@ class STRONG(Solver):
                 )
                 r_diff = r_old - r_new
                 if r_diff == 0:
-                    print(
+                    logging.info(
                         "Warning: Division by zero in STRONG solver (r_diff == 0 (Step II_3))",
                         file=sys.stderr,
                     )
@@ -561,7 +562,7 @@ class STRONG(Solver):
                         g_b_diff = g_b_old - g_b_new
                         rr_diff = rr_old - rr_new
                         if rr_diff == 0:
-                            print(
+                            logging.info(
                                 "Warning: Division by zero in STRONG solver (rr_diff == 0)",
                                 file=sys.stderr,
                             )

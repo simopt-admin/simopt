@@ -1,6 +1,7 @@
 """GUI for SimOpt Library."""  # noqa: N999
 
 import tkinter as tk
+import logging
 
 from simopt.gui.main_menu import MainMenuWindow
 
@@ -20,6 +21,9 @@ def main() -> None:
     root = GUIMaster()
     root.title("SimOpt Library Graphical User Interface")
     root.pack_propagate(False)
+
+    logging.basicConfig(level=logging.WARNING)
+    logging.info("GUI started")
 
     # app = Experiment_Window(root)
     MainMenuWindow(root)

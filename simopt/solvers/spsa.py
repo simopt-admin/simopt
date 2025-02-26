@@ -6,6 +6,7 @@ Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for op
 
 from __future__ import annotations
 
+import logging
 import sys
 from typing import Callable
 
@@ -302,7 +303,7 @@ class SPSA(Solver):
             (aalg + 1) ** self.factors["alpha"]
         )
         if meangbar == 0:
-            print(
+            logging.info(
                 "Warning: Division by zero in SPSA solver (meangbar == 0)",
                 file=sys.stderr,
             )
@@ -349,7 +350,7 @@ class SPSA(Solver):
             mean_net = mean_minus + mean_plus
             net_step_weight = step_weight_plus + step_weight_minus
             if net_step_weight == 0:
-                print(
+                logging.info(
                     "Warning: Division by zero in SPSA solver (step_weight_minus = step_weight_plus)",
                     file=sys.stderr,
                 )
@@ -407,7 +408,7 @@ def check_cons(
         if current_step[i] > 0:
             diff = upper_bound[i] - new_x[i]
             if current_step[i] == np.inf:
-                print(
+                logging.info(
                     "Warning: Division by +inf in SPSA solver", file=sys.stderr
                 )
                 # IEEE 754 standard.
@@ -417,7 +418,7 @@ def check_cons(
         elif current_step[i] < 0:
             diff = lower_bound[i] - new_x[i]
             if current_step[i] == -np.inf:
-                print(
+                logging.info(
                     "Warning: Division by -inf in SPSA solver", file=sys.stderr
                 )
                 # IEEE 754 standard.

@@ -14,12 +14,13 @@ This version does not require a delta_max, instead it estimates the maximum step
 
 from __future__ import annotations
 
+import logging
 import sys
 from math import ceil, log
 from typing import Callable
 
 import numpy as np
-from numpy.linalg import norm, inv, pinv
+from numpy.linalg import inv, norm, pinv
 from scipy.optimize import NonlinearConstraint, minimize
 
 from simopt.base import (
@@ -737,7 +738,7 @@ class ASTRODF(Solver):
                         * np.sqrt(pilot_run)
                         / (delta_k ** (delta_power / 2))
                     )
-                    # print("kappa "+str(kappa))
+                    # logging.info("kappa "+str(kappa))
                     break
                 problem.simulate(incumbent_solution, 1)
                 expended_budget += 1
@@ -811,8 +812,8 @@ class ASTRODF(Solver):
         if easy_solve:
             # Cauchy reduction
             # TODO: why do we need this? Check model reduction calculation too.
-            # print("np.dot(np.multiply(grad, Hessian), grad) "+str(np.dot(np.multiply(grad, hessian), grad)))
-            # print("np.dot(np.dot(grad, hessian), grad) "+str(np.dot(np.dot(grad, hessian), grad)))
+            # logging.info("np.dot(np.multiply(grad, Hessian), grad) "+str(np.dot(np.multiply(grad, hessian), grad)))
+            # logging.info("np.dot(np.dot(grad, hessian), grad) "+str(np.dot(np.dot(grad, hessian), grad)))
             if enable_gradient:
                 dot_a = np.dot(grad, hessian)
             else:
@@ -838,8 +839,8 @@ class ASTRODF(Solver):
                 adjustment = product / grad_norm
                 candidate_x = incumbent_x - adjustment
             # if norm(incumbent_x - candidate_x) > 0:
-            #     print("incumbent_x " + str(incumbent_x))
-            #     print("candidate_x " + str(candidate_x))
+            #     logging.info("incumbent_x " + str(incumbent_x))
+            #     logging.info("candidate_x " + str(candidate_x))
 
         else:
             # Search engine - solve subproblem
@@ -861,7 +862,7 @@ class ASTRODF(Solver):
             )
             candidate_x = incumbent_x + solve_subproblem.x
 
-        # print("problem.lower_bounds "+str(problem.lower_bounds))
+        # logging.info("problem.lower_bounds "+str(problem.lower_bounds))
         # handle the box constraints
         new_candidate_list = []
         for i in range(problem.dim):
@@ -893,7 +894,7 @@ class ASTRODF(Solver):
             sample_size = pilot_run
             while True:
                 # if enable_gradient:
-                #     # print("incumbent_solution.objectives_gradients_var[0] "+str(candidate_solution.objectives_gradients_var[0]))
+                #     # logging.info("incumbent_solution.objectives_gradients_var[0] "+str(candidate_solution.objectives_gradients_var[0]))
                 #     while norm(candidate_solution.objectives_gradients_var[0]) == 0 and candidate_solution.n_reps < max(pilot_run, lambda_max/100):
                 #         problem.simulate(candidate_solution, 1)
                 #         expended_budget += 1
@@ -925,8 +926,8 @@ class ASTRODF(Solver):
         fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
         # replace the candidate x if the interpolation set has lower objective function value and with sufficient reduction (pattern search)
         # also if the candidate solution's variance is high that could be caused by stopping early due to exhausting budget
-        # print("cv "+str(candidate_solution.objectives_var/(candidate_solution.n_reps * candidate_solution.objectives_mean ** 2)))
-        # print("fval[0] - min(fval) "+str(fval[0] - min(fval)))
+        # logging.info("cv "+str(candidate_solution.objectives_var/(candidate_solution.n_reps * candidate_solution.objectives_mean ** 2)))
+        # logging.info("fval[0] - min(fval) "+str(fval[0] - min(fval)))
         if not enable_gradient and (
             (
                 (min(fval) < fval_tilde)
@@ -995,7 +996,7 @@ class ASTRODF(Solver):
                     warning_msg = (
                         "Warning: Division by 0 in ASTRO-DF solver (y_ks == 0)."
                     )
-                    print(warning_msg, file=sys.stderr)
+                    logging.info(warning_msg, file=sys.stderr)
                     r_k = 0
                 else:
                     r_k = 1.0 / (y_k @ s)
@@ -1012,7 +1013,7 @@ class ASTRODF(Solver):
 
         # TODO: unified TR management
         # delta_k = min(kappa * norm(grad), delta_max)
-        # print("norm of grad "+str(norm(grad)))
+        # logging.info("norm of grad "+str(norm(grad)))
         return (
             final_ob,
             delta_k,
@@ -1065,11 +1066,11 @@ class ASTRODF(Solver):
             delta_max_arr += [min(soln_range, bounds_range)]
         # TODO: update this so that it could be used for problems with decision variables at varying scales!
         delta_max = max(delta_max_arr)
-        # print("delta_max  " + str(delta_max))
+        # logging.info("delta_max  " + str(delta_max))
         # Reset iteration and data storage arrays
         visited_pts_list = []
         delta_k = 10 ** (ceil(log(delta_max * 2, 10) - 1) / problem.dim)
-        # print("initial delta " + str(delta_k))
+        # logging.info("initial delta " + str(delta_k))
         incumbent_x: tuple[int | float, ...] = problem.factors[
             "initial_solution"
         ]
