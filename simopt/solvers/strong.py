@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import logging
 import math
-import sys
 from typing import Callable, Literal
+from simopt.utils import classproperty
 
 import numpy as np
 from numpy.linalg import norm
@@ -65,24 +65,24 @@ class STRONG(Solver):
     base.Solver
     """
 
-    @property
-    def objective_type(self) -> ObjectiveType:
+    @classproperty
+    def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_needed(self) -> bool:
+    @classproperty
+    def gradient_needed(cls) -> bool:
         return False
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",

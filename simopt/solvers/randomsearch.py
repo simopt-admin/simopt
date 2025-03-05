@@ -9,6 +9,7 @@ A detailed description of the solver can be found `here <https://simopt.readthed
 from __future__ import annotations
 
 from typing import Callable
+from simopt.utils import classproperty
 
 from simopt.base import (
     ConstraintType,
@@ -59,24 +60,32 @@ class RandomSearch(Solver):
     base.Solver
     """
 
-    @property
-    def objective_type(self) -> ObjectiveType:
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "RNDSRCH"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Random Search"
+
+    @classproperty
+    def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.MIXED
 
-    @property
-    def gradient_needed(self) -> bool:
+    @classproperty
+    def gradient_needed(cls) -> bool:
         return False
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",

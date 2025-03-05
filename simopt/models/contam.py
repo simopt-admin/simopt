@@ -9,6 +9,7 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 from typing import Callable, Final
+from simopt.utils import classproperty
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -50,20 +51,20 @@ class Contamination(Model):
     base.Model
     """
 
-    @property
-    def name(self) -> str:
+    @classproperty
+    def class_name_abbr(cls) -> str:
         return "CONTAM"
 
-    @property
-    def n_rngs(self) -> int:
+    @classproperty
+    def n_rngs(cls) -> int:
         return 2
 
-    @property
-    def n_responses(self) -> int:
+    @classproperty
+    def n_responses(cls) -> int:
         return 1
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "contam_rate_alpha": {
                 "description": "alpha parameter of beta distribution for growth rate of contamination at each stage",
@@ -297,48 +298,56 @@ class ContaminationTotalCostDisc(Problem):
     base.Problem
     """
 
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "CONTAM-1"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Min Total Cost for Discrete Contamination"
+
+    @classproperty
+    def n_objectives(cls) -> int:
         return 1
 
-    @property
-    def n_stochastic_constraints(self) -> int:
-        return self.model.factors["stages"]
+    @classproperty
+    def n_stochastic_constraints(cls) -> int:
+        return cls.model.factors["stages"]
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    def minmax(cls) -> tuple[int]:
         return (-1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    def gradient_available(cls) -> bool:
         return True
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    def optimal_value(cls) -> float | None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    def optimal_solution(cls) -> tuple | None:
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    def model_decision_factors(cls) -> set[str]:
         return {"prev_decision"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "initial solution",
@@ -688,48 +697,56 @@ class ContaminationTotalCostCont(Problem):
     base.Problem
     """
 
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "CONTAM-2"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Min Total Cost for Continuous Contamination"
+
+    @classproperty
+    def n_objectives(cls) -> int:
         return 1
 
     @property
     def n_stochastic_constraints(self) -> int:
         return self.model.factors["stages"]
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    def minmax(cls) -> tuple[int]:
         return (-1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    def gradient_available(cls) -> bool:
         return True
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    def optimal_value(cls) -> float | None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    def optimal_solution(cls) -> tuple | None:
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    def model_decision_factors(cls) -> set[str]:
         return {"prev_decision"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "initial solution",

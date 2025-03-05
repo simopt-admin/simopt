@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Callable
 
 import numpy as np
+from simopt.utils import classproperty
 
 from simopt.base import (
     ConstraintType,
@@ -63,24 +64,32 @@ class NelderMead(Solver):
     base.Solver
     """
 
-    @property
-    def objective_type(self) -> ObjectiveType:
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "NELDMD"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Nelder-Mead"
+
+    @classproperty
+    def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_needed(self) -> bool:
+    @classproperty
+    def gradient_needed(cls) -> bool:
         return False
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",

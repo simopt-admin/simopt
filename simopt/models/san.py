@@ -7,6 +7,7 @@ A detailed description of the model/problem can be found
 """
 
 from __future__ import annotations
+from simopt.utils import classproperty
 
 from typing import Callable, Final
 
@@ -49,20 +50,20 @@ class SAN(Model):
     base.Model
     """
 
-    @property
-    def name(self) -> str:
-        return "SAN"
+    @classproperty
+    def class_name(cls) -> str:
+        return "Stochastic Activity Network"
 
-    @property
-    def n_rngs(self) -> int:
+    @classproperty
+    def n_rngs(cls) -> int:
         return 1
 
-    @property
-    def n_responses(self) -> int:
+    @classproperty
+    def n_responses(cls) -> int:
         return 1
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "num_nodes": {
                 "description": "number of nodes",
@@ -322,48 +323,56 @@ class SANLongestPath(Problem):
     base.Problem
     """
 
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "SAN-1"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Min Mean Longest Path for Stochastic Activity Network"
+
+    @classproperty
+    def n_objectives(cls) -> int:
         return 1
 
-    @property
-    def n_stochastic_constraints(self) -> int:
+    @classproperty
+    def n_stochastic_constraints(cls) -> int:
         return 0
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    def minmax(cls) -> tuple[int]:
         return (-1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    def gradient_available(cls) -> bool:
         return True
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    def optimal_value(cls) -> float | None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    def optimal_solution(cls) -> tuple | None:
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    def model_decision_factors(cls) -> set[str]:
         return {"arc_means"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "initial solution",

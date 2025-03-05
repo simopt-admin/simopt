@@ -4799,11 +4799,12 @@ class ProblemsSolvers:
     @solver_names.setter
     def solver_names(self, solver_names: list[str]) -> None:
         self.__solver_names = solver_names
+        self.__n_solvers = len(solver_names)
 
     @property
     def n_solvers(self) -> int:
         """Number of solvers."""
-        return len(self.solver_names)
+        return self.__n_solvers
 
     @property
     def problem_names(self) -> list[str]:
@@ -4813,11 +4814,12 @@ class ProblemsSolvers:
     @problem_names.setter
     def problem_names(self, problem_names: list[str]) -> None:
         self.__problem_names = problem_names
+        self.__n_problems = len(problem_names)
 
     @property
     def n_problems(self) -> int:
         """Number of problems."""
-        return len(self.problem_names)
+        return self.__n_problems
 
     @property
     def solvers(self) -> list[Solver]:

@@ -2,6 +2,7 @@ import tkinter as tk
 from abc import ABC, abstractmethod
 from tkinter import ttk
 from typing import Literal, Union
+from simopt.utils import classproperty
 
 
 class DFFactor(ABC):
@@ -17,9 +18,9 @@ class DFFactor(ABC):
         """The description of the factor."""
         return self.__description
 
-    @property
+    @classproperty
     @abstractmethod
-    def type(self) -> tk.StringVar:
+    def type(cls) -> tk.StringVar:
         """The type of the factor."""
         raise NotImplementedError
 
@@ -328,8 +329,8 @@ class DFBoolean(DFFactor):
         """Whether to include the factor in the experiment."""
         return self.__include
 
-    @property
-    def type(self) -> tk.StringVar:
+    @classproperty
+    def type(cls) -> tk.StringVar:
         """The type of the factor."""
         return tk.StringVar(value="bool")
 
@@ -421,8 +422,8 @@ class DFBoolean(DFFactor):
 class DFInteger(DFFactor):
     """Class to store integer factors for problems and solvers."""
 
-    @property
-    def type(self) -> tk.StringVar:
+    @classproperty
+    def type(cls) -> tk.StringVar:
         """The type of the factor."""
         return tk.StringVar(value="int")
 
@@ -494,8 +495,8 @@ class DFInteger(DFFactor):
 class DFIntegerNonDatafarmable(DFFactor):
     """Class to store non-datafarmable integer factors for problems and solvers."""
 
-    @property
-    def type(self) -> tk.StringVar:
+    @classproperty
+    def type(cls) -> tk.StringVar:
         """The type of the factor."""
         return tk.StringVar(value="int")
 
@@ -542,8 +543,8 @@ class DFIntegerNonDatafarmable(DFFactor):
 class DFFloat(DFFactor):
     """Class to store float factors for problems and solvers."""
 
-    @property
-    def type(self) -> tk.StringVar:
+    @classproperty
+    def type(cls) -> tk.StringVar:
         """The type of the factor."""
         return tk.StringVar(value="float")
 
@@ -649,8 +650,8 @@ class DFFloat(DFFactor):
 class DFTuple(DFFactor):
     """Class to store tuple factors for problems and solvers."""
 
-    @property
-    def type(self) -> tk.StringVar:
+    @classproperty
+    def type(cls) -> tk.StringVar:
         """The type of the factor."""
         return tk.StringVar(value="tuple")
 
@@ -696,8 +697,8 @@ class DFTuple(DFFactor):
 class DFList(DFFactor):
     """Class to store list factors for problems and solvers."""
 
-    @property
-    def type(self) -> tk.StringVar:
+    @classproperty
+    def type(cls) -> tk.StringVar:
         """The type of the factor."""
         return tk.StringVar(value="list")
 

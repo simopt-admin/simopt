@@ -8,6 +8,7 @@ A detailed description of the model/problem can be found
 """
 
 from __future__ import annotations
+from simopt.utils import classproperty
 
 from typing import Callable
 
@@ -48,20 +49,20 @@ class RMITD(Model):
     base.Model
     """
 
-    @property
-    def name(self) -> str:
-        return "RMITD"
+    @classproperty
+    def class_name(cls) -> str:
+        return "Revenue Management Temporal Demand"
 
-    @property
-    def n_rngs(self) -> int:
+    @classproperty
+    def n_rngs(cls) -> int:
         return 2
 
-    @property
-    def n_responses(self) -> int:
+    @classproperty
+    def n_responses(cls) -> int:
         return 1
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "time_horizon": {
                 "description": "time horizon",
@@ -346,49 +347,57 @@ class RMITDMaxRevenue(Problem):
     base.Problem
     """
 
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "RMITD-1"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Max Revenue for Revenue Management Temporal Demand"
+
+    @classproperty
+    def n_objectives(cls) -> int:
         return 1
 
-    @property
-    def n_stochastic_constraints(self) -> int:
+    @classproperty
+    def n_stochastic_constraints(cls) -> int:
         return 0
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    def minmax(cls) -> tuple[int]:
         return (1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.DETERMINISTIC
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    def gradient_available(cls) -> bool:
         return False
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    def optimal_value(cls) -> float | None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    def optimal_solution(cls) -> tuple | None:
         # return (90, 50, 0)
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    def model_decision_factors(cls) -> set[str]:
         return {"initial_inventory", "reservation_qtys"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "initial solution",
@@ -410,17 +419,17 @@ class RMITDMaxRevenue(Problem):
             "budget": self.check_budget,
         }
 
-    @property
-    def dim(self) -> int:
+    @classproperty
+    def dim(cls) -> int:
         return 3
 
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
+    @classproperty
+    def lower_bounds(cls) -> tuple:
+        return (0,) * cls.dim
 
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @classproperty
+    def upper_bounds(cls) -> tuple:
+        return (np.inf,) * cls.dim
 
     def __init__(
         self,
