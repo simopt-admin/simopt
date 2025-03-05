@@ -9,15 +9,19 @@ import os
 import pickle
 import subprocess
 import time
-from enum import Enum
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import simopt.curve_utils as curve_utils
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
+from simopt.curve import (
+    Curve,
+    CurveType,
+)
 from simopt.directory import (
     model_directory,
     problem_directory,
@@ -27,7 +31,6 @@ from simopt.directory import (
 # Imports exclusively used when type checking
 # Prevents imports from being executed at runtime
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
     from typing import Literal
 
     from matplotlib.lines import Line2D as Line2D
@@ -37,553 +40,6 @@ if TYPE_CHECKING:
 EXPERIMENT_DIR = os.path.join(
     os.getcwd(), "experiments", time.strftime("%Y-%m-%d_%H-%M-%S")
 )
-
-
-class CurveType(Enum):
-    """Enumeration for different curve styles."""
-
-    REGULAR = "regular"
-    CONF_BOUND = "conf_bound"
-
-    @property
-    def style(self) -> tuple[str, int]:
-        """Returns linestyle and linewidth for the curve type."""
-        return {
-            CurveType.REGULAR: ("-", 2),
-            CurveType.CONF_BOUND: ("--", 1),
-        }[self]
-
-
-class Curve:
-    """Base class for all curves.
-
-    Attributes
-    ----------
-    x_vals : list [float]
-        Values of horizontal components.
-    y_vals : list [float]
-        Values of vertical components.
-    n_points : int
-        Number of values in x- and y- vectors.
-
-    Parameters
-    ----------
-    x_vals : list [float]
-        Values of horizontal components.
-    y_vals : list [float]
-        Values of vertical components.
-
-    """
-
-    @property
-    def x_vals(self) -> tuple[float, ...]:
-        """Values of horizontal components."""
-        return self.__x_vals
-
-    @property
-    def y_vals(self) -> tuple[float, ...]:
-        """Values of vertical components."""
-        return self.__y_vals
-
-    @property
-    def n_points(self) -> int:
-        """Number of points in the curve."""
-        return self.__n_points
-
-    def __init__(
-        self, x_vals: Sequence[int | float], y_vals: Sequence[int | float]
-    ) -> None:
-        """Initialize a curve with x- and y-values.
-
-        Parameters
-        ----------
-        x_vals : Sequence[int | float]
-            Values of horizontal components.
-        y_vals : Sequence[int | float]
-            Values of vertical components.
-
-        Raises
-        ------
-        TypeError
-        ValueError
-        """
-        try:
-            # Ensure x_vals and y_vals have the same length before conversion
-            if len(x_vals) != len(y_vals):
-                error_msg = f"Length of x ({len(x_vals)}) and y ({len(y_vals)}) must be equal."
-                raise ValueError(error_msg)
-
-            # Convert to immutable tuples only after validation
-            self.__x_vals = tuple(float(x) for x in x_vals)
-            self.__y_vals = tuple(float(y) for y in y_vals)
-
-            # Store the number of points
-            self.__n_points = len(self.__x_vals)
-
-        except (TypeError, ValueError) as e:
-            error_msg = f"Invalid input for Curve initialization: {e}"
-            logging.error(error_msg)
-            raise ValueError(error_msg) from e  # Keep the original error type
-
-    def lookup(self, x_val: float) -> float:
-        """Lookup the y-value of the curve at an intermediate x-value.
-
-        Parameters
-        ----------
-        x_val : float
-            X-value at which to lookup the y-value.
-
-        Returns
-        -------
-        float
-            Y-value corresponding to x, or NaN if x_val is out of range.
-
-        Raises
-        ------
-        TypeError
-            If x_val is not numeric.
-        """
-        import math
-        from bisect import bisect_right
-
-        try:
-            # Return NaN if x_val is out of range (before first or after last x-value)
-            if x_val < self.x_vals[0] or x_val > self.x_vals[-1]:
-                return math.nan
-
-            # Use binary search (O(log n)) instead of linear search (O(n))
-            idx = bisect_right(self.x_vals, x_val) - 1
-            return self.y_vals[idx]
-
-        except TypeError as e:
-            raise TypeError(f"x_val must be a numeric value: {e}") from e
-
-    def compute_crossing_time(self, threshold: float) -> float:
-        """Compute the first time at which a curve drops below a given threshold.
-
-        Parameters
-        ----------
-        threshold : float
-            Value for which to find first crossing time.
-
-        Returns
-        -------
-        float
-            First time at which a curve drops below threshold.
-
-        Raises
-        ------
-        TypeError
-            If threshold is not numeric.
-        """
-        import math
-        from bisect import bisect_right
-
-        try:
-            # Find the first index where y_vals < threshold using binary search
-            index = bisect_right(self.y_vals, threshold)
-
-            # If all y-values are above the threshold, return infinity
-            if index == self.n_points:
-                return math.inf
-
-            # Return corresponding x-value
-            return self.x_vals[index]
-
-        except TypeError as e:
-            raise TypeError(f"Threshold must be a numeric value: {e}") from e
-
-    def compute_area_under_curve(self) -> float:
-        """Compute the area under a curve.
-
-        Returns
-        -------
-        float
-            Area under the curve.
-        """
-        x_diffs = (
-            x_next - x for x, x_next in zip(self.x_vals[:-1], self.x_vals[1:])
-        )
-        area_contributions = (
-            y * dx for y, dx in zip(self.y_vals[:-1], x_diffs)
-        )
-
-        return sum(area_contributions)
-
-    def curve_to_mesh(self, mesh: Iterable[float]) -> Curve:
-        """Create a curve defined at equally spaced x values.
-
-        Parameters
-        ----------
-        mesh : Iterable[float]
-            Collection of uniformly spaced x-values.
-
-        Returns
-        -------
-        ``experiment_base.Curve``
-            Curve with equally spaced x-values.
-
-        Raises
-        ------
-        TypeError
-            If mesh is not an iterable of numeric values.
-        """
-        try:
-            # Ensure mesh contains valid numeric values
-            mesh_x_vals = tuple(float(x) for x in mesh)
-
-            # Generate corresponding y-values using lookup
-            mesh_y_vals = tuple(self.lookup(x) for x in mesh_x_vals)
-
-            return Curve(x_vals=mesh_x_vals, y_vals=mesh_y_vals)
-
-        except (TypeError, ValueError) as e:
-            error_msg = "Mesh must be an iterable of numeric values."
-            logging.error(error_msg)
-            raise TypeError(error_msg) from e
-
-    def curve_to_full_curve(self) -> Curve:
-        """Create a curve with duplicate x- and y-values to indicate steps.
-
-        Returns
-        -------
-        ``experiment_base.Curve``
-            Curve with duplicate x- and y-values.
-
-        """
-        from itertools import chain, repeat
-
-        full_curve = Curve(
-            x_vals=chain.from_iterable(repeat(x, 2) for x in self.x_vals),
-            y_vals=chain.from_iterable(repeat(y, 2) for y in self.y_vals),
-        )
-        return Curve(
-            x_vals=list(full_curve.x_vals)[1:],
-            y_vals=list(full_curve.y_vals)[:-1],
-        )
-
-    def plot(
-        self,
-        color_str: str = "C0",
-        curve_type: CurveType = CurveType.REGULAR,
-    ) -> Line2D:
-        """Plot a curve.
-
-        Parameters
-        ----------
-        color_str : str, default="C0"
-            String indicating line color, e.g., "C0", "C1", etc.
-        curve_type : CurveType, default=CurveType.REGULAR
-            Type of line: REGULAR (solid) or CONF_BOUND (dashed).
-
-        Returns
-        -------
-        matplotlib.lines.Line2D
-            Curve handle, to use when creating legends.
-
-        Raises
-        ------
-        ValueError
-            If an invalid curve type is provided.
-        """
-        try:
-            # Ensure curve_type is a valid Enum member
-            if not isinstance(curve_type, CurveType):
-                error_msg = f"Invalid curve type: {curve_type}. Must be a member of CurveType."
-                raise ValueError(error_msg)
-
-            linestyle, linewidth = curve_type.style
-
-            # Plot the step curve
-            handle = plt.step(
-                self.x_vals,
-                self.y_vals,
-                color=color_str,
-                linestyle=linestyle,
-                linewidth=linewidth,
-                where="post",
-            )[0]
-
-            return handle
-
-        except Exception as e:
-            error_msg = f"Error in plot function: {e}"
-            logging.error(error_msg)
-            raise
-
-
-def mean_of_curves(curves: Iterable[Curve]) -> Curve:
-    """Compute pointwise (w.r.t. x-values) mean of curves.
-
-    Starting and ending x-values must coincide for all curves.
-
-    Parameters
-    ----------
-    curves : Iterable [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-
-    Returns
-    -------
-    ``experiment_base.Curve object``
-        Mean curve.
-
-    Raises
-    ------
-    TypeError
-    """
-    from statistics import mean
-
-    try:
-        # Collect unique x-values across all curves
-        unique_x_vals = sorted(
-            {x_val for curve in curves for x_val in curve.x_vals}
-        )
-
-        # Compute pointwise means using generator expressions
-        mean_y_vals = [
-            mean(curve.lookup(x_val) for curve in curves)
-            for x_val in unique_x_vals
-        ]
-
-        return Curve(x_vals=unique_x_vals, y_vals=mean_y_vals)
-
-    except AttributeError as e:
-        error_msg = "Curves must be an iterable of Curve objects."
-        logging.error(error_msg)
-        raise TypeError(error_msg) from e
-
-
-def quantile_of_curves(curves: Iterable[Curve], beta: float) -> Curve:
-    """Compute pointwise (w.r.t. x values) quantile of curves.
-
-    Starting and ending x values must coincide for all curves.
-
-    Parameters
-    ----------
-    curves : Iterable [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-    beta : float
-        Quantile level.
-
-    Returns
-    -------
-    ``experiment_base.Curve``
-        Quantile curve.
-
-    Raises
-    ------
-    TypeError
-    """
-    from statistics import quantiles
-
-    try:
-        # Collect unique x-values across all curves
-        unique_x_vals = sorted(
-            {x_val for curve in curves for x_val in curve.x_vals}
-        )
-
-        # Precompute quantile index
-        quantile_idx = int(beta * 99)
-
-        # Compute pointwise quantiles
-        quantile_y_vals = [
-            quantiles((curve.lookup(x_val) for curve in curves), n=100)[
-                quantile_idx
-            ]
-            for x_val in unique_x_vals
-        ]
-
-        return Curve(x_vals=unique_x_vals, y_vals=quantile_y_vals)
-
-    except AttributeError as e:
-        error_msg = "Curves must be an iterable of Curve objects."
-        logging.error(error_msg)
-        raise TypeError(error_msg) from e
-    except TypeError as e:
-        error_msg = "Beta must be a numeric value (int or float)."
-        logging.error(error_msg)
-        raise TypeError(error_msg) from e
-
-
-def cdf_of_curves_crossing_times(
-    curves: Iterable[Curve], threshold: float
-) -> Curve:
-    """Compute the cdf of crossing times of curves.
-
-    Parameters
-    ----------
-    curves : list [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-    threshold : float
-        Value for which to find first crossing time.
-
-    Returns
-    -------
-    ``experiment_base.Curve``
-        CDF of crossing times.
-
-    Raises
-    ------
-    TypeError
-
-    """
-    from bisect import bisect_right
-
-    try:
-        # Compute crossing times once (errors will naturally raise if `curves` is invalid)
-        crossing_times = [
-            curve.compute_crossing_time(threshold) for curve in curves
-        ]
-
-        # Collect unique crossing times (excluding infinity)
-        finite_crossing_times = {t for t in crossing_times if t < float("inf")}
-
-        # Construct sorted unique x-values with 0 and 1 at the edges
-        unique_x_vals = [0, *sorted(finite_crossing_times), 1]
-
-        # Use binary search (`bisect_right`) for efficient cumulative sum calculation
-        n_curves = len(curves)
-        sorted_crossings = sorted(crossing_times)
-
-        cdf_y_vals = [
-            bisect_right(sorted_crossings, x) / n_curves for x in unique_x_vals
-        ]
-
-        return Curve(x_vals=unique_x_vals, y_vals=cdf_y_vals)
-
-    except AttributeError as e:
-        error_msg = "Curves must be an iterable of Curve objects."
-        logging.error(error_msg)
-        raise TypeError(error_msg) from e
-    except TypeError as e:
-        error_msg = "Threshold must be a float."
-        logging.error(error_msg)
-        raise TypeError(error_msg) from e
-
-
-def quantile_cross_jump(
-    curves: Iterable[Curve], threshold: float, beta: float
-) -> Curve:
-    """Compute a simple curve with a jump at the quantile of the crossing times.
-
-    Parameters
-    ----------
-    curves : list [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-    threshold : float
-        Value for which to find first crossing time.
-    beta : float
-        Quantile level.
-
-    Returns
-    -------
-    ``experiment_base.Curve``
-        Piecewise-constant curve with a jump at the quantile crossing time (if finite).
-
-    Raises
-    ------
-    TypeError
-
-    """
-    import math
-    from statistics import quantiles
-
-    """Computes the quantile crossing time curve based on the given threshold and beta quantile."""
-
-    try:
-        # Compute crossing times once
-        crossing_times = [
-            curve.compute_crossing_time(threshold=threshold) for curve in curves
-        ]
-
-        # Compute quantile using built-in `statistics.quantiles()` instead of `np.quantile()`
-        quantile_idx = int(
-            beta * 99
-        )  # Convert beta into an index (assuming n=100 quantiles)
-        solve_time_quantile = quantiles(crossing_times, n=100)[quantile_idx]
-
-        # Handle NaN and infinity cases
-        if math.isinf(solve_time_quantile) or math.isnan(solve_time_quantile):
-            return Curve(x_vals=[0, 1], y_vals=[0, 0])
-        else:
-            return Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
-
-    except AttributeError as e:
-        error_msg = "Curves must be an iterable of Curve objects."
-        logging.error(error_msg)
-        raise TypeError(error_msg) from e
-    except TypeError as e:
-        error_msg = "Threshold and Beta must be numeric (int or float)."
-        logging.error(error_msg)
-        raise TypeError(error_msg) from e
-
-
-def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
-    """Compute the difference of two curves (Curve 1 - Curve 2).
-
-    Parameters
-    ----------
-    curve_1: ``experiment_base.Curve``
-        First curve to take the difference of.
-    curve_2 : ``experiment_base.Curve``
-        Second curve to take the difference of.
-
-    Returns
-    -------
-    ``experiment_base.Curve``
-        Difference of curves.
-
-    Raises
-    ------
-    TypeError
-
-    """
-    try:
-        # Collect unique x-values from both curves
-        unique_x_vals = sorted(set(curve_1.x_vals) | set(curve_2.x_vals))
-
-        # Compute difference in y-values
-        difference_y_vals = [
-            curve_1.lookup(x_val) - curve_2.lookup(x_val)
-            for x_val in unique_x_vals
-        ]
-
-        return Curve(x_vals=unique_x_vals, y_vals=difference_y_vals)
-
-    except AttributeError as e:
-        error_msg = "Both curve_1 and curve_2 must be Curve objects."
-        logging.error(error_msg)
-        raise TypeError(error_msg) from e
-
-
-def max_difference_of_curves(curve_1: Curve, curve_2: Curve) -> float:
-    """Compute the maximum difference of two curves (Curve 1 - Curve 2).
-
-    Parameters
-    ----------
-    curve_1: ``experiment_base.Curve``
-        First curve to take the difference of.
-    curve_2 : ``experiment_base.Curve``
-        Curves to take the difference of.
-
-    Returns
-    -------
-    float
-        Maximum difference of curves.
-
-    Raises
-    ------
-    TypeError
-    """
-
-    try:
-        # Compute the difference curve and return the max y-value
-        return max(difference_of_curves(curve_1, curve_2).y_vals)
-
-    except AttributeError as e:
-        error_msg = "Both curve_1 and curve_2 must be Curve objects."
-        logging.error(error_msg)
-        raise TypeError(error_msg) from e
 
 
 class ProblemSolver:
@@ -2564,10 +2020,10 @@ def functional_of_curves(
 
     if plot_type == "mean":
         # Single experiment --> returns a curve.
-        return mean_of_curves(bootstrap_curves[0][0])
+        return curve_utils.mean_of_curves(bootstrap_curves[0][0])
     elif plot_type == "quantile":
         # Single experiment --> returns a curve.
-        return quantile_of_curves(bootstrap_curves[0][0], beta=beta)
+        return curve_utils.quantile_of_curves(bootstrap_curves[0][0], beta=beta)
     elif plot_type == "area_mean":
         # Single experiment --> returns a scalar.
         area_mean = np.mean(
@@ -2599,14 +2055,14 @@ def functional_of_curves(
         return float(solve_time_quantile)
     elif plot_type == "solve_time_cdf":
         # Single experiment --> returns a curve.
-        return cdf_of_curves_crossing_times(
+        return curve_utils.cdf_of_curves_crossing_times(
             bootstrap_curves[0][0], threshold=solve_tol
         )
     elif plot_type == "cdf_solvability":
         # One solver, multiple problems --> returns a curve.
-        return mean_of_curves(
+        return curve_utils.mean_of_curves(
             [
-                cdf_of_curves_crossing_times(
+                curve_utils.cdf_of_curves_crossing_times(
                     curves=progress_curves, threshold=solve_tol
                 )
                 for progress_curves in bootstrap_curves[0]
@@ -2614,9 +2070,9 @@ def functional_of_curves(
         )
     elif plot_type == "quantile_solvability":
         # One solver, multiple problems --> returns a curve.
-        return mean_of_curves(
+        return curve_utils.mean_of_curves(
             [
-                quantile_cross_jump(
+                curve_utils.quantile_cross_jump(
                     curves=progress_curves, threshold=solve_tol, beta=beta
                 )
                 for progress_curves in bootstrap_curves[0]
@@ -2624,44 +2080,44 @@ def functional_of_curves(
         )
     elif plot_type == "diff_cdf_solvability":
         # Two solvers, multiple problems --> returns a curve.
-        solvability_profile_1 = mean_of_curves(
+        solvability_profile_1 = curve_utils.mean_of_curves(
             [
-                cdf_of_curves_crossing_times(
+                curve_utils.cdf_of_curves_crossing_times(
                     curves=progress_curves, threshold=solve_tol
                 )
                 for progress_curves in bootstrap_curves[0]
             ]
         )
-        solvability_profile_2 = mean_of_curves(
+        solvability_profile_2 = curve_utils.mean_of_curves(
             [
-                cdf_of_curves_crossing_times(
+                curve_utils.cdf_of_curves_crossing_times(
                     curves=progress_curves, threshold=solve_tol
                 )
                 for progress_curves in bootstrap_curves[1]
             ]
         )
-        return difference_of_curves(
+        return curve_utils.difference_of_curves(
             solvability_profile_1, solvability_profile_2
         )
     elif plot_type == "diff_quantile_solvability":
         # Two solvers, multiple problems --> returns a curve.
-        solvability_profile_1 = mean_of_curves(
+        solvability_profile_1 = curve_utils.mean_of_curves(
             [
-                quantile_cross_jump(
+                curve_utils.quantile_cross_jump(
                     curves=progress_curves, threshold=solve_tol, beta=beta
                 )
                 for progress_curves in bootstrap_curves[0]
             ]
         )
-        solvability_profile_2 = mean_of_curves(
+        solvability_profile_2 = curve_utils.mean_of_curves(
             [
-                quantile_cross_jump(
+                curve_utils.quantile_cross_jump(
                     curves=progress_curves, threshold=solve_tol, beta=beta
                 )
                 for progress_curves in bootstrap_curves[1]
             ]
         )
-        return difference_of_curves(
+        return curve_utils.difference_of_curves(
             solvability_profile_1, solvability_profile_2
         )
     else:
@@ -2789,8 +2245,12 @@ def plot_bootstrap_conf_ints(
         error_msg = "Color string must be a string."
         raise TypeError(error_msg)
 
-    bs_conf_int_lower_bounds.plot(color_str=color_str, curve_type=CurveType.CONF_BOUND)
-    bs_conf_int_upper_bounds.plot(color_str=color_str, curve_type=CurveType.CONF_BOUND)
+    bs_conf_int_lower_bounds.plot(
+        color_str=color_str, curve_type=CurveType.CONF_BOUND
+    )
+    bs_conf_int_upper_bounds.plot(
+        color_str=color_str, curve_type=CurveType.CONF_BOUND
+    )
     # Shade space between curves.
     # Convert to full curves to get piecewise-constant shaded areas.
     plt.fill_between(
@@ -2865,7 +2325,8 @@ def report_max_halfwidth(
         min_lower_bound = min(min_lower_bound, min(curve_pair[0].y_vals))
         max_upper_bound = max(max_upper_bound, max(curve_pair[1].y_vals))
         max_halfwidths.append(
-            0.5 * max_difference_of_curves(curve_pair[1], curve_pair[0])
+            0.5
+            * curve_utils.max_difference_of_curves(curve_pair[1], curve_pair[0])
         )
     max_halfwidth = max(max_halfwidths)
     # Print caption about max halfwidth.
@@ -3088,18 +2549,22 @@ def plot_progress_curves(
             elif plot_type == "mean":
                 # Plot estimated mean progress curve.
                 if normalize:
-                    estimator = mean_of_curves(experiment.progress_curves)
+                    estimator = curve_utils.mean_of_curves(
+                        experiment.progress_curves
+                    )
                 else:
-                    estimator = mean_of_curves(experiment.objective_curves)
+                    estimator = curve_utils.mean_of_curves(
+                        experiment.objective_curves
+                    )
                 handle = estimator.plot(color_str=color_str)
             else:  # Must be quantile.
                 # Plot estimated beta-quantile progress curve.
                 if normalize:
-                    estimator = quantile_of_curves(
+                    estimator = curve_utils.quantile_of_curves(
                         experiment.progress_curves, beta
                     )
                 else:
-                    estimator = quantile_of_curves(
+                    estimator = curve_utils.quantile_of_curves(
                         experiment.objective_curves, beta
                     )
                 handle = estimator.plot(color_str=color_str)
@@ -3177,18 +2642,22 @@ def plot_progress_curves(
             elif plot_type == "mean":
                 # Plot estimated mean progress curve.
                 if normalize:
-                    estimator = mean_of_curves(experiment.progress_curves)
+                    estimator = curve_utils.mean_of_curves(
+                        experiment.progress_curves
+                    )
                 else:
-                    estimator = mean_of_curves(experiment.objective_curves)
+                    estimator = curve_utils.mean_of_curves(
+                        experiment.objective_curves
+                    )
                 estimator.plot()
             else:  # Must be quantile.
                 # Plot estimated beta-quantile progress curve.
                 if normalize:
-                    estimator = quantile_of_curves(
+                    estimator = curve_utils.quantile_of_curves(
                         experiment.progress_curves, beta
                     )
                 else:
-                    estimator = quantile_of_curves(
+                    estimator = curve_utils.quantile_of_curves(
                         experiment.objective_curves, beta
                     )
                 estimator.plot()
@@ -3368,7 +2837,7 @@ def plot_solvability_cdfs(
             experiment = experiments[exp_idx]
             color_str = "C" + str(exp_idx)
             # Plot cdf of solve times.
-            estimator = cdf_of_curves_crossing_times(
+            estimator = curve_utils.cdf_of_curves_crossing_times(
                 experiment.progress_curves, threshold=solve_tol
             )
             handle = estimator.plot(color_str=color_str)
@@ -3430,7 +2899,7 @@ def plot_solvability_cdfs(
                 problem_name=experiment.problem.name,
                 solve_tol=solve_tol,
             )
-            estimator = cdf_of_curves_crossing_times(
+            estimator = curve_utils.cdf_of_curves_crossing_times(
                 experiment.progress_curves, threshold=solve_tol
             )
             estimator.plot()
@@ -4017,14 +3486,14 @@ def plot_solvability_profiles(
                 experiment = experiments[solver_idx][problem_idx]
                 sub_curve = None
                 if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
-                    sub_curve = cdf_of_curves_crossing_times(
+                    sub_curve = curve_utils.cdf_of_curves_crossing_times(
                         curves=experiment.progress_curves, threshold=solve_tol
                     )
                 if plot_type in {
                     "quantile_solvability",
                     "diff_quantile_solvability",
                 }:
-                    sub_curve = quantile_cross_jump(
+                    sub_curve = curve_utils.quantile_cross_jump(
                         curves=experiment.progress_curves,
                         threshold=solve_tol,
                         beta=beta,
@@ -4033,7 +3502,7 @@ def plot_solvability_profiles(
                     solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
             # Exploit the fact that each solvability profile is an average of more basic curves.
-            solver_curve = mean_of_curves(solver_sub_curves)
+            solver_curve = curve_utils.mean_of_curves(solver_sub_curves)
             # CAUTION: Using mean above requires an equal number of macro-replications per problem.
             solver_curves.append(solver_curve)
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
@@ -4128,7 +3597,7 @@ def plot_solvability_profiles(
             ref_solver_idx = solver_names.index(ref_solver)
             for solver_idx in range(n_solvers):
                 if solver_idx is not ref_solver_idx:
-                    diff_solver_curve = difference_of_curves(
+                    diff_solver_curve = curve_utils.difference_of_curves(
                         solver_curves[solver_idx], solver_curves[ref_solver_idx]
                     )
                     color_str = "C" + str(solver_idx)
@@ -4221,14 +3690,14 @@ def plot_solvability_profiles(
                 experiment = experiments[solver_idx][problem_idx]
                 sub_curve = None
                 if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
-                    sub_curve = cdf_of_curves_crossing_times(
+                    sub_curve = curve_utils.cdf_of_curves_crossing_times(
                         curves=experiment.progress_curves, threshold=solve_tol
                     )
                 if plot_type in {
                     "quantile_solvability",
                     "diff_quantile_solvability",
                 }:
-                    sub_curve = quantile_cross_jump(
+                    sub_curve = curve_utils.quantile_cross_jump(
                         curves=experiment.progress_curves,
                         threshold=solve_tol,
                         beta=beta,
@@ -4237,7 +3706,7 @@ def plot_solvability_profiles(
                     solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
             # Exploit the fact that each solvability profile is an average of more basic curves.
-            solver_curve = mean_of_curves(solver_sub_curves)
+            solver_curve = curve_utils.mean_of_curves(solver_sub_curves)
             solver_curves.append(solver_curve)
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
                 # Set up plot.
@@ -4356,7 +3825,7 @@ def plot_solvability_profiles(
                                 solve_tol=solve_tol,
                             )
                         )
-                    diff_solver_curve = difference_of_curves(
+                    diff_solver_curve = curve_utils.difference_of_curves(
                         solver_curves[solver_idx], solver_curves[ref_solver_idx]
                     )
                     handle = diff_solver_curve.plot()
