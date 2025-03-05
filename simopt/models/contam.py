@@ -310,9 +310,9 @@ class ContaminationTotalCostDisc(Problem):
     def n_objectives(cls) -> int:
         return 1
 
-    @classproperty
-    def n_stochastic_constraints(cls) -> int:
-        return cls.model.factors["stages"]
+    @property
+    def n_stochastic_constraints(self) -> int:
+        return self.model.factors["stages"]
 
     @classproperty
     def minmax(cls) -> tuple[int]:
