@@ -9,6 +9,7 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 from typing import Callable, Final
+from simopt.utils import classproperty
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -49,20 +50,24 @@ class FacilitySize(Model):
     base.Model
     """
 
-    @property
-    def name(self) -> str:
+    @classproperty
+    def class_name_abbr(cls) -> str:
         return "FACSIZE"
 
-    @property
-    def n_rngs(self) -> int:
+    @classproperty
+    def class_name(cls) -> str:
+        "Facility Sizing"
+
+    @classproperty
+    def n_rngs(cls) -> int:
         return 1
 
-    @property
-    def n_responses(self) -> int:
+    @classproperty
+    def n_responses(cls) -> int:
         return 3
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "mean_vec": {
                 "description": "location parameters of the multivariate normal distribution",
@@ -265,49 +270,57 @@ class FacilitySizingTotalCost(Problem):
     base.Problem
     """
 
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "FACSIZE-1"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Min Total Cost for Facility Sizing"
+
+    @classproperty
+    def n_objectives(cls) -> int:
         return 1
 
-    @property
-    def n_stochastic_constraints(self) -> int:
+    @classproperty
+    def n_stochastic_constraints(cls) -> int:
         return 1
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    def minmax(cls) -> tuple[int]:
         return (-1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    def gradient_available(cls) -> bool:
         return True
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    def optimal_value(cls) -> float | None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    def optimal_solution(cls) -> tuple | None:
         # return (185, 185, 185)
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    def model_decision_factors(cls) -> set[str]:
         return {"capacity"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
@@ -664,49 +677,57 @@ class FacilitySizingMaxService(Problem):
     base.Problem
     """
 
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "FACSIZE-2"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Max Service for Facility Sizing"
+
+    @classproperty
+    def n_objectives(cls) -> int:
         return 1
 
-    @property
-    def n_stochastic_constraints(self) -> int:
+    @classproperty
+    def n_stochastic_constraints(cls) -> int:
         return 0
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    def minmax(cls) -> tuple[int]:
         return (1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.DETERMINISTIC
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    def gradient_available(cls) -> bool:
         return False
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    def optimal_value(cls) -> float | None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    def optimal_solution(cls) -> tuple | None:
         # return (175, 179, 143)
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    def model_decision_factors(cls) -> set[str]:
         return {"capacity"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",

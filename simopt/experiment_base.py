@@ -2,555 +2,44 @@
 
 from __future__ import annotations
 
-import ast
-import csv
 import importlib
 import itertools
+import logging
 import os
 import pickle
-import platform
-import re
 import subprocess
 import time
-from multiprocessing import Pool
-from typing import Literal
+from typing import TYPE_CHECKING
 
-import matplotlib.lines as mpl_lines
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from mrg32k3a.mrg32k3a import MRG32k3a
-from scipy.stats import norm
 
+import simopt.curve_utils as curve_utils
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
+from simopt.curve import (
+    Curve,
+    CurveType,
+)
 from simopt.directory import (
     model_directory,
     problem_directory,
     solver_directory,
 )
 
+# Imports exclusively used when type checking
+# Prevents imports from being executed at runtime
+if TYPE_CHECKING:
+    from typing import Literal
+
+    from matplotlib.lines import Line2D as Line2D
+    from pandas import DataFrame as DataFrame
+
 """Set the default directory for saving experiment results."""
 EXPERIMENT_DIR = os.path.join(
     os.getcwd(), "experiments", time.strftime("%Y-%m-%d_%H-%M-%S")
 )
-
-
-class Curve:
-    """Base class for all curves.
-
-    Attributes
-    ----------
-    x_vals : list [float]
-        Values of horizontal components.
-    y_vals : list [float]
-        Values of vertical components.
-    n_points : int
-        Number of values in x- and y- vectors.
-
-    Parameters
-    ----------
-    x_vals : list [float]
-        Values of horizontal components.
-    y_vals : list [float]
-        Values of vertical components.
-
-    """
-
-    @property
-    def x_vals(self) -> list[float]:
-        """Values of horizontal components."""
-        return self.__x_vals
-
-    @property
-    def y_vals(self) -> list[float]:
-        """Values of vertical components."""
-        return self.__y_vals
-
-    @property
-    def n_points(self) -> int:
-        """Number of values in x- and y- vectors."""
-        return len(self.x_vals)
-
-    def __init__(self, x_vals: list[float], y_vals: list[float]) -> None:
-        """Initialize a curve with x- and y-values.
-
-        Parameters
-        ----------
-        x_vals : list[float]
-            Values of horizontal components.
-        y_vals : list[float]
-            Values of vertical components.
-
-        Raises
-        ------
-        TypeError
-        ValueError
-
-        """
-        # Type checking
-        if not isinstance(x_vals, list) or not all(
-            [isinstance(x, (int, float)) for x in x_vals]
-        ):
-            error_msg = "x_vals must be a list of floats."
-            raise TypeError(error_msg)
-        if not isinstance(y_vals, list) or not all(
-            [isinstance(y, (int, float)) for y in y_vals]
-        ):
-            error_msg = "y_vals must be a list of floats."
-            raise TypeError(error_msg)
-        # Value checking
-        if len(x_vals) != len(y_vals):
-            error_msg = f"Length of x- {len(x_vals)} and y-values {len(y_vals)} must be equal."
-            raise ValueError(error_msg)
-
-        # Each attribute is read-only
-        self.__x_vals = x_vals
-        self.__y_vals = y_vals
-
-    def lookup(self, x_val: float) -> float:
-        """Lookup the y-value of the curve at an intermediate x-value.
-
-        Parameters
-        ----------
-        x_val : float
-            X-value at which to lookup the y-value.
-
-        Returns
-        -------
-        float
-            Y-value corresponding to x.
-
-        Raises
-        ------
-        TypeError
-
-        """
-        # Type checking
-        if not isinstance(x_val, (int, float)):
-            error_msg = "x_val must be a float."
-            raise TypeError(error_msg)
-
-        if x_val < self.x_vals[0]:
-            return np.nan
-        else:
-            idx = np.max(np.where(np.array(self.x_vals) <= x_val))
-            return self.y_vals[idx]
-
-    def compute_crossing_time(self, threshold: float) -> float:
-        """Compute the first time at which a curve drops below a given threshold.
-
-        Parameters
-        ----------
-        threshold : float
-            Value for which to find first crossing time.
-
-        Returns
-        -------
-        float
-            First time at which a curve drops below threshold.
-
-        Raises
-        ------
-        TypeError
-
-        """
-        # Type checking
-        if not isinstance(threshold, (int, float)):
-            error_msg = "Threshold must be a float."
-            raise TypeError(error_msg)
-
-        # Use binary search to find the first x-value below threshold.
-        # TODO: Test this
-        # index = bisect.bisect_left(self.y_vals, threshold)
-        # if index == self.n_points:
-        #     return np.inf
-        # else:
-        #     return self.x_vals[index]
-
-        for i in range(self.n_points):
-            if self.y_vals[i] < threshold:
-                return self.x_vals[i]
-        # If threshold is never crossed, return infinity.
-        return np.inf
-
-    def compute_area_under_curve(self) -> float:
-        """Compute the area under a curve.
-
-        Returns
-        -------
-        float
-            Area under the curve.
-
-        """
-        area = np.dot(self.y_vals[:-1], np.diff(self.x_vals))
-        return area
-
-    def curve_to_mesh(self, mesh: list[float]) -> Curve:
-        """Create a curve defined at equally spaced x values.
-
-        Parameters
-        ----------
-        mesh : list[float]
-            List of uniformly spaced x-values.
-
-        Returns
-        -------
-        ``experiment_base.Curve``
-            Curve with equally spaced x-values.
-
-        Raises
-        ------
-        TypeError
-
-        """
-        # Type checking
-        if not isinstance(mesh, list) or not all(
-            [isinstance(x, (int, float)) for x in mesh]
-        ):
-            error_msg = "Mesh must be a list of floats."
-            raise TypeError(error_msg)
-
-        mesh_curve = Curve(x_vals=mesh, y_vals=[self.lookup(x) for x in mesh])
-        return mesh_curve
-
-    def curve_to_full_curve(self) -> Curve:
-        """Create a curve with duplicate x- and y-values to indicate steps.
-
-        Returns
-        -------
-        ``experiment_base.Curve``
-            Curve with duplicate x- and y-values.
-
-        """
-        duplicate_x_vals = [x for x in self.x_vals for _ in (0, 1)]
-        duplicate_y_vals = [y for y in self.y_vals for _ in (0, 1)]
-        full_curve = Curve(
-            x_vals=duplicate_x_vals[1:], y_vals=duplicate_y_vals[:-1]
-        )
-        return full_curve
-
-    def plot(
-        self,
-        color_str: str = "C0",
-        curve_type: Literal["regular", "conf_bound"] = "regular",
-    ) -> mpl_lines.Line2D:
-        """Plot a curve.
-
-        Parameters
-        ----------
-        color_str : str, default="C0"
-            String indicating line color, e.g., "C0", "C1", etc.
-        curve_type : str, default="regular"
-            String indicating type of line: "regular" or "conf_bound".
-
-        Returns
-        -------
-        ``matplotlib.lines.Line2D``
-            Curve handle, to use when creating legends.
-
-        Raises
-        ------
-        TypeError
-        ValueError
-
-        """
-        # Type checking
-        if not isinstance(color_str, str):
-            error_msg = "Color must be a string."
-            raise TypeError(error_msg)
-        if not isinstance(curve_type, str):
-            error_msg = "Curve type must be a string."
-            raise TypeError(error_msg)
-        # Value checking
-        if curve_type not in ["regular", "conf_bound"]:
-            error_msg = "Invalid curve type."
-            raise ValueError(error_msg)
-
-        if curve_type == "regular":
-            linestyle = "-"
-            linewidth = 2
-        elif curve_type == "conf_bound":
-            linestyle = "--"
-            linewidth = 1
-        (handle,) = plt.step(
-            self.x_vals,
-            self.y_vals,
-            color=color_str,
-            linestyle=linestyle,
-            linewidth=linewidth,
-            where="post",
-        )
-        return handle
-
-
-def mean_of_curves(curves: list[Curve]) -> Curve:
-    """Compute pointwise (w.r.t. x-values) mean of curves.
-
-    Starting and ending x-values must coincide for all curves.
-
-    Parameters
-    ----------
-    curves : list [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-
-    Returns
-    -------
-    ``experiment_base.Curve object``
-        Mean curve.
-
-    Raises
-    ------
-    TypeError
-
-    """
-    # Type checking
-    if not isinstance(curves, list) or not all(
-        [isinstance(curve, Curve) for curve in curves]
-    ):
-        error_msg = "Curves must be a list of Curve objects."
-        raise TypeError(error_msg)
-
-    unique_x_vals = np.unique(
-        [x_val for curve in curves for x_val in curve.x_vals]
-    )
-    mean_y_vals = [
-        float(np.mean([curve.lookup(float(x_val)) for curve in curves]))
-        for x_val in unique_x_vals
-    ]
-    mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)  # type: ignore
-    return mean_curve
-
-
-def quantile_of_curves(curves: list[Curve], beta: float) -> Curve:
-    """Compute pointwise (w.r.t. x values) quantile of curves.
-
-    Starting and ending x values must coincide for all curves.
-
-    Parameters
-    ----------
-    curves : list [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-    beta : float
-        Quantile level.
-
-    Returns
-    -------
-    ``experiment_base.Curve``
-        Quantile curve.
-
-    Raises
-    ------
-    TypeError
-
-    """
-    # Type checking
-    if not isinstance(curves, list) or not all(
-        [isinstance(curve, Curve) for curve in curves]
-    ):
-        error_msg = "Curves must be a list of Curve objects."
-        raise TypeError(error_msg)
-    if not isinstance(beta, (int, float)):
-        error_msg = "Beta must be a float."
-        raise TypeError(error_msg)
-
-    unique_x_vals = np.unique(
-        [x_val for curve in curves for x_val in curve.x_vals]
-    )
-    quantile_y_vals = [
-        float(np.quantile([curve.lookup(x_val) for curve in curves], q=beta))
-        for x_val in unique_x_vals
-    ]
-    quantile_curve = Curve(
-        x_vals=unique_x_vals.tolist(),  # type: ignore
-        y_vals=quantile_y_vals,
-    )
-    return quantile_curve
-
-
-def cdf_of_curves_crossing_times(
-    curves: list[Curve], threshold: float
-) -> Curve:
-    """Compute the cdf of crossing times of curves.
-
-    Parameters
-    ----------
-    curves : list [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-    threshold : float
-        Value for which to find first crossing time.
-
-    Returns
-    -------
-    ``experiment_base.Curve``
-        CDF of crossing times.
-
-    Raises
-    ------
-    TypeError
-
-    """
-    # Type checking
-    if not isinstance(curves, list) or not all(
-        [isinstance(curve, Curve) for curve in curves]
-    ):
-        error_msg = "Curves must be a list of Curve objects."
-        raise TypeError(error_msg)
-    if not isinstance(threshold, (int, float)):
-        error_msg = "Threshold must be a float."
-        raise TypeError(error_msg)
-
-    n_curves = len(curves)
-    crossing_times = [
-        curve.compute_crossing_time(threshold) for curve in curves
-    ]
-    unique_x_vals = [
-        0,
-        *list(
-            np.unique(
-                [
-                    crossing_time
-                    for crossing_time in crossing_times
-                    if crossing_time < np.inf
-                ]
-            )
-        ),
-        1,
-    ]
-    cdf_y_vals = [
-        sum(crossing_time <= x_val for crossing_time in crossing_times)
-        / n_curves
-        for x_val in unique_x_vals
-    ]
-    cdf_curve = Curve(x_vals=unique_x_vals, y_vals=cdf_y_vals)
-    return cdf_curve
-
-
-def quantile_cross_jump(
-    curves: list[Curve], threshold: float, beta: float
-) -> Curve:
-    """Compute a simple curve with a jump at the quantile of the crossing times.
-
-    Parameters
-    ----------
-    curves : list [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-    threshold : float
-        Value for which to find first crossing time.
-    beta : float
-        Quantile level.
-
-    Returns
-    -------
-    ``experiment_base.Curve``
-        Piecewise-constant curve with a jump at the quantile crossing time (if finite).
-
-    Raises
-    ------
-    TypeError
-
-    """
-    # Type checking
-    if not isinstance(curves, list) or not all(
-        [isinstance(curve, Curve) for curve in curves]
-    ):
-        error_msg = "Curves must be a list of Curve objects."
-        raise TypeError(error_msg)
-    if not isinstance(threshold, (int, float)):
-        error_msg = "Threshold must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(beta, (int, float)):
-        error_msg = "Beta must be a float."
-        raise TypeError(error_msg)
-
-    solve_time_quantile = float(
-        np.quantile(
-            [
-                curve.compute_crossing_time(threshold=threshold)
-                for curve in curves
-            ],
-            q=beta,
-        )
-    )
-    # Note: np.quantile will evaluate to np.nan if forced to interpolate
-    # between a finite and infinite value. These are rare cases. Since
-    # crossing times must be non-negative, the quantile should be mapped
-    # to positive infinity.
-    if solve_time_quantile == np.inf or np.isnan(solve_time_quantile):
-        return Curve(x_vals=[0, 1], y_vals=[0, 0])
-    else:
-        return Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
-
-
-def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
-    """Compute the difference of two curves (Curve 1 - Curve 2).
-
-    Parameters
-    ----------
-    curve_1: ``experiment_base.Curve``
-        First curve to take the difference of.
-    curve_2 : ``experiment_base.Curve``
-        Curves to take the difference of.
-
-    Returns
-    -------
-    ``experiment_base.Curve``
-        Difference of curves.
-
-    Raises
-    ------
-    TypeError
-
-    """
-    # Type checking
-    if not isinstance(curve_1, Curve):
-        error_msg = "curve_1 must be a Curve object."
-        raise TypeError(error_msg)
-    if not isinstance(curve_2, Curve):
-        error_msg = "curve_2 must be a Curve object."
-        raise TypeError(error_msg)
-
-    unique_x_vals_np = np.unique(curve_1.x_vals + curve_2.x_vals)
-    unique_x_vals = [float(x_val) for x_val in unique_x_vals_np]
-    difference_y_vals = [
-        (curve_1.lookup(x_val) - curve_2.lookup(x_val))
-        for x_val in unique_x_vals
-    ]
-    difference_curve = Curve(x_vals=unique_x_vals, y_vals=difference_y_vals)
-    return difference_curve
-
-
-def max_difference_of_curves(curve_1: Curve, curve_2: Curve) -> float:
-    """Compute the maximum difference of two curves (Curve 1 - Curve 2).
-
-    Parameters
-    ----------
-    curve_1: ``experiment_base.Curve``
-        First curve to take the difference of.
-    curve_2 : ``experiment_base.Curve``
-        Curves to take the difference of.
-
-    Returns
-    -------
-    float
-        Maximum difference of curves.
-
-    Raises
-    ------
-    TypeError
-
-    """
-    # Type checking
-    if not isinstance(curve_1, Curve):
-        error_msg = "curve_1 must be a Curve object."
-        raise TypeError(error_msg)
-    if not isinstance(curve_2, Curve):
-        error_msg = "curve_2 must be a Curve object."
-        raise TypeError(error_msg)
-
-    difference_curve = difference_of_curves(curve_1, curve_2)
-    max_diff = max(difference_curve.y_vals)
-    return max_diff
 
 
 class ProblemSolver:
@@ -1068,6 +557,10 @@ class ProblemSolver:
         ValueError
 
         """
+        # Local Imports
+        from functools import partial
+        from multiprocessing import Pool
+
         # Type checking
         if not isinstance(n_macroreps, int):
             error_msg = "Number of macroreplications must be an integer."
@@ -1077,12 +570,10 @@ class ProblemSolver:
             error_msg = "Number of macroreplications must be positive."
             raise ValueError(error_msg)
 
-        print(
-            "Running Solver",
-            self.solver.name,
-            "on Problem",
-            self.problem.name + ".",
+        msg = (
+            f"Running Solver {self.solver.name} on Problem {self.problem.name}."
         )
+        logging.info(msg)
 
         # Initialize variables
         self.n_macroreps = n_macroreps
@@ -1108,18 +599,22 @@ class ProblemSolver:
         # Start a timer
         function_start = time.time()
 
-        print("Starting macroreplications in parallel")
-        with Pool() as process_pool:
+        logging.debug("Starting macroreplications")
+
+        with Pool(initializer=self._run_pool_init) as process_pool:
             # Start the macroreplications in parallel (async)
+            run_multithread_partial = partial(
+                self.run_multithread, solver=self.solver, problem=self.problem
+            )
             result = process_pool.map_async(
-                self.run_multithread, range(n_macroreps)
+                run_multithread_partial, range(n_macroreps)
             )
             # Wait for the results to be returned (or 1 second)
             while not result.ready():
                 # Update status bar here
                 result.wait(1)
 
-            print(
+            logging.info(
                 f"Finished running {n_macroreps} macroreplications in {round(time.time() - function_start, 3)} seconds."
             )
 
@@ -1140,7 +635,12 @@ class ProblemSolver:
             file_name = os.path.basename(self.file_name_path)
             self.record_experiment_results(file_name=file_name)
 
-    def run_multithread(self, mrep: int) -> tuple:
+    def _run_pool_init(self) -> None:
+        pass
+
+    def run_multithread(
+        self, mrep: int, solver: Solver, problem: Problem
+    ) -> tuple:
         """Run a single macroreplication of the solver on the problem.
 
         Parameters
@@ -1168,13 +668,13 @@ class ProblemSolver:
             error_msg = "Macroreplication index must be non-negative."
             raise ValueError(error_msg)
 
-        print(
-            f"Macroreplication {mrep + 1}: Starting Solver {self.solver.name} on Problem {self.problem.name}."
+        logging.debug(
+            f"Macroreplication {mrep + 1}: Starting Solver {solver.name} on Problem {problem.name}."
         )
         # Create, initialize, and attach RNGs used for simulating solutions.
         progenitor_rngs = [
             MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0])
-            for ss in range(self.problem.model.n_rngs)
+            for ss in range(problem.model.n_rngs)
         ]
         # Create a new set of RNGs for the solver based on the current macroreplication.
         # Tried re-using the progentior RNGs, but we need to match the number needed by the solver, not the problem
@@ -1182,32 +682,30 @@ class ProblemSolver:
             MRG32k3a(
                 s_ss_sss_index=[
                     mrep + 3,
-                    self.problem.model.n_rngs + rng_index,
+                    problem.model.n_rngs + rng_index,
                     0,
                 ]
             )
-            for rng_index in range(len(self.solver.rng_list))
+            for rng_index in range(len(solver.rng_list))
         ]
 
         # Set progenitor_rngs and rng_list for solver.
-        self.solver.solution_progenitor_rngs = progenitor_rngs
-        self.solver.rng_list = solver_rngs
+        solver.solution_progenitor_rngs = progenitor_rngs
+        solver.rng_list = solver_rngs
 
-        # print([rng.s_ss_sss_index for rng in progenitor_rngs])
+        # logging.debug([rng.s_ss_sss_index for rng in progenitor_rngs])
         # Run the solver on the problem.
         tic = time.perf_counter()
-        recommended_solns, intermediate_budgets = self.solver.solve(
-            problem=self.problem
-        )
+        recommended_solns, intermediate_budgets = solver.solve(problem=problem)
         toc = time.perf_counter()
         runtime = toc - tic
-        print(
-            f"Macroreplication {mrep + 1}: Finished Solver {self.solver.name} on Problem {self.problem.name} in {runtime:0.4f} seconds."
+        logging.debug(
+            f"Macroreplication {mrep + 1}: Finished Solver {solver.name} on Problem {problem.name} in {runtime:0.4f} seconds."
         )
 
         # Trim the recommended solutions and intermediate budgets
         recommended_solns, intermediate_budgets = trim_solver_results(
-            problem=self.problem,
+            problem=problem,
             recommended_solutions=recommended_solns,
             intermediate_budgets=intermediate_budgets,
         )
@@ -1243,6 +741,9 @@ class ProblemSolver:
         ValueError
 
         """
+        # Local Imports
+        from multiprocessing import Pool
+
         # Type checking
         if not isinstance(n_postreps, int):
             error_msg = "Number of postreplications must be an integer."
@@ -1258,7 +759,7 @@ class ProblemSolver:
             error_msg = "Number of postreplications must be positive."
             raise ValueError(error_msg)
 
-        print(
+        logging.debug(
             f"Setting up {n_postreps} postreplications for {self.n_macroreps} macroreplications of {self.solver.name} on {self.problem.name}."
         )
 
@@ -1275,7 +776,7 @@ class ProblemSolver:
 
         self.function_start = time.time()
 
-        print("Starting postreplications in parallel")
+        logging.info("Starting postreplications")
         with Pool() as process_pool:
             # Start the macroreplications in parallel (async)
             result = process_pool.map_async(
@@ -1305,7 +806,7 @@ class ProblemSolver:
                 ]
                 for mrep in range(self.n_macroreps)
             ]
-        print(
+        logging.info(
             f"Finished running {self.n_macroreps} postreplications in {round(time.time() - self.function_start, 3)} seconds."
         )
 
@@ -1348,7 +849,7 @@ class ProblemSolver:
             error_msg = "Macroreplication index must be non-negative."
             raise ValueError(error_msg)
 
-        print(
+        logging.debug(
             f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}."
         )
         # Create RNG list for the macroreplication.
@@ -1396,7 +897,7 @@ class ProblemSolver:
             )  # 0 <- assuming only one objective
         toc = time.perf_counter()
         runtime = toc - tic
-        print(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
+        logging.debug(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
 
         # Return tuple (post_replicates, runtime)
         return (post_replicates, runtime)
@@ -1609,9 +1110,7 @@ class ProblemSolver:
         file_path = os.path.join(EXPERIMENT_DIR, file_name)
         folder_name = os.path.dirname(file_path)
 
-        print(f"File Name: {file_name}")
-        print(f"Folder Name: {folder_name}")
-        print(f"File Path: {file_path}")
+        logging.debug(f"Saving ProblemSolver object to {file_path}")
 
         # Create the directory if it does not exist.
         if not os.path.exists(folder_name):
@@ -1622,6 +1121,8 @@ class ProblemSolver:
         # Create and dump the object to the file
         with open(file_path, "xb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
+
+        logging.info(f"Saved experiment results to {file_path}")
 
     def log_experiment_results(self, print_solutions: bool = True) -> None:
         """Create readable .txt file from a problem-solver pair's .pickle file.
@@ -1902,7 +1403,7 @@ def post_normalize(
         ):
             error_msg = "At least two experiments have different numbers of post-replications.\nEstimation of optimal solution x* may be based on different numbers of post-replications."
             raise Exception(error_msg)
-    print(f"Postnormalizing on Problem {ref_experiment.problem.name}.")
+    logging.info(f"Postnormalizing on Problem {ref_experiment.problem.name}.")
     # Take post-replications at common x0.
     # Create, initialize, and attach RNGs for model.
     #     Stream 0: reserved for post-replications.
@@ -1936,7 +1437,7 @@ def post_normalize(
     # objective function value. If deterministic (proxy for) f(x*),
     # create duplicate post-replicates to facilitate later bootstrapping.
     # If proxy for f(x*) is specified...
-    print("Finding f(x*)...")
+    fstar_log_msg = "Finding f(x*) using "
     if proxy_opt_val is not None:
         if proxy_opt_x is None:
             xstar = None
@@ -1944,11 +1445,11 @@ def post_normalize(
             xstar = (
                 proxy_opt_x  # Assuming the provided x is optimal in this case.
             )
-        print("\t...using provided proxy f(x*).")
+        logging.info(fstar_log_msg + "provided proxy f(x*).")
         xstar_postreps = [proxy_opt_val] * n_postreps_init_opt
     # ...else if proxy for x* is specified...
     elif proxy_opt_x is not None:
-        print("\t...using provided proxy x*.")
+        logging.info(fstar_log_msg + "provided proxy x*.")
         xstar = proxy_opt_x
         # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
@@ -1961,7 +1462,7 @@ def post_normalize(
         )  # 0 <- assuming only one objective
     # ...else if f(x*) is known...
     elif ref_experiment.problem.optimal_value is not None:
-        print("\t...using coded f(x*).")
+        logging.info(fstar_log_msg + "coded f(x*).")
         xstar = None
         # NOTE: optimal_value is a tuple.
         # Currently hard-coded for single objective case, i.e., optimal_value[0].
@@ -1970,7 +1471,7 @@ def post_normalize(
         ] * n_postreps_init_opt
     # ...else if x* is known...
     elif ref_experiment.problem.optimal_solution is not None:
-        print("\t...using coded x*.")
+        logging.info(fstar_log_msg + "using coded x*.")
         xstar = ref_experiment.problem.optimal_solution
         # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
@@ -1984,7 +1485,10 @@ def post_normalize(
     # ...else determine x* empirically as estimated best solution
     # found by any solver on any macroreplication.
     else:
-        print("\t...using best postreplicated solution as proxy for x*.")
+        logging.info(
+            fstar_log_msg
+            + "using best postreplicated solution as proxy for x*."
+        )
         # TODO: Simplify this block of code.
         best_est_objectives = np.zeros(len(experiments))
         for experiment_idx in range(len(experiments)):
@@ -2059,19 +1563,18 @@ def post_normalize(
             )
             # Normalize by initial optimality gap.
             if initial_opt_gap == 0:
-                print(
-                    "Warning: Divide by zero during post-normalization (initial_opt_gap is 0)."
-                )
+                warning_msg = "Divide by zero during post-normalization (initial_opt_gap is 0)."
+                logging.warning(warning_msg)
                 norm_est_objectives = []
                 for est_objective in est_objectives:
                     est_diff = est_objective - opt_obj_val
                     # Follow IEEE 754 standard for division by zero.
                     if est_diff < 0:
-                        norm_est_objectives.append(-np.inf)
+                        norm_est_objectives.append(-float("inf"))
                     elif est_diff > 0:
-                        norm_est_objectives.append(np.inf)
+                        norm_est_objectives.append(float("inf"))
                     else:
-                        norm_est_objectives.append(np.nan)
+                        norm_est_objectives.append(float("nan"))
             else:
                 norm_est_objectives = [
                     (est_objective - opt_obj_val) / initial_opt_gap
@@ -2517,10 +2020,10 @@ def functional_of_curves(
 
     if plot_type == "mean":
         # Single experiment --> returns a curve.
-        return mean_of_curves(bootstrap_curves[0][0])
+        return curve_utils.mean_of_curves(bootstrap_curves[0][0])
     elif plot_type == "quantile":
         # Single experiment --> returns a curve.
-        return quantile_of_curves(bootstrap_curves[0][0], beta=beta)
+        return curve_utils.quantile_of_curves(bootstrap_curves[0][0], beta=beta)
     elif plot_type == "area_mean":
         # Single experiment --> returns a scalar.
         area_mean = np.mean(
@@ -2552,14 +2055,14 @@ def functional_of_curves(
         return float(solve_time_quantile)
     elif plot_type == "solve_time_cdf":
         # Single experiment --> returns a curve.
-        return cdf_of_curves_crossing_times(
+        return curve_utils.cdf_of_curves_crossing_times(
             bootstrap_curves[0][0], threshold=solve_tol
         )
     elif plot_type == "cdf_solvability":
         # One solver, multiple problems --> returns a curve.
-        return mean_of_curves(
+        return curve_utils.mean_of_curves(
             [
-                cdf_of_curves_crossing_times(
+                curve_utils.cdf_of_curves_crossing_times(
                     curves=progress_curves, threshold=solve_tol
                 )
                 for progress_curves in bootstrap_curves[0]
@@ -2567,9 +2070,9 @@ def functional_of_curves(
         )
     elif plot_type == "quantile_solvability":
         # One solver, multiple problems --> returns a curve.
-        return mean_of_curves(
+        return curve_utils.mean_of_curves(
             [
-                quantile_cross_jump(
+                curve_utils.quantile_cross_jump(
                     curves=progress_curves, threshold=solve_tol, beta=beta
                 )
                 for progress_curves in bootstrap_curves[0]
@@ -2577,44 +2080,44 @@ def functional_of_curves(
         )
     elif plot_type == "diff_cdf_solvability":
         # Two solvers, multiple problems --> returns a curve.
-        solvability_profile_1 = mean_of_curves(
+        solvability_profile_1 = curve_utils.mean_of_curves(
             [
-                cdf_of_curves_crossing_times(
+                curve_utils.cdf_of_curves_crossing_times(
                     curves=progress_curves, threshold=solve_tol
                 )
                 for progress_curves in bootstrap_curves[0]
             ]
         )
-        solvability_profile_2 = mean_of_curves(
+        solvability_profile_2 = curve_utils.mean_of_curves(
             [
-                cdf_of_curves_crossing_times(
+                curve_utils.cdf_of_curves_crossing_times(
                     curves=progress_curves, threshold=solve_tol
                 )
                 for progress_curves in bootstrap_curves[1]
             ]
         )
-        return difference_of_curves(
+        return curve_utils.difference_of_curves(
             solvability_profile_1, solvability_profile_2
         )
     elif plot_type == "diff_quantile_solvability":
         # Two solvers, multiple problems --> returns a curve.
-        solvability_profile_1 = mean_of_curves(
+        solvability_profile_1 = curve_utils.mean_of_curves(
             [
-                quantile_cross_jump(
+                curve_utils.quantile_cross_jump(
                     curves=progress_curves, threshold=solve_tol, beta=beta
                 )
                 for progress_curves in bootstrap_curves[0]
             ]
         )
-        solvability_profile_2 = mean_of_curves(
+        solvability_profile_2 = curve_utils.mean_of_curves(
             [
-                quantile_cross_jump(
+                curve_utils.quantile_cross_jump(
                     curves=progress_curves, threshold=solve_tol, beta=beta
                 )
                 for progress_curves in bootstrap_curves[1]
             ]
         )
-        return difference_of_curves(
+        return curve_utils.difference_of_curves(
             solvability_profile_1, solvability_profile_2
         )
     else:
@@ -2686,6 +2189,9 @@ def compute_bootstrap_conf_int(
                 "Overall estimator must be provided for bias correction."
             )
             raise ValueError(error_msg)
+        # Lazy imports
+        from scipy.stats import norm
+
         # For biased-corrected CIs, see equation (4.4) on page 146.
         z0 = norm.ppf(
             np.mean([obs < overall_estimator for obs in observations])
@@ -2739,8 +2245,12 @@ def plot_bootstrap_conf_ints(
         error_msg = "Color string must be a string."
         raise TypeError(error_msg)
 
-    bs_conf_int_lower_bounds.plot(color_str=color_str, curve_type="conf_bound")
-    bs_conf_int_upper_bounds.plot(color_str=color_str, curve_type="conf_bound")
+    bs_conf_int_lower_bounds.plot(
+        color_str=color_str, curve_type=CurveType.CONF_BOUND
+    )
+    bs_conf_int_upper_bounds.plot(
+        color_str=color_str, curve_type=CurveType.CONF_BOUND
+    )
     # Shade space between curves.
     # Convert to full curves to get piecewise-constant shaded areas.
     plt.fill_between(
@@ -2808,14 +2318,15 @@ def report_max_halfwidth(
         raise ValueError(error_msg)
 
     # Compute max halfwidth of bootstrap confidence intervals.
-    min_lower_bound = np.inf
-    max_upper_bound = -np.inf
+    min_lower_bound = float("inf")
+    max_upper_bound = -float("inf")
     max_halfwidths = []
     for curve_pair in curve_pairs:
         min_lower_bound = min(min_lower_bound, min(curve_pair[0].y_vals))
         max_upper_bound = max(max_upper_bound, max(curve_pair[1].y_vals))
         max_halfwidths.append(
-            0.5 * max_difference_of_curves(curve_pair[1], curve_pair[0])
+            0.5
+            * curve_utils.max_difference_of_curves(curve_pair[1], curve_pair[0])
         )
     max_halfwidth = max(max_halfwidths)
     # Print caption about max halfwidth.
@@ -3038,18 +2549,22 @@ def plot_progress_curves(
             elif plot_type == "mean":
                 # Plot estimated mean progress curve.
                 if normalize:
-                    estimator = mean_of_curves(experiment.progress_curves)
+                    estimator = curve_utils.mean_of_curves(
+                        experiment.progress_curves
+                    )
                 else:
-                    estimator = mean_of_curves(experiment.objective_curves)
+                    estimator = curve_utils.mean_of_curves(
+                        experiment.objective_curves
+                    )
                 handle = estimator.plot(color_str=color_str)
             else:  # Must be quantile.
                 # Plot estimated beta-quantile progress curve.
                 if normalize:
-                    estimator = quantile_of_curves(
+                    estimator = curve_utils.quantile_of_curves(
                         experiment.progress_curves, beta
                     )
                 else:
-                    estimator = quantile_of_curves(
+                    estimator = curve_utils.quantile_of_curves(
                         experiment.objective_curves, beta
                     )
                 handle = estimator.plot(color_str=color_str)
@@ -3127,18 +2642,22 @@ def plot_progress_curves(
             elif plot_type == "mean":
                 # Plot estimated mean progress curve.
                 if normalize:
-                    estimator = mean_of_curves(experiment.progress_curves)
+                    estimator = curve_utils.mean_of_curves(
+                        experiment.progress_curves
+                    )
                 else:
-                    estimator = mean_of_curves(experiment.objective_curves)
+                    estimator = curve_utils.mean_of_curves(
+                        experiment.objective_curves
+                    )
                 estimator.plot()
             else:  # Must be quantile.
                 # Plot estimated beta-quantile progress curve.
                 if normalize:
-                    estimator = quantile_of_curves(
+                    estimator = curve_utils.quantile_of_curves(
                         experiment.progress_curves, beta
                     )
                 else:
-                    estimator = quantile_of_curves(
+                    estimator = curve_utils.quantile_of_curves(
                         experiment.objective_curves, beta
                     )
                 estimator.plot()
@@ -3318,7 +2837,7 @@ def plot_solvability_cdfs(
             experiment = experiments[exp_idx]
             color_str = "C" + str(exp_idx)
             # Plot cdf of solve times.
-            estimator = cdf_of_curves_crossing_times(
+            estimator = curve_utils.cdf_of_curves_crossing_times(
                 experiment.progress_curves, threshold=solve_tol
             )
             handle = estimator.plot(color_str=color_str)
@@ -3380,7 +2899,7 @@ def plot_solvability_cdfs(
                 problem_name=experiment.problem.name,
                 solve_tol=solve_tol,
             )
-            estimator = cdf_of_curves_crossing_times(
+            estimator = curve_utils.cdf_of_curves_crossing_times(
                 experiment.progress_curves, threshold=solve_tol
             )
             estimator.plot()
@@ -3967,14 +3486,14 @@ def plot_solvability_profiles(
                 experiment = experiments[solver_idx][problem_idx]
                 sub_curve = None
                 if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
-                    sub_curve = cdf_of_curves_crossing_times(
+                    sub_curve = curve_utils.cdf_of_curves_crossing_times(
                         curves=experiment.progress_curves, threshold=solve_tol
                     )
                 if plot_type in {
                     "quantile_solvability",
                     "diff_quantile_solvability",
                 }:
-                    sub_curve = quantile_cross_jump(
+                    sub_curve = curve_utils.quantile_cross_jump(
                         curves=experiment.progress_curves,
                         threshold=solve_tol,
                         beta=beta,
@@ -3983,7 +3502,7 @@ def plot_solvability_profiles(
                     solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
             # Exploit the fact that each solvability profile is an average of more basic curves.
-            solver_curve = mean_of_curves(solver_sub_curves)
+            solver_curve = curve_utils.mean_of_curves(solver_sub_curves)
             # CAUTION: Using mean above requires an equal number of macro-replications per problem.
             solver_curves.append(solver_curve)
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
@@ -4078,7 +3597,7 @@ def plot_solvability_profiles(
             ref_solver_idx = solver_names.index(ref_solver)
             for solver_idx in range(n_solvers):
                 if solver_idx is not ref_solver_idx:
-                    diff_solver_curve = difference_of_curves(
+                    diff_solver_curve = curve_utils.difference_of_curves(
                         solver_curves[solver_idx], solver_curves[ref_solver_idx]
                     )
                     color_str = "C" + str(solver_idx)
@@ -4171,14 +3690,14 @@ def plot_solvability_profiles(
                 experiment = experiments[solver_idx][problem_idx]
                 sub_curve = None
                 if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
-                    sub_curve = cdf_of_curves_crossing_times(
+                    sub_curve = curve_utils.cdf_of_curves_crossing_times(
                         curves=experiment.progress_curves, threshold=solve_tol
                     )
                 if plot_type in {
                     "quantile_solvability",
                     "diff_quantile_solvability",
                 }:
-                    sub_curve = quantile_cross_jump(
+                    sub_curve = curve_utils.quantile_cross_jump(
                         curves=experiment.progress_curves,
                         threshold=solve_tol,
                         beta=beta,
@@ -4187,7 +3706,7 @@ def plot_solvability_profiles(
                     solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
             # Exploit the fact that each solvability profile is an average of more basic curves.
-            solver_curve = mean_of_curves(solver_sub_curves)
+            solver_curve = curve_utils.mean_of_curves(solver_sub_curves)
             solver_curves.append(solver_curve)
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
                 # Set up plot.
@@ -4306,7 +3825,7 @@ def plot_solvability_profiles(
                                 solve_tol=solve_tol,
                             )
                         )
-                    diff_solver_curve = difference_of_curves(
+                    diff_solver_curve = curve_utils.difference_of_curves(
                         solver_curves[solver_idx], solver_curves[ref_solver_idx]
                     )
                     handle = diff_solver_curve.plot()
@@ -4499,35 +4018,36 @@ def plot_terminal_progress(
                 labels=[experiment.solver.name for experiment in experiments],
             )
         elif plot_type == "violin":
-            solver_names = [
-                experiments[exp_idx].solver.name
-                for exp_idx in range(n_experiments)
-                for td in terminal_data[exp_idx]
-            ]
-            terminal_values = [
-                td
-                for exp_idx in range(n_experiments)
-                for td in terminal_data[exp_idx]
-            ]
+            import seaborn as sns
+
+            # Construct dictionary of lists directly
             terminal_data_dict = {
-                "Solvers": solver_names,
-                "Terminal": terminal_values,
+                "Solvers": [
+                    experiments[exp_idx].solver.name
+                    for exp_idx in range(n_experiments)
+                    for _ in terminal_data[exp_idx]
+                ],
+                "Terminal": [
+                    td
+                    for exp_idx in range(n_experiments)
+                    for td in terminal_data[exp_idx]
+                ],
             }
-            terminal_data_df = pd.DataFrame(terminal_data_dict)
-            # sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, inner="stick", scale="width", showmeans=True, bw = 0.2,  cut=2)
+
             sns.violinplot(
                 x="Solvers",
                 y="Terminal",
-                data=terminal_data_df,
+                data=terminal_data_dict,
                 inner="stick",
                 density_norm="width",
                 cut=0.1,
                 hue="Solvers",
             )
-            if normalize:
-                plt.ylabel("Terminal Progress")
-            else:
-                plt.ylabel("Terminal Objective")
+
+            plt.ylabel(
+                "Terminal Progress" if normalize else "Terminal Objective"
+            )
+
         file_list.append(
             save_plot(
                 solver_name=solver_set_name,
@@ -4549,31 +4069,22 @@ def plot_terminal_progress(
                 budget=experiment.problem.factors["budget"],
             )
             if normalize:
-                terminal_data = [
-                    experiment.progress_curves[mrep].y_vals[-1]
-                    for mrep in range(experiment.n_macroreps)
-                ]
+                curves = experiment.progress_curves
             else:
-                terminal_data = [
-                    experiment.objective_curves[mrep].y_vals[-1]
-                    for mrep in range(experiment.n_macroreps)
-                ]
+                curves = experiment.objective_curves
+            terminal_data = [curve.y_vals[-1] for curve in curves]
             if plot_type == "box":
                 plt.boxplot(terminal_data)
                 plt.xticks([1], labels=[experiment.solver.name])
             if plot_type == "violin":
-                solver_name_rep = [
-                    experiment.solver.name for td in terminal_data
-                ]
                 terminal_data_dict = {
-                    "Solver": solver_name_rep,
+                    "Solver": [experiment.solver.name] * len(terminal_data),
                     "Terminal": terminal_data,
                 }
-                terminal_data_df = pd.DataFrame(terminal_data_dict)
+
                 sns.violinplot(
-                    x="Solver",
-                    y="Terminal",
-                    data=terminal_data_df,
+                    x=terminal_data_dict["Solver"],
+                    y=terminal_data_dict["Terminal"],
                     inner="stick",
                 )
             if normalize:
@@ -5288,11 +4799,12 @@ class ProblemsSolvers:
     @solver_names.setter
     def solver_names(self, solver_names: list[str]) -> None:
         self.__solver_names = solver_names
+        self.__n_solvers = len(solver_names)
 
     @property
     def n_solvers(self) -> int:
         """Number of solvers."""
-        return len(self.solver_names)
+        return self.__n_solvers
 
     @property
     def problem_names(self) -> list[str]:
@@ -5302,11 +4814,12 @@ class ProblemsSolvers:
     @problem_names.setter
     def problem_names(self, problem_names: list[str]) -> None:
         self.__problem_names = problem_names
+        self.__n_problems = len(problem_names)
 
     @property
     def n_problems(self) -> int:
         """Number of problems."""
-        return len(self.problem_names)
+        return self.__n_problems
 
     @property
     def solvers(self) -> list[Solver]:
@@ -5739,7 +5252,7 @@ class ProblemsSolvers:
                             error_msg = "Problem names must be provided if no file exists."
                             raise ValueError(error_msg)
                         # If no file exists, create new ProblemSolver object.
-                        print(
+                        logging.debug(
                             f"No experiment file exists for {self.solver_names[solver_idx]} on {self.problem_names[problem_idx]}. Creating new experiment."
                         )
                         next_experiment = ProblemSolver(
@@ -5832,7 +5345,7 @@ class ProblemsSolvers:
                 # If the problem-solver pair has not been run in this way before,
                 # run it now and save result to .pickle file.
                 if not experiment.has_run:
-                    print(
+                    logging.debug(
                         f"Running {n_macroreps} macro-replications of {experiment.solver.name} on {experiment.problem.name}."
                     )
                     experiment.run(n_macroreps)
@@ -5885,7 +5398,7 @@ class ProblemsSolvers:
                 # If the problem-solver pair has not been post-replicated in this way before,
                 # post-process it now.
                 if not experiment.has_postreplicated:
-                    print(
+                    logging.debug(
                         f"Post-processing {experiment.solver.name} on {experiment.problem.name}."
                     )
                     experiment.post_replicate(
@@ -6132,6 +5645,9 @@ class ProblemsSolvers:
         ValueError
 
         """
+        # Local imports
+        import csv
+
         # Assign default values
         if solve_tols is None:
             solve_tols = [0.05, 0.10, 0.20, 0.50]
@@ -6236,7 +5752,7 @@ class ProblemsSolvers:
                                 progress_curve.compute_crossing_time(
                                     threshold=solve_tol
                                 )
-                                < np.inf
+                                < float("inf")
                             ),
                         ]
                         for solve_tol in solve_tols
@@ -6502,6 +6018,9 @@ def validate_ruby_install() -> None:
 
 
 def lookup_datafarming_gem(design_type: str) -> str:
+    # Local imports
+    import platform
+
     # Dictionary of all the valid design types and their corresponding scripts
     # Windows needs .bat file equivalents to any scripts being run
     if platform.system() == "Windows":
@@ -6554,6 +6073,9 @@ def lookup_datafarming_gem(design_type: str) -> str:
         for gem in installed_gems
         if gem.startswith("datafarming ")
     ]
+    # Local import
+    import re
+
     # Strip away anything that isn't a period or a number
     datafarming_versions = [
         re.sub(r"[^0-9.]", "", version) for version in datafarming_gem_installs
@@ -6591,7 +6113,10 @@ def lookup_datafarming_gem(design_type: str) -> str:
     raise Exception(error_msg)
 
 
-def create_design_list_from_table(design_table: pd.DataFrame) -> list:
+def create_design_list_from_table(design_table: DataFrame) -> list:
+    # Local imports
+    import ast
+
     # Create list of solver or problem objects for each dp using design_table.
     design_list = []
     dp_dict = design_table.to_dict(

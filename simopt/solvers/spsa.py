@@ -6,8 +6,9 @@ Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for op
 
 from __future__ import annotations
 
-import sys
+import logging
 from typing import Callable
+from simopt.utils import classproperty
 
 import numpy as np
 
@@ -59,24 +60,24 @@ class SPSA(Solver):
     base.Solver
     """
 
-    @property
-    def objective_type(self) -> ObjectiveType:
+    @classproperty
+    def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_needed(self) -> bool:
+    @classproperty
+    def gradient_needed(cls) -> bool:
         return False
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
@@ -302,10 +303,8 @@ class SPSA(Solver):
             (aalg + 1) ** self.factors["alpha"]
         )
         if meangbar == 0:
-            print(
-                "Warning: Division by zero in SPSA solver (meangbar == 0)",
-                file=sys.stderr,
-            )
+            warning_msg = "Division by zero in SPSA solver (meangbar == 0)"
+            logging.warning(warning_msg)
             # Follow IEEE 754 standard.
             if a_leftside < 0:
                 a = -np.inf
@@ -349,10 +348,8 @@ class SPSA(Solver):
             mean_net = mean_minus + mean_plus
             net_step_weight = step_weight_plus + step_weight_minus
             if net_step_weight == 0:
-                print(
-                    "Warning: Division by zero in SPSA solver (step_weight_minus = step_weight_plus)",
-                    file=sys.stderr,
-                )
+                warning_msg = "Division by zero in SPSA solver (step_weight_minus = step_weight_plus)"
+                logging.warning(warning_msg)
                 # Follow IEEE 754 standard.
                 if mean_net < 0:
                     ftheta = -np.inf
@@ -407,9 +404,8 @@ def check_cons(
         if current_step[i] > 0:
             diff = upper_bound[i] - new_x[i]
             if current_step[i] == np.inf:
-                print(
-                    "Warning: Division by +inf in SPSA solver", file=sys.stderr
-                )
+                warning_msg = "Division by +inf in SPSA solver"
+                logging.warning(warning_msg)
                 # IEEE 754 standard.
                 step_size_matrix[0, i] = 0
             else:
@@ -417,9 +413,8 @@ def check_cons(
         elif current_step[i] < 0:
             diff = lower_bound[i] - new_x[i]
             if current_step[i] == -np.inf:
-                print(
-                    "Warning: Division by -inf in SPSA solver", file=sys.stderr
-                )
+                warning_msg = "Division by -inf in SPSA solver"
+                logging.warning(warning_msg)
                 # IEEE 754 standard.
                 step_size_matrix[1, i] = 0
             else:

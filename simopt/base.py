@@ -9,6 +9,7 @@ from enum import Enum
 from typing import Callable
 
 import numpy as np
+from simopt.utils import classproperty
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 
@@ -39,6 +40,11 @@ class ObjectiveType(Enum):
     SINGLE = 1
     MULTI = 2
 
+    def symbol(self) -> str:
+        """Return the symbol of the objective type."""
+        symbol_mapping = {ObjectiveType.SINGLE: "S", ObjectiveType.MULTI: "M"}
+        return symbol_mapping[self]
+
 
 class ConstraintType(Enum):
     """Enum class for constraint types."""
@@ -48,6 +54,16 @@ class ConstraintType(Enum):
     DETERMINISTIC = 3
     STOCHASTIC = 4
 
+    def symbol(self) -> str:
+        """Return the symbol of the constraint type."""
+        symbol_mapping = {
+            ConstraintType.UNCONSTRAINED: "U",
+            ConstraintType.BOX: "B",
+            ConstraintType.DETERMINISTIC: "D",
+            ConstraintType.STOCHASTIC: "S",
+        }
+        return symbol_mapping[self]
+
 
 class VariableType(Enum):
     """Enum class for variable types."""
@@ -55,6 +71,15 @@ class VariableType(Enum):
     DISCRETE = 1
     CONTINUOUS = 2
     MIXED = 3
+
+    def symbol(self) -> str:
+        """Return the symbol of the variable type."""
+        symbol_mapping = {
+            VariableType.DISCRETE: "D",
+            VariableType.CONTINUOUS: "C",
+            VariableType.MIXED: "M",
+        }
+        return symbol_mapping[self]
 
 
 class Solver(ABC):
@@ -88,6 +113,26 @@ class Solver(ABC):
 
     """
 
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        """Short name of the solver class."""
+        return cls.__name__
+
+    @classproperty
+    def class_name(cls) -> str:
+        """Long name of the solver class."""
+        return cls.__name__.replace("_", " ")
+
+    @classproperty
+    def compatibility(cls) -> str:
+        """Compatibility of the solver."""
+        return (
+            f"{cls.objective_type.symbol()}"
+            f"{cls.constraint_type.symbol()}"
+            f"{cls.variable_type.symbol()}"
+            f"{'G' if cls.gradient_needed else 'N'}"
+        )
+
     @property
     def name(self) -> str:
         """Name of solver."""
@@ -97,27 +142,27 @@ class Solver(ABC):
     def name(self, value: str) -> None:
         self.__name = value
 
-    @property
+    @classproperty
     @abstractmethod
-    def objective_type(self) -> ObjectiveType:
+    def objective_type(cls) -> ObjectiveType:
         """Description of objective types: "single" or "multi"."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def constraint_type(self) -> ConstraintType:
+    def constraint_type(cls) -> ConstraintType:
         """Description of constraints types: "unconstrained", "box", "deterministic", "stochastic"."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def variable_type(self) -> VariableType:
+    def variable_type(cls) -> VariableType:
         """Description of variable types: "discrete", "continuous", "mixed"."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def gradient_needed(self) -> bool:
+    def gradient_needed(cls) -> bool:
         """True if gradient of objective function is needed, otherwise False."""
         raise NotImplementedError
 
@@ -132,10 +177,10 @@ class Solver(ABC):
             value = {}
         self.__factors = value
 
-    @property
+    @classproperty
     @abstractmethod
     def specifications(
-        self,
+        cls,
     ) -> dict[str, dict]:
         """Details of each factor (for GUI, data validation, and defaults)."""
         raise NotImplementedError
@@ -395,56 +440,6 @@ class Solver(ABC):
             )
         self.solution_progenitor_rngs = new_rngs
 
-    def get_extended_name(self) -> str:
-        """Get the extended name of the solver.
-
-        Returns
-        -------
-        str
-            Extended name of the solver.
-
-        """
-        # Single (S)
-        # Multiple (M)
-        objective = ""
-        # Unconstrained (U)
-        # Box (B)
-        # Deterministic (D)
-        # Stochastic (S)
-        constraint = ""
-        # Discrete (D)
-        # Continuous (C)
-        # Mixed (M)
-        variable = ""
-        # Available (G)
-        # Not Available (N)
-        direct_gradient_observations = ""
-        # Set the string values
-        if self.objective_type == "single":
-            objective = "S"
-        elif self.objective_type == "multi":
-            objective = "M"
-        if self.constraint_type == "unconstrained":
-            constraint = "U"
-        elif self.constraint_type == "box":
-            constraint = "B"
-        elif self.constraint_type == "deterministic":
-            constraint = "D"
-        elif self.constraint_type == "stochastic":
-            constraint = "S"
-        if self.variable_type == "discrete":
-            variable = "D"
-        elif self.variable_type == "continuous":
-            variable = "C"
-        elif self.variable_type == "mixed":
-            variable = "M"
-        if self.gradient_needed:
-            direct_gradient_observations = "G"
-        else:
-            direct_gradient_observations = "N"
-
-        return f"{self.name} ({objective}{constraint}{variable}{direct_gradient_observations})"
-
 
 class Problem(ABC):
     """Base class to implement simulation-optimization problems.
@@ -504,6 +499,26 @@ class Problem(ABC):
 
     """
 
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        """Short name of the solver class."""
+        return cls.__name__
+
+    @classproperty
+    def class_name(cls) -> str:
+        """Long name of the solver class."""
+        return cls.__name__.replace("_", " ")
+
+    @classproperty
+    def compatibility(cls) -> str:
+        """Compatibility of the solver."""
+        return (
+            "S"
+            f"{cls.constraint_type.symbol()}"
+            f"{cls.variable_type.symbol()}"
+            f"{'G' if cls.gradient_available else 'N'}"
+        )
+
     @property
     def name(self) -> str:
         """Name of the problem."""
@@ -513,69 +528,69 @@ class Problem(ABC):
     def name(self, value: str) -> None:
         self.__name = value
 
-    @property
+    @classproperty
     @abstractmethod
-    def dim(self) -> int:
+    def dim(cls) -> int:
         """Number of decision variables."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def n_objectives(self) -> int:
+    def n_objectives(cls) -> int:
         """Number of objectives."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def n_stochastic_constraints(self) -> int:
+    def n_stochastic_constraints(cls) -> int:
         """Number of stochastic constraints."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def minmax(self) -> tuple[int]:
+    def minmax(cls) -> tuple[int]:
         """Indicators of maximization (+1) or minimization (-1) for each objective."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def constraint_type(self) -> ConstraintType:
+    def constraint_type(cls) -> ConstraintType:
         """Description of constraints types: "unconstrained", "box", "deterministic", "stochastic"."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def variable_type(self) -> VariableType:
+    def variable_type(cls) -> VariableType:
         """Description of variable types: "discrete", "continuous", "mixed"."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(cls) -> tuple:
         """Lower bound for each decision variable."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(cls) -> tuple:
         """Upper bound for each decision variable."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def gradient_available(self) -> bool:
+    def gradient_available(cls) -> bool:
         """True if direct gradient of objective function is available, otherwise False."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def optimal_value(self) -> float | None:
+    def optimal_value(cls) -> float | None:
         """Optimal objective function value."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def optimal_solution(self) -> tuple | None:
+    def optimal_solution(cls) -> tuple | None:
         """Optimal solution."""
         raise NotImplementedError
 
@@ -588,9 +603,9 @@ class Problem(ABC):
     def model(self, value: Model) -> None:
         self.__model = value
 
-    @property
+    @classproperty
     @abstractmethod
-    def model_default_factors(self) -> dict:
+    def model_default_factors(cls) -> dict:
         """Default values for overriding model-level default factors."""
         raise NotImplementedError
 
@@ -605,9 +620,9 @@ class Problem(ABC):
             value = {}
         self.__model_fixed_factors = value
 
-    @property
+    @classproperty
     @abstractmethod
-    def model_decision_factors(self) -> set[str]:
+    def model_decision_factors(cls) -> set[str]:
         """Set of keys for factors that are decision variables."""
         raise NotImplementedError
 
@@ -631,9 +646,9 @@ class Problem(ABC):
             value = {}
         self.__factors = value
 
-    @property
+    @classproperty
     @abstractmethod
-    def specifications(self) -> dict:
+    def specifications(cls) -> dict:
         """Details of each factor (for GUI, data validation, and defaults)."""
         raise NotImplementedError
 
@@ -1138,8 +1153,8 @@ class Problem(ABC):
                 )
             ]
             if self.gradient_available:
-                # print(self.response_dict_to_objectives_gradients(vector_gradients))
-                # print(solution.det_objectives_gradients)
+                # logging.debug(self.response_dict_to_objectives_gradients(vector_gradients))
+                # logging.debug(solution.det_objectives_gradients)
                 # TODO: Ensure that this never happens
                 if "vector_gradients" not in locals():
                     raise ValueError("vector_gradients not defined")
@@ -1231,27 +1246,40 @@ class Model(ABC):
 
     """
 
-    @property
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        """Short name of the model class."""
+        return cls.__name__.capitalize()
+
+    @classproperty
+    def class_name(cls) -> str:
+        """Long name of the model class."""
+        # Insert spaces before capital letters
+        import re
+
+        return re.sub(r"(?<!^)(?=[A-Z])", " ", cls.__name__)
+
+    @classproperty
     @abstractmethod
-    def name(self) -> str:
+    def name(cls) -> str:
         """Name of model."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def n_rngs(self) -> int:
+    def n_rngs(cls) -> int:
         """Number of random-number generators used to run a simulation replication."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def n_responses(self) -> int:
+    def n_responses(cls) -> int:
         """Number of responses (performance measures)."""
         raise NotImplementedError
 
-    @property
+    @classproperty
     @abstractmethod
-    def specifications(self) -> dict[str, dict]:
+    def specifications(cls) -> dict[str, dict]:
         """Details of each factor (for GUI, data validation, and defaults)."""
         raise NotImplementedError
 
@@ -1488,11 +1516,12 @@ class Solution:
     @x.setter
     def x(self, value: tuple) -> None:
         self.__x = value
+        self.__dim = len(value)
 
     @property
     def dim(self) -> int:
         """Number of decision variables describing `x`."""
-        return len(self.__x)
+        return self.__dim
 
     @property
     def decision_factors(self) -> dict:

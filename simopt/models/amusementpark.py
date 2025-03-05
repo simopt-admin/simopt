@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import math as math
 from typing import Callable, Final
+from simopt.utils import classproperty
 
 import numpy as np
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -53,20 +54,16 @@ class AmusementPark(Model):
 
     """
 
-    @property
-    def name(self) -> str:
-        return "AMUSEMENTPARK"
-
-    @property
-    def n_rngs(self) -> int:
+    @classproperty
+    def n_rngs(cls) -> int:
         return 3
 
-    @property
-    def n_responses(self) -> int:
+    @classproperty
+    def n_responses(cls) -> int:
         return 4
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "park_capacity": {
                 "description": "The total number of tourists waiting for \
@@ -504,48 +501,56 @@ class AmusementParkMinDepart(Problem):
 
     """
 
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "AMUSEMENTPARK-1"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Min Total Departed Visitors for Amusement Park"
+
+    @classproperty
+    def n_objectives(cls) -> int:
         return 1
 
-    @property
-    def n_stochastic_constraints(self) -> int:
+    @classproperty
+    def n_stochastic_constraints(cls) -> int:
         return 0
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    def minmax(cls) -> tuple[int]:
         return (-1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.DETERMINISTIC
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    def gradient_available(cls) -> bool:
         return False
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    def optimal_value(cls) -> float | None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    def optimal_solution(cls) -> tuple | None:
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    def model_decision_factors(cls) -> set[str]:
         return {"queue_capacities"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",

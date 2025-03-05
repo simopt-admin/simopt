@@ -11,6 +11,15 @@ from simopt.experiment_base import ProblemSolver, post_normalize
 NUM_MACROREPS = 10
 NUM_POSTREPS = 100
 
+# Constants for the template file
+TEMPLATE_NAME = "testing_template.py"
+TEMPLATE_DIR = os.path.join(os.getcwd(), "dev_tools", "testing")
+TEMPLATE_FILEPATH = os.path.join(TEMPLATE_DIR, TEMPLATE_NAME)
+
+# Constants for the test directory
+TEST_DIR = os.path.join(os.getcwd(), "test")
+EXPECTED_RESULTS_DIR = os.path.join(TEST_DIR, "expected_results")
+
 
 # Check compatibility of a solver with a problem
 # Based off the similar function in simopt/experiment_base.py
@@ -78,10 +87,7 @@ def create_test(problem_name: str, solver_name: str) -> None:
     filename = "test_" + filename_core.lower() + ".py"
 
     # Open the file template and read it
-    cwd = os.getcwd()
-    test_dir = os.path.join(cwd, "test")
-    template_filepath = os.path.join(test_dir, "template.py")
-    with open(template_filepath, "rb") as f:
+    with open(TEMPLATE_FILEPATH, "rb") as f:
         template = f.read()
 
     results_dict = {
@@ -97,9 +103,8 @@ def create_test(problem_name: str, solver_name: str) -> None:
     }
 
     # Define the directory and output file
-    expected_dir = os.path.join(test_dir, "expected_results")
     results_filename = filename_core + ".yaml"
-    results_filepath = os.path.join(expected_dir, results_filename)
+    results_filepath = os.path.join(EXPECTED_RESULTS_DIR, results_filename)
     # Write the results to the file
     with open(results_filepath, "w") as f:
         yaml.dump(results_dict, f)
@@ -118,7 +123,7 @@ def create_test(problem_name: str, solver_name: str) -> None:
     )
 
     # Write the new test into the new file
-    with open(os.path.join(test_dir, filename), "wb") as f:
+    with open(os.path.join(TEST_DIR, filename), "wb") as f:
         f.write(template)
 
 
@@ -132,16 +137,12 @@ def main() -> None:
                 pair = (problem_name, solver_name)
                 compatible_pairs.append(pair)
 
-    # Setup the directory structure for the test cases
-    cwd = os.getcwd()
     # Create the test directory if it doesn't exist
-    test_directory = os.path.join(cwd, "test")
-    os.makedirs(test_directory, exist_ok=True)
-    existing_test_files = os.listdir(test_directory)
+    os.makedirs(TEST_DIR, exist_ok=True)
+    existing_test_files = os.listdir(TEST_DIR)
     # Create the expected directory if it doesn't exist
-    results_directory = os.path.join(test_directory, "expected_results")
-    os.makedirs(results_directory, exist_ok=True)
-    existing_result_files = os.listdir(results_directory)
+    os.makedirs(EXPECTED_RESULTS_DIR, exist_ok=True)
+    existing_result_files = os.listdir(EXPECTED_RESULTS_DIR)
 
     # Don't generate any tests for pairs that already have tests generated
     for pair in compatible_pairs:
@@ -170,12 +171,12 @@ def main() -> None:
     # Remove any tests that are no longer needed
     for test_file in existing_test_files:
         if test_file.startswith("test_") and test_file.endswith(".py"):
-            path = os.path.join(test_directory, test_file)
+            path = os.path.join(TEST_DIR, test_file)
             print(f"Removing unneeded test file: {path}")
             os.remove(path)
     for result_file in existing_result_files:
         if result_file.endswith(".yaml"):
-            path = os.path.join(results_directory, result_file)
+            path = os.path.join(EXPECTED_RESULTS_DIR, result_file)
             print(f"Removing unneeded result file: {path}")
             os.remove(path)
 
