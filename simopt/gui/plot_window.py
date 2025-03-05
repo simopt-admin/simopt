@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import tkinter as tk
@@ -5,7 +7,7 @@ from functools import partial
 from tkinter import Listbox, Scrollbar, ttk
 from tkinter.constants import MULTIPLE
 from tkinter.font import nametofont
-from typing import Literal, Union
+from typing import Literal
 
 from PIL import Image, ImageTk
 
@@ -44,7 +46,7 @@ class PlotWindow(Toplevel):
         root: tk.Tk,
         main_window: tk.Tk,
         experiment_list: list,
-        meta_list: Union[list[ProblemSolver], None] = None,
+        meta_list: list[ProblemSolver] | None = None,
     ) -> None:
         """Initialize the Plot_Window class.
 

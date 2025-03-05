@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import tkinter as tk
 from abc import ABC, abstractmethod
 from tkinter import ttk
-from typing import Literal, Union
+from typing import Literal
 from simopt.utils import classproperty
 
 
@@ -42,7 +44,7 @@ class DFFactor(ABC):
         raise NotImplementedError
 
     @property
-    def include(self) -> Union[tk.BooleanVar, None]:
+    def include(self) -> tk.BooleanVar | None:
         """Whether to include the factor in the experiment."""
         return None
 
@@ -69,17 +71,17 @@ class DFFactor(ABC):
         return "disabled"
 
     @property
-    def minimum(self) -> Union[tk.IntVar, tk.DoubleVar, None]:
+    def minimum(self) -> tk.IntVar | tk.DoubleVar | None:
         """The minimum value of the factor."""
         return None
 
     @property
-    def maximum(self) -> Union[tk.IntVar, tk.DoubleVar, None]:
+    def maximum(self) -> tk.IntVar | tk.DoubleVar | None:
         """The maximum value of the factor."""
         return None
 
     @property
-    def num_decimals(self) -> Union[tk.IntVar, None]:
+    def num_decimals(self) -> tk.IntVar | None:
         """The number of decimals of the factor."""
         return None
 
@@ -193,7 +195,7 @@ class DFFactor(ABC):
 
     def get_include_checkbutton(
         self, frame: ttk.Frame
-    ) -> Union[tk.Checkbutton, None]:
+    ) -> tk.Checkbutton | None:
         """Get the include checkbutton of the factor.
 
         Parameters
@@ -217,7 +219,7 @@ class DFFactor(ABC):
             )
         return self.chk_include
 
-    def get_minimum_entry(self, frame: ttk.Frame) -> Union[ttk.Entry, None]:
+    def get_minimum_entry(self, frame: ttk.Frame) -> ttk.Entry | None:
         """Get the minimum entry of the factor.
 
         Parameters
@@ -243,7 +245,7 @@ class DFFactor(ABC):
             )
         return self.ent_minimum
 
-    def get_maximum_entry(self, frame: ttk.Frame) -> Union[ttk.Entry, None]:
+    def get_maximum_entry(self, frame: ttk.Frame) -> ttk.Entry | None:
         """Get the maximum entry of the factor.
 
         Parameters
@@ -269,9 +271,7 @@ class DFFactor(ABC):
             )
         return self.ent_maximum
 
-    def get_num_decimals_entry(
-        self, frame: ttk.Frame
-    ) -> Union[ttk.Entry, None]:
+    def get_num_decimals_entry(self, frame: ttk.Frame) -> ttk.Entry | None:
         """Get the number of decimals entry of the factor.
 
         Parameters
@@ -741,7 +741,7 @@ class DFList(DFFactor):
         self.__default = tk.StringVar(value=str(default))
 
 
-def spec_dict_to_df_dict(spec_dict: "dict[str, dict]") -> "dict[str, DFFactor]":
+def spec_dict_to_df_dict(spec_dict: dict[str, dict]) -> dict[str, DFFactor]:
     """Convert a dictionary of specifications to a dictionary of datafarm factors.
 
     Parameters
