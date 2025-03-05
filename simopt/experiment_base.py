@@ -2,28 +2,21 @@
 
 from __future__ import annotations
 
-import ast
-import csv
 import importlib
 import itertools
 import logging
 import os
 import pickle
-import platform
-import re
 import subprocess
 import time
-from multiprocessing import Pool
-from typing import Literal
+from enum import Enum
+from typing import TYPE_CHECKING
 
-import matplotlib.lines as mpl_lines
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from mrg32k3a.mrg32k3a import MRG32k3a
-from scipy.stats import norm
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
 from simopt.directory import (
     model_directory,
@@ -31,10 +24,34 @@ from simopt.directory import (
     solver_directory,
 )
 
+# Imports exclusively used when type checking
+# Prevents imports from being executed at runtime
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+    from typing import Literal
+
+    from matplotlib.lines import Line2D as Line2D
+    from pandas import DataFrame as DataFrame
+
 """Set the default directory for saving experiment results."""
 EXPERIMENT_DIR = os.path.join(
     os.getcwd(), "experiments", time.strftime("%Y-%m-%d_%H-%M-%S")
 )
+
+
+class CurveType(Enum):
+    """Enumeration for different curve styles."""
+
+    REGULAR = "regular"
+    CONF_BOUND = "conf_bound"
+
+    @property
+    def style(self) -> tuple[str, int]:
+        """Returns linestyle and linewidth for the curve type."""
+        return {
+            CurveType.REGULAR: ("-", 2),
+            CurveType.CONF_BOUND: ("--", 1),
+        }[self]
 
 
 class Curve:
@@ -59,55 +76,54 @@ class Curve:
     """
 
     @property
-    def x_vals(self) -> list[float]:
+    def x_vals(self) -> tuple[float, ...]:
         """Values of horizontal components."""
         return self.__x_vals
 
     @property
-    def y_vals(self) -> list[float]:
+    def y_vals(self) -> tuple[float, ...]:
         """Values of vertical components."""
         return self.__y_vals
 
     @property
     def n_points(self) -> int:
-        """Number of values in x- and y- vectors."""
-        return len(self.x_vals)
+        """Number of points in the curve."""
+        return self.__n_points
 
-    def __init__(self, x_vals: list[float], y_vals: list[float]) -> None:
+    def __init__(
+        self, x_vals: Sequence[int | float], y_vals: Sequence[int | float]
+    ) -> None:
         """Initialize a curve with x- and y-values.
 
         Parameters
         ----------
-        x_vals : list[float]
+        x_vals : Sequence[int | float]
             Values of horizontal components.
-        y_vals : list[float]
+        y_vals : Sequence[int | float]
             Values of vertical components.
 
         Raises
         ------
         TypeError
         ValueError
-
         """
-        # Type checking
-        if not isinstance(x_vals, list) or not all(
-            [isinstance(x, (int, float)) for x in x_vals]
-        ):
-            error_msg = "x_vals must be a list of floats."
-            raise TypeError(error_msg)
-        if not isinstance(y_vals, list) or not all(
-            [isinstance(y, (int, float)) for y in y_vals]
-        ):
-            error_msg = "y_vals must be a list of floats."
-            raise TypeError(error_msg)
-        # Value checking
-        if len(x_vals) != len(y_vals):
-            error_msg = f"Length of x- {len(x_vals)} and y-values {len(y_vals)} must be equal."
-            raise ValueError(error_msg)
+        try:
+            # Ensure x_vals and y_vals have the same length before conversion
+            if len(x_vals) != len(y_vals):
+                error_msg = f"Length of x ({len(x_vals)}) and y ({len(y_vals)}) must be equal."
+                raise ValueError(error_msg)
 
-        # Each attribute is read-only
-        self.__x_vals = x_vals
-        self.__y_vals = y_vals
+            # Convert to immutable tuples only after validation
+            self.__x_vals = tuple(float(x) for x in x_vals)
+            self.__y_vals = tuple(float(y) for y in y_vals)
+
+            # Store the number of points
+            self.__n_points = len(self.__x_vals)
+
+        except (TypeError, ValueError) as e:
+            error_msg = f"Invalid input for Curve initialization: {e}"
+            logging.error(error_msg)
+            raise ValueError(error_msg) from e  # Keep the original error type
 
     def lookup(self, x_val: float) -> float:
         """Lookup the y-value of the curve at an intermediate x-value.
@@ -120,23 +136,27 @@ class Curve:
         Returns
         -------
         float
-            Y-value corresponding to x.
+            Y-value corresponding to x, or NaN if x_val is out of range.
 
         Raises
         ------
         TypeError
-
+            If x_val is not numeric.
         """
-        # Type checking
-        if not isinstance(x_val, (int, float)):
-            error_msg = "x_val must be a float."
-            raise TypeError(error_msg)
+        import math
+        from bisect import bisect_right
 
-        if x_val < self.x_vals[0]:
-            return np.nan
-        else:
-            idx = np.max(np.where(np.array(self.x_vals) <= x_val))
+        try:
+            # Return NaN if x_val is out of range (before first or after last x-value)
+            if x_val < self.x_vals[0] or x_val > self.x_vals[-1]:
+                return math.nan
+
+            # Use binary search (O(log n)) instead of linear search (O(n))
+            idx = bisect_right(self.x_vals, x_val) - 1
             return self.y_vals[idx]
+
+        except TypeError as e:
+            raise TypeError(f"x_val must be a numeric value: {e}") from e
 
     def compute_crossing_time(self, threshold: float) -> float:
         """Compute the first time at which a curve drops below a given threshold.
@@ -154,26 +174,24 @@ class Curve:
         Raises
         ------
         TypeError
-
+            If threshold is not numeric.
         """
-        # Type checking
-        if not isinstance(threshold, (int, float)):
-            error_msg = "Threshold must be a float."
-            raise TypeError(error_msg)
+        import math
+        from bisect import bisect_right
 
-        # Use binary search to find the first x-value below threshold.
-        # TODO: Test this
-        # index = bisect.bisect_left(self.y_vals, threshold)
-        # if index == self.n_points:
-        #     return np.inf
-        # else:
-        #     return self.x_vals[index]
+        try:
+            # Find the first index where y_vals < threshold using binary search
+            index = bisect_right(self.y_vals, threshold)
 
-        for i in range(self.n_points):
-            if self.y_vals[i] < threshold:
-                return self.x_vals[i]
-        # If threshold is never crossed, return infinity.
-        return np.inf
+            # If all y-values are above the threshold, return infinity
+            if index == self.n_points:
+                return math.inf
+
+            # Return corresponding x-value
+            return self.x_vals[index]
+
+        except TypeError as e:
+            raise TypeError(f"Threshold must be a numeric value: {e}") from e
 
     def compute_area_under_curve(self) -> float:
         """Compute the area under a curve.
@@ -182,18 +200,23 @@ class Curve:
         -------
         float
             Area under the curve.
-
         """
-        area = np.dot(self.y_vals[:-1], np.diff(self.x_vals))
-        return area
+        x_diffs = (
+            x_next - x for x, x_next in zip(self.x_vals[:-1], self.x_vals[1:])
+        )
+        area_contributions = (
+            y * dx for y, dx in zip(self.y_vals[:-1], x_diffs)
+        )
 
-    def curve_to_mesh(self, mesh: list[float]) -> Curve:
+        return sum(area_contributions)
+
+    def curve_to_mesh(self, mesh: Iterable[float]) -> Curve:
         """Create a curve defined at equally spaced x values.
 
         Parameters
         ----------
-        mesh : list[float]
-            List of uniformly spaced x-values.
+        mesh : Iterable[float]
+            Collection of uniformly spaced x-values.
 
         Returns
         -------
@@ -203,17 +226,21 @@ class Curve:
         Raises
         ------
         TypeError
-
+            If mesh is not an iterable of numeric values.
         """
-        # Type checking
-        if not isinstance(mesh, list) or not all(
-            [isinstance(x, (int, float)) for x in mesh]
-        ):
-            error_msg = "Mesh must be a list of floats."
-            raise TypeError(error_msg)
+        try:
+            # Ensure mesh contains valid numeric values
+            mesh_x_vals = tuple(float(x) for x in mesh)
 
-        mesh_curve = Curve(x_vals=mesh, y_vals=[self.lookup(x) for x in mesh])
-        return mesh_curve
+            # Generate corresponding y-values using lookup
+            mesh_y_vals = tuple(self.lookup(x) for x in mesh_x_vals)
+
+            return Curve(x_vals=mesh_x_vals, y_vals=mesh_y_vals)
+
+        except (TypeError, ValueError) as e:
+            error_msg = "Mesh must be an iterable of numeric values."
+            logging.error(error_msg)
+            raise TypeError(error_msg) from e
 
     def curve_to_full_curve(self) -> Curve:
         """Create a curve with duplicate x- and y-values to indicate steps.
@@ -224,75 +251,75 @@ class Curve:
             Curve with duplicate x- and y-values.
 
         """
-        duplicate_x_vals = [x for x in self.x_vals for _ in (0, 1)]
-        duplicate_y_vals = [y for y in self.y_vals for _ in (0, 1)]
+        from itertools import chain, repeat
+
         full_curve = Curve(
-            x_vals=duplicate_x_vals[1:], y_vals=duplicate_y_vals[:-1]
+            x_vals=chain.from_iterable(repeat(x, 2) for x in self.x_vals),
+            y_vals=chain.from_iterable(repeat(y, 2) for y in self.y_vals),
         )
-        return full_curve
+        return Curve(
+            x_vals=list(full_curve.x_vals)[1:],
+            y_vals=list(full_curve.y_vals)[:-1],
+        )
 
     def plot(
         self,
         color_str: str = "C0",
-        curve_type: Literal["regular", "conf_bound"] = "regular",
-    ) -> mpl_lines.Line2D:
+        curve_type: CurveType = CurveType.REGULAR,
+    ) -> Line2D:
         """Plot a curve.
 
         Parameters
         ----------
         color_str : str, default="C0"
             String indicating line color, e.g., "C0", "C1", etc.
-        curve_type : str, default="regular"
-            String indicating type of line: "regular" or "conf_bound".
+        curve_type : CurveType, default=CurveType.REGULAR
+            Type of line: REGULAR (solid) or CONF_BOUND (dashed).
 
         Returns
         -------
-        ``matplotlib.lines.Line2D``
+        matplotlib.lines.Line2D
             Curve handle, to use when creating legends.
 
         Raises
         ------
-        TypeError
         ValueError
-
+            If an invalid curve type is provided.
         """
-        # Type checking
-        if not isinstance(color_str, str):
-            error_msg = "Color must be a string."
-            raise TypeError(error_msg)
-        if not isinstance(curve_type, str):
-            error_msg = "Curve type must be a string."
-            raise TypeError(error_msg)
-        # Value checking
-        if curve_type not in ["regular", "conf_bound"]:
-            error_msg = "Invalid curve type."
-            raise ValueError(error_msg)
+        try:
+            # Ensure curve_type is a valid Enum member
+            if not isinstance(curve_type, CurveType):
+                error_msg = f"Invalid curve type: {curve_type}. Must be a member of CurveType."
+                raise ValueError(error_msg)
 
-        if curve_type == "regular":
-            linestyle = "-"
-            linewidth = 2
-        elif curve_type == "conf_bound":
-            linestyle = "--"
-            linewidth = 1
-        (handle,) = plt.step(
-            self.x_vals,
-            self.y_vals,
-            color=color_str,
-            linestyle=linestyle,
-            linewidth=linewidth,
-            where="post",
-        )
-        return handle
+            linestyle, linewidth = curve_type.style
+
+            # Plot the step curve
+            handle = plt.step(
+                self.x_vals,
+                self.y_vals,
+                color=color_str,
+                linestyle=linestyle,
+                linewidth=linewidth,
+                where="post",
+            )[0]
+
+            return handle
+
+        except Exception as e:
+            error_msg = f"Error in plot function: {e}"
+            logging.error(error_msg)
+            raise
 
 
-def mean_of_curves(curves: list[Curve]) -> Curve:
+def mean_of_curves(curves: Iterable[Curve]) -> Curve:
     """Compute pointwise (w.r.t. x-values) mean of curves.
 
     Starting and ending x-values must coincide for all curves.
 
     Parameters
     ----------
-    curves : list [``experiment_base.Curve``]
+    curves : Iterable [``experiment_base.Curve``]
         Collection of curves to aggregate.
 
     Returns
@@ -303,34 +330,37 @@ def mean_of_curves(curves: list[Curve]) -> Curve:
     Raises
     ------
     TypeError
-
     """
-    # Type checking
-    if not isinstance(curves, list) or not all(
-        [isinstance(curve, Curve) for curve in curves]
-    ):
-        error_msg = "Curves must be a list of Curve objects."
-        raise TypeError(error_msg)
+    from statistics import mean
 
-    unique_x_vals = np.unique(
-        [x_val for curve in curves for x_val in curve.x_vals]
-    )
-    mean_y_vals = [
-        float(np.mean([curve.lookup(float(x_val)) for curve in curves]))
-        for x_val in unique_x_vals
-    ]
-    mean_curve = Curve(x_vals=unique_x_vals.tolist(), y_vals=mean_y_vals)  # type: ignore
-    return mean_curve
+    try:
+        # Collect unique x-values across all curves
+        unique_x_vals = sorted(
+            {x_val for curve in curves for x_val in curve.x_vals}
+        )
+
+        # Compute pointwise means using generator expressions
+        mean_y_vals = [
+            mean(curve.lookup(x_val) for curve in curves)
+            for x_val in unique_x_vals
+        ]
+
+        return Curve(x_vals=unique_x_vals, y_vals=mean_y_vals)
+
+    except AttributeError as e:
+        error_msg = "Curves must be an iterable of Curve objects."
+        logging.error(error_msg)
+        raise TypeError(error_msg) from e
 
 
-def quantile_of_curves(curves: list[Curve], beta: float) -> Curve:
+def quantile_of_curves(curves: Iterable[Curve], beta: float) -> Curve:
     """Compute pointwise (w.r.t. x values) quantile of curves.
 
     Starting and ending x values must coincide for all curves.
 
     Parameters
     ----------
-    curves : list [``experiment_base.Curve``]
+    curves : Iterable [``experiment_base.Curve``]
         Collection of curves to aggregate.
     beta : float
         Quantile level.
@@ -343,34 +373,40 @@ def quantile_of_curves(curves: list[Curve], beta: float) -> Curve:
     Raises
     ------
     TypeError
-
     """
-    # Type checking
-    if not isinstance(curves, list) or not all(
-        [isinstance(curve, Curve) for curve in curves]
-    ):
-        error_msg = "Curves must be a list of Curve objects."
-        raise TypeError(error_msg)
-    if not isinstance(beta, (int, float)):
-        error_msg = "Beta must be a float."
-        raise TypeError(error_msg)
+    from statistics import quantiles
 
-    unique_x_vals = np.unique(
-        [x_val for curve in curves for x_val in curve.x_vals]
-    )
-    quantile_y_vals = [
-        float(np.quantile([curve.lookup(x_val) for curve in curves], q=beta))
-        for x_val in unique_x_vals
-    ]
-    quantile_curve = Curve(
-        x_vals=unique_x_vals.tolist(),  # type: ignore
-        y_vals=quantile_y_vals,
-    )
-    return quantile_curve
+    try:
+        # Collect unique x-values across all curves
+        unique_x_vals = sorted(
+            {x_val for curve in curves for x_val in curve.x_vals}
+        )
+
+        # Precompute quantile index
+        quantile_idx = int(beta * 99)
+
+        # Compute pointwise quantiles
+        quantile_y_vals = [
+            quantiles((curve.lookup(x_val) for curve in curves), n=100)[
+                quantile_idx
+            ]
+            for x_val in unique_x_vals
+        ]
+
+        return Curve(x_vals=unique_x_vals, y_vals=quantile_y_vals)
+
+    except AttributeError as e:
+        error_msg = "Curves must be an iterable of Curve objects."
+        logging.error(error_msg)
+        raise TypeError(error_msg) from e
+    except TypeError as e:
+        error_msg = "Beta must be a numeric value (int or float)."
+        logging.error(error_msg)
+        raise TypeError(error_msg) from e
 
 
 def cdf_of_curves_crossing_times(
-    curves: list[Curve], threshold: float
+    curves: Iterable[Curve], threshold: float
 ) -> Curve:
     """Compute the cdf of crossing times of curves.
 
@@ -391,44 +427,42 @@ def cdf_of_curves_crossing_times(
     TypeError
 
     """
-    # Type checking
-    if not isinstance(curves, list) or not all(
-        [isinstance(curve, Curve) for curve in curves]
-    ):
-        error_msg = "Curves must be a list of Curve objects."
-        raise TypeError(error_msg)
-    if not isinstance(threshold, (int, float)):
-        error_msg = "Threshold must be a float."
-        raise TypeError(error_msg)
+    from bisect import bisect_right
 
-    n_curves = len(curves)
-    crossing_times = [
-        curve.compute_crossing_time(threshold) for curve in curves
-    ]
-    unique_x_vals = [
-        0,
-        *list(
-            np.unique(
-                [
-                    crossing_time
-                    for crossing_time in crossing_times
-                    if crossing_time < np.inf
-                ]
-            )
-        ),
-        1,
-    ]
-    cdf_y_vals = [
-        sum(crossing_time <= x_val for crossing_time in crossing_times)
-        / n_curves
-        for x_val in unique_x_vals
-    ]
-    cdf_curve = Curve(x_vals=unique_x_vals, y_vals=cdf_y_vals)
-    return cdf_curve
+    try:
+        # Compute crossing times once (errors will naturally raise if `curves` is invalid)
+        crossing_times = [
+            curve.compute_crossing_time(threshold) for curve in curves
+        ]
+
+        # Collect unique crossing times (excluding infinity)
+        finite_crossing_times = {t for t in crossing_times if t < float("inf")}
+
+        # Construct sorted unique x-values with 0 and 1 at the edges
+        unique_x_vals = [0, *sorted(finite_crossing_times), 1]
+
+        # Use binary search (`bisect_right`) for efficient cumulative sum calculation
+        n_curves = len(curves)
+        sorted_crossings = sorted(crossing_times)
+
+        cdf_y_vals = [
+            bisect_right(sorted_crossings, x) / n_curves for x in unique_x_vals
+        ]
+
+        return Curve(x_vals=unique_x_vals, y_vals=cdf_y_vals)
+
+    except AttributeError as e:
+        error_msg = "Curves must be an iterable of Curve objects."
+        logging.error(error_msg)
+        raise TypeError(error_msg) from e
+    except TypeError as e:
+        error_msg = "Threshold must be a float."
+        logging.error(error_msg)
+        raise TypeError(error_msg) from e
 
 
 def quantile_cross_jump(
-    curves: list[Curve], threshold: float, beta: float
+    curves: Iterable[Curve], threshold: float, beta: float
 ) -> Curve:
     """Compute a simple curve with a jump at the quantile of the crossing times.
 
@@ -451,36 +485,37 @@ def quantile_cross_jump(
     TypeError
 
     """
-    # Type checking
-    if not isinstance(curves, list) or not all(
-        [isinstance(curve, Curve) for curve in curves]
-    ):
-        error_msg = "Curves must be a list of Curve objects."
-        raise TypeError(error_msg)
-    if not isinstance(threshold, (int, float)):
-        error_msg = "Threshold must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(beta, (int, float)):
-        error_msg = "Beta must be a float."
-        raise TypeError(error_msg)
+    import math
+    from statistics import quantiles
 
-    solve_time_quantile = float(
-        np.quantile(
-            [
-                curve.compute_crossing_time(threshold=threshold)
-                for curve in curves
-            ],
-            q=beta,
-        )
-    )
-    # Note: np.quantile will evaluate to np.nan if forced to interpolate
-    # between a finite and infinite value. These are rare cases. Since
-    # crossing times must be non-negative, the quantile should be mapped
-    # to positive infinity.
-    if solve_time_quantile == np.inf or np.isnan(solve_time_quantile):
-        return Curve(x_vals=[0, 1], y_vals=[0, 0])
-    else:
-        return Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
+    """Computes the quantile crossing time curve based on the given threshold and beta quantile."""
+
+    try:
+        # Compute crossing times once
+        crossing_times = [
+            curve.compute_crossing_time(threshold=threshold) for curve in curves
+        ]
+
+        # Compute quantile using built-in `statistics.quantiles()` instead of `np.quantile()`
+        quantile_idx = int(
+            beta * 99
+        )  # Convert beta into an index (assuming n=100 quantiles)
+        solve_time_quantile = quantiles(crossing_times, n=100)[quantile_idx]
+
+        # Handle NaN and infinity cases
+        if math.isinf(solve_time_quantile) or math.isnan(solve_time_quantile):
+            return Curve(x_vals=[0, 1], y_vals=[0, 0])
+        else:
+            return Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
+
+    except AttributeError as e:
+        error_msg = "Curves must be an iterable of Curve objects."
+        logging.error(error_msg)
+        raise TypeError(error_msg) from e
+    except TypeError as e:
+        error_msg = "Threshold and Beta must be numeric (int or float)."
+        logging.error(error_msg)
+        raise TypeError(error_msg) from e
 
 
 def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
@@ -491,7 +526,7 @@ def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
     curve_1: ``experiment_base.Curve``
         First curve to take the difference of.
     curve_2 : ``experiment_base.Curve``
-        Curves to take the difference of.
+        Second curve to take the difference of.
 
     Returns
     -------
@@ -503,22 +538,22 @@ def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
     TypeError
 
     """
-    # Type checking
-    if not isinstance(curve_1, Curve):
-        error_msg = "curve_1 must be a Curve object."
-        raise TypeError(error_msg)
-    if not isinstance(curve_2, Curve):
-        error_msg = "curve_2 must be a Curve object."
-        raise TypeError(error_msg)
+    try:
+        # Collect unique x-values from both curves
+        unique_x_vals = sorted(set(curve_1.x_vals) | set(curve_2.x_vals))
 
-    unique_x_vals_np = np.unique(curve_1.x_vals + curve_2.x_vals)
-    unique_x_vals = [float(x_val) for x_val in unique_x_vals_np]
-    difference_y_vals = [
-        (curve_1.lookup(x_val) - curve_2.lookup(x_val))
-        for x_val in unique_x_vals
-    ]
-    difference_curve = Curve(x_vals=unique_x_vals, y_vals=difference_y_vals)
-    return difference_curve
+        # Compute difference in y-values
+        difference_y_vals = [
+            curve_1.lookup(x_val) - curve_2.lookup(x_val)
+            for x_val in unique_x_vals
+        ]
+
+        return Curve(x_vals=unique_x_vals, y_vals=difference_y_vals)
+
+    except AttributeError as e:
+        error_msg = "Both curve_1 and curve_2 must be Curve objects."
+        logging.error(error_msg)
+        raise TypeError(error_msg) from e
 
 
 def max_difference_of_curves(curve_1: Curve, curve_2: Curve) -> float:
@@ -539,19 +574,16 @@ def max_difference_of_curves(curve_1: Curve, curve_2: Curve) -> float:
     Raises
     ------
     TypeError
-
     """
-    # Type checking
-    if not isinstance(curve_1, Curve):
-        error_msg = "curve_1 must be a Curve object."
-        raise TypeError(error_msg)
-    if not isinstance(curve_2, Curve):
-        error_msg = "curve_2 must be a Curve object."
-        raise TypeError(error_msg)
 
-    difference_curve = difference_of_curves(curve_1, curve_2)
-    max_diff = max(difference_curve.y_vals)
-    return max_diff
+    try:
+        # Compute the difference curve and return the max y-value
+        return max(difference_of_curves(curve_1, curve_2).y_vals)
+
+    except AttributeError as e:
+        error_msg = "Both curve_1 and curve_2 must be Curve objects."
+        logging.error(error_msg)
+        raise TypeError(error_msg) from e
 
 
 class ProblemSolver:
@@ -1069,6 +1101,10 @@ class ProblemSolver:
         ValueError
 
         """
+        # Local Imports
+        from functools import partial
+        from multiprocessing import Pool
+
         # Type checking
         if not isinstance(n_macroreps, int):
             error_msg = "Number of macroreplications must be an integer."
@@ -1108,10 +1144,14 @@ class ProblemSolver:
         function_start = time.time()
 
         logging.debug("Starting macroreplications")
-        with Pool() as process_pool:
+
+        with Pool(initializer=self._run_pool_init) as process_pool:
             # Start the macroreplications in parallel (async)
+            run_multithread_partial = partial(
+                self.run_multithread, solver=self.solver, problem=self.problem
+            )
             result = process_pool.map_async(
-                self.run_multithread, range(n_macroreps)
+                run_multithread_partial, range(n_macroreps)
             )
             # Wait for the results to be returned (or 1 second)
             while not result.ready():
@@ -1139,7 +1179,12 @@ class ProblemSolver:
             file_name = os.path.basename(self.file_name_path)
             self.record_experiment_results(file_name=file_name)
 
-    def run_multithread(self, mrep: int) -> tuple:
+    def _run_pool_init(self) -> None:
+        pass
+
+    def run_multithread(
+        self, mrep: int, solver: Solver, problem: Problem
+    ) -> tuple:
         """Run a single macroreplication of the solver on the problem.
 
         Parameters
@@ -1168,12 +1213,12 @@ class ProblemSolver:
             raise ValueError(error_msg)
 
         logging.debug(
-            f"Macroreplication {mrep + 1}: Starting Solver {self.solver.name} on Problem {self.problem.name}."
+            f"Macroreplication {mrep + 1}: Starting Solver {solver.name} on Problem {problem.name}."
         )
         # Create, initialize, and attach RNGs used for simulating solutions.
         progenitor_rngs = [
             MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0])
-            for ss in range(self.problem.model.n_rngs)
+            for ss in range(problem.model.n_rngs)
         ]
         # Create a new set of RNGs for the solver based on the current macroreplication.
         # Tried re-using the progentior RNGs, but we need to match the number needed by the solver, not the problem
@@ -1181,32 +1226,30 @@ class ProblemSolver:
             MRG32k3a(
                 s_ss_sss_index=[
                     mrep + 3,
-                    self.problem.model.n_rngs + rng_index,
+                    problem.model.n_rngs + rng_index,
                     0,
                 ]
             )
-            for rng_index in range(len(self.solver.rng_list))
+            for rng_index in range(len(solver.rng_list))
         ]
 
         # Set progenitor_rngs and rng_list for solver.
-        self.solver.solution_progenitor_rngs = progenitor_rngs
-        self.solver.rng_list = solver_rngs
+        solver.solution_progenitor_rngs = progenitor_rngs
+        solver.rng_list = solver_rngs
 
         # logging.debug([rng.s_ss_sss_index for rng in progenitor_rngs])
         # Run the solver on the problem.
         tic = time.perf_counter()
-        recommended_solns, intermediate_budgets = self.solver.solve(
-            problem=self.problem
-        )
+        recommended_solns, intermediate_budgets = solver.solve(problem=problem)
         toc = time.perf_counter()
         runtime = toc - tic
         logging.debug(
-            f"Macroreplication {mrep + 1}: Finished Solver {self.solver.name} on Problem {self.problem.name} in {runtime:0.4f} seconds."
+            f"Macroreplication {mrep + 1}: Finished Solver {solver.name} on Problem {problem.name} in {runtime:0.4f} seconds."
         )
 
         # Trim the recommended solutions and intermediate budgets
         recommended_solns, intermediate_budgets = trim_solver_results(
-            problem=self.problem,
+            problem=problem,
             recommended_solutions=recommended_solns,
             intermediate_budgets=intermediate_budgets,
         )
@@ -1242,6 +1285,9 @@ class ProblemSolver:
         ValueError
 
         """
+        # Local Imports
+        from multiprocessing import Pool
+
         # Type checking
         if not isinstance(n_postreps, int):
             error_msg = "Number of postreplications must be an integer."
@@ -2068,11 +2114,11 @@ def post_normalize(
                     est_diff = est_objective - opt_obj_val
                     # Follow IEEE 754 standard for division by zero.
                     if est_diff < 0:
-                        norm_est_objectives.append(-np.inf)
+                        norm_est_objectives.append(-float("inf"))
                     elif est_diff > 0:
-                        norm_est_objectives.append(np.inf)
+                        norm_est_objectives.append(float("inf"))
                     else:
-                        norm_est_objectives.append(np.nan)
+                        norm_est_objectives.append(float("nan"))
             else:
                 norm_est_objectives = [
                     (est_objective - opt_obj_val) / initial_opt_gap
@@ -2687,6 +2733,9 @@ def compute_bootstrap_conf_int(
                 "Overall estimator must be provided for bias correction."
             )
             raise ValueError(error_msg)
+        # Lazy imports
+        from scipy.stats import norm
+
         # For biased-corrected CIs, see equation (4.4) on page 146.
         z0 = norm.ppf(
             np.mean([obs < overall_estimator for obs in observations])
@@ -2740,8 +2789,8 @@ def plot_bootstrap_conf_ints(
         error_msg = "Color string must be a string."
         raise TypeError(error_msg)
 
-    bs_conf_int_lower_bounds.plot(color_str=color_str, curve_type="conf_bound")
-    bs_conf_int_upper_bounds.plot(color_str=color_str, curve_type="conf_bound")
+    bs_conf_int_lower_bounds.plot(color_str=color_str, curve_type=CurveType.CONF_BOUND)
+    bs_conf_int_upper_bounds.plot(color_str=color_str, curve_type=CurveType.CONF_BOUND)
     # Shade space between curves.
     # Convert to full curves to get piecewise-constant shaded areas.
     plt.fill_between(
@@ -2809,8 +2858,8 @@ def report_max_halfwidth(
         raise ValueError(error_msg)
 
     # Compute max halfwidth of bootstrap confidence intervals.
-    min_lower_bound = np.inf
-    max_upper_bound = -np.inf
+    min_lower_bound = float("inf")
+    max_upper_bound = -float("inf")
     max_halfwidths = []
     for curve_pair in curve_pairs:
         min_lower_bound = min(min_lower_bound, min(curve_pair[0].y_vals))
@@ -4500,35 +4549,36 @@ def plot_terminal_progress(
                 labels=[experiment.solver.name for experiment in experiments],
             )
         elif plot_type == "violin":
-            solver_names = [
-                experiments[exp_idx].solver.name
-                for exp_idx in range(n_experiments)
-                for td in terminal_data[exp_idx]
-            ]
-            terminal_values = [
-                td
-                for exp_idx in range(n_experiments)
-                for td in terminal_data[exp_idx]
-            ]
+            import seaborn as sns
+
+            # Construct dictionary of lists directly
             terminal_data_dict = {
-                "Solvers": solver_names,
-                "Terminal": terminal_values,
+                "Solvers": [
+                    experiments[exp_idx].solver.name
+                    for exp_idx in range(n_experiments)
+                    for _ in terminal_data[exp_idx]
+                ],
+                "Terminal": [
+                    td
+                    for exp_idx in range(n_experiments)
+                    for td in terminal_data[exp_idx]
+                ],
             }
-            terminal_data_df = pd.DataFrame(terminal_data_dict)
-            # sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, inner="stick", scale="width", showmeans=True, bw = 0.2,  cut=2)
+
             sns.violinplot(
                 x="Solvers",
                 y="Terminal",
-                data=terminal_data_df,
+                data=terminal_data_dict,
                 inner="stick",
                 density_norm="width",
                 cut=0.1,
                 hue="Solvers",
             )
-            if normalize:
-                plt.ylabel("Terminal Progress")
-            else:
-                plt.ylabel("Terminal Objective")
+
+            plt.ylabel(
+                "Terminal Progress" if normalize else "Terminal Objective"
+            )
+
         file_list.append(
             save_plot(
                 solver_name=solver_set_name,
@@ -4550,31 +4600,22 @@ def plot_terminal_progress(
                 budget=experiment.problem.factors["budget"],
             )
             if normalize:
-                terminal_data = [
-                    experiment.progress_curves[mrep].y_vals[-1]
-                    for mrep in range(experiment.n_macroreps)
-                ]
+                curves = experiment.progress_curves
             else:
-                terminal_data = [
-                    experiment.objective_curves[mrep].y_vals[-1]
-                    for mrep in range(experiment.n_macroreps)
-                ]
+                curves = experiment.objective_curves
+            terminal_data = [curve.y_vals[-1] for curve in curves]
             if plot_type == "box":
                 plt.boxplot(terminal_data)
                 plt.xticks([1], labels=[experiment.solver.name])
             if plot_type == "violin":
-                solver_name_rep = [
-                    experiment.solver.name for td in terminal_data
-                ]
                 terminal_data_dict = {
-                    "Solver": solver_name_rep,
+                    "Solver": [experiment.solver.name] * len(terminal_data),
                     "Terminal": terminal_data,
                 }
-                terminal_data_df = pd.DataFrame(terminal_data_dict)
+
                 sns.violinplot(
-                    x="Solver",
-                    y="Terminal",
-                    data=terminal_data_df,
+                    x=terminal_data_dict["Solver"],
+                    y=terminal_data_dict["Terminal"],
                     inner="stick",
                 )
             if normalize:
@@ -6133,6 +6174,9 @@ class ProblemsSolvers:
         ValueError
 
         """
+        # Local imports
+        import csv
+
         # Assign default values
         if solve_tols is None:
             solve_tols = [0.05, 0.10, 0.20, 0.50]
@@ -6237,7 +6281,7 @@ class ProblemsSolvers:
                                 progress_curve.compute_crossing_time(
                                     threshold=solve_tol
                                 )
-                                < np.inf
+                                < float("inf")
                             ),
                         ]
                         for solve_tol in solve_tols
@@ -6503,6 +6547,9 @@ def validate_ruby_install() -> None:
 
 
 def lookup_datafarming_gem(design_type: str) -> str:
+    # Local imports
+    import platform
+
     # Dictionary of all the valid design types and their corresponding scripts
     # Windows needs .bat file equivalents to any scripts being run
     if platform.system() == "Windows":
@@ -6555,6 +6602,9 @@ def lookup_datafarming_gem(design_type: str) -> str:
         for gem in installed_gems
         if gem.startswith("datafarming ")
     ]
+    # Local import
+    import re
+
     # Strip away anything that isn't a period or a number
     datafarming_versions = [
         re.sub(r"[^0-9.]", "", version) for version in datafarming_gem_installs
@@ -6592,7 +6642,10 @@ def lookup_datafarming_gem(design_type: str) -> str:
     raise Exception(error_msg)
 
 
-def create_design_list_from_table(design_table: pd.DataFrame) -> list:
+def create_design_list_from_table(design_table: DataFrame) -> list:
+    # Local imports
+    import ast
+
     # Create list of solver or problem objects for each dp using design_table.
     design_list = []
     dp_dict = design_table.to_dict(
