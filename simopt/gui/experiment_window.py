@@ -422,7 +422,7 @@ class ExperimentWindow(Toplevel):
 
         """
         # if args and len(args) == 2:
-        #     logging.info("ARGS: ", args[1])
+        #     logging.debug("ARGS: ", args[1])
         # ("arg length:", len(args))
 
         self.problem_factors_list = []
@@ -1086,10 +1086,10 @@ class ExperimentWindow(Toplevel):
 
         self.macro_var.set(current_experiment_arguments[2])
         self.show_problem_factors(True, current_experiment_arguments)
-        # logging.info(" self.show_problem_factors", self.show_problem_factors(True, current_experiment_arguments))
+        # logging.debug(" self.show_problem_factors", self.show_problem_factors(True, current_experiment_arguments))
         # self.my_experiment[1][3][1]
         self.show_solver_factors(True, current_experiment_arguments, False)
-        # logging.info("self.show_solver_factors", self. show_solver_factors(True, current_experiment_arguments))
+        # logging.debug("self.show_solver_factors", self. show_solver_factors(True, current_experiment_arguments))
         view_edit_button_added = self.widget_list[row_index - 1][5]
         view_edit_button_added["text"] = "Save Changes"
         view_edit_button_added["command"] = partial(
@@ -1198,7 +1198,7 @@ class ExperimentWindow(Toplevel):
                     problem_fixed_factors=self.problem_factors,
                     model_fixed_factors=self.oracle_factors,
                 )
-                # logging.info("type", type(self.selected[2]))
+                # logging.debug("type", type(self.selected[2]))
                 self.my_experiment.n_macroreps = self.selected[2]
                 self.my_experiment.post_norm_ready = False
 
@@ -2286,7 +2286,7 @@ class ExperimentWindow(Toplevel):
 
     def post_norm_return_func(self) -> None:
         # ('IN post_process_disable_button ', self.post_rep_function_row_index)
-        # logging.info("youve returned")
+        # logging.debug("youve returned")
         pass
 
     def make_meta_experiment_func(self) -> None:
@@ -2308,8 +2308,8 @@ class ExperimentWindow(Toplevel):
                         index
                     ]  ## Is this right?
                     self.list_checked_experiments.append(experiment_checked)
-                    # logging.info("checkbox",checkbox.get())
-                    # logging.info("experiment_checked:", experiment_checked )
+                    # logging.debug("checkbox",checkbox.get())
+                    # logging.debug("experiment_checked:", experiment_checked )
                     # Making the checkbox in the Queue of Porblem-Solver Groups disabled
                     check_box_object = self.check_box_list[index]
                     check_box_object["state"] = "disabled"
@@ -2343,9 +2343,9 @@ class ExperimentWindow(Toplevel):
         self.list_meta_experiment_solvers = []
 
         self.list_meta_experiment_problems = meta_experiment.problem_names
-        # logging.info("self.list_meta_experiment_problems", self.list_meta_experiment_problems)
+        # logging.debug("self.list_meta_experiment_problems", self.list_meta_experiment_problems)
         self.list_meta_experiment_solvers = meta_experiment.solver_names
-        # logging.info("self.list_meta_experiment_solvers", self.list_meta_experiment_solvers)
+        # logging.debug("self.list_meta_experiment_solvers", self.list_meta_experiment_solvers)
 
     def view_meta_function(self, row_num: int) -> None:
         self.factor_label_frame_solvers.destroy()
@@ -2411,7 +2411,7 @@ class ExperimentWindow(Toplevel):
                 view_button_added["state"] = "disabled"
 
         for i in range(self.count_experiment_queue - 1):
-            # logging.info("VALUE OF I",i)
+            # logging.debug("VALUE OF I",i)
             self.run_button_added = self.widget_list[i][3]
             self.run_button_added["state"] = "disabled"
 
@@ -3898,16 +3898,16 @@ class PostProcessingWindow(Toplevel):
             self.crn_across_macroreps_var.set("False")
 
             self.n_postreps = self.experiment_list[0]  # int
-            # logging.info("self.n_prostreps", type(self.n_postreps))
+            # logging.debug("self.n_prostreps", type(self.n_postreps))
             # self.n_postreps_init_opt = self.experiment_list[4] # int
             self.crn_across_budget = self.experiment_list[1]  # boolean
-            # logging.info("self.n_prostreps", type(self.n_postreps))
+            # logging.debug("self.n_prostreps", type(self.n_postreps))
             self.crn_across_macroreps = self.experiment_list[2]  # boolean
 
-            # logging.info("This is the experiment object", self.my_experiment)
-            # logging.info("This is the problem name: ", self.my_experiment.problem.name)
-            # logging.info("This is the solver name: ", self.my_experiment.solver.name)
-            # logging.info("This is the experiment list", self.selected)
+            # logging.debug("This is the experiment object", self.my_experiment)
+            # logging.debug("This is the problem name: ", self.my_experiment.problem.name)
+            # logging.debug("This is the solver name: ", self.my_experiment.solver.name)
+            # logging.debug("This is the experiment list", self.selected)
             # print ("This is experiment_list ", self.experiment_list)
             # self, n_postreps, crn_across_budget=True, crn_across_macroreps=False
             self.my_experiment.post_replicate(
@@ -4151,7 +4151,7 @@ class CrossDesignWindow(Toplevel):
                 )
                 self.crossdesign_button.place(x=15, y=135 + (25 * problem_cnt))
             else:
-                # logging.info("forced creation of cross design window class")
+                # logging.debug("forced creation of cross design window class")
                 pass
 
     def confirm_cross_design_function(self) -> ProblemsSolvers:

@@ -1,7 +1,10 @@
 """GUI for SimOpt Library."""  # noqa: N999
 
-import tkinter as tk
 import logging
+import sys
+import tkinter as tk
+
+from numpy import seterr
 
 from simopt.gui.main_menu import MainMenuWindow
 
@@ -22,8 +25,20 @@ def main() -> None:
     root.title("SimOpt Library Graphical User Interface")
     root.pack_propagate(False)
 
-    logging.basicConfig(level=logging.WARNING)
-    logging.info("GUI started")
+    # Parse command line
+    log_level = logging.INFO
+    for arg in sys.argv:
+        if arg == "--debug":
+            log_level = logging.DEBUG
+            seterr(all="raise")
+            break
+        elif arg == "--silent":
+            log_level = logging.CRITICAL
+            break
+
+    debug_format = "%(levelname)s: %(message)s"
+    logging.basicConfig(level=log_level, format=debug_format)
+    logging.debug("GUI started")
 
     # app = Experiment_Window(root)
     MainMenuWindow(root)

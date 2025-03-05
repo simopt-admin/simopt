@@ -12,10 +12,10 @@ from copy import deepcopy
 from enum import Enum
 from typing import Literal
 
-import numpy as np
 import pandas as pd
-from mrg32k3a.mrg32k3a import MRG32k3a
+from numpy import inf
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import Model
 from simopt.directory import model_directory, solver_directory
 from simopt.experiment_base import EXPERIMENT_DIR, ProblemSolver, post_normalize
@@ -623,7 +623,7 @@ class DataFarmingMetaExperiment:
                     and solver_factor_headers is not None
                     and factor not in solver_factor_headers
                 ):
-                    logging.info("default from df base", default)
+                    logging.debug("default from df base", default)
                     solver_fixed_str[factor] = str(default)
 
             # all_solver_factor_names = solver_factor_headers + list(
@@ -661,7 +661,7 @@ class DataFarmingMetaExperiment:
                         [new_design_table, working_design_table],
                         ignore_index=True,
                     )
-                    logging.info(new_design_table)
+                    logging.debug(new_design_table)
 
                 design_table = new_design_table
 
@@ -798,10 +798,12 @@ class DataFarmingMetaExperiment:
             experiment = self.design[design_pt_index]
 
             if getattr(experiment, "n_macroreps", None) != n_macroreps:
-                logging.info("Running Design Point " + str(design_pt_index) + ".")
+                logging.info(
+                    "Running Design Point " + str(design_pt_index) + "."
+                )
                 experiment.clear_run()
-                logging.info(experiment.solver.name)
-                logging.info(experiment.problem.name)
+                logging.debug(experiment.solver.name)
+                logging.debug(experiment.problem.name)
                 experiment.run(n_macroreps)
 
     # Largely taken from MetaExperiment class in wrapper_base.py.
@@ -1008,7 +1010,7 @@ class DataFarmingMetaExperiment:
                                 progress_curve.compute_crossing_time(
                                     threshold=solve_tol
                                 )
-                                < np.inf
+                                < inf
                             ),
                         ]
                         for solve_tol in solve_tols

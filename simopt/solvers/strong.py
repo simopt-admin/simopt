@@ -327,10 +327,8 @@ class STRONG(Solver):
                 )
                 r_diff = r_old - r_new
                 if r_diff == 0:
-                    logging.info(
-                        "Warning: Division by zero in STRONG solver (r_diff == 0 (Step I_3))",
-                        file=sys.stderr,
-                    )
+                    warning_msg = "Division by zero in STRONG solver (r_diff == 0 (Step I_3))"
+                    logging.warning(warning_msg)
                     # Follow IEEE 754 standard.
                     if g_diff < 0:
                         rho = -np.inf
@@ -434,10 +432,8 @@ class STRONG(Solver):
                 )
                 r_diff = r_old - r_new
                 if r_diff == 0:
-                    logging.info(
-                        "Warning: Division by zero in STRONG solver (r_diff == 0 (Step II_3))",
-                        file=sys.stderr,
-                    )
+                    warning_msg = "Division by zero in STRONG solver (r_diff == 0 (Step II_3))"
+                    logging.warning(warning_msg)
                     rho = 0
                 else:
                     rho = g_diff / r_diff
@@ -562,10 +558,8 @@ class STRONG(Solver):
                         g_b_diff = g_b_old - g_b_new
                         rr_diff = rr_old - rr_new
                         if rr_diff == 0:
-                            logging.info(
-                                "Warning: Division by zero in STRONG solver (rr_diff == 0)",
-                                file=sys.stderr,
-                            )
+                            warning_msg = "Division by zero in STRONG solver (rr_diff == 0)"
+                            logging.warning(warning_msg)
                             rrho = 0
                         else:
                             rrho = (g_b_diff) / (rr_diff)

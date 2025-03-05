@@ -582,7 +582,11 @@ class PlotWindow(Toplevel):
             )
             param_list = {}
         else:
-            logging.info(f"{self.plot_type_list[-1]} is the plot_type_list")
+            error_msg = (
+                f"Plot type {self.plot_type_list[-1]} is not a valid plot type."
+            )
+            logging.error(error_msg)
+            raise ValueError(error_msg)
 
         for i, new_plot in enumerate(path_name):
             place = self.num_plots + 1
@@ -664,7 +668,7 @@ class PlotWindow(Toplevel):
             # self.view_plot.pack()
             self.change_on_hover(self.view_plot, "red", "yellow")
             self.all_path_names.append(new_plot)
-            # logging.info("all_path_names",self.all_path_names)
+            # logging.debug("all_path_names",self.all_path_names)
             self.num_plots += 1
 
     def change_on_hover(
@@ -1045,7 +1049,7 @@ class PlotWindow(Toplevel):
     def clear_row(self, place: int) -> None:
         self.plot_CI_list.pop(place)
         self.plot_exp_list.pop(place)
-        logging.info("Clear")
+        logging.debug("Clear")
 
     def plot_button(self) -> None:
         self.postrep_window = Toplevel(self)
@@ -1093,7 +1097,7 @@ class PlotWindow(Toplevel):
 
         width = 400
         height = 400
-        logging.info("This is path", path_name)
+        logging.debug("This is path", path_name)
         img = Image.open(path_name)
 
         img = img.resize((width, height), Image.ANTIALIAS)

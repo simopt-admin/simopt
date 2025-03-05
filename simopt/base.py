@@ -1138,8 +1138,8 @@ class Problem(ABC):
                 )
             ]
             if self.gradient_available:
-                # logging.info(self.response_dict_to_objectives_gradients(vector_gradients))
-                # logging.info(solution.det_objectives_gradients)
+                # logging.debug(self.response_dict_to_objectives_gradients(vector_gradients))
+                # logging.debug(solution.det_objectives_gradients)
                 # TODO: Ensure that this never happens
                 if "vector_gradients" not in locals():
                     raise ValueError("vector_gradients not defined")

@@ -1078,12 +1078,10 @@ class ProblemSolver:
             error_msg = "Number of macroreplications must be positive."
             raise ValueError(error_msg)
 
-        logging.info(
-            "Running Solver",
-            self.solver.name,
-            "on Problem",
-            self.problem.name + ".",
+        msg = (
+            f"Running Solver {self.solver.name} on Problem {self.problem.name}."
         )
+        logging.info(msg)
 
         # Initialize variables
         self.n_macroreps = n_macroreps
@@ -1109,7 +1107,7 @@ class ProblemSolver:
         # Start a timer
         function_start = time.time()
 
-        logging.info("Starting macroreplications")
+        logging.debug("Starting macroreplications")
         with Pool() as process_pool:
             # Start the macroreplications in parallel (async)
             result = process_pool.map_async(
@@ -1194,7 +1192,7 @@ class ProblemSolver:
         self.solver.solution_progenitor_rngs = progenitor_rngs
         self.solver.rng_list = solver_rngs
 
-        # logging.info([rng.s_ss_sss_index for rng in progenitor_rngs])
+        # logging.debug([rng.s_ss_sss_index for rng in progenitor_rngs])
         # Run the solver on the problem.
         tic = time.perf_counter()
         recommended_solns, intermediate_budgets = self.solver.solve(
@@ -1306,7 +1304,7 @@ class ProblemSolver:
                 ]
                 for mrep in range(self.n_macroreps)
             ]
-        logging.debug(
+        logging.info(
             f"Finished running {self.n_macroreps} postreplications in {round(time.time() - self.function_start, 3)} seconds."
         )
 
@@ -1349,7 +1347,7 @@ class ProblemSolver:
             error_msg = "Macroreplication index must be non-negative."
             raise ValueError(error_msg)
 
-        logging.info(
+        logging.debug(
             f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}."
         )
         # Create RNG list for the macroreplication.
@@ -1397,7 +1395,7 @@ class ProblemSolver:
             )  # 0 <- assuming only one objective
         toc = time.perf_counter()
         runtime = toc - tic
-        logging.info(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
+        logging.debug(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
 
         # Return tuple (post_replicates, runtime)
         return (post_replicates, runtime)
@@ -1610,9 +1608,7 @@ class ProblemSolver:
         file_path = os.path.join(EXPERIMENT_DIR, file_name)
         folder_name = os.path.dirname(file_path)
 
-        logging.info(f"File Name: {file_name}")
-        logging.info(f"Folder Name: {folder_name}")
-        logging.info(f"File Path: {file_path}")
+        logging.debug(f"Saving ProblemSolver object to {file_path}")
 
         # Create the directory if it does not exist.
         if not os.path.exists(folder_name):
@@ -1623,6 +1619,8 @@ class ProblemSolver:
         # Create and dump the object to the file
         with open(file_path, "xb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
+
+        logging.info(f"Saved experiment results to {file_path}")
 
     def log_experiment_results(self, print_solutions: bool = True) -> None:
         """Create readable .txt file from a problem-solver pair's .pickle file.
@@ -1937,7 +1935,7 @@ def post_normalize(
     # objective function value. If deterministic (proxy for) f(x*),
     # create duplicate post-replicates to facilitate later bootstrapping.
     # If proxy for f(x*) is specified...
-    logging.info("Finding f(x*)...")
+    fstar_log_msg = "Finding f(x*) using "
     if proxy_opt_val is not None:
         if proxy_opt_x is None:
             xstar = None
@@ -1945,11 +1943,11 @@ def post_normalize(
             xstar = (
                 proxy_opt_x  # Assuming the provided x is optimal in this case.
             )
-        logging.info("\t...using provided proxy f(x*).")
+        logging.info(fstar_log_msg + "provided proxy f(x*).")
         xstar_postreps = [proxy_opt_val] * n_postreps_init_opt
     # ...else if proxy for x* is specified...
     elif proxy_opt_x is not None:
-        logging.info("\t...using provided proxy x*.")
+        logging.info(fstar_log_msg + "provided proxy x*.")
         xstar = proxy_opt_x
         # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
@@ -1962,7 +1960,7 @@ def post_normalize(
         )  # 0 <- assuming only one objective
     # ...else if f(x*) is known...
     elif ref_experiment.problem.optimal_value is not None:
-        logging.info("\t...using coded f(x*).")
+        logging.info(fstar_log_msg + "coded f(x*).")
         xstar = None
         # NOTE: optimal_value is a tuple.
         # Currently hard-coded for single objective case, i.e., optimal_value[0].
@@ -1971,7 +1969,7 @@ def post_normalize(
         ] * n_postreps_init_opt
     # ...else if x* is known...
     elif ref_experiment.problem.optimal_solution is not None:
-        logging.info("\t...using coded x*.")
+        logging.info(fstar_log_msg + "using coded x*.")
         xstar = ref_experiment.problem.optimal_solution
         # Take post-replications at xstar.
         opt_soln = Solution(xstar, ref_experiment.problem)
@@ -1985,7 +1983,10 @@ def post_normalize(
     # ...else determine x* empirically as estimated best solution
     # found by any solver on any macroreplication.
     else:
-        logging.info("\t...using best postreplicated solution as proxy for x*.")
+        logging.info(
+            fstar_log_msg
+            + "using best postreplicated solution as proxy for x*."
+        )
         # TODO: Simplify this block of code.
         best_est_objectives = np.zeros(len(experiments))
         for experiment_idx in range(len(experiments)):
@@ -2060,9 +2061,8 @@ def post_normalize(
             )
             # Normalize by initial optimality gap.
             if initial_opt_gap == 0:
-                logging.info(
-                    "Warning: Divide by zero during post-normalization (initial_opt_gap is 0)."
-                )
+                warning_msg = "Divide by zero during post-normalization (initial_opt_gap is 0)."
+                logging.warning(warning_msg)
                 norm_est_objectives = []
                 for est_objective in est_objectives:
                     est_diff = est_objective - opt_obj_val
@@ -5740,7 +5740,7 @@ class ProblemsSolvers:
                             error_msg = "Problem names must be provided if no file exists."
                             raise ValueError(error_msg)
                         # If no file exists, create new ProblemSolver object.
-                        logging.info(
+                        logging.debug(
                             f"No experiment file exists for {self.solver_names[solver_idx]} on {self.problem_names[problem_idx]}. Creating new experiment."
                         )
                         next_experiment = ProblemSolver(
@@ -5833,7 +5833,7 @@ class ProblemsSolvers:
                 # If the problem-solver pair has not been run in this way before,
                 # run it now and save result to .pickle file.
                 if not experiment.has_run:
-                    logging.info(
+                    logging.debug(
                         f"Running {n_macroreps} macro-replications of {experiment.solver.name} on {experiment.problem.name}."
                     )
                     experiment.run(n_macroreps)
@@ -5886,7 +5886,7 @@ class ProblemsSolvers:
                 # If the problem-solver pair has not been post-replicated in this way before,
                 # post-process it now.
                 if not experiment.has_postreplicated:
-                    logging.info(
+                    logging.debug(
                         f"Post-processing {experiment.solver.name} on {experiment.problem.name}."
                     )
                     experiment.post_replicate(
