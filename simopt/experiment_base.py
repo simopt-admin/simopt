@@ -1313,17 +1313,6 @@ class ProblemSolver:
             # Store estimated lhs for each macrorep for each budget.
             self.all_est_lhs = [[np.mean(self.all_stoch_constraints[mrep][budget_index], axis=0) for budget_index in range(len(self.all_intermediate_budgets[mrep]))] for mrep in range(self.n_macroreps)]
            
-            # compute feasibility score if applicable
-            if self.problem.n_stochastic_constraints >= 1:
-                self.compute_feasibility_score(score = feasibiliy_score, norm_degree=norm_degree)
-            else: # set feasibility score to 0 if no stochastic constraints in problem
-                self.feasibility_curves = []
-                for mrep in range(self.n_macroreps):
-                    self.feasibility_curves.append(
-                        Curve(
-                            x_vals=[ 0 for budget in self.all_intermediate_budgets[mrep]],
-                            y_vals=[ 0 for budget in self.all_intermediate_budgets[mrep]],
-                        ))
                 
         print(
             f"Finished running {self.n_macroreps} postreplications in {round(time.time() - self.function_start, 3)} seconds."
@@ -1473,6 +1462,8 @@ class ProblemSolver:
         bs_initial_obj_val = np.mean(
             [self.x0_postreps[postrep] for postrep in bs_postrep_idxs]
         )
+        # find feasiblity score here
+        
         # Reset subsubstream if using CRN across budgets.
         # This means the same postreplication indices will be used for resampling at x0 and x*.
         if self.crn_across_init_opt:
@@ -1486,6 +1477,9 @@ class ProblemSolver:
         bs_optimal_obj_val = np.mean(
             [self.xstar_postreps[postrep] for postrep in bs_postrep_idxs]
         )
+        # compute feas of x*
+        
+        
         # Compute initial optimality gap.
         bs_initial_opt_gap = bs_initial_obj_val - bs_optimal_obj_val
         # Advance RNG subsubstream to prepare for inner-level bootstrapping.
@@ -1507,6 +1501,7 @@ class ProblemSolver:
                     # If solution is x0...
                     if self.all_recommended_xs[mrep][budget] == self.x0:
                         est_objectives.append(bs_initial_obj_val)
+                        # use feas found before
                     # ...else if solution is x*...
                     elif self.all_recommended_xs[mrep][budget] == self.xstar:
                         est_objectives.append(bs_optimal_obj_val)
@@ -1523,6 +1518,9 @@ class ProblemSolver:
                                 ]
                             )
                         )
+                        # find lhs side estimates for each special case
+                        
+                        
                 # Record objective or progress curve.
                 if normalize:
                     frac_intermediate_budgets = [
@@ -1608,9 +1606,59 @@ class ProblemSolver:
                         y_vals=est_objectives,
                     )
                     bootstrap_curves.append(new_objective_curve)
-        return bootstrap_curves
+        return bootstrap_curves #add feas_bootstrap_curves
     
-    def compute_feasibility_score(self, score : str = "inf_norm", norm_degree : int = 1) -> list:
+    def bootstrap_feasibility_sample(self, bootstrap_rng: MRG32k3a, score : str = "inf_norm", norm_degree : int = 1, two_sided=True):
+        
+        bootstrap_obj = []
+        bootstrap_feas = []
+        for mrep in range(self.n_macroreps):
+            bs_postrep_idxs = bootstrap_rng.choices(
+                range(self.n_postreps), k=self.n_postreps
+            )
+            # get mean objective from bootstrapping
+            est_objectives =  np.mean(
+                 [
+                     self.all_post_replicates[mrep][-1][
+                         postrep
+                     ]
+                     for postrep in bs_postrep_idxs
+                 ]
+             )
+            bootstrap_obj.append(est_objectives)
+            # get mean lhs for each constraint from bootstrapping
+            est_lhs = np.mean(
+                 [
+                     self.all_stoch_constraints[mrep][-1][
+                         postrep
+                     ]
+                     for postrep in bs_postrep_idxs
+                 ]
+             )
+            # compute feasiblity score for est_lhs
+            avg = np.array(est_lhs) 
+            # test if all elements are non-negative
+            is_feasible = np.all(avg<=0)
+            if is_feasible:
+                if two_sided:
+                    feas_score = -1*np.max(avg)
+                else:
+                    feas_score = 0
+            else:
+                if score == "inf_norm":
+                    feas_score = -1*np.max(avg)
+                elif score == "norm":
+                    norm_array = np.where(avg<0, 0, avg)
+                    feas_score = -1*np.linalg.norm(norm_array,ord=norm_degree)
+            bootstrap_feas.append(feas_score)
+            
+        return bootstrap_obj, bootstrap_feas
+                
+
+            
+        
+    
+    def compute_feasibility_score(self, score : str = "inf_norm", norm_degree : int = 1, two_sided=True) -> list:
         """
         
 
@@ -1634,7 +1682,10 @@ class ProblemSolver:
                     # test if all elements are non-negative
                     is_feasible = np.all(avg<=0)
                     if is_feasible:
-                        feas_score = -1*np.max(avg)
+                        if two_sided:
+                            feas_score = -1*np.max(avg)
+                        else:
+                            feas_score = 0
                     else:
                         if score == "inf_norm":
                             feas_score = -1*np.max(avg)
@@ -2052,7 +2103,6 @@ def post_normalize(
         best_est_objectives = np.zeros(len(experiments))
         for experiment_idx in range(len(experiments)):
             experiment = experiments[experiment_idx]
-            print("lhs", experiment.all_est_lhs)
             exp_best_est_objectives = np.zeros(experiment.n_macroreps)
             for mrep in range(experiment.n_macroreps):
                 #check for feasibility here (all could be infeasible)
@@ -2060,7 +2110,6 @@ def post_normalize(
                     all_feasible_est_objectives = np.array([experiment.all_est_objectives[mrep][budget] 
                                                            for budget in range(len(experiment.all_intermediate_budgets[mrep]))
                                                            if np.all(experiment.all_est_lhs[mrep][budget] <= 0)])
-                    print("feasible", all_feasible_est_objectives)
                         
                 else: # no stochastic constraints, proceeed normally   
                     all_feasible_est_objectives = np.array(experiment.all_est_objectives[mrep])
@@ -2698,6 +2747,7 @@ def functional_of_curves(
         error_msg = "'{plot_type}' is not implemented."
         raise NotImplementedError(error_msg)
 
+    
 
 # TODO: double check observations type and return type
 def compute_bootstrap_conf_int(
@@ -3833,15 +3883,20 @@ def plot_feasibility(
         plot_type: Literal[
             "scatter",
             "violin",
-            "progress"
+            "objective_violin"
         ] = "scatter",
         score_type: Literal[
             "inf_norm",
             "norm"
         ] = "inf_norm",
+        two_sided : bool = True,
         plot_zero : bool = True,
+        plot_xstar: bool = True,
         norm_degree: int = 1,
         all_in_one: bool = True,
+        n_bootstraps: int = 100,
+        conf_level: float = 0.95,
+        plot_conf_ints: bool = True,
         solver_set_name: str = "SOLVER_SET",
         plot_title: str | None = None,
         legend_loc: str | None = None,
@@ -3921,26 +3976,72 @@ def plot_feasibility(
                         solver_idx % len(marker_list)
                     ]  # Cycle through list of marker types.
                     # Compute terminal feasibility scores
-                    experiment.compute_feasibility_score(score=score_type, norm_degree=norm_degree) # gives list of feasibility scores for each macrorep
+                    experiment.compute_feasibility_score(score=score_type, 
+                                                         norm_degree=norm_degree, 
+                                                         two_sided = two_sided) # gives list of feasibility scores for each macrorep
                     term_feas_score = [
                         curve.y_vals[-1] for curve in experiment.feasibility_curves
                     ]
                     # Plot mean of terminal progress.
                     terminals = [
-                        curve.y_vals[-1] for curve in experiment.progress_curves
+                        curve.y_vals[-1] for curve in experiment.objective_curves
                     ]
-                    handle = plt.scatter(
-                        x=terminals,
-                        y=term_feas_score,
-                        color=color_str,
-                        marker=marker_str,
-                    )
-                    if plot_zero:
-                        plt.axhline(y=0, color='red', linestyle = '--', linewidth=2)    
+                    if plot_conf_ints:
+                        bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
+                        all_obj_reps = []
+                        all_feas_reps = []
+                        for rep in range(n_bootstraps):
+                            est_obj, est_feas = experiment.bootstrap_feasibility_sample(bootstrap_rng, 
+                                                                                        score= score_type, 
+                                                                                        norm_degree=norm_degree, 
+                                                                                        two_sided=two_sided) #estimations for each macrorep in experiment
+                            all_obj_reps.append(est_obj)
+                            all_feas_reps.append(est_feas)
+                        # sort by mrep
+                        obj_conf_int_lb = []
+                        obj_conf_int_ub = []
+                        feas_conf_int_lb = []
+                        feas_conf_int_ub = []
+                        for mrep in range(experiment.n_macroreps):
+                            mrep_est_obj = [rep[mrep] for rep in all_obj_reps]
+                            mrep_est_feas = [rep[mrep] for rep in all_feas_reps]
+                            lower_obj, upper_obj = compute_bootstrap_conf_int(mrep_est_obj, conf_level=conf_level, bias_correction=False)
+                            lower_feas, upper_feas = compute_bootstrap_conf_int(mrep_est_feas, conf_level=conf_level, bias_correction=False)
+                            obj_conf_int_lb.append(lower_obj[0])
+                            obj_conf_int_ub.append(upper_obj[0])
+                            feas_conf_int_lb.append(lower_feas[0])
+                            feas_conf_int_ub.append(upper_feas[0])
+                        x_err = [
+                            np.abs(np.array(terminals) - np.array(obj_conf_int_lb)),
+                            np.abs(np.array(obj_conf_int_ub)- np.array(terminals)),
+                        ]
+                        y_err = [
+                            np.abs(np.array(term_feas_score) - np.array(feas_conf_int_lb)),
+                            np.abs(np.array(feas_conf_int_ub) - np.array(term_feas_score)),
+                        ]
+                        handle = plt.errorbar(
+                            x=terminals,
+                            y=term_feas_score,
+                            xerr=x_err,
+                            yerr=y_err,
+                            color=color_str,
+                            marker=marker_str,
+                            elinewidth=1,
+                            linestyle='none'
+                        )
+                    else: # do not plot conf int
+                        handle = plt.scatter(
+                            x=terminals,
+                            y=term_feas_score,
+                            color=color_str,
+                            marker=marker_str,
+                        )
                     solver_curve_handles.append(handle)
                 plt.legend(
                     handles=solver_curve_handles, labels=solver_names, loc=legend_loc
                 )
+                if plot_zero:
+                    plt.axhline(y=0, color='red', linestyle = '--', linewidth=.75)   
                 file_list.append(
                     save_plot(
                         solver_name=solver_set_name,
@@ -3969,25 +4070,70 @@ def plot_feasibility(
                     )
 
                     # Compute terminal feasibility scores
-                    experiment.compute_feasibility_score(score=score_type, norm_degree=norm_degree) # gives list of feasibility scores for each macrorep
-                    experiment.compute_feasibility_score(score=score_type, norm_degree=norm_degree) # gives list of feasibility scores for each macrorep
+                    experiment.compute_feasibility_score(score=score_type,
+                                                         norm_degree=norm_degree,
+                                                         two_sided=two_sided) # gives list of feasibility scores for each macrorep
                     term_feas_score = [
                         curve.y_vals[-1] for curve in experiment.feasibility_curves
                     ]
                     # Plot mean and of terminal progress.
                     terminals = [
-                        curve.y_vals[-1] for curve in experiment.progress_curves
+                        curve.y_vals[-1] for curve in experiment.objective_curves
                     ]
-                    # edit plot
-                    handle = plt.scatter(
-                        x=terminals,
-                        y=term_feas_score,
-                        color="C0",
-                        marker="o",
-                        
-                    )
+                    if plot_conf_ints:
+                        bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
+                        all_obj_reps = []
+                        all_feas_reps = []
+                        for rep in range(n_bootstraps):
+                            est_obj, est_feas = experiment.bootstrap_feasibility_sample(bootstrap_rng, 
+                                                                                        score= score_type, 
+                                                                                        norm_degree=norm_degree, 
+                                                                                        two_sided=two_sided) #estimations for each macrorep in experiment
+                            all_obj_reps.append(est_obj)
+                            all_feas_reps.append(est_feas)
+                        # sort by mrep
+                        obj_conf_int_lb = []
+                        obj_conf_int_ub = []
+                        feas_conf_int_lb = []
+                        feas_conf_int_ub = []
+                        for mrep in range(experiment.n_macroreps):
+                            mrep_est_obj = [rep[mrep] for rep in all_obj_reps]
+                            mrep_est_feas = [rep[mrep] for rep in all_feas_reps]
+                            lower_obj, upper_obj = compute_bootstrap_conf_int(mrep_est_obj, conf_level=conf_level, bias_correction=False)
+                            lower_feas, upper_feas = compute_bootstrap_conf_int(mrep_est_feas, conf_level=conf_level, bias_correction=False)
+                            obj_conf_int_lb.append(lower_obj[0])
+                            obj_conf_int_ub.append(upper_obj[0])
+                            feas_conf_int_lb.append(lower_feas[0])
+                            feas_conf_int_ub.append(upper_feas[0])
+                        x_err = [
+                            np.abs(np.array(terminals) - np.array(obj_conf_int_lb)),
+                            np.abs(np.array(obj_conf_int_ub)- np.array(terminals)),
+                        ]
+                        y_err = [
+                            np.abs(np.array(term_feas_score) - np.array(feas_conf_int_lb)),
+                            np.abs(np.array(feas_conf_int_ub) - np.array(term_feas_score)),
+                        ]
+                        handle = plt.errorbar(
+                            x=terminals,
+                            y=term_feas_score,
+                            xerr=x_err,
+                            yerr=y_err,
+                            color="C0",
+                            marker="o",
+                            elinewidth=1,
+                            linestyle='none'
+                        )
+                    else: # no confidence intervals
+                        # edit plot
+                        handle = plt.scatter(
+                            x=terminals,
+                            y=term_feas_score,
+                            color="C0",
+                            marker="o",
+                            
+                        )
                     if plot_zero:
-                        plt.axhline(y=0, color='red', linestyle = '--', linewidth=2) 
+                        plt.axhline(y=0, color='red', linestyle = '--', linewidth=.75) 
                     file_list.append(
                         save_plot(
                             solver_name=experiment.solver.name,
@@ -3999,7 +4145,10 @@ def plot_feasibility(
                             save_as_pickle=save_as_pickle,
                         )
                     )
-        if plot_type == "violin":
+
+                        
+                            
+        if plot_type == "violin" or plot_type == "objective_violin":
             
             if score_type == "inf_norm":
                 y_title = "Feasibility Score: Infinite Norm"
@@ -4023,8 +4172,9 @@ def plot_feasibility(
                 solver_names = []
                 for solver_idx in range(n_solvers):
                     experiment = experiments[solver_idx][problem_idx]
-                    experiment.compute_feasibility_score(score=score_type, norm_degree=norm_degree)
-                    experiment.compute_feasibility_score(score=score_type, norm_degree=norm_degree) # gives list of feasibility scores for each macrorep
+                    experiment.compute_feasibility_score(score=score_type, 
+                                                         norm_degree=norm_degree,
+                                                         two_sided=two_sided) # gives list of feasibility scores for each macrorep
                     term_feas_score = [
                         curve.y_vals[-1] for curve in experiment.feasibility_curves
                     ]
@@ -4048,13 +4198,13 @@ def plot_feasibility(
                     hue="Solvers",
                 )
                 if plot_zero:
-                    plt.axhline(y=0, color='red', linestyle = '--', linewidth=2) 
+                    plt.axhline(y=0, color='red', linestyle = '--', linewidth=.75) 
                 
                 file_list.append(
                     save_plot(
                         solver_name=solver_set_name,
                         problem_name=ref_experiment.problem.name,
-                        plot_type=plot_type,
+                        plot_type="feasiblity_violin",
                         normalize=False,
                         extra=extra,
                         plot_title=plot_title,
@@ -4076,30 +4226,63 @@ def plot_feasibility(
                     )
     
                     # Compute terminal feasibility scores
-                    experiment.compute_feasibility_score(score=score_type, norm_degree=norm_degree) # gives list of feasibility scores for each macrorep
-                    term_feas_score = [
-                        curve.y_vals[-1] for curve in experiment.feasibility_curves
+                    experiment.compute_feasibility_score(score=score_type, 
+                                                         norm_degree=norm_degree,
+                                                         two_sided=two_sided) # gives list of feasibility scores for each macrorep
+                    terminal_data = [
+                        experiment.feasibility_curves[mrep].y_vals[-1]
+                        for mrep in range(experiment.n_macroreps)
                     ]
-                    feas_data_dict = {
-                        "Solver": experiment.solver.name,
-                        y_title: term_feas_score,
+                    
+                    solver_name_rep = [
+                        experiment.solver.name for td in terminal_data
+                    ]
+                    terminal_data_dict = {
+                        "Solver": solver_name_rep,
+                        y_title: terminal_data,
                     }
-                    feas_data_df = pd.DataFrame(feas_data_dict)
-                    feas_data_df = feas_data_df.explode(y_title)
-                    feas_data_df[y_title] = pd.to_numeric(feas_data_df[y_title], errors="coerce")
+                    terminal_data_df = pd.DataFrame(terminal_data_dict)
                     sns.violinplot(
                         x="Solver",
                         y=y_title,
-                        data=feas_data_df,
+                        data=terminal_data_df,
+                        density_norm="width",
+                        cut=0.1,
                         inner="stick",
                     )
                     if plot_zero:
                         plt.axhline(y=0, color='red', linestyle = '--', linewidth=2) 
+                    # add violin for optimality
+                    if plot_type == "objective_violin":
+                        feas_x_ticks = plt.gca().get_xticks()
+                        ax = plt.gca().twinx() # twin feasiblity plot 
+                        ax.set_xticks([2])
+                        terminal_data = [
+                            experiment.objective_curves[mrep].y_vals[-1]
+                            for mrep in range(experiment.n_macroreps)
+                        ]
+                        solver_name_rep_obj = [
+                            f"{experiment.solver.name}_obj" for td in terminal_data
+                        ]
+                        terminal_data_dict = {
+                            "Solver_obj": solver_name_rep_obj,
+                            "Terminal Objective": terminal_data,
+                        }
+                        terminal_data_df = pd.DataFrame(terminal_data_dict)
+                        sns.violinplot(
+                            x="Solver_obj",
+                            y="Terminal Objective",
+                            data=terminal_data_df,
+                            density_norm="width",
+                            cut=0.1,
+                            inner="stick",
+                            color = "orange"
+                        )
                     file_list.append(
                         save_plot(
                             solver_name=experiment.solver.name,
                             problem_name=experiment.problem.name,
-                            plot_type="feasibility_scatter",
+                            plot_type="feasibility_violin",
                             extra=extra,
                             ext=ext,
                             normalize=False,
@@ -4123,6 +4306,7 @@ def plot_feasibility_progress(
             "norm"
         ] = "inf_norm",
         norm_degree: int = 1,
+        two_sided: bool = True,
         plot_zero : bool = True,
         all_in_one: bool = True,
         beta : float = 0.5,
@@ -4203,7 +4387,9 @@ def plot_feasibility_progress(
             solver_names = []
             for exp_idx in range(n_solvers):
                 experiment = experiments[exp_idx][problem_idx]
-                experiment.compute_feasibility_score(score = score_type, norm_degree=norm_degree)
+                experiment.compute_feasibility_score(score = score_type, 
+                                                     norm_degree=norm_degree,
+                                                     two_sided = two_sided)
                 color_str = "C" + str(exp_idx)
                 estimator = None
                 solver_names.append(experiment.solver.name)
@@ -4223,49 +4409,15 @@ def plot_feasibility_progress(
                     )
                     handle = estimator.plot(color_str=color_str)
                 if plot_zero:
-                    plt.axhline(y=0, color='red', linestyle = '--', linewidth=2) 
+                    plt.axhline(y=0, color='red', linestyle = '--', linewidth=.75) 
                 solver_curve_handles.append(handle)
                 
-                
-                # if (plot_conf_ints or print_max_hw) and plot_type != "all":
-                #     # Note: "experiments" needs to be a list of list of ProblemSolver objects.
-                #     bs_conf_int_lb_curve, bs_conf_int_ub_curve = (
-                #         bootstrap_procedure(
-                #             experiments=[[experiment]],
-                #             n_bootstraps=n_bootstraps,
-                #             conf_level=conf_level,
-                #             plot_type=plot_type,
-                #             beta=beta,
-                #             estimator=estimator,
-                #             normalize=normalize,
-                #         )
-                #     )
-                #     if plot_conf_ints:
-                #         if isinstance(
-                #             bs_conf_int_lb_curve, (int, float)
-                #         ) or isinstance(bs_conf_int_ub_curve, (int, float)):
-                #             error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
-                #             raise ValueError(error_msg)
-                #         plot_bootstrap_conf_ints(
-                #             bs_conf_int_lb_curve,
-                #             bs_conf_int_ub_curve,
-                #             color_str=color_str,
-                #         )
-                #     if print_max_hw:
-                #         curve_pairs.append(
-                #             [bs_conf_int_lb_curve, bs_conf_int_ub_curve]
-                #         )
+              
             plt.legend(
                 handles=solver_curve_handles,
                 labels=solver_names,
                 loc=legend_loc,
             )
-            # if print_max_hw and plot_type != "all":
-            #     report_max_halfwidth(
-            #         curve_pairs=curve_pairs,
-            #         normalize=normalize,
-            #         conf_level=conf_level,
-            #     )
             file_list.append(
                 save_plot(
                     solver_name=solver_set_name,
@@ -4293,7 +4445,9 @@ def plot_feasibility_progress(
                     beta=beta
                 )
                 # Compute terminal feasibility scores
-                experiment.compute_feasibility_score(score=score_type, norm_degree=norm_degree) # gives list of feasibility scores for each macrorep
+                experiment.compute_feasibility_score(score=score_type, 
+                                                     norm_degree=norm_degree,
+                                                     two_sided = two_sided) # gives list of feasibility scores for each macrorep
                 
                 if plot_type == 'all':
                     for curve in experiment.feasibility_curves:
@@ -4305,7 +4459,7 @@ def plot_feasibility_progress(
                     estimator = quantile_of_curves(experiment.feasibility_curves, beta)
                     estimator.plot()
                 if plot_zero:
-                    plt.axhline(y=0, color='red', linestyle = '--', linewidth=2) 
+                    plt.axhline(y=0, color='red', linestyle = '--', linewidth=.75) 
 
                 file_list.append(
                     save_plot(
@@ -4319,91 +4473,7 @@ def plot_feasibility_progress(
                     )
                 )
                 
-                
-                
-                # for experiment in experiments:
-                #     setup_plot(
-                #         plot_type=plot_type,
-                #         solver_name=experiment.solver.name,
-                #         problem_name=experiment.problem.name,
-                #         normalize=normalize,
-                #         budget=experiment.problem.factors["budget"],
-                #         beta=beta,
-                #     )
-                #     estimator = None
-                #     if plot_type == "all":
-                #         # Plot all estimated progress curves.
-                #         if normalize:
-                #             for curve in experiment.progress_curves:
-                #                 curve.plot()
-                #         else:
-                #             for curve in experiment.objective_curves:
-                #                 curve.plot()
-                #     elif plot_type == "mean":
-                #         # Plot estimated mean progress curve.
-                #         if normalize:
-                #             estimator = mean_of_curves(experiment.progress_curves)
-                #         else:
-                #             estimator = mean_of_curves(experiment.objective_curves)
-                #         estimator.plot()
-                #     else:  # Must be quantile.
-                #         # Plot estimated beta-quantile progress curve.
-                #         if normalize:
-                #             estimator = quantile_of_curves(
-                #                 experiment.progress_curves, beta
-                #             )
-                #         else:
-                #             estimator = quantile_of_curves(
-                #                 experiment.objective_curves, beta
-                #             )
-                #         estimator.plot()
-                #     if (plot_conf_ints or print_max_hw) and plot_type != "all":
-                #         # Note: "experiments" needs to be a list of list of ProblemSolvers.
-                #         bs_conf_int_lb_curve, bs_conf_int_ub_curve = (
-                #             bootstrap_procedure(
-                #                 experiments=[[experiment]],
-                #                 n_bootstraps=n_bootstraps,
-                #                 conf_level=conf_level,
-                #                 plot_type=plot_type,
-                #                 beta=beta,
-                #                 estimator=estimator,
-                #                 normalize=normalize,
-                #             )
-                #         )
-                #         if plot_conf_ints:
-                #             if isinstance(
-                #                 bs_conf_int_lb_curve, (int, float)
-                #             ) or isinstance(bs_conf_int_ub_curve, (int, float)):
-                #                 error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
-                #                 raise ValueError(error_msg)
-                #             plot_bootstrap_conf_ints(
-                #                 bs_conf_int_lb_curve, bs_conf_int_ub_curve
-                #             )
-                #         if print_max_hw:
-                #             if isinstance(
-                #                 bs_conf_int_lb_curve, (int, float)
-                #             ) or isinstance(bs_conf_int_ub_curve, (int, float)):
-                #                 error_msg = "Max halfwidth is not available for scalar estimators."
-                #                 raise ValueError(error_msg)
-                #             report_max_halfwidth(
-                #                 curve_pairs=[
-                #                     [bs_conf_int_lb_curve, bs_conf_int_ub_curve]
-                #                 ],
-                #                 normalize=normalize,
-                #                 conf_level=conf_level,
-                #             )
-                #     file_list.append(
-                #         save_plot(
-                #             solver_name=experiment.solver.name,
-                #             problem_name=experiment.problem.name,
-                #             plot_type=plot_type,
-                #             normalize=normalize,
-                #             extra=beta,
-                #             ext=ext,
-                #             save_as_pickle=save_as_pickle,
-                #         )
-                #     )        
-
+              
     return(file_list)
 
 def plot_solvability_profiles(
@@ -5674,7 +5744,7 @@ def setup_plot(
         title = f"{solver_name}\nTerminal Progress"
     # more changes start here
     elif plot_type == "feasibility_scatter":
-        plt.xlabel("Fraction of Initial Optimality Gap", size=14)
+        plt.xlabel("Terminal Objective Value", size=14)
         plt.tick_params(axis="both", which="major", labelsize=12)
         title = f"{solver_name} on {problem_name} \n Terminal Feasibility vs Optimality Gap"
     elif plot_type == "feasibility_violin":
@@ -6924,7 +6994,6 @@ class ProblemsSolvers:
                     "Final Relative Optimality Gap",
                     "Area Under Progress Curve",
                     *solve_time_headers,
-                    "Feasibility Score",
                     "Initial Solution",
                     "Initial Objective Function Value",
                     "Optimal Solution",
@@ -6982,7 +7051,6 @@ class ProblemsSolvers:
                             for x in experiment.all_recommended_xs[mrep][-1]
                         ]
                     )
-                    feasibility_score = experiment.feasibility_curves[mrep].y_vals[-1]
                     opt_obj = experiment.all_est_objectives[mrep][-1]
                     solution_list = [init_sol, int_obj, opt_sol, opt_obj]
                     print_list = [
@@ -6994,7 +7062,6 @@ class ProblemsSolvers:
                         *model_factor_list,
                         mrep,
                         *statistics_list,
-                        feasibility_score,
                         *solution_list,
                     ]
                     csv_writer.writerow(print_list)

@@ -67,9 +67,9 @@ def main() -> None:
     myexperiment.post_replicate(n_postreps=50)
     # Find an optimal solution x* for normalization.
     myexperiment.post_normalize(50)
-    
+     
     #myexperiment.log_group_experiment_results()
-    myexperiment.report_group_statistics()
+    #myexperiment.report_group_statistics()
     #print(myexperiment.all_intermediate_budgets)
     #print(myexperiment.all_stoch_constraints[0])
 
@@ -82,8 +82,12 @@ def main() -> None:
     #plot_terminal_progress(experiments=myexperiment.experiments)
     #print(myexperiment.experiments[1][0].feasibility_curves)
     #plot_feasibility(myexperiment.experiments, plot_type= "scatter")
-    plot_feasibility(myexperiment.experiments, "violin",score_type= "norm", norm_degree=1,  all_in_one=True)
-    plot_feasibility(myexperiment.experiments, "violin",score_type= "inf_norm", norm_degree=2,  all_in_one=False)
+    #plot_progress_curves(myexperiment.experiments[0] + myexperiment.experiments[1], "all", normalize=False)
+    #plot_feasibility(myexperiment.experiments,  all_in_one=True, two_sided=True)
+    #plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=False, two_sided=True)
+    plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=False, two_sided=False)
+    #plot_feasibility(myexperiment.experiments, "violin",  all_in_one=True, two_sided=False)
+    #plot_feasibility(myexperiment.experiments, "violin",score_type= "inf_norm", norm_degree=2,  all_in_one=False)
     #plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True)
     #plot_feasibility_progress(myexperiment.experiments, plot_type = "mean",all_in_one=True)
     #plot_feasibility_progress(myexperiment.experiments, plot_type = "quantile", all_in_one=True)
