@@ -170,7 +170,7 @@ class ASTRODF(Solver):
         """
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
-    
+
         # Initialize instance variables
         self.iteration_count = 0
         self.delta_k = None
@@ -1044,15 +1044,65 @@ class ASTRODF(Solver):
         self.visited_pts_list = visited_pts_list
         self.h_k = h_k
 
+    def _initialize_solving(self) -> None:
+        """Setup the solver for the first iteration."""
+        problem = self.problem
+        self.budget = problem.factors["budget"]
+
+        # Designate random number generator for random sampling
+        rng = self.rng_list[1]
+
+        # Generate dummy solutions to estimate a reasonable maximum radius
+        dummy_solns = [
+            problem.get_random_solution(rng) for _ in range(1000 * problem.dim)
+        ]
+
+        # Range for each dimension is calculated and compared with box constraints range if given
+        # TODO: just use box constraints range if given
+        # self.delta_max = min(self.factors["delta_max"], problem.upper_bounds[0] - problem.lower_bounds[0])
+        delta_max_candidates: list[float | int] = []
+        for i in range(problem.dim):
+            sol_values = [sol[i] for sol in dummy_solns]
+            min_soln, max_soln = min(sol_values), max(sol_values)
+            bound_range = problem.upper_bounds[i] - problem.lower_bounds[i]
+            delta_max_candidates.append(min(max_soln - min_soln, bound_range))
+
+        # TODO: update this so that it could be used for problems with decision variables at varying scales!
+        self.delta_max = max(delta_max_candidates)
+        # logging.debug("delta_max  " + str(self.delta_max))
+
+        # Initialize trust-region radius
+        self.delta_k = 10 ** (
+            ceil(log(self.delta_max * 2, 10) - 1) / problem.dim
+        )
+        # logging.debug("initial delta " + str(self.delta_k))
+
+        if "initial_solution" in problem.factors:
+            self.incumbent_x = tuple(problem.factors["initial_solution"])
+        else:
+            self.incumbent_x = tuple(problem.get_random_solution(rng))
+
+        self.incumbent_solution = self.create_new_solution(
+            self.incumbent_x, problem
+        )
+        self.h_k = np.identity(problem.dim).tolist()
+
+        # Reset iteration count and data storage
+        self.iteration_count = 0
+        self.expended_budget = 0
+        self.recommended_solns = []
+        self.intermediate_budgets = []
+        self.visited_pts_list = []
+
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
+
         Arguments
         ---------
         problem : Problem object
             simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
+
         Returns
         -------
         recommended_solns : list of Solution objects
@@ -1061,40 +1111,7 @@ class ASTRODF(Solver):
             list of intermediate budgets when recommended solutions changes
         """
         self.problem = problem
-        self.budget = problem.factors["budget"]
-
-        # Designate random number generator for random sampling
-        find_next_soln_rng = self.rng_list[1]
-
-        # Generate many dummy solutions without replication only to find a reasonable maximum radius
-        dummy_solns: list[tuple[int, ...]] = []
-        for _ in range(1000 * problem.dim):
-            random_soln = problem.get_random_solution(find_next_soln_rng)
-            dummy_solns.append(random_soln)
-        # Range for each dimension is calculated and compared with box constraints range if given
-        # TODO: just use box constraints range if given
-        # delta_max = min(self.factors["delta_max"], problem.upper_bounds[0] - problem.lower_bounds[0])
-        delta_max_arr: list[float | int] = []
-        for i in range(problem.dim):
-            min_soln = min([sol[i] for sol in dummy_solns])
-            max_soln = max([sol[i] for sol in dummy_solns])
-            soln_range = max_soln - min_soln
-            bounds_range = problem.upper_bounds[i] - problem.lower_bounds[i]
-            delta_max_arr += [min(soln_range, bounds_range)]
-        # TODO: update this so that it could be used for problems with decision variables at varying scales!
-        self.delta_max = max(delta_max_arr)
-        # logging.debug("delta_max  " + str(delta_max))
-        # Reset iteration and data storage arrays
-        self.delta_k = 10 ** (ceil(log(self.delta_max * 2, 10) - 1) / problem.dim)
-        # logging.debug("initial delta " + str(delta_k))
-        
-        self.incumbent_x: tuple[int | float, ...] = problem.factors[
-            "initial_solution"
-        ]
-        self.incumbent_solution = self.create_new_solution(
-            tuple(self.incumbent_x), problem
-        )
-        self.h_k = np.identity(problem.dim).tolist()
+        self._initialize_solving()
 
         while self.expended_budget < self.budget:
             self.iterate()
