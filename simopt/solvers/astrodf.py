@@ -655,27 +655,11 @@ class ASTRODF(Solver):
             y_var.append(list(minus))
         return y_var
 
-    def iterate(
-        self,
-    ) -> None:
+    def iterate(self) -> None:
         """
         Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
         """
         self.iteration_count += 1
-        # Adapt the variable names for the new iterate layout
-        k = self.iteration_count
-        delta_k = self.delta_k
-        delta_max = self.delta_max
-        problem = self.problem
-        visited_pts_list = self.visited_pts_list
-        incumbent_x = self.incumbent_x
-        expended_budget = self.expended_budget
-        budget_limit = self.budget
-        recommended_solns = self.recommended_solns
-        intermediate_budgets = self.intermediate_budgets
-        kappa = self.kappa
-        incumbent_solution = self.incumbent_solution
-        h_k = self.h_k
 
         # default values
         eta_1: float = self.factors["eta_1"]
@@ -684,10 +668,10 @@ class ASTRODF(Solver):
         gamma_2: float = self.factors["gamma_2"]
         easy_solve: bool = self.factors["easy_solve"]
         lambda_min: int = self.factors["lambda_min"]
-        lambda_max = budget_limit - expended_budget
+        lambda_max = self.budget - self.expended_budget
         # lambda_max = budget_limit / (15 * sqrt(problem.dim))
         enable_gradient = (
-            problem.gradient_available and self.factors["use_gradients"]
+            self.problem.gradient_available and self.factors["use_gradients"]
         )
         # uncomment the next line to avoid Hessian updating
         # h_k = np.identity(problem.dim)
@@ -699,102 +683,111 @@ class ASTRODF(Solver):
 
         pilot_run = ceil(
             max(
-                lambda_min * log(10 + k, 10) ** 1.1,
-                min(0.5 * problem.dim, lambda_max),
+                lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
+                min(0.5 * self.problem.dim, lambda_max),
             )
             - 1
         )
-        is_first_solver_iteration = k == 1
+        is_first_solver_iteration = self.iteration_count == 1
         if is_first_solver_iteration:
-            incumbent_solution = self.create_new_solution(incumbent_x, problem)
-            if len(visited_pts_list) == 0:
-                visited_pts_list.append(incumbent_solution)
+            self.incumbent_solution = self.create_new_solution(
+                self.incumbent_x, self.problem
+            )
+            if len(self.visited_pts_list) == 0:
+                self.visited_pts_list.append(self.incumbent_solution)
 
             # pilot run
-            problem.simulate(incumbent_solution, pilot_run)
-            expended_budget += pilot_run
+            self.problem.simulate(self.incumbent_solution, pilot_run)
+            self.expended_budget += pilot_run
             sample_size = pilot_run
 
             # adaptive sampling
             while True:
                 if enable_gradient:
                     rhs_for_kappa = norm(
-                        incumbent_solution.objectives_gradients_mean[0]
+                        self.incumbent_solution.objectives_gradients_mean[0]
                     )
                 else:
-                    rhs_for_kappa = incumbent_solution.objectives_mean
-                sig2 = incumbent_solution.objectives_var[0]
+                    rhs_for_kappa = self.incumbent_solution.objectives_mean
+                sig2 = self.incumbent_solution.objectives_var[0]
                 if delta_power == 0:
                     sol_trace = np.trace(
-                        incumbent_solution.objectives_gradients_var
+                        self.incumbent_solution.objectives_gradients_var
                     )
                     sig2 = max(sig2, sol_trace)
                 stopping = self.get_stopping_time(
                     pilot_run,
                     sig2,
-                    delta_k,
+                    self.delta_k,
                     rhs_for_kappa
                     * np.sqrt(pilot_run)
-                    / (delta_k ** (delta_power / 2)),
-                    problem.dim,
+                    / (self.delta_k ** (delta_power / 2)),
+                    self.problem.dim,
                     delta_power,
                 )
                 if (
                     sample_size >= min(stopping, lambda_max)
-                    or expended_budget >= budget_limit
+                    or self.expended_budget >= self.budget
                 ):
                     # calculate kappa
-                    kappa = (
+                    self.kappa = (
                         rhs_for_kappa
                         * np.sqrt(pilot_run)
-                        / (delta_k ** (delta_power / 2))
+                        / (self.delta_k ** (delta_power / 2))
                     )
                     # logging.debug("kappa "+str(kappa))
                     break
-                problem.simulate(incumbent_solution, 1)
-                expended_budget += 1
+                self.problem.simulate(self.incumbent_solution, 1)
+                self.expended_budget += 1
                 sample_size += 1
 
-            recommended_solns.append(incumbent_solution)
-            intermediate_budgets.append(expended_budget)
+            self.recommended_solns.append(self.incumbent_solution)
+            self.intermediate_budgets.append(self.expended_budget)
         # since incument was only evaluated with the sample size of previous incumbent, here we compute its adaptive sample size
         elif self.factors["crn_across_solns"]:
-            sample_size = incumbent_solution.n_reps
+            sample_size = self.incumbent_solution.n_reps
             # adaptive sampling
             while True:
-                sig2 = incumbent_solution.objectives_var[0]
+                sig2 = self.incumbent_solution.objectives_var[0]
                 if delta_power == 0:
                     sig2 = max(
                         sig2,
-                        np.trace(incumbent_solution.objectives_gradients_var),
+                        np.trace(
+                            self.incumbent_solution.objectives_gradients_var
+                        ),
                     )
                 stopping = self.get_stopping_time(
-                    pilot_run, sig2, delta_k, kappa, problem.dim, delta_power
+                    pilot_run,
+                    sig2,
+                    self.delta_k,
+                    self.kappa,
+                    self.problem.dim,
+                    delta_power,
                 )
                 if (
                     sample_size >= min(stopping, lambda_max)
-                    or expended_budget >= budget_limit
+                    or self.expended_budget >= self.budget
                 ):
                     break
                 else:
-                    problem.simulate(incumbent_solution, 1)
-                    expended_budget += 1
+                    self.problem.simulate(self.incumbent_solution, 1)
+                    self.expended_budget += 1
                     sample_size += 1
 
         # use Taylor expansion if gradient available
         if enable_gradient:
             fval = (
-                np.ones(2 * problem.dim + 1)
+                np.ones(2 * self.problem.dim + 1)
                 * -1
-                * problem.minmax[0]
-                * incumbent_solution.objectives_mean
+                * self.problem.minmax[0]
+                * self.incumbent_solution.objectives_mean
             )
             grad = (
                 -1
-                * problem.minmax[0]
-                * incumbent_solution.objectives_gradients_mean[0]
+                * self.problem.minmax[0]
+                * self.incumbent_solution.objectives_gradients_mean[0]
             )
-            hessian = h_k
+            hessian = self.h_k
         else:
             # build the local model with interpolation (subproblem)
             (
@@ -803,19 +796,19 @@ class ASTRODF(Solver):
                 q,
                 grad,
                 hessian,
-                delta_k,
-                expended_budget,
+                self.delta_k,
+                self.expended_budget,
                 interpolation_solns,
-                visited_pts_list,
+                self.visited_pts_list,
             ) = self.construct_model(
-                incumbent_x,
-                delta_k,
-                k,
-                problem,
-                expended_budget,
-                kappa,
-                incumbent_solution,
-                visited_pts_list,
+                self.incumbent_x,
+                self.delta_k,
+                self.iteration_count,
+                self.problem,
+                self.expended_budget,
+                self.kappa,
+                self.incumbent_solution,
+                self.visited_pts_list,
                 delta_power,
             )
 
@@ -836,19 +829,19 @@ class ASTRODF(Solver):
                 tau = 1.0
             else:
                 norm_ratio = norm(grad) ** 3 / (
-                    delta_k * check_positive_definite
+                    self.delta_k * check_positive_definite
                 )
                 tau = min(1.0, norm_ratio)
 
-            grad: np.ndarray = np.reshape(grad, (1, problem.dim))[0]
+            grad: np.ndarray = np.reshape(grad, (1, self.problem.dim))[0]
             grad_norm = norm(grad)
             # Make sure we don't divide by 0
             if grad_norm == 0:
-                candidate_x = incumbent_x
+                candidate_x = self.incumbent_x
             else:
-                product = tau * delta_k * grad
+                product = tau * self.delta_k * grad
                 adjustment = product / grad_norm
-                candidate_x = incumbent_x - adjustment
+                candidate_x = self.incumbent_x - adjustment
             # if norm(incumbent_x - candidate_x) > 0:
             #     logging.debug("incumbent_x " + str(incumbent_x))
             #     logging.debug("candidate_x " + str(candidate_x))
@@ -864,23 +857,23 @@ class ASTRODF(Solver):
             def con_f(s: np.ndarray) -> float:
                 return float(norm(s))
 
-            nlc = NonlinearConstraint(con_f, 0, delta_k)
+            nlc = NonlinearConstraint(con_f, 0, self.delta_k)
             solve_subproblem = minimize(
                 subproblem,
-                np.zeros(problem.dim),
+                np.zeros(self.problem.dim),
                 method="trust-constr",
                 constraints=nlc,
             )
-            candidate_x = incumbent_x + solve_subproblem.x
+            candidate_x = self.incumbent_x + solve_subproblem.x
 
         # logging.debug("problem.lower_bounds "+str(problem.lower_bounds))
         # handle the box constraints
         new_candidate_list = []
-        for i in range(problem.dim):
+        for i in range(self.problem.dim):
             candidate = float(candidate_x[i])
             # Correct candidate if it violates the box constraints
-            lower_bound = problem.lower_bounds[i]
-            upper_bound = problem.upper_bounds[i]
+            lower_bound = self.problem.lower_bounds[i]
+            upper_bound = self.problem.upper_bounds[i]
             epsilon = 0.01
             if candidate <= lower_bound:
                 candidate = lower_bound + epsilon
@@ -891,17 +884,19 @@ class ASTRODF(Solver):
         candidate_x = tuple(new_candidate_list)
 
         # store the solution (and function estimate at it) to the subproblem as a candidate for the next iterate
-        candidate_solution = self.create_new_solution(candidate_x, problem)
-        visited_pts_list.append(candidate_solution)
+        candidate_solution = self.create_new_solution(candidate_x, self.problem)
+        self.visited_pts_list.append(candidate_solution)
 
         # if we use crn, then the candidate solution has the same sample size as the incumbent solution
         if self.factors["crn_across_solns"]:
-            problem.simulate(candidate_solution, incumbent_solution.n_reps)
-            expended_budget += incumbent_solution.n_reps
+            self.problem.simulate(
+                candidate_solution, self.incumbent_solution.n_reps
+            )
+            self.expended_budget += self.incumbent_solution.n_reps
         else:
             # pilot run and adaptive sampling
-            problem.simulate(candidate_solution, pilot_run)
-            expended_budget += pilot_run
+            self.problem.simulate(candidate_solution, pilot_run)
+            self.expended_budget += pilot_run
             sample_size = pilot_run
             while True:
                 # if enable_gradient:
@@ -917,16 +912,21 @@ class ASTRODF(Solver):
                         np.trace(candidate_solution.objectives_gradients_var),
                     )
                 stopping = self.get_stopping_time(
-                    pilot_run, sig2, delta_k, kappa, problem.dim, delta_power
+                    pilot_run,
+                    sig2,
+                    self.delta_k,
+                    self.kappa,
+                    self.problem.dim,
+                    delta_power,
                 )
                 if (
                     sample_size >= min(stopping, lambda_max)
-                    or expended_budget >= budget_limit
+                    or self.expended_budget >= self.budget
                 ):
                     break
                 else:
-                    problem.simulate(candidate_solution, 1)
-                    expended_budget += 1
+                    self.problem.simulate(candidate_solution, 1)
+                    self.expended_budget += 1
                     sample_size += 1
 
         # TODO: make sure the solution whose estimated objevtive is abrupted bc of budget is not added to the list of recommended solutions, unless the error is negligible ...
@@ -934,7 +934,9 @@ class ASTRODF(Solver):
         #     final_ob = fval[0]
         # else:
         # calculate success ratio
-        fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
+        fval_tilde = (
+            -1 * self.problem.minmax[0] * candidate_solution.objectives_mean
+        )
         # replace the candidate x if the interpolation set has lower objective function value and with sufficient reduction (pattern search)
         # also if the candidate solution's variance is high that could be caused by stopping early due to exhausting budget
         # logging.debug("cv "+str(candidate_solution.objectives_var/(candidate_solution.n_reps * candidate_solution.objectives_mean ** 2)))
@@ -944,7 +946,7 @@ class ASTRODF(Solver):
                 (min(fval) < fval_tilde)
                 and (
                     (fval[0] - min(fval))
-                    >= self.factors["ps_sufficient_reduction"] * delta_k**2
+                    >= self.factors["ps_sufficient_reduction"] * self.delta_k**2
                 )
             )
             or (
@@ -964,7 +966,7 @@ class ASTRODF(Solver):
 
         # compute the success ratio rho
         candidate_x_arr = np.array(candidate_x)
-        incumbent_x_arr = np.array(incumbent_x)
+        incumbent_x_arr = np.array(self.incumbent_x)
         s = np.subtract(candidate_x_arr, incumbent_x_arr)
         if enable_gradient:
             model_reduction = -np.dot(s, grad) - 0.5 * np.dot(
@@ -972,7 +974,7 @@ class ASTRODF(Solver):
             )
         else:
             model_reduction = self.evaluate_model(
-                np.zeros(problem.dim),
+                np.zeros(self.problem.dim),
                 q,  # type: ignore
             ) - self.evaluate_model(s, q)  # type: ignore
         if model_reduction <= 0:
@@ -982,20 +984,20 @@ class ASTRODF(Solver):
         # successful: accept
         successful = rho >= eta_1
         if successful:
-            incumbent_x = candidate_x
-            incumbent_solution = candidate_solution
+            self.incumbent_x = candidate_x
+            self.incumbent_solution = candidate_solution
             # final_ob = candidate_solution.objectives_mean
-            recommended_solns.append(candidate_solution)
-            intermediate_budgets.append(expended_budget)
-            delta_k = min(delta_k, delta_max)
+            self.recommended_solns.append(candidate_solution)
+            self.intermediate_budgets.append(self.expended_budget)
+            self.delta_k = min(self.delta_k, self.delta_max)
             # very successful: expand
             very_successful = rho >= eta_2
             if very_successful:
-                delta_k = min(gamma_1 * delta_k, delta_max)
+                self.delta_k = min(gamma_1 * self.delta_k, self.delta_max)
             if enable_gradient:
                 candidate_grad = (
                     -1
-                    * problem.minmax[0]
+                    * self.problem.minmax[0]
                     * candidate_solution.objectives_gradients_mean[0]
                 )
                 y_k = np.array(
@@ -1011,7 +1013,7 @@ class ASTRODF(Solver):
                     r_k = 0
                 else:
                     r_k = 1.0 / (y_k @ s)
-                h_s_k = h_k @ s
+                h_s_k = self.h_k @ s
                 s_h_s_k = s @ h_s_k
                 if s_h_s_k == 0:
                     warning_msg = (
@@ -1019,30 +1021,21 @@ class ASTRODF(Solver):
                     )
                     logging.warning(warning_msg)
                     # TODO: validate this error handling
-                    h_k = -np.inf
+                    self.h_k = -np.inf
                 else:
-                    h_k = (
-                        h_k
+                    self.h_k = (
+                        self.h_k
                         + np.outer(y_k, y_k) * r_k
                         - np.outer(h_s_k, h_s_k) / (s_h_s_k)
                     )  # type: ignore
         # unsuccessful: shrink and reject
         elif not successful:
-            delta_k = min(gamma_2 * delta_k, delta_max)
+            self.delta_k = min(gamma_2 * self.delta_k, self.delta_max)
             # final_ob = fval[0]
 
         # TODO: unified TR management
-        # delta_k = min(kappa * norm(grad), delta_max)
+        # delta_k = min(kappa * norm(grad), self.delta_max)
         # logging.debug("norm of grad "+str(norm(grad)))
-        self.delta_k = delta_k
-        self.recommended_solns = recommended_solns
-        self.intermediate_budgets = intermediate_budgets
-        self.expended_budget = expended_budget
-        self.incumbent_x = incumbent_x
-        self.kappa = kappa
-        self.incumbent_solution = incumbent_solution
-        self.visited_pts_list = visited_pts_list
-        self.h_k = h_k
 
     def _initialize_solving(self) -> None:
         """Setup the solver for the first iteration."""
