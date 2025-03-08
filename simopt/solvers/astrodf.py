@@ -170,6 +170,21 @@ class ASTRODF(Solver):
         """
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
+    
+        # Initialize instance variables
+        self.iteration_count = 0
+        self.delta_k = None
+        self.delta_max = None
+        self.expended_budget = 0
+        self.recommended_solns = []
+        self.intermediate_budgets = []
+        self.incumbent_x = None
+        self.incumbent_solution = None
+        self.interpolation_solns = []
+        self.visited_pts_list = []
+        self.intermediate_budgets = []
+        self.kappa = 0
+        self.h_k = None
 
     def check_eta_1(self) -> None:
         if self.factors["eta_1"] <= 0:
@@ -642,34 +657,26 @@ class ASTRODF(Solver):
 
     def iterate(
         self,
-        k: int,
-        delta_k: float,
-        delta_max: float | int,
-        problem: Problem,
-        visited_pts_list: list,
-        incumbent_x: tuple[int | float, ...],
-        expended_budget: int,
-        budget_limit: int,
-        recommended_solns: list,
-        intermediate_budgets: list,
-        kappa: float,
-        incumbent_solution: Solution,
-        h_k: list,
-    ) -> tuple[
-        float,
-        float,
-        list[Solution],
-        list[int],
-        int,
-        tuple[int | float, ...],
-        float,
-        Solution,
-        list[Solution],
-        list[list],
-    ]:
+    ) -> None:
         """
         Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
         """
+        self.iteration_count += 1
+        # Adapt the variable names for the new iterate layout
+        k = self.iteration_count
+        delta_k = self.delta_k
+        delta_max = self.delta_max
+        problem = self.problem
+        visited_pts_list = self.visited_pts_list
+        incumbent_x = self.incumbent_x
+        expended_budget = self.expended_budget
+        budget_limit = self.budget
+        recommended_solns = self.recommended_solns
+        intermediate_budgets = self.intermediate_budgets
+        kappa = self.kappa
+        incumbent_solution = self.incumbent_solution
+        h_k = self.h_k
+
         # default values
         eta_1: float = self.factors["eta_1"]
         eta_2: float = self.factors["eta_2"]
@@ -977,7 +984,7 @@ class ASTRODF(Solver):
         if successful:
             incumbent_x = candidate_x
             incumbent_solution = candidate_solution
-            final_ob = candidate_solution.objectives_mean
+            # final_ob = candidate_solution.objectives_mean
             recommended_solns.append(candidate_solution)
             intermediate_budgets.append(expended_budget)
             delta_k = min(delta_k, delta_max)
@@ -1022,23 +1029,20 @@ class ASTRODF(Solver):
         # unsuccessful: shrink and reject
         elif not successful:
             delta_k = min(gamma_2 * delta_k, delta_max)
-            final_ob = fval[0]
+            # final_ob = fval[0]
 
         # TODO: unified TR management
         # delta_k = min(kappa * norm(grad), delta_max)
         # logging.debug("norm of grad "+str(norm(grad)))
-        return (
-            final_ob,
-            delta_k,
-            recommended_solns,
-            intermediate_budgets,
-            expended_budget,
-            incumbent_x,
-            kappa,
-            incumbent_solution,
-            visited_pts_list,
-            h_k,
-        )
+        self.delta_k = delta_k
+        self.recommended_solns = recommended_solns
+        self.intermediate_budgets = intermediate_budgets
+        self.expended_budget = expended_budget
+        self.incumbent_x = incumbent_x
+        self.kappa = kappa
+        self.incumbent_solution = incumbent_solution
+        self.visited_pts_list = visited_pts_list
+        self.h_k = h_k
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
@@ -1056,8 +1060,8 @@ class ASTRODF(Solver):
         intermediate_budgets : list of ints
             list of intermediate budgets when recommended solutions changes
         """
-
-        budget = problem.factors["budget"]
+        self.problem = problem
+        self.budget = problem.factors["budget"]
 
         # Designate random number generator for random sampling
         find_next_soln_rng = self.rng_list[1]
@@ -1078,49 +1082,21 @@ class ASTRODF(Solver):
             bounds_range = problem.upper_bounds[i] - problem.lower_bounds[i]
             delta_max_arr += [min(soln_range, bounds_range)]
         # TODO: update this so that it could be used for problems with decision variables at varying scales!
-        delta_max = max(delta_max_arr)
+        self.delta_max = max(delta_max_arr)
         # logging.debug("delta_max  " + str(delta_max))
         # Reset iteration and data storage arrays
-        visited_pts_list = []
-        delta_k = 10 ** (ceil(log(delta_max * 2, 10) - 1) / problem.dim)
+        self.delta_k = 10 ** (ceil(log(self.delta_max * 2, 10) - 1) / problem.dim)
         # logging.debug("initial delta " + str(delta_k))
-        incumbent_x: tuple[int | float, ...] = problem.factors[
+        
+        self.incumbent_x: tuple[int | float, ...] = problem.factors[
             "initial_solution"
         ]
-        expended_budget, kappa = 0, 0
-        recommended_solns, intermediate_budgets = [], []
-        incumbent_solution = self.create_new_solution(
-            tuple(incumbent_x), problem
+        self.incumbent_solution = self.create_new_solution(
+            tuple(self.incumbent_x), problem
         )
-        h_k = np.identity(problem.dim).tolist()
-        iteration_count = 0
-        while expended_budget < budget:
-            iteration_count += 1
-            (
-                _,
-                delta_k,
-                recommended_solns,
-                intermediate_budgets,
-                expended_budget,
-                incumbent_x,
-                kappa,
-                incumbent_solution,
-                visited_pts_list,
-                h_k,
-            ) = self.iterate(
-                iteration_count,
-                delta_k,
-                delta_max,
-                problem,
-                visited_pts_list,
-                incumbent_x,
-                expended_budget,
-                budget,
-                recommended_solns,
-                intermediate_budgets,
-                kappa,
-                incumbent_solution,
-                h_k,  # type: ignore
-            )
+        self.h_k = np.identity(problem.dim).tolist()
 
-        return recommended_solns, intermediate_budgets
+        while self.expended_budget < self.budget:
+            self.iterate()
+
+        return self.recommended_solns, self.intermediate_budgets
