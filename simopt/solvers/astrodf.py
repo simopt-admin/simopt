@@ -688,8 +688,7 @@ class ASTRODF(Solver):
             )
             - 1
         )
-        is_first_solver_iteration = self.iteration_count == 1
-        if is_first_solver_iteration:
+        if self.iteration_count == 1:
             self.incumbent_solution = self.create_new_solution(
                 self.incumbent_x, self.problem
             )
@@ -889,10 +888,9 @@ class ASTRODF(Solver):
 
         # if we use crn, then the candidate solution has the same sample size as the incumbent solution
         if self.factors["crn_across_solns"]:
-            self.problem.simulate(
-                candidate_solution, self.incumbent_solution.n_reps
-            )
-            self.expended_budget += self.incumbent_solution.n_reps
+            num_sims = self.incumbent_solution.n_reps
+            self.problem.simulate(candidate_solution, num_sims)
+            self.expended_budget += num_sims
         else:
             # pilot run and adaptive sampling
             self.problem.simulate(candidate_solution, pilot_run)
@@ -941,28 +939,37 @@ class ASTRODF(Solver):
         # also if the candidate solution's variance is high that could be caused by stopping early due to exhausting budget
         # logging.debug("cv "+str(candidate_solution.objectives_var/(candidate_solution.n_reps * candidate_solution.objectives_mean ** 2)))
         # logging.debug("fval[0] - min(fval) "+str(fval[0] - min(fval)))
-        if not enable_gradient and (
-            (
-                (min(fval) < fval_tilde)
-                and (
-                    (fval[0] - min(fval))
-                    >= self.factors["ps_sufficient_reduction"] * self.delta_k**2
-                )
-            )
-            or (
-                (
-                    candidate_solution.objectives_var
-                    / (
-                        candidate_solution.n_reps
-                        * candidate_solution.objectives_mean**2
+
+        if not enable_gradient:
+            min_fval = min(fval)
+            sufficient_reduction = (fval[0] - min_fval) >= self.factors[
+                "ps_sufficient_reduction"
+            ] * self.delta_k**2
+
+            condition_met = min_fval < fval_tilde and sufficient_reduction
+
+            high_variance = False
+            if not condition_met:
+                # Treat variance as low if mean is zero to avoid division by
+                # zero (zero mean typically indicates negligible uncertainty)
+                if candidate_solution.objectives_mean[0] == 0:
+                    logging.debug(
+                        "Candidate solution objectives_mean is zero, skipping variance check."
                     )
-                )[0]
-                > 0.75
-            )
-        ):
-            fval_tilde = min(fval)
-            candidate_x = y_var[fval.index(min(fval))][0]  # type: ignore
-            candidate_solution = interpolation_solns[fval.index(min(fval))]  # type: ignore
+                else:
+                    high_variance = (
+                        candidate_solution.objectives_var[0]
+                        / (
+                            candidate_solution.n_reps
+                            * candidate_solution.objectives_mean[0] ** 2
+                        )
+                    ) > 0.75
+
+            if condition_met or high_variance:
+                fval_tilde = min_fval
+                min_idx = fval.index(min_fval)
+                candidate_x = y_var[min_idx][0]
+                candidate_solution = interpolation_solns[min_idx]
 
         # compute the success ratio rho
         candidate_x_arr = np.array(candidate_x)
@@ -981,57 +988,55 @@ class ASTRODF(Solver):
             rho = 0
         else:
             rho = (fval[0] - fval_tilde) / model_reduction
-        # successful: accept
+
+        epsilon = 1e-15
         successful = rho >= eta_1
+        # successful: accept
         if successful:
             self.incumbent_x = candidate_x
             self.incumbent_solution = candidate_solution
-            # final_ob = candidate_solution.objectives_mean
             self.recommended_solns.append(candidate_solution)
             self.intermediate_budgets.append(self.expended_budget)
             self.delta_k = min(self.delta_k, self.delta_max)
+
             # very successful: expand
-            very_successful = rho >= eta_2
-            if very_successful:
+            if rho >= eta_2:
                 self.delta_k = min(gamma_1 * self.delta_k, self.delta_max)
+
             if enable_gradient:
                 candidate_grad = (
                     -1
                     * self.problem.minmax[0]
                     * candidate_solution.objectives_gradients_mean[0]
                 )
-                y_k = np.array(
-                    candidate_grad - grad
-                )  # np.clip(candidate_grad - grad, 1e-5, np.inf)
-                # Compute the intermediate terms for the SMW update
+                y_k = candidate_grad - grad
                 y_ks = y_k @ s
-                if y_ks == 0:
+
+                if np.isclose(y_ks, 0, atol=epsilon):
                     warning_msg = (
-                        "Division by 0 in ASTRO-DF solver (y_ks == 0)."
+                        "y_ks near zero; skipping Hessian update to avoid numerical instability."
                     )
                     logging.warning(warning_msg)
                     r_k = 0
                 else:
-                    r_k = 1.0 / (y_k @ s)
+                    r_k = 1.0 / y_ks
+
                 h_s_k = self.h_k @ s
                 s_h_s_k = s @ h_s_k
-                if s_h_s_k == 0:
+
+                if np.isclose(s_h_s_k, 0, atol=epsilon):
                     warning_msg = (
-                        "Division by 0 in ASTRO-DF solver (s @ h_s_k == 0)."
+                        "s_h_s_k near zero; skipping Hessian update to avoid numerical instability."
                     )
                     logging.warning(warning_msg)
-                    # TODO: validate this error handling
-                    self.h_k = -np.inf
                 else:
-                    self.h_k = (
-                        self.h_k
-                        + np.outer(y_k, y_k) * r_k
-                        - np.outer(h_s_k, h_s_k) / (s_h_s_k)
-                    )  # type: ignore
-        # unsuccessful: shrink and reject
+                    self.h_k += (
+                        np.outer(y_k, y_k) * r_k
+                        - np.outer(h_s_k, h_s_k) / s_h_s_k
+                    )
+
         elif not successful:
             self.delta_k = min(gamma_2 * self.delta_k, self.delta_max)
-            # final_ob = fval[0]
 
         # TODO: unified TR management
         # delta_k = min(kappa * norm(grad), self.delta_max)
