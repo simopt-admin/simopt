@@ -252,7 +252,7 @@ class ASTRODF(Solver):
         Compute the local model value with a linear interpolation with a diagonal Hessian
         """
         xk_arr = np.array(x_k).flatten()
-        x_val = np.concatenate((np.ones(1), xk_arr, xk_arr**2))
+        x_val = np.hstack(([1], xk_arr, xk_arr**2))
         result = np.matmul(x_val, q)
         return result
 
@@ -283,6 +283,74 @@ class ASTRODF(Solver):
         sample_size: int = ceil(raw_sample_size)
         return sample_size
 
+    def select_interpolation_points(
+        self, delta_k: float, f_index: int
+    ) -> tuple[list, list]:
+        # If it is the first iteration or there is no design point we can reuse within the trust region, use the coordinate basis
+        if (
+            self.iteration_count == 1
+            or (
+                norm(
+                    np.array(self.incumbent_x)
+                    - np.array(self.visited_pts_list[f_index].x)
+                )
+                == 0
+            )
+            or not self.reuse_points
+        ):
+            # Construct the interpolation set
+            var_y = self.get_coordinate_basis_interpolation_points(
+                self.incumbent_x, delta_k, self.problem
+            )
+            var_z = self.get_coordinate_basis_interpolation_points(
+                tuple(np.zeros(self.problem.dim)), delta_k, self.problem
+            )
+        # Else if we will reuse one design point (k > 1)
+        elif self.iteration_count > 1:
+            visited_pts_array = np.array(self.visited_pts_list[f_index].x)
+            diff_array = visited_pts_array - np.array(self.incumbent_x)
+            first_basis = (diff_array) / norm(diff_array)
+            # if first_basis has some non-zero components, use rotated basis for those dimensions
+            rotate_list = np.nonzero(first_basis)[0]
+            rotate_matrix = self.get_rotated_basis(first_basis, rotate_list)
+
+            # if first_basis has some zero components, use coordinate basis for those dimensions
+            for i in range(self.problem.dim):
+                if first_basis[i] == 0:
+                    coord_vector = self.get_coordinate_vector(
+                        self.problem.dim, i
+                    )
+                    rotate_matrix = np.vstack(
+                        (
+                            rotate_matrix,
+                            coord_vector,
+                        )
+                    )
+
+            # construct the interpolation set
+            var_y = self.get_rotated_basis_interpolation_points(
+                np.array(self.incumbent_x),
+                delta_k,
+                self.problem,
+                rotate_matrix,
+                self.visited_pts_list[f_index].x,
+            )
+            var_z = self.get_rotated_basis_interpolation_points(
+                np.zeros(self.problem.dim),
+                delta_k,
+                self.problem,
+                rotate_matrix,
+                np.array(self.visited_pts_list[f_index].x)
+                - np.array(self.incumbent_x),
+            )
+        # Else
+        # TODO: figure out what to do if the above conditions are not met
+        else:
+            var_y = []
+            var_z = []
+
+        return var_y, var_z
+
     def construct_model(
         self,
     ) -> tuple[
@@ -298,15 +366,6 @@ class ASTRODF(Solver):
         reconstruct with new points in a shrunk trust-region if the model fails the criticality condition
         the criticality condition keeps the model gradient norm and the trust-region size in lock-step
         """
-        x_k = self.incumbent_x
-        delta = self.delta_k
-        k = self.iteration_count
-        problem = self.problem
-        expended_budget = self.expended_budget
-        kappa = self.kappa
-        incumbent_solution = self.incumbent_solution
-        visited_pts_list = self.visited_pts_list
-
         interpolation_solns = []
 
         ## inner loop parameters
@@ -317,16 +376,17 @@ class ASTRODF(Solver):
         # skip_criticality = True  # self.factors["skip_criticality"]
         # Problem and solver factors
 
-        lambda_max = self.budget - expended_budget
+        lambda_max = self.budget - self.expended_budget
         # lambda_max = budget / (15 * sqrt(problem.dim))
         pilot_run = ceil(
             max(
-                self.lambda_min * log(10 + k, 10) ** 1.1,
-                min(0.5 * problem.dim, lambda_max),
+                self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
+                min(0.5 * self.problem.dim, lambda_max),
             )
             - 1
         )
 
+        delta = self.delta_k
         model_iterations: int = 0
         while True:
             delta_k = delta * w**model_iterations
@@ -334,156 +394,99 @@ class ASTRODF(Solver):
 
             # Calculate the distance between the center point and other design points
             distance_array = []
-            for point in visited_pts_list:
-                dist_diff = np.array(point.x) - np.array(x_k)
+            for point in self.visited_pts_list:
+                dist_diff = np.array(point.x) - np.array(self.incumbent_x)
                 distance = norm(dist_diff) - delta_k
                 # If the design point is outside the trust region, we will not reuse it (distance = -big M)
-                if distance > 0:
-                    distance_array.append(-delta_k * 10000)
-                else:
-                    distance_array.append(distance)
+                dist_to_append = -delta_k * 10000 if distance > 0 else distance
+                distance_array.append(dist_to_append)
 
             # Find the index of visited design points list for reusing points
             # The reused point will be the farthest point from the center point among the design points within the trust region
             f_index = distance_array.index(max(distance_array))
 
-            # If it is the first iteration or there is no design point we can reuse within the trust region, use the coordinate basis
-            is_first_solv_iteration = k == 1
-            if (
-                is_first_solv_iteration
-                or (
-                    norm(np.array(x_k) - np.array(visited_pts_list[f_index].x))
-                    == 0
-                )
-                or not self.reuse_points
-            ):
-                # Construct the interpolation set
-                var_y = self.get_coordinate_basis_interpolation_points(
-                    x_k, delta_k, problem
-                )
-                var_z = self.get_coordinate_basis_interpolation_points(
-                    tuple(np.zeros(problem.dim)), delta_k, problem
-                )
-            # Else if we will reuse one design point (k > 1)
-            elif not is_first_solv_iteration:
-                visited_pts_array = np.array(visited_pts_list[f_index].x)
-                diff_array = visited_pts_array - np.array(x_k)
-                first_basis = (diff_array) / norm(diff_array)
-                # if first_basis has some non-zero components, use rotated basis for those dimensions
-                rotate_list = np.nonzero(first_basis)[0]
-                rotate_matrix = self.get_rotated_basis(first_basis, rotate_list)
+            var_y, var_z = self.select_interpolation_points(delta_k, f_index)
 
-                # if first_basis has some zero components, use coordinate basis for those dimensions
-                for i in range(problem.dim):
-                    if first_basis[i] == 0:
-                        coord_vector = self.get_coordinate_vector(
-                            problem.dim, i
-                        )
-                        rotate_matrix = np.vstack(
-                            (
-                                rotate_matrix,
-                                coord_vector,
-                            )
-                        )
-
-                # construct the interpolation set
-                var_y = self.get_rotated_basis_interpolation_points(
-                    np.array(x_k),
-                    delta_k,
-                    problem,
-                    rotate_matrix,
-                    visited_pts_list[f_index].x,
-                )
-                var_z = self.get_rotated_basis_interpolation_points(
-                    np.zeros(problem.dim),
-                    delta_k,
-                    problem,
-                    rotate_matrix,
-                    np.array(visited_pts_list[f_index].x) - np.array(x_k),
-                )
-            # Else
-            # TODO: figure out what to do if the above conditions are not met
-            else:
-                pass
             # Evaluate the function estimate for the interpolation points
             fval = []
-            double_dim = 2 * problem.dim + 1
+            double_dim = 2 * self.problem.dim + 1
             for i in range(double_dim):
                 # Special cases for the first two iterations
                 is_first_dp_iteration = i == 0
                 is_second_dp_iteration = i == 1
                 if is_first_dp_iteration:
                     # for anthing other than x_0, we need to simulate the new solution
-                    if not is_first_solv_iteration:
+                    if self.iteration_count > 1:
                         # reuse the replications for x_k (center point, i.e., the incumbent solution)
-                        sample_size = incumbent_solution.n_reps
-                        sig2 = incumbent_solution.objectives_var[0]
+                        sample_size = self.incumbent_solution.n_reps
+                        sig2 = self.incumbent_solution.objectives_var[0]
                         # adaptive sampling
                         while True:
                             stopping = self.get_stopping_time(
                                 pilot_run,
                                 sig2,
                                 delta_k,
-                                kappa,
+                                self.kappa,
                             )
                             if (
                                 sample_size >= min(stopping, lambda_max)
-                                or expended_budget >= self.budget
+                                or self.expended_budget >= self.budget
                             ):
                                 break
-                            problem.simulate(incumbent_solution, 1)
-                            expended_budget += 1
+                            self.problem.simulate(self.incumbent_solution, 1)
+                            self.expended_budget += 1
                             sample_size += 1
-                            sig2 = incumbent_solution.objectives_var[0]
+                            sig2 = self.incumbent_solution.objectives_var[0]
                     fval.append(
                         -1
-                        * problem.minmax[0]
-                        * incumbent_solution.objectives_mean
+                        * self.problem.minmax[0]
+                        * self.incumbent_solution.objectives_mean
                     )
-                    interpolation_solns.append(incumbent_solution)
+                    interpolation_solns.append(self.incumbent_solution)
                 # else if reuse one design point, reuse the replications
                 elif (
                     is_second_dp_iteration
                     and self.reuse_points
                     and norm(
-                        np.array(x_k) - np.array(visited_pts_list[f_index].x)
+                        np.array(self.incumbent_x)
+                        - np.array(self.visited_pts_list[f_index].x)
                     )
                     != 0
                 ):
-                    sample_size = visited_pts_list[f_index].n_reps
-                    sig2 = visited_pts_list[f_index].objectives_var[0]
+                    sample_size = self.visited_pts_list[f_index].n_reps
+                    sig2 = self.visited_pts_list[f_index].objectives_var[0]
                     # adaptive sampling
                     while True:
                         stopping = self.get_stopping_time(
                             pilot_run,
                             sig2,
                             delta_k,
-                            kappa,
+                            self.kappa,
                         )
                         if (
                             sample_size >= min(stopping, lambda_max)
-                            or expended_budget >= self.budget
+                            or self.expended_budget >= self.budget
                         ):
                             break
-                        problem.simulate(visited_pts_list[f_index], 1)
-                        expended_budget += 1
+                        self.problem.simulate(self.visited_pts_list[f_index], 1)
+                        self.expended_budget += 1
                         sample_size += 1
-                        sig2 = visited_pts_list[f_index].objectives_var[0]
+                        sig2 = self.visited_pts_list[f_index].objectives_var[0]
                     fval.append(
                         -1
-                        * problem.minmax[0]
-                        * visited_pts_list[f_index].objectives_mean
+                        * self.problem.minmax[0]
+                        * self.visited_pts_list[f_index].objectives_mean
                     )
-                    interpolation_solns.append(visited_pts_list[f_index])
+                    interpolation_solns.append(self.visited_pts_list[f_index])
                 # for new points, run the simulation with pilot run
                 else:
                     decision_vars = tuple(var_y[i][0])
                     new_solution = self.create_new_solution(
-                        decision_vars, problem
+                        decision_vars, self.problem
                     )
-                    visited_pts_list.append(new_solution)
-                    problem.simulate(new_solution, pilot_run)
-                    expended_budget += pilot_run
+                    self.visited_pts_list.append(new_solution)
+                    self.problem.simulate(new_solution, pilot_run)
+                    self.expended_budget += pilot_run
                     sample_size = pilot_run
 
                     # adaptive sampling
@@ -493,24 +496,28 @@ class ASTRODF(Solver):
                             pilot_run,
                             sig2,
                             delta_k,
-                            kappa,
+                            self.kappa,
                         )
                         if (
                             sample_size >= min(stopping, lambda_max)
-                            or expended_budget >= self.budget
+                            or self.expended_budget >= self.budget
                         ):
                             break
-                        problem.simulate(new_solution, 1)
-                        expended_budget += 1
+                        self.problem.simulate(new_solution, 1)
+                        self.expended_budget += 1
                         sample_size += 1
 
                     fval.append(
-                        -1 * problem.minmax[0] * new_solution.objectives_mean
+                        -1
+                        * self.problem.minmax[0]
+                        * new_solution.objectives_mean
                     )
                     interpolation_solns.append(new_solution)
 
             # construct the model and obtain the model coefficients
-            q, grad, hessian = self.get_model_coefficients(var_z, fval, problem)
+            q, grad, hessian = self.get_model_coefficients(
+                var_z, fval, self.problem
+            )
 
             if delta_k <= mu * norm(grad):
                 break
@@ -525,8 +532,6 @@ class ASTRODF(Solver):
 
         beta_n_grad = float(beta * norm(grad))
         self.delta_k = min(max(beta_n_grad, delta_k), delta)
-        self.expended_budget = expended_budget
-        self.visited_pts_list = visited_pts_list
 
         return (
             fval,
@@ -546,9 +551,7 @@ class ASTRODF(Solver):
         # Construct the matrix with ones, linear terms, and squared terms
         m_var = np.array(
             [
-                np.concatenate(
-                    ([1], np.ravel(y_var[i]), np.ravel(y_var[i]) ** 2)
-                )
+                np.hstack(([1], np.ravel(y_var[i]), np.ravel(y_var[i]) ** 2))
                 for i in range(num_design_points)
             ]
         )
