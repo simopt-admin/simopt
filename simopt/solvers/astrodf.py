@@ -648,6 +648,64 @@ class ASTRODF(Solver):
 
         return y_var
 
+    def update_hessian(
+        self, candidate_solution: Solution, grad: np.ndarray, s: np.ndarray
+    ) -> None:
+        """Performs Hessian update if gradients are enabled."""
+        epsilon = 1e-15
+        if not hasattr(self, "hessian_skip_count"):
+            self.hessian_skip_count = 0
+
+        def handle_hessian_skip(variable: str, value: float) -> None:
+            """Handles skipping Hessian update if gradients are near zero."""
+            self.hessian_skip_count += 1
+            message = (
+                f"{variable} near zero ({value}); skipping Hessian update to avoid numerical instability. "
+                f"({self.hessian_skip_count} consecutive skips)"
+            )
+            logging.debug(message)
+            if self.hessian_skip_count == 10:
+                message = (
+                    "Hessian update skipped 10 consecutive times. "
+                    "Check optimization stability."
+                )
+                logging.info(message)
+            # If Hessian updates fail too often, the current approximation may
+            # be useless or unstable. Resetting can prevent further instability
+            # elif self.hessian_skip_count == 50:
+            #     message = (
+            #         "Hessian update skipped 50 consecutive times. "
+            #         "Resetting Hessian approximation."
+            #     )
+            #     logging.warning(message)
+            #     self.h_k = np.identity(self.problem.dim)
+            #     self.hessian_skip_count = 0
+
+        candidate_grad = (
+            -1
+            * self.problem.minmax[0]
+            * candidate_solution.objectives_gradients_mean[0]
+        )
+        y_k = candidate_grad - grad
+        y_ks = y_k @ s
+
+        if np.isclose(y_ks, 0, atol=epsilon):
+            handle_hessian_skip("y_ks", y_ks)
+            return
+
+        r_k = 1.0 / y_ks
+        h_s_k = self.h_k @ s
+        s_h_s_k = s @ h_s_k
+
+        if np.isclose(s_h_s_k, 0, atol=epsilon):
+            handle_hessian_skip("s_h_s_k", s_h_s_k)
+            return
+        else:
+            self.h_k += (
+                np.outer(y_k, y_k) * r_k - np.outer(h_s_k, h_s_k) / s_h_s_k
+            )
+            self.hessian_skip_count = 0  # Reset counter on successful update
+
     def iterate(self) -> None:
         """
         Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
@@ -666,8 +724,7 @@ class ASTRODF(Solver):
             self.incumbent_solution = self.create_new_solution(
                 self.incumbent_x, self.problem
             )
-            if len(self.visited_pts_list) == 0:
-                self.visited_pts_list.append(self.incumbent_solution)
+            self.visited_pts_list.append(self.incumbent_solution)
 
             self.perform_adaptive_sampling(
                 self.incumbent_solution,
@@ -764,20 +821,14 @@ class ASTRODF(Solver):
 
         # logging.debug("problem.lower_bounds "+str(problem.lower_bounds))
         # handle the box constraints
-        new_candidate_list = []
-        for i in range(self.problem.dim):
-            candidate = float(candidate_x[i])
-            # Correct candidate if it violates the box constraints
-            lower_bound = self.problem.lower_bounds[i]
-            upper_bound = self.problem.upper_bounds[i]
-            epsilon = 0.01
-            if candidate <= lower_bound:
-                candidate = lower_bound + epsilon
-            elif candidate >= upper_bound:
-                candidate = upper_bound - epsilon
-            # Append the corrected candidate to the new candidate list
-            new_candidate_list.append(candidate)
-        candidate_x = tuple(new_candidate_list)
+        candidate_x = tuple(
+            clamp_with_epsilon(
+                float(candidate_x[i]),
+                self.problem.lower_bounds[i],
+                self.problem.upper_bounds[i],
+            )
+            for i in range(self.problem.dim)
+        )
 
         # store the solution (and function estimate at it) to the subproblem as a candidate for the next iterate
         candidate_solution = self.create_new_solution(candidate_x, self.problem)
@@ -855,7 +906,6 @@ class ASTRODF(Solver):
         else:
             rho = (fval[0] - fval_tilde) / model_reduction
 
-        epsilon = 1e-15
         successful = rho >= self.eta_1
         # successful: accept
         if successful:
@@ -870,32 +920,7 @@ class ASTRODF(Solver):
                 self.delta_k = min(self.gamma_1 * self.delta_k, self.delta_max)
 
             if self.enable_gradient:
-                candidate_grad = (
-                    -1
-                    * self.problem.minmax[0]
-                    * candidate_solution.objectives_gradients_mean[0]
-                )
-                y_k = candidate_grad - grad
-                y_ks = y_k @ s
-
-                if np.isclose(y_ks, 0, atol=epsilon):
-                    warning_msg = "y_ks near zero; skipping Hessian update to avoid numerical instability."
-                    logging.warning(warning_msg)
-                    r_k = 0
-                else:
-                    r_k = 1.0 / y_ks
-
-                h_s_k = self.h_k @ s
-                s_h_s_k = s @ h_s_k
-
-                if np.isclose(s_h_s_k, 0, atol=epsilon):
-                    warning_msg = "s_h_s_k near zero; skipping Hessian update to avoid numerical instability."
-                    logging.warning(warning_msg)
-                else:
-                    self.h_k += (
-                        np.outer(y_k, y_k) * r_k
-                        - np.outer(h_s_k, h_s_k) / s_h_s_k
-                    )
+                self.update_hessian(candidate_solution, grad, s)
 
         elif not successful:
             self.delta_k = min(self.gamma_2 * self.delta_k, self.delta_max)
