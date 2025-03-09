@@ -352,29 +352,66 @@ class ASTRODF(Solver):
         return var_y, var_z
 
     def perform_adaptive_sampling(
-        self, solution: Solution, pilot_run: int, delta_k: float
+        self,
+        solution: Solution,
+        pilot_run: int,
+        delta_k: float,
+        compute_kappa: bool = False,
     ) -> None:
         """
-        Perform adaptive sampling on the given solution until the stopping condition is met or the budget is exhausted.
+        Perform adaptive sampling on the given solution until the stopping condition is met.
+
+        Parameters:
+        - solution: The solution object being sampled.
+        - pilot_run: The number of initial pilot runs.
+        - delta_k: The current trust-region radius.
+        - compute_kappa: Whether or not to compute kappa dynamically (needed in first iteration).
         """
         sample_size = solution.n_reps if solution.n_reps > 0 else pilot_run
-        sig2 = solution.objectives_var[0]
-        lambda_max = self.remaining_budget
+        lambda_max = self.budget - self.expended_budget
+
+        # Initial Simulation (only if needed)
+        if solution.n_reps == 0:
+            self.problem.simulate(solution, pilot_run)
+            self.expended_budget += pilot_run
+            sample_size = pilot_run
 
         while True:
+            # Compute variance
+            sig2 = solution.objectives_var[0]
+            if self.delta_power == 0:
+                sig2 = max(sig2, np.trace(solution.objectives_gradients_var))
+
+            # Compute stopping condition
+            kappa = None
+            if compute_kappa:
+                if self.enable_gradient:
+                    rhs_for_kappa = norm(solution.objectives_gradients_mean[0])
+                else:
+                    rhs_for_kappa = solution.objectives_mean
+                kappa = (
+                    rhs_for_kappa
+                    * np.sqrt(pilot_run)
+                    / (delta_k ** (self.delta_power / 2))
+                )
+
             stopping = self.get_stopping_time(
-                pilot_run, sig2, delta_k, self.kappa
+                pilot_run, sig2, delta_k, kappa or self.kappa
             )
 
+            # Stop if conditions are met
             if (
                 sample_size >= min(stopping, lambda_max)
-                or self.remaining_budget <= 0
+                or self.expended_budget >= self.budget
             ):
+                if compute_kappa:
+                    self.kappa = kappa  # Update kappa only if needed
                 break
+
+            # Perform additional simulation
             self.problem.simulate(solution, 1)
             self.expended_budget += 1
             sample_size += 1
-            sig2 = solution.objectives_var[0]
 
     def construct_model(
         self,
@@ -463,10 +500,14 @@ class ASTRODF(Solver):
 
                 # Don't perform adaptive sampling on x_0
                 if not (i == 0 and self.iteration_count == 0):
-                    self.perform_adaptive_sampling(adapt_soln, pilot_run, delta_k)
+                    self.perform_adaptive_sampling(
+                        adapt_soln, pilot_run, delta_k
+                    )
 
                 # Append the function estimate to the list
-                fval.append(-1 * self.problem.minmax[0] * adapt_soln.objectives_mean)
+                fval.append(
+                    -1 * self.problem.minmax[0] * adapt_soln.objectives_mean
+                )
                 interpolation_solns.append(adapt_soln)
 
             # construct the model and obtain the model coefficients
@@ -628,82 +669,19 @@ class ASTRODF(Solver):
             if len(self.visited_pts_list) == 0:
                 self.visited_pts_list.append(self.incumbent_solution)
 
-            # pilot run
-            self.problem.simulate(self.incumbent_solution, pilot_run)
-            self.expended_budget += pilot_run
-            sample_size = pilot_run
-
-            # adaptive sampling
-            while True:
-                if self.enable_gradient:
-                    rhs_for_kappa = norm(
-                        self.incumbent_solution.objectives_gradients_mean[0]
-                    )
-                else:
-                    rhs_for_kappa = self.incumbent_solution.objectives_mean
-                sig2 = self.incumbent_solution.objectives_var[0]
-                if self.delta_power == 0:
-                    sol_trace = np.trace(
-                        self.incumbent_solution.objectives_gradients_var
-                    )
-                    sig2 = max(sig2, sol_trace)
-                kappa = (
-                    rhs_for_kappa
-                    * np.sqrt(pilot_run)
-                    / (self.delta_k ** (self.delta_power / 2))
-                )
-                stopping = self.get_stopping_time(
-                    pilot_run,
-                    sig2,
-                    self.delta_k,
-                    kappa,
-                )
-                if (
-                    sample_size >= min(stopping, self.lambda_max)
-                    or self.expended_budget >= self.budget
-                ):
-                    # calculate kappa
-                    self.kappa = (
-                        rhs_for_kappa
-                        * np.sqrt(pilot_run)
-                        / (self.delta_k ** (self.delta_power / 2))
-                    )
-                    # logging.debug("kappa "+str(kappa))
-                    break
-                self.problem.simulate(self.incumbent_solution, 1)
-                self.expended_budget += 1
-                sample_size += 1
-
+            self.perform_adaptive_sampling(
+                self.incumbent_solution,
+                pilot_run,
+                self.delta_k,
+                compute_kappa=True,
+            )
             self.recommended_solns.append(self.incumbent_solution)
             self.intermediate_budgets.append(self.expended_budget)
         # since incument was only evaluated with the sample size of previous incumbent, here we compute its adaptive sample size
         elif self.factors["crn_across_solns"]:
-            sample_size = self.incumbent_solution.n_reps
-            # adaptive sampling
-            while True:
-                sig2 = self.incumbent_solution.objectives_var[0]
-                if self.delta_power == 0:
-                    sig2 = max(
-                        sig2,
-                        np.trace(
-                            self.incumbent_solution.objectives_gradients_var
-                        ),
-                    )
-                stopping = self.get_stopping_time(
-                    pilot_run,
-                    sig2,
-                    self.delta_k,
-                    self.kappa,
-                )
-                if (
-                    sample_size >= min(stopping, self.lambda_max)
-                    or self.expended_budget >= self.budget
-                ):
-                    break
-                else:
-                    self.problem.simulate(self.incumbent_solution, 1)
-                    self.expended_budget += 1
-                    sample_size += 1
+            self.perform_adaptive_sampling(
+                self.incumbent_solution, pilot_run, self.delta_k
+            )
 
         # use Taylor expansion if gradient available
         if self.enable_gradient:
@@ -811,38 +789,9 @@ class ASTRODF(Solver):
             self.problem.simulate(candidate_solution, num_sims)
             self.expended_budget += num_sims
         else:
-            # pilot run and adaptive sampling
-            self.problem.simulate(candidate_solution, pilot_run)
-            self.expended_budget += pilot_run
-            sample_size = pilot_run
-            while True:
-                # if enable_gradient:
-                #     # logging.debug("incumbent_solution.objectives_gradients_var[0] "+str(candidate_solution.objectives_gradients_var[0]))
-                #     while norm(candidate_solution.objectives_gradients_var[0]) == 0 and candidate_solution.n_reps < max(pilot_run, lambda_max/100):
-                #         problem.simulate(candidate_solution, 1)
-                #         expended_budget += 1
-                #         sample_size += 1
-                sig2 = candidate_solution.objectives_var[0]
-                if self.delta_power == 0:
-                    sig2 = max(
-                        sig2,
-                        np.trace(candidate_solution.objectives_gradients_var),
-                    )
-                stopping = self.get_stopping_time(
-                    pilot_run,
-                    sig2,
-                    self.delta_k,
-                    self.kappa,
-                )
-                if (
-                    sample_size >= min(stopping, self.lambda_max)
-                    or self.expended_budget >= self.budget
-                ):
-                    break
-                else:
-                    self.problem.simulate(candidate_solution, 1)
-                    self.expended_budget += 1
-                    sample_size += 1
+            self.perform_adaptive_sampling(
+                candidate_solution, pilot_run, self.delta_k
+            )
 
         # TODO: make sure the solution whose estimated objevtive is abrupted bc of budget is not added to the list of recommended solutions, unless the error is negligible ...
         # if (expended_budget >= budget_limit) and (sample_size < stopping):
@@ -954,11 +903,6 @@ class ASTRODF(Solver):
         # TODO: unified TR management
         # delta_k = min(kappa * norm(grad), self.delta_max)
         # logging.debug("norm of grad "+str(norm(grad)))
-
-    @property
-    def remaining_budget(self) -> int:
-        """Return the remaining budget."""
-        return self.budget - self.expended_budget
 
     def _initialize_solving(self) -> None:
         """Setup the solver for the first iteration."""
