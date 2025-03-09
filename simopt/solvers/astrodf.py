@@ -351,6 +351,31 @@ class ASTRODF(Solver):
 
         return var_y, var_z
 
+    def perform_adaptive_sampling(
+        self, solution: Solution, pilot_run: int, delta_k: float
+    ) -> None:
+        """
+        Perform adaptive sampling on the given solution until the stopping condition is met or the budget is exhausted.
+        """
+        sample_size = solution.n_reps if solution.n_reps > 0 else pilot_run
+        sig2 = solution.objectives_var[0]
+        lambda_max = self.remaining_budget
+
+        while True:
+            stopping = self.get_stopping_time(
+                pilot_run, sig2, delta_k, self.kappa
+            )
+
+            if (
+                sample_size >= min(stopping, lambda_max)
+                or self.remaining_budget <= 0
+            ):
+                break
+            self.problem.simulate(solution, 1)
+            self.expended_budget += 1
+            sample_size += 1
+            sig2 = solution.objectives_var[0]
+
     def construct_model(
         self,
     ) -> tuple[
@@ -411,41 +436,12 @@ class ASTRODF(Solver):
             fval = []
             double_dim = 2 * self.problem.dim + 1
             for i in range(double_dim):
-                # Special cases for the first two iterations
-                is_first_dp_iteration = i == 0
-                is_second_dp_iteration = i == 1
-                if is_first_dp_iteration:
-                    # for anthing other than x_0, we need to simulate the new solution
-                    if self.iteration_count > 1:
-                        # reuse the replications for x_k (center point, i.e., the incumbent solution)
-                        sample_size = self.incumbent_solution.n_reps
-                        sig2 = self.incumbent_solution.objectives_var[0]
-                        # adaptive sampling
-                        while True:
-                            stopping = self.get_stopping_time(
-                                pilot_run,
-                                sig2,
-                                delta_k,
-                                self.kappa,
-                            )
-                            if (
-                                sample_size >= min(stopping, lambda_max)
-                                or self.expended_budget >= self.budget
-                            ):
-                                break
-                            self.problem.simulate(self.incumbent_solution, 1)
-                            self.expended_budget += 1
-                            sample_size += 1
-                            sig2 = self.incumbent_solution.objectives_var[0]
-                    fval.append(
-                        -1
-                        * self.problem.minmax[0]
-                        * self.incumbent_solution.objectives_mean
-                    )
-                    interpolation_solns.append(self.incumbent_solution)
-                # else if reuse one design point, reuse the replications
+                # If first iteration, reuse the incumbent solution
+                if i == 0:
+                    adapt_soln = self.incumbent_solution
+                # If the second iteration and we can reuse points, reuse the farthest point from the center point
                 elif (
-                    is_second_dp_iteration
+                    i == 1
                     and self.reuse_points
                     and norm(
                         np.array(self.incumbent_x)
@@ -453,32 +449,8 @@ class ASTRODF(Solver):
                     )
                     != 0
                 ):
-                    sample_size = self.visited_pts_list[f_index].n_reps
-                    sig2 = self.visited_pts_list[f_index].objectives_var[0]
-                    # adaptive sampling
-                    while True:
-                        stopping = self.get_stopping_time(
-                            pilot_run,
-                            sig2,
-                            delta_k,
-                            self.kappa,
-                        )
-                        if (
-                            sample_size >= min(stopping, lambda_max)
-                            or self.expended_budget >= self.budget
-                        ):
-                            break
-                        self.problem.simulate(self.visited_pts_list[f_index], 1)
-                        self.expended_budget += 1
-                        sample_size += 1
-                        sig2 = self.visited_pts_list[f_index].objectives_var[0]
-                    fval.append(
-                        -1
-                        * self.problem.minmax[0]
-                        * self.visited_pts_list[f_index].objectives_mean
-                    )
-                    interpolation_solns.append(self.visited_pts_list[f_index])
-                # for new points, run the simulation with pilot run
+                    adapt_soln = self.visited_pts_list[f_index]
+                # Otherwise, create/initialize a new solution and use that
                 else:
                     decision_vars = tuple(var_y[i][0])
                     new_solution = self.create_new_solution(
@@ -487,50 +459,32 @@ class ASTRODF(Solver):
                     self.visited_pts_list.append(new_solution)
                     self.problem.simulate(new_solution, pilot_run)
                     self.expended_budget += pilot_run
-                    sample_size = pilot_run
+                    adapt_soln = new_solution
 
-                    # adaptive sampling
-                    while True:
-                        sig2 = new_solution.objectives_var[0]
-                        stopping = self.get_stopping_time(
-                            pilot_run,
-                            sig2,
-                            delta_k,
-                            self.kappa,
-                        )
-                        if (
-                            sample_size >= min(stopping, lambda_max)
-                            or self.expended_budget >= self.budget
-                        ):
-                            break
-                        self.problem.simulate(new_solution, 1)
-                        self.expended_budget += 1
-                        sample_size += 1
+                # Don't perform adaptive sampling on x_0
+                if not (i == 0 and self.iteration_count == 0):
+                    self.perform_adaptive_sampling(adapt_soln, pilot_run, delta_k)
 
-                    fval.append(
-                        -1
-                        * self.problem.minmax[0]
-                        * new_solution.objectives_mean
-                    )
-                    interpolation_solns.append(new_solution)
+                # Append the function estimate to the list
+                fval.append(-1 * self.problem.minmax[0] * adapt_soln.objectives_mean)
+                interpolation_solns.append(adapt_soln)
 
             # construct the model and obtain the model coefficients
             q, grad, hessian = self.get_model_coefficients(
                 var_z, fval, self.problem
             )
 
-            if delta_k <= mu * norm(grad):
+            norm_grad = norm(grad)
+            if delta_k <= mu * norm_grad or norm_grad == 0:
                 break
 
             # If a model gradient norm is zero, there is a possibility that the code stuck in this while loop
-            if norm(grad) == 0:
-                break
             # TODO: investigate if this can be implemented instead of checking norm(grad) == 0
             # MAX_ITER = 100
             # if model_iterations > MAX_ITER:
             #     break
 
-        beta_n_grad = float(beta * norm(grad))
+        beta_n_grad = float(beta * norm_grad)
         self.delta_k = min(max(beta_n_grad, delta_k), delta)
 
         return (
