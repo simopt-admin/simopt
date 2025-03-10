@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from typing import Callable
-from simopt.utils import classproperty
+from simopt.utils import classproperty, make_nonzero
 
 import numpy as np
 
@@ -302,12 +302,7 @@ class SPSA(Solver):
         meangbar = np.mean(gbar) / (
             self.factors["n_loss"] / (2 * self.factors["gavg"])
         )
-        # Avoid division by zero.
-        epsilon = 1e-15
-        if np.isclose(meangbar, 0, atol=epsilon):
-            warning_msg = f"Attempted division by zero in SPSA solver (meangbar == {meangbar})"
-            logging.warning(warning_msg)
-            meangbar = epsilon if meangbar == 0 else np.sign(meangbar) * epsilon
+        meangbar = make_nonzero(meangbar, "meangbar")
         a = a_leftside / meangbar
         # Run the main algorithm.
         # Initiate iteration counter.
@@ -342,16 +337,7 @@ class SPSA(Solver):
             mean_plus = thetaminus_sol.objectives_mean * step_weight_plus
             mean_net = mean_minus + mean_plus
             net_step_weight = step_weight_plus + step_weight_minus
-            # Avoid division by zero.
-            epsilon = 1e-15
-            if np.isclose(net_step_weight, 0, atol=epsilon):
-                warning_msg = f"Attempted division by zero in SPSA solver (net_step_weight == {net_step_weight})"
-                logging.warning(warning_msg)
-                net_step_weight = (
-                    epsilon
-                    if net_step_weight == 0
-                    else np.sign(net_step_weight) * epsilon
-                )
+            net_step_weight = make_nonzero(net_step_weight, "net_step_weight")
             ftheta = mean_net / net_step_weight
             # If on the first iteration, record the initial solution as best estimated objective.
             if k == 1:
@@ -392,7 +378,6 @@ def check_cons(
     """Evaluates the distance from the new vector (candiate_x) compared to the current vector (new_x) respecting the vector's boundaries of feasibility.
     Returns the evaluated vector (modified_x) and the weight (t2 - how much of a full step took) of the new vector.
     The weight (t2) is used to calculate the weigthed average in the ftheta calculation."""
-    epsilon = 1e-15  # Smallest denominator to prevent division by zero
     max_step = 1e15  # Large finite replacement for infinite steps
     # Compute step direction
     current_step = np.subtract(candidate_x, new_x)
@@ -413,13 +398,7 @@ def check_cons(
             current_step[i] = np.sign(current_step[i]) * max_step
 
         # Ensure denominator is never too small while preserving sign
-        if np.isclose(current_step[i], 0, atol=epsilon):
-            logging.warning("Near-zero step encountered in SPSA solver")
-            current_step[i] = (
-                epsilon
-                if current_step[i] == 0
-                else np.sign(current_step[i]) * epsilon
-            )
+        current_step[i] = make_nonzero(current_step[i], f"current_step[{i}]")
 
         # Compute safe step size
         step_size = diff / current_step[i]
