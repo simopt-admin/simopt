@@ -295,25 +295,20 @@ class SPSA(Solver):
                     delta,
                 )
             gbar += np.abs(np.divide(ghat, self.factors["gavg"]))
-        meangbar = np.mean(gbar) / (
-            self.factors["n_loss"] / (2 * self.factors["gavg"])
-        )
 
         a_leftside = self.factors["step"] * (
             (aalg + 1) ** self.factors["alpha"]
         )
-        if meangbar == 0:
-            warning_msg = "Division by zero in SPSA solver (meangbar == 0)"
+        meangbar = np.mean(gbar) / (
+            self.factors["n_loss"] / (2 * self.factors["gavg"])
+        )
+        # Avoid division by zero.
+        epsilon = 1e-15
+        if np.isclose(meangbar, 0, atol=epsilon):
+            warning_msg = f"Attempted division by zero in SPSA solver (meangbar == {meangbar})"
             logging.warning(warning_msg)
-            # Follow IEEE 754 standard.
-            if a_leftside < 0:
-                a = -np.inf
-            elif a_leftside > 0:
-                a = np.inf
-            else:
-                a = np.nan
-        else:
-            a = a_leftside / meangbar
+            meangbar = epsilon if meangbar == 0 else np.sign(meangbar) * epsilon
+        a = a_leftside / meangbar
         # Run the main algorithm.
         # Initiate iteration counter.
         k = 0
@@ -347,18 +342,17 @@ class SPSA(Solver):
             mean_plus = thetaminus_sol.objectives_mean * step_weight_plus
             mean_net = mean_minus + mean_plus
             net_step_weight = step_weight_plus + step_weight_minus
-            if net_step_weight == 0:
-                warning_msg = "Division by zero in SPSA solver (step_weight_minus = step_weight_plus)"
+            # Avoid division by zero.
+            epsilon = 1e-15
+            if np.isclose(net_step_weight, 0, atol=epsilon):
+                warning_msg = f"Attempted division by zero in SPSA solver (net_step_weight == {net_step_weight})"
                 logging.warning(warning_msg)
-                # Follow IEEE 754 standard.
-                if mean_net < 0:
-                    ftheta = -np.inf
-                elif mean_net > 0:
-                    ftheta = np.inf
-                else:
-                    ftheta = np.nan
-            else:
-                ftheta = mean_net / net_step_weight
+                net_step_weight = (
+                    epsilon
+                    if net_step_weight == 0
+                    else np.sign(net_step_weight) * epsilon
+                )
+            ftheta = mean_net / net_step_weight
             # If on the first iteration, record the initial solution as best estimated objective.
             if k == 1:
                 ftheta_best = ftheta
@@ -373,9 +367,11 @@ class SPSA(Solver):
                 recommended_solns.append(theta_sol)
                 intermediate_budgets.append(expended_budget)
             # Estimate gradient. (-minmax is needed to cast this as a minimization problem.)
+            theta_mean_diff = (
+                thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
+            )
             ghat = np.dot(-1, problem.minmax) * np.divide(
-                (thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean)
-                / ((step_weight_plus + step_weight_minus) * c),
+                theta_mean_diff / (net_step_weight * c),
                 delta,
             )
             # Take step and check feasibility.
@@ -396,35 +392,40 @@ def check_cons(
     """Evaluates the distance from the new vector (candiate_x) compared to the current vector (new_x) respecting the vector's boundaries of feasibility.
     Returns the evaluated vector (modified_x) and the weight (t2 - how much of a full step took) of the new vector.
     The weight (t2) is used to calculate the weigthed average in the ftheta calculation."""
-    # The current step.
+    epsilon = 1e-15  # Smallest denominator to prevent division by zero
+    max_step = 1e15  # Large finite replacement for infinite steps
+    # Compute step direction
     current_step = np.subtract(candidate_x, new_x)
-    # Form a matrix to determine the possible stepsize.
-    step_size_matrix = np.ones((2, len(candidate_x)))
-    for i in range(0, len(candidate_x)):
+    # Initialize minimum step size
+    # TODO: figure out if this should be larger than 1
+    min_step_size = 1
+    for i in range(len(candidate_x)):
         if current_step[i] > 0:
             diff = upper_bound[i] - new_x[i]
-            if current_step[i] == np.inf:
-                warning_msg = "Division by +inf in SPSA solver"
-                logging.warning(warning_msg)
-                # IEEE 754 standard.
-                step_size_matrix[0, i] = 0
-            else:
-                step_size_matrix[0, i] = diff / current_step[i]
         elif current_step[i] < 0:
             diff = lower_bound[i] - new_x[i]
-            if current_step[i] == -np.inf:
-                warning_msg = "Division by -inf in SPSA solver"
-                logging.warning(warning_msg)
-                # IEEE 754 standard.
-                step_size_matrix[1, i] = 0
-            else:
-                step_size_matrix[1, i] = diff / current_step[i]
-    # Find the minimum stepsize.
-    min_step_size = step_size_matrix.min()
+        else:
+            continue
+
+        # Handle infinite steps
+        if np.isinf(current_step[i]):
+            logging.warning("Infinite step encountered in SPSA solver")
+            current_step[i] = np.sign(current_step[i]) * max_step
+
+        # Ensure denominator is never too small while preserving sign
+        if np.isclose(current_step[i], 0, atol=epsilon):
+            logging.warning("Near-zero step encountered in SPSA solver")
+            current_step[i] = (
+                epsilon
+                if current_step[i] == 0
+                else np.sign(current_step[i]) * epsilon
+            )
+
+        # Compute safe step size
+        step_size = diff / current_step[i]
+        if step_size < min_step_size:
+            min_step_size = step_size
+
     # Calculate the modified x.
-    if min_step_size == 0:
-        # If t2 is 0, then there shouldn't be any change.
-        modified_x = new_x
-    else:
-        modified_x = new_x + min_step_size * current_step
+    modified_x = new_x + min_step_size * current_step
     return modified_x, min_step_size
