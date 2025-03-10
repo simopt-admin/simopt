@@ -324,7 +324,7 @@ class STRONG(Solver):
                         np.subtract(candidate_x, new_x),
                     )
                 )
-                r_diff = float(r_old - r_new)
+                r_diff = (r_old - r_new)[0]
                 r_diff = make_nonzero(r_diff, "r_diff (stage I)")
                 rho = g_diff / r_diff
 
@@ -419,7 +419,7 @@ class STRONG(Solver):
                         np.subtract(candidate_x, new_x),
                     )
                 )
-                r_diff = r_old - r_new
+                r_diff = (r_old - r_new)[0]
                 r_diff = make_nonzero(r_diff, "rdiff (stage II)")
                 rho = g_diff / r_diff
                 # Step 4: Update the trust region size and determine to accept or reject the solution.
@@ -541,7 +541,7 @@ class STRONG(Solver):
                         rr_old = g_b_old
                         # Set rho to the ratio.
                         g_b_diff = g_b_old - g_b_new
-                        rr_diff = rr_old - rr_new
+                        rr_diff = (rr_old - rr_new)[0]
                         rr_diff = make_nonzero(rr_diff, "rr_diff")
                         rrho = (g_b_diff) / (rr_diff)
 

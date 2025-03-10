@@ -35,49 +35,39 @@ all_est_objectives:
   - 171178.91767060646
   - 171178.91767060646
 all_intermediate_budgets:
-- &id012
-  - 0
+- - 0
   - 330
   - 1000
-- &id013
-  - 0
+- - 0
   - 270
   - 1000
-- &id014
-  - 0
+- - 0
   - 210
   - 1000
-- &id015
-  - 0
+- - 0
   - 1000
-- &id016
-  - 0
+- - 0
   - 1000
-- &id017
-  - 0
+- - 0
   - 210
   - 1000
-- &id018
-  - 0
+- - 0
   - 330
   - 450
   - 690
   - 1000
-- &id019
-  - 0
+- - 0
   - 270
   - 330
   - 1000
-- &id020
-  - 0
+- - 0
   - 210
   - 270
   - 690
   - 810
   - 870
   - 1000
-- &id021
-  - 0
+- - 0
   - 210
   - 1000
 all_recommended_xs:
@@ -343,82 +333,90 @@ num_macroreps: 10
 num_postreps: 100
 objective_curves:
 - !!python/tuple
-  - *id012
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
+  - !!python/tuple
+    - 0.0
+    - 330.0
+    - 1000.0
+  - !!python/tuple
+    - 142803.49299952385
     - 143703.80380981145
     - 143703.80380981145
 - !!python/tuple
-  - *id013
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
+  - !!python/tuple
+    - 0.0
+    - 270.0
+    - 1000.0
+  - !!python/tuple
+    - 142803.49299952385
     - 124484.36530911895
     - 124484.36530911895
 - !!python/tuple
-  - *id014
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 1000.0
+  - !!python/tuple
+    - 142803.49299952385
     - 2767.251336613593
     - 2767.251336613593
 - !!python/tuple
-  - *id015
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 142803.49299952385
+    - 142803.49299952385
 - !!python/tuple
-  - *id016
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 142803.49299952385
+    - 142803.49299952385
 - !!python/tuple
-  - *id017
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 1000.0
+  - !!python/tuple
+    - 142803.49299952385
     - 123425.60221072758
     - 123425.60221072758
 - !!python/tuple
-  - *id018
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
+  - !!python/tuple
+    - 0.0
+    - 330.0
+    - 450.0
+    - 690.0
+    - 1000.0
+  - !!python/tuple
+    - 142803.49299952385
     - 138953.39463979824
     - 137478.9506210003
     - 135479.72132039454
     - 135479.72132039454
 - !!python/tuple
-  - *id019
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
+  - !!python/tuple
+    - 0.0
+    - 270.0
+    - 330.0
+    - 1000.0
+  - !!python/tuple
+    - 142803.49299952385
     - 158764.36152011174
     - 158700.34277161688
     - 158700.34277161688
 - !!python/tuple
-  - *id020
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 690.0
+    - 810.0
+    - 870.0
+    - 1000.0
+  - !!python/tuple
+    - 142803.49299952385
     - 159751.55689350533
     - 159671.87180783367
     - 159926.85115486226
@@ -426,93 +424,114 @@ objective_curves:
     - 159124.48680240626
     - 159124.48680240626
 - !!python/tuple
-  - *id021
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /7up8ZtuAUE=
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 1000.0
+  - !!python/tuple
+    - 142803.49299952385
     - 171178.91767060646
     - 171178.91767060646
 problem_name: IRONORECONT-1
 progress_curves:
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.33
     - 1.0
-  - - .nan
-    - .inf
-    - .inf
+  - !!python/tuple
+    - 0.0
+    - 9.003108102875994e+17
+    - 9.003108102875994e+17
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.27
     - 1.0
-  - - .nan
-    - -.inf
-    - -.inf
+  - !!python/tuple
+    - 0.0
+    - -1.8319127690404899e+19
+    - -1.8319127690404899e+19
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 1.0
-  - - .nan
-    - -.inf
-    - -.inf
+  - !!python/tuple
+    - 0.0
+    - -1.4003624166291025e+20
+    - -1.4003624166291025e+20
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 1.0
-  - - .nan
-    - .nan
+  - !!python/tuple
+    - 0.0
+    - 0.0
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 1.0
-  - - .nan
-    - .nan
+  - !!python/tuple
+    - 0.0
+    - 0.0
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 1.0
-  - - .nan
-    - -.inf
-    - -.inf
+  - !!python/tuple
+    - 0.0
+    - -1.937789078879627e+19
+    - -1.937789078879627e+19
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.33
     - 0.45
     - 0.69
     - 1.0
-  - - .nan
-    - -.inf
-    - -.inf
-    - -.inf
-    - -.inf
+  - !!python/tuple
+    - 0.0
+    - -3.8500983597256125e+18
+    - -5.324542378523561e+18
+    - -7.323771679129305e+18
+    - -7.323771679129305e+18
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.27
     - 0.33
     - 1.0
-  - - .nan
-    - .inf
-    - .inf
-    - .inf
+  - !!python/tuple
+    - 0.0
+    - 1.5960868520587885e+19
+    - 1.589684977209303e+19
+    - 1.589684977209303e+19
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.69
     - 0.81
     - 0.87
     - 1.0
-  - - .nan
-    - .inf
-    - .inf
-    - .inf
-    - .inf
-    - .inf
-    - .inf
+  - !!python/tuple
+    - 0.0
+    - 1.694806389398148e+19
+    - 1.6868378808309817e+19
+    - 1.7123358155338412e+19
+    - 1.6814503249416737e+19
+    - 1.632099380288241e+19
+    - 1.632099380288241e+19
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 1.0
-  - - .nan
-    - .inf
-    - .inf
+  - !!python/tuple
+    - 0.0
+    - 2.837542467108261e+19
+    - 2.837542467108261e+19
 solver_name: SPSA

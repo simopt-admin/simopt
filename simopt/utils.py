@@ -18,8 +18,23 @@ def classproperty(func: Callable[[type[T]], Any]) -> ClassPropertyDescriptor:
     return ClassPropertyDescriptor(func)
 
 
-def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> None:
-    """Return a non-zero value to avoid division by zero."""
+def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> float:
+    """Return a non-zero value to avoid division by zero.
+
+    Arguments
+    ---------
+    value : float
+        The value to check.
+    name : str
+        The name of the variable.
+    epsilon : float, optional (default=1e-15)
+        The value to use if the original value is zero.
+
+    Returns
+    -------
+    float
+        The original value if it's not close to zero, otherwise a non-zero value.
+    """
     # Delayed imports
     import numpy as np
 
