@@ -1529,6 +1529,20 @@ def post_normalize(
     initial_obj_val = np.mean(x0_postreps)
     opt_obj_val = np.mean(xstar_postreps)
     initial_opt_gap = initial_obj_val - opt_obj_val
+    # Make sure initial_opt_gap is not equal to zero.
+    # This prevents a divide-by-zero error later on.
+    epsilon = 1e-15
+    if np.isclose(initial_opt_gap, 0, atol=epsilon):
+        warning_msg = (
+            f"initial_opt_gap is {initial_opt_gap}. "
+            f"Setting to {epsilon} to avoid divide-by-zero error."
+        )
+        logging.warning(warning_msg)
+        initial_opt_gap = (
+            epsilon
+            if initial_opt_gap == 0
+            else np.sign(initial_opt_gap) * epsilon
+        )
     # Store x0 and x* info and compute progress curves for each ProblemSolver.
     for experiment in experiments:
         # DOUBLE-CHECK FOR SHALLOW COPY ISSUES.
@@ -1562,24 +1576,10 @@ def post_normalize(
                 )
             )
             # Normalize by initial optimality gap.
-            if initial_opt_gap == 0:
-                warning_msg = "Divide by zero during post-normalization (initial_opt_gap is 0)."
-                logging.warning(warning_msg)
-                norm_est_objectives = []
-                for est_objective in est_objectives:
-                    est_diff = est_objective - opt_obj_val
-                    # Follow IEEE 754 standard for division by zero.
-                    if est_diff < 0:
-                        norm_est_objectives.append(-float("inf"))
-                    elif est_diff > 0:
-                        norm_est_objectives.append(float("inf"))
-                    else:
-                        norm_est_objectives.append(float("nan"))
-            else:
-                norm_est_objectives = [
-                    (est_objective - opt_obj_val) / initial_opt_gap
-                    for est_objective in est_objectives
-                ]
+            norm_est_objectives = [
+                (est_objective - opt_obj_val) / initial_opt_gap
+                for est_objective in est_objectives
+            ]
             frac_intermediate_budgets = [
                 budget / experiment.problem.factors["budget"]
                 for budget in experiment.all_intermediate_budgets[mrep]
