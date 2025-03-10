@@ -27,6 +27,7 @@ from simopt.directory import (
     problem_directory,
     solver_directory,
 )
+from simopt.utils import make_nonzero
 
 # Imports exclusively used when type checking
 # Prevents imports from being executed at runtime
@@ -1529,20 +1530,7 @@ def post_normalize(
     initial_obj_val = np.mean(x0_postreps)
     opt_obj_val = np.mean(xstar_postreps)
     initial_opt_gap = initial_obj_val - opt_obj_val
-    # Make sure initial_opt_gap is not equal to zero.
-    # This prevents a divide-by-zero error later on.
-    epsilon = 1e-15
-    if np.isclose(initial_opt_gap, 0, atol=epsilon):
-        warning_msg = (
-            f"initial_opt_gap is {initial_opt_gap}. "
-            f"Setting to {epsilon} to avoid divide-by-zero error."
-        )
-        logging.warning(warning_msg)
-        initial_opt_gap = (
-            epsilon
-            if initial_opt_gap == 0
-            else np.sign(initial_opt_gap) * epsilon
-        )
+    initial_opt_gap = make_nonzero(initial_opt_gap, "initial_opt_gap")
     # Store x0 and x* info and compute progress curves for each ProblemSolver.
     for experiment in experiments:
         # DOUBLE-CHECK FOR SHALLOW COPY ISSUES.
