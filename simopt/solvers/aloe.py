@@ -305,81 +305,65 @@ class ALOE(Solver):
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
-        new_x = new_solution.x
+        new_x = np.array(new_solution.x, dtype=float)
         # Store values for each dimension.
         function_diff = np.zeros((problem.dim, 3))
         grad = np.zeros(problem.dim)
 
+        # Compute step sizes
+        step_forward = np.minimum(stepsize, upper_bound - new_x)
+        step_backward = np.minimum(stepsize, new_x - lower_bound)
+
+        # Create perturbed variables
+        x1 = np.tile(new_x, (problem.dim, 1))
+        x2 = np.tile(new_x, (problem.dim, 1))
+
+        central_mask = bounds_check == 0
+        forward_mask = bounds_check == 1
+        backward_mask = bounds_check == -1
+
+        # Assign step sizes
+        function_diff[:, 2] = np.where(
+            central_mask,
+            np.minimum(step_forward, step_backward),
+            np.where(forward_mask, step_forward, step_backward),
+        )
+
+        # Apply step updates
+        np.fill_diagonal(x1, new_x + function_diff[:, 2])
+        np.fill_diagonal(x2, new_x - function_diff[:, 2])
+
+        # Simulate perturbed solutions per dimension
         for i in range(problem.dim):
-            # Initialization.
-            x1 = list(new_x)
-            x2 = list(new_x)
-            # Forward stepsize.
-            steph1 = stepsize
-            # Backward stepsize.
-            steph2 = stepsize
+            x1_solution = self.create_new_solution(tuple(x1[i]), problem)
+            x2_solution = self.create_new_solution(tuple(x2[i]), problem)
 
-            # Check variable bounds.
-            if x1[i] + steph1 > upper_bound[i]:
-                steph1 = np.abs(upper_bound[i] - x1[i])
-            if x2[i] - steph2 < lower_bound[i]:
-                steph2 = np.abs(x2[i] - lower_bound[i])
-
-            # Decide stepsize.
-            # Central diff.
-            if bounds_check[i] == 0:
-                function_diff[i, 2] = min(steph1, steph2)
-                x1[i] = x1[i] + function_diff[i, 2]
-                x2[i] = x2[i] - function_diff[i, 2]
-            # Forward diff.
-            elif bounds_check[i] == 1:
-                function_diff[i, 2] = steph1
-                x1[i] = x1[i] + function_diff[i, 2]
-            # Backward diff.
-            else:
-                function_diff[i, 2] = steph2
-                x2[i] = x2[i] - function_diff[i, 2]
-            x1_solution = self.create_new_solution(tuple(x1), problem)
             if bounds_check[i] != -1:
                 problem.simulate_up_to([x1_solution], r)
-                fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
-                # First column is f(x+h,y).
+                fn1 = -problem.minmax[0] * x1_solution.objectives_mean
                 function_diff[i, 0] = (
                     fn1[0] if isinstance(fn1, np.ndarray) else fn1
                 )
-            x2_solution = self.create_new_solution(tuple(x2), problem)
+
             if bounds_check[i] != 1:
                 problem.simulate_up_to([x2_solution], r)
-                fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
-                # Second column is f(x-h,y).
+                fn2 = -problem.minmax[0] * x2_solution.objectives_mean
                 function_diff[i, 1] = (
                     fn2[0] if isinstance(fn2, np.ndarray) else fn2
                 )
 
-            # Calculate gradient.
-            fn_divisor = (
-                function_diff[i, 2][0]
-                if isinstance(function_diff[i, 2], np.ndarray)
-                else function_diff[i, 2]
-            )
-            if bounds_check[i] == 0:
-                fn_diff = fn1 - fn2  # type: ignore
-                fn_divisor = 2 * fn_divisor
-                if isinstance(fn_diff, np.ndarray):
-                    grad[i] = fn_diff[0] / fn_divisor
-                else:
-                    grad[i] = fn_diff / fn_divisor
-            elif bounds_check[i] == 1:
-                fn_diff = fn1 - fn  # type: ignore
-                if isinstance(fn_diff, np.ndarray):
-                    grad[i] = fn_diff[0] / fn_divisor
-                else:
-                    grad[i] = fn_diff / fn_divisor
-            elif bounds_check[i] == -1:
-                fn_diff = fn - fn2  # type: ignore
-                if isinstance(fn_diff, np.ndarray):
-                    grad[i] = fn_diff[0] / fn_divisor
-                else:
-                    grad[i] = fn_diff / fn_divisor
+        # Compute gradient
+        fn_divisor = function_diff[:, 2].copy()
+        fn_divisor[central_mask] *= 2
+
+        fn_diff = np.zeros(problem.dim)
+        if np.any(central_mask):
+            fn_diff[central_mask] = function_diff[:, 0] - function_diff[:, 1]
+        if np.any(forward_mask):
+            fn_diff[forward_mask] = function_diff[forward_mask, 0] - fn
+        if np.any(backward_mask):
+            fn_diff[backward_mask] = fn - function_diff[backward_mask, 1]
+
+        grad = fn_diff / fn_divisor
 
         return grad
