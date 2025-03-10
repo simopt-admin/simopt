@@ -14,7 +14,6 @@ from simopt.utils import classproperty
 from typing import Callable
 
 import numpy as np
-from numpy.linalg import norm
 
 from simopt.base import (
     ConstraintType,
@@ -186,38 +185,35 @@ class ALOE(Solver):
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
-        Run a single macroreplication of a solver on a problem.
+        Run a single macroreplication of the ALOE solver on a problem.
 
         Arguments
         ---------
-        problem : Problem object
-            simulation-optimization problem to solve
+        problem : Problem
+            The simulation-optimization problem to solve.
 
         Returns
         -------
-        recommended_solns : list of Solution objects
-            list of solutions recommended throughout the budget
-        intermediate_budgets : list of ints
-            list of intermediate budgets when recommended solutions changes
+        list[Solution]
+            List of solutions recommended throughout the budget.
+        list[int]
+            List of intermediate budgets when recommended solutions change.
         """
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0
 
         # Default values.
-        r: int = self.factors["r"]
-        theta: float = self.factors["theta"]
-        gamma: float = self.factors["gamma"]
-        alpha_max: int = self.factors["alpha_max"]
-        alpha_0: int = self.factors["alpha_0"]
-        epsilon_f: int = self.factors["epsilon_f"]
+        r = self.factors["r"]
+        theta = self.factors["theta"]
+        gamma = self.factors["gamma"]
+        alpha_max = self.factors["alpha_max"]
+        alpha = self.factors["alpha_0"]
+        epsilon_f = self.factors["epsilon_f"]
 
-        # Upper bound and lower bound.
+        # Upper and lower bounds.
         lower_bound = np.array(problem.lower_bounds)
         upper_bound = np.array(problem.upper_bounds)
-
-        # Initialize stepsize.
-        alpha: float = alpha_0
 
         # Start with the initial solution.
         new_solution = self.create_new_solution(
@@ -230,78 +226,63 @@ class ALOE(Solver):
         best_solution = new_solution
 
         while expended_budget < problem.factors["budget"]:
-            new_x = new_solution.x
-            # Check variable bounds.
+            new_x = np.array(new_solution.x, dtype=float)
+
+            # Check variable bounds
             forward = np.isclose(
                 new_x, lower_bound, atol=self.factors["sensitivity"]
             ).astype(int)
             backward = np.isclose(
                 new_x, upper_bound, atol=self.factors["sensitivity"]
             ).astype(int)
-            # bounds_check: 1 stands for forward, -1 stands for backward, 0 means central diff.
-            bounds_check = np.subtract(forward, backward)
+            bounds_check = forward - backward
 
             if problem.gradient_available:
-                # Use IPA gradient if available.
                 grad = (
-                    -1
-                    * problem.minmax[0]
+                    -problem.minmax[0]
                     * new_solution.objectives_gradients_mean[0]
                 )
             else:
-                # Use finite difference to estimate gradient if IPA gradient is not available.
-                grad = self.finite_diff(
+                grad = self._finite_diff(
                     new_solution, bounds_check, problem, alpha, r
                 )
                 expended_budget += (
-                    2 * problem.dim - np.sum(bounds_check != 0)
+                    2 * problem.dim - np.count_nonzero(bounds_check)
                 ) * r
-                # A while loop to prevent zero gradient
-                while np.all(grad == 0):
-                    if expended_budget > problem.factors["budget"]:
-                        break
-                    grad = self.finite_diff(
+                while (
+                    np.all(grad == 0)
+                    and expended_budget <= problem.factors["budget"]
+                ):
+                    grad = self._finite_diff(
                         new_solution, bounds_check, problem, alpha, r
                     )
                     expended_budget += (
-                        2 * problem.dim - np.sum(bounds_check != 0)
+                        2 * problem.dim - np.count_nonzero(bounds_check)
                     ) * r
-                    # Update sample size after each iteration.
-                    r = int(self.factors["lambda"] * r)
+                    r = int(self.factors["lambda"] * r)  # Update sample size
 
-            # Calculate the candidate solution and adjust the solution to respect box constraints.
-            candidate_x = list()
-            for i in range(problem.dim):
-                candidate_x.append(
-                    min(
-                        max((new_x[i] - alpha * grad[i]), lower_bound[i]),
-                        upper_bound[i],
-                    )
-                )
+            # Compute candidate solution and apply box constraints (vectorized).
+            candidate_x = np.clip(
+                new_x - alpha * grad, lower_bound, upper_bound
+            )
             candidate_solution = self.create_new_solution(
                 tuple(candidate_x), problem
             )
 
-            # Use r simulated observations to estimate the objective value.
             problem.simulate(candidate_solution, r)
             expended_budget += r
 
-            # Check the modified Armijo condition for sufficient decrease.
-            if (
-                -1 * problem.minmax[0] * candidate_solution.objectives_mean
-            ) <= (
-                -1 * problem.minmax[0] * new_solution.objectives_mean
-                - alpha * theta * norm(grad) ** 2
+            # Check modified Armijo condition
+            if (-problem.minmax[0] * candidate_solution.objectives_mean) <= (
+                -problem.minmax[0] * new_solution.objectives_mean
+                - alpha * theta * np.linalg.norm(grad) ** 2
                 + 2 * epsilon_f
             ):
-                # Successful step.
                 new_solution = candidate_solution
                 alpha = min(alpha_max, alpha / gamma)
             else:
-                # Unsuccessful step.
                 alpha = gamma * alpha
 
-            # Append new solution.
             if (
                 problem.minmax[0] * new_solution.objectives_mean
                 > problem.minmax[0] * best_solution.objectives_mean
@@ -310,13 +291,10 @@ class ALOE(Solver):
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
 
-        # Loop through the budgets and convert any numpy int32s to Python ints.
-        for i in range(len(intermediate_budgets)):
-            intermediate_budgets[i] = int(intermediate_budgets[i])
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.
-    def finite_diff(
+    def _finite_diff(
         self,
         new_solution: Solution,
         bounds_check: np.ndarray,
