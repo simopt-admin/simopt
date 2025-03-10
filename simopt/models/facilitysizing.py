@@ -115,13 +115,12 @@ class FacilitySize(Model):
 
     def check_cov(self) -> bool:
         try:
-            np.linalg.cholesky(np.matrix(self.factors["cov"]))
+            np.linalg.cholesky(np.array(self.factors["cov"]))
             return True
-        except np.linalg.linalg.LinAlgError as err:
-            if "Matrix is not positive definite" in err.message:
+        except np.linalg.LinAlgError as err:
+            if "Matrix is not positive definite" in str(err):
                 return False
-            else:
-                raise
+            raise
 
     def check_capacity(self) -> None:
         if len(self.factors["capacity"]) != self.factors["n_fac"]:
