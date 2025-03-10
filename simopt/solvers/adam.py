@@ -213,51 +213,40 @@ class ADAM(Solver):
 
         while expended_budget < problem.factors["budget"]:
             # Update timestep.
-            t = t + 1
-            new_x = new_solution.x
+            t += 1
             # Check variable bounds.
             forward = np.isclose(
-                new_x, lower_bound, atol=self.factors["sensitivity"]
+                new_solution.x, lower_bound, atol=self.factors["sensitivity"]
             ).astype(int)
             backward = np.isclose(
-                new_x, upper_bound, atol=self.factors["sensitivity"]
+                new_solution.x, upper_bound, atol=self.factors["sensitivity"]
             ).astype(int)
-            # BdsCheck: 1 stands for forward, -1 stands for backward, 0 means central diff.
+            # 1 stands for forward, -1 stands for backward, 0 means central diff.
             bounds_check = np.subtract(forward, backward)
             if problem.gradient_available:
                 # Use IPA gradient if available.
                 grad = (
-                    -1
-                    * problem.minmax[0]
+                    -problem.minmax[0]
                     * new_solution.objectives_gradients_mean[0]
                 )
             else:
                 # Use finite difference to estimate gradient if IPA gradient is not available.
                 grad = self.finite_diff(new_solution, bounds_check, problem)
                 expended_budget += (
-                    2 * problem.dim - np.sum(bounds_check != 0)
+                    2 * problem.dim - np.count_nonzero(bounds_check)
                 ) * r
 
-            # Convert new_x from tuple to list.
-            new_x = list(new_x)
-            # Loop through all the dimensions.
-            for i in range(problem.dim):
-                # Update biased first moment estimate.
-                m[i] = beta_1 * m[i] + (1 - beta_1) * grad[i]
-                # Update biased second raw moment estimate.
-                v[i] = beta_2 * v[i] + (1 - beta_2) * grad[i] ** 2
-                # Compute bias-corrected first moment estimate.
-                mhat = m[i] / (1 - beta_1**t)
-                # Compute bias-corrected second raw moment estimate.
-                vhat = v[i] / (1 - beta_2**t)
-                # Update new_x and adjust it for box constraints.
-                new_x[i] = min(
-                    max(
-                        new_x[i] - alpha * mhat / (np.sqrt(vhat) + epsilon),
-                        lower_bound[i],
-                    ),
-                    upper_bound[i],
-                )
+            # Update biased first moment estimate.
+            m = beta_1 * m + (1 - beta_1) * grad
+            # Update biased second raw moment estimate.
+            v = beta_2 * v + (1 - beta_2) * grad**2
+            # Compute bias-corrected first moment estimate.
+            mhat = m / (1 - beta_1**t)
+            # Compute bias-corrected second raw moment estimate.
+            vhat = v / (1 - beta_2**t)
+            # Update new_x (vectorized) and apply box constraints
+            new_x = new_solution.x - alpha * mhat / (np.sqrt(vhat) + epsilon)
+            new_x = np.clip(new_x, lower_bound, upper_bound)
 
             # Create new solution based on new x
             new_solution = self.create_new_solution(tuple(new_x), problem)
@@ -265,16 +254,12 @@ class ADAM(Solver):
             problem.simulate(new_solution, r)
             expended_budget += r
             if (
-                problem.minmax[0] * new_solution.objectives_mean
-                > problem.minmax[0] * best_solution.objectives_mean
-            ):
+                new_solution.objectives_mean > best_solution.objectives_mean
+            ) ^ (problem.minmax[0] < 0):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
 
-        # Loop through the budgets and convert any numpy int32s to Python ints.
-        for i in range(len(intermediate_budgets)):
-            intermediate_budgets[i] = int(intermediate_budgets[i])
         return recommended_solns, intermediate_budgets
 
     # Finite difference for approximating gradients.
@@ -310,16 +295,16 @@ class ADAM(Solver):
             # Central diff.
             if bounds_check[i] == 0:
                 function_diff[i, 2] = min(steph1, steph2)
-                x1[i] = x1[i] + function_diff[i, 2]
-                x2[i] = x2[i] - function_diff[i, 2]
+                x1[i] += function_diff[i, 2]
+                x2[i] -= function_diff[i, 2]
             # Forward diff.
             elif bounds_check[i] == 1:
                 function_diff[i, 2] = steph1
-                x1[i] = x1[i] + function_diff[i, 2]
+                x1[i] += function_diff[i, 2]
             # Backward diff.
             else:
                 function_diff[i, 2] = steph2
-                x2[i] = x2[i] - function_diff[i, 2]
+                x2[i] -= function_diff[i, 2]
             x1_solution = self.create_new_solution(tuple(x1), problem)
             if bounds_check[i] != -1:
                 problem.simulate_up_to([x1_solution], r)
