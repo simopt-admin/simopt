@@ -27,6 +27,7 @@ from simopt.directory import (
     problem_directory,
     solver_directory,
 )
+from simopt.utils import make_nonzero
 
 # Imports exclusively used when type checking
 # Prevents imports from being executed at runtime
@@ -1529,6 +1530,7 @@ def post_normalize(
     initial_obj_val = np.mean(x0_postreps)
     opt_obj_val = np.mean(xstar_postreps)
     initial_opt_gap = initial_obj_val - opt_obj_val
+    initial_opt_gap = make_nonzero(initial_opt_gap, "initial_opt_gap")
     # Store x0 and x* info and compute progress curves for each ProblemSolver.
     for experiment in experiments:
         # DOUBLE-CHECK FOR SHALLOW COPY ISSUES.
@@ -1562,24 +1564,10 @@ def post_normalize(
                 )
             )
             # Normalize by initial optimality gap.
-            if initial_opt_gap == 0:
-                warning_msg = "Divide by zero during post-normalization (initial_opt_gap is 0)."
-                logging.warning(warning_msg)
-                norm_est_objectives = []
-                for est_objective in est_objectives:
-                    est_diff = est_objective - opt_obj_val
-                    # Follow IEEE 754 standard for division by zero.
-                    if est_diff < 0:
-                        norm_est_objectives.append(-float("inf"))
-                    elif est_diff > 0:
-                        norm_est_objectives.append(float("inf"))
-                    else:
-                        norm_est_objectives.append(float("nan"))
-            else:
-                norm_est_objectives = [
-                    (est_objective - opt_obj_val) / initial_opt_gap
-                    for est_objective in est_objectives
-                ]
+            norm_est_objectives = [
+                (est_objective - opt_obj_val) / initial_opt_gap
+                for est_objective in est_objectives
+            ]
             frac_intermediate_budgets = [
                 budget / experiment.problem.factors["budget"]
                 for budget in experiment.all_intermediate_budgets[mrep]

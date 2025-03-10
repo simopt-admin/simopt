@@ -9,10 +9,9 @@ A detailed description of the solver can be found
 
 from __future__ import annotations
 
-import logging
 import math
 from typing import Callable, Literal
-from simopt.utils import classproperty
+from simopt.utils import classproperty, make_nonzero
 
 import numpy as np
 from numpy.linalg import norm
@@ -325,19 +324,9 @@ class STRONG(Solver):
                         np.subtract(candidate_x, new_x),
                     )
                 )
-                r_diff = r_old - r_new
-                if r_diff == 0:
-                    warning_msg = "Division by zero in STRONG solver (r_diff == 0 (Step I_3))"
-                    logging.warning(warning_msg)
-                    # Follow IEEE 754 standard.
-                    if g_diff < 0:
-                        rho = -np.inf
-                    elif g_diff > 0:
-                        rho = np.inf
-                    else:
-                        rho = np.nan
-                else:
-                    rho = g_diff / r_diff
+                r_diff = (r_old - r_new)[0]
+                r_diff = make_nonzero(r_diff, "r_diff (stage I)")
+                rho = g_diff / r_diff
 
                 # Step 4: Update the trust region size and determine to accept or reject the solution.
                 if (rho < eta_0) | (g_diff <= 0) | (r_diff <= 0):
@@ -430,13 +419,9 @@ class STRONG(Solver):
                         np.subtract(candidate_x, new_x),
                     )
                 )
-                r_diff = r_old - r_new
-                if r_diff == 0:
-                    warning_msg = "Division by zero in STRONG solver (r_diff == 0 (Step II_3))"
-                    logging.warning(warning_msg)
-                    rho = 0
-                else:
-                    rho = g_diff / r_diff
+                r_diff = (r_old - r_new)[0]
+                r_diff = make_nonzero(r_diff, "rdiff (stage II)")
+                rho = g_diff / r_diff
                 # Step 4: Update the trust region size and determine to accept or reject the solution.
                 if (rho < eta_0) | (g_diff <= 0) | (r_diff <= 0):
                     # Inner Loop.
@@ -556,13 +541,9 @@ class STRONG(Solver):
                         rr_old = g_b_old
                         # Set rho to the ratio.
                         g_b_diff = g_b_old - g_b_new
-                        rr_diff = rr_old - rr_new
-                        if rr_diff == 0:
-                            warning_msg = "Division by zero in STRONG solver (rr_diff == 0)"
-                            logging.warning(warning_msg)
-                            rrho = 0
-                        else:
-                            rrho = (g_b_diff) / (rr_diff)
+                        rr_diff = (rr_old - rr_new)[0]
+                        rr_diff = make_nonzero(rr_diff, "rr_diff")
+                        rrho = (g_b_diff) / (rr_diff)
 
                         if (
                             (rrho < eta_0)
