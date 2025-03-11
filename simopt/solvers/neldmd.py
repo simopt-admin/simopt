@@ -201,71 +201,78 @@ class NelderMead(Solver):
         # Designate random number generator for random sampling.
         get_rand_soln_rng = self.rng_list[1]
         n_pts = problem.dim + 1
+
         # Check for sufficiently large budget.
         if problem.factors["budget"] < self.factors["r"] * n_pts:
             err_msg = (
                 "Budget is too small for a good quality run of Nelder-Mead."
             )
             raise ValueError(err_msg)
+
         # Shrink variable bounds to avoid floating errors.
-        if (
-            problem.lower_bounds is not None
-            and problem.lower_bounds != (-np.inf,) * problem.dim
+        if problem.lower_bounds and not np.all(
+            np.isneginf(problem.lower_bounds)
         ):
             self.lower_bounds = tuple(
-                map(
-                    lambda i: i + self.factors["sensitivity"],
-                    problem.lower_bounds,
-                )
+                np.array(problem.lower_bounds) + self.factors["sensitivity"]
             )
         else:
             self.lower_bounds = None
-        if (
-            problem.upper_bounds is not None
-            and problem.upper_bounds != (np.inf,) * problem.dim
+
+        if problem.upper_bounds and not np.all(
+            np.isposinf(problem.upper_bounds)
         ):
             self.upper_bounds = tuple(
-                map(
-                    lambda i: i - self.factors["sensitivity"],
-                    problem.upper_bounds,
-                )
+                np.array(problem.upper_bounds) - self.factors["sensitivity"]
             )
         else:
             self.upper_bounds = None
+
         # Initial dim + 1 points.
-        sol = []
-        sol.append(
+        sol = [
             self.create_new_solution(
                 problem.factors["initial_solution"], problem
             )
-        )
+        ]
+
         if self.lower_bounds is None or self.upper_bounds is None:
-            for _ in range(1, n_pts):
-                rand_x = problem.get_random_solution(get_rand_soln_rng)
-                sol.append(self.create_new_solution(rand_x, problem))
+            sol.extend(
+                self.create_new_solution(
+                    problem.get_random_solution(get_rand_soln_rng), problem
+                )
+                for _ in range(1, n_pts)
+            )
         else:  # Restrict starting shape/location.
-            for i in range(problem.dim):
-                distance = (
-                    self.upper_bounds[i] - self.lower_bounds[i]
-                ) * self.factors["initial_spread"]
-                new_pt = list(problem.factors["initial_solution"])
-                new_pt[i] += distance
-                # Try opposite direction if out of bounds.
-                if (
-                    new_pt[i] > self.upper_bounds[i]
-                    or new_pt[i] < self.lower_bounds[i]
-                ):
-                    new_pt[i] -= 2 * distance
-                # Set to bound if neither direction works.
-                if (
-                    new_pt[i] > self.upper_bounds[i]
-                    or new_pt[i] < self.lower_bounds[i]
-                ):
-                    if problem.minmax[i] == -1:
-                        new_pt[i] = self.lower_bounds[i]
-                    else:
-                        new_pt[i] = self.upper_bounds[i]
-                sol.append(self.create_new_solution(tuple(new_pt), problem))
+            initial_solution = np.array(
+                problem.factors["initial_solution"], dtype=float
+            )
+            lower_bounds = np.array(self.lower_bounds)
+            upper_bounds = np.array(self.upper_bounds)
+            distances = (upper_bounds - lower_bounds) * self.factors[
+                "initial_spread"
+            ]
+
+            # Generate new points
+            new_pts = np.tile(initial_solution, (problem.dim, 1))
+            new_pts[np.arange(problem.dim), np.arange(problem.dim)] += distances
+
+            # Apply boundary conditions
+            out_of_bounds = (new_pts > upper_bounds) | (new_pts < lower_bounds)
+            if np.any(out_of_bounds):
+                new_pts[out_of_bounds] -= 2 * distances
+
+            # If still out of bounds, set to nearest bound
+            out_of_bounds = (new_pts > upper_bounds) | (new_pts < lower_bounds)
+            if np.any(out_of_bounds):
+                new_pts[out_of_bounds] = np.where(
+                    problem.minmax[np.newaxis, :] == -1,
+                    lower_bounds,
+                    upper_bounds,
+                )
+
+            sol.extend(
+                self.create_new_solution(tuple(pt), problem) for pt in new_pts
+            )
 
         # Initialize lists to track budget and best solutions.
         intermediate_budgets = []
@@ -277,8 +284,8 @@ class NelderMead(Solver):
         # Start Solving.
         # Evaluate solutions in initial structure.
         for solution in sol:
-            problem.simulate(solution, self.factors["r"])
-            budget_spent += self.factors["r"]
+            problem.simulate(solution, r)
+            budget_spent += r
         # Record initial solution data.
         intermediate_budgets.append(0)
         recommended_solns.append(sol[0])
@@ -289,69 +296,48 @@ class NelderMead(Solver):
         while budget_spent <= problem.factors["budget"]:
             # Reflect worst and update sort_sol.
             p_high = sort_sol[-1]  # Current worst point.
-            p_cent = tuple(
-                np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0)
-            )  # Centroid for other pts.
+            p_cent = tuple(np.mean([s.x for s in sort_sol[:-1]], axis=0))
             orig_pt = p_high  # Save the original point.
-            p_refl = tuple(
-                map(
-                    lambda i, j: i - j,
-                    tuple((1 + self.factors["alpha"]) * i for i in p_cent),
-                    tuple(self.factors["alpha"] * i for i in p_high.x),
-                )
-            )  # Reflection.
-            p_refl_copy = p_refl
+            p_refl = (1 + self.factors["alpha"]) * np.array(
+                p_cent
+            ) - self.factors["alpha"] * np.array(p_high.x)
+            p_refl = tuple(p_refl)  # Convert back to tuple
+            p_refl_old = p_refl
             p_refl = self._check_const(p_refl, orig_pt.x)
 
             # Shrink towards best if out of bounds.
-            if p_refl != p_refl_copy:
-                while p_refl != p_refl_copy:
-                    p_low = sort_sol[0]
-                    for i in range(1, len(sort_sol)):
-                        p_new2 = p_low
-                        p_new = tuple(
-                            map(
-                                lambda i, j: i + j,
-                                tuple(
-                                    self.factors["delta"] * i
-                                    for i in sort_sol[i].x
-                                ),
-                                tuple(
-                                    (1 - self.factors["delta"]) * i
-                                    for i in p_low.x
-                                ),
-                            )
-                        )
-                        p_new = self._check_const(p_new, p_new2.x)
-                        p_new = Solution(p_new, problem)
-                        p_new.attach_rngs(
-                            rng_list=self.solution_progenitor_rngs, copy=True
-                        )
-                        problem.simulate(p_new, r)
-                        budget_spent += r
+            while p_refl != p_refl_old:
+                p_low = sort_sol[0]
+                for i in range(1, len(sort_sol)):
+                    p_new2 = p_low
+                    p_new = self.factors["delta"] * np.array(sort_sol[i].x) + (
+                        1 - self.factors["delta"]
+                    ) * np.array(p_low.x)
+                    p_new = self._check_const(tuple(p_new), p_new2.x)
+                    p_new = Solution(p_new, problem)
+                    p_new.attach_rngs(
+                        rng_list=self.solution_progenitor_rngs, copy=True
+                    )
+                    problem.simulate(p_new, r)
+                    budget_spent += r
 
-                        # Update sort_sol.
-                        sort_sol[i] = p_new  # p_new replaces pi.
+                    # Update sort_sol.
+                    sort_sol[i] = p_new  # p_new replaces pi.
 
-                    # Sort & end updating.
-                    sort_sol = self._sort_and_end_update(problem, sort_sol)
+                # Sort & end updating.
+                sort_sol = self._sort_and_end_update(problem, sort_sol)
 
-                    p_high = sort_sol[-1]  # Current worst point.
-                    p_cent = tuple(
-                        np.mean(tuple([s.x for s in sort_sol[0:-1]]), axis=0)
-                    )  # Centroid for other pts.
-                    orig_pt = p_high  # Save the original point.
-                    p_refl = tuple(
-                        map(
-                            lambda i, j: i - j,
-                            tuple(
-                                (1 + self.factors["alpha"]) * i for i in p_cent
-                            ),
-                            tuple(self.factors["alpha"] * i for i in p_high.x),
-                        )
-                    )  # Reflection.
-                    p_refl_copy = p_refl
-                    p_refl = self._check_const(p_refl, orig_pt.x)
+                p_high = sort_sol[-1]  # Current worst point.
+                p_cent = tuple(
+                    np.mean([s.x for s in sort_sol[:-1]], axis=0)
+                )  # Centroid for other pts.
+                orig_pt = p_high  # Save the original point.
+                p_refl = (1 + self.factors["alpha"]) * np.array(
+                    p_cent
+                ) - self.factors["alpha"] * np.array(p_high.x)
+                p_refl = tuple(p_refl)  # Convert back to tuple
+                p_refl_old = p_refl
+                p_refl = self._check_const(p_refl, orig_pt.x)
 
             # Evaluate reflected point.
             p_refl = Solution(p_refl, problem)
@@ -360,47 +346,32 @@ class NelderMead(Solver):
             )
             problem.simulate(p_refl, r)
             budget_spent += r
-            refl_fn_val = (
-                tuple([-1 * i for i in problem.minmax]) * p_refl.objectives_mean
-            )
+            refl_fn_val = np.array(problem.minmax) * -p_refl.objectives_mean
 
             # Track best, worst, and second worst points.
             p_low = sort_sol[0]  # Current best pt.
-            fn_low = (
-                tuple([-1 * i for i in problem.minmax])
-                * sort_sol[0].objectives_mean
-            )
-            fn_sec = (
-                tuple([-1 * i for i in problem.minmax])
-                * sort_sol[-2].objectives_mean
-            )  # Current 2nd worst obj fn.
-            fn_high = (
-                tuple([-1 * i for i in problem.minmax])
-                * sort_sol[-1].objectives_mean
-            )  # Worst obj fn from unreflected structure.
+            minmax_array = np.array(problem.minmax) * -1
+            fn_low = minmax_array * sort_sol[0].objectives_mean
+            fn_sec = minmax_array * sort_sol[-2].objectives_mean
+            fn_high = minmax_array * sort_sol[-1].objectives_mean
+
+            # Create an inverse array of minmax for comparison.
+            inv_minmax = tuple(-np.array(problem.minmax))
 
             # Check if accept reflection.
             if fn_low <= refl_fn_val and refl_fn_val <= fn_sec:
-                sort_sol[-1] = (
-                    p_refl  # The new point replaces the previous worst.
-                )
-
+                # The new point replaces the previous worst.
+                sort_sol[-1] = p_refl
                 # Sort & end updating.
                 sort_sol = self._sort_and_end_update(problem, sort_sol)
-
                 # Best solution remains the same, so no reporting.
 
             # Check if accept expansion (of reflection in the same direction).
             elif refl_fn_val < fn_low:
-                p_exp2 = p_refl
-                p_exp = tuple(
-                    map(
-                        lambda i, j: i + j,
-                        tuple(self.factors["gammap"] * i for i in p_refl.x),
-                        tuple((1 - self.factors["gammap"]) * i for i in p_cent),
-                    )
-                )
-                p_exp = self._check_const(p_exp, p_exp2.x)
+                p_exp = self.factors["gammap"] * np.array(p_refl.x) + (
+                    1 - self.factors["gammap"]
+                ) * np.array(p_cent)
+                p_exp = self._check_const(tuple(p_exp), p_refl.x)
 
                 # Evaluate expansion point.
                 p_exp = Solution(p_exp, problem)
@@ -409,32 +380,20 @@ class NelderMead(Solver):
                 )
                 problem.simulate(p_exp, r)
                 budget_spent += r
-                exp_fn_val = (
-                    tuple([-1 * i for i in problem.minmax])
-                    * p_exp.objectives_mean
-                )
+                exp_fn_val = inv_minmax * p_exp.objectives_mean
 
                 # Check if expansion point is an improvement relative to simplex.
-                if exp_fn_val < fn_low:
-                    sort_sol[-1] = p_exp  # p_exp replaces p_high.
+                sort_sol[-1] = p_exp if exp_fn_val < fn_low else p_refl
 
-                    # Sort & end updating.
-                    sort_sol = self._sort_and_end_update(problem, sort_sol)
+                # Sort & end updating.
+                sort_sol = self._sort_and_end_update(problem, sort_sol)
 
-                    # Record data from expansion point (new best).
-                    if budget_spent <= problem.factors["budget"]:
-                        intermediate_budgets.append(budget_spent)
-                        recommended_solns.append(p_exp)
-                else:
-                    sort_sol[-1] = p_refl  # p_refl replaces p_high.
-
-                    # Sort & end updating.
-                    sort_sol = self._sort_and_end_update(problem, sort_sol)
-
-                    # Record data from expansion point (new best).
-                    if budget_spent <= problem.factors["budget"]:
-                        intermediate_budgets.append(budget_spent)
-                        recommended_solns.append(p_refl)
+                # Record data if within budget.
+                if budget_spent <= problem.factors["budget"]:
+                    intermediate_budgets.append(budget_spent)
+                    recommended_solns.append(
+                        p_exp if exp_fn_val < fn_low else p_refl
+                    )
 
             # Check if accept contraction or shrink.
             elif refl_fn_val > fn_sec:
@@ -444,14 +403,10 @@ class NelderMead(Solver):
 
                 # Attempt contraction or shrinking.
                 p_cont2 = p_high
-                p_cont = tuple(
-                    map(
-                        lambda i, j: i + j,
-                        tuple(self.factors["betap"] * i for i in p_high.x),
-                        tuple((1 - self.factors["betap"]) * i for i in p_cent),
-                    )
-                )
-                p_cont = self._check_const(p_cont, p_cont2.x)
+                p_cont = self.factors["betap"] * np.array(p_high.x) + (
+                    1 - self.factors["betap"]
+                ) * np.array(p_cent)
+                p_cont = self._check_const(tuple(p_cont), p_cont2.x)
 
                 # Evaluate contraction point.
                 p_cont = Solution(p_cont, problem)
@@ -460,10 +415,7 @@ class NelderMead(Solver):
                 )
                 problem.simulate(p_cont, r)
                 budget_spent += r
-                cont_fn_val = (
-                    tuple([-1 * i for i in problem.minmax])
-                    * p_cont.objectives_mean
-                )
+                cont_fn_val = inv_minmax * p_cont.objectives_mean
 
                 # Accept contraction.
                 if cont_fn_val <= fn_high:
@@ -478,42 +430,30 @@ class NelderMead(Solver):
                         if budget_spent <= problem.factors["budget"]:
                             intermediate_budgets.append(budget_spent)
                             recommended_solns.append(p_cont)
-                else:  # Contraction fails -> simplex shrinks by delta with p_low fixed.
+                # Contraction fails -> simplex shrinks by delta with p_low fixed.
+                else:
+                    # Set pre-loop variables
                     sort_sol[-1] = p_high  # Replaced by p_refl.
-
-                    # Check for new best.
-                    new_best = 0
-
+                    is_new_best = False
+                    p_low_x = np.array(p_low.x)
                     for i in range(1, len(sort_sol)):
-                        p_new2 = p_low
-                        p_new = tuple(
-                            map(
-                                lambda i, j: i + j,
-                                tuple(
-                                    self.factors["delta"] * i
-                                    for i in sort_sol[i].x
-                                ),
-                                tuple(
-                                    (1 - self.factors["delta"]) * i
-                                    for i in p_low.x
-                                ),
-                            )
+                        p_new = (
+                            self.factors["delta"] * np.array(sort_sol[i].x)
+                            + (1 - self.factors["delta"]) * p_low_x
                         )
-                        p_new = self._check_const(p_new, p_new2.x)
+                        p_new = self._check_const(tuple(p_new), p_low.x)
+
                         p_new = Solution(p_new, problem)
                         p_new.attach_rngs(
                             rng_list=self.solution_progenitor_rngs, copy=True
                         )
                         problem.simulate(p_new, r)
                         budget_spent += r
-                        new_fn_val = (
-                            tuple([-1 * i for i in problem.minmax])
-                            * p_new.objectives_mean
-                        )
+                        new_fn_val = inv_minmax * p_new.objectives_mean
 
                         # Check for new best.
                         if new_fn_val <= fn_low:
-                            new_best = 1
+                            is_new_best = True
 
                         # Update sort_sol.
                         sort_sol[i] = p_new  # p_new replaces pi.
@@ -523,7 +463,7 @@ class NelderMead(Solver):
 
                     # Record data if there is a new best solution in the contraction.
                     if (
-                        new_best == 1
+                        is_new_best
                         and budget_spent <= problem.factors["budget"]
                     ):
                         intermediate_budgets.append(budget_spent)
