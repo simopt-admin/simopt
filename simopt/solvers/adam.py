@@ -286,24 +286,17 @@ class ADAM(Solver):
         alpha = self.factors["alpha"]
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
-        fn = (
-            -problem.minmax[0] * new_solution.objectives_mean
-        )  # Apply min/max sign
-        new_x = np.array(
-            new_solution.x, dtype=float
-        )  # Convert tuple to NumPy array
+        fn = -problem.minmax[0] * new_solution.objectives_mean
+        new_x = np.array(new_solution.x, dtype=float)
 
         function_diff = np.zeros((problem.dim, 3))
         grad = np.zeros(problem.dim)
 
         # Compute step sizes
         step_size = np.full(problem.dim, alpha)
-        step_forward = np.minimum(
-            step_size, upper_bound - new_x
-        )  # Ensure step doesn't exceed upper bound
-        step_backward = np.minimum(
-            step_size, new_x - lower_bound
-        )  # Ensure step doesn't exceed lower bound
+        # Compute step sizes for forward and backward differences
+        step_forward = np.minimum(step_size, upper_bound - new_x)
+        step_backward = np.minimum(step_size, new_x - lower_bound)
 
         # Create perturbed variables
         x1 = np.repeat(new_x[:, np.newaxis], problem.dim, axis=1)
