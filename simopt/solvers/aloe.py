@@ -293,7 +293,6 @@ class ALOE(Solver):
 
         return recommended_solns, intermediate_budgets
 
-    # Finite difference for approximating gradients.
     def _finite_diff(
         self,
         new_solution: Solution,
@@ -302,6 +301,27 @@ class ALOE(Solver):
         stepsize: float,
         r: int,
     ) -> np.ndarray:
+        """
+        Compute the finite difference approximation of the gradient for a given solution in the ALOE solver.
+
+        Arguments
+        ---------
+        new_solution : Solution
+            The current solution to perturb.
+        bounds_check : np.ndarray
+            Array indicating which perturbation method to use per dimension.
+        problem : Problem
+            The problem instance providing bounds and function evaluations.
+        stepsize : float
+            The step size used for finite difference calculations.
+        r : int
+            The number of replications used for each function evaluation.
+
+        Returns
+        -------
+        np.ndarray
+            The approximated gradient of the function at the given solution.
+        """
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
@@ -333,24 +353,22 @@ class ALOE(Solver):
         np.fill_diagonal(x1, new_x + function_diff[:, 2])
         np.fill_diagonal(x2, new_x - function_diff[:, 2])
 
-        # Simulate perturbed solutions per dimension
-        for i in range(problem.dim):
+        # Identify indices where x1 and x2 solutions are needed
+        x1_indices = np.where(bounds_check != -1)[0]
+        x2_indices = np.where(bounds_check != 1)[0]
+
+        # Simulate only required solutions
+        for i in x1_indices:
             x1_solution = self.create_new_solution(tuple(x1[i]), problem)
+            problem.simulate_up_to([x1_solution], r)
+            fn1 = -problem.minmax[0] * x1_solution.objectives_mean
+            function_diff[i, 0] = fn1[0] if isinstance(fn1, np.ndarray) else fn1
+
+        for i in x2_indices:
             x2_solution = self.create_new_solution(tuple(x2[i]), problem)
-
-            if bounds_check[i] != -1:
-                problem.simulate_up_to([x1_solution], r)
-                fn1 = -problem.minmax[0] * x1_solution.objectives_mean
-                function_diff[i, 0] = (
-                    fn1[0] if isinstance(fn1, np.ndarray) else fn1
-                )
-
-            if bounds_check[i] != 1:
-                problem.simulate_up_to([x2_solution], r)
-                fn2 = -problem.minmax[0] * x2_solution.objectives_mean
-                function_diff[i, 1] = (
-                    fn2[0] if isinstance(fn2, np.ndarray) else fn2
-                )
+            problem.simulate_up_to([x2_solution], r)
+            fn2 = -problem.minmax[0] * x2_solution.objectives_mean
+            function_diff[i, 1] = fn2[0] if isinstance(fn2, np.ndarray) else fn2
 
         # Compute gradient
         fn_divisor = function_diff[:, 2].copy()
