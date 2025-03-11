@@ -283,7 +283,7 @@ class NelderMead(Solver):
         intermediate_budgets.append(0)
         recommended_solns.append(sol[0])
         # Sort solutions by obj function estimate.
-        sort_sol = self.sort_and_end_update(problem, sol)
+        sort_sol = self._sort_and_end_update(problem, sol)
 
         # Maximization problem is converted to minimization by using minmax.
         while budget_spent <= problem.factors["budget"]:
@@ -301,7 +301,7 @@ class NelderMead(Solver):
                 )
             )  # Reflection.
             p_refl_copy = p_refl
-            p_refl = self.check_const(p_refl, orig_pt.x)
+            p_refl = self._check_const(p_refl, orig_pt.x)
 
             # Shrink towards best if out of bounds.
             if p_refl != p_refl_copy:
@@ -322,7 +322,7 @@ class NelderMead(Solver):
                                 ),
                             )
                         )
-                        p_new = self.check_const(p_new, p_new2.x)
+                        p_new = self._check_const(p_new, p_new2.x)
                         p_new = Solution(p_new, problem)
                         p_new.attach_rngs(
                             rng_list=self.solution_progenitor_rngs, copy=True
@@ -334,7 +334,7 @@ class NelderMead(Solver):
                         sort_sol[i] = p_new  # p_new replaces pi.
 
                     # Sort & end updating.
-                    sort_sol = self.sort_and_end_update(problem, sort_sol)
+                    sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                     p_high = sort_sol[-1]  # Current worst point.
                     p_cent = tuple(
@@ -351,7 +351,7 @@ class NelderMead(Solver):
                         )
                     )  # Reflection.
                     p_refl_copy = p_refl
-                    p_refl = self.check_const(p_refl, orig_pt.x)
+                    p_refl = self._check_const(p_refl, orig_pt.x)
 
             # Evaluate reflected point.
             p_refl = Solution(p_refl, problem)
@@ -386,7 +386,7 @@ class NelderMead(Solver):
                 )
 
                 # Sort & end updating.
-                sort_sol = self.sort_and_end_update(problem, sort_sol)
+                sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                 # Best solution remains the same, so no reporting.
 
@@ -400,7 +400,7 @@ class NelderMead(Solver):
                         tuple((1 - self.factors["gammap"]) * i for i in p_cent),
                     )
                 )
-                p_exp = self.check_const(p_exp, p_exp2.x)
+                p_exp = self._check_const(p_exp, p_exp2.x)
 
                 # Evaluate expansion point.
                 p_exp = Solution(p_exp, problem)
@@ -419,7 +419,7 @@ class NelderMead(Solver):
                     sort_sol[-1] = p_exp  # p_exp replaces p_high.
 
                     # Sort & end updating.
-                    sort_sol = self.sort_and_end_update(problem, sort_sol)
+                    sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                     # Record data from expansion point (new best).
                     if budget_spent <= problem.factors["budget"]:
@@ -429,7 +429,7 @@ class NelderMead(Solver):
                     sort_sol[-1] = p_refl  # p_refl replaces p_high.
 
                     # Sort & end updating.
-                    sort_sol = self.sort_and_end_update(problem, sort_sol)
+                    sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                     # Record data from expansion point (new best).
                     if budget_spent <= problem.factors["budget"]:
@@ -451,7 +451,7 @@ class NelderMead(Solver):
                         tuple((1 - self.factors["betap"]) * i for i in p_cent),
                     )
                 )
-                p_cont = self.check_const(p_cont, p_cont2.x)
+                p_cont = self._check_const(p_cont, p_cont2.x)
 
                 # Evaluate contraction point.
                 p_cont = Solution(p_cont, problem)
@@ -470,7 +470,7 @@ class NelderMead(Solver):
                     sort_sol[-1] = p_cont  # p_cont replaces p_high.
 
                     # Sort & end updating.
-                    sort_sol = self.sort_and_end_update(problem, sort_sol)
+                    sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                     # Check if contraction point is new best.
                     if cont_fn_val < fn_low:
@@ -499,7 +499,7 @@ class NelderMead(Solver):
                                 ),
                             )
                         )
-                        p_new = self.check_const(p_new, p_new2.x)
+                        p_new = self._check_const(p_new, p_new2.x)
                         p_new = Solution(p_new, problem)
                         p_new.attach_rngs(
                             rng_list=self.solution_progenitor_rngs, copy=True
@@ -519,7 +519,7 @@ class NelderMead(Solver):
                         sort_sol[i] = p_new  # p_new replaces pi.
 
                     # Sort & end updating.
-                    sort_sol = self.sort_and_end_update(problem, sort_sol)
+                    sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                     # Record data if there is a new best solution in the contraction.
                     if (
@@ -531,36 +531,90 @@ class NelderMead(Solver):
 
         return recommended_solns, intermediate_budgets
 
-    # HELPER FUNCTIONS
-
-    def sort_and_end_update(
+    def _sort_and_end_update(
         self, problem: Problem, sol: list[Solution]
     ) -> list[Solution]:
+        """
+        Sorts solutions based on their objectives while considering the problem's min/max direction.
+
+        Arguments
+        ---------
+        problem : Problem
+            The simulation-optimization problem containing the objective direction (min/max).
+        sol : list[Solution]
+            List of solutions to be sorted.
+
+        Returns
+        -------
+        list[Solution]
+            The sorted list of solutions.
+        """
         sort_sol = sorted(
             sol,
-            key=lambda s: tuple([-1 * i for i in problem.minmax])
-            * s.objectives_mean,
+            key=lambda s: np.array(problem.minmax) * s.objectives_mean,
+            reverse=True,
         )
         return sort_sol
 
-    def check_const(self, pt: tuple, pt2: tuple) -> tuple:
+    def _check_const(self, new_point: tuple, reference_point: tuple) -> tuple:
         """
-        Check & modify (if needed) the new point based on bounds.
+        Adjust a point to ensure it remains within the specified bounds.
+
+        new_point : tuple
+            The proposed new point to be checked and adjusted if necessary.
+        reference_point : tuple
+            The original reference point used to compute movement direction.
+
+        Returns
+        -------
+        tuple
+            The modified point that adheres to the given bounds.
         """
-        col = len(pt2)
-        step = tuple(map(lambda i, j: i - j, pt, pt2))
-        tmax = np.ones(col)
-        for i in range(col):
-            if step[i] > 0 and self.upper_bounds is not None:  # Move pt to ub.
-                tmax[i] = (self.upper_bounds[i] - pt2[i]) / step[i]
-            elif (
-                step[i] < 0 and self.lower_bounds is not None
-            ):  # Move pt to lb.
-                tmax[i] = (self.lower_bounds[i] - pt2[i]) / step[i]
-        t = min(1, min(tmax))
-        modified = list(map(lambda i, j: i + t * j, pt2, step))
-        # Remove rounding error.
-        for i in range(col):
-            if abs(modified[i]) < self.factors["sensitivity"]:
-                modified[i] = 0
-        return tuple(modified)
+        # Make sure everything is a NumPy array
+        new_point = np.array(new_point)
+        reference_point = np.array(reference_point)
+        lower_bounds = (
+            np.asarray(self.lower_bounds)
+            if self.lower_bounds is not None
+            else None
+        )
+        upper_bounds = (
+            np.asarray(self.upper_bounds)
+            if self.upper_bounds is not None
+            else None
+        )
+
+        # Create or compute the other variables we need
+        step = new_point - reference_point
+        tmin = 1
+
+        # Apply bounding constraints using NumPy masks
+        if upper_bounds is not None:
+            mask = step > 0
+            if np.any(mask):
+                tmin = min(
+                    tmin,
+                    np.min(
+                        (upper_bounds[mask] - reference_point[mask])
+                        / step[mask]
+                    ),
+                )
+
+        if lower_bounds is not None:
+            mask = step < 0
+            if np.any(mask):
+                tmin = min(
+                    tmin,
+                    np.min(
+                        (lower_bounds[mask] - reference_point[mask])
+                        / step[mask]
+                    ),
+                )
+
+        # Compute the modified point
+        adjusted_point = reference_point + tmin * step
+
+        # Remove rounding errors
+        adjusted_point[np.abs(adjusted_point) < self.factors["sensitivity"]] = 0
+
+        return tuple(adjusted_point)
