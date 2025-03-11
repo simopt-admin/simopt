@@ -213,7 +213,7 @@ class NelderMead(Solver):
         if problem.lower_bounds and not np.all(
             np.isneginf(problem.lower_bounds)
         ):
-            self.lower_bounds = tuple(
+            self.lower_bounds = (
                 np.array(problem.lower_bounds) + self.factors["sensitivity"]
             )
         else:
@@ -222,7 +222,7 @@ class NelderMead(Solver):
         if problem.upper_bounds and not np.all(
             np.isposinf(problem.upper_bounds)
         ):
-            self.upper_bounds = tuple(
+            self.upper_bounds = (
                 np.array(problem.upper_bounds) - self.factors["sensitivity"]
             )
         else:
@@ -246,9 +246,7 @@ class NelderMead(Solver):
             initial_solution = np.array(
                 problem.factors["initial_solution"], dtype=float
             )
-            lower_bounds = np.array(self.lower_bounds)
-            upper_bounds = np.array(self.upper_bounds)
-            distances = (upper_bounds - lower_bounds) * self.factors[
+            distances = (self.upper_bounds - self.lower_bounds) * self.factors[
                 "initial_spread"
             ]
 
@@ -257,17 +255,21 @@ class NelderMead(Solver):
             new_pts[np.arange(problem.dim), np.arange(problem.dim)] += distances
 
             # Apply boundary conditions
-            out_of_bounds = (new_pts > upper_bounds) | (new_pts < lower_bounds)
+            out_of_bounds = (new_pts > self.upper_bounds) | (
+                new_pts < self.lower_bounds
+            )
             if np.any(out_of_bounds):
                 new_pts[out_of_bounds] -= 2 * distances
 
             # If still out of bounds, set to nearest bound
-            out_of_bounds = (new_pts > upper_bounds) | (new_pts < lower_bounds)
+            out_of_bounds = (new_pts > self.upper_bounds) | (
+                new_pts < self.lower_bounds
+            )
             if np.any(out_of_bounds):
                 new_pts[out_of_bounds] = np.where(
                     problem.minmax[np.newaxis, :] == -1,
-                    lower_bounds,
-                    upper_bounds,
+                    self.lower_bounds,
+                    self.upper_bounds,
                 )
 
             sol.extend(
@@ -513,40 +515,29 @@ class NelderMead(Solver):
         # Make sure everything is a NumPy array
         new_point = np.array(new_point)
         reference_point = np.array(reference_point)
-        lower_bounds = (
-            np.asarray(self.lower_bounds)
-            if self.lower_bounds is not None
-            else None
-        )
-        upper_bounds = (
-            np.asarray(self.upper_bounds)
-            if self.upper_bounds is not None
-            else None
-        )
-
         # Create or compute the other variables we need
         step = new_point - reference_point
         tmin = 1
 
         # Apply bounding constraints using NumPy masks
-        if upper_bounds is not None:
+        if self.upper_bounds is not None:
             mask = step > 0
             if np.any(mask):
                 tmin = min(
                     tmin,
                     np.min(
-                        (upper_bounds[mask] - reference_point[mask])
+                        (self.upper_bounds[mask] - reference_point[mask])
                         / step[mask]
                     ),
                 )
 
-        if lower_bounds is not None:
+        if self.lower_bounds is not None:
             mask = step < 0
             if np.any(mask):
                 tmin = min(
                     tmin,
                     np.min(
-                        (lower_bounds[mask] - reference_point[mask])
+                        (self.lower_bounds[mask] - reference_point[mask])
                         / step[mask]
                     ),
                 )
