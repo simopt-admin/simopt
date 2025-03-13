@@ -265,8 +265,16 @@ class STRONG(Solver):
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
+        # Precompute factorials
+        factorials = np.array(
+            [math.factorial(i) for i in range(1, problem.dim + 1)]
+        )
+        # Precompute other variables
+        neg_minmax = -problem.minmax[0]
+        dim_sq = problem.dim**2
+
         while expended_budget < problem.factors["budget"]:
-            new_x = new_solution.x
+            new_x = np.array(new_solution.x)
             # Check variable bounds.
             forward = np.isclose(
                 new_x, lower_bound, atol=self.factors["sensitivity"]
@@ -275,7 +283,7 @@ class STRONG(Solver):
                 new_x, upper_bound, atol=self.factors["sensitivity"]
             ).astype(int)
             # bounds_check: 1 stands for forward, -1 stands for backward, 0 means central diff.
-            bounds_check = np.subtract(forward, backward)
+            bounds_check = forward - backward
 
             # Stage I.
             if delta_t > delta_threshold:
@@ -308,22 +316,18 @@ class STRONG(Solver):
                 problem.simulate(candidate_solution, n_r)
                 expended_budget += n_r
                 # Find the old objective value and the new objective value.
-                g_old = -1 * problem.minmax[0] * new_solution.objectives_mean
-                g_new = (
-                    -1 * problem.minmax[0] * candidate_solution.objectives_mean
-                )
+                g_old = neg_minmax * new_solution.objectives_mean
+                g_new = neg_minmax * candidate_solution.objectives_mean
                 g_diff = g_old - g_new
                 # Construct the polynomial.
+                x_diff = candidate_x - new_x
                 r_old = g_old
                 r_new = (
                     g_old
-                    + np.matmul(np.subtract(candidate_x, new_x), grad)
-                    + 0.5
-                    * np.matmul(
-                        np.matmul(np.subtract(candidate_x, new_x), hessian),
-                        np.subtract(candidate_x, new_x),
-                    )
+                    + (x_diff @ grad)
+                    + 0.5 * ((x_diff @ hessian) @ x_diff)
                 )
+
                 r_diff = (r_old - r_new)[0]
                 r_diff = make_nonzero(r_diff, "r_diff (stage I)")
                 rho = g_diff / r_diff
@@ -362,15 +366,14 @@ class STRONG(Solver):
             else:
                 n_onbound = np.sum(bounds_check != 0)
                 if n_onbound <= 1:
-                    num_evals = problem.dim**2
+                    num_evals = dim_sq
                 else:
                     # TODO: Check the formula, it seems to be dividing an
                     # integer by a tuple.
                     num_evals = (
-                        problem.dim**2
+                        dim_sq
                         + problem.dim
-                        - math.factorial(n_onbound)
-                        / (math.factorial(2), math.factorial(n_onbound - 2))
+                        - factorials[n_onbound] / (2, factorials[n_onbound - 2])
                     )
                 # Step 1: Build the quadratic model.
                 grad, hessian = self.finite_diff(
@@ -403,22 +406,18 @@ class STRONG(Solver):
                 problem.simulate(candidate_solution, n_r)
                 expended_budget += n_r
                 # Find the old objective value and the new objective value.
-                g_old = -1 * problem.minmax[0] * new_solution.objectives_mean
-                g_new = (
-                    -1 * problem.minmax[0] * candidate_solution.objectives_mean
-                )
+                g_old = neg_minmax * new_solution.objectives_mean
+                g_new = neg_minmax * candidate_solution.objectives_mean
                 g_diff = g_old - g_new
                 # Construct the polynomial.
+                x_diff = candidate_x - new_x
                 r_old = g_old
                 r_new = (
                     g_old
-                    + np.matmul(np.subtract(candidate_x, new_x), grad)
-                    + 0.5
-                    * np.matmul(
-                        np.matmul(np.subtract(candidate_x, new_x), hessian),
-                        np.subtract(candidate_x, new_x),
-                    )
+                    + (x_diff @ grad)
+                    + 0.5 * ((x_diff @ hessian) @ x_diff)
                 )
+
                 r_diff = (r_old - r_new)[0]
                 r_diff = make_nonzero(r_diff, "rdiff (stage II)")
                 rho = g_diff / r_diff
@@ -467,46 +466,25 @@ class STRONG(Solver):
                         )
 
                         # Step 3.
-                        problem.simulate(
-                            try_solution,
-                            int(
-                                n_r
-                                + np.ceil(
-                                    sub_counter ** self.factors["lambda_2"]
-                                )
-                            ),
+                        counter_ceiling = np.ceil(
+                            sub_counter ** self.factors["lambda_2"]
                         )
-                        expended_budget += int(
-                            n_r
-                            + np.ceil(sub_counter ** self.factors["lambda_2"])
+                        counter_lower_ceiling = np.ceil(
+                            (sub_counter - 1) ** self.factors["lambda_2"]
                         )
-                        g_b_new = (
-                            -1
-                            * problem.minmax[0]
-                            * try_solution.objectives_mean
-                        )
+                        ceiling_diff = int(counter_ceiling - counter_lower_ceiling)
+                        mreps = int(n_r + counter_ceiling)
+                        problem.simulate(try_solution, mreps)
+                        expended_budget += mreps
+                        g_b_new = neg_minmax * try_solution.objectives_mean
                         dummy_solution = new_solution
                         problem.simulate(
                             dummy_solution,
-                            int(
-                                np.ceil(sub_counter ** self.factors["lambda_2"])
-                                - np.ceil(
-                                    (sub_counter - 1)
-                                    ** self.factors["lambda_2"]
-                                )
-                            ),
+                            ceiling_diff
                         )
-                        expended_budget += int(
-                            np.ceil(sub_counter ** self.factors["lambda_2"])
-                            - np.ceil(
-                                (sub_counter - 1) ** self.factors["lambda_2"]
-                            )
-                        )
-                        dummy = (
-                            -1
-                            * problem.minmax[0]
-                            * dummy_solution.objectives_mean
-                        )
+                        expended_budget += ceiling_diff
+                        
+                        dummy = neg_minmax * dummy_solution.objectives_mean
                         # Update g_old.
                         g_b_old = (
                             g_b_old
