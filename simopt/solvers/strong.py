@@ -289,20 +289,23 @@ class STRONG(Solver):
             if delta_t > delta_threshold:
                 # Step 1: Build the linear model.
                 num_evals = 2 * problem.dim - np.sum(bounds_check != 0)
-                grad, hessian = self.finite_diff(
-                    new_solution, bounds_check, 1, problem, n_r
-                )
-                expended_budget += num_evals * n_r
-                # A while loop to prevent zero gradient
-                while norm(grad) == 0:
-                    if expended_budget > problem.factors["budget"]:
-                        break
+                # Generate a new gradient and Hessian matrix.
+                num_generated_grads = 0
+                while True:
                     grad, hessian = self.finite_diff(
                         new_solution, bounds_check, 1, problem, n_r
                     )
                     expended_budget += num_evals * n_r
-                    # Update n_r and counter after each loop.
-                    n_r = int(lam * n_r)
+                    num_generated_grads += 1
+                    if num_generated_grads > 2:
+                        # Update n_r and counter after each loop.
+                        n_r *= lam
+                    # Accept any non-zero gradient, or exit if the budget is exceeded.
+                    if (
+                        norm(grad) != 0
+                        or expended_budget > problem.factors["budget"]
+                    ):
+                        break
 
                 # Step 2: Solve the subproblem.
                 # Cauchy reduction.
@@ -333,10 +336,10 @@ class STRONG(Solver):
                 rho = g_diff / r_diff
 
                 # Step 4: Update the trust region size and determine to accept or reject the solution.
-                if (rho < eta_0) | (g_diff <= 0) | (r_diff <= 0):
+                if (rho < eta_0) or (g_diff <= 0) or (r_diff <= 0):
                     # The solution fails either the RC or SR test, the center point reamins and the trust region shrinks.
                     delta_t = gamma_1 * delta_t
-                elif (eta_0 <= rho) & (rho < eta_1):
+                elif (eta_0 <= rho) and (rho < eta_1):
                     # The center point moves to the new solution and the trust region remains.
                     new_solution = candidate_solution
                     # Update incumbent best solution.
@@ -376,20 +379,23 @@ class STRONG(Solver):
                         - factorials[n_onbound] / (2, factorials[n_onbound - 2])
                     )
                 # Step 1: Build the quadratic model.
-                grad, hessian = self.finite_diff(
-                    new_solution, bounds_check, 2, problem, n_r
-                )
-                expended_budget += num_evals * n_r
-                # A while loop to prevent zero gradient
-                while norm(grad) == 0:
-                    if expended_budget > problem.factors["budget"]:
-                        break
+                num_generated_grads = 0
+                while True:
                     grad, hessian = self.finite_diff(
                         new_solution, bounds_check, 2, problem, n_r
                     )
                     expended_budget += num_evals * n_r
-                    # Update n_r and counter after each loop.
-                    n_r = int(lam * n_r)
+                    num_generated_grads += 1
+                    if num_generated_grads > 2:
+                        # Update n_r and counter after each loop.
+                        n_r *= lam
+                    # Accept any non-zero gradient, or exit if the budget is exceeded.
+                    if (
+                        norm(grad) != 0
+                        or expended_budget > problem.factors["budget"]
+                    ):
+                        break
+
                 # Step 2: Solve the subproblem.
                 # Cauchy reduction.
                 candidate_x = self.cauchy_point(
@@ -422,7 +428,7 @@ class STRONG(Solver):
                 r_diff = make_nonzero(r_diff, "rdiff (stage II)")
                 rho = g_diff / r_diff
                 # Step 4: Update the trust region size and determine to accept or reject the solution.
-                if (rho < eta_0) | (g_diff <= 0) | (r_diff <= 0):
+                if (rho < eta_0) or (g_diff <= 0) or (r_diff <= 0):
                     # Inner Loop.
                     rr_old = r_old
                     g_b_old = rr_old
@@ -433,31 +439,23 @@ class STRONG(Solver):
                     while np.sum(result_x != new_x) == 0:
                         if expended_budget > problem.factors["budget"]:
                             break
-                        # Step1: Build the quadratic model.
-                        g_var, h_var = self.finite_diff(
-                            new_solution,
-                            bounds_check,
-                            2,
-                            problem,
-                            (sub_counter + 1) * n_r,
-                        )
-                        expended_budget += num_evals * (sub_counter + 1) * n_r
                         # A while loop to prevent zero gradient
-                        while norm(g_var) == 0:
-                            if expended_budget > problem.factors["budget"]:
-                                break
+                        while True:
+                            n_r_loop = (sub_counter + 1) * n_r
                             g_var, h_var = self.finite_diff(
-                                new_solution,
-                                bounds_check,
-                                2,
-                                problem,
-                                (sub_counter + 1) * n_r,
+                                new_solution, bounds_check, 2, problem, n_r_loop
                             )
-                            expended_budget += (
-                                num_evals * (sub_counter + 1) * n_r
-                            )
-                            # Update n_r and counter after each loop.
-                            n_r = int(lam * n_r)
+                            expended_budget += num_evals * n_r_loop
+                            num_generated_grads += 1
+                            if num_generated_grads > 2:
+                                # Update n_r and counter after each loop.
+                                n_r *= lam
+                            # Accept any non-zero gradient, or exit if the budget is exceeded.
+                            if (
+                                norm(grad) != 0
+                                or expended_budget > problem.factors["budget"]
+                            ):
+                                break
 
                         # Step 2: determine the new inner solution based on the accumulated design matrix X.
                         try_x = self.cauchy_point(g_var, h_var, new_x, problem)
@@ -472,66 +470,44 @@ class STRONG(Solver):
                         counter_lower_ceiling = np.ceil(
                             (sub_counter - 1) ** self.factors["lambda_2"]
                         )
-                        ceiling_diff = int(counter_ceiling - counter_lower_ceiling)
+                        # Theoretically these are already integers
+                        ceiling_diff = int(
+                            counter_ceiling - counter_lower_ceiling
+                        )
                         mreps = int(n_r + counter_ceiling)
+
                         problem.simulate(try_solution, mreps)
                         expended_budget += mreps
                         g_b_new = neg_minmax * try_solution.objectives_mean
                         dummy_solution = new_solution
-                        problem.simulate(
-                            dummy_solution,
-                            ceiling_diff
-                        )
+                        problem.simulate(dummy_solution, ceiling_diff)
                         expended_budget += ceiling_diff
-                        
+
                         dummy = neg_minmax * dummy_solution.objectives_mean
                         # Update g_old.
                         g_b_old = (
-                            g_b_old
-                            * (
-                                n_r
-                                + np.ceil(
-                                    (sub_counter - 1)
-                                    ** self.factors["lambda_2"]
-                                )
-                            )
-                            + (
-                                np.ceil(sub_counter ** self.factors["lambda_2"])
-                                - np.ceil(
-                                    (sub_counter - 1)
-                                    ** self.factors["lambda_2"]
-                                )
-                            )
-                            * dummy
-                        ) / (
-                            n_r
-                            + np.ceil(sub_counter ** self.factors["lambda_2"])
-                        )
+                            g_b_old * (n_r + counter_lower_ceiling)
+                            + ceiling_diff * dummy
+                        ) / mreps
+
+                        x_diff = try_x - new_x
                         rr_new = (
                             g_b_old
-                            + np.matmul(np.subtract(try_x, new_x), g_var)
-                            + 0.5
-                            * np.matmul(
-                                np.matmul(np.subtract(try_x, new_x), h_var),
-                                np.subtract(try_x, new_x),
-                            )
+                            + (x_diff @ g_var)
+                            + 0.5 * ((x_diff @ h_var) @ x_diff)
                         )
+
                         rr_old = g_b_old
                         # Set rho to the ratio.
                         g_b_diff = g_b_old - g_b_new
                         rr_diff = (rr_old - rr_new)[0]
                         rr_diff = make_nonzero(rr_diff, "rr_diff")
-                        rrho = (g_b_diff) / (rr_diff)
+                        rrho = g_b_diff / rr_diff
 
-                        if (
-                            (rrho < eta_0)
-                            | ((g_b_diff) <= 0)
-                            | ((rr_diff) <= 0)
-                        ):
+                        if (rrho < eta_0) or (g_b_diff <= 0) or (rr_diff <= 0):
                             delta_t = gamma_1 * delta_t
                             result_solution = new_solution
                             result_x = new_x
-
                         elif (eta_0 <= rrho) and (rrho < eta_1):
                             # Accept the solution and remains the size of trust region.
                             result_solution = try_solution
@@ -543,19 +519,8 @@ class STRONG(Solver):
                             result_solution = try_solution
                             result_x = try_x
                             rr_old = g_b_new
-                        sub_counter = sub_counter + 1
+                        sub_counter += 1
                     new_solution = result_solution
-                    # Update incumbent best solution.
-                    if (
-                        problem.minmax * new_solution.objectives_mean
-                        > problem.minmax * best_solution.objectives_mean
-                    ):
-                        best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
-                elif (eta_0 <= rho) and (rho < eta_1):
-                    # The center point moves to the new solution and the trust region remains.
-                    new_solution = candidate_solution
                     # Update incumbent best solution.
                     if (
                         problem.minmax * new_solution.objectives_mean
@@ -566,7 +531,8 @@ class STRONG(Solver):
                         intermediate_budgets.append(expended_budget)
                 else:
                     # The center point moves to the new solution and the trust region enlarges.
-                    delta_t = gamma_2 * delta_t
+                    if not ((eta_0 <= rho) and (rho < eta_1)):
+                        delta_t = gamma_2 * delta_t
                     new_solution = candidate_solution
                     # Update incumbent best solution.
                     if (
@@ -578,8 +544,7 @@ class STRONG(Solver):
                         intermediate_budgets.append(expended_budget)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
         # Loop through each budget and convert any numpy int32s to Python ints.
-        for i in range(len(intermediate_budgets)):
-            intermediate_budgets[i] = int(intermediate_budgets[i])
+        intermediate_budgets = [int(i) for i in intermediate_budgets]
         return recommended_solns, intermediate_budgets
 
     def cauchy_point(
@@ -595,15 +560,10 @@ class STRONG(Solver):
         delta_t = self.factors["delta_T"]
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
-        if np.dot(np.matmul(grad, hessian), grad) <= 0:
-            tau = 1
-        else:
-            tau = min(
-                1,
-                norm(grad) ** 3
-                / (delta_t * np.dot(np.matmul(grad, hessian), grad)),
-            )
-        grad = np.reshape(grad, (1, problem.dim))[0]
+
+        val = float(np.dot(grad, hessian @ grad))
+        val_dt = delta_t * val
+        tau = 1 if val <= 0 else min(1, norm(grad) ** 3 / val_dt)
         candidate_x = new_x - tau * delta_t * grad / norm(grad)
         cauchy_x = self.check_cons(candidate_x, new_x, lower_bound, upper_bound)
         return cauchy_x
@@ -618,21 +578,25 @@ class STRONG(Solver):
         """
         Check the feasibility of the Cauchy point and update the point accordingly.
         """
+        # Convert the inputs to numpy arrays
+        candidate_x = np.array(candidate_x)
+        new_x = np.array(new_x)
+        lower_bound = np.array(lower_bound)
+        upper_bound = np.array(upper_bound)
         # The current step.
-        current_step = np.subtract(candidate_x, new_x)
+        current_step = candidate_x - new_x
         # Form a matrix to determine the possible stepsize.
-        max_step_matrix = np.ones((2, len(candidate_x)))
-        for i in range(0, len(candidate_x)):
-            if current_step[i] > 0:
-                step_diff = upper_bound[i] - new_x[i]
-                max_step_matrix[0, i] = step_diff / current_step[i]
-            elif current_step[i] < 0:
-                step_diff = lower_bound[i] - new_x[i]
-                max_step_matrix[1, i] = step_diff / current_step[i]
-        # Find the minimum stepsize.
-        t2 = max_step_matrix.min()
+        min_step = 1
+        pos_mask = current_step > 0
+        if np.any(pos_mask):
+            step_diff = (upper_bound[pos_mask] - new_x[pos_mask]) / current_step[pos_mask]
+            min_step = min(min_step, np.min(step_diff))
+        neg_mask = current_step < 0
+        if np.any(neg_mask):
+            step_diff = (lower_bound[neg_mask] - new_x[neg_mask]) / current_step[neg_mask]
+            min_step = min(min_step, np.min(step_diff))
         # Calculate the modified x.
-        modified_x = new_x + t2 * current_step
+        modified_x = new_x + min_step * current_step
         return modified_x
 
     def finite_diff(
