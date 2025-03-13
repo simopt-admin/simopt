@@ -755,7 +755,7 @@ class STRONG(Solver):
                     x6 = list(new_x)
                     x6[i] -= func_diff[i, 2]
                     x6[j] -= func_diff[j, 2]
-                    x6_solution = self.create_new_solution(tuple(x5), problem)
+                    x6_solution = self.create_new_solution(tuple(x6), problem)
                     # Check budget.
                     problem.simulate_up_to([x6_solution], n_r)
                     fn6 = -problem.minmax[0] * x6_solution.objectives_mean

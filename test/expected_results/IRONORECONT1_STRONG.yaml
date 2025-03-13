@@ -16,8 +16,8 @@ all_est_objectives:
 - - 158721.55446680367
   - 144226.94711823962
   - 137007.8737508123
-  - 142199.63315839774
-  - 142199.63315839774
+  - 142204.76827225502
+  - 142204.76827225502
 - - 134090.81721492455
   - 127633.68087959175
   - 127633.68087959175
@@ -249,15 +249,15 @@ all_recommended_xs:
     - !!python/object/apply:numpy._core.multiarray.scalar
       - *id001
       - !!binary |
-        IeQ95HoBVEA=
+        8qSktXoBVEA=
     - !!python/object/apply:numpy._core.multiarray.scalar
       - *id001
       - !!binary |
-        RFifJTQBREA=
+        jxyw+TABREA=
     - !!python/object/apply:numpy._core.multiarray.scalar
       - *id001
       - !!binary |
-        DgUKt6jUWUA=
+        MC1Q5xrVWUA=
   - *id005
 - - !!python/tuple
     - 80
@@ -470,8 +470,8 @@ objective_curves:
     - 142803.49299952385
     - 144226.94711823962
     - 137007.8737508123
-    - 142199.63315839774
-    - 142199.63315839774
+    - 142204.76827225502
+    - 142204.76827225502
 - !!python/tuple
   - !!python/tuple
     - 10.0
@@ -584,8 +584,8 @@ progress_curves:
     - 0.0
     - 1.4234541187157737e+18
     - -5.795619248711562e+18
-    - -6.038598411261046e+17
-    - -6.038598411261046e+17
+    - -5.987247272688255e+17
+    - -5.987247272688255e+17
 - !!python/tuple
   - !!python/tuple
     - 0.01
