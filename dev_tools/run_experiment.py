@@ -17,15 +17,10 @@ def is_compatible(problem_name: str, solver_name: str) -> bool:
     return len(output) == 0
 
 
-# Main loop to iterate through problem/solver pairs
-def main(
-    methods: list[str],
-    problems: list[str],
-    solvers: list[str],
-    num_macroreps: int,
-    num_postreps: int,
-) -> None:
-    valid_pairs = [
+def generate_valid_pairs(
+    problems: list[str], solvers: list[str]
+) -> list[tuple[str, str]]:
+    return [
         (solver_name, problem_name)
         for problem_name in problem_directory
         if problems == ["all"] or problem_name in problems
@@ -34,6 +29,14 @@ def main(
         if is_compatible(problem_name, solver_name)
     ]
 
+
+# Main loop to iterate through problem/solver pairs
+def main(
+    valid_pairs: list[tuple[str, str]],
+    methods: list[str],
+    num_macroreps: int,
+    num_postreps: int,
+) -> None:
     for solver_name, problem_name in valid_pairs:
         logging.info(f"Experimenting with {solver_name} on {problem_name}.")
         myexperiment = ProblemSolver(solver_name, problem_name)
@@ -102,4 +105,6 @@ if __name__ == "__main__":
     problems = args.problems.split(",")
     solvers = args.solvers.split(",")
 
-    main(methods, problems, solvers, args.num_macroreps, args.num_postreps)
+    valid_pairs = generate_valid_pairs(problems, solvers)
+
+    main(valid_pairs, methods, args.num_macroreps, args.num_postreps)
