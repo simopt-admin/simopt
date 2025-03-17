@@ -37,16 +37,22 @@ def main(
     num_macroreps: int,
     num_postreps: int,
 ) -> None:
+    # Check these outside of the loop to avoid repeated checks
+    should_run = "run" in methods or "all" in methods
+    should_post_replicate = "post_replicate" in methods or "all" in methods
+    should_post_normalize = "post_normalize" in methods or "all" in methods
+
+    # For each problem/solver pair, run the experiment
     for solver_name, problem_name in valid_pairs:
         logging.info(f"Experimenting with {solver_name} on {problem_name}.")
         myexperiment = ProblemSolver(solver_name, problem_name)
-        if "run" in methods or "all" in methods:
+        if should_run:
             logging.info("Executing `run` method.")
             myexperiment.run(n_macroreps=num_macroreps)
-        if "post_replicate" in methods or "all" in methods:
+        if should_post_replicate:
             logging.info("Executing `post_replicate` method.")
             myexperiment.post_replicate(n_postreps=num_postreps)
-        if "post_normalize" in methods or "all" in methods:
+        if should_post_normalize:
             logging.info("Executing `post_normalize` method.")
             post_normalize([myexperiment], n_postreps_init_opt=num_postreps)
 
