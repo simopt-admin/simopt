@@ -602,30 +602,29 @@ class ProblemSolver:
 
         logging.debug("Starting macroreplications")
 
-        with Pool(initializer=self._run_pool_init) as process_pool:
+        num_processes = min(n_macroreps, os.cpu_count())
+        with Pool(num_processes) as process_pool:
             # Start the macroreplications in parallel (async)
             run_multithread_partial = partial(
                 self.run_multithread, solver=self.solver, problem=self.problem
             )
-            result = process_pool.map_async(
+            num_completed = 0
+            for (
+                mrep,
+                recommended_xs,
+                intermediate_budgets,
+                timing,
+            ) in process_pool.imap_unordered(
                 run_multithread_partial, range(n_macroreps)
-            )
-            # Wait for the results to be returned (or 1 second)
-            while not result.ready():
-                # Update status bar here
-                result.wait(1)
+            ):
+                self.all_recommended_xs[mrep] = recommended_xs
+                self.all_intermediate_budgets[mrep] = intermediate_budgets
+                self.timings[mrep] = timing
+                num_completed += 1
 
             logging.info(
                 f"Finished running {n_macroreps} macroreplications in {round(time.time() - function_start, 3)} seconds."
             )
-
-            # Grab all the data out of the result
-            for mrep in range(n_macroreps):
-                (
-                    self.all_recommended_xs[mrep],
-                    self.all_intermediate_budgets[mrep],
-                    self.timings[mrep],
-                ) = result.get()[mrep]
 
         self.has_run = True
         self.has_postreplicated = False
@@ -635,9 +634,6 @@ class ProblemSolver:
         if self.create_pickle:
             file_name = os.path.basename(self.file_name_path)
             self.record_experiment_results(file_name=file_name)
-
-    def _run_pool_init(self) -> None:
-        pass
 
     def run_multithread(
         self, mrep: int, solver: Solver, problem: Problem
@@ -651,8 +647,14 @@ class ProblemSolver:
 
         Returns
         -------
-        tuple
-            Tuple of recommended solutions, intermediate budgets, and runtime.
+        int
+            Index of the macroreplication.
+        list
+            Recommended solutions from the solver.
+        list
+            Intermediate budgets from the solver.
+        float
+            Runtime for the macrorep
 
         Raises
         ------
@@ -712,6 +714,7 @@ class ProblemSolver:
         )
         # Return tuple (rec_solns, int_budgets, runtime)
         return (
+            mrep,
             [solution.x for solution in recommended_solns],
             intermediate_budgets,
             runtime,
@@ -778,21 +781,16 @@ class ProblemSolver:
         self.function_start = time.time()
 
         logging.info("Starting postreplications")
-        with Pool() as process_pool:
-            # Start the macroreplications in parallel (async)
-            result = process_pool.map_async(
+        num_processes = min(self.n_macroreps, os.cpu_count())
+        with Pool(num_processes) as process_pool:
+            num_completed = 0
+            for mrep, post_rep, timing in process_pool.imap_unordered(
                 self.post_replicate_multithread, range(self.n_macroreps)
-            )
-            # Wait for the results to be returned (or 1 second)
-            while not result.ready():
+            ):
+                self.all_post_replicates[mrep] = post_rep
+                self.timings[mrep] = timing
+                num_completed += 1
                 # Update status bar here
-                result.wait(1)
-
-            # Grab all the data out of the result
-            for mrep in range(self.n_macroreps):
-                self.all_post_replicates[mrep], self.timings[mrep] = (
-                    result.get()[mrep]
-                )
 
             # # The all post replicates is tricky because it is a dictionary of lists of lists
             # # We need to convert it to a list of lists of lists
@@ -832,8 +830,12 @@ class ProblemSolver:
 
         Returns
         -------
-        tuple
-            Tuple of post-replicates and runtime.
+        int
+            Index of the macroreplication.
+        list
+            Post-replicates for each recommended solution.
+        float
+            Runtime for the macroreplication.
 
         Raises
         ------
@@ -900,8 +902,7 @@ class ProblemSolver:
         runtime = toc - tic
         logging.debug(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
 
-        # Return tuple (post_replicates, runtime)
-        return (post_replicates, runtime)
+        return (mrep, post_replicates, runtime)
 
     def bootstrap_sample(
         self, bootstrap_rng: MRG32k3a, normalize: bool = True
