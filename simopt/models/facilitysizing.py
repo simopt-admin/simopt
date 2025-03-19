@@ -170,7 +170,7 @@ class FacilitySize(Model):
         demand = demand_rng.mvnormalvariate(
             self.factors["mean_vec"], self.factors["cov"], factorized=False
         )
-        while np.any(demand < 0):
+        while any(d < 0 for d in demand):
             demand = demand_rng.mvnormalvariate(
                 self.factors["mean_vec"], self.factors["cov"], factorized=False
             )
@@ -595,7 +595,7 @@ class FacilitySizingTotalCost(Problem):
         x = rand_sol_rng.mvnormalvariate(
             self.factors["initial_solution"], cov_matrix, factorized=False
         )
-        while np.any(x < 0):
+        while any(elem < 0 for elem in x):
             x = rand_sol_rng.mvnormalvariate(
                 self.factors["initial_solution"], cov_matrix, factorized=False
             )

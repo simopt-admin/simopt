@@ -712,10 +712,18 @@ class ProblemSolver:
             recommended_solutions=recommended_solns,
             intermediate_budgets=intermediate_budgets,
         )
+        # Sometimes we end up with numpy scalar values in the solutions,
+        # so we convert them to Python scalars. This is especially problematic
+        # when trying to dump the solutions to human-readable files as numpy
+        # scalars just spit out binary data.
+        # TODO: figure out where numpy scalars are coming from and fix it
+        solutions = [
+            tuple([float(x) for x in soln.x]) for soln in recommended_solns
+        ]
         # Return tuple (rec_solns, int_budgets, runtime)
         return (
             mrep,
-            [solution.x for solution in recommended_solns],
+            solutions,
             intermediate_budgets,
             runtime,
         )
@@ -1547,12 +1555,14 @@ def post_normalize(
         experiment.progress_curves = []
         for mrep in range(experiment.n_macroreps):
             est_objectives = []
+            budgets = experiment.all_intermediate_budgets[mrep]
             # Substitute estimates at x0 and x* (based on N postreplicates)
             # with new estimates (based on L postreplicates).
-            for budget in range(len(experiment.all_intermediate_budgets[mrep])):
-                if experiment.all_recommended_xs[mrep][budget] == x0:
+            for budget in range(len(budgets)):
+                soln = experiment.all_recommended_xs[mrep][budget]
+                if np.equal(soln, x0).all():
                     est_objectives.append(np.mean(x0_postreps))
-                elif experiment.all_recommended_xs[mrep][budget] == xstar:
+                elif np.equal(soln, xstar).all():
                     est_objectives.append(np.mean(xstar_postreps))
                 else:
                     est_objectives.append(
@@ -1560,7 +1570,7 @@ def post_normalize(
                     )
             experiment.objective_curves.append(
                 Curve(
-                    x_vals=experiment.all_intermediate_budgets[mrep],
+                    x_vals=budgets,
                     y_vals=est_objectives,
                 )
             )

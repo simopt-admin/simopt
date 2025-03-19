@@ -1,167 +1,166 @@
 all_est_objectives:
-- - 2.787223600894949
-  - 2.696579088415415
-  - 2.6330620969698146
-  - 2.5834797112812815
-  - 2.542591870603137
-  - 2.507677880829915
-  - 2.4771687512511007
-  - 2.450048175450278
-  - 2.425600643451994
-  - 2.4033420574958697
-  - 2.382910023864397
-  - 2.364019194517631
-  - 2.3464542555016186
-  - 2.3300483413404818
-  - 2.3146719583259725
-  - 2.3146719583259725
-- - 2.783448899937667
-  - 2.6927495957222156
-  - 2.6292267043308843
-  - 2.5796724123661683
-  - 2.5387981038502456
-  - 2.503909007186637
-  - 2.4734098896565486
-  - 2.4462897802290806
-  - 2.4218556002694926
-  - 2.3996109467123254
-  - 2.3791834605827176
-  - 2.36029854146521
-  - 2.3427356429800965
-  - 2.32631273626676
-  - 2.310897985803673
-  - 2.310897985803673
-- - 2.790670858760015
-  - 2.700368147400127
-  - 2.637138702026826
-  - 2.587825748860766
-  - 2.547174859583101
-  - 2.512487612537681
-  - 2.4821850150373934
-  - 2.4552606432291895
-  - 2.431004320291268
-  - 2.4089152339790747
-  - 2.3886384487036945
-  - 2.3698886846574205
-  - 2.3524626617445765
-  - 2.336186787350253
-  - 2.3209188594169214
-  - 2.3209188594169214
-- - 2.7861714922902805
-  - 2.6957092747208744
-  - 2.632358287889074
-  - 2.5829581956057934
-  - 2.542221003289336
-  - 2.5074656139332676
-  - 2.4770874941449996
-  - 2.4500725186981382
-  - 2.425728245925109
-  - 2.4035597076635264
-  - 2.383197461991419
-  - 2.3643697057132353
-  - 2.3468626520960045
-  - 2.3304994499341953
-  - 2.315146819113173
-  - 2.315146819113173
-- - 2.779342435339204
-  - 2.68840636030384
-  - 2.624664535051768
-  - 2.57502637093311
-  - 2.534103707340533
-  - 2.4991509911055876
-  - 2.46860052144242
-  - 2.4414362915002594
-  - 2.4169651805098424
-  - 2.3946986654975917
-  - 2.3742671887177917
-  - 2.3553768506195265
-  - 2.3378121219061843
-  - 2.32139512414043
-  - 2.305978560006671
-  - 2.305978560006671
-- - 2.7863907192246073
-  - 2.6958102080950277
-  - 2.6323713605330443
-  - 2.582903096845734
-  - 2.5421243432513503
-  - 2.507317490525692
-  - 2.4769207375911377
-  - 2.44991498215788
-  - 2.4255881761431017
-  - 2.4034404815345143
-  - 2.3831104066989415
-  - 2.364317520573398
-  - 2.346849547024524
-  - 2.3305386726474935
-  - 2.3152369545493015
-  - 2.3152369545493015
-- - 2.7875454686134424
-  - 2.6969085233225614
-  - 2.6334506179106993
-  - 2.5839571763755727
-  - 2.54314121766466
-  - 2.508304543111284
-  - 2.477862724650389
-  - 2.450789015660437
-  - 2.4263884033632945
-  - 2.4041733721201752
-  - 2.383779428351585
-  - 2.3649288454442248
-  - 2.3474038284836127
-  - 2.3310338869973055
-  - 2.315673529425823
-  - 2.315673529425823
-- - 2.789553468994508
-  - 2.6990558895937973
-  - 2.6356861775154505
-  - 2.5863116547826968
-  - 2.5456457709387847
-  - 2.5109489425903284
-  - 2.480631474726955
-  - 2.453678984347356
-  - 2.429400055012455
-  - 2.407294566192945
-  - 2.386995212315154
-  - 2.3682239099439446
-  - 2.350766335517243
-  - 2.3344511026420123
-  - 2.319134392781842
-  - 2.319134392781842
-- - 2.787035806828702
-  - 2.696429677418912
-  - 2.632993962290948
-  - 2.583483639187786
-  - 2.5426220873463325
-  - 2.507743210291555
-  - 2.4772453013812252
-  - 2.4501145112742346
-  - 2.425669404144472
-  - 2.403429758558655
-  - 2.3830308802855322
-  - 2.3641806736056354
-  - 2.3466464185778064
-  - 2.330250035520439
-  - 2.314853832665878
-  - 2.314853832665878
-- - 2.7840104490285067
-  - 2.693465927363123
-  - 2.630050727898232
-  - 2.5806241031717874
-  - 2.5398630882995445
-  - 2.5050725443414423
-  - 2.4746815276354686
-  - 2.44767496098299
-  - 2.4233552641005693
-  - 2.4012252496321853
-  - 2.3809117889363898
-  - 2.3621376746147407
-  - 2.344683528541491
-  - 2.3283754145989652
-  - 2.3130666963863185
-  - 2.3130666963863185
+- - 2.780124829249758
+  - 2.6893551138342264
+  - 2.6257317225670054
+  - 2.576067221538355
+  - 2.5350946867274846
+  - 2.500118232668328
+  - 2.4695277450866824
+  - 2.44231526621196
+  - 2.417786478457059
+  - 2.3954512886928754
+  - 2.3749384803161497
+  - 2.355974043875788
+  - 2.3383351981520986
+  - 2.3218478008517467
+  - 2.3063688616357227
+  - 2.3063688616357227
+- - 2.789035151306537
+  - 2.698602375009207
+  - 2.635260454269838
+  - 2.585841590528148
+  - 2.545107808634954
+  - 2.5103527824475167
+  - 2.479979638398922
+  - 2.4529797693132105
+  - 2.428657700324564
+  - 2.4065190173202713
+  - 2.386193828775252
+  - 2.367414706908724
+  - 2.349962835823599
+  - 2.333660825871027
+  - 2.3183624159715324
+  - 2.3183624159715324
+- - 2.7862478107466546
+  - 2.695726447273908
+  - 2.632316299991869
+  - 2.582833952440025
+  - 2.542042839736181
+  - 2.50721938725384
+  - 2.4767744007042687
+  - 2.4497204079248234
+  - 2.425372033106726
+  - 2.403205203830921
+  - 2.3828574732359105
+  - 2.3640456113067616
+  - 2.346556852281289
+  - 2.33022178385454
+  - 2.3149023762161005
+  - 2.3149023762161005
+- - 2.7881760005848144
+  - 2.69761352449041
+  - 2.634245563320202
+  - 2.5848473714702744
+  - 2.5441445259338336
+  - 2.5094169182363713
+  - 2.4790880895128082
+  - 2.452128144196195
+  - 2.4278422208751125
+  - 2.405737496018033
+  - 2.3854503517294976
+  - 2.366708342444746
+  - 2.34928425954856
+  - 2.3330055481105108
+  - 2.3177295691308033
+  - 2.3177295691308033
+- - 2.77940256374346
+  - 2.6885602551680954
+  - 2.624895734274738
+  - 2.575246289996016
+  - 2.534323197809421
+  - 2.4993971094734384
+  - 2.4688598713337506
+  - 2.4417015815213814
+  - 2.4172287215729593
+  - 2.3949566562280804
+  - 2.3745143523966554
+  - 2.355614765054877
+  - 2.3380344787131704
+  - 2.321612646675303
+  - 2.3062041734249403
+  - 2.3062041734249403
+- - 2.789186580392257
+  - 2.69872839078544
+  - 2.6353478144599247
+  - 2.585911794470485
+  - 2.545137157764509
+  - 2.5103194712926706
+  - 2.4798806907626223
+  - 2.4528174647841468
+  - 2.428449588900828
+  - 2.4062837954613556
+  - 2.38593949634555
+  - 2.3671290861781547
+  - 2.3496340702989933
+  - 2.3332783248904185
+  - 2.3179280456169598
+  - 2.3179280456169598
+- - 2.7840784985550453
+  - 2.693483139515207
+  - 2.6299924722853016
+  - 2.5804321647694564
+  - 2.539560564218672
+  - 2.5046625625512844
+  - 2.474159315791943
+  - 2.4470404377242776
+  - 2.422604102858047
+  - 2.4003543764144073
+  - 2.3799272307242676
+  - 2.3610528320760276
+  - 2.3435042143325218
+  - 2.3270979684962527
+  - 2.3116902366692744
+  - 2.3116902366692744
+- - 2.7894024528762422
+  - 2.6989732313654495
+  - 2.6355904042017766
+  - 2.5861609109477017
+  - 2.5453847549562134
+  - 2.510576711134216
+  - 2.4801587722887715
+  - 2.4531042333907265
+  - 2.428733476601435
+  - 2.4065532483576972
+  - 2.386189741085131
+  - 2.3673710473425045
+  - 2.349882128494207
+  - 2.3335443993177587
+  - 2.3182074661114944
+  - 2.3182074661114944
+- - 2.7873753797816248
+  - 2.696739105506379
+  - 2.6332829812261918
+  - 2.5837853391428136
+  - 2.5429699446833505
+  - 2.508125065376736
+  - 2.4776849794557214
+  - 2.4506321465152903
+  - 2.426261826986175
+  - 2.404084297421792
+  - 2.3837360546370494
+  - 2.364923645616419
+  - 2.3474304464137767
+  - 2.3310822630373997
+  - 2.3157347860686723
+  - 2.3157347860686723
+- - 2.789809403279113
+  - 2.6993382275745255
+  - 2.635978464435007
+  - 2.5865514847370155
+  - 2.5457588403958513
+  - 2.510914649024044
+  - 2.4804643633997516
+  - 2.4533900324261664
+  - 2.429023622604677
+  - 2.406858055069522
+  - 2.386510065793446
+  - 2.36770157910432
+  - 2.3502150302384344
+  - 2.3338695863360535
+  - 2.3185329122227234
+  - 2.3185329122227234
 all_intermediate_budgets:
-- &id012
-  - 0
+- - 0
   - 210
   - 270
   - 330
@@ -177,8 +176,7 @@ all_intermediate_budgets:
   - 930
   - 990
   - 1000
-- &id013
-  - 0
+- - 0
   - 210
   - 270
   - 330
@@ -194,8 +192,7 @@ all_intermediate_budgets:
   - 930
   - 990
   - 1000
-- &id014
-  - 0
+- - 0
   - 210
   - 270
   - 330
@@ -211,8 +208,7 @@ all_intermediate_budgets:
   - 930
   - 990
   - 1000
-- &id015
-  - 0
+- - 0
   - 210
   - 270
   - 330
@@ -228,8 +224,7 @@ all_intermediate_budgets:
   - 930
   - 990
   - 1000
-- &id016
-  - 0
+- - 0
   - 210
   - 270
   - 330
@@ -245,8 +240,7 @@ all_intermediate_budgets:
   - 930
   - 990
   - 1000
-- &id017
-  - 0
+- - 0
   - 210
   - 270
   - 330
@@ -262,8 +256,7 @@ all_intermediate_budgets:
   - 930
   - 990
   - 1000
-- &id018
-  - 0
+- - 0
   - 210
   - 270
   - 330
@@ -279,8 +272,7 @@ all_intermediate_budgets:
   - 930
   - 990
   - 1000
-- &id019
-  - 0
+- - 0
   - 210
   - 270
   - 330
@@ -296,8 +288,7 @@ all_intermediate_budgets:
   - 930
   - 990
   - 1000
-- &id020
-  - 0
+- - 0
   - 210
   - 270
   - 330
@@ -313,8 +304,7 @@ all_intermediate_budgets:
   - 930
   - 990
   - 1000
-- &id021
-  - 0
+- - 0
   - 210
   - 270
   - 330
@@ -332,971 +322,683 @@ all_intermediate_budgets:
   - 1000
 all_recommended_xs:
 - - !!python/tuple
-    - 5
+    - 5.0
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - &id001 !!python/object/apply:numpy.dtype
-        args:
-        - f8
-        - false
-        - true
-        state: !!python/tuple
-        - 3
-        - <
-        - null
-        - null
-        - null
-        - -1
-        - -1
-        - 0
-      - !!binary |
-        mpmZmZmZE0A=
+    - 4.9
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        acbySRpQE0A=
+    - 4.828220242877965
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        XvAF/akVE0A=
+    - 4.77115832083815
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Dd1sA7bkEkA=
+    - 4.72335624727182
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        ficiwFa6EkA=
+    - 4.681991245539889
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        +ri23taUEkA=
+    - 4.645378954588567
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Bql+lB5zEkA=
+    - 4.612444103015849
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        w3PxD2tUEkA=
+    - 4.582458610463398
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        u46C9TI4EkA=
+    - 4.554898657638181
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        7Ub5VA8eEkA=
+    - 4.5293647642366315
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        7eudH68FEkA=
+    - 4.505556753022126
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        QEboh9XuEUA=
+    - 4.4832379952675225
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        EJJlwVXZEUA=
-  - &id002 !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        KG+9TgnFEUA=
-  - *id002
+    - 4.462218240075169
+  - !!python/tuple
+    - 4.44234161983448
+  - !!python/tuple
+    - 4.44234161983448
 - - !!python/tuple
-    - 5
+    - 5.0
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mpmZmZmZE0A=
+    - 4.9
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        zs9gsydQE0A=
+    - 4.828268158857999
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        PAClR8cVE0A=
+    - 4.77125483623946
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        cHUG+t/kEkA=
+    - 4.723516406221872
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        77h1R5C6EkA=
+    - 4.682219351774142
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        NM+82yCVEkA=
+    - 4.645691726023227
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        qaSawHlzEkA=
+    - 4.612860645066557
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        uKJtothUEkA=
+    - 4.582980956756656
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        EF7pHrI4EkA=
+    - 4.55552124554624
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        LG7BRp4eEkA=
+    - 4.530091984205565
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        bdDrfk0GEkA=
+    - 4.506399094048837
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        YLx37oDvEUA=
+    - 4.484204055878757
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        kxwv0gbaEUA=
-  - &id003 !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        5CMunbfFEUA=
-  - *id003
+    - 4.463313252399073
+  - !!python/tuple
+    - 4.4435677552669315
+  - !!python/tuple
+    - 4.4435677552669315
 - - !!python/tuple
-    - 5
+    - 5.0
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mpmZmZmZE0A=
+    - 4.9
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        sxukMB9QE0A=
+    - 4.82823275038073
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        JYn54bwVE0A=
+    - 4.771172505640116
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        TE0W09TkEkA=
+    - 4.723397826999343
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /gRhIoK6EkA=
+    - 4.682055296320445
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        XdajABGVEkA=
+    - 4.645470553365277
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        1GxqOWxzEkA=
+    - 4.612599470427851
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        1H5t0cxUEkA=
+    - 4.582700704662213
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        ulCOkKU4EkA=
+    - 4.555214194443703
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        xJfmp5AeEkA=
+    - 4.529748789482905
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        R1IHVT8GEkA=
+    - 4.506008016885366
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        eBwJ53TvEUA=
+    - 4.483762945089934
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        HJf5YwHaEUA=
-  - &id004 !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        OIFhWb3FEUA=
-  - *id004
+    - 4.462827836579086
+  - !!python/tuple
+    - 4.443047831595066
+  - !!python/tuple
+    - 4.443047831595066
 - - !!python/tuple
-    - 5
+    - 5.0
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mpmZmZmZE0A=
+    - 4.9
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        BzY2cSdQE0A=
+    - 4.828297566124756
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        r0KhEssVE0A=
+    - 4.77133985569511
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        apsmcOjkEkA=
+    - 4.723662803100284
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        WkSB3J+6EkA=
+    - 4.682430559303072
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mhqdpDeVEkA=
+    - 4.64598210005234
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        m4mSGJVzEkA=
+    - 4.613221916775125
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Zu/Or/VUEkA=
+    - 4.583404666246024
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        okET6844EkA=
+    - 4.55600793339497
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        d3g70bkeEkA=
+    - 4.530632771098147
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        xOFlcGgGEkA=
+    - 4.506973585550731
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        RRxpZJ3vEUA=
+    - 4.484800768623449
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hUUP/ibaEUA=
-  - &id005 !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        av6di93FEUA=
-  - *id005
+    - 4.4639247852540915
+  - !!python/tuple
+    - 4.444193643993287
+  - !!python/tuple
+    - 4.444193643993287
 - - !!python/tuple
-    - 5
+    - 5.0
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mpmZmZmZE0A=
+    - 4.9
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        1B/XtBlQE0A=
+    - 4.828242201209381
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        khJ14soVE0A=
+    - 4.771246332527541
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        qrIhavzkEkA=
+    - 4.723544599544323
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        jGY/lb66EkA=
+    - 4.682284832130809
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        MWtO4mGVEkA=
+    - 4.645777394471526
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        K1BFlM1zEkA=
+    - 4.612955155466781
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        TE7kvD1VEkA=
+    - 4.583085669022965
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        9ODP+ik5EkA=
+    - 4.555644025130447
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        NCxvqCofEkA=
+    - 4.530235421844776
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        P8W0Tu8GEkA=
+    - 4.506549316233132
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        jEU7cznwEUA=
+    - 4.484344301558649
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        WTzRMtbaEUA=
-  - &id006 !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        nrFkeJzGEUA=
-  - *id006
+    - 4.463436572342118
+  - !!python/tuple
+    - 4.443680365996487
+  - !!python/tuple
+    - 4.443680365996487
 - - !!python/tuple
-    - 5
+    - 5.0
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mpmZmZmZE0A=
+    - 4.9
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        SUyGXyJQE0A=
+    - 4.828231076513509
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        i1S7D8kVE0A=
+    - 4.77118550921551
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        MPoQ0e3kEkA=
+    - 4.723394504996684
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Fhzekai6EkA=
+    - 4.6820319457613335
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        5mUNbkyVEkA=
+    - 4.645431670927908
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        ilcxWLxzEkA=
+    - 4.612525516390918
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        2p8n+DJVEkA=
+    - 4.58258464984244
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Dy4KmyM5EkA=
+    - 4.555080790570565
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        J2BoICYfEkA=
+    - 4.529610075601056
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        QUdn5usGEkA=
+    - 4.505863936314343
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        LrU3MznwEUA=
+    - 4.483602781215476
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        0WNw1dzaEUA=
-  - &id007 !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        VXj7dq3GEUA=
-  - *id007
+    - 4.462634686662743
+  - !!python/tuple
+    - 4.442809303376708
+  - !!python/tuple
+    - 4.442809303376708
 - - !!python/tuple
-    - 5
+    - 5.0
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mpmZmZmZE0A=
+    - 4.9
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        xWF94SlQE0A=
+    - 4.828219519984449
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        I8yP4MsVE0A=
+    - 4.771140758673956
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        PpVdgOXkEkA=
+    - 4.72332673450608
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        N+PcFpi6EkA=
+    - 4.681939665803397
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        6Paewi2VEkA=
+    - 4.645321340494432
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        1Ve0+YpzEkA=
+    - 4.6123957586347775
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        b5EX6e1UEkA=
+    - 4.5824260924707305
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        VPBVUMs4EkA=
+    - 4.554874501548692
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Wl8YMbweEkA=
+    - 4.529352338311443
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        d4unzHEGEkA=
+    - 4.505558750506951
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        a/fPvq/vEUA=
+    - 4.483254550686459
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        u1iaG0XaEUA=
-  - &id008 !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AJ8FmAjGEUA=
-  - *id008
+    - 4.462247367333751
+  - !!python/tuple
+    - 4.442377777121173
+  - !!python/tuple
+    - 4.442377777121173
 - - !!python/tuple
-    - 5
+    - 5.0
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mpmZmZmZE0A=
+    - 4.9
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        1QILsCdQE0A=
+    - 4.828155661607371
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        OMMvhdoVE0A=
+    - 4.771043245392114
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        idrQ2xDlEkA=
+    - 4.723177248151984
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        sswvCd+6EkA=
+    - 4.681738456913568
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        piDTaI+VEkA=
+    - 4.645066791335436
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        x+Askwh0EkA=
+    - 4.612087630607224
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        50j2rIdVEkA=
+    - 4.582070938331959
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        +gwunH85EkA=
+    - 4.5544816827586825
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        O+WD84cfEkA=
+    - 4.528920891992621
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        3TYSNlIHEkA=
+    - 4.505093949146738
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        nSbjxaDwEUA=
+    - 4.482765194735517
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        icq5C0PbEUA=
-  - &id009 !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        ROY2ERDHEUA=
-  - *id009
+    - 4.461742626587014
+  - !!python/tuple
+    - 4.4418663689176245
+  - !!python/tuple
+    - 4.4418663689176245
 - - !!python/tuple
-    - 5
+    - 5.0
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mpmZmZmZE0A=
+    - 4.9
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        R1T0lSdQE0A=
+    - 4.828281141238867
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        UhymWcYVE0A=
+    - 4.77130191027399
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        vgCU9NnkEkA=
+    - 4.7235850644093755
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        +sXiuYW6EkA=
+    - 4.682297832549167
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        ag70rxCVEkA=
+    - 4.645788402306379
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        FW2ybmBzEkA=
+    - 4.6129703155455335
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        z1qPGLZUEkA=
+    - 4.583087744250107
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        aoYgZI04EkA=
+    - 4.5556364244958685
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Ys7fjH4eEkA=
+    - 4.53022182901151
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        QysD8TUGEkA=
+    - 4.506525035647594
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        KgIzUnDvEUA=
+    - 4.484315641542505
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        4wLukvzZEUA=
-  - &id010 !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        7JFUMbPFEUA=
-  - *id010
+    - 4.4634046793896625
+  - !!python/tuple
+    - 4.443634821147837
+  - !!python/tuple
+    - 4.443634821147837
 - - !!python/tuple
-    - 5
+    - 5.0
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mpmZmZmZE0A=
+    - 4.9
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        vtNYKR9QE0A=
+    - 4.82824690497898
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        zZeW6cIVE0A=
+    - 4.771193308305304
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        xrHQGt/kEkA=
+    - 4.723367579680743
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        29gawZC6EkA=
+    - 4.681961154914757
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        A/ujEyeVEkA=
+    - 4.645321235876418
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        BImKWodzEkA=
+    - 4.612375186030649
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        2b9BGfBUEkA=
+    - 4.582403553392493
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        a2vdAtQ4EkA=
+    - 4.554873753200952
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Pb3mi8keEkA=
+    - 4.529374807930152
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        eCmbV4MGEkA=
+    - 4.5055998794636265
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Dn0irsPvEUA=
+    - 4.483311991698895
   - !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        YrxMPVjaEUA=
-  - &id011 !!python/tuple
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        bw+DbxfGEUA=
-  - *id011
+    - 4.462319081864513
+  - !!python/tuple
+    - 4.442467634606434
+  - !!python/tuple
+    - 4.442467634606434
 num_macroreps: 10
 num_postreps: 100
 objective_curves:
 - !!python/tuple
-  - *id012
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hN0j4ztMBkA=
-    - 2.696579088415415
-    - 2.6330620969698146
-    - 2.5834797112812815
-    - 2.542591870603137
-    - 2.507677880829915
-    - 2.4771687512511007
-    - 2.450048175450278
-    - 2.425600643451994
-    - 2.4033420574958697
-    - 2.382910023864397
-    - 2.364019194517631
-    - 2.3464542555016186
-    - 2.3300483413404818
-    - 2.3146719583259725
-    - 2.3146719583259725
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 330.0
+    - 390.0
+    - 450.0
+    - 510.0
+    - 570.0
+    - 630.0
+    - 690.0
+    - 750.0
+    - 810.0
+    - 870.0
+    - 930.0
+    - 990.0
+    - 1000.0
+  - !!python/tuple
+    - 2.780124829249758
+    - 2.6893551138342264
+    - 2.6257317225670054
+    - 2.576067221538355
+    - 2.5350946867274846
+    - 2.500118232668328
+    - 2.4695277450866824
+    - 2.44231526621196
+    - 2.417786478457059
+    - 2.3954512886928754
+    - 2.3749384803161497
+    - 2.355974043875788
+    - 2.3383351981520986
+    - 2.3218478008517467
+    - 2.3063688616357227
+    - 2.3063688616357227
 - !!python/tuple
-  - *id013
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hN0j4ztMBkA=
-    - 2.6927495957222156
-    - 2.6292267043308843
-    - 2.5796724123661683
-    - 2.5387981038502456
-    - 2.503909007186637
-    - 2.4734098896565486
-    - 2.4462897802290806
-    - 2.4218556002694926
-    - 2.3996109467123254
-    - 2.3791834605827176
-    - 2.36029854146521
-    - 2.3427356429800965
-    - 2.32631273626676
-    - 2.310897985803673
-    - 2.310897985803673
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 330.0
+    - 390.0
+    - 450.0
+    - 510.0
+    - 570.0
+    - 630.0
+    - 690.0
+    - 750.0
+    - 810.0
+    - 870.0
+    - 930.0
+    - 990.0
+    - 1000.0
+  - !!python/tuple
+    - 2.780124829249758
+    - 2.698602375009207
+    - 2.635260454269838
+    - 2.585841590528148
+    - 2.545107808634954
+    - 2.5103527824475167
+    - 2.479979638398922
+    - 2.4529797693132105
+    - 2.428657700324564
+    - 2.4065190173202713
+    - 2.386193828775252
+    - 2.367414706908724
+    - 2.349962835823599
+    - 2.333660825871027
+    - 2.3183624159715324
+    - 2.3183624159715324
 - !!python/tuple
-  - *id014
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hN0j4ztMBkA=
-    - 2.700368147400127
-    - 2.637138702026826
-    - 2.587825748860766
-    - 2.547174859583101
-    - 2.512487612537681
-    - 2.4821850150373934
-    - 2.4552606432291895
-    - 2.431004320291268
-    - 2.4089152339790747
-    - 2.3886384487036945
-    - 2.3698886846574205
-    - 2.3524626617445765
-    - 2.336186787350253
-    - 2.3209188594169214
-    - 2.3209188594169214
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 330.0
+    - 390.0
+    - 450.0
+    - 510.0
+    - 570.0
+    - 630.0
+    - 690.0
+    - 750.0
+    - 810.0
+    - 870.0
+    - 930.0
+    - 990.0
+    - 1000.0
+  - !!python/tuple
+    - 2.780124829249758
+    - 2.695726447273908
+    - 2.632316299991869
+    - 2.582833952440025
+    - 2.542042839736181
+    - 2.50721938725384
+    - 2.4767744007042687
+    - 2.4497204079248234
+    - 2.425372033106726
+    - 2.403205203830921
+    - 2.3828574732359105
+    - 2.3640456113067616
+    - 2.346556852281289
+    - 2.33022178385454
+    - 2.3149023762161005
+    - 2.3149023762161005
 - !!python/tuple
-  - *id015
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hN0j4ztMBkA=
-    - 2.6957092747208744
-    - 2.632358287889074
-    - 2.5829581956057934
-    - 2.542221003289336
-    - 2.5074656139332676
-    - 2.4770874941449996
-    - 2.4500725186981382
-    - 2.425728245925109
-    - 2.4035597076635264
-    - 2.383197461991419
-    - 2.3643697057132353
-    - 2.3468626520960045
-    - 2.3304994499341953
-    - 2.315146819113173
-    - 2.315146819113173
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 330.0
+    - 390.0
+    - 450.0
+    - 510.0
+    - 570.0
+    - 630.0
+    - 690.0
+    - 750.0
+    - 810.0
+    - 870.0
+    - 930.0
+    - 990.0
+    - 1000.0
+  - !!python/tuple
+    - 2.780124829249758
+    - 2.69761352449041
+    - 2.634245563320202
+    - 2.5848473714702744
+    - 2.5441445259338336
+    - 2.5094169182363713
+    - 2.4790880895128082
+    - 2.452128144196195
+    - 2.4278422208751125
+    - 2.405737496018033
+    - 2.3854503517294976
+    - 2.366708342444746
+    - 2.34928425954856
+    - 2.3330055481105108
+    - 2.3177295691308033
+    - 2.3177295691308033
 - !!python/tuple
-  - *id016
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hN0j4ztMBkA=
-    - 2.68840636030384
-    - 2.624664535051768
-    - 2.57502637093311
-    - 2.534103707340533
-    - 2.4991509911055876
-    - 2.46860052144242
-    - 2.4414362915002594
-    - 2.4169651805098424
-    - 2.3946986654975917
-    - 2.3742671887177917
-    - 2.3553768506195265
-    - 2.3378121219061843
-    - 2.32139512414043
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        reWXMeKGAkA=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        reWXMeKGAkA=
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 330.0
+    - 390.0
+    - 450.0
+    - 510.0
+    - 570.0
+    - 630.0
+    - 690.0
+    - 750.0
+    - 810.0
+    - 870.0
+    - 930.0
+    - 990.0
+    - 1000.0
+  - !!python/tuple
+    - 2.780124829249758
+    - 2.6885602551680954
+    - 2.624895734274738
+    - 2.575246289996016
+    - 2.534323197809421
+    - 2.4993971094734384
+    - 2.4688598713337506
+    - 2.4417015815213814
+    - 2.4172287215729593
+    - 2.3949566562280804
+    - 2.3745143523966554
+    - 2.355614765054877
+    - 2.3380344787131704
+    - 2.321612646675303
+    - 2.307408082366422
+    - 2.307408082366422
 - !!python/tuple
-  - *id017
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hN0j4ztMBkA=
-    - 2.6958102080950277
-    - 2.6323713605330443
-    - 2.582903096845734
-    - 2.5421243432513503
-    - 2.507317490525692
-    - 2.4769207375911377
-    - 2.44991498215788
-    - 2.4255881761431017
-    - 2.4034404815345143
-    - 2.3831104066989415
-    - 2.364317520573398
-    - 2.346849547024524
-    - 2.3305386726474935
-    - 2.3152369545493015
-    - 2.3152369545493015
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 330.0
+    - 390.0
+    - 450.0
+    - 510.0
+    - 570.0
+    - 630.0
+    - 690.0
+    - 750.0
+    - 810.0
+    - 870.0
+    - 930.0
+    - 990.0
+    - 1000.0
+  - !!python/tuple
+    - 2.780124829249758
+    - 2.69872839078544
+    - 2.6353478144599247
+    - 2.585911794470485
+    - 2.545137157764509
+    - 2.5103194712926706
+    - 2.4798806907626223
+    - 2.4528174647841468
+    - 2.428449588900828
+    - 2.4062837954613556
+    - 2.38593949634555
+    - 2.3671290861781547
+    - 2.3496340702989933
+    - 2.3332783248904185
+    - 2.3179280456169598
+    - 2.3179280456169598
 - !!python/tuple
-  - *id018
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hN0j4ztMBkA=
-    - 2.6969085233225614
-    - 2.6334506179106993
-    - 2.5839571763755727
-    - 2.54314121766466
-    - 2.508304543111284
-    - 2.477862724650389
-    - 2.450789015660437
-    - 2.4263884033632945
-    - 2.4041733721201752
-    - 2.383779428351585
-    - 2.3649288454442248
-    - 2.3474038284836127
-    - 2.3310338869973055
-    - 2.315673529425823
-    - 2.315673529425823
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 330.0
+    - 390.0
+    - 450.0
+    - 510.0
+    - 570.0
+    - 630.0
+    - 690.0
+    - 750.0
+    - 810.0
+    - 870.0
+    - 930.0
+    - 990.0
+    - 1000.0
+  - !!python/tuple
+    - 2.780124829249758
+    - 2.693483139515207
+    - 2.6299924722853016
+    - 2.5804321647694564
+    - 2.539560564218672
+    - 2.5046625625512844
+    - 2.474159315791943
+    - 2.4470404377242776
+    - 2.422604102858047
+    - 2.4003543764144073
+    - 2.3799272307242676
+    - 2.3610528320760276
+    - 2.3435042143325218
+    - 2.3270979684962527
+    - 2.3116902366692744
+    - 2.3116902366692744
 - !!python/tuple
-  - *id019
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hN0j4ztMBkA=
-    - 2.6990558895937973
-    - 2.6356861775154505
-    - 2.5863116547826968
-    - 2.5456457709387847
-    - 2.5109489425903284
-    - 2.480631474726955
-    - 2.453678984347356
-    - 2.429400055012455
-    - 2.407294566192945
-    - 2.386995212315154
-    - 2.3682239099439446
-    - 2.350766335517243
-    - 2.3344511026420123
-    - 2.319134392781842
-    - 2.319134392781842
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 330.0
+    - 390.0
+    - 450.0
+    - 510.0
+    - 570.0
+    - 630.0
+    - 690.0
+    - 750.0
+    - 810.0
+    - 870.0
+    - 930.0
+    - 990.0
+    - 1000.0
+  - !!python/tuple
+    - 2.780124829249758
+    - 2.6989732313654495
+    - 2.6355904042017766
+    - 2.5861609109477017
+    - 2.5453847549562134
+    - 2.510576711134216
+    - 2.4801587722887715
+    - 2.4531042333907265
+    - 2.428733476601435
+    - 2.4065532483576972
+    - 2.386189741085131
+    - 2.3673710473425045
+    - 2.349882128494207
+    - 2.3335443993177587
+    - 2.3182074661114944
+    - 2.3182074661114944
 - !!python/tuple
-  - *id020
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hN0j4ztMBkA=
-    - 2.696429677418912
-    - 2.632993962290948
-    - 2.583483639187786
-    - 2.5426220873463325
-    - 2.507743210291555
-    - 2.4772453013812252
-    - 2.4501145112742346
-    - 2.425669404144472
-    - 2.403429758558655
-    - 2.3830308802855322
-    - 2.3641806736056354
-    - 2.3466464185778064
-    - 2.330250035520439
-    - 2.314853832665878
-    - 2.314853832665878
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 330.0
+    - 390.0
+    - 450.0
+    - 510.0
+    - 570.0
+    - 630.0
+    - 690.0
+    - 750.0
+    - 810.0
+    - 870.0
+    - 930.0
+    - 990.0
+    - 1000.0
+  - !!python/tuple
+    - 2.780124829249758
+    - 2.696739105506379
+    - 2.6332829812261918
+    - 2.5837853391428136
+    - 2.5429699446833505
+    - 2.508125065376736
+    - 2.4776849794557214
+    - 2.4506321465152903
+    - 2.426261826986175
+    - 2.404084297421792
+    - 2.3837360546370494
+    - 2.364923645616419
+    - 2.3474304464137767
+    - 2.3310822630373997
+    - 2.3157347860686723
+    - 2.3157347860686723
 - !!python/tuple
-  - *id021
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hN0j4ztMBkA=
-    - 2.693465927363123
-    - 2.630050727898232
-    - 2.5806241031717874
-    - 2.5398630882995445
-    - 2.5050725443414423
-    - 2.4746815276354686
-    - 2.44767496098299
-    - 2.4233552641005693
-    - 2.4012252496321853
-    - 2.3809117889363898
-    - 2.3621376746147407
-    - 2.344683528541491
-    - 2.3283754145989652
-    - 2.3130666963863185
-    - 2.3130666963863185
+  - !!python/tuple
+    - 0.0
+    - 210.0
+    - 270.0
+    - 330.0
+    - 390.0
+    - 450.0
+    - 510.0
+    - 570.0
+    - 630.0
+    - 690.0
+    - 750.0
+    - 810.0
+    - 870.0
+    - 930.0
+    - 990.0
+    - 1000.0
+  - !!python/tuple
+    - 2.780124829249758
+    - 2.6993382275745255
+    - 2.635978464435007
+    - 2.5865514847370155
+    - 2.5457588403958513
+    - 2.510914649024044
+    - 2.4804643633997516
+    - 2.4533900324261664
+    - 2.429023622604677
+    - 2.406858055069522
+    - 2.386510065793446
+    - 2.36770157910432
+    - 2.3502150302384344
+    - 2.3338695863360535
+    - 2.3185329122227234
+    - 2.3185329122227234
 problem_name: MM1-1
 progress_curves:
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.33
@@ -1312,72 +1014,26 @@ progress_curves:
     - 0.93
     - 0.99
     - 1.0
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAA8D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        cns196bY6T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        EilUvsOI5T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Wj6DXQ0r4j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        rf+8QuTI3j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        p0QapVIL2j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        luk3mtzm1T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        yJFQxy440j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        nRHcw9TMzT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        /n29k3fBxz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        RxMwphQ1wj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        3BwgkKsnuj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        +O0ERoadsD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        U2p6uxjSnj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        cis+/biqZL8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        cis+/biqZL8=
+  - !!python/tuple
+    - 1.0
+    - 0.8079828649736138
+    - 0.6733919250784318
+    - 0.5683300643423927
+    - 0.4816554646354735
+    - 0.40766516433458655
+    - 0.3429530766344328
+    - 0.2853869356966791
+    - 0.233497960075186
+    - 0.18624939121985906
+    - 0.14285594575390417
+    - 0.10273797539343814
+    - 0.06542420168014354
+    - 0.03054623848325078
+    - -0.002198400495752984
+    - -0.002198400495752984
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.33
@@ -1393,72 +1049,26 @@ progress_curves:
     - 0.93
     - 0.99
     - 1.0
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAA8D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        vxcLEBmW6T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        IBpDlxtG5T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        omGLNOLo4T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hTVwWgZF3j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        RC0mPlKI2T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        1hk/SjVk1T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Yjm4nYu10T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        b/tQD3zIzD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        80Lp0Ra+xj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        3b1a0gQywT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        F2deRV4iuD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        UsFmOAMxrT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        k+pM0JK0lj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hkUf/maQhb8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hkUf/maQhb8=
+  - !!python/tuple
+    - 1.0
+    - 0.8275448145680561
+    - 0.6935493063551823
+    - 0.58900707452711
+    - 0.5028375403150145
+    - 0.42931565555721785
+    - 0.3650633432605885
+    - 0.3079469638140722
+    - 0.25649528762742535
+    - 0.2096624154047783
+    - 0.16666586688174612
+    - 0.12693991684858083
+    - 0.09002167521617199
+    - 0.05553588629489449
+    - 0.02317314475811034
+    - 0.02317314475811034
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.33
@@ -1474,72 +1084,26 @@ progress_curves:
     - 0.93
     - 0.99
     - 1.0
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAA8D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        cANS+YAa6j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        e567FJ3P5T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        mxlMcZV24j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        8RuV3jBo3z8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        HgpX3oCy2j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        lPPtmTiV1j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        EpaZplzt0j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        LaMhXXtEzz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        pWShreZEyT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        0nUnoU7Dwz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        N1bYdrxXvT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        k39wnufgsz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        RJDtEvgTpj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        kUi0iaL5hT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        kUi0iaL5hT8=
+  - !!python/tuple
+    - 1.0
+    - 0.8214609858180487
+    - 0.6873211490127992
+    - 0.5826446215191456
+    - 0.496353807891781
+    - 0.4226871719793982
+    - 0.3582828817775003
+    - 0.3010520073525625
+    - 0.24954468297992652
+    - 0.2026522692417775
+    - 0.15960803455120479
+    - 0.11981282515112082
+    - 0.08281654959968886
+    - 0.04826082773358631
+    - 0.015853666913832123
+    - 0.015853666913832123
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.33
@@ -1555,72 +1119,26 @@ progress_curves:
     - 0.93
     - 0.99
     - 1.0
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAA8D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        oeygDYnJ6T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        3R0laIh85T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        gcFHE/0h4j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        vvg8MAC83j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        8NX61vED2j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        cONOjgnk1T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        ZQgaZAc50j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        gQDdpLPVzT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        ngCr/ZjQxz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        EuSRCxBJwj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        C0v2UGdYuj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        UYXYV07WsD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        um73AfrMnz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Kt0rLgPUWL8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Kt0rLgPUWL8=
+  - !!python/tuple
+    - 1.0
+    - 0.8254529688162042
+    - 0.6914023738499829
+    - 0.5869038719974163
+    - 0.500799781535637
+    - 0.42733589872119354
+    - 0.3631773324687312
+    - 0.3061454090296686
+    - 0.2547701965346557
+    - 0.20800916045370915
+    - 0.16509309195753155
+    - 0.1254456510569935
+    - 0.08858619344085328
+    - 0.0541496909361797
+    - 0.0218344004785783
+    - 0.0218344004785783
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.33
@@ -1636,72 +1154,26 @@ progress_curves:
     - 0.93
     - 0.99
     - 1.0
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAA8D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Nejac51K6T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        IdB+6tH25D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AwhYXyOY4T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        xaFradqh3T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        T4y0MvDi2D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        e9wHTQq91D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Mr4FCNgM0T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        L0SUpYN0yz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        5M5qWZloxT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        cpSoqYC4vz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        e8eSaRR2tT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        q3hpN+3Xpz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        BgF/JmALiD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAAAAA=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAAAAA=
+  - !!python/tuple
+    - 1.0
+    - 0.8063013957399309
+    - 0.6716234489290692
+    - 0.5665934397193996
+    - 0.48002343250809454
+    - 0.406139677455511
+    - 0.3415402353138426
+    - 0.28408872763736137
+    - 0.2323180634716134
+    - 0.1852030300150654
+    - 0.1419587321005047
+    - 0.1019779455800668
+    - 0.0647880502408073
+    - 0.03004878587977525
+    - 0.0
+    - 0.0
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.33
@@ -1717,72 +1189,26 @@ progress_curves:
     - 0.93
     - 0.99
     - 1.0
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAA8D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        VExlHkrL6T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        BCaVkcJ85T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        W8MS7wch4j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        I0YqFaS43j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Fke+zMv+2T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        P22htj3e1T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        E70vl40z0j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        iKD14/bLzT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        tl+CLk/Ixz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        BVjAwwJDwj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        rPar4yVRuj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        qBDf5HvUsD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        JzU/Osrinz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        W23X2PaxVb8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        W23X2PaxVb8=
+  - !!python/tuple
+    - 1.0
+    - 0.8278113923380714
+    - 0.6937341108721848
+    - 0.5891555861734599
+    - 0.5028996263945719
+    - 0.42924518808369233
+    - 0.36485402629233643
+    - 0.30760361966531125
+    - 0.25605504212077074
+    - 0.20916481962365463
+    - 0.16612784399303146
+    - 0.12633570569580782
+    - 0.08932619419762723
+    - 0.05472673158833814
+    - 0.022254263932676394
+    - 0.022254263932676394
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.33
@@ -1798,72 +1224,26 @@ progress_curves:
     - 0.93
     - 0.99
     - 1.0
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAA8D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        fCzpqWDe6T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        wlOmUoSP5T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        xS4oq1kz4j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        JH3Offzb3j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        NMWl2Boh2j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        G19cwfv+1T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        66Lf9u5R0j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        rPzFJJgDzj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        1HvgE0L7xz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        rscyBIVxwj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        rPU3yiSmuj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        iSt1cowhsT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        QohDdxl7oD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        dYloS9YUOr8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        dYloS9YUOr8=
+  - !!python/tuple
+    - 1.0
+    - 0.816715421431994
+    - 0.6824052501750945
+    - 0.5775638037008562
+    - 0.49110272352915846
+    - 0.4172783839061743
+    - 0.3527508482086303
+    - 0.29538271338695826
+    - 0.24368931553858209
+    - 0.19662153850226108
+    - 0.15340930660056157
+    - 0.11348180504137073
+    - 0.07635890245921047
+    - 0.041652609643402935
+    - 0.00905860503374429
+    - 0.00905860503374429
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.33
@@ -1879,72 +1259,26 @@ progress_curves:
     - 0.93
     - 0.99
     - 1.0
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAA8D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        +UkukrID6j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        hJ0TnV625T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        B+1VC0Vc4j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        0v+7pQoz3z8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Q6C6YwV92j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        iptSzThf1j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        WNUxpWK20j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        2ZKtCfXUzj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        WPbgcTzUyD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Cb3ywBJRwz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Pq84GUZwvD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        id5JPQ71sj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        PL5OilMxpD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Mm3nEJxxfD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Mm3nEJxxfD8=
+  - !!python/tuple
+    - 1.0
+    - 0.8283293358668838
+    - 0.6942472929065665
+    - 0.589682575070848
+    - 0.5034234013471981
+    - 0.4297893614036376
+    - 0.36544228877295
+    - 0.30821025907140465
+    - 0.25665558716699244
+    - 0.20973482882709016
+    - 0.16665721965241057
+    - 0.1268475580174044
+    - 0.08985094437169877
+    - 0.05528959387128966
+    - 0.02284535890948208
+    - 0.02284535890948208
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.33
@@ -1960,72 +1294,26 @@ progress_curves:
     - 0.93
     - 0.99
     - 1.0
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAA8D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        +oiONw7W6T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        KWODmpSH5T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        pI9O1x4r4j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        JBcTI/HJ3j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        fEeU9pcN2j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        5S/bw4Xp1T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Rec8DX060j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Bnkud5zRzT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        oNOgWZDHxz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        OkvOeHs9wj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        41iMFx8+uj8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        ypY88D24sD8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        rsXtWkRCnz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        k4HxV4qBYb8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        k4HxV4qBYb8=
+  - !!python/tuple
+    - 1.0
+    - 0.82360319516254
+    - 0.689366097157108
+    - 0.5846572151263347
+    - 0.49831503510296404
+    - 0.4246030722068964
+    - 0.3602091489500857
+    - 0.3029807280853863
+    - 0.2514269811750196
+    - 0.20451193170702184
+    - 0.16146661351404354
+    - 0.12167024677928706
+    - 0.08466457833623614
+    - 0.05008111268971095
+    - 0.01761457311836153
+    - 0.01761457311836153
 - !!python/tuple
-  - - 0.0
+  - !!python/tuple
+    - 0.0
     - 0.21
     - 0.27
     - 0.33
@@ -2041,68 +1329,21 @@ progress_curves:
     - 0.93
     - 0.99
     - 1.0
-  - - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        AAAAAAAA8D8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Rc4hHYyi6T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        yq7zxm1U5T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        GktAZmz54T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        rleB2wpq3j8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        0p2yscOw2T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        1XJypmiQ1T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        91IVT7Hl0T8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        FpZM2LwwzT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        U4Xsx08uxz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        xmCkCSuqwT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        G8SjlBIiuT8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        sbRzfqlOrz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        ntjtpbYvmz8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Y2lXg15IeL8=
-    - !!python/object/apply:numpy._core.multiarray.scalar
-      - *id001
-      - !!binary |
-        Y2lXg15IeL8=
+  - !!python/tuple
+    - 1.0
+    - 0.829101460424523
+    - 0.6950682078324476
+    - 0.5905088072529926
+    - 0.5042147535514605
+    - 0.4305042459345033
+    - 0.3660887459018648
+    - 0.308814847415956
+    - 0.2572693712251098
+    - 0.21037962661315207
+    - 0.16733484470044863
+    - 0.1275467753901644
+    - 0.09055517528042446
+    - 0.05597750480408133
+    - 0.023533817935684712
+    - 0.023533817935684712
 solver_name: SPSA

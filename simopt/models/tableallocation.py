@@ -217,6 +217,8 @@ class TableAllocation(Model):
         total_rev = 0
         # Track table availability.
         # (i,j) is the time that jth table of size i becomes available.
+        # TODO: figure out how floats are getting into the num_tables list
+        self.factors["num_tables"] = [int(n) for n in self.factors["num_tables"]]
         table_avail = np.zeros((4, max(self.factors["num_tables"])))
         # Generate total number of arrivals in the period
         n_arrivals = arrival_rng.poissonvariate(
@@ -608,10 +610,8 @@ class TableAllocationMaxRev(Problem):
             if self.model_fixed_factors["table_cap"][table] <= (
                 self.model_fixed_factors["capacity"] - allocated
             ):
-                num_tables[table] = num_tables[table] + 1
-                allocated = (
-                    allocated + self.model_fixed_factors["table_cap"][table]
-                )
+                num_tables[table] += 1
+                allocated += self.model_fixed_factors["table_cap"][table]
             elif self.model_fixed_factors["table_cap"][0] > (
                 self.model_fixed_factors["capacity"] - allocated
             ):
