@@ -218,7 +218,9 @@ class TableAllocation(Model):
         # Track table availability.
         # (i,j) is the time that jth table of size i becomes available.
         # TODO: figure out how floats are getting into the num_tables list
-        self.factors["num_tables"] = [int(n) for n in self.factors["num_tables"]]
+        self.factors["num_tables"] = [
+            int(n) for n in self.factors["num_tables"]
+        ]
         table_avail = np.zeros((4, max(self.factors["num_tables"])))
         # Generate total number of arrivals in the period
         n_arrivals = arrival_rng.poissonvariate(
