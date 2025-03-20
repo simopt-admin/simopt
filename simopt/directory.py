@@ -42,6 +42,7 @@ from simopt.solvers.neldmd import NelderMead
 from simopt.solvers.randomsearch import RandomSearch
 from simopt.solvers.spsa import SPSA
 from simopt.solvers.strong import STRONG
+from simopt.solvers.csa_lp import CSA_LP
 
 # directory dictionaries
 solver_directory: dict[str, type[Solver]] = {
@@ -52,6 +53,7 @@ solver_directory: dict[str, type[Solver]] = {
     "SPSA": SPSA,
     "ADAM": ADAM,
     "ALOE": ALOE,
+    "CSA_LP": CSA_LP
 }
 
 solver_unabbreviated_directory: dict[str, type[Solver]] = {
@@ -62,6 +64,7 @@ solver_unabbreviated_directory: dict[str, type[Solver]] = {
     "SPSA (SBCN)": SPSA,
     "ADAM (SBCN)": ADAM,
     "ALOE (SBCN)": ALOE,
+    "CSA_LP": CSA_LP
 }
 
 problem_directory: dict[str, type[Problem]] = {

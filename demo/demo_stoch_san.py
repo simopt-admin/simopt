@@ -24,24 +24,25 @@ from simopt.experiment_base import (
 
 )
 
-from simopt.models.san import SANLongestPathStochastic, SAN
+from simopt.models.san import SANLongestPathStochastic, SAN, SANLongestPath
 from simopt.solvers.randomsearch import RandomSearch
+from simopt.solvers.csa_lp import CSA_LP
 
 
 def main() -> None:
     
-    constraint_nodes = [2,3,4,5,6]
+    constraint_nodes = [5,7]
     
-    max_length_to_node = [1, 2, 2.5, 3, 3.5]
+    max_length_to_node = [5,5]
     
     initial = (5,)*13
     
     fixed_factors = {"constraint_nodes": constraint_nodes, "max_length_to_node": max_length_to_node, "initial_solution": initial}
     
-    solvers = [RandomSearch(name="RNDSRCH_10"), RandomSearch(fixed_factors={"sample_size":5}, name="RNDSRCH_5")]
+    solvers = [CSA_LP(), RandomSearch()]
 
     problem =  SANLongestPathStochastic(fixed_factors=fixed_factors)   
-    
+    #problem = SANLongestPath()
     
     
     # -----------------------------------------------
@@ -64,9 +65,9 @@ def main() -> None:
 
 
     # Run a fixed number of postreplications at all recommended solutions.
-    myexperiment.post_replicate(n_postreps=50)
+    myexperiment.post_replicate(n_postreps=200)
     # Find an optimal solution x* for normalization.
-    myexperiment.post_normalize(50)
+    myexperiment.post_normalize(200)
      
     #myexperiment.log_group_experiment_results()
     #myexperiment.report_group_statistics()
@@ -84,9 +85,9 @@ def main() -> None:
     #plot_feasibility(myexperiment.experiments, plot_type= "scatter")
     #plot_progress_curves(myexperiment.experiments[0] + myexperiment.experiments[1], "all", normalize=False)
     #plot_feasibility(myexperiment.experiments,  all_in_one=True, two_sided=True)
-    #plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=False, two_sided=True)
-    plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=False, two_sided=False)
-    #plot_feasibility(myexperiment.experiments, "violin",  all_in_one=True, two_sided=False)
+    plot_feasibility(myexperiment.experiments, "contour",  all_in_one=True, color_fill = False, two_sided=True, plot_conf_ints=False)
+    plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=True, two_sided=True)
+    plot_feasibility(myexperiment.experiments, "violin",  all_in_one=True, two_sided=True)
     #plot_feasibility(myexperiment.experiments, "violin",score_type= "inf_norm", norm_degree=2,  all_in_one=False)
     #plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True)
     #plot_feasibility_progress(myexperiment.experiments, plot_type = "mean",all_in_one=True)
