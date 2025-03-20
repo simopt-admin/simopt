@@ -1,6 +1,11 @@
+"""Script to run experiments from the command line."""
+
+# Sample usage for running a single experiment with viztracer:
+# viztracer --min_duration 0.05ms -m dev_tools.run_experiment --problems=CHESS-1 --num_macroreps=1
+
+import argparse
 import logging
 import os
-import argparse
 
 from simopt.directory import problem_directory, solver_directory
 from simopt.experiment_base import ProblemSolver, post_normalize
@@ -38,21 +43,33 @@ def main(
     num_postreps: int,
 ) -> None:
     # Check these outside of the loop to avoid repeated checks
-    should_run = "run" in methods or "all" in methods
-    should_post_replicate = "post_replicate" in methods or "all" in methods
-    should_post_normalize = "post_normalize" in methods or "all" in methods
+    method_steps = ["run", "post_replicate", "post_normalize"]
+    level = (
+        2
+        if "all" in methods
+        else max(
+            (method_steps.index(m) for m in methods if m in method_steps),
+            default=-1,
+        )
+    )
+
+    if valid_pairs == []:
+        logging.warning(
+            f"No valid problem/solver pairs found for problems {problems} and solvers {solvers}."
+        )
+        return
 
     # For each problem/solver pair, run the experiment
     for solver_name, problem_name in valid_pairs:
         logging.info(f"Experimenting with {solver_name} on {problem_name}.")
         myexperiment = ProblemSolver(solver_name, problem_name)
-        if should_run:
+        if level >= 0:
             logging.info("Executing `run` method.")
             myexperiment.run(n_macroreps=num_macroreps)
-        if should_post_replicate:
+        if level >= 1:
             logging.info("Executing `post_replicate` method.")
             myexperiment.post_replicate(n_postreps=num_postreps)
-        if should_post_normalize:
+        if level >= 2:
             logging.info("Executing `post_normalize` method.")
             post_normalize([myexperiment], n_postreps_init_opt=num_postreps)
 
