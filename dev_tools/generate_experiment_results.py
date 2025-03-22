@@ -1,6 +1,7 @@
 """Create test cases for all compatible problem-solver pairs."""
+
 # TO RUN FROM TOP DIRECTORY:
-# python -m dev_tools.testing.make_tests
+# python -m dev_tools.generate_experiment_results
 
 import os
 from pathlib import Path
@@ -15,11 +16,10 @@ NUM_POSTREPS = 100
 
 # Constants for the test directory
 
-TEST_DIR = (Path(__file__).parent / ".." / ".." / "test").resolve()
-EXPECTED_RESULTS_DIR = TEST_DIR / "expected_results"
+HOME_DIR = (Path(__file__).parent / "..").resolve()
+EXPECTED_RESULTS_DIR = HOME_DIR / "test" / "expected_results"
 
 
-# Check compatibility of a solver with a problem
 # Based off the similar function in simopt/experiment_base.py
 def is_compatible(problem_name: str, solver_name: str) -> bool:
     """Check if a solver is compatible with a problem.
@@ -44,7 +44,6 @@ def is_compatible(problem_name: str, solver_name: str) -> bool:
     return len(output) == 0
 
 
-# Create a test case for a problem and solver
 def create_test(problem_name: str, solver_name: str) -> None:
     """Create a test case for a problem and solver.
 
@@ -56,12 +55,6 @@ def create_test(problem_name: str, solver_name: str) -> None:
         Name of the solver.
 
     """
-    # Setup the names
-    file_problem_name = "".join(e for e in problem_name if e.isalnum())
-    file_solver_name = "".join(e for e in solver_name if e.isalnum())
-
-    filename_core = file_problem_name + "_" + file_solver_name
-
     # Run the experiment to get the expected results
     myexperiment = ProblemSolver(solver_name, problem_name)
     myexperiment.run(n_macroreps=NUM_MACROREPS)
@@ -69,7 +62,7 @@ def create_test(problem_name: str, solver_name: str) -> None:
     post_normalize([myexperiment], n_postreps_init_opt=NUM_POSTREPS)
 
     # Loop through each curve object and convert it into a tuple
-    # This is done to avoid pickling issues
+    # This is done to avoid packing custom classes into the YAML file
     for i in range(len(myexperiment.objective_curves)):
         myexperiment.objective_curves[i] = (  # type: ignore
             myexperiment.objective_curves[i].x_vals,
@@ -94,8 +87,10 @@ def create_test(problem_name: str, solver_name: str) -> None:
     }
 
     # Define the directory and output file
-    results_filename = filename_core + ".yaml"
-    results_filepath = os.path.join(EXPECTED_RESULTS_DIR, results_filename)
+    file_problem_name = "".join(e for e in problem_name if e.isalnum())
+    file_solver_name = "".join(e for e in solver_name if e.isalnum())
+    results_filename = f"{file_problem_name}_{file_solver_name}.yaml"
+    results_filepath = EXPECTED_RESULTS_DIR / results_filename
     # Write the results to the file
     with open(results_filepath, "w") as f:
         yaml.dump(results_dict, f)
