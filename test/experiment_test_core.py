@@ -71,20 +71,10 @@ class ExperimentTest(unittest.TestCase):
         self.assertEqual(
             self.myexperiment.solver.name,
             self.expected_solver_name,
-            "Solver name does not match (expected: "
-            + self.expected_solver_name
-            + ", actual: "
-            + self.myexperiment.solver.name
-            + ")",
         )
         self.assertEqual(
             self.myexperiment.problem.name,
             self.expected_problem_name,
-            "Problem name does not match (expected: "
-            + self.expected_problem_name
-            + ", actual: "
-            + self.myexperiment.problem.name
-            + ")",
         )
 
 
@@ -98,108 +88,71 @@ class ExperimentTestMixin:
     """
 
     def test_run(self: Any) -> None:
+        ps_names = f"{self.expected_problem_name} | {self.expected_solver_name}"
         # Check actual run results against expected
         self.myexperiment.run(n_macroreps=self.num_macroreps)
         self.assertEqual(
             self.myexperiment.n_macroreps,
             self.num_macroreps,
-            "Number of macro-replications for problem "
-            + self.expected_problem_name
-            + " and solver "
-            + self.expected_solver_name
-            + " does not match.",
+            f"[{ps_names}] Number of macro-replications does not match",
         )
         # For each macroreplication
         for mrep in range(self.num_macroreps):
+            rec_xs = self.myexperiment.all_recommended_xs[mrep]
+            expected_rec_xs = self.expected_all_recommended_xs[mrep]
             # Check to make sure the list lengths are the same
             self.assertEqual(
-                len(self.myexperiment.all_recommended_xs[mrep]),
-                len(self.expected_all_recommended_xs[mrep]),
-                "Length of recommended solutions for problem "
-                + self.expected_problem_name
-                + " and solver "
-                + self.expected_solver_name
-                + " do not match.",
+                len(rec_xs),
+                len(expected_rec_xs),
+                f"[{ps_names} | {mrep}] "
+                f"Length of recommended solutions do not match",
             )
             # For each list of recommended solutions
-            for sol_list_idx in range(
-                len(self.myexperiment.all_recommended_xs[mrep])
-            ):
+            for sol_list_idx in range(len(rec_xs)):
+                rec_xs_list = rec_xs[sol_list_idx]
+                expected_rec_xs_list = expected_rec_xs[sol_list_idx]
                 # Check to make sure the tuples are the same length
                 self.assertEqual(
-                    len(
-                        self.myexperiment.all_recommended_xs[mrep][sol_list_idx]
-                    ),
-                    len(self.expected_all_recommended_xs[mrep][sol_list_idx]),
-                    "Recommended solutions for problem "
-                    + self.expected_problem_name
-                    + " and solver "
-                    + self.expected_solver_name
-                    + " do not match at mrep "
-                    + str(mrep)
-                    + " and index "
-                    + str(sol_list_idx)
-                    + ".",
+                    len(rec_xs_list),
+                    len(expected_rec_xs_list),
+                    f"[{ps_names} | {mrep} | {sol_list_idx}] "
+                    f"Length of recommended solutions do not match",
                 )
                 # For each tuple of recommended solutions
-                for sol_idx in range(
-                    len(
-                        self.myexperiment.all_recommended_xs[mrep][sol_list_idx]
-                    )
-                ):
+                for sol_idx in range(len(rec_xs_list)):
+                    rec_xs_tup = rec_xs_list[sol_idx]
+                    expected_rec_xs_tup = expected_rec_xs_list[sol_idx]
                     self.assertAlmostEqual(
-                        self.myexperiment.all_recommended_xs[mrep][
-                            sol_list_idx
-                        ][sol_idx],
-                        self.expected_all_recommended_xs[mrep][sol_list_idx][
-                            sol_idx
-                        ],
+                        rec_xs_tup,
+                        expected_rec_xs_tup,
                         5,
-                        "Recommended solutions for problem "
-                        + self.expected_problem_name
-                        + " and solver "
-                        + self.expected_solver_name
-                        + " do not match at mrep "
-                        + str(mrep)
-                        + " and index "
-                        + str(sol_list_idx)
-                        + " and tuple "
-                        + str(sol_idx)
-                        + ".",
+                        f"[{ps_names} | {mrep} | {sol_list_idx} | {sol_idx}] "
+                        f"Recommended solutions do not match",
                     )
             # Check to make sure the list lengths are the same
+            int_budg = self.myexperiment.all_intermediate_budgets[mrep]
+            expected_int_budg = self.expected_all_intermediate_budgets[mrep]
             self.assertEqual(
-                len(self.myexperiment.all_intermediate_budgets[mrep]),
-                len(self.expected_all_intermediate_budgets[mrep]),
-                "Length of intermediate budgets for problem "
-                + self.expected_problem_name
-                + " and solver "
-                + self.expected_solver_name
-                + " do not match.",
+                len(int_budg),
+                len(expected_int_budg),
+                f"[{ps_names} | {mrep}] "
+                f"Length of intermediate budgets do not match",
             )
             # For each list of intermediate budgets
-            for sol_list_idx in range(
-                len(self.myexperiment.all_intermediate_budgets[mrep])
-            ):
+            for sol_list_idx in range(len(int_budg)):
+                int_budg_list = int_budg[sol_list_idx]
+                expected_int_budg_list = expected_int_budg[sol_list_idx]
                 # Check the values in the list
                 self.assertAlmostEqual(
-                    self.myexperiment.all_intermediate_budgets[mrep][
-                        sol_list_idx
-                    ],
-                    self.expected_all_intermediate_budgets[mrep][sol_list_idx],
+                    int_budg_list,
+                    expected_int_budg_list,
                     5,
-                    "Intermediate budgets for problem "
-                    + self.expected_problem_name
-                    + " and solver "
-                    + self.expected_solver_name
-                    + " do not match at mrep "
-                    + str(mrep)
-                    + " and index "
-                    + str(sol_list_idx)
-                    + ".",
+                    f"[{ps_names} | {mrep} | {sol_list_idx}] "
+                    f"Intermediate budgets do not match",
                 )
 
     def test_post_replicate(self: Any) -> None:
+        ps_names = f"{self.expected_problem_name} | {self.expected_solver_name}"
         # Simulate results from the run method
         self.myexperiment = ProblemSolver(
             self.expected_solver_name, self.expected_problem_name
@@ -215,45 +168,34 @@ class ExperimentTestMixin:
         self.assertEqual(
             self.myexperiment.n_postreps,
             self.num_postreps,
-            "Number of post-replications for problem "
-            + self.expected_problem_name
-            + " and solver "
-            + self.expected_solver_name
-            + " does not match.",
+            f"[{ps_names}] Number of post-replications does not match",
         )
         # For each macroreplication
         for mrep in range(self.num_macroreps):
+            est_obj = self.myexperiment.all_est_objectives[mrep]
+            expected_est_obj = self.expected_all_est_objectives[mrep]
             # Check to make sure the list lengths are the same
             self.assertEqual(
-                len(self.myexperiment.all_est_objectives[mrep]),
-                len(self.expected_all_est_objectives[mrep]),
-                "Estimated objectives for problem "
-                + self.expected_problem_name
-                + " and solver "
-                + self.expected_solver_name
-                + " do not match.",
+                len(est_obj),
+                len(expected_est_obj),
+                f"[{ps_names} | {mrep}] "
+                f"Length of estimated objectives do not match",
             )
             # For each list in the estimated objectives
-            for objective_idx in range(
-                len(self.myexperiment.all_est_objectives[mrep])
-            ):
+            for objective_idx in range(len(est_obj)):
+                est_obj_list = est_obj[objective_idx]
+                expected_est_obj_list = expected_est_obj[objective_idx]
                 # Check the values in the list
                 self.assertAlmostEqual(
-                    self.myexperiment.all_est_objectives[mrep][objective_idx],
-                    self.expected_all_est_objectives[mrep][objective_idx],
+                    est_obj_list,
+                    expected_est_obj_list,
                     5,
-                    "Estimated objectives for problem "
-                    + self.expected_problem_name
-                    + " and solver "
-                    + self.expected_solver_name
-                    + " do not match at mrep "
-                    + str(mrep)
-                    + " and index "
-                    + str(objective_idx)
-                    + ".",
+                    f"[{ps_names} | {mrep} | {objective_idx}] "
+                    f"Estimated objectives do not match",
                 )
 
     def test_post_normalize(self: Any) -> None:
+        ps_names = f"{self.expected_problem_name} | {self.expected_solver_name}"
         # Simulate results from the post_replicate method
         self.myexperiment = ProblemSolver(
             self.expected_solver_name, self.expected_problem_name
@@ -272,222 +214,148 @@ class ExperimentTestMixin:
             [self.myexperiment], n_postreps_init_opt=self.num_postreps
         )
 
-        objective_curves = []
-        progress_curves = []
+        objective_curves = [
+            [curve.x_vals, curve.y_vals]
+            for curve in self.myexperiment.objective_curves
+        ]
 
-        # Loop through each curve object and convert it into a tuple
-        for i in range(len(self.myexperiment.objective_curves)):
-            objective_curves.append(
-                [
-                    self.myexperiment.objective_curves[i].x_vals,
-                    self.myexperiment.objective_curves[i].y_vals,
-                ]
-            )
-        for i in range(len(self.myexperiment.progress_curves)):
-            progress_curves.append(
-                [
-                    self.myexperiment.progress_curves[i].x_vals,
-                    self.myexperiment.progress_curves[i].y_vals,
-                ]
-            )
+        progress_curves = [
+            [curve.x_vals, curve.y_vals]
+            for curve in self.myexperiment.progress_curves
+        ]
 
         for mrep in range(self.num_macroreps):
+            obj_curves = objective_curves[mrep]
+            expected_obj_curves = self.expected_objective_curves[mrep]
             # Check to make sure the same number of objective curves are present
             # This should probably always be 2 (x and y)
             self.assertEqual(
-                len(objective_curves[mrep]),
-                len(self.expected_objective_curves[mrep]),
-                "Number of objective curves for problem "
-                + self.expected_problem_name
-                + " and solver "
-                + self.expected_solver_name
-                + " does not match.",
+                len(obj_curves),
+                len(expected_obj_curves),
+                f"[{ps_names} | {mrep}] "
+                f"Number of objective curves do not match",
             )
             # Make sure that curves are only checked if they exist
-            if len(objective_curves[mrep]) > 0:
+            # TODO: check if this is necessary
+            if len(obj_curves) > 0:
+                obj_curve_x = obj_curves[0]
+                expected_obj_curve_x = expected_obj_curves[0]
                 # Make sure the lengths of the X and Y values are the same
                 self.assertEqual(
-                    len(objective_curves[mrep][0]),
-                    len(self.expected_objective_curves[mrep][0]),
-                    "Length of X values for problem "
-                    + self.expected_problem_name
-                    + " and solver "
-                    + self.expected_solver_name
-                    + " do not match.",
+                    len(obj_curve_x),
+                    len(expected_obj_curve_x),
+                    f"[{ps_names} | {mrep}] Length of X values do not match",
                 )
+                obj_curve_y = obj_curves[1]
+                expected_obj_curve_y = expected_obj_curves[1]
                 self.assertEqual(
-                    len(objective_curves[mrep][1]),
-                    len(self.expected_objective_curves[mrep][1]),
-                    "Length of Y values for problem "
-                    + self.expected_problem_name
-                    + " and solver "
-                    + self.expected_solver_name
-                    + " do not match.",
+                    len(obj_curve_y),
+                    len(expected_obj_curve_y),
+                    f"[{ps_names} | {mrep}] Length of Y values do not match",
                 )
                 # Check X (0) and Y (1) values
-                for x_index in range(len(objective_curves[mrep][0])):
+                for x_index in range(len(obj_curve_x)):
+                    obj_curve_x_val = obj_curve_x[x_index]
+                    expected_obj_curve_x_val = expected_obj_curve_x[x_index]
                     # If the value is NaN, make sure we're expecting NaN
-                    if math.isnan(objective_curves[mrep][0][x_index]):
+                    if math.isnan(obj_curve_x_val):
                         self.assertTrue(
-                            math.isnan(
-                                self.expected_objective_curves[mrep][0][x_index]
-                            ),
-                            "X values for problem "
-                            + self.expected_problem_name
-                            + " and solver "
-                            + self.expected_solver_name
-                            + " do not match at mrep "
-                            + str(mrep)
-                            + " and index "
-                            + str(x_index)
-                            + ".",
+                            math.isnan(expected_obj_curve_x_val),
+                            f"[{ps_names} | {mrep} | {x_index}] "
+                            f"Unexpected NaN value in X values",
                         )
                     # Otherwise, check the value normally
                     else:
                         self.assertAlmostEqual(
-                            objective_curves[mrep][0][x_index],
-                            self.expected_objective_curves[mrep][0][x_index],
+                            obj_curve_x_val,
+                            expected_obj_curve_x_val,
                             5,
-                            "X values for problem "
-                            + self.expected_problem_name
-                            + " and solver "
-                            + self.expected_solver_name
-                            + " do not match at mrep "
-                            + str(mrep)
-                            + " and index "
-                            + str(x_index)
-                            + ".",
+                            f"[{ps_names} | {mrep} | {x_index}] "
+                            f"X values do not match",
                         )
-                for y_index in range(len(objective_curves[mrep][1])):
+                for y_index in range(len(obj_curve_y)):
+                    obj_curve_y_val = obj_curve_y[y_index]
+                    expected_obj_curve_y_val = expected_obj_curve_y[y_index]
                     # If the value is NaN, make sure we're expecting NaN
-                    if math.isnan(objective_curves[mrep][1][y_index]):
+                    if math.isnan(obj_curve_y_val):
                         self.assertTrue(
-                            math.isnan(
-                                self.expected_objective_curves[mrep][1][y_index]
-                            ),
-                            "Y values for problem "
-                            + self.expected_problem_name
-                            + " and solver "
-                            + self.expected_solver_name
-                            + " do not match at mrep "
-                            + str(mrep)
-                            + " and index "
-                            + str(y_index)
-                            + ".",
+                            math.isnan(expected_obj_curve_y_val),
+                            f"[{ps_names} | {mrep} | {y_index}] "
+                            f"Unexpected NaN value in Y values",
                         )
                     # Otherwise, check the value normally
                     else:
                         self.assertAlmostEqual(
-                            objective_curves[mrep][1][y_index],
-                            self.expected_objective_curves[mrep][1][y_index],
+                            obj_curve_y_val,
+                            expected_obj_curve_y_val,
                             5,
-                            "Y values for problem "
-                            + self.expected_problem_name
-                            + " and solver "
-                            + self.expected_solver_name
-                            + " do not match at mrep "
-                            + str(mrep)
-                            + " and index "
-                            + str(y_index)
-                            + ".",
+                            f"[{ps_names} | {mrep} | {y_index}] "
+                            f"Y values do not match",
                         )
 
             # Check to make sure the same number of progress curves are present
             # This should probably always be 2 (x and y)
+            prog_curves = progress_curves[mrep]
+            expected_prog_curves = self.expected_progress_curves[mrep]
             self.assertEqual(
-                len(progress_curves[mrep]),
-                len(self.expected_progress_curves[mrep]),
-                "Number of progress curves for problem "
-                + self.expected_problem_name
-                + " and solver "
-                + self.expected_solver_name
-                + " does not match.",
+                len(prog_curves),
+                len(expected_prog_curves),
+                f"[{ps_names} | {mrep}] Number of progress curves do not match",
             )
             # Make sure that curves are only checked if they exist
-            if len(progress_curves[mrep]) > 0:
+            # TODO: check if this is necessary
+            if len(prog_curves) > 0:
+                prog_curve_x = prog_curves[0]
+                expected_prog_curve_x = expected_prog_curves[0]
                 # Make sure the lengths of the X and Y values are the same
                 self.assertEqual(
-                    len(progress_curves[mrep][0]),
-                    len(self.expected_progress_curves[mrep][0]),
-                    "Length of X values for problem "
-                    + self.expected_problem_name
-                    + " and solver "
-                    + self.expected_solver_name
-                    + " do not match.",
+                    len(prog_curve_x),
+                    len(expected_prog_curve_x),
+                    f"[{ps_names} | {mrep}] Length of X values do not match",
                 )
+                prog_curve_y = prog_curves[1]
+                expected_prog_curve_y = expected_prog_curves[1]
                 self.assertEqual(
-                    len(progress_curves[mrep][1]),
-                    len(self.expected_progress_curves[mrep][1]),
-                    "Length of Y values for problem "
-                    + self.expected_problem_name
-                    + " and solver "
-                    + self.expected_solver_name
-                    + " do not match.",
+                    len(prog_curve_y),
+                    len(expected_prog_curve_y),
+                    f"[{ps_names} | {mrep}] Length of Y values do not match",
                 )
                 # Check X (0) and Y (1) values
-                for x_index in range(len(progress_curves[mrep][0])):
+                for x_index in range(len(prog_curve_x)):
+                    prog_curve_x_val = prog_curve_x[x_index]
+                    expected_prog_curve_x_val = expected_prog_curve_x[x_index]
                     # If the value is NaN, make sure we're expecting NaN
-                    if math.isnan(progress_curves[mrep][0][x_index]):
+                    if math.isnan(prog_curve_x_val):
                         self.assertTrue(
-                            math.isnan(
-                                self.expected_progress_curves[mrep][0][x_index]
-                            ),
-                            "X values for problem "
-                            + self.expected_problem_name
-                            + " and solver "
-                            + self.expected_solver_name
-                            + " do not match at mrep "
-                            + str(mrep)
-                            + " and index "
-                            + str(x_index)
-                            + ".",
+                            math.isnan(expected_prog_curve_x_val),
+                            f"[{ps_names} | {mrep} | {x_index}] "
+                            f"Unexpected NaN value in X values",
                         )
                     # Otherwise, check the value normally
                     else:
                         self.assertAlmostEqual(
-                            progress_curves[mrep][0][x_index],
-                            self.expected_progress_curves[mrep][0][x_index],
+                            prog_curve_x_val,
+                            expected_prog_curve_x_val,
                             5,
-                            "X values for problem "
-                            + self.expected_problem_name
-                            + " and solver "
-                            + self.expected_solver_name
-                            + " do not match at mrep "
-                            + str(mrep)
-                            + " and index "
-                            + str(x_index)
-                            + ".",
+                            f"[{ps_names} | {mrep} | {x_index}] "
+                            f"X values do not match",
                         )
-                for y_index in range(len(progress_curves[mrep][1])):
+                for y_index in range(len(prog_curve_y)):
+                    prog_curve_y_val = prog_curve_y[y_index]
+                    expected_prog_curve_y_val = expected_prog_curve_y[y_index]
                     # If the value is NaN, make sure we're expecting NaN
-                    if math.isnan(progress_curves[mrep][1][y_index]):
+                    if math.isnan(prog_curve_y_val):
                         self.assertTrue(
-                            math.isnan(
-                                self.expected_progress_curves[mrep][1][y_index]
-                            ),
-                            "Y values for problem "
-                            + self.expected_problem_name
-                            + " and solver "
-                            + self.expected_solver_name
-                            + " do not match at mrep "
-                            + str(mrep)
-                            + " and index "
-                            + str(y_index)
-                            + ".",
+                            math.isnan(expected_prog_curve_y_val),
+                            f"[{ps_names} | {mrep} | {y_index}] "
+                            f"Unexpected NaN value in Y values",
                         )
                     # Otherwise, check the value normally
                     else:
                         self.assertAlmostEqual(
-                            progress_curves[mrep][1][y_index],
-                            self.expected_progress_curves[mrep][1][y_index],
+                            prog_curve_y_val,
+                            expected_prog_curve_y_val,
                             5,
-                            "Y values for problem "
-                            + self.expected_problem_name
-                            + " and solver "
-                            + self.expected_solver_name
-                            + " do not match at mrep "
-                            + str(mrep)
-                            + " and index "
-                            + str(y_index)
-                            + ".",
+                            f"[{ps_names} | {mrep} | {y_index}] "
+                            f"Y values do not match",
                         )
