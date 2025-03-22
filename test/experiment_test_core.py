@@ -333,10 +333,13 @@ class ExperimentTestMixin:
                         )
                     # Otherwise, check the value normally
                     else:
-                        self.assertAlmostEqual(
-                            prog_curve_x_val,
-                            expected_prog_curve_x_val,
-                            5,
+                        self.assertTrue(
+                            math.isclose(
+                                prog_curve_x_val,
+                                expected_prog_curve_x_val,
+                                rel_tol=1e-8,
+                                abs_tol=1e-8,
+                            ),
                             f"[{ps_names} | {mrep} | {x_index}] "
                             f"X values do not match",
                         )
@@ -352,10 +355,13 @@ class ExperimentTestMixin:
                         )
                     # Otherwise, check the value normally
                     else:
-                        self.assertAlmostEqual(
-                            prog_curve_y_val,
-                            expected_prog_curve_y_val,
-                            5,
+                        self.assertTrue(
+                            math.isclose(
+                                prog_curve_y_val,
+                                expected_prog_curve_y_val,
+                                rel_tol=1e-8,
+                                abs_tol=1e-8,
+                            ),
                             f"[{ps_names} | {mrep} | {y_index}] "
                             f"Y values do not match",
                         )
