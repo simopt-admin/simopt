@@ -28,19 +28,16 @@ To generate plots for the selected top 5 solvers, run the command (after the pre
 ## Citation
 To cite this work, please use
 ```
-@inproceedings{boometal24,
-	abstract = {Linearly constrained simulation optimization problems are those that include deterministic linear constraints in addition to an objective function that can only be evaluated through simulation. We provide several solvers for linearly constrained simulation optimization that all rely on gradient estimates of the objective function. We compare these solvers on random instances of 4 test problems from SimOpt.
-},
-	address = {Piscataway, New Jersey},
-	author = {Natthawut Boonsiriphatthanajaroen and Rongyi He and Litong Liu and Tinghan Ye and Shane G. Henderson},
-	booktitle = {Proceedings of the 2024 Winter Simulation Conference},
-	date-added = {2023-05-05 13:46:37 -0400},
-	date-modified = {2024-05-03 09:58:07 -0400},
-	editor = {H. Lam and E. Azar and D. Batur and S. Gao and W. Xie and S.R. Hunter and M. D. Rossetti},
-	pages = {Submitted},
-	publisher = {IEEE},
-	title = {Evaluating Solvers for Linearly Constrained Simulation Optimization},
-	year = {2024}}
+@INPROCEEDINGS{10838622,
+  author={Boonsiriphatthanajaroen, Natthawut and He, Rongyi and Liu, Litong and Ye, Tinghan and Henderson, Shane G.},
+  booktitle={2024 Winter Simulation Conference (WSC)}, 
+  title={Evaluating Solvers for Linearly Constrained Simulation Optimization}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={3482-3493},
+  keywords={Linear programming;Optimization},
+  doi={10.1109/WSC63780.2024.10838622}}
 
 ```
 
