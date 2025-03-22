@@ -1,9 +1,11 @@
 """Create test cases for all compatible problem-solver pairs."""
 # TO RUN FROM TOP DIRECTORY:
-# python -m test.make_tests
+# python -m dev_tools.testing.make_tests
+
+import os
+from pathlib import Path
 
 import yaml
-import os
 
 from simopt.directory import problem_directory, solver_directory
 from simopt.experiment_base import ProblemSolver, post_normalize
@@ -11,14 +13,10 @@ from simopt.experiment_base import ProblemSolver, post_normalize
 NUM_MACROREPS = 10
 NUM_POSTREPS = 100
 
-# Constants for the template file
-TEMPLATE_NAME = "testing_template.py"
-TEMPLATE_DIR = os.path.join(os.getcwd(), "dev_tools", "testing")
-TEMPLATE_FILEPATH = os.path.join(TEMPLATE_DIR, TEMPLATE_NAME)
-
 # Constants for the test directory
-TEST_DIR = os.path.join(os.getcwd(), "test")
-EXPECTED_RESULTS_DIR = os.path.join(TEST_DIR, "expected_results")
+
+TEST_DIR = (Path(__file__).parent / ".." / ".." / "test").resolve()
+EXPECTED_RESULTS_DIR = TEST_DIR / "expected_results"
 
 
 # Check compatibility of a solver with a problem
@@ -83,13 +81,6 @@ def create_test(problem_name: str, solver_name: str) -> None:
             myexperiment.progress_curves[i].y_vals,
         )
 
-    # Strip any non-alphanumeric characters from the problem and solver names
-    filename = "test_" + filename_core.lower() + ".py"
-
-    # Open the file template and read it
-    with open(TEMPLATE_FILEPATH, "rb") as f:
-        template = f.read()
-
     results_dict = {
         "num_macroreps": NUM_MACROREPS,
         "num_postreps": NUM_POSTREPS,
@@ -109,40 +100,21 @@ def create_test(problem_name: str, solver_name: str) -> None:
     with open(results_filepath, "w") as f:
         yaml.dump(results_dict, f)
 
-    # Replace the placeholders in the template with the actual values
-    class_name = "Test" + file_problem_name.title() + file_solver_name.title()
-    # Replace the class name
-    template = template.replace(
-        b"TestProblemSolver",
-        class_name.encode(),
-    )
-    # Replace the filename for the results file
-    template = template.replace(
-        b"{{FILE}}",
-        results_filename.encode(),
-    )
-
-    # Write the new test into the new file
-    with open(os.path.join(TEST_DIR, filename), "wb") as f:
-        f.write(template)
-
 
 def main() -> None:
     """Create test cases for all compatible problem-solver pairs."""
     # Create a list of compatible problem-solver pairs
-    compatible_pairs = []
-    for problem_name in problem_directory:
-        for solver_name in solver_directory:
-            if is_compatible(problem_name, solver_name):
-                pair = (problem_name, solver_name)
-                compatible_pairs.append(pair)
+    compatible_pairs = [
+        (problem_name, solver_name)
+        for problem_name in problem_directory
+        for solver_name in solver_directory
+        if is_compatible(problem_name, solver_name)
+    ]
 
     # Create the test directory if it doesn't exist
-    os.makedirs(TEST_DIR, exist_ok=True)
-    existing_test_files = os.listdir(TEST_DIR)
     # Create the expected directory if it doesn't exist
     os.makedirs(EXPECTED_RESULTS_DIR, exist_ok=True)
-    existing_result_files = os.listdir(EXPECTED_RESULTS_DIR)
+    existing_results = os.listdir(EXPECTED_RESULTS_DIR)
 
     # Don't generate any tests for pairs that already have tests generated
     for pair in compatible_pairs:
@@ -151,34 +123,15 @@ def main() -> None:
         # Generate the expected filenames
         file_problem_name = "".join(e for e in problem_name if e.isalnum())
         file_solver_name = "".join(e for e in solver_name if e.isalnum())
-        filename_core = file_problem_name + "_" + file_solver_name
-        test_filename = "test_" + filename_core.lower() + ".py"
-        results_filename = filename_core + ".yaml"
-        # Check if the files exist or if the test needs created
-        test_exists = test_filename in existing_test_files
-        results_exist = results_filename in existing_result_files
-        if test_exists and results_exist:
-            print("Test already exists for", pair)
-        else:
-            print("Creating test for", pair)
-            create_test(problem_name, solver_name)
-        # These files exist, so we don't need to delete them later
-        if test_exists:
-            existing_test_files.remove(test_filename)
-        if results_exist:
-            existing_result_files.remove(results_filename)
-
-    # Remove any tests that are no longer needed
-    for test_file in existing_test_files:
-        if test_file.startswith("test_") and test_file.endswith(".py"):
-            path = os.path.join(TEST_DIR, test_file)
-            print(f"Removing unneeded test file: {path}")
-            os.remove(path)
-    for result_file in existing_result_files:
-        if result_file.endswith(".yaml"):
-            path = os.path.join(EXPECTED_RESULTS_DIR, result_file)
-            print(f"Removing unneeded result file: {path}")
-            os.remove(path)
+        results_filename = f"{file_problem_name}_{file_solver_name}.yaml"
+        # If file exists, skip it
+        if results_filename in existing_results:
+            print(f"Test for {pair} already exists")
+            continue
+        # If file doesn't exist, create it
+        print(f"Creating test for {pair}")
+        create_test(problem_name, solver_name)
+    print("All tests created!")
 
 
 if __name__ == "__main__":
