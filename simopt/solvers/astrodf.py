@@ -13,14 +13,13 @@ This version does not require a delta_max, instead it estimates the maximum step
 """
 
 from __future__ import annotations
-from simopt.utils import classproperty
 
 import logging
 from math import ceil, log
 from typing import Callable
 
 import numpy as np
-from numpy.linalg import inv, norm, pinv, LinAlgError
+from numpy.linalg import LinAlgError, inv, norm, pinv
 from scipy.optimize import NonlinearConstraint, minimize
 
 from simopt.base import (
@@ -31,6 +30,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
+from simopt.utils import classproperty
 
 
 class ASTRODF(Solver):
@@ -171,20 +171,75 @@ class ASTRODF(Solver):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-        # Initialize instance variables
-        self.iteration_count = 0
-        self.delta_k = None
-        self.delta_max = None
-        self.expended_budget = 0
-        self.recommended_solns = []
-        self.intermediate_budgets = []
-        self.incumbent_x = None
-        self.incumbent_solution = None
-        self.interpolation_solns = []
-        self.visited_pts_list = []
-        self.intermediate_budgets = []
-        self.kappa = 0
-        self.h_k = None
+    @property
+    def iteration_count(self) -> int:
+        """Get the current iteration count."""
+        return self._iteration_count
+
+    @iteration_count.setter
+    def iteration_count(self, value: int) -> None:
+        """Set the current iteration count."""
+        self._iteration_count = value
+
+    @property
+    def delta_k(self) -> float:
+        """Get the current delta_k value."""
+        return self._delta_k
+
+    @delta_k.setter
+    def delta_k(self, value: float) -> None:
+        """Set the current delta_k value."""
+        self._delta_k = value
+
+    @property
+    def delta_max(self) -> float:
+        """Get the current delta_max value."""
+        return self._delta_max
+
+    @delta_max.setter
+    def delta_max(self, value: float) -> None:
+        """Set the current delta_max value."""
+        self._delta_max = value
+
+    @property
+    def expended_budget(self) -> int:
+        """Get the current expended budget."""
+        return self._expended_budget
+
+    @expended_budget.setter
+    def expended_budget(self, value: int) -> None:
+        """Set the current expended budget."""
+        self._expended_budget = value
+
+    @property
+    def incumbent_x(self) -> tuple[float, ...]:
+        """Get the incumbent solution."""
+        return self._incumbent_x
+
+    @incumbent_x.setter
+    def incumbent_x(self, value: tuple[float, ...]) -> None:
+        """Set the incumbent solution."""
+        self._incumbent_x = value
+
+    @property
+    def incumbent_solution(self) -> Solution:
+        """Get the incumbent solution."""
+        return self._incumbent_solution
+
+    @incumbent_solution.setter
+    def incumbent_solution(self, value: Solution) -> None:
+        """Set the incumbent solution."""
+        self._incumbent_solution = value
+
+    @property
+    def h_k(self) -> np.ndarray:
+        """Get the Hessian approximation."""
+        return self._h_k
+
+    @h_k.setter
+    def h_k(self, value: np.ndarray) -> None:
+        """Set the Hessian approximation."""
+        self._h_k = value
 
     def check_eta_1(self) -> None:
         if self.factors["eta_1"] <= 0:
@@ -286,9 +341,13 @@ class ASTRODF(Solver):
     def select_interpolation_points(
         self, delta_k: float, f_index: int
     ) -> tuple[list, list]:
+        assert self.incumbent_x is not None, (
+            "incumbent_x should be initialized before use"
+        )
+
         # If it is the first iteration or there is no design point we can reuse within the trust region, use the coordinate basis
         if (
-            self.iteration_count == 1
+            not self.reuse_points
             or (
                 norm(
                     np.array(self.incumbent_x)
@@ -296,7 +355,7 @@ class ASTRODF(Solver):
                 )
                 == 0
             )
-            or not self.reuse_points
+            or self.iteration_count == 1
         ):
             # Construct the interpolation set
             var_y = self.get_coordinate_basis_interpolation_points(
@@ -306,7 +365,7 @@ class ASTRODF(Solver):
                 tuple(np.zeros(self.problem.dim)), delta_k, self.problem
             )
         # Else if we will reuse one design point (k > 1)
-        elif self.iteration_count > 1:
+        else:
             visited_pts_array = np.array(self.visited_pts_list[f_index].x)
             diff_array = visited_pts_array - np.array(self.incumbent_x)
             first_basis = (diff_array) / norm(diff_array)
@@ -343,11 +402,6 @@ class ASTRODF(Solver):
                 np.array(self.visited_pts_list[f_index].x)
                 - np.array(self.incumbent_x),
             )
-        # Else
-        # TODO: figure out what to do if the above conditions are not met
-        else:
-            var_y = []
-            var_z = []
 
         return var_y, var_z
 
@@ -395,9 +449,11 @@ class ASTRODF(Solver):
                     / (delta_k ** (self.delta_power / 2))
                 )
 
-            stopping = self.get_stopping_time(
-                pilot_run, sig2, delta_k, kappa or self.kappa
-            )
+            # Make sure kappa is not None
+            k = kappa or self.kappa
+            assert k is not None, "kappa should be initialized before use"
+            # Compute stopping time
+            stopping = self.get_stopping_time(pilot_run, sig2, delta_k, k)
 
             # Stop if conditions are met
             if (
@@ -428,6 +484,17 @@ class ASTRODF(Solver):
         reconstruct with new points in a shrunk trust-region if the model fails the criticality condition
         the criticality condition keeps the model gradient norm and the trust-region size in lock-step
         """
+        # Make sure we have our global variables initialized
+        assert self.delta_k is not None, (
+            "delta_k should be initialized before use"
+        )
+        assert self.incumbent_x is not None, (
+            "incumbent_x should be initialized before use"
+        )
+        assert self.incumbent_solution is not None, (
+            "incumbent_solution should be initialized before use"
+        )
+
         interpolation_solns = []
 
         ## inner loop parameters
@@ -570,11 +637,11 @@ class ASTRODF(Solver):
 
     def get_coordinate_basis_interpolation_points(
         self, x_k: tuple[int | float, ...], delta: float, problem: Problem
-    ) -> list:
+    ) -> list[list[list[int | float]]]:
         """
         Compute the interpolation points (2d+1) using the coordinate basis.
         """
-        y_var = [[x_k]]
+        y_var = [[list(x_k)]]
         is_block_constraint = sum(x_k) != 0
         num_decision_vars = problem.dim
 
@@ -587,8 +654,8 @@ class ASTRODF(Solver):
             )
             coord_diff = delta * coord_vector
 
-            minus = [x - d for x, d in zip(x_k, coord_diff)]
-            plus = [x + d for x, d in zip(x_k, coord_diff)]
+            minus: list[float] = [x - d for x, d in zip(x_k, coord_diff)]
+            plus: list[float] = [x + d for x, d in zip(x_k, coord_diff)]
 
             if is_block_constraint:
                 minus = [
@@ -624,24 +691,32 @@ class ASTRODF(Solver):
         upper_bounds = np.array(problem.upper_bounds)
 
         for i in range(num_decision_vars):
-            rotate_matrix_delta = delta * rotate_matrix[i]
+            rotate_matrix_delta: np.ndarray = delta * rotate_matrix[i]
 
             if i == 0:
-                plus = np.array(reused_x)
+                plus = reused_x
             else:
                 plus = x_k + rotate_matrix_delta
 
             minus = x_k - rotate_matrix_delta
 
             if is_block_constraint:
-                minus = [
-                    clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j])
-                    for j, val in enumerate(minus)
-                ]
-                plus = [
-                    clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j])
-                    for j, val in enumerate(plus)
-                ]
+                minus = np.array(
+                    [
+                        clamp_with_epsilon(
+                            val, lower_bounds[j], upper_bounds[j]
+                        )
+                        for j, val in enumerate(minus)
+                    ]
+                )
+                plus = np.array(
+                    [
+                        clamp_with_epsilon(
+                            val, lower_bounds[j], upper_bounds[j]
+                        )
+                        for j, val in enumerate(plus)
+                    ]
+                )
 
             y_var.append([plus])
             y_var.append([minus])
@@ -656,7 +731,9 @@ class ASTRODF(Solver):
         if not hasattr(self, "hessian_skip_count"):
             self.hessian_skip_count = 0
 
-        def handle_hessian_skip(variable: str, value: float) -> None:
+        def handle_hessian_skip(
+            variable: str, value: float | np.ndarray
+        ) -> None:
             """Handles skipping Hessian update if gradients are near zero."""
             self.hessian_skip_count += 1
             message = (
@@ -697,20 +774,22 @@ class ASTRODF(Solver):
         h_s_k = self.h_k @ s
         s_h_s_k = s @ h_s_k
 
-        if np.isclose(s_h_s_k, 0, atol=epsilon):
+        if np.all(np.isclose(s_h_s_k, 0, atol=epsilon)):
             handle_hessian_skip("s_h_s_k", s_h_s_k)
             return
         else:
             self.h_k += (
                 np.outer(y_k, y_k) * r_k - np.outer(h_s_k, h_s_k) / s_h_s_k
             )
-            self.hessian_skip_count = 0  # Reset counter on successful update
+            # Reset counter on successful update
+            self.hessian_skip_count = 0
 
     def iterate(self) -> None:
         """
         Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
         """
         self.iteration_count += 1
+        neg_minmax = -self.problem.minmax[0]
 
         # determine power of delta in adaptive sampling rule
         pilot_run = ceil(
@@ -744,16 +823,18 @@ class ASTRODF(Solver):
         if self.enable_gradient:
             fval = (
                 np.ones(2 * self.problem.dim + 1)
-                * -1
-                * self.problem.minmax[0]
+                * neg_minmax
                 * self.incumbent_solution.objectives_mean
             )
             grad = (
-                -1
-                * self.problem.minmax[0]
+                neg_minmax
                 * self.incumbent_solution.objectives_gradients_mean[0]
             )
             hessian = self.h_k
+            # Set empty y_var and interpolation_solns
+            # This isn't really needed, but it gets rid of typing warnings
+            y_var = [[]]
+            interpolation_solns: list[Solution] = []
         else:
             # build the local model with interpolation (subproblem)
             (
@@ -784,7 +865,7 @@ class ASTRODF(Solver):
                 norm_ratio = norm(grad) ** 3 / (
                     self.delta_k * check_positive_definite
                 )
-                tau = min(1.0, norm_ratio)
+                tau = min(1.0, float(norm_ratio))
 
             grad: np.ndarray = np.reshape(grad, (1, self.problem.dim))[0]
             grad_norm = norm(grad)
@@ -849,9 +930,7 @@ class ASTRODF(Solver):
         #     final_ob = fval[0]
         # else:
         # calculate success ratio
-        fval_tilde = (
-            -1 * self.problem.minmax[0] * candidate_solution.objectives_mean
-        )
+        fval_tilde = neg_minmax * candidate_solution.objectives_mean
         # replace the candidate x if the interpolation set has lower objective function value and with sufficient reduction (pattern search)
         # also if the candidate solution's variance is high that could be caused by stopping early due to exhausting budget
         # logging.debug("cv "+str(candidate_solution.objectives_var/(candidate_solution.n_reps * candidate_solution.objectives_mean ** 2)))
@@ -980,7 +1059,7 @@ class ASTRODF(Solver):
         self.incumbent_solution = self.create_new_solution(
             self.incumbent_x, self.problem
         )
-        self.h_k = np.identity(self.problem.dim).tolist()
+        self.h_k = np.identity(self.problem.dim)
 
         self.enable_gradient = (
             self.problem.gradient_available and self.factors["use_gradients"]
@@ -997,6 +1076,7 @@ class ASTRODF(Solver):
         self.recommended_solns = []
         self.intermediate_budgets = []
         self.visited_pts_list = []
+        self.kappa = None
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
