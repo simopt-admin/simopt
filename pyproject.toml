@@ -54,5 +54,8 @@ select = [
   "I",
 ]
 
+[tool.ruff.lint.isort]
+known-first-party = ["simopt", "mrg32k3a"]
+
 [tool.ruff.lint.pep8-naming]
 classmethod-decorators = ["classproperty"]
