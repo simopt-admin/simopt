@@ -552,7 +552,7 @@ class STRONG(Solver):
         self,
         grad: np.ndarray,
         hessian: np.ndarray,
-        new_x: tuple,
+        new_x: np.ndarray,
         problem: Problem,
     ) -> np.ndarray:
         """
@@ -572,7 +572,7 @@ class STRONG(Solver):
     def check_cons(
         self,
         candidate_x: tuple,
-        new_x: tuple,
+        new_x: tuple | np.ndarray,
         lower_bound: tuple,
         upper_bound: tuple,
     ) -> np.ndarray:
@@ -580,24 +580,26 @@ class STRONG(Solver):
         Check the feasibility of the Cauchy point and update the point accordingly.
         """
         # Convert the inputs to numpy arrays
-        candidate_x = np.array(candidate_x)
-        new_x = np.array(new_x)
-        lower_bound = np.array(lower_bound)
-        upper_bound = np.array(upper_bound)
+        candidate_x_arr = np.array(candidate_x)
+        # If new_x is a tuple, convert it to a numpy array
+        if isinstance(new_x, tuple):
+            new_x = np.array(new_x)
+        current_step = candidate_x_arr - new_x
+        lower_bound_arr = np.array(lower_bound)
+        upper_bound_arr = np.array(upper_bound)
         # The current step.
-        current_step = candidate_x - new_x
         # Form a matrix to determine the possible stepsize.
         min_step = 1
         pos_mask = current_step > 0
         if np.any(pos_mask):
             step_diff = (
-                upper_bound[pos_mask] - new_x[pos_mask]
+                upper_bound_arr[pos_mask] - new_x[pos_mask]
             ) / current_step[pos_mask]
             min_step = min(min_step, np.min(step_diff))
         neg_mask = current_step < 0
         if np.any(neg_mask):
             step_diff = (
-                lower_bound[neg_mask] - new_x[neg_mask]
+                lower_bound_arr[neg_mask] - new_x[neg_mask]
             ) / current_step[neg_mask]
             min_step = min(min_step, np.min(step_diff))
         # Calculate the modified x.

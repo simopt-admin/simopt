@@ -56,7 +56,7 @@ class FacilitySize(Model):
 
     @classproperty
     def class_name(cls) -> str:
-        "Facility Sizing"
+        return "Facility Sizing"
 
     @classproperty
     def n_rngs(cls) -> int:

@@ -331,6 +331,7 @@ class NelderMead(Solver):
                 sort_sol = self._sort_and_end_update(problem, sort_sol)
 
             # Evaluate reflected point.
+            p_refl = tuple(p_refl.tolist())
             p_refl = Solution(p_refl, problem)
             p_refl.attach_rngs(
                 rng_list=self.solution_progenitor_rngs, copy=True
@@ -536,4 +537,6 @@ class NelderMead(Solver):
         # Remove rounding errors
         adjusted_point[np.abs(adjusted_point) < self.factors["sensitivity"]] = 0
 
-        return adjusted_point
+        adjusted_point_tuple = tuple(adjusted_point.tolist())
+
+        return adjusted_point_tuple

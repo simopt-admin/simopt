@@ -443,7 +443,7 @@ class ExampleProblem(Problem):
         # x = tuple([rand_sol_rng.uniform(-2, 2) for _ in range(self.dim)])
         x = tuple(
             rand_sol_rng.mvnormalvariate(
-                mean_vec=np.zeros(self.dim),
+                mean_vec=[0] * self.dim,
                 cov=np.eye(self.dim),
                 factorized=False,
             )
