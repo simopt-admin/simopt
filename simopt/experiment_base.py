@@ -1562,7 +1562,8 @@ def post_normalize(
                 soln = experiment.all_recommended_xs[mrep][budget]
                 if np.equal(soln, x0).all():
                     est_objectives.append(np.mean(x0_postreps))
-                elif np.equal(soln, xstar).all():
+                # TODO: ensure xstar is not None.
+                elif np.equal(soln, xstar).all():  # type: ignore
                     est_objectives.append(np.mean(xstar_postreps))
                 else:
                     est_objectives.append(
@@ -4081,6 +4082,7 @@ def plot_terminal_progress(
                     "Terminal": terminal_data,
                 }
                 import seaborn as sns
+
                 sns.violinplot(
                     x=terminal_data_dict["Solver"],
                     y=terminal_data_dict["Terminal"],
