@@ -481,7 +481,9 @@ class NelderMead(Solver):
         """
         minmax_array = np.array(problem.minmax)
         sort_sol = sorted(
-            sol, key=lambda s: minmax_array * s.objectives_mean, reverse=True
+            sol,
+            key=lambda s: np.dot(minmax_array, s.objectives_mean),
+            reverse=True,
         )
         return sort_sol
 
