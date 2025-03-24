@@ -602,7 +602,7 @@ class ProblemSolver:
 
         logging.debug("Starting macroreplications")
 
-        num_processes = min(n_macroreps, os.cpu_count())
+        num_processes = min(n_macroreps, os.cpu_count() or 1)
         with Pool(num_processes) as process_pool:
             # Start the macroreplications in parallel (async)
             run_multithread_partial = partial(
@@ -789,7 +789,7 @@ class ProblemSolver:
         self.function_start = time.time()
 
         logging.info("Starting postreplications")
-        num_processes = min(self.n_macroreps, os.cpu_count())
+        num_processes = min(self.n_macroreps, os.cpu_count() or 1)
         with Pool(num_processes) as process_pool:
             num_completed = 0
             for mrep, post_rep, timing in process_pool.imap_unordered(
@@ -1538,7 +1538,7 @@ def post_normalize(
     # Compute signed initial optimality gap = f(x0) - f(x*).
     initial_obj_val = np.mean(x0_postreps)
     opt_obj_val = np.mean(xstar_postreps)
-    initial_opt_gap = initial_obj_val - opt_obj_val
+    initial_opt_gap = float(initial_obj_val - opt_obj_val)
     initial_opt_gap = make_nonzero(initial_opt_gap, "initial_opt_gap")
     # Store x0 and x* info and compute progress curves for each ProblemSolver.
     for experiment in experiments:
@@ -4080,7 +4080,7 @@ def plot_terminal_progress(
                     "Solver": [experiment.solver.name] * len(terminal_data),
                     "Terminal": terminal_data,
                 }
-
+                import seaborn as sns
                 sns.violinplot(
                     x=terminal_data_dict["Solver"],
                     y=terminal_data_dict["Terminal"],
