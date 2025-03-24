@@ -7,9 +7,9 @@ Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for op
 from __future__ import annotations
 
 from typing import Callable
-from simopt.utils import classproperty, make_nonzero
 
 import numpy as np
+from numpy.typing import NDArray
 
 from simopt.base import (
     ConstraintType,
@@ -19,6 +19,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
+from simopt.utils import classproperty, make_nonzero
 
 
 class SPSA(Solver):
@@ -183,7 +184,7 @@ class SPSA(Solver):
         # Check divisibility for the for loop.
         return self.factors["n_loss"] % (2 * self.factors["gavg"]) == 0
 
-    def _gen_simul_pert_vec(self, dim: int) -> np.ndarray[int]:
+    def _gen_simul_pert_vec(self, dim: int) -> NDArray[np.int_]:
         """
         Generate a new simulatanious pertubation vector with a 50/50 probability
         discrete distribution, with values of -1 and 1. The vector size is the
@@ -196,8 +197,8 @@ class SPSA(Solver):
 
         Returns
         -------
-        np.ndarray[int]
-            Vector of -1's and 1's.
+        NDArray[np.int_]
+            A random vector of -1's and 1's.
         """
         prob_list = self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim)
         return np.array(prob_list)
@@ -340,9 +341,9 @@ class SPSA(Solver):
             mean_net = mean_minus + mean_plus
             step_weight_net = step_weight_plus + step_weight_minus
             step_weight_net = make_nonzero(step_weight_net, "net_step_weight")
-            solution_value = (mean_net / step_weight_net) * neg_minmax
-            # If on the first iteration, record the initial solution as best estimated objective.
-            if k == 1:
+            solution_value = float((mean_net / step_weight_net) * neg_minmax)
+            if best_solution_value is None:
+                # Record data from the initial solution.
                 best_solution_value = solution_value
             # Check if new solution is better than the best recorded and update accordingly.
             if solution_value < best_solution_value:
