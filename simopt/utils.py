@@ -1,20 +1,20 @@
-from typing import TypeVar, Callable, Any
+from typing import Optional, TypeVar, Callable, Generic
 
 T = TypeVar("T", bound=type)
+R = TypeVar("R")
 
 
-class ClassPropertyDescriptor:
-    def __init__(self, fget: Callable[[type[T]], Any]) -> None:
-        """A descriptor that allows class-level attribute access like a property."""
+class ClassPropertyDescriptor(Generic[T, R]):
+    def __init__(self, fget: Callable[[type[T]], R]) -> None:
         self.fget = fget
 
-    def __get__(self, instance: Any, owner: type[T]) -> Any:  # noqa: ANN401
-        """Retrieve the computed class property when accessed on the class."""
+    def __get__(self, instance: Optional[object], owner: type[T]) -> R:
         return self.fget(owner)
 
 
-def classproperty(func: Callable[[type[T]], Any]) -> ClassPropertyDescriptor:
-    """Decorator to create a class property using a descriptor."""
+def classproperty(
+    func: Callable[[type[T]], R],
+) -> ClassPropertyDescriptor[T, R]:
     return ClassPropertyDescriptor(func)
 
 
