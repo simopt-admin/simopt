@@ -1704,35 +1704,35 @@ class Solution:
         )
 
     @property
-    def stoch_constraints_mean(self) -> np.ndarray | None:
+    def stoch_constraints_mean(self) -> np.ndarray:
         """Mean of stochastic constraints."""
         if self.stoch_constraints is None:
-            return None
+            return np.array([])
         mean = np.mean(self.stoch_constraints[: self.n_reps], axis=0)
         return np.round(mean, 15)
 
     @property
-    def stoch_constraints_var(self) -> np.ndarray | None:
+    def stoch_constraints_var(self) -> np.ndarray:
         """Variance of stochastic constraints."""
         if self.stoch_constraints is None:
-            return None
+            return np.array([])
         var = np.var(self.stoch_constraints[: self.n_reps], axis=0, ddof=1)
         return np.round(var, 15)
 
     @property
-    def stoch_constraints_stderr(self) -> np.ndarray | None:
+    def stoch_constraints_stderr(self) -> np.ndarray:
         """Standard error of stochastic constraints."""
         if self.stoch_constraints is None:
-            return None
+            return np.array([])
         std = np.std(self.stoch_constraints[: self.n_reps], axis=0, ddof=1)
         sqrt = np.sqrt(self.n_reps)
         return np.round(std / sqrt, 15)
 
     @property
-    def stoch_constraints_cov(self) -> np.ndarray | None:
+    def stoch_constraints_cov(self) -> np.ndarray:
         """Covariance of stochastic constraints."""
         if self.stoch_constraints is None:
-            return None
+            return np.array([])
         cov = np.cov(
             self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1
         )
