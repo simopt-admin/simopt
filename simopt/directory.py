@@ -8,7 +8,9 @@ import simopt.solvers
 from simopt.base import Model, Problem, Solver
 
 
-def load_models_and_problems() -> tuple[dict[str, Model], dict[str, Problem]]:
+def load_models_and_problems() -> tuple[
+    dict[str, type[Model]], dict[str, type[Problem]]
+]:
     """Dynamically load models and problems from simopt.models."""
     models = {}
     problems = {}
@@ -28,7 +30,7 @@ def load_models_and_problems() -> tuple[dict[str, Model], dict[str, Problem]]:
     return models, problems
 
 
-def load_solvers() -> dict[str, Solver]:
+def load_solvers() -> dict[str, type[Solver]]:
     """Dynamically load solvers from simopt.solvers."""
     solvers = {}
 
