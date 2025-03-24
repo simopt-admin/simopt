@@ -6,8 +6,11 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+import bisect
+import itertools
 import math as math
 from typing import Callable, Final
+from collections.abc import Sequence
 from simopt.utils import classproperty
 
 import numpy as np
@@ -15,6 +18,9 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 
 from simopt.base import ConstraintType, Model, Problem, VariableType
 
+INF = float("inf")
+
+# Default values for the model
 PARK_CAPACITY: Final[int] = 350
 NUM_ATTRACTIONS: Final[int] = 7
 
@@ -267,35 +273,102 @@ class AmusementPark(Model):
             gradients of performance measures with respect to factors
 
         """
+
+        def fast_weighted_choice(
+            population: Sequence[int], weights: Sequence[float], rng: MRG32k3a
+        ) -> int:
+            """Select a single element from a population based on weights.
+
+            Designed to be faster than random's choices() when only one
+            element is needed.
+
+            Parameters
+            ----------
+            population : list
+                The population to select from.
+            weights : list
+                The weights for each element in the population.
+            rng : MRG32k3a
+                The random number generator to use for selection.
+
+            Returns
+            -------
+            int
+                The selected element from the population.
+            """
+            # Calculate cumulative weights
+            cum_weights = list(itertools.accumulate(weights))
+            # Generate a value somewhere between 0 and the sum of weights
+            x = rng.random() * cum_weights[-1]
+            # Find the index of the first cumulative weight that is >= x
+            # Return the corresponding element from the population
+            return population[bisect.bisect(cum_weights, x)]
+
+        def set_completion(i: int, new_time: float) -> None:
+            """Set the completion time for an attraction.
+            Update the minimum completion time and index if necessary.
+            This function doesn't offer much (if any) performance gain
+            with small numbers of attractions, but with larger numbers
+            it is significantly faster"
+
+            Parameters
+            ----------
+            i : int
+                The index of the attraction
+            new_time : float
+                The new completion time for the attraction
+            """
+            nonlocal min_completion_time, min_completion_index
+            completion_times[i] = new_time
+
+            if new_time < min_completion_time:
+                min_completion_time = new_time
+                min_completion_index = i
+            elif i == min_completion_index:
+                # Grab the min index and time with one scanning pass
+                min_completion_time = min(completion_times)
+                min_completion_index = completion_times.index(
+                    min_completion_time
+                )
+
+        # Keep local copies of factors to prevent excessive lookups
+        num_attactions: int = self.factors["number_attractions"]
+        arrival_gammas: list[int] = self.factors["arrival_gammas"]
+        time_open: float = self.factors["time_open"]
+        erlang_shape: list[int] = self.factors["erlang_shape"]
+        erlang_scale: list[float] = self.factors["erlang_scale"]
+        queue_capacities: list[int] = self.factors["queue_capacities"]
+        transition_probabilities: list[list[float]] = self.factors[
+            "transition_probabilities"
+        ]
+        depart_probabilities: list[float] = self.factors["depart_probabilities"]
+
         # Designate random number generators.
         arrival_rng = rng_list[0]
         transition_rng = rng_list[1]
         time_rng = rng_list[2]
 
+        # initialize list of attractions to be selected upon arrival.
+        attraction_range = range(num_attactions)
+        destination_range = range(num_attactions + 1)
+        depart_idx = destination_range[-1]
+        # create list of each attraction's next completion time and initialize to infinity.
+        completion_times = [INF] * num_attactions
+        min_completion_time = INF
+        min_completion_index = -1
+        # initialize actual queues.
+        queues = [0] * num_attactions
+
+        # create external arrival probabilities for each attraction.
+        arrival_prob_sum = sum(arrival_gammas)
+        arrival_probabalities = [
+            arrival_gammas[i] / arrival_prob_sum for i in attraction_range
+        ]
+
         # Initiate clock variables for statistics tracking and event handling.
         clock = 0
         previous_clock = 0
-        next_arrival = arrival_rng.expovariate(
-            sum(self.factors["arrival_gammas"])
-        )
-
-        # initialize list of attractions to be selected upon arrival.
-        potential_attractions = range(self.factors["number_attractions"])
-
-        # create list of each attraction's next completion time and initialize to infinity.
-        completion_times = [
-            math.inf for _ in range(self.factors["number_attractions"])
-        ]
-
-        # initialize actual queues.
-        queues = [0 for _ in range(self.factors["number_attractions"])]
-
-        # create external arrival probabilities for each attraction.
-        arrival_probabalities = [
-            self.factors["arrival_gammas"][i]
-            / sum(self.factors["arrival_gammas"])
-            for i in self.factors["arrival_gammas"]
-        ]
+        next_arrival = arrival_rng.expovariate(arrival_prob_sum)
 
         # Initialize quantities to track:
         total_visitors = 0
@@ -303,133 +376,118 @@ class AmusementPark(Model):
         # initialize time average and utilization quantities.
         in_system = 0
         time_average = 0
-        cumulative_util = [
-            0.0 for _ in range(self.factors["number_attractions"])
-        ]
+        cumulative_util = [0.0] * num_attactions
 
         # Run simulation over time horizon.
-        while (
-            min(next_arrival, min(completion_times)) < self.factors["time_open"]
-        ):
+        while clock < time_open:
             # Count number of tourists on attractions and in queues.
-            clock = min(next_arrival, min(completion_times))
             riders = 0
-            for i in range(self.factors["number_attractions"]):
-                if completion_times[i] != math.inf:
+            delta_time = clock - previous_clock
+            for i in attraction_range:
+                if completion_times[i] != INF:
                     riders += 1
-                    cumulative_util[i] += clock - previous_clock
+                    cumulative_util[i] += delta_time
             in_system = sum(queues) + riders
-            time_average += in_system * (clock - previous_clock)
+            time_average += in_system * (delta_time)
 
             previous_clock = clock
-            if next_arrival < min(
-                completion_times
-            ):  # Next event is external tourist arrival.
+            if next_arrival < min_completion_time:
+                # Next event is external tourist arrival.
                 total_visitors += 1
                 # Select attraction.
-                attraction_selection = arrival_rng.choices(
-                    population=potential_attractions,
+                attraction_selection = fast_weighted_choice(
+                    population=attraction_range,
                     weights=arrival_probabalities,
-                )[0]
+                    rng=arrival_rng,
+                )
                 # Check if attraction is currently available.
                 # If available, arrive at that attraction. Otherwise check queue.
-                if completion_times[attraction_selection] == math.inf:
+                if completion_times[attraction_selection] == INF:
                     # Generate completion time if attraction available.
-                    completion_times[attraction_selection] = (
-                        next_arrival
-                        + time_rng.gammavariate(
-                            alpha=self.factors["erlang_shape"][
-                                attraction_selection
-                            ],
-                            beta=self.factors["erlang_scale"][
-                                attraction_selection
-                            ],
-                        )
+                    completion_time = next_arrival + time_rng.gammavariate(
+                        alpha=erlang_shape[attraction_selection],
+                        beta=erlang_scale[attraction_selection],
                     )
+                    set_completion(attraction_selection, completion_time)
                 # If unavailable, check if current queue is less than capacity. If queue is not full, join queue.
                 elif (
                     queues[attraction_selection]
-                    < self.factors["queue_capacities"][attraction_selection]
+                    < queue_capacities[attraction_selection]
                 ):
                     queues[attraction_selection] += 1
                 # If queue is full, leave park + 1.
                 else:
                     total_departed += 1
                 # Use superposition of Poisson processes to generate next arrival time.
-                next_arrival += arrival_rng.expovariate(
-                    sum(self.factors["arrival_gammas"])
-                )
-
-            else:  # Next event is the completion of an attraction.
+                next_arrival += arrival_rng.expovariate(arrival_prob_sum)
+            else:
+                # Next event is the completion of an attraction.
+                # Identify finished attraction.
                 finished_attraction = completion_times.index(
-                    min(completion_times)
-                )  # Identify finished attraction.
+                    min_completion_time
+                )
                 # Check if there is a queue for that attraction.
                 # If so then start new completion time and subtract 1 from queue.
+                alpha = erlang_shape[finished_attraction]
+                beta = erlang_scale[finished_attraction]
                 if queues[finished_attraction] > 0:
-                    completion_times[finished_attraction] = min(
-                        completion_times
-                    ) + time_rng.gammavariate(
-                        alpha=self.factors["erlang_shape"][finished_attraction],
-                        beta=self.factors["erlang_scale"][finished_attraction],
+                    completion_time = (
+                        min_completion_time
+                        + time_rng.gammavariate(
+                            alpha=alpha,
+                            beta=beta,
+                        )
                     )
+                    set_completion(finished_attraction, completion_time)
                     queues[finished_attraction] -= 1
                 else:  # If no one in queue, set next completion of that attraction to infinity.
-                    completion_times[finished_attraction] = math.inf
-
+                    set_completion(finished_attraction, INF)
                 # Check if that person will leave the park.
-                potential_destinations = range(
-                    self.factors["number_attractions"] + 1
+                next_destination = fast_weighted_choice(
+                    population=destination_range,
+                    weights=transition_probabilities[finished_attraction]
+                    + [depart_probabilities[finished_attraction]],
+                    rng=transition_rng,
                 )
-                next_destination = transition_rng.choices(
-                    population=potential_destinations,
-                    weights=self.factors["transition_probabilities"][
-                        finished_attraction
-                    ]
-                    + [
-                        self.factors["depart_probabilities"][
-                            finished_attraction
-                        ]
-                    ],
-                )[0]
 
                 # Check if tourist leaves park.
-                if next_destination != potential_destinations[-1]:
+                if next_destination != depart_idx:
                     # Check if attraction is currently available.
                     # If available, arrive at that attraction. Otherwise check queue.
-                    if completion_times[next_destination] == math.inf:
+                    if completion_times[next_destination] == INF:
                         # Generate completion time if attraction available.
-                        completion_times[next_destination] = min(
-                            completion_times
-                        ) + time_rng.gammavariate(
-                            alpha=self.factors["erlang_shape"][
-                                finished_attraction
-                            ],
-                            beta=self.factors["erlang_scale"][
-                                finished_attraction
-                            ],
+                        completion_time = (
+                            min_completion_time
+                            + time_rng.gammavariate(
+                                alpha=alpha,
+                                beta=beta,
+                            )
                         )
+                        set_completion(next_destination, completion_time)
                     # if unavailable, check if current queue is less than capacity. If queue is not full, join queue.
                     elif (
                         queues[next_destination]
-                        < self.factors["queue_capacities"][next_destination]
+                        < queue_capacities[next_destination]
                     ):
                         queues[next_destination] += 1
                     # If queue is full, leave park + 1.
                     else:
                         total_departed += 1
+            # End of while loop.
+            # Check if any attractions are available.
+            clock = min(next_arrival, min_completion_time)
         # End of simulation.
 
         # Calculate overall percent utilization calculation for each attraction.
-        for i in range(self.factors["number_attractions"]):
-            cumulative_util[i] = cumulative_util[i] / self.factors["time_open"]
+        cumulative_util = [
+            cumulative_util[i] / time_open for i in attraction_range
+        ]
 
         # Calculate responses from simulation data.
         responses = {
             "total_departed": total_departed,
             "percent_departed": total_departed / total_visitors,
-            "average_number_in_system": time_average
-            / self.factors["time_open"],
+            "average_number_in_system": time_average / time_open,
             "attraction_utilization_percentages": cumulative_util,
         }
         gradients = {
@@ -763,9 +821,7 @@ class AmusementParkMinDepart(Problem):
         """
         num_elements: int = self.model.factors["number_attractions"]
         summation: int = self.model.factors["park_capacity"]
-        # TODO: see if this issue still exists after the next release of MRG32k3a
-        # If it does, create a fix and PR it to the MRG32k3a repo.
-        vector: list[int] = rand_sol_rng.integer_random_vector_from_simplex(
+        vector = rand_sol_rng.integer_random_vector_from_simplex(
             n_elements=num_elements, summation=summation, with_zero=False
-        )  # type: ignore
+        )
         return tuple(vector)
