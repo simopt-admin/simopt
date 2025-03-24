@@ -4,8 +4,8 @@ a simulation model. It creates a design of model factors and runs multiple
 replications at each configuration of the model. Outputs are printed to a file.
 """
 
-import sys
 import os.path as o
+import sys
 
 sys.path.append(
     o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))

@@ -5,8 +5,8 @@ sets up pseudorandom number generators, and runs multiple replications
 at a given solution.
 """
 
-import sys
 import os.path as o
+import sys
 
 sys.path.append(
     o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
@@ -19,30 +19,21 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import Solution
 
 # Import problem.
-
 # from models.<filename> import <problem_class_name>
 # Replace <filename> with name of .py file containing problem class.
 # Replace <problem_class_name> with name of problem class.
-
 # Fix factors of problem. Specify a dictionary of factors.
-
 # fixed_factors = {}  # Resort to all default values.
 # Look at Problem class definition to get names of factors.
-
 # Initialize an instance of the specified problem class.
-
 # myproblem = <problem_class_name>(fixed_factors=fixed_factors)
 # Replace <problem_class_name> with name of problem class.
-
 # Initialize a solution x corresponding to the problem.
-
 # x = (,)
 # Look at the Problem class definition to identify the decision variables.
 # x will be a tuple consisting of the decision variables.
-
 # The following line does not need to be changed.
 # mysolution = Solution(x, myproblem)
-
 # Working example for CntNVMaxProfit problem.
 # -----------------------------------------------
 from simopt.models.cntnv import CntNVMaxProfit

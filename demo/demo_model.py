@@ -4,8 +4,8 @@ It imports a model, initializes a model object with given factors,
 sets up pseudorandom number generators, and runs one or more replications.
 """
 
-import sys
 import os.path as o
+import sys
 
 sys.path.append(
     o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
@@ -15,21 +15,15 @@ sys.path.append(
 from mrg32k3a.mrg32k3a import MRG32k3a
 
 # Import model.
-
 # from models.<filename> import <model_class_name>
 # Replace <filename> with name of .py file containing model class.
 # Replace <model_class_name> with name of model class.
-
 # Fix factors of model. Specify a dictionary of factors.
-
 # fixed_factors = {}  # Resort to all default values.
 # Look at Model class definition to get names of factors.
-
 # Initialize an instance of the specified model class.
-
 # mymodel = <model_class_name>(fixed_factors)
 # Replace <model_class_name> with name of model class.
-
 # Working example for MM1 model.
 # -----------------------------------------------
 from simopt.models.mm1queue import MM1Queue

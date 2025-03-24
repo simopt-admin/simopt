@@ -20,6 +20,7 @@
 #
 import os
 import sys
+
 from sphinx.ext.apidoc import main
 
 sys.path.insert(0, os.path.abspath("../simopt"))

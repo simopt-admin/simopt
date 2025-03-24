@@ -4,14 +4,14 @@ a problem. It creates a design of problem factors and runs multiple
 macroreplications at each version of the problem. Outputs are printed to a file.
 """
 
-import sys
 import os.path as o
+import sys
 
 sys.path.append(
     o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
 )
 
-from simopt.experiment_base import create_design, ProblemsSolvers  # type:ignore
+from simopt.experiment_base import ProblemsSolvers, create_design  # type:ignore
 
 
 def main() -> None:

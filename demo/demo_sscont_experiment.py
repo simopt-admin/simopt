@@ -3,8 +3,8 @@
 Produces plots appearing in the INFORMS Journal on Computing submission.
 """
 
-import sys
 import os.path as o
+import sys
 
 sys.path.append(
     o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
@@ -13,12 +13,12 @@ sys.path.append(
 from simopt.experiment_base import (
     ProblemSolver,
     plot_area_scatterplots,
-    post_normalize,
     plot_progress_curves,
-    read_experiment_results,
     plot_solvability_profiles,
-    plot_terminal_scatterplots,
     plot_terminal_progress,
+    plot_terminal_scatterplots,
+    post_normalize,
+    read_experiment_results,
 )
 
 

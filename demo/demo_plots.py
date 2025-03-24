@@ -4,8 +4,8 @@ It create a problem-solver pairing (using the directory) and runs multiple
 macroreplications of the solver on the problem.
 """
 
-import sys
 import os.path as o
+import sys
 
 sys.path.append(
     o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
@@ -14,9 +14,9 @@ sys.path.append(
 # Import the ProblemSolver class and other useful functions
 from simopt.experiment_base import (
     ProblemSolver,
-    read_experiment_results,
-    post_normalize,
     plot_terminal_progress,
+    post_normalize,
+    read_experiment_results,
 )
 
 solver_names = {"RNDSRCH", "ASTRODF", "NELDMD"}

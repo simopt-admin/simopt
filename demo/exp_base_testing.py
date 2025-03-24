@@ -4,8 +4,8 @@ a solver. It creates a design of solver factors and runs multiple
 macroreplications at each version of the solver. Outputs are printed to a file.
 """
 
-import sys
 import os.path as o
+import sys
 
 sys.path.append(
     o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))

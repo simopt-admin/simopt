@@ -4,6 +4,7 @@ import tkinter as tk
 from abc import ABC, abstractmethod
 from tkinter import ttk
 from typing import Literal
+
 from simopt.utils import classproperty
 
 

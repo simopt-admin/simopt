@@ -4,8 +4,8 @@ It create problem-solver groups (using the directory) and runs multiple
 macroreplications of each problem-solver pair.
 """
 
-import sys
 import os.path as o
+import sys
 
 sys.path.append(
     o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
