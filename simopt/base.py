@@ -1632,61 +1632,60 @@ class Solution:
         self.__stochastic_constraints_gradients = value
 
     @property
-    def objectives_mean(self) -> float:
+    def objectives_mean(self) -> np.ndarray:
         """Mean of objectives."""
-        if self.n_reps == 1:
-            return 0
-        return float(np.mean(self.objectives[: self.n_reps], axis=0))
+        mean = np.mean(self.objectives[: self.n_reps], axis=0)
+        return np.round(mean, 15)
 
     @property
-    def objectives_var(self) -> float:
+    def objectives_var(self) -> np.ndarray:
         """Variance of objectives."""
         if self.n_reps == 1:
-            return 0
-        return float(np.var(self.objectives[: self.n_reps], axis=0, ddof=1))
+            return np.zeros(self.objectives.shape[1])
+        var = np.var(self.objectives[: self.n_reps], axis=0, ddof=1)
+        return np.round(var, 15)
 
     @property
-    def objectives_stderr(self) -> float:
+    def objectives_stderr(self) -> np.ndarray:
         """Standard error of objectives."""
         if self.n_reps == 1:
-            return 0
-        std = np.std(self.objectives[: self.n_reps], axis=0, ddof=1) / np.sqrt(
-            self.n_reps
-        )
+            return np.zeros(self.objectives.shape[1])
+        std = np.std(self.objectives[: self.n_reps], axis=0, ddof=1)
         sqrt = np.sqrt(self.n_reps)
-        return float(std / sqrt)
+        return np.round(std / sqrt, 15)
 
     @property
     def objectives_cov(self) -> np.ndarray:
         """Covariance of objectives."""
         if self.n_reps == 1:
             return np.zeros(self.objectives.shape[1])
-        return np.cov(self.objectives[: self.n_reps], rowvar=False, ddof=1)
+        cov = np.cov(self.objectives[: self.n_reps], rowvar=False, ddof=1)
+        return np.round(cov, 15)
 
     @property
-    def objectives_gradients_mean(self) -> float:
+    def objectives_gradients_mean(self) -> np.ndarray:
         """Mean of gradients of objectives."""
         if self.n_reps == 1:
-            return 0
+            return np.zeros(self.objectives.shape[1])
         mean = np.mean(self.objectives_gradients[: self.n_reps], axis=0)
-        return float(mean)
+        return np.round(mean, 15)
 
     @property
-    def objectives_gradients_var(self) -> float:
+    def objectives_gradients_var(self) -> np.ndarray:
         """Variance of gradients of objectives."""
         if self.n_reps == 1:
-            return 0
+            return np.zeros(self.objectives.shape[1])
         var = np.var(self.objectives_gradients[: self.n_reps], axis=0, ddof=1)
-        return float(var)
+        return np.round(var, 15)
 
     @property
-    def objectives_gradients_stderr(self) -> float:
+    def objectives_gradients_stderr(self) -> np.ndarray:
         """Standard error of gradients of objectives."""
-        if self.n_reps < 2:
-            return 0
+        if self.n_reps == 1:
+            return np.zeros(self.objectives.shape[1])
         std = np.std(self.objectives_gradients[: self.n_reps], axis=0, ddof=1)
         sqrt = np.sqrt(self.n_reps)
-        return float(std / sqrt)
+        return np.round(std / sqrt, 15)
 
     @property
     def objectives_gradients_cov(self) -> np.ndarray:
@@ -1705,38 +1704,39 @@ class Solution:
         )
 
     @property
-    def stoch_constraints_mean(self) -> float | None:
+    def stoch_constraints_mean(self) -> np.ndarray | None:
         """Mean of stochastic constraints."""
         if self.stoch_constraints is None:
             return None
-        return float(np.mean(self.stoch_constraints[: self.n_reps], axis=0))
+        mean = np.mean(self.stoch_constraints[: self.n_reps], axis=0)
+        return np.round(mean, 15)
 
     @property
-    def stoch_constraints_var(self) -> float | None:
+    def stoch_constraints_var(self) -> np.ndarray | None:
         """Variance of stochastic constraints."""
         if self.stoch_constraints is None:
             return None
-        return float(
-            np.var(self.stoch_constraints[: self.n_reps], axis=0, ddof=1)
-        )
+        var = np.var(self.stoch_constraints[: self.n_reps], axis=0, ddof=1)
+        return np.round(var, 15)
 
     @property
-    def stoch_constraints_stderr(self) -> float | None:
+    def stoch_constraints_stderr(self) -> np.ndarray | None:
         """Standard error of stochastic constraints."""
         if self.stoch_constraints is None:
             return None
         std = np.std(self.stoch_constraints[: self.n_reps], axis=0, ddof=1)
         sqrt = np.sqrt(self.n_reps)
-        return float(std / sqrt)
+        return np.round(std / sqrt, 15)
 
     @property
     def stoch_constraints_cov(self) -> np.ndarray | None:
         """Covariance of stochastic constraints."""
         if self.stoch_constraints is None:
             return None
-        return np.cov(
+        cov = np.cov(
             self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1
         )
+        return np.round(cov, 15)
 
     # TODO: implement these properties
     # self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
