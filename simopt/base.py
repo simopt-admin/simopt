@@ -9,8 +9,9 @@ from enum import Enum
 from typing import Callable
 
 import numpy as np
-from simopt.utils import classproperty
+
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt.utils import classproperty
 
 
 def _factor_check(self: Solver | Problem | Model, factor_name: str) -> bool:

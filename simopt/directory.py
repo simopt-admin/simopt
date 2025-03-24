@@ -3,6 +3,7 @@
 
 import importlib
 import pkgutil
+
 import simopt.models
 import simopt.solvers
 from simopt.base import Model, Problem, Solver

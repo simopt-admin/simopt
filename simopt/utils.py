@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar, Callable, Generic
+from typing import Callable, Generic, Optional, TypeVar
 
 T = TypeVar("T", bound=type)
 R = TypeVar("R")

@@ -11,15 +11,15 @@ Changed get_random_solution quantiles
 """
 
 from __future__ import annotations
-from simopt.utils import classproperty
 
 from math import copysign, sqrt
 from typing import Callable
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty
 
 
 class IronOre(Model):

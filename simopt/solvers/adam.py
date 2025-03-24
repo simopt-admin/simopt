@@ -8,7 +8,6 @@ A detailed description of the solver can be found `here <https://simopt.readthed
 """
 
 from __future__ import annotations
-from simopt.utils import classproperty
 
 from typing import Callable
 
@@ -22,6 +21,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
+from simopt.utils import classproperty
 
 
 class ADAM(Solver):

@@ -8,12 +8,12 @@ A detailed description of the model/problem can be found `here <https://simopt.r
 from __future__ import annotations
 
 from typing import Callable
-from simopt.utils import classproperty
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty
 
 
 class CntNV(Model):

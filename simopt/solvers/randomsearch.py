@@ -9,7 +9,6 @@ A detailed description of the solver can be found `here <https://simopt.readthed
 from __future__ import annotations
 
 from typing import Callable
-from simopt.utils import classproperty
 
 from simopt.base import (
     ConstraintType,
@@ -19,6 +18,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
+from simopt.utils import classproperty
 
 
 class RandomSearch(Solver):

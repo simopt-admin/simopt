@@ -9,13 +9,13 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 from typing import Callable, Final
-from simopt.utils import classproperty
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 from scipy import special
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty
 
 MEAN_ELO: Final[int] = 1200
 MAX_ALLOWABLE_DIFF: Final[int] = 150
