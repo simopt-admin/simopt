@@ -6,12 +6,12 @@ and 60 problems (20 unique instances of problems from
 Produces plots appearing in the INFORMS Journal on Computing submission.
 """
 
-import os.path as o
 import sys
+from pathlib import Path
 
-sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
-)  # type:ignore
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 
 from simopt.experiment_base import (
     ProblemSolver,

@@ -1261,10 +1261,9 @@ class Model(ABC):
         return re.sub(r"(?<!^)(?=[A-Z])", " ", cls.__name__)
 
     @classproperty
-    @abstractmethod
     def name(cls) -> str:
         """Name of model."""
-        raise NotImplementedError
+        return cls.__name__.replace("_", " ")
 
     @classproperty
     @abstractmethod

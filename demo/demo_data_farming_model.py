@@ -4,13 +4,11 @@ a simulation model. It creates a design of model factors and runs multiple
 replications at each configuration of the model. Outputs are printed to a file.
 """
 
-import os.path as o
 import sys
+from pathlib import Path
 
-sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
-)  # type:ignore
-
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from simopt.data_farming_base import DataFarmingExperiment
 

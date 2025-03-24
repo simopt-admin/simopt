@@ -5,12 +5,12 @@ sets up pseudorandom number generators, and runs multiple replications
 at a given solution.
 """
 
-import os.path as o
 import sys
+from pathlib import Path
 
-sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
-)  # type:ignore
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 
 # Import random number generator.
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -97,6 +97,7 @@ if myproblem.n_stochastic_constraints > 0:
         )
         print("\tThe observations of the LHSs were:")
         for idx in range(n_reps):
+            assert mysolution.stoch_constraints is not None
             print(
                 f"\t\t {round(mysolution.stoch_constraints[idx][stc_idx], 4)}"
             )

@@ -6137,7 +6137,7 @@ def create_design(
     factor_headers: list[str],
     factor_settings_filename: str,
     fixed_factors: dict,
-    class_type: Literal["solver", "problem", "model"],
+    class_type: Literal["solver", "problem", "model"] | None = None,
     n_stacks: int = 1,
     design_type: Literal["nolhs"] = "nolhs",
     cross_design_factors: dict | None = None,
@@ -6186,6 +6186,8 @@ def create_design(
     # Default values
     if cross_design_factors is None:
         cross_design_factors = {}
+    if class_type is None:
+        class_type = "solver"
     if csv_filename is None:
         csv_filename = factor_settings_filename
 
@@ -6214,7 +6216,7 @@ def create_design(
         error_msg = "Cross design factors must be a dictionary or None."
         raise TypeError(error_msg)
     if not isinstance(class_type, str):
-        error_msg = "Class type must be a string."
+        error_msg = "Class type must be a string or None."
         raise TypeError(error_msg)
     if not isinstance(csv_filename, str):
         error_msg = "CSV filename must be a string or None."
