@@ -384,7 +384,7 @@ class AmusementPark(Model):
             riders = 0
             delta_time = clock - previous_clock
             for i in attraction_range:
-                if completion_times[i] != INF:
+                if not math.isinf(completion_times[i]):
                     riders += 1
                     cumulative_util[i] += delta_time
             in_system = sum(queues) + riders
@@ -402,7 +402,7 @@ class AmusementPark(Model):
                 )
                 # Check if attraction is currently available.
                 # If available, arrive at that attraction. Otherwise check queue.
-                if completion_times[attraction_selection] == INF:
+                if math.isinf(completion_times[attraction_selection]):
                     # Generate completion time if attraction available.
                     completion_time = next_arrival + time_rng.gammavariate(
                         alpha=erlang_shape[attraction_selection],
@@ -454,7 +454,7 @@ class AmusementPark(Model):
                 if next_destination != depart_idx:
                     # Check if attraction is currently available.
                     # If available, arrive at that attraction. Otherwise check queue.
-                    if completion_times[next_destination] == INF:
+                    if math.isinf(completion_times[next_destination]):
                         # Generate completion time if attraction available.
                         completion_time = (
                             min_completion_time
@@ -732,7 +732,7 @@ class AmusementParkMinDepart(Problem):
 
         Returns
         -------
-        stoch_constraints : tuple
+        tuple
             vector of LHSs of stochastic constraint
 
         """
@@ -752,9 +752,9 @@ class AmusementParkMinDepart(Problem):
 
         Returns
         -------
-        det_objectives : tuple
+        tuple
             vector of deterministic components of objectives
-        det_objectives_gradients : tuple
+        tuple
             vector of gradients of deterministic components of objectives
         """
         det_objectives = (0,)
@@ -775,9 +775,9 @@ class AmusementParkMinDepart(Problem):
 
         Returns
         -------
-        det_stoch_constraints : tuple
+        tuple
             vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
+        tuple
             vector of gradients of deterministic components of
             stochastic constraints
         """
@@ -816,7 +816,7 @@ class AmusementParkMinDepart(Problem):
 
         Returns
         -------
-        x : tuple
+        tuple
             vector of decision variables
         """
         num_elements: int = self.model.factors["number_attractions"]
