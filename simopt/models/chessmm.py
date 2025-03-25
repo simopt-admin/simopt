@@ -197,7 +197,7 @@ class ChessMatchmaking(Model):
         # Incoming players are initialized with a wait time of 0.
         wait_times = np.zeros(num_players)
         waiting_players = []
-        total_diff = 0
+        total_diff = 0  # TODO: make this do something
         elo_diffs = []
 
         # Simulate arrival and matching and players.
