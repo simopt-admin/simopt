@@ -188,30 +188,46 @@ class Contamination(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
+        stages: int = self.factors["stages"]
+        init_alpha: float = self.factors["initial_rate_alpha"]
+        init_beta: float = self.factors["initial_rate_beta"]
+        contam_alpha: float = self.factors["contam_rate_alpha"]
+        contam_beta: float = self.factors["contam_rate_beta"]
+        restore_alpha: float = self.factors["restore_rate_alpha"]
+        restore_beta: float = self.factors["restore_rate_beta"]
+        u: tuple = self.factors["prev_decision"]
+
         # Designate separate random number generators.
         # Outputs will be coupled when generating demand.
         contam_rng = rng_list[0]
         restore_rng = rng_list[1]
-        # Generate rates with beta distribution.
-        levels = np.zeros(self.factors["stages"])
-        levels[0] = restore_rng.betavariate(
-            alpha=self.factors["initial_rate_alpha"],
-            beta=self.factors["initial_rate_beta"],
-        )
-        u = self.factors["prev_decision"]
-        for i in range(1, self.factors["stages"]):
-            c = contam_rng.betavariate(
-                alpha=self.factors["contam_rate_alpha"],
-                beta=self.factors["contam_rate_beta"],
-            )
-            r = restore_rng.betavariate(
-                alpha=self.factors["restore_rate_alpha"],
-                beta=self.factors["restore_rate_beta"],
-            )
-            levels[i] = (
-                c * (1 - u[i]) * (1 - levels[i - 1])
-                + (1 - r * u[i]) * levels[i - 1]
-            )
+
+        # Initialize levels with beta distribution.
+        levels = np.zeros(stages)
+        levels[0] = restore_rng.betavariate(alpha=init_alpha, beta=init_beta)
+
+        # Generate contamination and restoration values with beta distribution.
+        rand_range = range(stages - 1)
+        contamination_rates = [
+            contam_rng.betavariate(contam_alpha, contam_beta)
+            for _ in rand_range
+        ]
+        restoration_rates = [
+            restore_rng.betavariate(restore_alpha, restore_beta)
+            for _ in rand_range
+        ]
+
+        # Calculate contamination and restoration levels.
+        # Start from stage 1; stage 0 was initialized separately.
+        for i in range(1, stages):
+            c = contamination_rates[i - 1]
+            r = restoration_rates[i - 1]
+            u_i = u[i]
+            prev = levels[i - 1]
+
+            contamination_change = c * (1 - u_i) * (1 - prev)
+            restoration_change = (1 - r * u_i) * prev
+            levels[i] = contamination_change + restoration_change
         # Compose responses and gradients.
         responses = {"level": levels}
         gradients = {
