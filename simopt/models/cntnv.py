@@ -170,40 +170,51 @@ class CntNV(Model):
             "stockout_qty" = amount by which demand exceeded supply
             "stockout" = was there unmet demand? (Y/N)
         """
+        ord_quant: float = self.factors["order_quantity"]
+        purch_price: float = self.factors["purchase_price"]
+        sales_price: float = self.factors["sales_price"]
+        salvage_price: float = self.factors["salvage_price"]
+        burr_k: float = self.factors["Burr_k"]
+        burr_c: float = self.factors["Burr_c"]
         # Designate random number generator for demand variability.
         demand_rng = rng_list[0]
+
         # Generate random demand according to Burr Type XII distribution.
         # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
-        #   X = ((1-U)**(-1/k - 1))**(1/c) has the desired distribution.
-        base = (1 - demand_rng.random()) ** (-1 / self.factors["Burr_k"]) - 1
-        exponent = 1 / self.factors["Burr_c"]
-        demand = base**exponent
-        # Calculate profit.
-        order_cost = (
-            self.factors["purchase_price"] * self.factors["order_quantity"]
-        )
-        sales_revenue = (
-            min(demand, self.factors["order_quantity"])
-            * self.factors["sales_price"]
-        )
-        salvage_revenue = (
-            max(0, self.factors["order_quantity"] - demand)
-            * self.factors["salvage_price"]
-        )
+        #   X = ((1-U)**(-1/k) - 1)**(1/c) has the desired distribution.
+        # https://en.wikipedia.org/wiki/Burr_distribution
+        def nth_root(x: float, n: float) -> float:
+            """Return the nth root of x."""
+            return x ** (1 / n)
+
+        u = demand_rng.random()
+        demand = nth_root(nth_root(1 - u, -burr_k) - 1, burr_c)
+
+        # Calculate units sold, as well as unsold/stockout
+        units_sold = min(demand, ord_quant)
+        order_diff = ord_quant - demand
+        units_unsold = max(order_diff, 0)
+        stockout_qty = max(-order_diff, 0)
+
+        # Compute revenue and cost components
+        order_cost = purch_price * ord_quant
+        sales_revenue = units_sold * sales_price
+        salvage_revenue = units_unsold * salvage_price
+
+        # Build profit
         profit = sales_revenue + salvage_revenue - order_cost
-        stockout_qty = max(demand - self.factors["order_quantity"], 0)
+
+        # Determine if there was a stockout.
         stockout = int(stockout_qty > 0)
+
         # Calculate gradient of profit w.r.t. order quantity.
-        if demand > self.factors["order_quantity"]:
-            grad_profit_order_quantity = (
-                self.factors["sales_price"] - self.factors["purchase_price"]
-            )
-        elif demand < self.factors["order_quantity"]:
-            grad_profit_order_quantity = (
-                self.factors["salvage_price"] - self.factors["purchase_price"]
-            )
+        if order_diff < 0:
+            grad_profit_order_quantity = sales_price - purch_price
+        elif order_diff > 0:
+            grad_profit_order_quantity = salvage_price - purch_price
         else:
             grad_profit_order_quantity = np.nan
+
         # Compose responses and gradients.
         responses = {
             "profit": profit,
