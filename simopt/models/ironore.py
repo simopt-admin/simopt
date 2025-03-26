@@ -237,6 +237,19 @@ class IronOre(Model):
             "frac_producing" = The fraction of days spent producing iron ore
             "mean_stock" = The average stocks over the time period
         """
+        n_days = self.factors["n_days"]
+        min_price = self.factors["min_price"]
+        mean_price = self.factors["mean_price"]
+        max_price = self.factors["max_price"]
+        st_dev = self.factors["st_dev"]
+        price_stop = self.factors["price_stop"]
+        inven_stop = self.factors["inven_stop"]
+        max_prod_perday = self.factors["max_prod_perday"]
+        capacity = self.factors["capacity"]
+        prod_cost = self.factors["prod_cost"]
+        price_prod = self.factors["price_prod"]
+        price_sell = self.factors["price_sell"]
+        holding_cost = self.factors["holding_cost"]
         # Designate random number generators.
         price_rng = rng_list[0]
         # Initialize quantities to track:
@@ -246,74 +259,63 @@ class IronOre(Model):
         #   - Profit in each period.
         #   - Whether producing or not in each period.
         #   - Production in each period.
-        mkt_price = np.zeros(self.factors["n_days"])
-        mkt_price[0] = self.factors["mean_price"]
-        stock = np.zeros(self.factors["n_days"])
-        profit = np.zeros(self.factors["n_days"])
-        producing = np.zeros(self.factors["n_days"])
-        prod = np.zeros(self.factors["n_days"])
+        mkt_price = np.zeros(n_days)
+        mkt_price[0] = mean_price
+        stock = np.zeros(n_days)
+        profit = np.zeros(n_days)
+        producing = np.zeros(n_days)
 
         # Run simulation over time horizon.
-        for day in range(1, self.factors["n_days"]):
-            # Determine new price, mean-reverting random walk, Pt = trunc(Pt-1 + Nt(μt,sigma)).
-            # Run μt, mean at period t, where μt = sgn(μ0 - Pt-1) * |μ0 - Pt-1|^(1/4).
-            mean_val = sqrt(
-                sqrt(abs(self.factors["mean_price"] - mkt_price[day]))
-            )
-            mean_dir = copysign(1, self.factors["mean_price"] - mkt_price[day])
-            mean_move = mean_val * mean_dir
-            move = price_rng.normalvariate(mean_move, self.factors["st_dev"])
-            mkt_price[day] = max(
-                min(mkt_price[day - 1] + move, self.factors["max_price"]),
-                self.factors["min_price"],
-            )
-            # If production is underway...
-            if producing[day] == 1:
-                # ... cease production if price goes too low or inventory is too high.
-                if (mkt_price[day] <= self.factors["price_stop"]) | (
-                    stock[day] >= self.factors["inven_stop"]
-                ):
-                    producing[day] = 0
-                else:
-                    prod[day] = min(
-                        self.factors["max_prod_perday"],
-                        self.factors["capacity"] - stock[day],
-                    )
-                    stock[day] = stock[day] + prod[day]
-                    profit[day] = (
-                        profit[day] - prod[day] * self.factors["prod_cost"]
-                    )
-            # If production is not currently underway...
-            else:
-                if (mkt_price[day] >= self.factors["price_prod"]) and (
-                    stock[day] < self.factors["inven_stop"]
-                ):
-                    producing[day] = 1
-                    prod[day] = min(
-                        self.factors["max_prod_perday"],
-                        self.factors["capacity"] - stock[day],
-                    )
-                    stock[day] = stock[day] + prod[day]
-                    profit[day] = (
-                        profit[day] - prod[day] * self.factors["prod_cost"]
-                    )
-            # Sell if price is high enough.
-            if mkt_price[day] >= self.factors["price_sell"]:
-                profit[day] = profit[day] + stock[day] * mkt_price[day]
-                stock[day] = 0
-            # Charge holding cost.
-            profit[day] = (
-                profit[day] - stock[day] * self.factors["holding_cost"]
-            )
-            # Calculate starting quantities for next period.
-            if day < self.factors["n_days"] - 1:
-                profit[day + 1] = profit[day]
-                stock[day + 1] = stock[day]
+        for day in range(1, n_days):
+            # Carry forward running values from previous day.
+            prior_day = day - 1
+            # Stock doesn't reset between days
+            stock[day] = stock[prior_day]
+            # The profit is cumulative, so carry that forwards too
+            profit[day] = profit[prior_day]
+            # Keep references of previous values.
+            prev_price = mkt_price[prior_day]
+            prev_stock = stock[prior_day]
+            prev_producing = producing[prior_day]
+
+            # === Price Update: mean-reverting random walk ===
+            delta = mean_price - mkt_price[day]
+            mean_move = copysign(sqrt(sqrt(abs(delta))), delta)
+            move = price_rng.normalvariate(mean_move, st_dev)
+            price_today = max(min(prev_price + move, max_price), min_price)
+            mkt_price[day] = price_today
+            if day < n_days - 1:
                 mkt_price[day + 1] = mkt_price[day]
-                producing[day + 1] = producing[day]
+
+            # === Production Logic ===
+            # If stock is below the inventory stop and either:
+            # - if producing, price is above the price stop
+            # - if not producing, price is above the price prod
+            # then produce the maximum amount possible.
+            if prev_stock < inven_stop and (
+                (prev_producing and price_today >= price_stop)
+                or (not prev_producing and price_today >= price_prod)
+            ):
+                missing_stock = capacity - prev_stock
+                production_amount = min(max_prod_perday, missing_stock)
+                stock[day] += production_amount
+                daily_production_cost = production_amount * prod_cost
+                profit[day] -= daily_production_cost
+                producing[day] = 1
+
+            # === Selling Logic ===
+            if price_today >= price_sell:
+                daily_selling_profit = stock[day] * price_today
+                profit[day] += daily_selling_profit
+                stock[day] = 0
+
+            # === Holding Cost ===
+            daily_holding_cost = stock[day] * holding_cost
+            profit[day] -= daily_holding_cost
+
         # Calculate responses from simulation data.
         responses = {
-            "total_profit": profit[self.factors["n_days"] - 1],
+            "total_profit": profit[-1],
             "frac_producing": np.mean(producing),
             "mean_stock": np.mean(stock),
         }
