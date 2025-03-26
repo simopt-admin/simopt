@@ -340,9 +340,10 @@ class Network(Model):
                     max(arr_i, message_mat[last_in_line[net], Col.DONE]) + svc_i
                 )
 
-            message_mat[i, Col.DONE] = done
-            message_mat[i, Col.SOJ] = done - arr_i
-            message_mat[i, Col.WAIT] = message_mat[i, Col.SOJ] - svc_i
+            curr_message = message_mat[i]
+            curr_message[Col.DONE] = done
+            curr_message[Col.SOJ] = done - arr_i
+            curr_message[Col.WAIT] = curr_message[Col.SOJ] - svc_i
             last_in_line[net] = i
 
         # Vectorized cost computations after SOJ is known
