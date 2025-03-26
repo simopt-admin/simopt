@@ -161,28 +161,25 @@ class FacilitySize(Model):
             n_cut : integer
             the number of toal demand which cannot be satisfied
         """
+        mean_vec: list[float | int] = self.factors["mean_vec"]
+        cov = np.array(self.factors["cov"])
+        capacity = np.array(self.factors["capacity"])
         # Designate RNG for demands.
         demand_rng = rng_list[0]
-        stockout_flag = 0
-        n_fac_stockout = 0
-        n_cut = 0
         # Generate random demands at facilities from truncated multivariate normal distribution.
-        demand = demand_rng.mvnormalvariate(
-            self.factors["mean_vec"], self.factors["cov"], factorized=False
-        )
-        while any(d < 0 for d in demand):
-            demand = demand_rng.mvnormalvariate(
-                self.factors["mean_vec"], self.factors["cov"], factorized=False
-            )
+        while True:
+            demand = np.array(demand_rng.mvnormalvariate(mean_vec, cov))
+            # Only leave if all demands are non-negative.
+            if np.all(demand >= 0):
+                break
         # Check for stockouts.
-        for i in range(self.factors["n_fac"]):
-            if demand[i] > self.factors["capacity"][i]:
-                n_fac_stockout = n_fac_stockout + 1
-                stockout_flag = 1
-                n_cut += demand[i] - self.factors["capacity"][i]
+        extra_demand = demand - capacity
+        pos_excess_mask = extra_demand > 0
+        n_fac_stockout = np.sum(pos_excess_mask).astype(int)
+        n_cut = np.sum(extra_demand[pos_excess_mask]).astype(int)
         # Compose responses and gradients.
         responses = {
-            "stockout_flag": stockout_flag,
+            "stockout_flag": int(n_fac_stockout > 0),
             "n_fac_stockout": n_fac_stockout,
             "n_cut": n_cut,
         }
