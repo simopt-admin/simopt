@@ -8,6 +8,7 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from collections import deque
 from typing import Callable, Final
 
 import numpy as np
@@ -168,72 +169,63 @@ class SAN(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
+        num_nodes: int = self.factors["num_nodes"]
+        arcs: list[tuple[int, int]] = self.factors["arcs"]
+        arc_means: tuple[int, ...] = self.factors["arc_means"]
         # Designate separate random number generators.
         exp_rng = rng_list[0]
 
         # Topological sort.
-        graph_in = {
-            node: set() for node in range(1, self.factors["num_nodes"] + 1)
-        }
-        graph_out = {
-            node: set() for node in range(1, self.factors["num_nodes"] + 1)
-        }
-        for a in self.factors["arcs"]:
-            graph_in[a[1]].add(a[0])
-            graph_out[a[0]].add(a[1])
-        indegrees = [
-            len(graph_in[n]) for n in range(1, self.factors["num_nodes"] + 1)
-        ]
-        # outdegrees = [len(graph_out[n]) for n in range(1, self.factors["num_nodes"]+1)]
-        queue = []
+        node_range = range(1, num_nodes + 1)
+        graph_in = {node: set() for node in node_range}
+        graph_out = {node: set() for node in node_range}
+        for start, end in arcs:
+            graph_in[end].add(start)
+            graph_out[start].add(end)
+
+        indegrees = [len(graph_in[n]) for n in node_range]
+        # outdegrees = [len(graph_out[n]) for n in node_range]
+        queue = deque(n for n in node_range if indegrees[n - 1] == 0)
         topo_order = []
-        for n in range(self.factors["num_nodes"]):
-            if indegrees[n] == 0:
-                queue.append(n + 1)
-        while len(queue) != 0:
-            u = queue.pop(0)
+        while queue:
+            u = queue.popleft()
             topo_order.append(u)
-            for n in graph_out[u]:
-                indegrees[n - 1] -= 1
-                if indegrees[n - 1] == 0:
-                    queue.append(n)
+            for v in graph_out[u]:
+                indegrees[v - 1] -= 1
+                if indegrees[v - 1] == 0:
+                    queue.append(v)
 
-        # Generate arc lengths.
-        arc_length = {}
-        for i in range(len(self.factors["arcs"])):
-            arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(
-                1 / self.factors["arc_means"][i]
-            )
+        # Arc lengths
+        arc_length = {
+            arc: exp_rng.expovariate(1 / arc_means[i])
+            for i, arc in enumerate(arcs)
+        }
 
-        # Calculate the length of the longest path.
-        path_length = np.zeros(self.factors["num_nodes"])
-        prev = np.zeros(self.factors["num_nodes"])
-        for i in range(1, self.factors["num_nodes"]):
-            vi = topo_order[i - 1]
+        # Longest path
+        path_length = np.zeros(num_nodes)
+        prev = np.full(num_nodes, -1)
+        for vi in topo_order:
             for j in graph_out[vi]:
-                if (
-                    path_length[j - 1]
-                    < path_length[vi - 1] + arc_length[str((vi, j))]
-                ):
-                    path_length[j - 1] = (
-                        path_length[vi - 1] + arc_length[str((vi, j))]
-                    )
+                new_len = path_length[vi - 1] + arc_length[(vi, j)]
+                if new_len > path_length[j - 1]:
+                    path_length[j - 1] = new_len
                     prev[j - 1] = vi
-        longest_path = path_length[self.factors["num_nodes"] - 1]
+
+        longest_path = path_length[-1]
 
         # Calculate the IPA gradient w.r.t. arc means.
         # If an arc is on the longest path, the component of the gradient
         # is the length of the length of that arc divided by its mean.
         # If an arc is not on the longest path, the component of the gradient is zero.
-        gradient = np.zeros(len(self.factors["arcs"]))
+        arc_to_index = {arc: i for i, arc in enumerate(arcs)}
+        gradient = np.zeros(len(arcs))
         current = topo_order[-1]
-        backtrack = int(prev[self.factors["num_nodes"] - 1])
+        backtrack = int(prev[-1])
+
         while current != topo_order[0]:
-            idx = self.factors["arcs"].index((backtrack, current))
-            gradient[idx] = (
-                arc_length[str((backtrack, current))]
-                / (self.factors["arc_means"][idx])
-            )
+            arc = (backtrack, current)
+            idx = arc_to_index[arc]
+            gradient[idx] = arc_length[arc] / arc_means[idx]
             current = backtrack
             backtrack = int(prev[backtrack - 1])
 
