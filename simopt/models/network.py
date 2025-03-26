@@ -8,6 +8,7 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from enum import IntEnum
 from typing import Callable, Final
 
 import numpy as np
@@ -269,79 +270,100 @@ class Network(Model):
         """
         # Determine total number of arrivals to simulate.
         total_arrivals = self.factors["n_messages"]
+        arrival_rate = self.factors["arrival_rate"]
+        n_networks = self.factors["n_networks"]
+        process_prob = self.factors["process_prob"]
+        lower_limits_transit_time = self.factors["lower_limits_transit_time"]
+        upper_limits_transit_time = self.factors["upper_limits_transit_time"]
+        mode_transit_time = self.factors["mode_transit_time"]
+        cost_process = self.factors["cost_process"]
+        cost_time = self.factors["cost_time"]
+
         # Designate separate random number generators.
         arrival_rng = rng_list[0]
         network_rng = rng_list[1]
         transit_rng = rng_list[2]
+
         # Generate all interarrival, network routes, and service times before the simulation run.
         arrival_times = [
-            arrival_rng.expovariate(self.factors["arrival_rate"])
-            for _ in range(total_arrivals)
+            arrival_rng.expovariate(arrival_rate) for _ in range(total_arrivals)
         ]
         network_routes = network_rng.choices(
-            range(self.factors["n_networks"]),
-            weights=self.factors["process_prob"],
+            range(n_networks),
+            weights=process_prob,
             k=total_arrivals,
         )
         service_times = [
             transit_rng.triangular(
-                low=self.factors["lower_limits_transit_time"][
-                    network_routes[i]
-                ],
-                high=self.factors["upper_limits_transit_time"][
-                    network_routes[i]
-                ],
-                mode=self.factors["mode_transit_time"][network_routes[i]],
+                low=lower_limits_transit_time[route],
+                high=upper_limits_transit_time[route],
+                mode=mode_transit_time[route],
             )
-            for i in range(total_arrivals)
+            for route in network_routes
         ]
-        # Create matrix storing times and metrics for each message:
-        #     column 0 : arrival time to queue;
-        #     column 1 : network route;
-        #     column 2 : service time;
-        #     column 3 : service completion time;
-        #     column 4 : sojourn time;
-        #     column 5 : waiting time;
-        #     column 6 : processing cost;
-        #     column 7 : time cost;
-        #     column 8 : total cost;
+
+        # Alias columns by index
+        class Col(IntEnum):
+            ARR = 0  # arrival time to queue
+            ROUTE = 1  # network route
+            SVC = 2  # service time
+            DONE = 3  # service completion time
+            SOJ = 4  # sojourn time
+            WAIT = 5  # waiting time
+            PROC_COST = 6  # processing cost
+            TIME_COST = 7  # time cost
+            TOTAL_COST = 8  # total cost
+
         message_mat = np.zeros((total_arrivals, 9))
-        message_mat[:, 0] = np.cumsum(arrival_times)
-        message_mat[:, 1] = network_routes
-        message_mat[:, 2] = service_times
+        message_mat[:, Col.ARR] = np.cumsum(arrival_times)
+        message_mat[:, Col.ROUTE] = network_routes
+        message_mat[:, Col.SVC] = service_times
         # Fill in entries for remaining messages' metrics.
         # Create a list recording the index of the last customer sent to each network.
         # Starting with -1, indicating no one is in line.
-        last_in_line = [-1 for _ in range(self.factors["n_networks"])]
-        # Start of the simulation run.
+        routes = message_mat[:, Col.ROUTE].astype(int)
+        arrival = message_mat[:, Col.ARR]
+        service = message_mat[:, Col.SVC]
+
+        # Initialize completion time tracking per network
+        last_in_line = [-1] * n_networks
+
         for i in range(total_arrivals):
-            # Identify the network that message i was routed to.
-            network = int(message_mat[i, 1])
-            # Check if there was a message in line previously sent to that network.
-            if last_in_line[network] == -1:
-                # With no message in line, message i's service completion time is its arrival time plus its service time.
-                message_mat[i, 3] = message_mat[i, 0] + message_mat[i, 2]
+            net = routes[i]
+            arr_i = arrival[i]
+            svc_i = service[i]
+
+            if last_in_line[net] == -1:
+                done = arr_i + svc_i
             else:
-                # With a message in line, message i's service completion time will be calculated using Lindley's recursion method.
-                # We first choose the maximum between the arrival time of message i and the last in line message's service completion time.
-                # We then add message's i service time to this value.
-                message_mat[i, 3] = (
-                    max(
-                        message_mat[i, 0], message_mat[last_in_line[network], 3]
-                    )
-                    + message_mat[i, 2]
+                done = (
+                    max(arr_i, message_mat[last_in_line[net], Col.DONE]) + svc_i
                 )
-            # Calculate other statistics.
-            message_mat[i, 4] = message_mat[i, 3] - message_mat[i, 0]
-            message_mat[i, 5] = message_mat[i, 4] - message_mat[i, 2]
-            message_mat[i, 6] = self.factors["cost_process"][network]
-            message_mat[i, 7] = (
-                self.factors["cost_time"][network] * message_mat[i, 4]
-            )
-            message_mat[i, 8] = message_mat[i, 6] + message_mat[i, 7]
-            last_in_line[network] = i
+
+            message_mat[i, Col.DONE] = done
+            message_mat[i, Col.SOJ] = done - arr_i
+            message_mat[i, Col.WAIT] = message_mat[i, Col.SOJ] - svc_i
+            last_in_line[net] = i
+
+        # Vectorized cost computations after SOJ is known
+        message_mat[:, Col.PROC_COST] = np.array(cost_process)[routes]
+        message_mat[:, Col.TIME_COST] = (
+            np.array(cost_time)[routes] * message_mat[:, Col.SOJ]
+        )
+        message_mat[:, Col.TOTAL_COST] = (
+            message_mat[:, Col.PROC_COST] + message_mat[:, Col.TIME_COST]
+        )
+
+        routes = message_mat[:, Col.ROUTE].astype(int)
+        message_mat[:, Col.PROC_COST] = np.array(cost_process)[routes]
+        message_mat[:, Col.TIME_COST] = (
+            np.array(cost_time)[routes] * message_mat[:, Col.SOJ]
+        )
+        message_mat[:, Col.TOTAL_COST] = (
+            message_mat[:, Col.PROC_COST] + message_mat[:, Col.TIME_COST]
+        )
         # Compute total costs for the simulation run.
-        total_cost = sum(message_mat[:, 8])
+        total_cost = np.sum(message_mat[:, Col.TOTAL_COST])
         responses = {"total_cost": total_cost}
         gradients = {
             response_key: {
