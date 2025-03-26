@@ -122,21 +122,23 @@ class ParameterEstimation(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
+        xstar = self.factors["xstar"]
+        x = self.factors["x"]
         # Designate separate random number generators.
         # Outputs will be coupled when generating Y_j's.
         y2_rng = rng_list[0]
         y1_rng = rng_list[1]
         # Generate y1 and y2 from specified gamma distributions.
-        y2 = y2_rng.gammavariate(self.factors["xstar"][1], 1)
-        y1 = y1_rng.gammavariate(self.factors["xstar"][0] * y2, 1)
+        y2 = y2_rng.gammavariate(xstar[1], 1)
+        y1 = y1_rng.gammavariate(xstar[0] * y2, 1)
         # Compute Log Likelihood
         loglik = (
             -y1
             - y2
-            + (self.factors["x"][0] * y2 - 1) * np.log(y1)
-            + (self.factors["x"][1] - 1) * np.log(y2)
-            - np.log(math.gamma(self.factors["x"][0] * y2))
-            - np.log(math.gamma(self.factors["x"][1]))
+            + (x[0] * y2 - 1) * np.log(y1)
+            + (x[1] - 1) * np.log(y2)
+            - np.log(math.gamma(x[0] * y2))
+            - np.log(math.gamma(x[1]))
         )
         # Compose responses and gradients.
         responses = {"loglik": loglik}
