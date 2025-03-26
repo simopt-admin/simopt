@@ -8,7 +8,7 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
-from typing import Callable, Final
+from typing import Callable, Final, NamedTuple
 
 import numpy as np
 
@@ -126,80 +126,78 @@ class FixedSAN(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
+        num_nodes: int = self.factors["num_nodes"]
+        num_arcs: int = self.factors["num_arcs"]
+        thetas = list(self.factors["arc_means"])
+
         # Designate separate random number generators.
         exp_rng = rng_list[0]
 
         # Generate arc lengths.
-        nodes = np.zeros(self.factors["num_nodes"])
-        time_deriv = np.zeros(
-            (self.factors["num_nodes"], self.factors["num_arcs"])
-        )
-        thetas = list(self.factors["arc_means"])
+        nodes = np.zeros(num_nodes)
+        time_deriv = np.zeros((num_nodes, num_arcs))
         arcs = [exp_rng.expovariate(1 / x) for x in thetas]
 
-        # Brute force calculation like in Matlab code
-        nodes[1] = nodes[0] + arcs[0]
-        time_deriv[1, :] = time_deriv[0, :]
-        time_deriv[1, 0] = time_deriv[1, 0] + arcs[0] / thetas[0]
+        class PathSegment(NamedTuple):
+            prev_node_idx: int
+            arc_idx: int
 
-        nodes[2] = max(nodes[0] + arcs[1], nodes[1] + arcs[2])
-        if nodes[0] + arcs[1] > nodes[1] + arcs[2]:
-            nodes[2] = nodes[0] + arcs[1]
-            time_deriv[2, :] = time_deriv[0, :]
-            time_deriv[2, 1] = time_deriv[2, 1] + arcs[1] / thetas[1]
-        else:
-            nodes[2] = nodes[1] + arcs[2]
-            time_deriv[2, :] = time_deriv[1, :]
-            time_deriv[2, 2] = time_deriv[2, 2] + arcs[2] / thetas[2]
+            def get_time(self) -> float:
+                return nodes[self.prev_node_idx] + arcs[self.arc_idx]
 
-        nodes[3] = nodes[1] + arcs[3]
-        time_deriv[3, :] = time_deriv[1, :]
-        time_deriv[3, 3] = time_deriv[3, 3] + arcs[3] / thetas[3]
+            def to_tuple(self) -> tuple[int, int]:
+                return self.prev_node_idx, self.arc_idx
 
-        nodes[4] = nodes[3] + arcs[6]
-        time_deriv[4, :] = time_deriv[3, :]
-        time_deriv[4, 6] = time_deriv[4, 6] + arcs[6] / thetas[6]
+        def update_node(target_node_idx: int, segment: PathSegment) -> None:
+            prev = segment.prev_node_idx
+            arc = segment.arc_idx
+            nodes[target_node_idx] = segment.get_time()
+            time_deriv[target_node_idx, :] = time_deriv[prev, :].copy()
+            time_deriv[target_node_idx, arc] += arcs[arc] / thetas[arc]
 
-        nodes[5] = max(
-            [nodes[1] + arcs[4], nodes[2] + arcs[5], nodes[4] + arcs[8]]
+        def max_update_node(
+            target_node_idx: int, segments: list[PathSegment]
+        ) -> None:
+            seg_times = [seg.get_time() for seg in segments]
+            max_segment = segments[np.argmax(seg_times)]
+            update_node(target_node_idx, max_segment)
+
+        def max_update_node_shifted(
+            target_node_idx: int, segments: list[PathSegment]
+        ) -> None:
+            seg_times = [seg.get_time() for seg in segments]
+            nodes[target_node_idx] = max(seg_times)
+            ind = np.argmax(seg_times)
+            # TODO: The nodes/arcs seem to be off by one, investigate if this
+            # is due to a copying error from Matlab (1-based indexing).
+            # If this is an error, this function can be removed and replaced
+            # with max_update_node.
+            segment = segments[(ind - 1) % len(segments)]
+            arc = segment.arc_idx
+            node = segment.prev_node_idx
+            time_deriv[target_node_idx, :] = time_deriv[node, :]
+            time_deriv[target_node_idx, arc] += arcs[arc] / thetas[arc]
+
+        # node 1 = node 0 + arc 0
+        update_node(1, PathSegment(0, 0))
+        # node 2 = max(node0+arc1, node1+arc2)
+        max_update_node(2, [PathSegment(0, 1), PathSegment(1, 2)])
+        # node 3 = node1 + arc3
+        update_node(3, PathSegment(1, 3))
+        # node 4 = node3 + arc6
+        update_node(4, PathSegment(3, 6))
+        # node 5 = max(node1+arc4, node2+arc5, node4+arc8)
+        max_update_node_shifted(
+            5, [PathSegment(1, 4), PathSegment(2, 5), PathSegment(4, 8)]
         )
-        ind = np.argmax(
-            [nodes[1] + arcs[4], nodes[2] + arcs[5], nodes[4] + arcs[8]]
-        )
+        # node 6 = node3 + arc7
+        update_node(6, PathSegment(3, 7))
+        # node 7 = max(node6+arc11, node4+arc9)
+        max_update_node(7, [PathSegment(6, 11), PathSegment(4, 9)])
+        # node 8 = max(node5+arc10, node7+arc12)
+        max_update_node(8, [PathSegment(5, 10), PathSegment(7, 12)])
 
-        if ind == 1:
-            time_deriv[5, :] = time_deriv[1, :]
-            time_deriv[5, 4] = time_deriv[5, 4] + arcs[4] / thetas[4]
-        elif ind == 2:
-            time_deriv[5, :] = time_deriv[2, :]
-            time_deriv[5, 5] = time_deriv[5, 5] + arcs[5] / thetas[5]
-        else:
-            time_deriv[5, :] = time_deriv[4, :]
-            time_deriv[5, 8] = time_deriv[5, 8] + arcs[8] / thetas[8]
-
-        nodes[6] = nodes[3] + arcs[7]
-        time_deriv[6, :] = time_deriv[3, :]
-        time_deriv[6, 7] = time_deriv[6, 7] + arcs[7] / thetas[7]
-
-        if nodes[6] + arcs[11] > nodes[4] + arcs[9]:
-            nodes[7] = nodes[6] + arcs[11]
-            time_deriv[7, :] = time_deriv[6, :]
-            time_deriv[7, 11] = time_deriv[7, 11] + arcs[11] / thetas[11]
-        else:
-            nodes[7] = nodes[4] + arcs[9]
-            time_deriv[7, :] = time_deriv[4, :]
-            time_deriv[7, 9] = time_deriv[7, 9] + arcs[9] / thetas[9]
-
-        if nodes[5] + arcs[10] > nodes[7] + arcs[12]:
-            nodes[8] = nodes[5] + arcs[10]
-            time_deriv[8, :] = time_deriv[5, :]
-            time_deriv[8, 10] = time_deriv[8, 10] + arcs[10] / thetas[10]
-        else:
-            nodes[8] = nodes[7] + arcs[12]
-            time_deriv[8, :] = time_deriv[7, :]
-            time_deriv[8, 12] = time_deriv[8, 12] + arcs[12] / thetas[12]
-
-        longest_path = nodes[8]
+        longest_path = float(nodes[8])
         longest_path_gradient = time_deriv[8, :]
 
         # Compose responses and gradients.
