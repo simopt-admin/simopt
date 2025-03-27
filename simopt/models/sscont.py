@@ -238,123 +238,110 @@ class SSCont(Model):
             ``avg_order``
                 mean amount of product ordered given an order occured
         """
+        demand_mean = self.factors["demand_mean"]
+        n_days = self.factors["n_days"]
+        warmup = self.factors["warmup"]
+        fac_s = self.factors["s"]
+        fac_S = self.factors["S"]  # noqa: N806
+        lead_mean = self.factors["lead_mean"]
+        fixed_cost = self.factors["fixed_cost"]
+        variable_cost = self.factors["variable_cost"]
+        holding_cost = self.factors["holding_cost"]
+        backorder_cost = self.factors["backorder_cost"]
+
         # Designate random number generators.
         demand_rng = rng_list[0]
         lead_rng = rng_list[1]
+
+        periods = n_days + warmup
         # Generate exponential random demands.
-        demands = [
-            demand_rng.expovariate(1 / self.factors["demand_mean"])
-            for _ in range(self.factors["n_days"] + self.factors["warmup"])
-        ]
+        inv_demand_mean = 1 / demand_mean
+        demands = np.array(
+            [demand_rng.expovariate(inv_demand_mean) for _ in range(periods)]
+        )
         # Initialize starting and ending inventories for each period.
-        start_inv = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        start_inv[0] = self.factors["s"]  # Start with s units at period 0.
-        end_inv = np.zeros(self.factors["n_days"] + self.factors["warmup"])
+        start_inv = np.zeros(periods)
+        start_inv[0] = fac_s  # Start with s units at period 0.
+        end_inv = np.zeros(periods)
         # Initialize other quantities to track:
         #   - Amount of product to be received in each period.
         #   - Inventory position each period.
         #   - Amount of product ordered in each period.
         #   - Amount of product outstanding in each period.
-        orders_received = np.zeros(
-            self.factors["n_days"] + self.factors["warmup"]
-        )
-        inv_pos = np.zeros(self.factors["n_days"] + self.factors["warmup"])
-        orders_placed = np.zeros(
-            self.factors["n_days"] + self.factors["warmup"]
-        )
-        orders_outstanding = np.zeros(
-            self.factors["n_days"] + self.factors["warmup"]
-        )
+        orders_received = np.zeros(periods)
+        inv_pos = np.zeros(periods)
+        orders_placed = np.zeros(periods)
+        orders_outstanding = np.zeros(periods)
         # Run simulation over time horizon.
-        for day in range(self.factors["n_days"] + self.factors["warmup"]):
-            # Calculate end-of-period inventory on hand and inventory position.
+        for day in range(periods):
+            next_day = day + 1
+
+            # Inventory position
             end_inv[day] = start_inv[day] - demands[day]
             inv_pos[day] = end_inv[day] + orders_outstanding[day]
-            # Place orders, keeping track of outstanding orders and when they will be received.
-            orders_placed[day] = np.max(
-                (
-                    (inv_pos[day] < self.factors["s"])
-                    * (self.factors["S"] - inv_pos[day])
-                ),
-                0,
-            )
-            if orders_placed[day] > 0:
-                lead = lead_rng.poissonvariate(self.factors["lead_mean"])
-                for future_day in range(day + 1, day + lead + 1):
-                    if (
-                        future_day
-                        < self.factors["n_days"] + self.factors["warmup"]
-                    ):
-                        orders_outstanding[future_day] = (
-                            orders_outstanding[future_day] + orders_placed[day]
-                        )
-                if (
-                    day + lead + 1
-                    < self.factors["n_days"] + self.factors["warmup"]
-                ):
-                    orders_received[day + lead + 1] = (
-                        orders_received[day + lead + 1] + orders_placed[day]
-                    )
-            # Calculate starting inventory for next period.
-            if day < self.factors["n_days"] + self.factors["warmup"] - 1:
-                start_inv[day + 1] = end_inv[day] + orders_received[day + 1]
+
+            if inv_pos[day] < fac_s:
+                order_qty = fac_S - inv_pos[day]
+                orders_placed[day] = order_qty
+
+                lead = lead_rng.poissonvariate(lead_mean)
+                delivery_day = next_day + lead
+
+                if delivery_day < periods:
+                    orders_received[delivery_day] += order_qty
+
+                # Track future outstanding orders
+                if next_day < periods:
+                    orders_outstanding[
+                        next_day : min(delivery_day, periods)
+                    ] += order_qty
+
+            if next_day < periods:
+                start_inv[next_day] = end_inv[day] + orders_received[next_day]
+
         # Calculate responses from simulation data.
-        order_rate = np.mean(orders_placed[self.factors["warmup"] :] > 0)
-        stockout_rate = np.mean(end_inv[self.factors["warmup"] :] < 0)
-        avg_order_costs = np.mean(
-            self.factors["fixed_cost"]
-            * (orders_placed[self.factors["warmup"] :] > 0)
-            + self.factors["variable_cost"]
-            * orders_placed[self.factors["warmup"] :]
-        )
+        orders_post_warmup = orders_placed[warmup:]
+        pos_orders_post_warmup_mask = orders_post_warmup > 0
+        inv_post_warmup = end_inv[warmup:]
+        neg_inv_post_warmup_mask = inv_post_warmup < 0
+        pos_inv_post_warmup_mask = inv_post_warmup > 0
+
+        order_rate = np.mean(pos_orders_post_warmup_mask)
+        stockout_rate = np.mean(neg_inv_post_warmup_mask)
+
+        fixed_costs = fixed_cost * pos_orders_post_warmup_mask
+        variable_costs = variable_cost * orders_post_warmup
+        avg_order_costs = np.mean(fixed_costs + variable_costs)
+
         avg_holding_costs = np.mean(
-            self.factors["holding_cost"]
-            * end_inv[self.factors["warmup"] :]
-            * [end_inv[self.factors["warmup"] :] > 0]
+            holding_cost * inv_post_warmup * pos_inv_post_warmup_mask
         )
-        on_time_rate = 1 - np.sum(
-            np.min(
-                np.vstack(
-                    (
-                        demands[self.factors["warmup"] :],
-                        demands[self.factors["warmup"] :]
-                        - start_inv[self.factors["warmup"] :],
-                    )
-                ),
-                axis=0,
-            )
-            * (
-                (
-                    demands[self.factors["warmup"] :]
-                    - start_inv[self.factors["warmup"] :]
-                )
-                > 0
-            )
-        ) / np.sum(demands[self.factors["warmup"] :])
+        demands_post_warmup = demands[warmup:]
+        demand_start_inv_diff = demands_post_warmup - start_inv[warmup:]
+
+        shortage = np.minimum(demands_post_warmup, demand_start_inv_diff)
+        shortage[demand_start_inv_diff <= 0] = 0
+        on_time_rate = 1 - shortage.sum() / np.sum(demands_post_warmup)
+
         avg_backorder_costs = (
-            self.factors["backorder_cost"]
+            backorder_cost
             * (1 - on_time_rate)
-            * np.sum(demands[self.factors["warmup"] :])
-            / float(self.factors["n_days"])
+            * np.sum(demands_post_warmup)
+            / n_days
         )
-        if np.array(np.where(end_inv[self.factors["warmup"] :] < 0)).size == 0:
+        # Calculate average stockout costs.
+        neg_inv_post_warmup_mask = np.where(neg_inv_post_warmup_mask)
+        if len(neg_inv_post_warmup_mask[0]) == 0:
             avg_stockout = 0
         else:
-            avg_stockout = -np.mean(
-                end_inv[self.factors["warmup"] :][
-                    np.where(end_inv[self.factors["warmup"] :] < 0)
-                ]
-            )
-        if (
-            np.array(np.where(orders_placed[self.factors["warmup"] :] > 0)).size
-            == 0
-        ):
+            avg_stockout = -np.mean(inv_post_warmup[neg_inv_post_warmup_mask])
+        # Calculate average backorder costs.
+        pos_orders_placed_post_warmup = np.where(pos_orders_post_warmup_mask)
+        if len(pos_orders_placed_post_warmup[0]) == 0:
             avg_order = 0
         else:
             avg_order = np.mean(
-                orders_placed[self.factors["warmup"] :][
-                    np.where(orders_placed[self.factors["warmup"] :] > 0)
-                ]
+                orders_post_warmup[pos_orders_placed_post_warmup]
             )
         # Compose responses and gradients.
         responses = {
