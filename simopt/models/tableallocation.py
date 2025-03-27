@@ -8,6 +8,9 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+import bisect
+import itertools
+from collections.abc import Sequence
 from typing import Callable
 
 import numpy as np
@@ -209,6 +212,46 @@ class TableAllocation(Model):
                 Fraction of customer arrivals that are seated.
 
         """
+
+        def fast_weighted_choice(
+            population: Sequence[int], weights: Sequence[float], rng: MRG32k3a
+        ) -> int:
+            """Select a single element from a population based on weights.
+
+            Designed to be faster than random's choices() when only one
+            element is needed.
+
+            Parameters
+            ----------
+            population : list
+                The population to select from.
+            weights : list
+                The weights for each element in the population.
+            rng : MRG32k3a
+                The random number generator to use for selection.
+
+            Returns
+            -------
+            int
+                The selected element from the population.
+            """
+            # Calculate cumulative weights
+            cum_weights = list(itertools.accumulate(weights))
+            # Generate a value somewhere between 0 and the sum of weights
+            x = rng.random() * cum_weights[-1]
+            # Find the index of the first cumulative weight that is >= x
+            # Return the corresponding element from the population
+            return population[bisect.bisect(cum_weights, x)]
+
+        num_tables = self.factors["num_tables"]
+        # TODO: figure out how floats are getting into the num_tables list
+        num_tables = [int(n) for n in num_tables]
+        n_hours = self.factors["n_hours"]
+        f_lambda = self.factors["lambda"]
+        table_cap = self.factors["table_cap"]
+        max_table_cap = max(table_cap)
+        service_time_means = self.factors["service_time_means"]
+        table_revenue = self.factors["table_revenue"]
         # Designate separate random number generators.
         arrival_rng = rng_list[0]
         group_size_rng = rng_list[1]
@@ -217,58 +260,58 @@ class TableAllocation(Model):
         total_rev = 0
         # Track table availability.
         # (i,j) is the time that jth table of size i becomes available.
-        # TODO: figure out how floats are getting into the num_tables list
-        self.factors["num_tables"] = [
-            int(n) for n in self.factors["num_tables"]
-        ]
-        table_avail = np.zeros((4, max(self.factors["num_tables"])))
+        table_avail = np.zeros((4, max(num_tables)))
         # Generate total number of arrivals in the period
-        n_arrivals = arrival_rng.poissonvariate(
-            round(self.factors["n_hours"] * sum(self.factors["lambda"]))
-        )
+        n_arrivals = arrival_rng.poissonvariate(round(n_hours * sum(f_lambda)))
         # Generate arrival times in minutes
         arrival_times = 60 * np.sort(
-            [
-                arrival_rng.uniform(0, self.factors["n_hours"])
-                for _ in range(n_arrivals)
-            ]
+            [arrival_rng.uniform(0, n_hours) for _ in range(n_arrivals)]
         )
         # Track seating rate
         found = np.zeros(n_arrivals)
+        # Precompute options for group sizes.
+        group_size_options = range(1, max_table_cap + 1)
         # Pass through all arrivals of groups to the restaurants.
         for n in range(n_arrivals):
             # Determine group size.
-            group_size = group_size_rng.choices(
-                population=range(1, max(self.factors["table_cap"]) + 1),
-                weights=self.factors["lambda"],
-            )[0]
+            group_size = fast_weighted_choice(
+                population=group_size_options,
+                weights=f_lambda,
+                rng=group_size_rng,
+            )
+
             # Find smallest table size to start search.
             table_size_idx = 0
-            while self.factors["table_cap"][table_size_idx] < group_size:
-                table_size_idx = table_size_idx + 1
-            # Initialize k and j to make sure they're not unbound
-            k = 0
-            j = 0
+            while table_cap[table_size_idx] < group_size:
+                table_size_idx += 1
+
             # Find smallest available table.
-            for k in range(table_size_idx, len(self.factors["num_tables"])):
-                for j in range(self.factors["num_tables"][k]):
-                    # Check if table is currently available.
-                    if table_avail[k, j] < arrival_times[n]:
-                        found[n] = 1
-                        break
-                if found[n] == 1:
-                    break
-            if found[n] == 1:
-                # Sample service time.
-                service_time = service_rng.expovariate(
-                    lambd=1 / self.factors["service_time_means"][group_size - 1]
-                )
-                # Update table availability.
-                table_avail[k, j] = table_avail[k, j] + service_time
-                # Update revenue.
-                total_rev = (
-                    total_rev + self.factors["table_revenue"][group_size - 1]
-                )
+            def find_table(
+                table_size_idx: int, n: int
+            ) -> tuple[int, int] | None:
+                for k in range(table_size_idx, len(num_tables)):
+                    for j in range(num_tables[k]):
+                        # Check if table is currently available.
+                        if table_avail[k, j] < arrival_times[n]:
+                            return k, j
+                # Return None if no table is available.
+                return None
+
+            result = find_table(table_size_idx, n)
+            # If no table is available, move on to next group.
+            if result is None:
+                continue
+            k, j = result
+            # Mark group as seated.
+            found[n] = 1
+            # Sample service time.
+            service_time = service_rng.expovariate(
+                lambd=1 / service_time_means[group_size - 1]
+            )
+            # Update table availability.
+            table_avail[k, j] += service_time
+            # Update revenue.
+            total_rev += table_revenue[group_size - 1]
         # Calculate responses from simulation data.
         responses = {
             "total_revenue": total_rev,
