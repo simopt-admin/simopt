@@ -167,13 +167,9 @@ class OpenJackson(Model):
         rho = lambdas/self.factors["service_mus"]
         if((rho > 1).any()):
             print("Unstable System: arrival > service rate")
-            #rho = np.array([np.nan for i in range(self.factors['number_queues'])])
             sys.exit(1)
         #calculate expected value of queue length as rho/(1-rho)
         expected_queue_length = (rho)/(1-rho)
-        #if((rho < 0).any()):
-        #print("rho: ", rho)
-        #    print("service mu: ",self.factors["service_mus"])
         if self.factors["steady_state_initialization"]:
         # sample initialized queue lengths
             
