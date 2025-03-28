@@ -1,7 +1,4 @@
-"""Provide base classes for problem-solver pairs and helper functions for reading/writing data and plotting."""
-
 from __future__ import annotations
-
 import ast
 import csv
 import importlib
@@ -1472,11 +1469,13 @@ class ProblemSolver:
         bs_initial_obj_val = np.mean(
             [self.x0_postreps[postrep] for postrep in bs_postrep_idxs]
         )
+
         # find mean lhs here
-        if self.problem.n_stochastic_constraints > 0:
-            bs_initial_lhs_val = np.mean(
-                [self.all_stoch_constraints[postrep] for postrep in bs_postrep_idxs]
-            )
+        # if self.problem.n_stochastic_constraints > 0:
+        #     print('all_stoch',len(self.all_stoch_constraints))
+        #     bs_initial_lhs_val = np.mean(
+        #         [self.all_stoch_constraints[postrep] for postrep in bs_postrep_idxs]
+        #     )
         
         # Reset subsubstream if using CRN across budgets.
         # This means the same postreplication indices will be used for resampling at x0 and x*.
@@ -1492,10 +1491,10 @@ class ProblemSolver:
             [self.xstar_postreps[postrep] for postrep in bs_postrep_idxs]
         )
         # find mean lhs of x*
-        if self.problem.n_stochastic_constraints > 0:
-            bs_optimal_lhs_val = np.mean(
-                [self.all_stoch_constraints[postrep] for postrep in bs_postrep_idxs]
-            )
+        # if self.problem.n_stochastic_constraints > 0:
+        #     bs_optimal_lhs_val = np.mean(
+        #         [self.all_stoch_constraints[postrep] for postrep in bs_postrep_idxs]
+        #     )
         
         # Compute initial optimality gap.
         bs_initial_opt_gap = bs_initial_obj_val - bs_optimal_obj_val
@@ -1516,17 +1515,29 @@ class ProblemSolver:
                     range(self.n_postreps), k=self.n_postreps
                 )
                 for budget in range(len(self.all_intermediate_budgets[mrep])):
+                    # find estimated lhs for any problem with stochastic constraints
+                    if self.problem.n_stochastic_constraints > 0:
+                        est_lhs.append(
+                            np.mean(
+                                [
+                                    self.all_stoch_constraints[mrep][budget][
+                                        postrep
+                                    ]
+                                    for postrep in bs_postrep_idxs
+                                ], axis=0
+                            )
+                        )
                     # If solution is x0...
                     if self.all_recommended_xs[mrep][budget] == self.x0:
                         est_objectives.append(bs_initial_obj_val)
-                        if self.problem.n_stochastic_constraints > 0:
-                            est_lhs.append(bs_initial_lhs_val)                     
+                        # if self.problem.n_stochastic_constraints > 0:
+                        #     est_lhs.append(bs_initial_lhs_val)                     
                         # use feas found before
                     # ...else if solution is x*...
                     elif self.all_recommended_xs[mrep][budget] == self.xstar:
                         est_objectives.append(bs_optimal_obj_val)
-                        if self.problem.n_stochastic_constraints > 0:
-                            est_lhs.append(bs_optimal_lhs_val)
+                        # if self.problem.n_stochastic_constraints > 0:
+                        #     est_lhs.append(bs_optimal_lhs_val)
                     # ... else solution other than x0 or x*.
                     else:
                         # Compute the mean of the resampled postreplications.
@@ -1540,18 +1551,18 @@ class ProblemSolver:
                                 ]
                             )
                         )
-                        # find lhs side estimates for each special case
-                        if self.problem.n_stochastic_constraints > 0:
-                            est_lhs.append(
-                                np.mean(
-                                    [
-                                        self.all_stoch_constraints[mrep][budget][
-                                            postrep
-                                        ]
-                                        for postrep in bs_postrep_idxs
-                                    ]
-                                )
-                            )
+                        # # find lhs side estimates for each special case
+                        # if self.problem.n_stochastic_constraints > 0:
+                        #     est_lhs.append(
+                        #         np.mean(
+                        #             [
+                        #                 self.all_stoch_constraints[mrep][budget][
+                        #                     postrep
+                        #                 ]
+                        #                 for postrep in bs_postrep_idxs
+                        #             ]
+                        #         )
+                        #     )
                         
                 # Record objective or progress curve.
                 if normalize:
@@ -1576,31 +1587,33 @@ class ProblemSolver:
                     )
                     bootstrap_curves.append(new_objective_curve)
                 # compute feasibility score for relevant problems
-                if self.n_stochastic_constraints > 0:
+                if self.problem.n_stochastic_constraints > 0:
                     if score in ("inf_norm", "norm"):
+                        scores = []
                         for constraint in est_lhs:
-                            scores = []
-                            for lhs in constraint: # mean (estimated) lhs at each intermediate budget value
-                                avg = np.array(lhs) 
-                                # test if all elements are non-negative
-                                is_feasible = np.all(avg<=0)
-                                if is_feasible:
-                                    if two_sided:
-                                        feas_score = -1*np.max(avg)
-                                    else:
-                                        feas_score = 0
+                            # print('constraint', constraint)
+                            # for lhs in constraint: # mean (estimated) lhs at each intermediate budget value
+                            #     avg = np.array(lhs) 
+                            # test if all elements are non-negative
+                            is_feasible = np.all(constraint<=0)
+                            if is_feasible:
+                                if two_sided:
+                                    feas_score = -1*np.max(constraint)
                                 else:
-                                    if score == "inf_norm":
-                                        feas_score = -1*np.max(avg)
-                                    elif score == "norm":
-                                        norm_array = np.where(avg<0, 0, avg)
-                                        feas_score = -1*np.linalg.norm(norm_array,ord=norm_degree)
-                                scores.append(feas_score)
-                            bootstrap_feasibility_curves.append(
-                                Curve(
-                                    x_vals=self.all_intermediate_budgets[mrep],
-                                    y_vals=scores,
-                                ))
+                                    feas_score = 0
+                            else:
+                                if score == "inf_norm":
+                                    feas_score = -1*np.max(constraint)
+                                elif score == "norm":
+                                    norm_array = np.where(constraint<0, 0, constraint)
+                                    feas_score = -1*np.linalg.norm(norm_array,ord=norm_degree)
+                            scores.append(feas_score)
+                        print('scores', scores)
+                        bootstrap_feasibility_curves.append(
+                            Curve(
+                                x_vals=self.all_intermediate_budgets[mrep],
+                                y_vals=scores,
+                            ))
         # Option 2: Non-default CRN behavior.
         else:
             boostrap_feasibility_curves = [] # leave empty for now not accomidating option 2 for feasiblity scores
@@ -2383,6 +2396,7 @@ def bootstrap_procedure(
         "quantile_solvability",
         "diff_cdf_solvability",
         "diff_quantile_solvability",
+        "feasibility_mean"
     ],
     beta: float | None = None,
     solve_tol: float | None = None,
@@ -2501,6 +2515,7 @@ def bootstrap_procedure(
         "quantile_solvability",
         "diff_cdf_solvability",
         "diff_quantile_solvability",
+        "feasibility_mean"
     ]:
         error_msg = "Plot type must be a valid string."
         raise ValueError(error_msg)
@@ -2521,14 +2536,21 @@ def bootstrap_procedure(
         bootstrap_curves, bootstrap_feasibility_curves  = bootstrap_sample_all(
             experiments, bootstrap_rng=bootstrap_rng, normalize=normalize, score=score, norm_degree=norm_degree, two_sided=two_sided
         )
-        # Apply the functional of the bootstrap sample.
-        bootstrap_replications.append(
-            functional_of_curves(
-                bootstrap_curves, plot_type, beta=beta, solve_tol=solve_tol
+        if plot_type != "feasibility_mean":
+            # Apply the functional of the bootstrap sample.
+            bootstrap_replications.append(
+                functional_of_curves(
+                    bootstrap_curves, plot_type, beta=beta, solve_tol=solve_tol
+                )
             )
-        )
         
-        #unsure what to do past this point regarding functional of curves
+        else:
+            # Apply the functional of the bootstrap sample.
+            bootstrap_replications.append(
+                functional_of_curves(
+                    bootstrap_feasibility_curves, plot_type="mean", beta=beta, solve_tol=solve_tol
+                )
+            )
         
     # Distinguish cases where functional returns a scalar vs a curve.
     if plot_type in ["area_mean", "area_std_dev", "solve_time_quantile"]:
@@ -2723,8 +2745,8 @@ def functional_of_curves(
         raise ValueError(error_msg)
 
     if plot_type == "mean":
-        # Single experiment --> returns a curve.
         return mean_of_curves(bootstrap_curves[0][0])
+        
     elif plot_type == "quantile":
         # Single experiment --> returns a curve.
         return quantile_of_curves(bootstrap_curves[0][0], beta=beta)
@@ -4258,7 +4280,6 @@ def plot_feasibility(
                 y_title = f"Feasibility Score: {norm_degree} Degree Norm"
     
             if all_in_one: # plot all solvers together
-                print("plotting all in one constour")
                 ref_experiment = experiments[0][problem_idx]
                 all_data = []
                 for solver_idx in range(n_solvers):
@@ -4302,7 +4323,6 @@ def plot_feasibility(
                 
                 
             else:
-                print("plotting contours")
                 for solver_idx in range(n_solvers):
                     experiment = experiments[solver_idx][problem_idx]
 
@@ -4322,6 +4342,7 @@ def plot_feasibility(
                         y_title: term_feas_score,
                     }
                     feas_data_df = pd.DataFrame(feas_data_dict)
+                    print('ind data', feas_data_dict)
                     fig = px.density_contour(feas_data_dict, x="Objective Value", y=y_title)
                     if color_fill:
                         fig.update_traces(contours_coloring="fill", contours_showlabels = True)
@@ -4505,6 +4526,10 @@ def plot_feasibility_progress(
         two_sided: bool = True,
         plot_zero : bool = True,
         all_in_one: bool = True,
+        n_bootstraps: int = 100,
+        conf_level: float = 0.95,
+        plot_conf_ints: bool = True,
+        print_max_hw: bool = True,
         beta : float = 0.5,
         solver_set_name: str = "SOLVER_SET",
         plot_title: str | None = None,
@@ -4598,12 +4623,42 @@ def plot_feasibility_progress(
                     # Plot estimated mean progress curve.
                     estimator = mean_of_curves(experiment.feasibility_curves)
                     handle = estimator.plot(color_str=color_str)
+                    bootstrap_plot_type = "feasibility_mean"
                 elif plot_type == "quantile":  # Must be quantile.
                     # Plot estimated beta-quantile progress curve.
                     estimator = quantile_of_curves(
                         experiment.feasibility_curves, beta
                     )
                     handle = estimator.plot(color_str=color_str)
+                    bootstrap_plot_type = "feasiblity_quantile"
+                if (plot_conf_ints or print_max_hw) and plot_type != "all":
+                    # Note: "experiments" needs to be a list of list of ProblemSolver objects.
+                    bs_conf_int_lb_curve, bs_conf_int_ub_curve = (
+                        bootstrap_procedure(
+                            experiments=[[experiment]],
+                            n_bootstraps=n_bootstraps,
+                            conf_level=conf_level,
+                            plot_type=bootstrap_plot_type,
+                            beta=beta,
+                            estimator=estimator,
+                            normalize=False,
+                        )
+                    )
+                    if plot_conf_ints:
+                        if isinstance(
+                            bs_conf_int_lb_curve, (int, float)
+                        ) or isinstance(bs_conf_int_ub_curve, (int, float)):
+                            error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
+                            raise ValueError(error_msg)
+                        plot_bootstrap_conf_ints(
+                            bs_conf_int_lb_curve,
+                            bs_conf_int_ub_curve,
+                            color_str=color_str,
+                        )
+                    if print_max_hw:
+                        curve_pairs.append(
+                            [bs_conf_int_lb_curve, bs_conf_int_ub_curve]
+                        )
                 if plot_zero:
                     plt.axhline(y=0, color='red', linestyle = '--', linewidth=.75) 
                 solver_curve_handles.append(handle)
@@ -4667,8 +4722,7 @@ def plot_feasibility_progress(
                         normalize=False,
                         save_as_pickle=save_as_pickle,
                     )
-                )
-                
+                )    
               
     return(file_list)
 

@@ -37,9 +37,9 @@ def main() -> None:
     
     initial = (5,)*13
     
-    fixed_factors = {"constraint_nodes": constraint_nodes, "max_length_to_node": max_length_to_node, "initial_solution": initial}
+    fixed_factors = {"constraint_nodes": constraint_nodes, "max_length_to_node": max_length_to_node, "initial_solution": initial, "budget": 2000}
     
-    solvers = [CSA_LP(), RandomSearch()]
+    solvers = [ RandomSearch(name="RNDSRCH_10"), RandomSearch(name="RNDSRCH_5", fixed_factors={"sample_size": 5})]
 
     problem =  SANLongestPathStochastic(fixed_factors=fixed_factors)   
     #problem = SANLongestPath()
@@ -65,7 +65,7 @@ def main() -> None:
 
 
     # Run a fixed number of postreplications at all recommended solutions.
-    myexperiment.post_replicate(n_postreps=200)
+    myexperiment.post_replicate(n_postreps=50)
     # Find an optimal solution x* for normalization.
     myexperiment.post_normalize(200)
      
@@ -83,13 +83,16 @@ def main() -> None:
     #plot_terminal_progress(experiments=myexperiment.experiments)
     #print(myexperiment.experiments[1][0].feasibility_curves)
     #plot_feasibility(myexperiment.experiments, plot_type= "scatter")
-    #plot_progress_curves(myexperiment.experiments[0] + myexperiment.experiments[1], "all", normalize=False)
-    #plot_feasibility(myexperiment.experiments,  all_in_one=True, two_sided=True)
-    plot_feasibility(myexperiment.experiments, "contour",  all_in_one=True, color_fill = False, two_sided=True, plot_conf_ints=False)
-    plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=True, two_sided=True)
-    plot_feasibility(myexperiment.experiments, "violin",  all_in_one=True, two_sided=True)
+    plot_progress_curves(myexperiment.experiments[0] + myexperiment.experiments[1], "mean", normalize=False, all_in_one=True)
+    #plot_feasibility(myexperiment.experiments,  all_in_one=True, two_sided=True, plot_optimal=False, solver_set_name="RNDSRCH")
+    #plot_feasibility(myexperiment.experiments, "contour",  all_in_one=True, color_fill = False, two_sided=True, plot_conf_ints=False)
+    #plot_feasibility(myexperiment.experiments, "contour",  all_in_one=False, color_fill = False, two_sided=True, plot_conf_ints=False)
+    #plot_feasibility(myexperiment.experiments, "contour",  all_in_one=False, color_fill = True, two_sided=True, plot_conf_ints=False)
+    #plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=True, two_sided=True)
+    #plot_feasibility(myexperiment.experiments, "violin",  all_in_one=True, two_sided=True, solver_set_name="RNDSRCH")
     #plot_feasibility(myexperiment.experiments, "violin",score_type= "inf_norm", norm_degree=2,  all_in_one=False)
-    #plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True)
+    plot_feasibility_progress(myexperiment.experiments,plot_type =  "mean", score_type = "inf_norm", all_in_one=True, two_sided=False)
+    #plot_terminal_progress(myexperiment.experiments[0] + myexperiment.experiments[1], plot_type = 'violin', solver_set_name="RNDSRCH", normalize=False)
     #plot_feasibility_progress(myexperiment.experiments, plot_type = "mean",all_in_one=True)
     #plot_feasibility_progress(myexperiment.experiments, plot_type = "quantile", all_in_one=True)
 
