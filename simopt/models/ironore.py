@@ -314,15 +314,12 @@ class IronOre(Model):
             hold_costs[day] = stock[day] * holding_cost
 
         # Calculate total profit
-        profit = 0.0
-        for day in range(n_days):
-            profit -= prod_costs[day]
-            profit += sell_profit[day]
-            profit -= hold_costs[day]
+        profits = sell_profit - prod_costs - hold_costs
+        net_profit = np.sum(profits)
 
         # Calculate responses from simulation data.
         responses = {
-            "total_profit": profit,
+            "total_profit": net_profit,
             "frac_producing": np.mean(producing),
             "mean_stock": np.mean(stock),
         }
