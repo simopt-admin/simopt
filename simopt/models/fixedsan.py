@@ -133,6 +133,9 @@ class FixedSAN(Model):
         # Designate separate random number generators.
         exp_rng = rng_list[0]
 
+        # Make sure we're not going to index out of bounds.
+        assert num_nodes >= 9, "This model only supports 9 nodes."
+        assert num_arcs >= 13, "This model only supports 13 arcs."
         # Generate arc lengths.
         nodes = np.zeros(num_nodes)
         time_deriv = np.zeros((num_nodes, num_arcs))
@@ -155,47 +158,31 @@ class FixedSAN(Model):
             time_deriv[target_node_idx, :] = time_deriv[prev, :].copy()
             time_deriv[target_node_idx, arc] += arcs[arc] / thetas[arc]
 
-        def max_update_node(
+        def update_node_to_max(
             target_node_idx: int, segments: list[PathSegment]
         ) -> None:
             seg_times = [seg.get_time() for seg in segments]
             max_segment = segments[np.argmax(seg_times)]
             update_node(target_node_idx, max_segment)
 
-        def max_update_node_shifted(
-            target_node_idx: int, segments: list[PathSegment]
-        ) -> None:
-            seg_times = [seg.get_time() for seg in segments]
-            nodes[target_node_idx] = max(seg_times)
-            ind = np.argmax(seg_times)
-            # TODO: The nodes/arcs seem to be off by one, investigate if this
-            # is due to a copying error from Matlab (1-based indexing).
-            # If this is an error, this function can be removed and replaced
-            # with max_update_node.
-            segment = segments[(ind - 1) % len(segments)]
-            arc = segment.arc_idx
-            node = segment.prev_node_idx
-            time_deriv[target_node_idx, :] = time_deriv[node, :]
-            time_deriv[target_node_idx, arc] += arcs[arc] / thetas[arc]
-
         # node 1 = node 0 + arc 0
         update_node(1, PathSegment(0, 0))
         # node 2 = max(node0+arc1, node1+arc2)
-        max_update_node(2, [PathSegment(0, 1), PathSegment(1, 2)])
+        update_node_to_max(2, [PathSegment(0, 1), PathSegment(1, 2)])
         # node 3 = node1 + arc3
         update_node(3, PathSegment(1, 3))
         # node 4 = node3 + arc6
         update_node(4, PathSegment(3, 6))
         # node 5 = max(node1+arc4, node2+arc5, node4+arc8)
-        max_update_node_shifted(
+        update_node_to_max(
             5, [PathSegment(1, 4), PathSegment(2, 5), PathSegment(4, 8)]
         )
         # node 6 = node3 + arc7
         update_node(6, PathSegment(3, 7))
         # node 7 = max(node6+arc11, node4+arc9)
-        max_update_node(7, [PathSegment(6, 11), PathSegment(4, 9)])
+        update_node_to_max(7, [PathSegment(6, 11), PathSegment(4, 9)])
         # node 8 = max(node5+arc10, node7+arc12)
-        max_update_node(8, [PathSegment(5, 10), PathSegment(7, 12)])
+        update_node_to_max(8, [PathSegment(5, 10), PathSegment(7, 12)])
 
         longest_path = float(nodes[8])
         longest_path_gradient = time_deriv[8, :]
