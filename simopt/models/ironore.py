@@ -262,8 +262,10 @@ class IronOre(Model):
         mkt_price = np.zeros(n_days)
         mkt_price[0] = mean_price
         stock = np.zeros(n_days)
-        profit = np.zeros(n_days)
         producing = np.zeros(n_days)
+        prod_costs = np.zeros(n_days)
+        hold_costs = np.zeros(n_days)
+        sell_profit = np.zeros(n_days)
 
         # Run simulation over time horizon.
         for day in range(1, n_days):
@@ -273,9 +275,6 @@ class IronOre(Model):
             # Stock doesn't reset between days
             prev_stock = stock[prior_day]
             stock[day] = prev_stock
-            # Profit is cumulative, so it doesn't reset
-            prev_profit = profit[prior_day]
-            profit[day] = prev_profit
             # The market price is a random walk, but it's based off of the
             # previous day's price.
             prev_price = mkt_price[prior_day]
@@ -285,7 +284,7 @@ class IronOre(Model):
             prev_producing = producing[prior_day]
 
             # === Price Update: mean-reverting random walk ===
-            delta = mean_price - mkt_price[day]
+            delta = mean_price - prev_price
             mean_move = copysign(sqrt(sqrt(abs(delta))), delta)
             move = price_rng.normalvariate(mean_move, st_dev)
             price_today = max(min(prev_price + move, max_price), min_price)
@@ -303,23 +302,27 @@ class IronOre(Model):
                 missing_stock = capacity - prev_stock
                 production_amount = min(max_prod_perday, missing_stock)
                 stock[day] += production_amount
-                daily_production_cost = production_amount * prod_cost
-                profit[day] -= daily_production_cost
+                prod_costs[day] = production_amount * prod_cost
                 producing[day] = 1
 
             # === Selling Logic ===
             if price_today >= price_sell:
-                daily_selling_profit = stock[day] * price_today
-                profit[day] += daily_selling_profit
+                sell_profit[day] = stock[day] * price_today
                 stock[day] = 0
 
             # === Holding Cost ===
-            daily_holding_cost = stock[day] * holding_cost
-            profit[day] -= daily_holding_cost
+            hold_costs[day] = stock[day] * holding_cost
+
+        # Calculate total profit
+        profit = 0.0
+        for day in range(n_days):
+            profit -= prod_costs[day]
+            profit += sell_profit[day]
+            profit -= hold_costs[day]
 
         # Calculate responses from simulation data.
         responses = {
-            "total_profit": profit[-1],
+            "total_profit": profit,
             "frac_producing": np.mean(producing),
             "mean_stock": np.mean(stock),
         }
