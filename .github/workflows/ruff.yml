@@ -1,0 +1,30 @@
+name: "Ruff CI"
+
+on:
+  push:
+    branches: [ "master", "development" ]
+  pull_request:
+    branches: [ "master" , "development" ]
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Ruff linting check
+      uses: astral-sh/ruff-action@v2
+      with:
+        args: "check --no-fix"
+
+  formatter:
+    runs-on: ubuntu-latest 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Ruff formatting check
+      uses: astral-sh/ruff-action@v2
+      with:
+        args: "format --check"

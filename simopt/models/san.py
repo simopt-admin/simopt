@@ -3,11 +3,20 @@ Summary
 -------
 Simulate duration of a stochastic activity network (SAN).
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/san.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/san.html>`__.
 """
-import numpy as np
 
-from ..base import Model, Problem
+from __future__ import annotations
+from simopt.utils import classproperty
+
+from typing import Callable, Final
+
+import numpy as np
+from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import ConstraintType, Model, Problem, VariableType
+
+NUM_ARCS: Final[int] = 13
 
 
 class SAN(Model):
@@ -40,55 +49,88 @@ class SAN(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "SAN"
-        self.n_rngs = 1
-        self.n_responses = 1
-        self.specifications = {
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Stochastic Activity Network"
+
+    @classproperty
+    def n_rngs(cls) -> int:
+        return 1
+
+    @classproperty
+    def n_responses(cls) -> int:
+        return 1
+
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
+        return {
             "num_nodes": {
                 "description": "number of nodes",
                 "datatype": int,
-                "default": 9
+                "default": 9,
+                "isDatafarmable": False,
             },
             "arcs": {
                 "description": "list of arcs",
                 "datatype": list,
-                "default": [(1, 2), (1, 3), (2, 3), (2, 4), (2, 6), (3, 6), (4, 5),
-                            (4, 7), (5, 6), (5, 8), (6, 9), (7, 8), (8, 9)]
+                "default": [
+                    (1, 2),
+                    (1, 3),
+                    (2, 3),
+                    (2, 4),
+                    (2, 6),
+                    (3, 6),
+                    (4, 5),
+                    (4, 7),
+                    (5, 6),
+                    (5, 8),
+                    (6, 9),
+                    (7, 8),
+                    (8, 9),
+                ],
             },
             "arc_means": {
                 "description": "mean task durations for each arc",
                 "datatype": tuple,
-                "default": (1,) * 13
-            }
+                "default": (1,) * NUM_ARCS,
+            },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "num_nodes": self.check_num_nodes,
             "arcs": self.check_arcs,
-            "arc_means": self.check_arc_means
+            "arc_means": self.check_arc_means,
         }
-        # Set factors of the simulation model.
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_nodes(self):
-        return self.factors["num_nodes"] > 0
+    def check_num_nodes(self) -> None:
+        if self.factors["num_nodes"] <= 0:
+            raise ValueError("num_nodes must be greater than 0.")
 
-    def dfs(self, graph, start, visited=None):
+    def dfs(
+        self, graph: dict[int, set], start: int, visited: set | None = None
+    ) -> set:
         if visited is None:
             visited = set()
         visited.add(start)
 
-        for next in graph[start] - visited:
-            self.dfs(graph, next, visited)
+        for next_point in graph[start] - visited:
+            self.dfs(graph, next_point, visited)
         return visited
 
-    def check_arcs(self):
+    def check_arcs(self) -> bool:
         if len(self.factors["arcs"]) <= 0:
-            return False
+            raise ValueError("The length of arcs must be greater than 0.")
         # Check graph is connected.
-        graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
+        graph = {
+            node: set() for node in range(1, self.factors["num_nodes"] + 1)
+        }
         for a in self.factors["arcs"]:
             graph[a[0]].add(a[1])
         visited = self.dfs(graph, 1)
@@ -96,13 +138,20 @@ class SAN(Model):
             return True
         return False
 
-    def check_arc_means(self):
+    def check_arc_means(self) -> bool:
         positive = True
         for x in list(self.factors["arc_means"]):
-            positive = positive & (x > 0)
-        return (len(self.factors["arc_means"]) == len(self.factors["arcs"])) & positive
+            positive = positive and (x > 0)
+        return positive
 
-    def replicate(self, rng_list):
+    def check_simulatable_factors(self) -> bool:
+        if len(self.factors["arc_means"]) != len(self.factors["arcs"]):
+            raise ValueError(
+                "The length of arc_means must be equal to the length of arcs."
+            )
+        return True
+
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -123,12 +172,18 @@ class SAN(Model):
         exp_rng = rng_list[0]
 
         # Topological sort.
-        graph_in = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
-        graph_out = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
+        graph_in = {
+            node: set() for node in range(1, self.factors["num_nodes"] + 1)
+        }
+        graph_out = {
+            node: set() for node in range(1, self.factors["num_nodes"] + 1)
+        }
         for a in self.factors["arcs"]:
             graph_in[a[1]].add(a[0])
             graph_out[a[0]].add(a[1])
-        indegrees = [len(graph_in[n]) for n in range(1, self.factors["num_nodes"] + 1)]
+        indegrees = [
+            len(graph_in[n]) for n in range(1, self.factors["num_nodes"] + 1)
+        ]
         # outdegrees = [len(graph_out[n]) for n in range(1, self.factors["num_nodes"]+1)]
         queue = []
         topo_order = []
@@ -146,18 +201,25 @@ class SAN(Model):
         # Generate arc lengths.
         arc_length = {}
         for i in range(len(self.factors["arcs"])):
-            arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(1 / self.factors["arc_means"][i])
+            arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(
+                1 / self.factors["arc_means"][i]
+            )
 
         # Calculate the length of the longest path.
-        T = np.zeros(self.factors["num_nodes"])
+        path_length = np.zeros(self.factors["num_nodes"])
         prev = np.zeros(self.factors["num_nodes"])
         for i in range(1, self.factors["num_nodes"]):
             vi = topo_order[i - 1]
             for j in graph_out[vi]:
-                if T[j - 1] < T[vi - 1] + arc_length[str((vi, j))]:
-                    T[j - 1] = T[vi - 1] + arc_length[str((vi, j))]
+                if (
+                    path_length[j - 1]
+                    < path_length[vi - 1] + arc_length[str((vi, j))]
+                ):
+                    path_length[j - 1] = (
+                        path_length[vi - 1] + arc_length[str((vi, j))]
+                    )
                     prev[j - 1] = vi
-        longest_path = T[self.factors["num_nodes"] - 1]
+        longest_path = path_length[self.factors["num_nodes"] - 1]
 
         # Calculate the IPA gradient w.r.t. arc means.
         # If an arc is on the longest path, the component of the gradient
@@ -168,13 +230,22 @@ class SAN(Model):
         backtrack = int(prev[self.factors["num_nodes"] - 1])
         while current != topo_order[0]:
             idx = self.factors["arcs"].index((backtrack, current))
-            gradient[idx] = arc_length[str((backtrack, current))] / (self.factors["arc_means"][idx])
+            gradient[idx] = (
+                arc_length[str((backtrack, current))]
+                / (self.factors["arc_means"][idx])
+            )
             current = backtrack
             backtrack = int(prev[backtrack - 1])
 
         # Compose responses and gradients.
         responses = {"longest_path_length": longest_path}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        gradients = {
+            response_key: {
+                factor_key: np.zeros(len(self.specifications))
+                for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         gradients["longest_path_length"]["arc_means"] = gradient
         return responses, gradients
 
@@ -251,59 +322,120 @@ class SANLongestPath(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="SAN-1", fixed_factors=None, model_fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-        self.name = name
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (-1,)
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_available = True
-        self.optimal_value = None
-        self.optimal_solution = None
-        self.model_default_factors = {}
-        self.model_decision_factors = {"arc_means"}
-        self.factors = fixed_factors
-        self.specifications = {
+
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "SAN-1"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Min Mean Longest Path for Stochastic Activity Network"
+
+    @classproperty
+    def n_objectives(cls) -> int:
+        return 1
+
+    @classproperty
+    def n_stochastic_constraints(cls) -> int:
+        return 0
+
+    @classproperty
+    def minmax(cls) -> tuple[int]:
+        return (-1,)
+
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @classproperty
+    def variable_type(cls) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @classproperty
+    def gradient_available(cls) -> bool:
+        return True
+
+    @classproperty
+    def optimal_value(cls) -> float | None:
+        return None
+
+    @classproperty
+    def optimal_solution(cls) -> tuple | None:
+        return None
+
+    @classproperty
+    def model_default_factors(cls) -> dict:
+        return {}
+
+    @classproperty
+    def model_decision_factors(cls) -> set[str]:
+        return {"arc_means"}
+
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (8,) * 13
+                "default": (8,) * NUM_ARCS,
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 10000
+                "default": 10000,
+                "isDatafarmable": False,
             },
             "arc_costs": {
                 "description": "Cost associated to each arc.",
                 "datatype": tuple,
-                "default": (1,) * 13
-            }
+                "default": (1,) * NUM_ARCS,
+            },
         }
-        self.check_factor_list = {
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "arc_costs": self.check_arc_costs
+            "arc_costs": self.check_arc_costs,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = SAN(self.model_fixed_factors)
-        self.dim = len(self.model.factors["arcs"])
-        self.lower_bounds = (1e-2,) * self.dim
-        self.upper_bounds = (np.inf,) * self.dim
 
-    def check_arc_costs(self):
+    @property
+    def dim(self) -> int:
+        return len(self.model.factors["arcs"])
+
+    @property
+    def lower_bounds(self) -> tuple:
+        return (1e-2,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:
+        return (np.inf,) * self.dim
+
+    def __init__(
+        self,
+        name: str = "SAN-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=SAN,
+        )
+
+    def check_arc_costs(self) -> bool:
         positive = True
         for x in list(self.factors["arc_costs"]):
-            positive = positive & x > 0
-        return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) & positive
+            positive = positive and x > 0
+        matching_len = len(self.factors["arc_costs"]) == len(
+            self.model.factors["arcs"]
+        )
+        return positive and matching_len
 
-    def vector_to_factor_dict(self, vector):
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -317,12 +449,10 @@ class SANLongestPath(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "arc_means": vector[:]
-        }
+        factor_dict = {"arc_means": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -337,10 +467,10 @@ class SANLongestPath(Problem):
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["arc_means"])
+        vector = factor_dict["arc_means"]
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -358,7 +488,7 @@ class SANLongestPath(Problem):
         objectives = (response_dict["longest_path_length"],)
         return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict):
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of left-hand sides of stochastic constraints: E[Y] <= 0
@@ -373,10 +503,12 @@ class SANLongestPath(Problem):
         stoch_constraints : tuple
             vector of LHSs of stochastic constraint
         """
-        stoch_constraints = None
+        stoch_constraints = ()
         return stoch_constraints
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
+    def deterministic_stochastic_constraints_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of stochastic constraints for a solution `x`.
 
@@ -392,11 +524,15 @@ class SANLongestPath(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = ((0,) * self.dim,)  # tuple of tuples – of sizes self.dim by self.dim, full of zeros
+        det_stoch_constraints = ()
+        det_stoch_constraints_gradients = (
+            (0,) * self.dim,
+        )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -412,11 +548,15 @@ class SANLongestPath(Problem):
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
-        det_objectives_gradients = (-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),)
+        det_objectives = (
+            np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
+        )
+        det_objectives_gradients = (
+            -np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
+        )
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -430,9 +570,10 @@ class SANLongestPath(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        return np.all(np.array(x) >= 0)
+        is_positive: list[bool] = [x_i >= 0 for x_i in x]
+        return all(is_positive)
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -446,5 +587,10 @@ class SANLongestPath(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
+        x = tuple(
+            [
+                rand_sol_rng.lognormalvariate(lq=0.1, uq=10)
+                for _ in range(self.dim)
+            ]
+        )
         return x

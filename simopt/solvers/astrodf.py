@@ -2,25 +2,35 @@
 Summary
 -------
 The ASTRO-DF solver progressively builds local models (quadratic with diagonal Hessian) using interpolation on a set of points on the coordinate bases of the best (incumbent) solution. Solving the local models within a trust region (closed ball around the incumbent solution) at each iteration suggests a candidate solution for the next iteration. If the candidate solution is worse than the best interpolation point, it is replaced with the latter (a.k.a. direct search). The solver then decides whether to accept the candidate solution and expand the trust-region or reject it and shrink the trust-region based on a success ratio test. The sample size at each visited point is determined adaptively and based on closeness to optimality.
-A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.html>`_.
+A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.html>`__.
 
 This version does not require a delta_max, instead it estimates the maximum step size using get_random_solution(). Parameter tuning on delta_max is therefore not needed and removed from this version as well.
-- Delta_max is so longer a factor, instead the maximum step size is estimated using get_random_solution(). 
+- Delta_max is so longer a factor, instead the maximum step size is estimated using get_random_solution().
 - Parameter tuning on delta_max is therefore not needed and removed from this version as well.
 - No upper bound on sample size may be better - testing
 - It seems for SAN we always use pattern search - why? because the problem is convex and model may be misleading at the beginning
 - Added sufficient reduction for the pattern search
 """
-from numpy.linalg import pinv
-from numpy.linalg import norm
-import numpy as np
-from math import log, ceil, sqrt
-import warnings
-from scipy.optimize import NonlinearConstraint
-from scipy.optimize import minimize
-warnings.filterwarnings("ignore")
 
-from ..base import Solver
+from __future__ import annotations
+from simopt.utils import classproperty
+
+import logging
+from math import ceil, log
+from typing import Callable
+
+import numpy as np
+from numpy.linalg import inv, norm, pinv, LinAlgError
+from scipy.optimize import NonlinearConstraint, minimize
+
+from simopt.base import (
+    ConstraintType,
+    ObjectiveType,
+    Problem,
+    Solution,
+    Solver,
+    VariableType,
+)
 
 
 class ASTRODF(Solver):
@@ -58,465 +68,945 @@ class ASTRODF(Solver):
     --------
     base.Solver
     """
-    def __init__(self, name="ASTRODF", fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = name
-        self.objective_type = "single"
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_needed = False
-        self.specifications = {
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "ASTRO-DF"
+
+    @classproperty
+    def objective_type(cls) -> ObjectiveType:
+        return ObjectiveType.SINGLE
+
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @classproperty
+    def variable_type(cls) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @classproperty
+    def gradient_needed(cls) -> bool:
+        return False
+
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
+        return {
             "crn_across_solns": {
                 "description": "use CRN across solutions",
                 "datatype": bool,
-                "default": True
+                "default": True,
             },
             "eta_1": {
                 "description": "threshhold for a successful iteration",
                 "datatype": float,
-                "default": 0.1
+                "default": 0.1,
             },
             "eta_2": {
                 "description": "threshhold for a very successful iteration",
                 "datatype": float,
-                "default": 0.8
+                "default": 0.8,
             },
             "gamma_1": {
                 "description": "trust-region radius increase rate after a very successful iteration",
                 "datatype": float,
-                "default": 1.5
+                "default": 2.5,
             },
             "gamma_2": {
                 "description": "trust-region radius decrease rate after an unsuccessful iteration",
                 "datatype": float,
-                "default": 0.5
+                "default": 0.5,
             },
             "lambda_min": {
                 "description": "minimum sample size",
                 "datatype": int,
-                "default": 4
+                "default": 5,
             },
             "easy_solve": {
                 "description": "solve the subproblem approximately with Cauchy point",
                 "datatype": bool,
-                "default": True
+                "default": True,
             },
             "reuse_points": {
                 "description": "reuse the previously visited points",
                 "datatype": bool,
-                "default": True
+                "default": True,
             },
             "ps_sufficient_reduction": {
                 "description": "use pattern search if with sufficient reduction, 0 always allows it, large value never does",
                 "datatype": float,
-                "default": 0.1
-            }
-            
+                "default": 0.1,
+            },
+            "use_gradients": {
+                "description": "if direct gradient observations are available, use them",
+                "datatype": bool,
+                "default": True,
+            },
         }
-        self.check_factor_list = {
-            "crn_across_solns": self.check_crn_across_solns,
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
+            "crn_across_solns": self.check_crn_across_solns,  # type: ignore
             "eta_1": self.check_eta_1,
             "eta_2": self.check_eta_2,
             "gamma_1": self.check_gamma_1,
             "gamma_2": self.check_gamma_2,
             "lambda_min": self.check_lambda_min,
-            "ps_sufficient_reduction": self.check_ps_sufficient_reduction
+            "ps_sufficient_reduction": self.check_ps_sufficient_reduction,
         }
-        super().__init__(fixed_factors)
-    
-    def check_eta_1(self):
-        return self.factors["eta_1"] > 0
 
-    def check_eta_2(self):
-        return self.factors["eta_2"] > self.factors["eta_1"]
+    def __init__(
+        self, name: str = "ASTRODF", fixed_factors: dict | None = None
+    ) -> None:
+        """
+        Initialize the ASTRO-DF solver.
+        Arguments
+        ---------
+        name : str
+            user-specified name for solver
+        fixed_factors : dict
+            fixed_factors of the solver
+        """
+        # Let the base class handle default arguments.
+        super().__init__(name, fixed_factors)
 
-    def check_gamma_1(self):
-        return self.factors["gamma_1"] > 1
+        # Initialize instance variables
+        self.iteration_count = 0
+        self.delta_k = None
+        self.delta_max = None
+        self.expended_budget = 0
+        self.recommended_solns = []
+        self.intermediate_budgets = []
+        self.incumbent_x = None
+        self.incumbent_solution = None
+        self.interpolation_solns = []
+        self.visited_pts_list = []
+        self.intermediate_budgets = []
+        self.kappa = 0
+        self.h_k = None
 
-    def check_gamma_2(self):
-        return (self.factors["gamma_2"] < 1 and self.factors["gamma_2"] > 0)
+    def check_eta_1(self) -> None:
+        if self.factors["eta_1"] <= 0:
+            raise ValueError("Eta 1 must be greater than 0.")
 
-    def check_lambda_min(self):
-        return self.factors["lambda_min"] > 2
-    
-    def check_ps_sufficient_reduction(self):
-        return self.factors["ps_sufficient_reduction"] >= 0
+    def check_eta_2(self) -> None:
+        if self.factors["eta_2"] <= self.factors["eta_1"]:
+            raise ValueError("Eta 2 must be greater than Eta 1.")
 
-    # generate the coordinate vector corresponding to the variable number v_no
-    def get_coordinate_vector(self, size, v_no):
+    def check_gamma_1(self) -> None:
+        if self.factors["gamma_1"] <= 1:
+            raise ValueError("Gamma 1 must be greater than 1.")
+
+    def check_gamma_2(self) -> None:
+        if self.factors["gamma_2"] >= 1 or self.factors["gamma_2"] <= 0:
+            raise ValueError("Gamma 2 must be between 0 and 1.")
+
+    def check_lambda_min(self) -> None:
+        if self.factors["lambda_min"] <= 2:
+            raise ValueError("The minimum sample size must be greater than 2.")
+
+    def check_ps_sufficient_reduction(self) -> None:
+        if self.factors["ps_sufficient_reduction"] < 0:
+            raise ValueError(
+                "ps_sufficient reduction must be greater than or equal to 0."
+            )
+
+    def get_coordinate_vector(self, size: int, v_no: int) -> np.ndarray:
+        """
+        Generate the coordinate vector corresponding to the variable number v_no.
+        """
         arr = np.zeros(size)
         arr[v_no] = 1.0
         return arr
 
-    # generate the basis (rotated coordinate) (the first vector comes from the visited design points (origin basis)
-    def get_rotated_basis(self, first_basis, rotate_index):
+    def get_rotated_basis(
+        self, first_basis: np.ndarray, rotate_index: np.ndarray
+    ) -> np.ndarray:
+        """
+        Generate the basis (rotated coordinate) (the first vector comes from the visited design points (origin basis))
+        """
         rotate_matrix = np.array(first_basis)
-        rotation = np.matrix([[0, -1], [1, 0]])
+        rotation = np.zeros((2, 2), dtype=int)
+        rotation[0][1] = -1
+        rotation[1][0] = 1
 
         # rotate the coordinate basis based on the first basis vector (first_basis)
         # choose two dimensions which we use for the rotation (0,i)
 
-        for i in range(1,len(rotate_index)):
-            v1 = np.array([[first_basis[rotate_index[0]]],  [first_basis[rotate_index[i]]]])
+        for i in range(1, len(rotate_index)):
+            v1 = np.array(
+                [[first_basis[rotate_index[0]]], [first_basis[rotate_index[i]]]]
+            )
             v2 = np.dot(rotation, v1)
             rotated_basis = np.copy(first_basis)
             rotated_basis[rotate_index[0]] = v2[0][0]
             rotated_basis[rotate_index[i]] = v2[1][0]
             # stack the rotated vector
-            rotate_matrix = np.vstack((rotate_matrix,rotated_basis))
+            rotate_matrix = np.vstack((rotate_matrix, rotated_basis))
 
         return rotate_matrix
 
-    # compute the local model value with a linear interpolation with a diagonal Hessian
-    def evaluate_model(self, x_k, q):
-        X = [1]
-        X = np.append(X, np.array(x_k))
-        X = np.append(X, np.array(x_k) ** 2)
-        return np.matmul(X, q)
+    def evaluate_model(self, x_k: np.ndarray, q: np.ndarray) -> np.ndarray:
+        """
+        Compute the local model value with a linear interpolation with a diagonal Hessian
+        """
+        xk_arr = np.array(x_k).flatten()
+        x_val = np.hstack(([1], xk_arr, xk_arr**2))
+        result = np.matmul(x_val, q)
+        return result
 
-    # compute the sample size based on adaptive sampling stopping rule using the optimality gap
-    def get_stopping_time(self, k, sig2, delta, kappa, dim):
-        if kappa == 0: kappa = 1
-        lambda_k = max(self.factors["lambda_min"], 2 * log(dim + .5, 10)) * max(log(k + 0.1, 10) ** (1.01), 1)
-    
+    def get_stopping_time(
+        self,
+        pilot_run: int,
+        sig2: float,
+        delta: float,
+        kappa: float,
+    ) -> int:
+        """
+        Compute the sample size based on adaptive sampling stopping rule using the optimality gap
+        """
+        if kappa == 0:
+            kappa = 1
+        # lambda_k = max(
+        #     self.factors["lambda_min"], 2 * log(dim + 0.5, 10)
+        # ) * max(log(k + 0.1, 10) ** (1.01), 1)
+
         # compute sample size
-        N_k = ceil(max(lambda_k, lambda_k * sig2 / (kappa ** 2 * delta ** 4)))
-        return N_k
+        raw_sample_size = pilot_run * max(
+            1, sig2 / (kappa**2 * delta**self.delta_power)
+        )
+        # Convert out of ndarray if it is
+        if isinstance(raw_sample_size, np.ndarray):
+            raw_sample_size = raw_sample_size[0]
+        # round up to the nearest integer
+        sample_size: int = ceil(raw_sample_size)
+        return sample_size
 
-    # construct the "qualified" local model for each iteration k with the center point x_k
-    # reconstruct with new points in a shrunk trust-region if the model fails the criticality condition
-    # the criticality condition keeps the model gradient norm and the trust-region size in lock-step
-    def construct_model(self, x_k, delta, k, problem, expended_budget, kappa, new_solution, visited_pts_list):
-        interpolation_solns = []
-        
-        ## inner loop parameters
-        w = 0.85 #self.factors["w"] 
-        mu = 1000#self.factors["mu"]
-        beta = 10#self.factors["beta"]
-        criticality_threshold = 0.1#self.factors["criticality_threshold"]
-        skip_criticality = True#self.factors["skip_criticality"]
-        
-        reuse_points = self.factors["reuse_points"]
-        lambda_min = self.factors["lambda_min"]
-        
-        j = 0
-        budget = problem.factors["budget"]
-        lambda_max = budget - expended_budget
-        # lambda_max = budget / (15 * sqrt(problem.dim))
+    def select_interpolation_points(
+        self, delta_k: float, f_index: int
+    ) -> tuple[list, list]:
+        # If it is the first iteration or there is no design point we can reuse within the trust region, use the coordinate basis
+        if (
+            self.iteration_count == 1
+            or (
+                norm(
+                    np.array(self.incumbent_x)
+                    - np.array(self.visited_pts_list[f_index].x)
+                )
+                == 0
+            )
+            or not self.reuse_points
+        ):
+            # Construct the interpolation set
+            var_y = self.get_coordinate_basis_interpolation_points(
+                self.incumbent_x, delta_k, self.problem
+            )
+            var_z = self.get_coordinate_basis_interpolation_points(
+                tuple(np.zeros(self.problem.dim)), delta_k, self.problem
+            )
+        # Else if we will reuse one design point (k > 1)
+        elif self.iteration_count > 1:
+            visited_pts_array = np.array(self.visited_pts_list[f_index].x)
+            diff_array = visited_pts_array - np.array(self.incumbent_x)
+            first_basis = (diff_array) / norm(diff_array)
+            # if first_basis has some non-zero components, use rotated basis for those dimensions
+            rotate_list = np.nonzero(first_basis)[0]
+            rotate_matrix = self.get_rotated_basis(first_basis, rotate_list)
+
+            # if first_basis has some zero components, use coordinate basis for those dimensions
+            for i in range(self.problem.dim):
+                if first_basis[i] == 0:
+                    coord_vector = self.get_coordinate_vector(
+                        self.problem.dim, i
+                    )
+                    rotate_matrix = np.vstack(
+                        (
+                            rotate_matrix,
+                            coord_vector,
+                        )
+                    )
+
+            # construct the interpolation set
+            var_y = self.get_rotated_basis_interpolation_points(
+                np.array(self.incumbent_x),
+                delta_k,
+                self.problem,
+                rotate_matrix,
+                self.visited_pts_list[f_index].x,
+            )
+            var_z = self.get_rotated_basis_interpolation_points(
+                np.zeros(self.problem.dim),
+                delta_k,
+                self.problem,
+                rotate_matrix,
+                np.array(self.visited_pts_list[f_index].x)
+                - np.array(self.incumbent_x),
+            )
+        # Else
+        # TODO: figure out what to do if the above conditions are not met
+        else:
+            var_y = []
+            var_z = []
+
+        return var_y, var_z
+
+    def perform_adaptive_sampling(
+        self,
+        solution: Solution,
+        pilot_run: int,
+        delta_k: float,
+        compute_kappa: bool = False,
+    ) -> None:
+        """
+        Perform adaptive sampling on the given solution until the stopping condition is met.
+
+        Parameters:
+        - solution: The solution object being sampled.
+        - pilot_run: The number of initial pilot runs.
+        - delta_k: The current trust-region radius.
+        - compute_kappa: Whether or not to compute kappa dynamically (needed in first iteration).
+        """
+        sample_size = solution.n_reps if solution.n_reps > 0 else pilot_run
+        lambda_max = self.budget - self.expended_budget
+
+        # Initial Simulation (only if needed)
+        if solution.n_reps == 0:
+            self.problem.simulate(solution, pilot_run)
+            self.expended_budget += pilot_run
+            sample_size = pilot_run
 
         while True:
-            fval = []
-            j = j + 1
-            delta_k = delta * w ** (j - 1)
+            # Compute variance
+            sig2 = solution.objectives_var[0]
+            if self.delta_power == 0:
+                sig2 = max(sig2, np.trace(solution.objectives_gradients_var))
+
+            # Compute stopping condition
+            kappa = None
+            if compute_kappa:
+                if self.enable_gradient:
+                    rhs_for_kappa = norm(solution.objectives_gradients_mean[0])
+                else:
+                    rhs_for_kappa = solution.objectives_mean
+                kappa = (
+                    rhs_for_kappa
+                    * np.sqrt(pilot_run)
+                    / (delta_k ** (self.delta_power / 2))
+                )
+
+            stopping = self.get_stopping_time(
+                pilot_run, sig2, delta_k, kappa or self.kappa
+            )
+
+            # Stop if conditions are met
+            if (
+                sample_size >= min(stopping, lambda_max)
+                or self.expended_budget >= self.budget
+            ):
+                if compute_kappa:
+                    self.kappa = kappa  # Update kappa only if needed
+                break
+
+            # Perform additional simulation
+            self.problem.simulate(solution, 1)
+            self.expended_budget += 1
+            sample_size += 1
+
+    def construct_model(
+        self,
+    ) -> tuple[
+        list[float],
+        list,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        list[Solution],
+    ]:
+        """
+        construct the "qualified" local model for each iteration k with the center point x_k
+        reconstruct with new points in a shrunk trust-region if the model fails the criticality condition
+        the criticality condition keeps the model gradient norm and the trust-region size in lock-step
+        """
+        interpolation_solns = []
+
+        ## inner loop parameters
+        w = 0.85  # self.factors["w"]
+        mu = 1000  # self.factors["mu"]
+        beta = 10  # self.factors["beta"]
+        # criticality_threshold = 0.1  # self.factors["criticality_threshold"]
+        # skip_criticality = True  # self.factors["skip_criticality"]
+        # Problem and solver factors
+
+        lambda_max = self.budget - self.expended_budget
+        # lambda_max = budget / (15 * sqrt(problem.dim))
+        pilot_run = ceil(
+            max(
+                self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
+                min(0.5 * self.problem.dim, lambda_max),
+            )
+            - 1
+        )
+
+        delta = self.delta_k
+        model_iterations: int = 0
+        while True:
+            delta_k = delta * w**model_iterations
+            model_iterations += 1
 
             # Calculate the distance between the center point and other design points
-            Dist = []
-            for i in range(len(visited_pts_list)):
-                Dist.append(norm(np.array(visited_pts_list[i].x) - np.array(x_k))-delta_k)
+            distance_array = []
+            for point in self.visited_pts_list:
+                dist_diff = np.array(point.x) - np.array(self.incumbent_x)
+                distance = norm(dist_diff) - delta_k
                 # If the design point is outside the trust region, we will not reuse it (distance = -big M)
-                if Dist[i] > 0:
-                    Dist[i] = -delta_k*10000
+                dist_to_append = -delta_k * 10000 if distance > 0 else distance
+                distance_array.append(dist_to_append)
 
             # Find the index of visited design points list for reusing points
             # The reused point will be the farthest point from the center point among the design points within the trust region
-            f_index = Dist.index(max(Dist))
+            f_index = distance_array.index(max(distance_array))
 
-            # If it is the first iteration or there is no design point we can reuse within the trust region, use the coordinate basis
+            var_y, var_z = self.select_interpolation_points(delta_k, f_index)
 
-            if (k == 1) or (norm(np.array(x_k) - np.array(visited_pts_list[f_index].x))==0) or reuse_points == False:
-                # Construct the interpolation set
-                Y = self.get_coordinate_basis_interpolation_points(x_k, delta_k, problem)
-                Z = self.get_coordinate_basis_interpolation_points(np.zeros(problem.dim), delta_k, problem)
-            # Else if we will reuse one design point
-            elif k > 1:
-                first_basis = (np.array(visited_pts_list[f_index].x)-np.array(x_k)) / norm(np.array(visited_pts_list[f_index].x)-np.array(x_k))
-                # if first_basis has some non-zero components, use rotated basis for those dimensions
-                rotate_list = np.nonzero(first_basis)[0]
-                rotate_matrix = self.get_rotated_basis(first_basis, rotate_list)
-
-                # if first_basis has some zero components, use coordinate basis for those dimensions
-                for i in range(problem.dim):
-                    if first_basis[i] == 0:
-                        rotate_matrix = np.vstack((rotate_matrix, self.get_coordinate_vector(problem.dim, i)))
-
-                # construct the interpolation set
-                Y = self.get_rotated_basis_interpolation_points(x_k, delta_k, problem, rotate_matrix, visited_pts_list[f_index].x)
-                Z = self.get_rotated_basis_interpolation_points(np.zeros(problem.dim), delta_k, problem, rotate_matrix,
-                                                         np.array(visited_pts_list[f_index].x) - np.array(x_k))
             # Evaluate the function estimate for the interpolation points
-            for i in range(2 * problem.dim + 1):
-                # for x_0, we don't need to simulate the new solution
-                if (k == 1) and (i == 0):
-                    fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
-                    interpolation_solns.append(new_solution)
-                # reuse the replications for x_k (center point, i.e., the incumbent solution)
-                elif (i == 0):
-                    sample_size = new_solution.n_reps
-                    sig2 = new_solution.objectives_var
-                    # adaptive sampling
-                    while True:
-                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or \
-                                sample_size >= lambda_max or expended_budget >= budget:
-                            break
-                        problem.simulate(new_solution, 1)
-                        expended_budget += 1
-                        sample_size += 1
-                        sig2 = new_solution.objectives_var
-                    fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
-                    interpolation_solns.append(new_solution)
-                # else if reuse one design point, reuse the replications
-                elif (i == 1) and (norm(np.array(x_k) - np.array(visited_pts_list[f_index].x)) != 0) and reuse_points == True:
-                    sample_size = visited_pts_list[f_index].n_reps
-                    sig2 = visited_pts_list[f_index].objectives_var
-                    # adaptive sampling
-                    while True:
-                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or \
-                            sample_size >= lambda_max or expended_budget >= budget:
-                            break
-                        problem.simulate(visited_pts_list[f_index], 1)
-                        expended_budget += 1
-                        sample_size += 1
-                        sig2 = visited_pts_list[f_index].objectives_var
-                    fval.append(-1 * problem.minmax[0] * visited_pts_list[f_index].objectives_mean)
-                    interpolation_solns.append(visited_pts_list[f_index])
-                # for new points, run the simulation with pilot run
+            fval = []
+            double_dim = 2 * self.problem.dim + 1
+            for i in range(double_dim):
+                # If first iteration, reuse the incumbent solution
+                if i == 0:
+                    adapt_soln = self.incumbent_solution
+                # If the second iteration and we can reuse points, reuse the farthest point from the center point
+                elif (
+                    i == 1
+                    and self.reuse_points
+                    and norm(
+                        np.array(self.incumbent_x)
+                        - np.array(self.visited_pts_list[f_index].x)
+                    )
+                    != 0
+                ):
+                    adapt_soln = self.visited_pts_list[f_index]
+                # Otherwise, create/initialize a new solution and use that
                 else:
-                    new_solution = self.create_new_solution(tuple(Y[i][0]), problem)
-                    visited_pts_list.append(new_solution)
-                    pilot_run = ceil(max(lambda_min, min(.5 * problem.dim, lambda_max)) - 1)
-                    problem.simulate(new_solution, pilot_run)
-                    expended_budget += pilot_run
-                    sample_size = pilot_run
+                    decision_vars = tuple(var_y[i][0])
+                    new_solution = self.create_new_solution(
+                        decision_vars, self.problem
+                    )
+                    self.visited_pts_list.append(new_solution)
+                    self.problem.simulate(new_solution, pilot_run)
+                    self.expended_budget += pilot_run
+                    adapt_soln = new_solution
 
-                    # adaptive sampling
-                    while True:
-                        problem.simulate(new_solution, 1)
-                        expended_budget += 1
-                        sample_size += 1
-                        sig2 = new_solution.objectives_var
-                        if sample_size >= self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim) or \
-                            sample_size >= lambda_max or expended_budget >= budget:
-                            break
-                    fval.append(-1 * problem.minmax[0] * new_solution.objectives_mean)
-                    interpolation_solns.append(new_solution)
+                # Don't perform adaptive sampling on x_0
+                if not (i == 0 and self.iteration_count == 0):
+                    self.perform_adaptive_sampling(
+                        adapt_soln, pilot_run, delta_k
+                    )
+
+                # Append the function estimate to the list
+                fval.append(
+                    -1 * self.problem.minmax[0] * adapt_soln.objectives_mean
+                )
+                interpolation_solns.append(adapt_soln)
 
             # construct the model and obtain the model coefficients
-            q, grad, Hessian = self.get_model_coefficients(Z, fval, problem)
+            q, grad, hessian = self.get_model_coefficients(
+                var_z, fval, self.problem
+            )
 
-            if not skip_criticality:
-                # check the condition and break
-                if norm(grad) > criticality_threshold:
-                    break
-
-            if delta_k <= mu * norm(grad):
+            norm_grad = norm(grad)
+            if delta_k <= mu * norm_grad or norm_grad == 0:
                 break
 
             # If a model gradient norm is zero, there is a possibility that the code stuck in this while loop
-            if norm(grad) == 0:
-                break
+            # TODO: investigate if this can be implemented instead of checking norm(grad) == 0
+            # MAX_ITER = 100
+            # if model_iterations > MAX_ITER:
+            #     break
 
-        delta_k = min(max(beta * norm(grad), delta_k), delta)
+        beta_n_grad = float(beta * norm_grad)
+        self.delta_k = min(max(beta_n_grad, delta_k), delta)
 
-        return fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, visited_pts_list
+        return (
+            fval,
+            var_y,
+            q,
+            grad,
+            hessian,
+            interpolation_solns,
+        )
 
-    # compute the model coefficients using (2d+1) design points and their function estimates
-    def get_model_coefficients(self, Y, fval, problem):
-        M = []
-        for i in range(0, 2 * problem.dim + 1):
-            M.append(1)
-            M[i] = np.append(M[i], np.array(Y[i]))
-            M[i] = np.append(M[i], np.array(Y[i]) ** 2)
+    def get_model_coefficients(
+        self, y_var: list, fval: list, problem: Problem
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Compute the model coefficients using (2d+1) design points and their function estimates."""
+        num_design_points = 2 * problem.dim + 1
 
-        q = np.matmul(pinv(M), fval)  # pinv returns the inverse of your matrix when it is available and the pseudo inverse when it isn't.
-        grad = q[1:problem.dim + 1]
-        grad = np.reshape(grad, problem.dim)
-        Hessian = q[problem.dim + 1 : 2 * problem.dim + 1]
-        Hessian = np.reshape(Hessian, problem.dim)
-        return q, grad, Hessian
+        # Construct the matrix with ones, linear terms, and squared terms
+        m_var = np.array(
+            [
+                np.hstack(([1], np.ravel(y_var[i]), np.ravel(y_var[i]) ** 2))
+                for i in range(num_design_points)
+            ]
+        )
 
-    # compute the interpolation points (2d+1) using the coordinate basis
-    def get_coordinate_basis_interpolation_points(self, x_k, delta, problem):
-        Y = [[x_k]]
-        epsilon = 0.01
-        for i in range(0, problem.dim):
-            plus = Y[0] + delta * self.get_coordinate_vector(problem.dim, i)
-            minus = Y[0] - delta * self.get_coordinate_vector(problem.dim, i)
+        # Compute the inverse or pseudoinverse of the matrix
+        try:
+            matrix_inverse = inv(m_var)
+        except LinAlgError:
+            matrix_inverse = pinv(m_var)
 
-            if sum(x_k) != 0:
-                # block constraints
-                if minus[0][i] <= problem.lower_bounds[i]:
-                    minus[0][i] = problem.lower_bounds[i] + epsilon
-                if plus[0][i] >= problem.upper_bounds[i]:
-                    plus[0][i] = problem.upper_bounds[i] - epsilon
+        inverse_mult = np.matmul(matrix_inverse, fval)
 
-            Y.append(plus)
-            Y.append(minus)
-        return Y
+        # Extract gradient and Hessian from the result
+        decision_var_idx = problem.dim + 1
+        grad = inverse_mult[1:decision_var_idx].reshape(problem.dim)
+        hessian = inverse_mult[decision_var_idx:num_design_points].reshape(
+            problem.dim
+        )
 
-    # compute the interpolation points (2d+1) using the rotated coordinate basis (reuse one design point)
-    def get_rotated_basis_interpolation_points(self, x_k, delta, problem, rotate_matrix, reused_x):
-        Y = [[x_k]]
-        epsilon = 0.01
-        for i in range(0, problem.dim):
+        return inverse_mult, grad, hessian
+
+    def get_coordinate_basis_interpolation_points(
+        self, x_k: tuple[int | float, ...], delta: float, problem: Problem
+    ) -> list:
+        """
+        Compute the interpolation points (2d+1) using the coordinate basis.
+        """
+        y_var = [[x_k]]
+        is_block_constraint = sum(x_k) != 0
+        num_decision_vars = problem.dim
+
+        lower_bounds = problem.lower_bounds
+        upper_bounds = problem.upper_bounds
+
+        for var_idx in range(num_decision_vars):
+            coord_vector = self.get_coordinate_vector(
+                num_decision_vars, var_idx
+            )
+            coord_diff = delta * coord_vector
+
+            minus = [x - d for x, d in zip(x_k, coord_diff)]
+            plus = [x + d for x, d in zip(x_k, coord_diff)]
+
+            if is_block_constraint:
+                minus = [
+                    clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j])
+                    for j, val in enumerate(minus)
+                ]
+                plus = [
+                    clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j])
+                    for j, val in enumerate(plus)
+                ]
+
+            y_var.append([plus])
+            y_var.append([minus])
+
+        return y_var
+
+    def get_rotated_basis_interpolation_points(
+        self,
+        x_k: np.ndarray,
+        delta: float,
+        problem: Problem,
+        rotate_matrix: np.ndarray,
+        reused_x: np.ndarray,
+    ) -> list[list[np.ndarray]]:
+        """
+        Compute the interpolation points (2d+1) using the rotated coordinate basis (reuse one design point)
+        """
+        y_var = [[x_k]]
+        is_block_constraint = np.sum(x_k) != 0
+        num_decision_vars = problem.dim
+
+        lower_bounds = np.array(problem.lower_bounds)
+        upper_bounds = np.array(problem.upper_bounds)
+
+        for i in range(num_decision_vars):
+            rotate_matrix_delta = delta * rotate_matrix[i]
+
             if i == 0:
-                plus = [np.array(reused_x)]
+                plus = np.array(reused_x)
             else:
-                plus = Y[0] + delta * rotate_matrix[i]
-            minus = Y[0] - delta * rotate_matrix[i]
+                plus = x_k + rotate_matrix_delta
 
-            if sum(x_k) != 0:
-                # block constraints
-                for j in range(problem.dim):
-                    if minus[0][j] <= problem.lower_bounds[j]:
-                        minus[0][j] = problem.lower_bounds[j] + epsilon
-                    elif minus[0][j] >= problem.upper_bounds[j]:
-                        minus[0][j] = problem.upper_bounds[j] - epsilon
-                    if plus[0][j] <= problem.lower_bounds[j]:
-                        plus[0][j] = problem.lower_bounds[j] + epsilon
-                    elif plus[0][j] >= problem.upper_bounds[j]:
-                        plus[0][j] = problem.upper_bounds[j] - epsilon
+            minus = x_k - rotate_matrix_delta
 
-            Y.append(plus)
-            Y.append(minus)
-        return Y
+            if is_block_constraint:
+                minus = [
+                    clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j])
+                    for j, val in enumerate(minus)
+                ]
+                plus = [
+                    clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j])
+                    for j, val in enumerate(plus)
+                ]
 
-    # run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
-    def iterate(self, k, delta_k, delta_max, problem, visited_pts_list, new_x, expended_budget, budget_limit, recommended_solns, intermediate_budgets, kappa, new_solution):
-        # default values
-        eta_1 = self.factors["eta_1"]
-        eta_2 = self.factors["eta_2"]
-        gamma_1 = self.factors["gamma_1"]
-        gamma_2 = self.factors["gamma_2"]
-        easy_solve = self.factors["easy_solve"]
-        lambda_min = self.factors["lambda_min"]
-        lambda_max = budget_limit - expended_budget
-        # lambda_max = budget_limit / (15 * sqrt(problem.dim))
-        pilot_run = ceil(max(lambda_min, min(.5 * problem.dim, lambda_max)) - 1)
+            y_var.append([plus])
+            y_var.append([minus])
 
-        if k == 1:
-            new_solution = self.create_new_solution(tuple(new_x), problem)
-            if len(visited_pts_list) == 0:
-                visited_pts_list.append(new_solution)
+        return y_var
 
-            # pilot run
-            problem.simulate(new_solution, pilot_run)
-            expended_budget += pilot_run
-            sample_size = pilot_run
-            
-            # adaptive sampling
-            while True:
-                problem.simulate(new_solution, 1)
-                expended_budget += 1
-                sample_size += 1
-                fn = new_solution.objectives_mean
-                sig2 = new_solution.objectives_var
-                if sample_size >= self.get_stopping_time(k, sig2, delta_k, fn / (delta_k ** 2), problem.dim) or \
-                    sample_size >= lambda_max or expended_budget >= budget_limit:
-                    # calculate kappa
-                    kappa = fn / (delta_k ** 2)
-                    break
+    def update_hessian(
+        self, candidate_solution: Solution, grad: np.ndarray, s: np.ndarray
+    ) -> None:
+        """Performs Hessian update if gradients are enabled."""
+        epsilon = 1e-15
+        if not hasattr(self, "hessian_skip_count"):
+            self.hessian_skip_count = 0
 
-            recommended_solns.append(new_solution)
-            intermediate_budgets.append(expended_budget)
-        
-        # build the local model (subproblem)
-        fval, Y, q, grad, Hessian, delta_k, expended_budget, interpolation_solns, visited_pts_list = self.construct_model(new_x, delta_k, k, problem, expended_budget, kappa, new_solution, visited_pts_list)
-        
+        def handle_hessian_skip(variable: str, value: float) -> None:
+            """Handles skipping Hessian update if gradients are near zero."""
+            self.hessian_skip_count += 1
+            message = (
+                f"{variable} near zero ({value}); skipping Hessian update to avoid numerical instability. "
+                f"({self.hessian_skip_count} consecutive skips)"
+            )
+            logging.debug(message)
+            if self.hessian_skip_count == 10:
+                message = (
+                    "Hessian update skipped 10 consecutive times. "
+                    "Check optimization stability."
+                )
+                logging.info(message)
+            # If Hessian updates fail too often, the current approximation may
+            # be useless or unstable. Resetting can prevent further instability
+            # elif self.hessian_skip_count == 50:
+            #     message = (
+            #         "Hessian update skipped 50 consecutive times. "
+            #         "Resetting Hessian approximation."
+            #     )
+            #     logging.warning(message)
+            #     self.h_k = np.identity(self.problem.dim)
+            #     self.hessian_skip_count = 0
+
+        candidate_grad = (
+            -1
+            * self.problem.minmax[0]
+            * candidate_solution.objectives_gradients_mean[0]
+        )
+        y_k = candidate_grad - grad
+        y_ks = y_k @ s
+
+        if np.isclose(y_ks, 0, atol=epsilon):
+            handle_hessian_skip("y_ks", y_ks)
+            return
+
+        r_k = 1.0 / y_ks
+        h_s_k = self.h_k @ s
+        s_h_s_k = s @ h_s_k
+
+        if np.isclose(s_h_s_k, 0, atol=epsilon):
+            handle_hessian_skip("s_h_s_k", s_h_s_k)
+            return
+        else:
+            self.h_k += (
+                np.outer(y_k, y_k) * r_k - np.outer(h_s_k, h_s_k) / s_h_s_k
+            )
+            self.hessian_skip_count = 0  # Reset counter on successful update
+
+    def iterate(self) -> None:
+        """
+        Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data
+        """
+        self.iteration_count += 1
+
+        # determine power of delta in adaptive sampling rule
+        pilot_run = ceil(
+            max(
+                self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
+                min(0.5 * self.problem.dim, self.lambda_max),
+            )
+            - 1
+        )
+        if self.iteration_count == 1:
+            self.incumbent_solution = self.create_new_solution(
+                self.incumbent_x, self.problem
+            )
+            self.visited_pts_list.append(self.incumbent_solution)
+
+            self.perform_adaptive_sampling(
+                self.incumbent_solution,
+                pilot_run,
+                self.delta_k,
+                compute_kappa=True,
+            )
+            self.recommended_solns.append(self.incumbent_solution)
+            self.intermediate_budgets.append(self.expended_budget)
+        # since incument was only evaluated with the sample size of previous incumbent, here we compute its adaptive sample size
+        elif self.factors["crn_across_solns"]:
+            self.perform_adaptive_sampling(
+                self.incumbent_solution, pilot_run, self.delta_k
+            )
+
+        # use Taylor expansion if gradient available
+        if self.enable_gradient:
+            fval = (
+                np.ones(2 * self.problem.dim + 1)
+                * -1
+                * self.problem.minmax[0]
+                * self.incumbent_solution.objectives_mean
+            )
+            grad = (
+                -1
+                * self.problem.minmax[0]
+                * self.incumbent_solution.objectives_gradients_mean[0]
+            )
+            hessian = self.h_k
+        else:
+            # build the local model with interpolation (subproblem)
+            (
+                fval,
+                y_var,
+                q,
+                grad,
+                hessian,
+                interpolation_solns,
+            ) = self.construct_model()
+
         # solve the local model (subproblem)
-        if easy_solve:
+        if self.easy_solve:
             # Cauchy reduction
-            if np.dot(np.multiply(grad, Hessian), grad) <= 0:
-                tau = 1
+            # TODO: why do we need this? Check model reduction calculation too.
+            # logging.debug("np.dot(np.multiply(grad, Hessian), grad) "+str(np.dot(np.multiply(grad, hessian), grad)))
+            # logging.debug("np.dot(np.dot(grad, hessian), grad) "+str(np.dot(np.dot(grad, hessian), grad)))
+            if self.enable_gradient:
+                dot_a = np.dot(grad, hessian)
             else:
-                tau = min(1, norm(grad) ** 3 / (delta_k * np.dot(np.multiply(grad, Hessian), grad)))
-            grad = np.reshape(grad, (1, problem.dim))[0]
-            candidate_x = new_x - tau * delta_k * grad / norm(grad)
+                dot_a = grad * hessian
+
+            check_positive_definite: float = np.dot(dot_a, grad)
+
+            if check_positive_definite <= 0:
+                tau = 1.0
+            else:
+                norm_ratio = norm(grad) ** 3 / (
+                    self.delta_k * check_positive_definite
+                )
+                tau = min(1.0, norm_ratio)
+
+            grad: np.ndarray = np.reshape(grad, (1, self.problem.dim))[0]
+            grad_norm = norm(grad)
+            # Make sure we don't divide by 0
+            if grad_norm == 0:
+                candidate_x = self.incumbent_x
+            else:
+                product = tau * self.delta_k * grad
+                adjustment = product / grad_norm
+                candidate_x = self.incumbent_x - adjustment
+            # if norm(incumbent_x - candidate_x) > 0:
+            #     logging.debug("incumbent_x " + str(incumbent_x))
+            #     logging.debug("candidate_x " + str(candidate_x))
+
         else:
             # Search engine - solve subproblem
-            def subproblem(s):
-                return fval[0] + np.dot(s, grad) + np.dot(np.multiply(s, Hessian), s)
+            def subproblem(s: np.ndarray) -> float:
+                s_grad_dot: np.ndarray = np.dot(s, grad)
+                s_hessian_dot: np.ndarray = np.dot(np.multiply(s, hessian), s)
+                result = fval[0] + s_grad_dot + s_hessian_dot
+                return float(result[0])
 
-            con_f = lambda s: norm(s)
-            nlc = NonlinearConstraint(con_f, 0, delta_k)
-            solve_subproblem = minimize(subproblem, np.zeros(problem.dim), method='trust-constr', constraints=nlc)
-            candidate_x = new_x + solve_subproblem.x
+            def con_f(s: np.ndarray) -> float:
+                return float(norm(s))
 
+            nlc = NonlinearConstraint(con_f, 0, self.delta_k)
+            solve_subproblem = minimize(
+                subproblem,
+                np.zeros(self.problem.dim),
+                method="trust-constr",
+                constraints=nlc,
+            )
+            candidate_x = self.incumbent_x + solve_subproblem.x
+
+        # logging.debug("problem.lower_bounds "+str(problem.lower_bounds))
         # handle the box constraints
-        for i in range(problem.dim):
-            if candidate_x[i] <= problem.lower_bounds[i]:
-                candidate_x[i] = problem.lower_bounds[i] + 0.01
-            elif candidate_x[i] >= problem.upper_bounds[i]:
-                candidate_x[i] = problem.upper_bounds[i] - 0.01
+        candidate_x = tuple(
+            clamp_with_epsilon(
+                float(candidate_x[i]),
+                self.problem.lower_bounds[i],
+                self.problem.upper_bounds[i],
+            )
+            for i in range(self.problem.dim)
+        )
 
         # store the solution (and function estimate at it) to the subproblem as a candidate for the next iterate
-        candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
-        visited_pts_list.append(candidate_solution)
+        candidate_solution = self.create_new_solution(candidate_x, self.problem)
+        self.visited_pts_list.append(candidate_solution)
 
-        # pilot run and adaptive sampling
-        problem.simulate(candidate_solution, pilot_run)
-        expended_budget += pilot_run
-        sample_size = pilot_run
-        while True:
-            problem.simulate(candidate_solution, 1)
-            expended_budget += 1
-            sample_size += 1
-            sig2 = candidate_solution.objectives_var
-            stopping = self.get_stopping_time(k, sig2, delta_k, kappa, problem.dim)
-            if sample_size >= stopping or sample_size >= lambda_max or expended_budget >= budget_limit:
-                break
-            
+        # if we use crn, then the candidate solution has the same sample size as the incumbent solution
+        if self.factors["crn_across_solns"]:
+            num_sims = self.incumbent_solution.n_reps
+            self.problem.simulate(candidate_solution, num_sims)
+            self.expended_budget += num_sims
+        else:
+            self.perform_adaptive_sampling(
+                candidate_solution, pilot_run, self.delta_k
+            )
+
         # TODO: make sure the solution whose estimated objevtive is abrupted bc of budget is not added to the list of recommended solutions, unless the error is negligible ...
         # if (expended_budget >= budget_limit) and (sample_size < stopping):
         #     final_ob = fval[0]
         # else:
         # calculate success ratio
-        fval_tilde = -1 * problem.minmax[0] * candidate_solution.objectives_mean
-    
+        fval_tilde = (
+            -1 * self.problem.minmax[0] * candidate_solution.objectives_mean
+        )
         # replace the candidate x if the interpolation set has lower objective function value and with sufficient reduction (pattern search)
-        if min(fval) < fval_tilde and fval[0] - min(fval) >= self.factors["ps_sufficient_reduction"] * delta_k ** 2:
-            fval_tilde = min(fval)
-            candidate_x = Y[fval.index(min(fval))][0]
-            candidate_solution = interpolation_solns[fval.index(min(fval))]
-    
+        # also if the candidate solution's variance is high that could be caused by stopping early due to exhausting budget
+        # logging.debug("cv "+str(candidate_solution.objectives_var/(candidate_solution.n_reps * candidate_solution.objectives_mean ** 2)))
+        # logging.debug("fval[0] - min(fval) "+str(fval[0] - min(fval)))
+
+        if not self.enable_gradient:
+            min_fval = min(fval)
+            sufficient_reduction = (fval[0] - min_fval) >= self.factors[
+                "ps_sufficient_reduction"
+            ] * self.delta_k**2
+
+            condition_met = min_fval < fval_tilde and sufficient_reduction
+
+            high_variance = False
+            if not condition_met:
+                # Treat variance as low if mean is zero to avoid division by
+                # zero (zero mean typically indicates negligible uncertainty)
+                if candidate_solution.objectives_mean[0] == 0:
+                    logging.debug(
+                        "Candidate solution objectives_mean is zero, skipping variance check."
+                    )
+                else:
+                    high_variance = (
+                        candidate_solution.objectives_var[0]
+                        / (
+                            candidate_solution.n_reps
+                            * candidate_solution.objectives_mean[0] ** 2
+                        )
+                    ) > 0.75
+
+            if condition_met or high_variance:
+                fval_tilde = min_fval
+                min_idx = fval.index(min_fval)
+                candidate_x = y_var[min_idx][0]
+                candidate_solution = interpolation_solns[min_idx]
+
         # compute the success ratio rho
-        if (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(np.array(candidate_x) - np.array(new_x), q)) == 0:
+        candidate_x_arr = np.array(candidate_x)
+        incumbent_x_arr = np.array(self.incumbent_x)
+        s = np.subtract(candidate_x_arr, incumbent_x_arr)
+        if self.enable_gradient:
+            model_reduction = -np.dot(s, grad) - 0.5 * np.dot(
+                np.dot(s, hessian), s
+            )
+        else:
+            model_reduction = self.evaluate_model(
+                np.zeros(self.problem.dim),
+                q,  # type: ignore
+            ) - self.evaluate_model(s, q)  # type: ignore
+        if model_reduction <= 0:
             rho = 0
         else:
-            rho = (fval[0] - fval_tilde) / (self.evaluate_model(np.zeros(problem.dim), q) - self.evaluate_model(candidate_x - new_x, q))
-        # very successful: expand and accept
-        if rho >= eta_2:
-            new_x = candidate_x
-            new_solution = candidate_solution
-            final_ob = candidate_solution.objectives_mean
-            recommended_solns.append(candidate_solution)
-            intermediate_budgets.append(expended_budget)
-            delta_k = min(gamma_1 * delta_k, delta_max)
+            rho = (fval[0] - fval_tilde) / model_reduction
+
+        successful = rho >= self.eta_1
         # successful: accept
-        elif rho >= eta_1:
-            new_x = candidate_x
-            new_solution = candidate_solution
-            final_ob = candidate_solution.objectives_mean
-            recommended_solns.append(candidate_solution)
-            intermediate_budgets.append(expended_budget)
-            delta_k = min(delta_k, delta_max)
-        # unsuccessful: shrink and reject
+        if successful:
+            self.incumbent_x = candidate_x
+            self.incumbent_solution = candidate_solution
+            self.recommended_solns.append(candidate_solution)
+            self.intermediate_budgets.append(self.expended_budget)
+            self.delta_k = min(self.delta_k, self.delta_max)
+
+            # very successful: expand
+            if rho >= self.eta_2:
+                self.delta_k = min(self.gamma_1 * self.delta_k, self.delta_max)
+
+            if self.enable_gradient:
+                self.update_hessian(candidate_solution, grad, s)
+
+        elif not successful:
+            self.delta_k = min(self.gamma_2 * self.delta_k, self.delta_max)
+
+        # TODO: unified TR management
+        # delta_k = min(kappa * norm(grad), self.delta_max)
+        # logging.debug("norm of grad "+str(norm(grad)))
+
+    def _initialize_solving(self) -> None:
+        """Setup the solver for the first iteration."""
+        self.budget: int = self.problem.factors["budget"]
+        self.eta_1: float = self.factors["eta_1"]
+        self.eta_2: float = self.factors["eta_2"]
+        self.gamma_1: float = self.factors["gamma_1"]
+        self.gamma_2: float = self.factors["gamma_2"]
+        self.easy_solve: bool = self.factors["easy_solve"]
+        self.reuse_points: bool = self.factors["reuse_points"]
+        self.lambda_min: int = self.factors["lambda_min"]
+        self.lambda_max = self.budget
+
+        # Designate random number generator for random sampling
+        rng = self.rng_list[1]
+
+        # Generate dummy solutions to estimate a reasonable maximum radius
+        dummy_solns = [
+            self.problem.get_random_solution(rng)
+            for _ in range(1000 * self.problem.dim)
+        ]
+
+        # Range for each dimension is calculated and compared with box constraints range if given
+        # TODO: just use box constraints range if given
+        # self.delta_max = min(self.factors["delta_max"], problem.upper_bounds[0] - problem.lower_bounds[0])
+        delta_max_candidates: list[float | int] = []
+        for i in range(self.problem.dim):
+            sol_values = [sol[i] for sol in dummy_solns]
+            min_soln, max_soln = min(sol_values), max(sol_values)
+            bound_range = (
+                self.problem.upper_bounds[i] - self.problem.lower_bounds[i]
+            )
+            delta_max_candidates.append(min(max_soln - min_soln, bound_range))
+
+        # TODO: update this so that it could be used for problems with decision variables at varying scales!
+        self.delta_max = max(delta_max_candidates)
+        # logging.debug("delta_max  " + str(self.delta_max))
+
+        # Initialize trust-region radius
+        self.delta_k = 10 ** (
+            ceil(log(self.delta_max * 2, 10) - 1) / self.problem.dim
+        )
+        # logging.debug("initial delta " + str(self.delta_k))
+
+        if "initial_solution" in self.problem.factors:
+            self.incumbent_x = tuple(self.problem.factors["initial_solution"])
         else:
-            delta_k = min(gamma_2 * delta_k, delta_max)
-            final_ob = fval[0]
-        
-        return final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list
-       
-    # start the search and stop when the budget is exhausted
-    def solve(self, problem):
+            self.incumbent_x = tuple(self.problem.get_random_solution(rng))
+
+        self.incumbent_solution = self.create_new_solution(
+            self.incumbent_x, self.problem
+        )
+        self.h_k = np.identity(self.problem.dim).tolist()
+
+        self.enable_gradient = (
+            self.problem.gradient_available and self.factors["use_gradients"]
+        )
+
+        if self.factors["crn_across_solns"]:
+            self.delta_power = 0 if self.enable_gradient else 2
+        else:
+            self.delta_power = 4
+
+        # Reset iteration count and data storage
+        self.iteration_count = 0
+        self.expended_budget = 0
+        self.recommended_solns = []
+        self.intermediate_budgets = []
+        self.visited_pts_list = []
+
+    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
         """
         Run a single macroreplication of a solver on a problem.
+
         Arguments
         ---------
         problem : Problem object
             simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
+
         Returns
         -------
         recommended_solns : list of Solution objects
@@ -524,38 +1014,21 @@ class ASTRODF(Solver):
         intermediate_budgets : list of ints
             list of intermediate budgets when recommended solutions changes
         """
+        self.problem = problem
+        self._initialize_solving()
 
-        budget = problem.factors["budget"]        
-        
-        # Designate random number generator for random sampling 
-        find_next_soln_rng = self.rng_list[1]
-        
-        # Generate many dummy solutions without replication only to find a reasonable maximum radius
-        dummy_solns = []
-        for i in range(1000 * problem.dim):    
-            dummy_solns += [problem.get_random_solution(find_next_soln_rng)]       
-        # Range for each dimension is calculated and compared with box constraints range if given 
-        # TODO: just use box constraints range if given
-        # delta_max = min(self.factors["delta_max"], problem.upper_bounds[0] - problem.lower_bounds[0])
-        delta_max_arr = []
-        for i in range(problem.dim):
-            delta_max_arr += [min(max([sol[i] for sol in dummy_solns])-min([sol[i] for sol in dummy_solns]), 
-                                  problem.upper_bounds[0] - problem.lower_bounds[0])]          
-        # TODO: update this so that it could be used for problems with decision variables at varying scales!
-        delta_max = max(delta_max_arr)
-        
-        # Reset iteration and data storage arrays
-        visited_pts_list = []
-        k = 0        
-        delta_k = 10 ** (ceil(log(delta_max * 2, 10) - 1) / problem.dim)
-        new_x = problem.factors["initial_solution"]
-        expended_budget, kappa = 0, 0
-        new_solution, recommended_solns, intermediate_budgets = [], [], [] 
-        
-        while expended_budget < budget:
-            k += 1
-            final_ob, delta_k, recommended_solns, intermediate_budgets, expended_budget, new_x, kappa, new_solution, visited_pts_list = \
-                self.iterate(k, delta_k, delta_max, problem, visited_pts_list, new_x, expended_budget, budget, \
-                             recommended_solns, intermediate_budgets, kappa, new_solution)
+        while self.expended_budget < self.budget:
+            self.iterate()
 
-        return recommended_solns, intermediate_budgets
+        return self.recommended_solns, self.intermediate_budgets
+
+
+def clamp_with_epsilon(
+    val: float, lower_bound: float, upper_bound: float, epsilon: float = 0.01
+) -> float:
+    """Apply epsilon adjustment to keep values within bounds while avoiding exact boundary values."""
+    if val <= lower_bound:
+        return lower_bound + epsilon
+    elif val >= upper_bound:
+        return upper_bound - epsilon
+    return val

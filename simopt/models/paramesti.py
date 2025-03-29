@@ -3,12 +3,19 @@ Summary
 -------
 Simulate MLE estimation for the parameters of a two-dimensional gamma distribution.
 A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/paramesti.html>`_.
+`here <https://simopt.readthedocs.io/en/latest/paramesti.html>`__.
 """
-import numpy as np
-import math
 
-from ..base import Model, Problem
+from __future__ import annotations
+from simopt.utils import classproperty
+
+import math
+from typing import Callable
+
+import numpy as np
+from mrg32k3a.mrg32k3a import MRG32k3a
+
+from simopt.base import ConstraintType, Model, Problem, VariableType
 
 
 class ParameterEstimation(Model):
@@ -40,47 +47,65 @@ class ParameterEstimation(Model):
     --------
     base.model
     """
-    def __init__(self, fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        self.name = "PARAMESTI"
-        self.n_rngs = 2
-        self.n_responses = 1
-        self.specifications = {
+
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "PARAMESTI"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Gamma Parameter Estimation"
+
+    @classproperty
+    def n_rngs(cls) -> int:
+        return 2
+
+    @classproperty
+    def n_responses(cls) -> int:
+        return 1
+
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
+        return {
             "xstar": {
                 "description": "x^*, the unknown parameter that maximizes g(x)",
                 "datatype": list,
-                "default": [2, 5]
+                "default": [2, 5],
             },
             "x": {
                 "description": "x, variable in pdf",
                 "datatype": list,
-                "default": [1, 1]
-            }
+                "default": [1, 1],
+            },
         }
-        self.check_factor_list = {
-            "xstar": self.check_xstar,
-            "x": self.check_x
-        }
-        # Set factors of the simulation model.
+
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {"xstar": self.check_xstar, "x": self.check_x}
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_xstar(self):
-        return all(xstar_i > 0 for xstar_i in self.factors["xstar"])
+    def check_xstar(self) -> None:
+        if any(xstar_i <= 0 for xstar_i in self.factors["xstar"]):
+            raise ValueError("All elements in xstar must be greater than 0.")
 
-    def check_x(self):
-        return all(x_i > 0 for x_i in self.factors["x"])
+    def check_x(self) -> None:
+        if any(x_i <= 0 for x_i in self.factors["x"]):
+            raise ValueError("All elements in x must be greater than 0.")
 
-    def check_simulatable_factors(self):
+    def check_simulatable_factors(self) -> bool:
         # Check for dimension of x and xstar.
-        if len(self.factors["x"]) != 2:
-            return False
-        elif len(self.factors["xstar"]) != 2:
-            return False
-        else:
-            return True
+        x_len = len(self.factors["x"])
+        xstar_len = len(self.factors["xstar"])
+        if x_len != 2:
+            raise ValueError("The length of x must equal 2.")
+        elif xstar_len != 2:
+            raise ValueError("The length of xstar must equal 2.")
+        return True
 
-    def replicate(self, rng_list):
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """
         Simulate a single replication for the current model factors.
 
@@ -102,13 +127,25 @@ class ParameterEstimation(Model):
         y2_rng = rng_list[0]
         y1_rng = rng_list[1]
         # Generate y1 and y2 from specified gamma distributions.
-        y2 = y2_rng.gammavariate(self.factors['xstar'][1], 1)
-        y1 = y1_rng.gammavariate(self.factors['xstar'][0] * y2, 1)
+        y2 = y2_rng.gammavariate(self.factors["xstar"][1], 1)
+        y1 = y1_rng.gammavariate(self.factors["xstar"][0] * y2, 1)
         # Compute Log Likelihood
-        loglik = - y1 - y2 + (self.factors['x'][0] * y2 - 1) * np.log(y1) + (self.factors['x'][1] - 1) * np.log(y2) - np.log(math.gamma(self.factors['x'][0] * y2)) - np.log(math.gamma(self.factors['x'][1]))
+        loglik = (
+            -y1
+            - y2
+            + (self.factors["x"][0] * y2 - 1) * np.log(y1)
+            + (self.factors["x"][1] - 1) * np.log(y2)
+            - np.log(math.gamma(self.factors["x"][0] * y2))
+            - np.log(math.gamma(self.factors["x"][1]))
+        )
         # Compose responses and gradients.
-        responses = {'loglik': loglik}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {"loglik": loglik}
+        gradients = {
+            response_key: {
+                factor_key: np.nan for factor_key in self.specifications
+            }
+            for response_key in responses
+        }
         return responses, gradients
 
 
@@ -186,47 +223,108 @@ class ParamEstiMaxLogLik(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="PARAMESTI-1", fixed_factors=None, model_fixed_factors=None):
-        if fixed_factors is None:
-            fixed_factors = {}
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-        self.name = name
-        self.dim = 2
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (1,)
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.lower_bounds = (0.1, 0.1)
-        self.upper_bounds = (10, 10)
-        self.gradient_available = False
-        self.model_default_factors = {}
-        self.model_decision_factors = {"x"}
-        self.factors = fixed_factors
-        self.specifications = {
+
+    @classproperty
+    def class_name_abbr(cls) -> str:
+        return "PARAMESTI-1"
+
+    @classproperty
+    def class_name(cls) -> str:
+        return "Max Log Likelihood for Gamma Parameter Estimation"
+
+    @classproperty
+    def n_objectives(cls) -> int:
+        return 1
+
+    @classproperty
+    def n_stochastic_constraints(cls) -> int:
+        return 0
+
+    @classproperty
+    def minmax(cls) -> tuple:
+        return (1,)
+
+    @classproperty
+    def constraint_type(cls) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @classproperty
+    def variable_type(cls) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @classproperty
+    def gradient_available(cls) -> bool:
+        return False
+
+    @classproperty
+    def optimal_value(cls) -> float | None:
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:
+        solution = self.model.factors["xstar"]
+        if isinstance(solution, list):
+            return tuple(solution)
+        return solution
+
+    @classproperty
+    def model_default_factors(cls) -> dict:
+        return {}
+
+    @classproperty
+    def model_decision_factors(cls) -> set[str]:
+        return {"x"}
+
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "initial solution",
-                "datatype": list,
-                "default": (1, 1)
+                "datatype": tuple,
+                "default": (1, 1),
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
                 "datatype": int,
-                "default": 1000
-            }
+                "default": 1000,
+                "isDatafarmable": False,
+            },
         }
-        self.check_factor_list = {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
-        }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and over-riden defaults.
-        self.model = ParameterEstimation(self.model_fixed_factors)
-        self.optimal_solution = list(self.model.factors["xstar"])
-        self.optimal_value = None
 
-    def vector_to_factor_dict(self, vector):
+    @property
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
+            "initial_solution": self.check_initial_solution,
+            "budget": self.check_budget,
+        }
+
+    @classproperty
+    def dim(cls) -> int:
+        return 2
+
+    @classproperty
+    def lower_bounds(cls) -> tuple:
+        return (0.1,) * cls.dim
+
+    @classproperty
+    def upper_bounds(cls) -> tuple:
+        return (10,) * cls.dim
+
+    def __init__(
+        self,
+        name: str = "PARAMESTI-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=ParameterEstimation,
+        )
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         """
         Convert a vector of variables to a dictionary with factor keys
 
@@ -240,12 +338,10 @@ class ParamEstiMaxLogLik(Problem):
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
-            "x": vector[:]
-        }
+        factor_dict = {"x": vector[:]}
         return factor_dict
 
-    def factor_dict_to_vector(self, factor_dict):
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         """
         Convert a dictionary with factor keys to a vector
         of variables.
@@ -263,7 +359,7 @@ class ParamEstiMaxLogLik(Problem):
         vector = tuple(factor_dict["x"])
         return vector
 
-    def response_dict_to_objectives(self, response_dict):
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         """
         Convert a dictionary with response keys to a vector
         of objectives.
@@ -281,7 +377,9 @@ class ParamEstiMaxLogLik(Problem):
         objectives = (response_dict["loglik"],)
         return objectives
 
-    def deterministic_objectives_and_gradients(self, x):
+    def deterministic_objectives_and_gradients(
+        self, x: tuple
+    ) -> tuple[tuple, tuple]:
         """
         Compute deterministic components of objectives for a solution `x`.
 
@@ -301,7 +399,7 @@ class ParamEstiMaxLogLik(Problem):
         det_objectives_gradients = ((0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x):
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         """
         Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -317,7 +415,7 @@ class ParamEstiMaxLogLik(Problem):
         """
         return True
 
-    def get_random_solution(self, rand_sol_rng):
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """
         Generate a random solution for starting or restarting solvers.
 
@@ -331,5 +429,29 @@ class ParamEstiMaxLogLik(Problem):
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(self.lower_bounds[idx], self.upper_bounds[idx]) for idx in range(self.dim)])
+        x = tuple(
+            [
+                rand_sol_rng.uniform(
+                    self.lower_bounds[idx], self.upper_bounds[idx]
+                )
+                for idx in range(self.dim)
+            ]
+        )
         return x
+
+    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
+        """
+        Convert a dictionary with response keys to a vector
+        of left-hand sides of stochastic constraints: E[Y] <= 0
+
+        Arguments
+        ---------
+        response_dict : dictionary
+            dictionary with response keys and associated values
+
+        Returns
+        -------
+        tuple
+            vector of LHSs of stochastic constraint
+        """
+        raise NotImplementedError

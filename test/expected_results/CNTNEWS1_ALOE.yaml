@@ -1,0 +1,219 @@
+all_est_objectives:
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+- - 0.0
+  - 0.0
+all_intermediate_budgets:
+- - 0
+  - 1000
+- - 0
+  - 1000
+- - 0
+  - 1000
+- - 0
+  - 1000
+- - 0
+  - 1000
+- - 0
+  - 1000
+- - 0
+  - 1000
+- - 0
+  - 1000
+- - 0
+  - 1000
+- - 0
+  - 1000
+all_recommended_xs:
+- - &id001 !!python/tuple
+    - 0
+  - *id001
+- - &id002 !!python/tuple
+    - 0
+  - *id002
+- - &id003 !!python/tuple
+    - 0
+  - *id003
+- - &id004 !!python/tuple
+    - 0
+  - *id004
+- - &id005 !!python/tuple
+    - 0
+  - *id005
+- - &id006 !!python/tuple
+    - 0
+  - *id006
+- - &id007 !!python/tuple
+    - 0
+  - *id007
+- - &id008 !!python/tuple
+    - 0
+  - *id008
+- - &id009 !!python/tuple
+    - 0
+  - *id009
+- - &id010 !!python/tuple
+    - 0
+  - *id010
+num_macroreps: 10
+num_postreps: 100
+objective_curves:
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1000.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+problem_name: CNTNEWS-1
+progress_curves:
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+- !!python/tuple
+  - !!python/tuple
+    - 0.0
+    - 1.0
+  - !!python/tuple
+    - 0.0
+    - 0.0
+solver_name: ALOE
