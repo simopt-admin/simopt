@@ -118,12 +118,12 @@ class IronOre(Model):
             "price_stop": {
                 "description": "price level to stop production",
                 "datatype": float,
-                "default": 40,
+                "default": 40.0,
             },
             "price_sell": {
                 "description": "price level to sell all stock",
                 "datatype": float,
-                "default": 100,
+                "default": 100.0,
             },
             "n_days": {
                 "description": "number of days to simulate",
@@ -237,19 +237,19 @@ class IronOre(Model):
             "frac_producing" = The fraction of days spent producing iron ore
             "mean_stock" = The average stocks over the time period
         """
-        n_days = self.factors["n_days"]
-        min_price = self.factors["min_price"]
-        mean_price = self.factors["mean_price"]
-        max_price = self.factors["max_price"]
-        st_dev = self.factors["st_dev"]
-        price_stop = self.factors["price_stop"]
-        inven_stop = self.factors["inven_stop"]
-        max_prod_perday = self.factors["max_prod_perday"]
-        capacity = self.factors["capacity"]
-        prod_cost = self.factors["prod_cost"]
-        price_prod = self.factors["price_prod"]
-        price_sell = self.factors["price_sell"]
-        holding_cost = self.factors["holding_cost"]
+        n_days: int = self.factors["n_days"]
+        min_price: float = self.factors["min_price"]
+        mean_price: float = self.factors["mean_price"]
+        max_price: float = self.factors["max_price"]
+        st_dev: float = self.factors["st_dev"]
+        price_stop: float = self.factors["price_stop"]
+        inven_stop: int = self.factors["inven_stop"]
+        max_prod_perday: int = self.factors["max_prod_perday"]
+        capacity: int = self.factors["capacity"]
+        prod_cost: float = self.factors["prod_cost"]
+        price_prod: float = self.factors["price_prod"]
+        price_sell: float = self.factors["price_sell"]
+        holding_cost: float = self.factors["holding_cost"]
         # Designate random number generators.
         price_rng = rng_list[0]
         # Initialize quantities to track:
@@ -267,15 +267,21 @@ class IronOre(Model):
 
         # Run simulation over time horizon.
         for day in range(1, n_days):
-            # Carry forward running values from previous day.
+            # === Initializatize values ===
+            # Initialize today with values from yesterday
             prior_day = day - 1
             # Stock doesn't reset between days
-            stock[day] = stock[prior_day]
-            # The profit is cumulative, so carry that forwards too
-            profit[day] = profit[prior_day]
-            # Keep references of previous values.
-            prev_price = mkt_price[prior_day]
             prev_stock = stock[prior_day]
+            stock[day] = prev_stock
+            # Profit is cumulative, so it doesn't reset
+            prev_profit = profit[prior_day]
+            profit[day] = prev_profit
+            # The market price is a random walk, but it's based off of the
+            # previous day's price.
+            prev_price = mkt_price[prior_day]
+            mkt_price[day] = prev_price
+            # We just need yesterday's producing status to help detetmine
+            # if we should produce today.
             prev_producing = producing[prior_day]
 
             # === Price Update: mean-reverting random walk ===
@@ -284,8 +290,6 @@ class IronOre(Model):
             move = price_rng.normalvariate(mean_move, st_dev)
             price_today = max(min(prev_price + move, max_price), min_price)
             mkt_price[day] = price_today
-            if day < n_days - 1:
-                mkt_price[day + 1] = mkt_price[day]
 
             # === Production Logic ===
             # If stock is below the inventory stop and either:
