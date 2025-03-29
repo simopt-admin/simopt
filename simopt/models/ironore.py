@@ -262,7 +262,6 @@ class IronOre(Model):
         mkt_price = np.zeros(n_days)
         mkt_price[0] = mean_price
         stock = np.zeros(n_days)
-        producing = np.zeros(n_days)
         prod_costs = np.zeros(n_days)
         hold_costs = np.zeros(n_days)
         sell_profit = np.zeros(n_days)
@@ -279,13 +278,13 @@ class IronOre(Model):
             # previous day's price.
             prev_price = mkt_price[prior_day]
             mkt_price[day] = prev_price
-            # We just need yesterday's producing status to help detetmine
+            # We just need yesterday's producing status to help determine
             # if we should produce today.
-            prev_producing = producing[prior_day]
+            prev_producing = prod_costs[prior_day] != 0
 
             # === Price Update: mean-reverting random walk ===
-            delta = mean_price - prev_price
-            mean_move = copysign(sqrt(sqrt(abs(delta))), delta)
+            price_delta = mean_price - prev_price
+            mean_move = copysign(sqrt(sqrt(abs(price_delta))), price_delta)
             move = price_rng.normalvariate(mean_move, st_dev)
             price_today = max(min(prev_price + move, max_price), min_price)
             mkt_price[day] = price_today
@@ -303,7 +302,6 @@ class IronOre(Model):
                 production_amount = min(max_prod_perday, missing_stock)
                 stock[day] += production_amount
                 prod_costs[day] = production_amount * prod_cost
-                producing[day] = 1
 
             # === Selling Logic ===
             if price_today >= price_sell:
@@ -317,10 +315,14 @@ class IronOre(Model):
         profits = sell_profit - prod_costs - hold_costs
         net_profit = np.sum(profits)
 
+        # Calculate fraction of days producing
+        is_producing_mask = prod_costs != 0
+        frac_producing = np.mean(is_producing_mask)
+
         # Calculate responses from simulation data.
         responses = {
             "total_profit": net_profit,
-            "frac_producing": np.mean(producing),
+            "frac_producing": frac_producing,
             "mean_stock": np.mean(stock),
         }
         gradients = {
