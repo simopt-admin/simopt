@@ -6,13 +6,16 @@
 import argparse
 import logging
 import os
+import time
+from collections.abc import Callable
+from functools import partial
+from pathlib import Path
 
 from simopt.directory import problem_directory, solver_directory
 from simopt.experiment_base import ProblemSolver, post_normalize
 
-# If running from /dev_tools, change to root directory
-if os.path.basename(os.getcwd()) == "dev_tools":
-    os.chdir(os.path.join(os.path.dirname(__file__), ".."))
+# Change the working directory to the parent directory of this script
+os.chdir(Path(__file__).resolve().parent.parent)
 
 
 # Function to check compatibility
@@ -59,21 +62,65 @@ def main(
         )
         return
 
+    runtime_strings = []
     # For each problem/solver pair, run the experiment
     for solver_name, problem_name in valid_pairs:
         logging.info(f"Experimenting with {solver_name} on {problem_name}.")
         myexperiment = ProblemSolver(solver_name, problem_name)
-        if level >= 0:
-            logging.info("Executing `run` method.")
-            myexperiment.run(n_macroreps=num_macroreps)
-        if level >= 1:
-            logging.info("Executing `post_replicate` method.")
-            myexperiment.post_replicate(n_postreps=num_postreps)
-        if level >= 2:
-            logging.info("Executing `post_normalize` method.")
-            post_normalize([myexperiment], n_postreps_init_opt=num_postreps)
 
+        partial_list = []
+        if level >= 0:
+            # Append the run method
+            partial_list.append(
+                partial(
+                    myexperiment.run,
+                    n_macroreps=num_macroreps,
+                )
+            )
+        if level >= 1:
+            # Append the post_replicate method
+            partial_list.append(
+                partial(
+                    myexperiment.post_replicate,
+                    n_postreps=num_postreps,
+                )
+            )
+        if level >= 2:
+            # Append the post_normalize method
+            partial_list.append(
+                partial(
+                    post_normalize,
+                    [myexperiment],
+                    n_postreps_init_opt=num_postreps,
+                )
+            )
+
+        def time_function(func: Callable) -> float:
+            """Decorator to print the runtime of a function."""
+            start_time = time.time()
+            func()
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            return elapsed_time
+
+        # Run the functions in the partial list
+        for func_partial in partial_list:
+            elapsed = time_function(func_partial)
+            runtime_strings.append(
+                f"{problem_name}"
+                f",{solver_name}"
+                f",{func_partial.func.__name__}"
+                f",{elapsed:.2f}"
+            )
     logging.info("Execution complete.")
+
+    # Print the runtimes
+    print()
+    print("Runtimes")
+    print("-" * 50)
+    for runtime_string in runtime_strings:
+        print(runtime_string)
+    print()
 
 
 if __name__ == "__main__":
