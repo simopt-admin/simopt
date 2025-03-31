@@ -8,7 +8,7 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
-from typing import Callable, Final, NamedTuple
+from typing import Callable, Final
 
 import numpy as np
 
@@ -141,48 +141,57 @@ class FixedSAN(Model):
         time_deriv = np.zeros((num_nodes, num_arcs))
         arcs = [exp_rng.expovariate(1 / x) for x in thetas]
 
-        class PathSegment(NamedTuple):
-            prev_node_idx: int
-            arc_idx: int
+        def get_time(prev_node_idx: int, arc_idx: int) -> float:
+            return nodes[prev_node_idx] + arcs[arc_idx]
 
-            def get_time(self) -> float:
-                return nodes[self.prev_node_idx] + arcs[self.arc_idx]
-
-            def to_tuple(self) -> tuple[int, int]:
-                return self.prev_node_idx, self.arc_idx
-
-        def update_node(target_node_idx: int, segment: PathSegment) -> None:
-            prev = segment.prev_node_idx
-            arc = segment.arc_idx
-            nodes[target_node_idx] = segment.get_time()
-            time_deriv[target_node_idx, :] = time_deriv[prev, :].copy()
-            time_deriv[target_node_idx, arc] += arcs[arc] / thetas[arc]
-
-        def update_node_to_max(
-            target_node_idx: int, segments: list[PathSegment]
+        def update_node(
+            target_node_idx: int, segments: list[tuple[int, int]]
         ) -> None:
-            seg_times = [seg.get_time() for seg in segments]
-            max_segment = segments[np.argmax(seg_times)]
-            update_node(target_node_idx, max_segment)
+            """Update the target node with the maximum time from the segments.
+
+            Arguments
+            ---------
+            target_node_idx : int
+                index of the target node to be updated
+            segments : list[tuple[int, int]]
+                list of tuples containing the previous node index and arc index
+                for each segment leading to the target node
+            """
+            # Get the time for the first segment in the list
+            best_prev, best_arc = segments[0]
+            max_time = get_time(best_prev, best_arc)
+            # Iterate through the rest of the segments (if any) to find the
+            # maximum time
+            for seg_prev, seg_arc in segments[1:]:
+                t = get_time(seg_prev, seg_arc)
+                if t > max_time:
+                    max_time = t
+                    best_prev, best_arc = seg_prev, seg_arc
+
+            # Update the target node with the maximum time and the
+            # time derivative
+            nodes[target_node_idx] = max_time
+            time_deriv[target_node_idx, :] = time_deriv[best_prev, :].copy()
+            time_deriv[target_node_idx, best_arc] += (
+                arcs[best_arc] / thetas[best_arc]
+            )
 
         # node 1 = node 0 + arc 0
-        update_node(1, PathSegment(0, 0))
+        update_node(1, [(0, 0)])
         # node 2 = max(node0+arc1, node1+arc2)
-        update_node_to_max(2, [PathSegment(0, 1), PathSegment(1, 2)])
+        update_node(2, [(0, 1), (1, 2)])
         # node 3 = node1 + arc3
-        update_node(3, PathSegment(1, 3))
+        update_node(3, [(1, 3)])
         # node 4 = node3 + arc6
-        update_node(4, PathSegment(3, 6))
+        update_node(4, [(3, 6)])
         # node 5 = max(node1+arc4, node2+arc5, node4+arc8)
-        update_node_to_max(
-            5, [PathSegment(1, 4), PathSegment(2, 5), PathSegment(4, 8)]
-        )
+        update_node(5, [(1, 4), (2, 5), (4, 8)])
         # node 6 = node3 + arc7
-        update_node(6, PathSegment(3, 7))
+        update_node(6, [(3, 7)])
         # node 7 = max(node6+arc11, node4+arc9)
-        update_node_to_max(7, [PathSegment(6, 11), PathSegment(4, 9)])
+        update_node(7, [(6, 11), (4, 9)])
         # node 8 = max(node5+arc10, node7+arc12)
-        update_node_to_max(8, [PathSegment(5, 10), PathSegment(7, 12)])
+        update_node(8, [(5, 10), (7, 12)])
 
         longest_path = float(nodes[8])
         longest_path_gradient = time_deriv[8, :]
