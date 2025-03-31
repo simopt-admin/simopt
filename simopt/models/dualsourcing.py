@@ -9,12 +9,12 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 from typing import Callable
-from simopt.utils import classproperty
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty
 
 
 class DualSourcing(Model):
@@ -252,82 +252,72 @@ class DualSourcing(Model):
             ``average_ordering_cost``
                 The average ordering cost over the time period
         """
+        n_days: int = self.factors["n_days"]
+        n_days_range = range(n_days)
+        lead_reg: int = self.factors["lead_reg"]
+        lead_exp: int = self.factors["lead_exp"]
+        order_level_reg: int = self.factors["order_level_reg"]
+        order_level_exp: int = self.factors["order_level_exp"]
+        mu: float = self.factors["mu"]
+        st_dev: float = self.factors["st_dev"]
+        initial_inv: int = self.factors["initial_inv"]
+        cost_exp: float = self.factors["cost_exp"]
+        cost_reg: float = self.factors["cost_reg"]
+        penalty_cost: float = self.factors["penalty_cost"]
+        holding_cost: float = self.factors["holding_cost"]
+
+        def round_and_clamp_non_neg(x: float | int) -> int:
+            return round(max(0, x))
+
         # Designate random number generators.
         demand_rng = rng_list[0]
         # Vectors of regular orders to be received in periods n through n + lr - 1.
-        orders_reg = np.zeros(self.factors["lead_reg"])
+        orders_reg = [0] * lead_reg
         # Vectors of expedited orders to be received in periods n through n + le - 1.
-        orders_exp = np.zeros(self.factors["lead_exp"])
+        orders_exp = [0] * lead_exp
 
         # Generate demand.
-        demand = [
-            round(
-                max(
-                    0,
-                    demand_rng.normalvariate(
-                        mu=self.factors["mu"], sigma=self.factors["st_dev"]
-                    ),
-                )
-            )
-            for _ in range(self.factors["n_days"])
-        ]
+        demand = []
+        for _ in n_days_range:
+            draw = demand_rng.normalvariate(mu=mu, sigma=st_dev)
+            demand.append(round_and_clamp_non_neg(draw))
 
         # Track total expenses.
-        total_holding_cost = np.zeros(self.factors["n_days"])
-        total_penalty_cost = np.zeros(self.factors["n_days"])
-        total_ordering_cost = np.zeros(self.factors["n_days"])
-        inv = self.factors["initial_inv"]
+        total_holding_cost = np.zeros(n_days)
+        total_penalty_cost = np.zeros(n_days)
+        total_ordering_cost = np.zeros(n_days)
+        inv = initial_inv
 
         # Run simulation over time horizon.
-        for day in range(self.factors["n_days"]):
+        for day in n_days_range:
             # Calculate inventory positions.
+            inv_order_exp_sum = inv + sum(orders_exp)
             inv_position_exp = round(
-                inv
-                + np.sum(orders_exp)
-                + np.sum(orders_reg[: self.factors["lead_exp"]])
+                inv_order_exp_sum + sum(orders_reg[:lead_exp])
             )
-            inv_position_reg = round(
-                inv + np.sum(orders_exp) + np.sum(orders_reg)
+            inv_position_reg = round(inv_order_exp_sum + sum(orders_reg))
+            # Calculate how much to order.
+            order_exp = round_and_clamp_non_neg(
+                order_level_exp - inv_position_exp - orders_reg[lead_exp]
             )
-            # Place orders if needed.
-            orders_exp = np.append(
-                orders_exp,
-                max(
-                    0,
-                    round(
-                        self.factors["order_level_exp"]
-                        - inv_position_exp
-                        - orders_reg[self.factors["lead_exp"]]
-                    ),
-                ),
+            orders_exp.append(order_exp)
+            order_reg = round_and_clamp_non_neg(
+                order_level_reg - inv_position_reg - orders_exp[lead_exp]
             )
-            orders_reg = np.append(
-                orders_reg,
-                (
-                    self.factors["order_level_reg"]
-                    - inv_position_reg
-                    - orders_exp[self.factors["lead_exp"]]
-                ),
-            )
+            orders_reg.append(order_reg)
             # Charge ordering cost.
-            total_ordering_cost[day] = (
-                self.factors["cost_exp"] * orders_exp[self.factors["lead_exp"]]
-                + self.factors["cost_reg"]
-                * orders_reg[self.factors["lead_reg"]]
-            )
+            daily_cost_exp = cost_exp * order_exp
+            daily_cost_reg = cost_reg * order_reg
+            total_ordering_cost[day] = daily_cost_exp + daily_cost_reg
             # Orders arrive, update on-hand inventory.
-            inv = inv + orders_exp[0] + orders_reg[0]
-            orders_exp = np.delete(orders_exp, 0)
-            orders_reg = np.delete(orders_reg, 0)
+            inv += orders_exp.pop(0) + orders_reg.pop(0)
             # Satisfy or backorder demand.
             # dn = max(0, demand[day]) THIS IS DONE TWICE
             # inv = inv - dn
-            inv = inv - demand[day]
-            total_penalty_cost[day] = (
-                -1 * self.factors["penalty_cost"] * min(0, inv)
-            )
-            # Charge holding cost.
-            total_holding_cost[day] = self.factors["holding_cost"] * max(0, inv)
+            inv -= demand[day]
+            # Calculate holding and penalty costs.
+            total_penalty_cost[day] = -penalty_cost * min(0, inv)
+            total_holding_cost[day] = holding_cost * max(0, inv)
 
         # Calculate responses from simulation data.
         responses = {

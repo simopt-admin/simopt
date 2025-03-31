@@ -8,13 +8,14 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+from enum import IntEnum
 from typing import Callable
-from simopt.utils import classproperty
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty
 
 
 class MM1Queue(Model):
@@ -150,21 +151,26 @@ class MM1Queue(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
-        # Set mu to be at least epsilon.
-        self.factors["mu"] = max(self.factors["mu"], self.factors["epsilon"])
-        # Calculate total number of arrivals to simulate.
-        total = self.factors["warmup"] + self.factors["people"]
+        mu: float = self.factors["mu"]
+        epsilon: float = self.factors["epsilon"]
+        warmup: int = self.factors["warmup"]
+        people: int = self.factors["people"]
+        f_lambda: float = self.factors["lambda"]
         # Designate separate RNGs for interarrival and serivce times.
         arrival_rng = rng_list[0]
         service_rng = rng_list[1]
+        # Set mu to be at least epsilon.
+        mu_floor = max(mu, epsilon)
+        # Calculate total number of arrivals to simulate.
+        total = warmup + people
         # Generate all interarrival and service times up front.
         arrival_times = [
-            arrival_rng.expovariate(self.factors["lambda"])
-            for _ in range(total)
+            arrival_rng.expovariate(f_lambda) for _ in range(total)
         ]
         service_times = [
-            service_rng.expovariate(self.factors["mu"]) for _ in range(total)
+            service_rng.expovariate(mu_floor) for _ in range(total)
         ]
+
         # Create matrix storing times and metrics for each customer:
         #     column 0 : arrival time to queue;
         #     column 1 : service time;
@@ -176,57 +182,81 @@ class MM1Queue(Model):
         #     column 7 : IPA gradient of waiting time w.r.t. mu;
         #     column 8 : IPA gradient of sojourn time w.r.t. lambda;
         #     column 9 : IPA gradient of waiting time w.r.t. lambda.
+        # Alias columns by index
+        class Col(IntEnum):
+            ARR = 0
+            SVC = 1
+            DONE = 2
+            SOJ = 3
+            WAIT = 4
+            IN_SYS = 5
+            G_SOJ_MU = 6
+            G_WAIT_MU = 7
+            G_SOJ_LAM = 8
+            G_WAIT_LAM = 9
+
         cust_mat = np.zeros((total, 10))
-        cust_mat[:, 0] = np.cumsum(arrival_times)
-        cust_mat[:, 1] = service_times
+        cust_mat[:, Col.ARR] = np.cumsum(arrival_times)
+        cust_mat[:, Col.SVC] = service_times
         # Input entries for first customer's queueing experience.
-        cust_mat[0, 2] = cust_mat[0, 0] + cust_mat[0, 1]
-        cust_mat[0, 3] = cust_mat[0, 1]
-        cust_mat[0, 4] = 0
-        cust_mat[0, 5] = 0
-        cust_mat[0, 6] = -cust_mat[0, 1] / self.factors["mu"]
-        cust_mat[0, 7] = 0
-        cust_mat[0, 8] = 0
-        cust_mat[0, 9] = 0
+        first_cust = cust_mat[0]
+        first_cust[Col.DONE] = first_cust[Col.ARR] + first_cust[Col.SVC]
+        first_cust[Col.SOJ] = first_cust[Col.SVC]
+        # first_cust[Col.WAIT] = 0
+        # cfirst_cust[Col.IN_SYS] = 0
+        first_cust[Col.G_SOJ_MU] = -first_cust[Col.SVC] / mu_floor
+        # first_cust[Col.G_WAIT_MU] = 0
+        # first_cust[Col.G_SOJ_LAM] = 0
+        # first_cust[Col.G_WAIT_LAM] = 0
         # Fill in entries for remaining customers' experiences.
         for i in range(1, total):
-            cust_mat[i, 2] = (
-                max(cust_mat[i, 0], cust_mat[i - 1, 2]) + cust_mat[i, 1]
+            # Views into the customer matrix.
+            # NOT copies, so be careful!
+            curr_cust = cust_mat[i]
+            prev_cust = cust_mat[i - 1]
+
+            arrival = curr_cust[Col.ARR]
+            prev_departure = prev_cust[Col.DONE]
+
+            # Completion time
+            curr_cust[Col.DONE] = (
+                max(arrival, prev_departure) + curr_cust[Col.SVC]
             )
-            cust_mat[i, 3] = cust_mat[i, 2] - cust_mat[i, 0]
-            cust_mat[i, 4] = cust_mat[i, 3] - cust_mat[i, 1]
-            cust_mat[i, 5] = sum(
-                cust_mat[i - int(cust_mat[i - 1, 5]) - 1 : i, 2]
-                > cust_mat[i, 0]
+            # Sojourn and waiting times
+            curr_cust[Col.SOJ] = curr_cust[Col.DONE] - arrival
+            curr_cust[Col.WAIT] = curr_cust[Col.SOJ] - curr_cust[Col.SVC]
+
+            # Number in system at arrival
+            lookback = int(prev_cust[Col.IN_SYS]) + 1
+            arrivals_in_window = cust_mat[i - lookback : i, Col.DONE]
+            curr_cust[Col.IN_SYS] = np.count_nonzero(
+                arrivals_in_window > arrival
             )
-            cust_mat[i, 6] = (
-                -sum(cust_mat[i - int(cust_mat[i, 5]) : i + 1, 1])
-                / self.factors["mu"]
-            )
-            cust_mat[i, 7] = (
-                -sum(cust_mat[i - int(cust_mat[i, 5]) : i, 1])
-                / self.factors["mu"]
-            )
-            cust_mat[i, 8] = np.nan  # ... to be derived
-            cust_mat[i, 9] = np.nan  # ... to be derived
+
+            # Gradients w.r.t mu
+            n_in_sys = int(curr_cust[Col.IN_SYS])
+            grad_range = cust_mat[i - n_in_sys : i + 1, Col.SVC]
+            curr_cust[Col.G_SOJ_MU] = -np.sum(grad_range) / mu_floor
+            curr_cust[Col.G_WAIT_MU] = -np.sum(grad_range[:-1]) / mu_floor
+
+            # Gradients w.r.t lambda
+            # cust_mat[i, 8] = 0.0
+            # cust_mat[i, 9] = 0.0
+        cust_mat_warmup = cust_mat[warmup:]
         # Compute average sojourn time and its gradient.
-        mean_sojourn_time = np.mean(cust_mat[self.factors["warmup"] :, 3])
-        grad_mean_sojourn_time_mu = np.mean(
-            cust_mat[self.factors["warmup"] :, 6]
-        )
+        mean_sojourn_time = np.mean(cust_mat_warmup[:, Col.SOJ])
+        grad_mean_sojourn_time_mu = np.mean(cust_mat_warmup[:, Col.G_SOJ_MU])
         grad_mean_sojourn_time_lambda = np.mean(
-            cust_mat[self.factors["warmup"] :, 8]
+            cust_mat_warmup[:, Col.G_SOJ_LAM]
         )
         # Compute average waiting time and its gradient.
-        mean_waiting_time = np.mean(cust_mat[self.factors["warmup"] :, 4])
-        grad_mean_waiting_time_mu = np.mean(
-            cust_mat[self.factors["warmup"] :, 7]
-        )
+        mean_waiting_time = np.mean(cust_mat_warmup[:, Col.WAIT])
+        grad_mean_waiting_time_mu = np.mean(cust_mat_warmup[:, Col.G_WAIT_MU])
         grad_mean_waiting_time_lambda = np.mean(
-            cust_mat[self.factors["warmup"] :, 9]
+            cust_mat_warmup[:, Col.G_WAIT_LAM]
         )
         # Compute fraction of customers who wait.
-        fraction_wait = np.mean(cust_mat[self.factors["warmup"] :, 5] > 0)
+        fraction_wait = np.mean(cust_mat_warmup[:, Col.IN_SYS] > 0)
         # Compose responses and gradients.
         responses = {
             "avg_sojourn_time": mean_sojourn_time,

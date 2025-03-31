@@ -8,13 +8,14 @@ A detailed description of the model/problem can be found
 
 from __future__ import annotations
 
+import heapq
 from typing import Callable
-from simopt.utils import classproperty
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty
 
 
 class Hotel(Model):
@@ -589,7 +590,7 @@ class Hotel(Model):
             "booking_limits": {
                 "description": "booking limits",
                 "datatype": tuple,
-                "default": tuple([100 for _ in range(56)]),
+                "default": tuple([100] * 56),
             },
         }
 
@@ -705,64 +706,65 @@ class Hotel(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
+        booking_limits = list(self.factors["booking_limits"])
+        product_incidence = np.array(self.factors["product_incidence"])
+        num_products: int = self.factors["num_products"]
+        time_before: int = self.factors["time_before"]
+        f_lambda = self.factors["lambda"]
+        run_length: int = self.factors["runlength"]
+        time_limit: list = self.factors["time_limit"]
+        rack_rate: int = self.factors["rack_rate"]
+        discount_rate: int = self.factors["discount_rate"]
+
         # Designate separate random number generators.
         arr_rng = rng_list[0]
-
         total_revenue = 0
-        b = list(self.factors["booking_limits"])
-        a_array = np.array(self.factors["product_incidence"])
-        # Vector of next arrival time per product.
-        # (Starts at time = -1*time_before, e.g., t = -168.)
-        arrival = (
-            np.zeros(self.factors["num_products"]) - self.factors["time_before"]
+
+        # Generate interarrival times
+        arr_bound = 10 * round(168 * np.sum(f_lambda))
+        arr_time = np.array(
+            [
+                [arr_rng.expovariate(f_lambda[i]) for _ in range(arr_bound)]
+                for i in range(num_products)
+            ]
         )
-        # Upper bound on number of arrivals over the time period.
-        arr_bound = 10 * round(168 * np.sum(self.factors["lambda"]))
-        arr_time = np.zeros((self.factors["num_products"], arr_bound))
-        # Index of which arrival time to use next for each product.
-        a = np.zeros(self.factors["num_products"], dtype=int)
-        # Generate all interarrival times in advance.
-        for i in range(self.factors["num_products"]):
-            arr_time[i] = np.array(
-                [
-                    arr_rng.expovariate(self.factors["lambda"][i])
-                    for _ in range(arr_bound)
-                ]
-            )
-        # Extract first arrivals.
-        for i in range(self.factors["num_products"]):
-            arrival[i] = arrival[i] + arr_time[i, a[i]]
-            a[i] = 1
-        min_time = (
-            0  # Keeps track of minimum time of the orders not yet received.
-        )
-        min_idx = 0
-        while min_time <= self.factors["runlength"]:
-            min_time = self.factors["runlength"] + 1
-            for i in range(self.factors["num_products"]):
-                if (arrival[i] < min_time) and (
-                    arrival[i] <= self.factors["time_limit"][i]
-                ):
-                    min_time = arrival[i]
-                    min_idx = i
-            if min_time > self.factors["runlength"]:
+
+        # Initialize arrival times
+        arrival = [-time_before + arr_time[i, 0] for i in range(num_products)]
+        a_idx = np.ones(num_products, dtype=int)  # Next interarrival index
+
+        # Precompute resource conflict matrix (bool)
+        conflicts = (product_incidence.T @ product_incidence) >= 1
+
+        # Min-heap for tracking next arrival events (arrival_time, product_idx)
+        heap = [
+            (arrival[i], i)
+            for i in range(num_products)
+            if arrival[i] <= time_limit[i]
+        ]
+        heapq.heapify(heap)
+
+        while heap:
+            current_time, product_idx = heapq.heappop(heap)
+            if current_time > run_length:
                 break
-            if b[min_idx] > 0:
-                if min_idx % 2 == 0:  # Rack_rate.
-                    total_revenue += sum(
-                        self.factors["rack_rate"] * a_array[:, min_idx]
-                    )
-                else:  # Discount_rate.
-                    total_revenue += sum(
-                        self.factors["discount_rate"] * a_array[:, min_idx]
-                    )
-                # Reduce the inventory of products sharing the same resource.
-                for i in range(self.factors["num_products"]):
-                    if np.dot(a_array[:, i].T, a_array[:, min_idx]) >= 1:
-                        if b[i] != 0:
-                            b[i] -= 1
-            arrival[min_idx] += arr_time[min_idx, a[min_idx]]
-            a[min_idx] = a[min_idx] + 1
+            if booking_limits[product_idx] > 0:
+                rate = rack_rate if product_idx % 2 == 0 else discount_rate
+                total_revenue += rate * np.sum(
+                    product_incidence[:, product_idx]
+                )
+                for i in range(num_products):
+                    if conflicts[product_idx, i] and booking_limits[i] > 0:
+                        booking_limits[i] -= 1
+
+            # Schedule next arrival for this product
+            next_idx = a_idx[product_idx]
+            if next_idx < arr_bound:
+                next_time = current_time + arr_time[product_idx, next_idx]
+                a_idx[product_idx] += 1
+                if next_time <= time_limit[product_idx]:
+                    heapq.heappush(heap, (next_time, product_idx))
+
         # Compose responses and gradients.
         responses = {"revenue": total_revenue}
         gradients = {

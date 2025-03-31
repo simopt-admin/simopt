@@ -5,18 +5,18 @@ macroreplications of the solver on the problem.
 """
 
 import sys
-import os.path as o
+from pathlib import Path
 
-sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
-)  # type:ignore
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 
 # Import the ProblemSolver class and other useful functions
 from simopt.experiment_base import (
     ProblemSolver,
-    post_normalize,
     plot_progress_curves,
     plot_solvability_cdfs,
+    post_normalize,
 )
 
 

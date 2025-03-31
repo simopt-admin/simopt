@@ -8,14 +8,14 @@ A detailed description of the model/problem can be found
 """
 
 from __future__ import annotations
-from simopt.utils import classproperty
 
 from typing import Callable
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty
 
 
 class RMITD(Model):
@@ -228,6 +228,14 @@ class RMITD(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
+        gamma_shape = self.factors["gamma_shape"]
+        gamma_scale = self.factors["gamma_scale"]
+        time_horizon = self.factors["time_horizon"]
+        initial_inventory = self.factors["initial_inventory"]
+        reservation_qtys: list = self.factors["reservation_qtys"]
+        demand_means = np.array(self.factors["demand_means"])
+        prices = self.factors["prices"]
+        cost = self.factors["cost"]
         # Designate separate random number generators.
         # Outputs will be coupled when generating demand.
         x_rng = rng_list[0]
@@ -237,31 +245,26 @@ class RMITD(Model):
         #     alpha = k = gamma_shape
         #     beta = 1/theta = 1/gamma_scale
         x_demand = x_rng.gammavariate(
-            alpha=self.factors["gamma_shape"],
-            beta=1.0 / self.factors["gamma_scale"],
+            alpha=gamma_shape,
+            beta=1.0 / gamma_scale,
         )
-        y_demand = [
-            y_rng.expovariate(1) for _ in range(self.factors["time_horizon"])
-        ]
-        # Track inventory over time horizon.
-        remaining_inventory = self.factors["initial_inventory"]
-        # Append "no reservations" for decision-making in final period.
-        reservations = self.factors["reservation_qtys"]
-        reservations.append(0)
-        # Simulate over the time horizon and calculate the realized revenue.
-        revenue = 0
-        for period in range(self.factors["time_horizon"]):
-            demand = (
-                self.factors["demand_means"][period]
-                * x_demand
-                * y_demand[period]
-            )
-            sell = min(
-                max(remaining_inventory - reservations[period], 0), demand
-            )
-            remaining_inventory = remaining_inventory - sell
-            revenue += sell * self.factors["prices"][period]
-        revenue -= self.factors["cost"] * self.factors["initial_inventory"]
+        y_demand = np.array([y_rng.expovariate(1) for _ in range(time_horizon)])
+        reservations = [*reservation_qtys, 0]
+        demand_vec = demand_means * x_demand * y_demand
+
+        # Set initial inventory and revenue
+        remaining_inventory = initial_inventory
+        revenue = 0.0
+
+        # Compute revenue for each period.
+        for reservation, demand, price in zip(reservations, demand_vec, prices):
+            available = max(remaining_inventory - reservation, 0)
+            sell = min(available, demand)
+            remaining_inventory -= sell
+            revenue += sell * price
+
+        revenue -= cost * initial_inventory
+
         # Compose responses and gradients.
         responses = {"revenue": revenue}
         gradients = {

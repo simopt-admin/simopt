@@ -142,7 +142,7 @@ def cdf_of_curves_crossing_times(
         unique_x_vals = [0, *sorted(finite_crossing_times), 1]
 
         # Use binary search (`bisect_right`) for efficient cumulative sum calculation
-        n_curves = len(curves)
+        n_curves = len(crossing_times)
         sorted_crossings = sorted(crossing_times)
 
         cdf_y_vals = [

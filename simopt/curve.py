@@ -226,8 +226,8 @@ class Curve:
         from itertools import chain, repeat
 
         full_curve = Curve(
-            x_vals=chain.from_iterable(repeat(x, 2) for x in self.x_vals),
-            y_vals=chain.from_iterable(repeat(y, 2) for y in self.y_vals),
+            x_vals=list(chain.from_iterable(repeat(x, 2) for x in self.x_vals)),
+            y_vals=list(chain.from_iterable(repeat(y, 2) for y in self.y_vals)),
         )
         return Curve(
             x_vals=list(full_curve.x_vals)[1:],

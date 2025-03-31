@@ -5,12 +5,10 @@ replications at each configuration of the model. Outputs are printed to a file.
 """
 
 import sys
-import os.path as o
+from pathlib import Path
 
-sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
-)  # type:ignore
-
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from simopt.data_farming_base import DataFarmingExperiment
 

@@ -5,18 +5,18 @@ macroreplications of the solver on the problem.
 """
 
 import sys
-import os.path as o
+from pathlib import Path
 
-sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
-)  # type:ignore
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 
 # Import the ProblemSolver class and other useful functions
 from simopt.experiment_base import (
     ProblemSolver,
-    read_experiment_results,
-    post_normalize,
     plot_terminal_progress,
+    post_normalize,
+    read_experiment_results,
 )
 
 solver_names = {"RNDSRCH", "ASTRODF", "NELDMD"}
@@ -71,7 +71,7 @@ for solver_name in solver_names:
             + ".pickle"
         )
         myexperiment = read_experiment_results(file_name_path)
-    myexperiments.append(myexperiment)
+        myexperiments.append(myexperiment)
 #    solver_experiments.append(myexperiment)
 # myexperiments.append(solver_experiments)
 

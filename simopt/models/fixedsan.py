@@ -9,12 +9,12 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 from typing import Callable, Final
-from simopt.utils import classproperty
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty
 
 # TODO: figure out if this should ever be anything other than 13
 NUM_ARCS: Final[int] = 13
@@ -126,80 +126,74 @@ class FixedSAN(Model):
         gradients : dict of dicts
             gradient estimates for each response
         """
+        num_nodes: int = self.factors["num_nodes"]
+        num_arcs: int = self.factors["num_arcs"]
+        thetas = list(self.factors["arc_means"])
+
         # Designate separate random number generators.
         exp_rng = rng_list[0]
 
+        # Make sure we're not going to index out of bounds.
+        assert num_nodes >= 9, "This model only supports 9 nodes."
+        assert num_arcs >= 13, "This model only supports 13 arcs."
         # Generate arc lengths.
-        nodes = np.zeros(self.factors["num_nodes"])
-        time_deriv = np.zeros(
-            (self.factors["num_nodes"], self.factors["num_arcs"])
-        )
-        thetas = list(self.factors["arc_means"])
+        nodes = np.zeros(num_nodes)
+        time_deriv = np.zeros((num_nodes, num_arcs))
         arcs = [exp_rng.expovariate(1 / x) for x in thetas]
 
-        # Brute force calculation like in Matlab code
-        nodes[1] = nodes[0] + arcs[0]
-        time_deriv[1, :] = time_deriv[0, :]
-        time_deriv[1, 0] = time_deriv[1, 0] + arcs[0] / thetas[0]
+        def get_time(prev_node_idx: int, arc_idx: int) -> float:
+            return nodes[prev_node_idx] + arcs[arc_idx]
 
-        nodes[2] = max(nodes[0] + arcs[1], nodes[1] + arcs[2])
-        if nodes[0] + arcs[1] > nodes[1] + arcs[2]:
-            nodes[2] = nodes[0] + arcs[1]
-            time_deriv[2, :] = time_deriv[0, :]
-            time_deriv[2, 1] = time_deriv[2, 1] + arcs[1] / thetas[1]
-        else:
-            nodes[2] = nodes[1] + arcs[2]
-            time_deriv[2, :] = time_deriv[1, :]
-            time_deriv[2, 2] = time_deriv[2, 2] + arcs[2] / thetas[2]
+        def update_node(
+            target_node_idx: int, segments: list[tuple[int, int]]
+        ) -> None:
+            """Update the target node with the maximum time from the segments.
 
-        nodes[3] = nodes[1] + arcs[3]
-        time_deriv[3, :] = time_deriv[1, :]
-        time_deriv[3, 3] = time_deriv[3, 3] + arcs[3] / thetas[3]
+            Arguments
+            ---------
+            target_node_idx : int
+                index of the target node to be updated
+            segments : list[tuple[int, int]]
+                list of tuples containing the previous node index and arc index
+                for each segment leading to the target node
+            """
+            # Get the time for the first segment in the list
+            best_prev, best_arc = segments[0]
+            max_time = get_time(best_prev, best_arc)
+            # Iterate through the rest of the segments (if any) to find the
+            # maximum time
+            for seg_prev, seg_arc in segments[1:]:
+                t = get_time(seg_prev, seg_arc)
+                if t > max_time:
+                    max_time = t
+                    best_prev, best_arc = seg_prev, seg_arc
 
-        nodes[4] = nodes[3] + arcs[6]
-        time_deriv[4, :] = time_deriv[3, :]
-        time_deriv[4, 6] = time_deriv[4, 6] + arcs[6] / thetas[6]
+            # Update the target node with the maximum time and the
+            # time derivative
+            nodes[target_node_idx] = max_time
+            time_deriv[target_node_idx, :] = time_deriv[best_prev, :].copy()
+            time_deriv[target_node_idx, best_arc] += (
+                arcs[best_arc] / thetas[best_arc]
+            )
 
-        nodes[5] = max(
-            [nodes[1] + arcs[4], nodes[2] + arcs[5], nodes[4] + arcs[8]]
-        )
-        ind = np.argmax(
-            [nodes[1] + arcs[4], nodes[2] + arcs[5], nodes[4] + arcs[8]]
-        )
+        # node 1 = node 0 + arc 0
+        update_node(1, [(0, 0)])
+        # node 2 = max(node0+arc1, node1+arc2)
+        update_node(2, [(0, 1), (1, 2)])
+        # node 3 = node1 + arc3
+        update_node(3, [(1, 3)])
+        # node 4 = node3 + arc6
+        update_node(4, [(3, 6)])
+        # node 5 = max(node1+arc4, node2+arc5, node4+arc8)
+        update_node(5, [(1, 4), (2, 5), (4, 8)])
+        # node 6 = node3 + arc7
+        update_node(6, [(3, 7)])
+        # node 7 = max(node6+arc11, node4+arc9)
+        update_node(7, [(6, 11), (4, 9)])
+        # node 8 = max(node5+arc10, node7+arc12)
+        update_node(8, [(5, 10), (7, 12)])
 
-        if ind == 1:
-            time_deriv[5, :] = time_deriv[1, :]
-            time_deriv[5, 4] = time_deriv[5, 4] + arcs[4] / thetas[4]
-        elif ind == 2:
-            time_deriv[5, :] = time_deriv[2, :]
-            time_deriv[5, 5] = time_deriv[5, 5] + arcs[5] / thetas[5]
-        else:
-            time_deriv[5, :] = time_deriv[4, :]
-            time_deriv[5, 8] = time_deriv[5, 8] + arcs[8] / thetas[8]
-
-        nodes[6] = nodes[3] + arcs[7]
-        time_deriv[6, :] = time_deriv[3, :]
-        time_deriv[6, 7] = time_deriv[6, 7] + arcs[7] / thetas[7]
-
-        if nodes[6] + arcs[11] > nodes[4] + arcs[9]:
-            nodes[7] = nodes[6] + arcs[11]
-            time_deriv[7, :] = time_deriv[6, :]
-            time_deriv[7, 11] = time_deriv[7, 11] + arcs[11] / thetas[11]
-        else:
-            nodes[7] = nodes[4] + arcs[9]
-            time_deriv[7, :] = time_deriv[4, :]
-            time_deriv[7, 9] = time_deriv[7, 9] + arcs[9] / thetas[9]
-
-        if nodes[5] + arcs[10] > nodes[7] + arcs[12]:
-            nodes[8] = nodes[5] + arcs[10]
-            time_deriv[8, :] = time_deriv[5, :]
-            time_deriv[8, 10] = time_deriv[8, 10] + arcs[10] / thetas[10]
-        else:
-            nodes[8] = nodes[7] + arcs[12]
-            time_deriv[8, :] = time_deriv[7, :]
-            time_deriv[8, 12] = time_deriv[8, 12] + arcs[12] / thetas[12]
-
-        longest_path = nodes[8]
+        longest_path = float(nodes[8])
         longest_path_gradient = time_deriv[8, :]
 
         # Compose responses and gradients.

@@ -602,30 +602,29 @@ class ProblemSolver:
 
         logging.debug("Starting macroreplications")
 
-        with Pool(initializer=self._run_pool_init) as process_pool:
+        num_processes = min(n_macroreps, os.cpu_count() or 1)
+        with Pool(num_processes) as process_pool:
             # Start the macroreplications in parallel (async)
             run_multithread_partial = partial(
                 self.run_multithread, solver=self.solver, problem=self.problem
             )
-            result = process_pool.map_async(
+            num_completed = 0
+            for (
+                mrep,
+                recommended_xs,
+                intermediate_budgets,
+                timing,
+            ) in process_pool.imap_unordered(
                 run_multithread_partial, range(n_macroreps)
-            )
-            # Wait for the results to be returned (or 1 second)
-            while not result.ready():
-                # Update status bar here
-                result.wait(1)
+            ):
+                self.all_recommended_xs[mrep] = recommended_xs
+                self.all_intermediate_budgets[mrep] = intermediate_budgets
+                self.timings[mrep] = timing
+                num_completed += 1
 
             logging.info(
                 f"Finished running {n_macroreps} macroreplications in {round(time.time() - function_start, 3)} seconds."
             )
-
-            # Grab all the data out of the result
-            for mrep in range(n_macroreps):
-                (
-                    self.all_recommended_xs[mrep],
-                    self.all_intermediate_budgets[mrep],
-                    self.timings[mrep],
-                ) = result.get()[mrep]
 
         self.has_run = True
         self.has_postreplicated = False
@@ -635,9 +634,6 @@ class ProblemSolver:
         if self.create_pickle:
             file_name = os.path.basename(self.file_name_path)
             self.record_experiment_results(file_name=file_name)
-
-    def _run_pool_init(self) -> None:
-        pass
 
     def run_multithread(
         self, mrep: int, solver: Solver, problem: Problem
@@ -651,8 +647,14 @@ class ProblemSolver:
 
         Returns
         -------
-        tuple
-            Tuple of recommended solutions, intermediate budgets, and runtime.
+        int
+            Index of the macroreplication.
+        list
+            Recommended solutions from the solver.
+        list
+            Intermediate budgets from the solver.
+        float
+            Runtime for the macrorep
 
         Raises
         ------
@@ -710,9 +712,18 @@ class ProblemSolver:
             recommended_solutions=recommended_solns,
             intermediate_budgets=intermediate_budgets,
         )
+        # Sometimes we end up with numpy scalar values in the solutions,
+        # so we convert them to Python scalars. This is especially problematic
+        # when trying to dump the solutions to human-readable files as numpy
+        # scalars just spit out binary data.
+        # TODO: figure out where numpy scalars are coming from and fix it
+        solutions = [
+            tuple([float(x) for x in soln.x]) for soln in recommended_solns
+        ]
         # Return tuple (rec_solns, int_budgets, runtime)
         return (
-            [solution.x for solution in recommended_solns],
+            mrep,
+            solutions,
             intermediate_budgets,
             runtime,
         )
@@ -778,21 +789,16 @@ class ProblemSolver:
         self.function_start = time.time()
 
         logging.info("Starting postreplications")
-        with Pool() as process_pool:
-            # Start the macroreplications in parallel (async)
-            result = process_pool.map_async(
+        num_processes = min(self.n_macroreps, os.cpu_count() or 1)
+        with Pool(num_processes) as process_pool:
+            num_completed = 0
+            for mrep, post_rep, timing in process_pool.imap_unordered(
                 self.post_replicate_multithread, range(self.n_macroreps)
-            )
-            # Wait for the results to be returned (or 1 second)
-            while not result.ready():
+            ):
+                self.all_post_replicates[mrep] = post_rep
+                self.timings[mrep] = timing
+                num_completed += 1
                 # Update status bar here
-                result.wait(1)
-
-            # Grab all the data out of the result
-            for mrep in range(self.n_macroreps):
-                self.all_post_replicates[mrep], self.timings[mrep] = (
-                    result.get()[mrep]
-                )
 
             # # The all post replicates is tricky because it is a dictionary of lists of lists
             # # We need to convert it to a list of lists of lists
@@ -832,8 +838,12 @@ class ProblemSolver:
 
         Returns
         -------
-        tuple
-            Tuple of post-replicates and runtime.
+        int
+            Index of the macroreplication.
+        list
+            Post-replicates for each recommended solution.
+        float
+            Runtime for the macroreplication.
 
         Raises
         ------
@@ -900,8 +910,7 @@ class ProblemSolver:
         runtime = toc - tic
         logging.debug(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
 
-        # Return tuple (post_replicates, runtime)
-        return (post_replicates, runtime)
+        return (mrep, post_replicates, runtime)
 
     def bootstrap_sample(
         self, bootstrap_rng: MRG32k3a, normalize: bool = True
@@ -1529,7 +1538,7 @@ def post_normalize(
     # Compute signed initial optimality gap = f(x0) - f(x*).
     initial_obj_val = np.mean(x0_postreps)
     opt_obj_val = np.mean(xstar_postreps)
-    initial_opt_gap = initial_obj_val - opt_obj_val
+    initial_opt_gap = float(initial_obj_val - opt_obj_val)
     initial_opt_gap = make_nonzero(initial_opt_gap, "initial_opt_gap")
     # Store x0 and x* info and compute progress curves for each ProblemSolver.
     for experiment in experiments:
@@ -1546,12 +1555,15 @@ def post_normalize(
         experiment.progress_curves = []
         for mrep in range(experiment.n_macroreps):
             est_objectives = []
+            budgets = experiment.all_intermediate_budgets[mrep]
             # Substitute estimates at x0 and x* (based on N postreplicates)
             # with new estimates (based on L postreplicates).
-            for budget in range(len(experiment.all_intermediate_budgets[mrep])):
-                if experiment.all_recommended_xs[mrep][budget] == x0:
+            for budget in range(len(budgets)):
+                soln = experiment.all_recommended_xs[mrep][budget]
+                if np.equal(soln, x0).all():
                     est_objectives.append(np.mean(x0_postreps))
-                elif experiment.all_recommended_xs[mrep][budget] == xstar:
+                # TODO: ensure xstar is not None.
+                elif np.equal(soln, xstar).all():  # type: ignore
                     est_objectives.append(np.mean(xstar_postreps))
                 else:
                     est_objectives.append(
@@ -1559,7 +1571,7 @@ def post_normalize(
                     )
             experiment.objective_curves.append(
                 Curve(
-                    x_vals=experiment.all_intermediate_budgets[mrep],
+                    x_vals=budgets,
                     y_vals=est_objectives,
                 )
             )
@@ -4069,6 +4081,7 @@ def plot_terminal_progress(
                     "Solver": [experiment.solver.name] * len(terminal_data),
                     "Terminal": terminal_data,
                 }
+                import seaborn as sns
 
                 sns.violinplot(
                     x=terminal_data_dict["Solver"],
@@ -6124,7 +6137,7 @@ def create_design(
     factor_headers: list[str],
     factor_settings_filename: str,
     fixed_factors: dict,
-    class_type: Literal["solver", "problem", "model"],
+    class_type: Literal["solver", "problem", "model"] | None = None,
     n_stacks: int = 1,
     design_type: Literal["nolhs"] = "nolhs",
     cross_design_factors: dict | None = None,
@@ -6173,6 +6186,8 @@ def create_design(
     # Default values
     if cross_design_factors is None:
         cross_design_factors = {}
+    if class_type is None:
+        class_type = "solver"
     if csv_filename is None:
         csv_filename = factor_settings_filename
 
@@ -6201,7 +6216,7 @@ def create_design(
         error_msg = "Cross design factors must be a dictionary or None."
         raise TypeError(error_msg)
     if not isinstance(class_type, str):
-        error_msg = "Class type must be a string."
+        error_msg = "Class type must be a string or None."
         raise TypeError(error_msg)
     if not isinstance(csv_filename, str):
         error_msg = "CSV filename must be a string or None."

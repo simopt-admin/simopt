@@ -9,7 +9,6 @@ A detailed description of the solver can be found `here <https://simopt.readthed
 from __future__ import annotations
 
 from typing import Callable
-from simopt.utils import classproperty
 
 from simopt.base import (
     ConstraintType,
@@ -19,6 +18,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
+from simopt.utils import classproperty
 
 
 class RandomSearch(Solver):
@@ -122,53 +122,52 @@ class RandomSearch(Solver):
 
         Arguments
         ---------
-        problem : Problem object
+        problem : Problem
             simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
 
         Returns
         -------
-        recommended_solns : list of Solution objects
+        list[Solution]
             list of solutions recommended throughout the budget
-        intermediate_budgets : list of ints
+        list[int]
             list of intermediate budgets when recommended solutions changes
         """
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
+        # Start at initial solution and record as best.
+        new_x = problem.factors["initial_solution"]
+        new_solution = self.create_new_solution(new_x, problem)
+        best_solution = new_solution
+        recommended_solns = [new_solution]
+        # Initialize budget and record initial expenditure.
+        expended_budget = 0
+        intermediate_budgets = [expended_budget]
+        # Prepare other variables in the loop.
+        sample_size = self.factors["sample_size"]
+        stoch_constraint_range = range(problem.n_stochastic_constraints)
         # Sequentially generate random solutions and simulate them.
-        best_solution = None
-        while expended_budget < problem.factors["budget"]:
-            if expended_budget == 0:
-                # Start at initial solution and record as best.
-                new_x = problem.factors["initial_solution"]
-                new_solution = self.create_new_solution(new_x, problem)
-                best_solution = new_solution
-                recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)
-            else:
-                # Identify new solution to simulate.
-                new_x = problem.get_random_solution(find_next_soln_rng)
-                new_solution = self.create_new_solution(new_x, problem)
+        while True:
             # Simulate new solution and update budget.
-            problem.simulate(new_solution, self.factors["sample_size"])
-            expended_budget += self.factors["sample_size"]
+            problem.simulate(new_solution, sample_size)
+            expended_budget += sample_size
             # Check for improvement relative to incumbent best solution.
             # Also check for feasibility w.r.t. stochastic constraints.
-            if (
-                best_solution is not None
-                and problem.minmax * new_solution.objectives_mean
-                > problem.minmax * best_solution.objectives_mean
-                and all(
-                    new_solution.stoch_constraints_mean[idx] <= 0
-                    for idx in range(problem.n_stochastic_constraints)
-                )
+            mean_diff = (
+                new_solution.objectives_mean - best_solution.objectives_mean
+            )
+            if all(problem.minmax * mean_diff > 0) and all(
+                new_solution.stoch_constraints_mean[idx] <= 0
+                for idx in stoch_constraint_range
             ):
                 # If better, record incumbent solution as best.
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
-        return recommended_solns, intermediate_budgets
+
+            # Check if budget is exceeded.
+            if expended_budget >= problem.factors["budget"]:
+                return recommended_solns, intermediate_budgets
+
+            # Identify new solution to simulate for next iteration.
+            new_x = problem.get_random_solution(find_next_soln_rng)
+            new_solution = self.create_new_solution(new_x, problem)

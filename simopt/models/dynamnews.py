@@ -9,12 +9,12 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 from typing import Callable, Final
-from simopt.utils import classproperty
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty
 
 NUM_PRODUCTS: Final[int] = 10
 
@@ -185,54 +185,63 @@ class DynamNews(Model):
             "n_missed_orders" = number of unmet customer orders
             "fill_rate" = fraction of customer orders fulfilled
         """
+        num_customer: int = self.factors["num_customer"]
+        num_prod: int = self.factors["num_prod"]
+        mu: float = self.factors["mu"]
+        init_level: list = self.factors["init_level"]
+        c_utility: list = self.factors["c_utility"]
+        price: list = self.factors["price"]
+        cost: list = self.factors["cost"]
+
         # Designate random number generator for generating a Gumbel random variable.
         gumbel_rng = rng_list[0]
         # Compute Gumbel rvs for the utility of the products.
-        gumbel = np.zeros(
-            (self.factors["num_customer"], self.factors["num_prod"])
-        )
-        for t in range(self.factors["num_customer"]):
-            for j in range(self.factors["num_prod"]):
-                gumbel[t][j] = gumbel_rng.gumbelvariate(
-                    -self.factors["mu"] * np.euler_gamma, self.factors["mu"]
-                )
+        gumbel_mu = -mu * np.euler_gamma
+        gumbel_beta = mu
+        gumbel_flat = [
+            gumbel_rng.gumbelvariate(gumbel_mu, gumbel_beta)
+            for _ in range(num_customer * num_prod)
+        ]
+        gumbel = np.reshape(gumbel_flat, (num_customer, num_prod))
+
         # Compute utility for each product and each customer.
-        utility = np.zeros(
-            (self.factors["num_customer"], self.factors["num_prod"] + 1)
-        )
-        for t in range(self.factors["num_customer"]):
-            for j in range(self.factors["num_prod"] + 1):
-                if j == 0:
-                    utility[t][j] = 0
-                else:
-                    utility[t][j] = (
-                        self.factors["c_utility"][j - 1] + gumbel[t][j - 1]
-                    )
+        utility = np.zeros((num_customer, num_prod + 1))
+        # Keep the first column of utility as 0, which indicates no purchase.
+        utility[:, 1:] = np.array(c_utility) + gumbel
 
         # Initialize inventory.
-        inventory = np.copy(self.factors["init_level"])
-        itembought = np.zeros(self.factors["num_customer"])
+        inventory = np.copy(init_level)
+        itembought = np.zeros(num_customer)
 
         # Loop through customers
-        for t in range(self.factors["num_customer"]):
+        for t in range(num_customer):
+            # Figure out which producs are in stock
             instock = np.where(inventory > 0)[0]
-            # Initialize the purchase option to be no-purchase.
-            itembought[t] = 0
-            # Assign the purchase option to be the product that maximizes the utility.
-            for j in instock:
-                if utility[t][j + 1] > utility[t][int(itembought[t])]:
-                    itembought[t] = j + 1
-            # logging.debug("item bought", int(itembought[t]))
-            if itembought[t] != 0:
-                inventory[int(itembought[t] - 1)] -= 1
+
+            # If no products are in stock, no purchase is made.
+            if len(instock) == 0:
+                itembought[t] = 0
+                continue
+
+            # Shift indices to match utility (1-based product indices)
+            utility_options = utility[t, instock + 1]
+
+            # Pick index of max utility
+            best_idx = np.argmax(utility_options)
+            best_product = instock[best_idx] + 1
+
+            # Record it and decrement inventory.
+            itembought[t] = best_product
+            inventory[best_product - 1] -= 1
 
         # Calculate profit.
-        numsold = self.factors["init_level"] - inventory
-        revenue = numsold * np.array(self.factors["price"])
-        cost = self.factors["init_level"] * np.array(self.factors["cost"])
-        profit = revenue - cost
-        unmet_demand = self.factors["num_customer"] - sum(numsold)
-        order_fill_rate = sum(numsold) / self.factors["num_customer"]
+        numsold = init_level - inventory
+        total_sold = sum(numsold)
+        revenue = numsold * np.array(price)
+        costs = init_level * np.array(cost)
+        profit = revenue - costs
+        unmet_demand = num_customer - total_sold
+        order_fill_rate = total_sold / num_customer
 
         # Compose responses and gradients.
         responses = {

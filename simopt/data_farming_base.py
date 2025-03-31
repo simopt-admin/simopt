@@ -189,7 +189,7 @@ class DataFarmingExperiment:
     def __init__(
         self,
         model_name: str,
-        factor_settings_filename: str | os.PathLike,
+        factor_settings_filename: str | os.PathLike | None,
         factor_headers: list[str],
         design_filepath: str | os.PathLike | None = None,
         model_fixed_factors: dict | None = None,
@@ -202,7 +202,7 @@ class DataFarmingExperiment:
         ----------
         model_name : str
             Name of model on which the experiment is run.
-        factor_settings_filename : str | os.PathLike
+        factor_settings_filename : str | os.PathLike | None
             Name of .txt file containing factor ranges and # of digits.
         factor_headers : list [str]
             Ordered list of factor names appearing in factor settings/design file.
@@ -225,10 +225,10 @@ class DataFarmingExperiment:
         if not isinstance(model_name, str):
             error_msg = "model_name must be a string."
             raise TypeError(error_msg)
-        if not isinstance(factor_settings_filename, (str, os.PathLike)):
-            error_msg = (
-                "factor_settings_filename must be a string or path-like object."
-            )
+        if not isinstance(
+            factor_settings_filename, (str, os.PathLike, type(None))
+        ):
+            error_msg = "factor_settings_filename must be a string, path-like object, or None."
             raise TypeError(error_msg)
         if not isinstance(factor_headers, list) or not all(
             isinstance(header, str) for header in factor_headers
@@ -236,7 +236,9 @@ class DataFarmingExperiment:
             error_msg = "factor_headers must be a list of strings."
             raise TypeError(error_msg)
         if not isinstance(design_filepath, (str, os.PathLike, type(None))):
-            error_msg = "design_filename must be a string or path-like object."
+            error_msg = (
+                "design_filename must be a string, path-like object, or None."
+            )
             raise TypeError(error_msg)
         if not isinstance(model_fixed_factors, (dict, type(None))):
             error_msg = "model_fixed_factors must be a dictionary."
@@ -248,7 +250,9 @@ class DataFarmingExperiment:
         if model_name not in model_directory:
             error_msg = "model_name must be a valid model name."
             raise ValueError(error_msg)
-        if not os.path.exists(factor_settings_filename):
+        if factor_settings_filename is not None and not os.path.exists(
+            factor_settings_filename
+        ):
             error_msg = f"{factor_settings_filename} is not a valid file path."
             raise ValueError(error_msg)  # Change to FileNotFoundError?
         if design_filepath is not None and not os.path.exists(design_filepath):
@@ -266,6 +270,9 @@ class DataFarmingExperiment:
             fixed_factors=model_fixed_factors
         )
         if design_filepath is None:
+            assert factor_settings_filename is not None, (
+                "factor_settings_filename must be provided if design_filepath is None."
+            )
             # Create model factor design from .txt file of factor settings.
             # Hard-coded for a single-stack NOLHS.
             filepath_core = os.path.join(

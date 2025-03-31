@@ -9,13 +9,13 @@ A detailed description of the model/problem can be found
 from __future__ import annotations
 
 from typing import Callable, Final
-from simopt.utils import classproperty
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 from scipy import special
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty
 
 MEAN_ELO: Final[int] = 1200
 MAX_ALLOWABLE_DIFF: Final[int] = 150
@@ -146,7 +146,9 @@ class ChessMatchmaking(Model):
         # No factors need cross-checked
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(
+        self, rng_list: list[MRG32k3a]
+    ) -> tuple[dict, dict[str, dict]]:
         """
         Simulate a single replication for the current model factors.
 
@@ -157,58 +159,70 @@ class ChessMatchmaking(Model):
 
         Returns
         -------
-        responses : dict
+        dict
             performance measures of interest
             "avg_diff" = the average Elo difference between all pairs
             "avg_wait_time" = the average waiting time
-        gradients : dict of dicts
+        dict[str, dict]
             gradient estimates for each response
         """
-        # Designate separate random number generators.
+        # Constants
+        num_players = self.factors["num_players"]
+        num_players_range = range(num_players)
+        elo_mean = self.factors["elo_mean"]
+        elo_sd = self.factors["elo_sd"]
+        elo_min, elo_max = 0, 2400
+        allowable_diff = self.factors["allowable_diff"]
+        poisson_rate = self.factors["poisson_rate"]
+
+        # Designate separate RNGs for Elo and arrival times.
         elo_rng = rng_list[0]
         arrival_rng = rng_list[1]
+
+        def generate_elo() -> float:
+            while True:
+                rating = elo_rng.normalvariate(elo_mean, elo_sd)
+                if elo_min <= rating <= elo_max:
+                    return rating
+
+        # Generate Elo ratings (normal distribution).
+        player_ratings = [generate_elo() for _ in num_players_range]
+
+        # Generate interarrival times (Poisson distribution).
+        interarrival_times = [
+            arrival_rng.poissonvariate(poisson_rate) for _ in num_players_range
+        ]
+
         # Initialize statistics.
         # Incoming players are initialized with a wait time of 0.
-        wait_times = np.zeros(self.factors["num_players"])
+        wait_times = np.zeros(num_players)
         waiting_players = []
-        total_diff = 0
+        total_diff = 0  # TODO: make this do something
         elo_diffs = []
+
         # Simulate arrival and matching and players.
-        for _ in range(self.factors["num_players"]):
-            # Generate interarrival time of the player.
-            time = arrival_rng.poissonvariate(self.factors["poisson_rate"])
-            # Generate rating of the player via acceptance/rejection (not truncation).
-            player_rating = elo_rng.normalvariate(
-                self.factors["elo_mean"], self.factors["elo_sd"]
-            )
-            while player_rating < 0 or player_rating > 2400:
-                player_rating = elo_rng.normalvariate(
-                    self.factors["elo_mean"], self.factors["elo_sd"]
-                )
-            # Attempt to match the incoming player with waiting players in FIFO manner.
-            old_total = total_diff
-            for p in range(len(waiting_players)):
-                if (
-                    abs(player_rating - waiting_players[p])
-                    <= self.factors["allowable_diff"]
-                ):
-                    total_diff += abs(player_rating - waiting_players[p])
-                    elo_diffs.append(abs(player_rating - waiting_players[p]))
-                    del waiting_players[p]
+        for interarrival_time, player_rating in zip(
+            interarrival_times, player_ratings
+        ):
+            # Try to match the player
+            for i, waiting_rating in enumerate(waiting_players):
+                diff = abs(player_rating - waiting_rating)
+                if diff <= allowable_diff:
+                    total_diff += diff
+                    elo_diffs.append(diff)
+                    waiting_players.pop(i)
                     break
                 else:
-                    wait_times[p] += time
-            # If incoming player is not matched, add them to the waiting pool.
-            if old_total == total_diff:
+                    wait_times[i] += interarrival_time
+            # If break did not execute, then the player was not matched.
+            else:
                 waiting_players.append(player_rating)
+
         # If there weren't any matches, the elo_diffs list will be empty.
-        # This throws some warnings, so we'll add a 0 to the list.
-        # TODO: Check to see if there is a better way to handle this.
-        if not elo_diffs:
-            elo_diffs.append(0)
+        avg_diff = np.mean(elo_diffs) if elo_diffs else np.nan
         # Compose responses and gradients.
         responses = {
-            "avg_diff": np.mean(elo_diffs),
+            "avg_diff": avg_diff,
             "avg_wait_time": np.mean(wait_times),
         }
         gradients = {

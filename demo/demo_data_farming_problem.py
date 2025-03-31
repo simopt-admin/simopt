@@ -5,13 +5,13 @@ macroreplications at each version of the problem. Outputs are printed to a file.
 """
 
 import sys
-import os.path as o
+from pathlib import Path
 
-sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
-)
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from simopt.experiment_base import create_design, ProblemsSolvers  # type:ignore
+
+from simopt.experiment_base import ProblemsSolvers, create_design  # type:ignore
 
 
 def main() -> None:
