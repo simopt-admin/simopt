@@ -35,14 +35,15 @@ select = [
     "D", # pydocstyle (docstring conventions)
 ]
 
-[mccabe]
+[lint.mccabe]
 max-complexity = 8
 
-[pydocstyle]
+[lint.pydocstyle]
 convention = "google"
+ignore-decorators = ["simopt.utils.classproperty"]
 
 [lint.isort]
 known-first-party = ["simopt", "mrg32k3a"]
 
 [lint.pep8-naming]
-classmethod-decorators = ["classproperty"]
+classmethod-decorators = ["simopt.utils.classproperty"]
