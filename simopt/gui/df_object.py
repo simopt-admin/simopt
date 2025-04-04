@@ -1,7 +1,13 @@
+"""Datafarmable row classes.
+
+This module contains the classes that represent the datafarmable rows in the GUI.
+"""
+
 from __future__ import annotations
 
 import tkinter as tk
 from abc import ABC, abstractmethod
+from ast import literal_eval
 from tkinter import ttk
 from typing import Literal
 
@@ -108,7 +114,7 @@ class DFFactor(ABC):
         frame : ttk.Frame
             The frame the entry will be placed in
 
-        Returns
+        Returns:
         -------
         tk.Label
             The name label of the factor
@@ -130,7 +136,7 @@ class DFFactor(ABC):
         frame : ttk.Frame
             The frame the entry will be placed in
 
-        Returns
+        Returns:
         -------
         tk.Label
             The description label of the factor
@@ -154,7 +160,7 @@ class DFFactor(ABC):
         frame : ttk.Frame
             The frame the entry will be placed in
 
-        Returns
+        Returns:
         -------
         tk.Label
             The type label of the factor
@@ -178,7 +184,7 @@ class DFFactor(ABC):
         frame : ttk.Frame
             The frame the entry will be placed in
 
-        Returns
+        Returns:
         -------
         ttk.Entry
             The default entry of the factor
@@ -194,9 +200,7 @@ class DFFactor(ABC):
             )
         return self.ent_default
 
-    def get_include_checkbutton(
-        self, frame: ttk.Frame
-    ) -> tk.Checkbutton | None:
+    def get_include_checkbutton(self, frame: ttk.Frame) -> tk.Checkbutton | None:
         """Get the include checkbutton of the factor.
 
         Parameters
@@ -204,7 +208,7 @@ class DFFactor(ABC):
         frame : ttk.Frame
             The frame the entry will be placed in
 
-        Returns
+        Returns:
         -------
         tk.Checkbutton | None
             The include checkbutton of the factor (if applicable)
@@ -228,7 +232,7 @@ class DFFactor(ABC):
         frame : ttk.Frame
             The frame the entry will be placed in
 
-        Returns
+        Returns:
         -------
         ttk.Entry | None
             The minimum entry of the factor (if applicable)
@@ -254,7 +258,7 @@ class DFFactor(ABC):
         frame : ttk.Frame
             The frame the entry will be placed in
 
-        Returns
+        Returns:
         -------
         ttk.Entry | None
             The maximum entry of the factor (if applicable)
@@ -280,7 +284,7 @@ class DFFactor(ABC):
         frame : ttk.Frame
             The frame the entry will be placed in
 
-        Returns
+        Returns:
         -------
         ttk.Entry | None
             The number of decimals entry of the factor (if applicable)
@@ -395,7 +399,7 @@ class DFBoolean(DFFactor):
         frame : ttk.Frame
             The frame the entry will be placed in
 
-        Returns
+        Returns:
         -------
         ttk.Entry
             The default entry of the factor
@@ -524,7 +528,7 @@ class DFIntegerNonDatafarmable(DFFactor):
             ) from None
 
     def __init__(self, name: str, description: str, default: int) -> None:
-        """Initialize the
+        """Initialize the non-datafarmable integer factor class.
 
         Parameters
         ----------
@@ -632,7 +636,7 @@ class DFFloat(DFFactor):
         value : float
             The float value to find the number of decimals in
 
-        Returns
+        Returns:
         -------
         int
             The number of decimals in the float value
@@ -642,7 +646,7 @@ class DFFloat(DFFactor):
         if "." in str(value):
             return len(str(value).split(".")[1])
         # Case 2: No decimal point in value, but xe-y format
-        elif "e-" in str(value):
+        if "e-" in str(value):
             return int(str(value).split("e-")[1])
         # Case 3: No decimal point and not in xe-y format
         return 0
@@ -672,7 +676,7 @@ class DFTuple(DFFactor):
     def default_eval(self) -> tuple:
         """Evaluated default value of the factor."""
         try:
-            return tuple(eval(self.default.get()))
+            return tuple(literal_eval(self.default.get()))
         except ValueError:
             raise ValueError(
                 f"Default value for {self.name.get()} must be a tuple."
@@ -719,7 +723,7 @@ class DFList(DFFactor):
     def default_eval(self) -> list:
         """Evaluated default value of the factor."""
         try:
-            return list(eval(self.default.get()))
+            return list(literal_eval(self.default.get()))
         except ValueError:
             raise ValueError(
                 f"Default value for {self.name.get()} must be a list."
@@ -750,13 +754,12 @@ def spec_dict_to_df_dict(spec_dict: dict[str, dict]) -> dict[str, DFFactor]:
     spec_dict : dict
         The dictionary of specifications
 
-    Returns
+    Returns:
     -------
     dict
         The dictionary of datafarm factors
 
     """
-
     # Create an empty dictionary for the datafarm factors
     df_dict: dict[str, DFFactor] = {}
 
@@ -778,13 +781,12 @@ def spec_to_df(spec_name: str, spec: dict) -> DFFactor:
     spec : dict
         The specifications of the factor
 
-    Returns
+    Returns:
     -------
     DFFactor
         The datafarm factor
 
     """
-
     # Get the factor's datatype, description, and default value
     f_type = spec["datatype"]
     f_description = spec["description"]
@@ -799,16 +801,9 @@ def spec_to_df(spec_name: str, spec: dict) -> DFFactor:
     }
 
     # Check to see if we have a non-datafarmable integer
-    if (
-        f_type is int
-        and "isDatafarmable" in spec
-        and not spec["isDatafarmable"]
-    ):
+    if f_type is int and "isDatafarmable" in spec and not spec["isDatafarmable"]:
         return DFIntegerNonDatafarmable(spec_name, f_description, f_default)
     # Otherwise, just use the default mapping
-    elif f_type in df_factor_map:
+    if f_type in df_factor_map:
         return df_factor_map[f_type](spec_name, f_description, f_default)
-    else:
-        raise NotImplementedError(
-            f"Factor type [{f_type}] not yet implemented."
-        )
+    raise NotImplementedError(f"Factor type [{f_type}] not yet implemented.")
