@@ -817,8 +817,7 @@ class Problem(ABC):
         """
         return self.response_dict_to_objectives(response_dict)
 
-    @abstractmethod
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
+    def response_dict_to_stoch_constraints(self, _response_dict: dict) -> tuple:
         """Convert a response dictionary to a vector of stochastic constraint values.
 
         Each returned value represents the left-hand side of a constraint of the form
@@ -832,7 +831,7 @@ class Problem(ABC):
             tuple: A tuple representing the left-hand sides of the stochastic
                 constraints.
         """
-        raise NotImplementedError
+        return ()
 
     def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         """Compute deterministic components of objectives for a solution `x`.
@@ -851,13 +850,8 @@ class Problem(ABC):
         )
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, _x: tuple
-    ) -> tuple[tuple, tuple]:
-        """Compute deterministic components of stochastic constraints for solution `x`.
-
-        Args:
-            x (tuple): A vector of decision variables.
+    def deterministic_stochastic_constraints_and_gradients(self) -> tuple[tuple, tuple]:
+        """Compute deterministic components of stochastic constraints.
 
         Returns:
             tuple:
@@ -1496,7 +1490,7 @@ class Solution:
             problem.deterministic_objectives_and_gradients(self.x)
         )
         self.det_stoch_constraints, self.det_stoch_constraints_gradients = (
-            problem.deterministic_stochastic_constraints_and_gradients(self.x)
+            problem.deterministic_stochastic_constraints_and_gradients()
         )
         # Initialize numpy arrays to store up to 100 replications.
         init_size = 100
