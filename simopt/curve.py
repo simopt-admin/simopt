@@ -1,3 +1,5 @@
+"""Curve class for plotting and analysis."""
+
 from __future__ import annotations
 
 import logging
@@ -31,7 +33,7 @@ class CurveType(Enum):
 class Curve:
     """Base class for all curves.
 
-    Attributes
+    Attributes:
     ----------
     x_vals : list [float]
         Values of horizontal components.
@@ -76,7 +78,7 @@ class Curve:
         y_vals : Sequence[int | float]
             Values of vertical components.
 
-        Raises
+        Raises:
         ------
         TypeError
         ValueError
@@ -84,7 +86,9 @@ class Curve:
         try:
             # Ensure x_vals and y_vals have the same length before conversion
             if len(x_vals) != len(y_vals):
-                error_msg = f"Length of x ({len(x_vals)}) and y ({len(y_vals)}) must be equal."
+                error_msg = (
+                    f"Length of x ({len(x_vals)}) and y ({len(y_vals)}) must be equal."
+                )
                 raise ValueError(error_msg)
 
             # Convert to immutable tuples only after validation
@@ -107,12 +111,12 @@ class Curve:
         x_val : float
             X-value at which to lookup the y-value.
 
-        Returns
+        Returns:
         -------
         float
             Y-value corresponding to x, or NaN if x_val is out of range.
 
-        Raises
+        Raises:
         ------
         TypeError
             If x_val is not numeric.
@@ -139,12 +143,12 @@ class Curve:
         threshold : float
             Value for which to find first crossing time.
 
-        Returns
+        Returns:
         -------
         float
             First time at which a curve drops below threshold.
 
-        Raises
+        Raises:
         ------
         TypeError
             If threshold is not numeric.
@@ -168,17 +172,13 @@ class Curve:
     def compute_area_under_curve(self) -> float:
         """Compute the area under a curve.
 
-        Returns
+        Returns:
         -------
         float
             Area under the curve.
         """
-        x_diffs = (
-            x_next - x for x, x_next in zip(self.x_vals[:-1], self.x_vals[1:])
-        )
-        area_contributions = (
-            y * dx for y, dx in zip(self.y_vals[:-1], x_diffs)
-        )
+        x_diffs = (x_next - x for x, x_next in zip(self.x_vals[:-1], self.x_vals[1:]))
+        area_contributions = (y * dx for y, dx in zip(self.y_vals[:-1], x_diffs))
 
         return sum(area_contributions)
 
@@ -190,12 +190,12 @@ class Curve:
         mesh : Iterable[float]
             Collection of uniformly spaced x-values.
 
-        Returns
+        Returns:
         -------
         ``experiment_base.Curve``
             Curve with equally spaced x-values.
 
-        Raises
+        Raises:
         ------
         TypeError
             If mesh is not an iterable of numeric values.
@@ -217,7 +217,7 @@ class Curve:
     def curve_to_full_curve(self) -> Curve:
         """Create a curve with duplicate x- and y-values to indicate steps.
 
-        Returns
+        Returns:
         -------
         ``experiment_base.Curve``
             Curve with duplicate x- and y-values.
@@ -248,12 +248,12 @@ class Curve:
         curve_type : CurveType, default=CurveType.REGULAR
             Type of line: REGULAR (solid) or CONF_BOUND (dashed).
 
-        Returns
+        Returns:
         -------
         matplotlib.lines.Line2D
             Curve handle, to use when creating legends.
 
-        Raises
+        Raises:
         ------
         ValueError
             If an invalid curve type is provided.
@@ -263,13 +263,15 @@ class Curve:
         try:
             # Ensure curve_type is a valid Enum member
             if not isinstance(curve_type, CurveType):
-                error_msg = f"Invalid curve type: {curve_type}. Must be a member of CurveType."
+                error_msg = (
+                    f"Invalid curve type: {curve_type}. Must be a member of CurveType."
+                )
                 raise ValueError(error_msg)
 
             linestyle, linewidth = curve_type.style
 
             # Plot the step curve
-            handle = step(
+            return step(
                 self.x_vals,
                 self.y_vals,
                 color=color_str,
@@ -277,8 +279,6 @@ class Curve:
                 linewidth=linewidth,
                 where="post",
             )[0]
-
-            return handle
 
         except Exception as e:
             error_msg = f"Error in plot function: {e}"
