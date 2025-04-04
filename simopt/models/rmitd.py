@@ -1,6 +1,5 @@
-"""
-Summary
--------
+"""Multistage Revenue Management with Inter-temporal Dependence (RMITD).
+
 Simulate a multi-stage revenue management system with inter-temporal dependence.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/rmitd.html>`__.
@@ -19,12 +18,12 @@ from simopt.utils import classproperty
 
 
 class RMITD(Model):
-    """
-    A model that simulates a multi-stage revenue management system with
-    inter-temporal dependence.
-    Returns the total revenue.
+    """Multi-stage Revenue Management with Inter-temporal Dependence (RMITD).
 
-    Attributes
+    A model that simulates a multi-stage revenue management system with
+    inter-temporal dependence. Returns the total revenue.
+
+    Attributes:
     ----------
     name : string
         name of model
@@ -39,12 +38,12 @@ class RMITD(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Arguments:
     ---------
     fixed_factors : nested dict
         fixed factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.Model
     """
@@ -120,6 +119,12 @@ class RMITD(Model):
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the RMITD model.
+
+        Args:
+            fixed_factors (dict, optional): Dictionary of fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
@@ -132,12 +137,8 @@ class RMITD(Model):
             raise ValueError("All elements in prices must be greater than 0.")
 
     def check_demand_means(self) -> None:
-        if any(
-            demand_mean <= 0 for demand_mean in self.factors["demand_means"]
-        ):
-            raise ValueError(
-                "All elements in demand_means must be greater than 0."
-            )
+        if any(demand_mean <= 0 for demand_mean in self.factors["demand_means"]):
+            raise ValueError("All elements in demand_means must be greater than 0.")
 
     def check_cost(self) -> None:
         if self.factors["cost"] <= 0:
@@ -157,70 +158,56 @@ class RMITD(Model):
 
     def check_reservation_qtys(self) -> None:
         if any(
-            reservation_qty <= 0
-            for reservation_qty in self.factors["reservation_qtys"]
+            reservation_qty <= 0 for reservation_qty in self.factors["reservation_qtys"]
         ):
-            raise ValueError(
-                "All elements in reservation_qtys must be greater than 0."
-            )
+            raise ValueError("All elements in reservation_qtys must be greater than 0.")
 
     def check_simulatable_factors(self) -> bool:
         # Check for matching number of periods.
         if len(self.factors["prices"]) != self.factors["time_horizon"]:
-            raise ValueError(
-                "The length of prices must be equal to time_horizon."
-            )
-        elif len(self.factors["demand_means"]) != self.factors["time_horizon"]:
+            raise ValueError("The length of prices must be equal to time_horizon.")
+        if len(self.factors["demand_means"]) != self.factors["time_horizon"]:
             raise ValueError(
                 "The length of demand_means must be equal to time_horizon."
             )
-        elif (
-            len(self.factors["reservation_qtys"])
-            != self.factors["time_horizon"] - 1
-        ):
+        if len(self.factors["reservation_qtys"]) != self.factors["time_horizon"] - 1:
             raise ValueError(
-                "The length of reservation_qtys must be equal to the time_horizon minus 1."
+                "The length of reservation_qtys must be equal to the time_horizon "
+                "minus 1."
             )
         # Check that first reservation level is less than initial inventory.
-        elif (
-            self.factors["initial_inventory"]
-            < self.factors["reservation_qtys"][0]
-        ):
+        if self.factors["initial_inventory"] < self.factors["reservation_qtys"][0]:
             raise ValueError(
-                "The initial_inventory must be greater than or equal to the first element in reservation_qtys."
+                "The initial_inventory must be greater than or equal to the first "
+                "element in reservation_qtys."
             )
         # Check for non-increasing reservation levels.
-        elif any(
+        if any(
             self.factors["reservation_qtys"][idx]
             < self.factors["reservation_qtys"][idx + 1]
             for idx in range(self.factors["time_horizon"] - 2)
         ):
             raise ValueError(
-                "Each value in reservation_qtys must be greater than the next value in the list."
+                "Each value in reservation_qtys must be greater than the next value "
+                "in the list."
             )
         # Check that gamma_shape*gamma_scale = 1.
-        elif (
-            np.isclose(
-                self.factors["gamma_shape"] * self.factors["gamma_scale"], 1
-            )
+        if (
+            np.isclose(self.factors["gamma_shape"] * self.factors["gamma_scale"], 1)
             is False
         ):
-            raise ValueError(
-                "gamma_shape times gamma_scale should be close to 1."
-            )
-        else:
-            return True
+            raise ValueError("gamma_shape times gamma_scale should be close to 1.")
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -268,9 +255,7 @@ class RMITD(Model):
         # Compose responses and gradients.
         responses = {"revenue": revenue}
         gradients = {
-            response_key: {
-                factor_key: np.nan for factor_key in self.specifications
-            }
+            response_key: dict.fromkeys(self.specifications, np.nan)
             for response_key in responses
         }
         return responses, gradients
@@ -285,10 +270,9 @@ with inter-temporal dependence problem.
 
 
 class RMITDMaxRevenue(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -336,7 +320,7 @@ class RMITDMaxRevenue(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -345,7 +329,7 @@ class RMITDMaxRevenue(Problem):
     model_fixed_factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
     """
@@ -440,6 +424,15 @@ class RMITDMaxRevenue(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the RMITDMaxRevenue problem.
+
+        Args:
+            name (str): Name of the problem.
+            fixed_factors (dict, optional): Dictionary of fixed factors for the model.
+                Defaults to None.
+            model_fixed_factors (dict, optional): Dictionary of fixed factors for the
+                model. Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -449,74 +442,65 @@ class RMITDMaxRevenue(Problem):
         )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys.
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {
+        return {
             "initial_inventory": vector[0],
             "reservation_qtys": list(vector[0:]),
         }
-        return factor_dict
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        """Convert a dictionary with factor keys to a vector of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (
+        return (
             factor_dict["initial_inventory"],
             *tuple(factor_dict["reservation_qtys"]),
         )
-        return vector
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        """Convert a dictionary with response keys to a vector of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["revenue"],)
-        return objectives
+        return (response_dict["revenue"],)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
@@ -524,15 +508,14 @@ class RMITDMaxRevenue(Problem):
         return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1))
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
@@ -543,20 +526,3 @@ class RMITDMaxRevenue(Problem):
             if self.check_deterministic_constraints(x):
                 break
         return x
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
-
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        tuple
-            vector of LHSs of stochastic constraint
-        """
-        raise NotImplementedError

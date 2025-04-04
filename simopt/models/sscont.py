@@ -1,6 +1,5 @@
-"""
-Summary
--------
+"""(s,S) Inventory Simulation Model.
+
 Simulate multiple periods worth of sales for a (s,S) inventory problem
 with continuous inventory.
 A detailed description of the model/problem can be found
@@ -20,7 +19,8 @@ from simopt.utils import classproperty
 
 
 class SSCont(Model):
-    """
+    """(s,S) Inventory Simulation Model.
+
     A model that simulates multiple periods' worth of sales for a (s,S)
     inventory problem with continuous inventory, exponentially distributed
     demand, and poisson distributed lead time. Returns the various types of
@@ -28,7 +28,7 @@ class SSCont(Model):
     met with inventory on hand, average amount backordered given a stockout
     occured, and average amount ordered given an order occured.
 
-    Attributes
+    Attributes:
     ----------
     name : str
         name of model
@@ -68,7 +68,8 @@ class SSCont(Model):
             Number of periods to simulate (`int`)
         ``warmup``
             Number of periods as warmup before collecting statistics (`int`)
-    See also
+
+    See Also:
     --------
     base.Model
     """
@@ -89,7 +90,9 @@ class SSCont(Model):
     def specifications(cls) -> dict[str, dict]:
         return {
             "demand_mean": {
-                "description": "mean of exponentially distributed demand in each period",
+                "description": (
+                    "mean of exponentially distributed demand in each period"
+                ),
                 "datatype": float,
                 "default": 100.0,
             },
@@ -99,7 +102,9 @@ class SSCont(Model):
                 "default": 6.0,
             },
             "backorder_cost": {
-                "description": "cost per unit of demand not met with in-stock inventory",
+                "description": (
+                    "cost per unit of demand not met with in-stock inventory"
+                ),
                 "datatype": float,
                 "default": 4.0,
             },
@@ -135,7 +140,9 @@ class SSCont(Model):
                 "isDatafarmable": False,
             },
             "warmup": {
-                "description": "number of periods as warmup before collecting statistics",
+                "description": (
+                    "number of periods as warmup before collecting statistics"
+                ),
                 "datatype": int,
                 "default": 20,
                 "isDatafarmable": False,
@@ -158,6 +165,12 @@ class SSCont(Model):
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the (s,S) inventory simulation model.
+
+        Args:
+            fixed_factors (dict, optional): Fixed factors of the simulation model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
@@ -208,15 +221,14 @@ class SSCont(Model):
         return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -292,9 +304,9 @@ class SSCont(Model):
 
                 # Track future outstanding orders
                 if next_day < periods:
-                    orders_outstanding[
-                        next_day : min(delivery_day, periods)
-                    ] += order_qty
+                    orders_outstanding[next_day : min(delivery_day, periods)] += (
+                        order_qty
+                    )
 
             if next_day < periods:
                 start_inv[next_day] = end_inv[day] + orders_received[next_day]
@@ -324,10 +336,7 @@ class SSCont(Model):
         on_time_rate = 1 - shortage.sum() / np.sum(demands_post_warmup)
 
         avg_backorder_costs = (
-            backorder_cost
-            * (1 - on_time_rate)
-            * np.sum(demands_post_warmup)
-            / n_days
+            backorder_cost * (1 - on_time_rate) * np.sum(demands_post_warmup) / n_days
         )
         # Calculate average stockout costs.
         neg_inv_post_warmup_mask = np.where(neg_inv_post_warmup_mask)
@@ -340,9 +349,7 @@ class SSCont(Model):
         if len(pos_orders_placed_post_warmup[0]) == 0:
             avg_order = 0
         else:
-            avg_order = np.mean(
-                orders_post_warmup[pos_orders_placed_post_warmup]
-            )
+            avg_order = np.mean(orders_post_warmup[pos_orders_placed_post_warmup])
         # Compose responses and gradients.
         responses = {
             "avg_backorder_costs": avg_backorder_costs,
@@ -355,9 +362,7 @@ class SSCont(Model):
             "avg_order": avg_order,
         }
         gradients = {
-            response_key: {
-                factor_key: np.nan for factor_key in self.specifications
-            }
+            response_key: dict.fromkeys(self.specifications, np.nan)
             for response_key in responses
         }
         return responses, gradients
@@ -371,10 +376,9 @@ Minimize the expected total cost for (s, S) inventory system.
 
 
 class SSContMinCost(Problem):
-    """
-    Class to make (s,S) inventory simulation-optimization problems.
+    """Class to make (s,S) inventory simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : str
         name of problem
@@ -422,7 +426,7 @@ class SSContMinCost(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name of problem
@@ -431,7 +435,7 @@ class SSContMinCost(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
     """
@@ -525,6 +529,15 @@ class SSContMinCost(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the (s,S) inventory simulation-optimization problem.
+
+        Args:
+            name (str, optional): name of problem. Defaults to "SSCONT-1".
+            fixed_factors (dict, optional): fixed factors of the simulation model.
+                Defaults to None.
+            model_fixed_factors (dict, optional): fixed factors for the simulation
+                model. Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -534,92 +547,63 @@ class SSContMinCost(Problem):
         )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys.
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dict
             dictionary with factor keys and associated values
         """
-        factor_dict = {"s": vector[0], "S": vector[0] + vector[1]}
-        return factor_dict
+        return {"s": vector[0], "S": vector[0] + vector[1]}
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        """Convert a dictionary with factor keys to a vector of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dict
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
-        return vector
+        return (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        """Convert a dictionary with response keys to a vector of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dict
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
         """
-        objectives = (
+        return (
             response_dict["avg_backorder_costs"]
             + response_dict["avg_order_costs"]
             + response_dict["avg_holding_costs"],
         )
-        return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
@@ -630,41 +614,15 @@ class SSContMinCost(Problem):
         det_objectives_gradients = ((0,),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
@@ -672,25 +630,31 @@ class SSContMinCost(Problem):
         return x[0] >= 0 and x[1] >= 0
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
         """
-
-        # x = (rand_sol_rng.expovariate(1/300), rand_sol_rng.expovariate(1/300))
-        # x = tuple(sorted([rand_sol_rng.lognormalvariate(600,1),rand_sol_rng.lognormalvariate(600,1)], key = float))
+        # x = (rand_sol_rng.expovariate(1 / 300), rand_sol_rng.expovariate(1 / 300))
+        # x = tuple(
+        #     sorted(
+        #         [
+        #             rand_sol_rng.lognormalvariate(600, 1),
+        #             rand_sol_rng.lognormalvariate(600, 1),
+        #         ],
+        #         key=float,
+        #     )
+        # )
         mu_d = self.model_default_factors["demand_mean"]
         mu_l = self.model_default_factors["lead_mean"]
-        x = (
+        return (
             rand_sol_rng.lognormalvariate(
                 mu_d * mu_l / 3, mu_d * mu_l + 2 * sqrt(2 * mu_d**2 * mu_l)
             ),
@@ -698,8 +662,8 @@ class SSContMinCost(Problem):
                 mu_d * mu_l / 3, mu_d * mu_l + 2 * sqrt(2 * mu_d**2 * mu_l)
             ),
         )
-        return x
 
 
-# If T is lead time and X is a single demand, then var(sum_{i=1}^T X_i) = E(T) var(X) + (E X))^2 var T
+# If T is lead time and X is a single demand, then:
+#   var(sum_{i=1}^T X_i) = E(T) var(X) + (E X))^2 var T
 # var(S) = E var(S|T) + var E(S|T)

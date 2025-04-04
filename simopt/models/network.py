@@ -1,6 +1,5 @@
-"""
-Summary
--------
+"""Network Queueing Model.
+
 Simulate messages being processed in a queueing network.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/network.html>`__.
@@ -21,10 +20,9 @@ NUM_NETWORKS: Final = 10
 
 
 class Network(Model):
-    """
-    Simulate messages being processed in a queueing network.
+    """Simulate messages being processed in a queueing network.
 
-    Attributes
+    Attributes:
     ----------
     name : str
         name of model
@@ -44,7 +42,7 @@ class Network(Model):
     fixed_factors : dict
         fixed_factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.Model
     """
@@ -65,7 +63,9 @@ class Network(Model):
     def specifications(cls) -> dict[str, dict]:
         return {
             "process_prob": {
-                "description": "probability that a message will go through a particular network i",
+                "description": (
+                    "probability that a message will go through a particular network i"
+                ),
                 "datatype": list,
                 "default": [0.1] * NUM_NETWORKS,
             },
@@ -75,22 +75,32 @@ class Network(Model):
                 "default": [0.1 / (x + 1) for x in range(NUM_NETWORKS)],
             },
             "cost_time": {
-                "description": "cost for the length of time a message spends in a network i per each unit of time",
+                "description": (
+                    "cost for the length of time a message spends in a network i per "
+                    "each unit of time"
+                ),
                 "datatype": list,
                 "default": [0.005] * NUM_NETWORKS,
             },
             "mode_transit_time": {
-                "description": "mode time of transit for network i following a triangular distribution",
+                "description": (
+                    "mode time of transit for network i following a triangular "
+                    "distribution"
+                ),
                 "datatype": list,
                 "default": [x + 1 for x in range(NUM_NETWORKS)],
             },
             "lower_limits_transit_time": {
-                "description": "lower limits for the triangular distribution for the transit time",
+                "description": (
+                    "lower limits for the triangular distribution for the transit time"
+                ),
                 "datatype": list,
                 "default": [0.5 + x for x in range(NUM_NETWORKS)],
             },
             "upper_limits_transit_time": {
-                "description": "upper limits for the triangular distribution for the transit time",
+                "description": (
+                    "upper limits for the triangular distribution for the transit time"
+                ),
                 "datatype": list,
                 "default": [1.5 + x for x in range(NUM_NETWORKS)],
             },
@@ -126,6 +136,11 @@ class Network(Model):
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the Network model.
+
+        Args:
+            fixed_factors (dict): Fixed factors for the model.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
@@ -134,53 +149,38 @@ class Network(Model):
         # Make sure probabilities are between 0 and 1.
         # Make sure probabilities sum up to 1.
         if (
-            any(
-                [
-                    1.0 < prob_i or prob_i < 0
-                    for prob_i in self.factors["process_prob"]
-                ]
-            )
+            any(prob_i > 1.0 or prob_i < 0 for prob_i in self.factors["process_prob"])
             or round(sum(self.factors["process_prob"]), 10) != 1.0
         ):
             raise ValueError(
-                "All elements in process_prob must be between 0 and 1 and the sum of all of the elements in process_prob must equal 1."
+                "All elements in process_prob must be between 0 and 1 and the sum of "
+                "all of the elements in process_prob must equal 1."
             )
 
     def check_cost_process(self) -> None:
         if any(cost_i <= 0 for cost_i in self.factors["cost_process"]):
-            raise ValueError(
-                "All elements in cost_process must be greater than 0."
-            )
+            raise ValueError("All elements in cost_process must be greater than 0.")
 
     def check_cost_time(self) -> None:
         if any(cost_time_i <= 0 for cost_time_i in self.factors["cost_time"]):
-            raise ValueError(
-                "All elements in cost_time must be greater than 0."
-            )
+            raise ValueError("All elements in cost_time must be greater than 0.")
 
     def check_mode_transit_time(self) -> None:
         if any(
-            transit_time_i <= 0
-            for transit_time_i in self.factors["mode_transit_time"]
+            transit_time_i <= 0 for transit_time_i in self.factors["mode_transit_time"]
         ):
             raise ValueError(
                 "All elements in mode_transit_time must be greater than 0."
             )
 
     def check_lower_limits_transit_time(self) -> None:
-        if any(
-            lower_i <= 0
-            for lower_i in self.factors["lower_limits_transit_time"]
-        ):
+        if any(lower_i <= 0 for lower_i in self.factors["lower_limits_transit_time"]):
             raise ValueError(
                 "All elements in lower_limits_transit_time must be greater than 0."
             )
 
     def check_upper_limits_transit_time(self) -> None:
-        if any(
-            upper_i <= 0
-            for upper_i in self.factors["upper_limits_transit_time"]
-        ):
+        if any(upper_i <= 0 for upper_i in self.factors["upper_limits_transit_time"]):
             raise ValueError(
                 "All elements in upper_limits_transit_time must be greater than 0."
             )
@@ -199,68 +199,50 @@ class Network(Model):
 
     def check_simulatable_factors(self) -> bool:
         if len(self.factors["process_prob"]) != self.factors["n_networks"]:
-            raise ValueError(
-                "The length of process_prob must equal n_networks."
-            )
-        elif len(self.factors["cost_process"]) != self.factors["n_networks"]:
-            raise ValueError(
-                "The length of cost_process must equal n_networks."
-            )
-        elif len(self.factors["cost_time"]) != self.factors["n_networks"]:
+            raise ValueError("The length of process_prob must equal n_networks.")
+        if len(self.factors["cost_process"]) != self.factors["n_networks"]:
+            raise ValueError("The length of cost_process must equal n_networks.")
+        if len(self.factors["cost_time"]) != self.factors["n_networks"]:
             raise ValueError("The length of cost_time must equal n_networks.")
-        elif (
-            len(self.factors["mode_transit_time"]) != self.factors["n_networks"]
-        ):
-            raise ValueError(
-                "The length of mode_transit_time must equal n_networks."
-            )
-        elif (
-            len(self.factors["lower_limits_transit_time"])
-            != self.factors["n_networks"]
-        ):
+        if len(self.factors["mode_transit_time"]) != self.factors["n_networks"]:
+            raise ValueError("The length of mode_transit_time must equal n_networks.")
+        if len(self.factors["lower_limits_transit_time"]) != self.factors["n_networks"]:
             raise ValueError(
                 "The length of lower_limits_transit_time must equal n_networks."
             )
-        elif (
-            len(self.factors["upper_limits_transit_time"])
-            != self.factors["n_networks"]
-        ):
+        if len(self.factors["upper_limits_transit_time"]) != self.factors["n_networks"]:
             raise ValueError(
                 "The length of upper_limits_transit_time must equal n_networks."
             )
-        elif any(
-            [
-                self.factors["mode_transit_time"][i]
-                < self.factors["lower_limits_transit_time"][i]
-                for i in range(self.factors["n_networks"])
-            ]
+        if any(
+            self.factors["mode_transit_time"][i]
+            < self.factors["lower_limits_transit_time"][i]
+            for i in range(self.factors["n_networks"])
         ):
             raise ValueError(
-                "The mode_transit time must be greater than or equal to the corresponding lower_limits_transit_time for each network."
+                "The mode_transit time must be greater than or equal to the "
+                "corresponding lower_limits_transit_time for each network."
             )
-        elif any(
-            [
-                self.factors["upper_limits_transit_time"][i]
-                < self.factors["mode_transit_time"][i]
-                for i in range(self.factors["n_networks"])
-            ]
+        if any(
+            self.factors["upper_limits_transit_time"][i]
+            < self.factors["mode_transit_time"][i]
+            for i in range(self.factors["n_networks"])
         ):
             raise ValueError(
-                "The mode_transit time must be less than or equal to the corresponding upper_limits_transit_time for each network."
+                "The mode_transit time must be less than or equal to the corresponding "
+                "upper_limits_transit_time for each network."
             )
-        else:
-            return True
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measure of interest
@@ -284,7 +266,8 @@ class Network(Model):
         network_rng = rng_list[1]
         transit_rng = rng_list[2]
 
-        # Generate all interarrival, network routes, and service times before the simulation run.
+        # Generate all interarrival, network routes, and service times before the
+        # simulation run.
         arrival_times = [
             arrival_rng.expovariate(arrival_rate) for _ in range(total_arrivals)
         ]
@@ -336,9 +319,7 @@ class Network(Model):
             if last_in_line[net] == -1:
                 done = arr_i + svc_i
             else:
-                done = (
-                    max(arr_i, message_mat[last_in_line[net], Col.DONE]) + svc_i
-                )
+                done = max(arr_i, message_mat[last_in_line[net], Col.DONE]) + svc_i
 
             curr_message = message_mat[i]
             curr_message[Col.DONE] = done
@@ -367,9 +348,7 @@ class Network(Model):
         total_cost = np.sum(message_mat[:, Col.TOTAL_COST])
         responses = {"total_cost": total_cost}
         gradients = {
-            response_key: {
-                factor_key: np.nan for factor_key in self.specifications
-            }
+            response_key: dict.fromkeys(self.specifications, np.nan)
             for response_key in responses
         }
         return responses, gradients
@@ -383,10 +362,9 @@ Minimize the expected total cost routing the messages though the communication n
 
 
 class NetworkMinTotalCost(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -430,7 +408,7 @@ class NetworkMinTotalCost(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -439,7 +417,7 @@ class NetworkMinTotalCost(Problem):
     model_fixed_factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
     """
@@ -533,6 +511,13 @@ class NetworkMinTotalCost(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the NetworkMinTotalCost problem.
+
+        Args:
+            name (str): Name of the problem.
+            fixed_factors (dict): Fixed factors for the problem.
+            model_fixed_factors (dict): Fixed factors for the model.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -542,88 +527,59 @@ class NetworkMinTotalCost(Problem):
         )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys.
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {"process_prob": vector[:]}
-        return factor_dict
+        return {"process_prob": vector[:]}
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        """Convert a dictionary with factor keys to a vector of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["process_prob"])
-        return vector
+        return tuple(factor_dict["process_prob"])
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        """Convert a dictionary with response keys to a vector of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["total_cost"],)
-        return objectives
+        return (response_dict["total_cost"],)
 
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
@@ -634,42 +590,15 @@ class NetworkMinTotalCost(Problem):
         det_objectives_gradients = (0,) * self.model.factors["n_networks"]
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic
-            constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
@@ -681,15 +610,14 @@ class NetworkMinTotalCost(Problem):
         return box_feasible and probability_feasible
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables

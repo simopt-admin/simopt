@@ -1,6 +1,5 @@
-"""
-Summary
--------
+"""Dual Sourcing Inventory Problem.
+
 Simulate multiple periods of ordering and sales for a dual sourcing inventory problem.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/dualsourcing.html>`__.
@@ -18,12 +17,13 @@ from simopt.utils import classproperty
 
 
 class DualSourcing(Model):
-    """
-    A model that simulates multiple periods of ordering and sales for a single-staged,
-    dual sourcing inventory problem with stochastic demand. Returns average holding cost,
-    average penalty cost, and average ordering cost per period.
+    """Dual Sourcing Inventory Model.
 
-    Attributes
+    A model that simulates multiple periods of ordering and sales for a single-staged,
+    dual sourcing inventory problem with stochastic demand. Returns average holding
+    cost, average penalty cost, and average ordering cost per period.
+
+    Attributes:
     ----------
     name : str
         name of model
@@ -69,7 +69,7 @@ class DualSourcing(Model):
             Order-up-to level for expedited orders (`int`)
 
 
-    See also
+    See Also:
     --------
     base.Model
     """
@@ -166,6 +166,12 @@ class DualSourcing(Model):
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the DualSourcing model.
+
+        Args:
+            fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
@@ -212,35 +218,31 @@ class DualSourcing(Model):
 
     def check_order_level_reg(self) -> None:
         if self.factors["order_level_reg"] < 0:
-            raise ValueError(
-                "order_level_reg must be greater than or equal to 0."
-            )
+            raise ValueError("order_level_reg must be greater than or equal to 0.")
 
     def check_order_level_exp(self) -> None:
         if self.factors["order_level_exp"] < 0:
-            raise ValueError(
-                "order_level_exp must be greater than or equal to 0."
-            )
+            raise ValueError("order_level_exp must be greater than or equal to 0.")
 
     def check_simulatable_factors(self) -> bool:
         if (self.factors["lead_exp"] > self.factors["lead_reg"]) or (
             self.factors["cost_exp"] < self.factors["cost_reg"]
         ):
             raise ValueError(
-                "lead_exp must be less than lead_reg and cost_exp must be greater than cost_reg"
+                "lead_exp must be less than lead_reg and cost_exp must be greater than "
+                "cost_reg"
             )
         return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -292,9 +294,7 @@ class DualSourcing(Model):
         for day in n_days_range:
             # Calculate inventory positions.
             inv_order_exp_sum = inv + sum(orders_exp)
-            inv_position_exp = round(
-                inv_order_exp_sum + sum(orders_reg[:lead_exp])
-            )
+            inv_position_exp = round(inv_order_exp_sum + sum(orders_reg[:lead_exp]))
             inv_position_reg = round(inv_order_exp_sum + sum(orders_reg))
             # Calculate how much to order.
             order_exp = round_and_clamp_non_neg(
@@ -326,9 +326,7 @@ class DualSourcing(Model):
             "average_holding_cost": np.mean(total_holding_cost),
         }
         gradients = {
-            response_key: {
-                factor_key: np.nan for factor_key in self.specifications
-            }
+            response_key: dict.fromkeys(self.specifications, np.nan)
             for response_key in responses
         }
         return responses, gradients
@@ -342,10 +340,9 @@ Minimize the expected total cost for dual-sourcing inventory system.
 
 
 class DualSourcingMinCost(Problem):
-    """
-    Class to make dual-sourcing inventory simulation-optimization problems.
+    """Class to make dual-sourcing inventory simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : str
         name of problem
@@ -389,7 +386,7 @@ class DualSourcingMinCost(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name of problem
@@ -398,7 +395,7 @@ class DualSourcingMinCost(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
     """
@@ -492,6 +489,14 @@ class DualSourcingMinCost(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the DualSourcingMinCost problem.
+
+        Args:
+            name (str, optional): Name of the problem. Defaults to "DUALSOURCING-1".
+            fixed_factors (dict, optional): Fixed factors for the problem.
+                Defaults to None.
+            model_fixed_factors (dict, optional): Model fixed factors. Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -501,98 +506,69 @@ class DualSourcingMinCost(Problem):
         )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys.
+        """Convert a vector of variables to a dictionary with factor keys.
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dict
             dictionary with factor keys and associated values
         """
-        factor_dict = {
+        return {
             "order_level_exp": vector[0],
             "order_level_reg": vector[1],
         }
-        return factor_dict
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        """Convert a dictionary with factor keys to a vector of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dict
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (
+        return (
             factor_dict["order_level_exp"],
             factor_dict["order_level_reg"],
         )
-        return vector
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        """Convert a dictionary with response keys to a vector of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dict
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
         """
-        objectives = (
+        return (
             response_dict["average_ordering_cost"]
             + response_dict["average_penalty_cost"]
             + response_dict["average_holding_cost"],
         )
-        return objectives
 
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
@@ -603,41 +579,15 @@ class DualSourcingMinCost(Problem):
         det_objectives_gradients = ((0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
@@ -645,18 +595,16 @@ class DualSourcingMinCost(Problem):
         return x[0] >= 0 and x[1] >= 0
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
         """
-        x = (rand_sol_rng.randint(40, 60), rand_sol_rng.randint(70, 90))
-        return x
+        return (rand_sol_rng.randint(40, 60), rand_sol_rng.randint(70, 90))

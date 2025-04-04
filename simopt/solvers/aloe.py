@@ -1,11 +1,9 @@
-"""
-Summary
--------
-ALOE
-The solver is a stochastic line search algorithm  with the gradient estimate recomputed in each iteration,
-whether or not a step is accepted. The algorithm includes the relaxation of the Armijo condition by
-an additive constant.
-A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/aloe.html>`__.
+"""Stochastic line search algorithm with gradient estimation.
+
+The solver is a stochastic line search algorithm  with the gradient estimate recomputed
+in each iteration, whether or not a step is accepted. The algorithm includes the
+relaxation of the Armijo condition by an additive constant. A detailed description of
+the solver can be found `here <https://simopt.readthedocs.io/en/latest/aloe.html>`__.
 """
 
 from __future__ import annotations
@@ -26,10 +24,9 @@ from simopt.utils import classproperty
 
 
 class ALOE(Solver):
-    """
-    Adaptive Line-search with Oracle Estimations
+    """Adaptive Line-search with Oracle Estimations.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of solver
@@ -51,14 +48,14 @@ class ALOE(Solver):
     rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
         list of RNGs used for the solver's internal purposes
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
 
-    See also
+    See Also:
     --------
     base.Solver
     """
@@ -112,10 +109,12 @@ class ALOE(Solver):
                 "datatype": int,
                 "default": 1,
             },
+            # In the paper, this value is estimated for every epoch but a value > 0
+            # is justified in practice.
             "epsilon_f": {
                 "description": "additive constant in the Armijo condition",
                 "datatype": int,
-                "default": 1,  # In the paper, this value is estimated for every epoch but a value > 0 is justified in practice.
+                "default": 1,
             },
             "sensitivity": {
                 "description": "shrinking scale for variable bounds",
@@ -123,7 +122,9 @@ class ALOE(Solver):
                 "default": 10 ** (-7),
             },
             "lambda": {
-                "description": "magnifying factor for n_r inside the finite difference function",
+                "description": (
+                    "magnifying factor for n_r inside the finite difference function"
+                ),
                 "datatype": int,
                 "default": 2,
             },
@@ -143,16 +144,22 @@ class ALOE(Solver):
             "lambda": self.check_lambda,
         }
 
-    def __init__(
-        self, name: str = "ALOE", fixed_factors: dict | None = None
-    ) -> None:
+    def __init__(self, name: str = "ALOE", fixed_factors: dict | None = None) -> None:
+        """Initialize the ALOE solver.
+
+        Args:
+            name (str): The name of the solver.
+            fixed_factors (dict, optional): Fixed factors for the solver.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
     def check_r(self) -> None:
         if self.factors["r"] <= 0:
             raise ValueError(
-                "The number of replications taken at each solution must be greater than 0."
+                "The number of replications taken at each solution must be greater "
+                "than 0."
             )
 
     def check_theta(self) -> None:
@@ -184,15 +191,14 @@ class ALOE(Solver):
             raise ValueError("Lambda must be greater than 0.")
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """
-        Run a single macroreplication of the ALOE solver on a problem.
+        """Run a single macroreplication of the ALOE solver on a problem.
 
-        Arguments
+        Arguments:
         ---------
         problem : Problem
             The simulation-optimization problem to solve.
 
-        Returns
+        Returns:
         -------
         list[Solution]
             List of solutions recommended throughout the budget.
@@ -238,20 +244,14 @@ class ALOE(Solver):
             bounds_check = forward - backward
 
             if problem.gradient_available:
-                grad = (
-                    -problem.minmax[0]
-                    * new_solution.objectives_gradients_mean[0]
-                )
+                grad = -problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
-                grad = self._finite_diff(
-                    new_solution, bounds_check, problem, alpha, r
-                )
+                grad = self._finite_diff(new_solution, bounds_check, problem, alpha, r)
                 expended_budget += (
                     2 * problem.dim - np.count_nonzero(bounds_check)
                 ) * r
                 while (
-                    np.all(grad == 0)
-                    and expended_budget <= problem.factors["budget"]
+                    np.all(grad == 0) and expended_budget <= problem.factors["budget"]
                 ):
                     grad = self._finite_diff(
                         new_solution, bounds_check, problem, alpha, r
@@ -262,12 +262,8 @@ class ALOE(Solver):
                     r = int(self.factors["lambda"] * r)  # Update sample size
 
             # Compute candidate solution and apply box constraints (vectorized).
-            candidate_x = np.clip(
-                new_x - alpha * grad, lower_bound, upper_bound
-            )
-            candidate_solution = self.create_new_solution(
-                tuple(candidate_x), problem
-            )
+            candidate_x = np.clip(new_x - alpha * grad, lower_bound, upper_bound)
+            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
             problem.simulate(candidate_solution, r)
             expended_budget += r
@@ -301,10 +297,9 @@ class ALOE(Solver):
         stepsize: float,
         r: int,
     ) -> np.ndarray:
-        """
-        Compute the finite difference approximation of the gradient for a given solution in the ALOE solver.
+        """Compute the finite difference approximation of the gradient for a solution.
 
-        Arguments
+        Arguments:
         ---------
         new_solution : Solution
             The current solution to perturb.
@@ -317,7 +312,7 @@ class ALOE(Solver):
         r : int
             The number of replications used for each function evaluation.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             The approximated gradient of the function at the given solution.
@@ -328,7 +323,6 @@ class ALOE(Solver):
         new_x = np.array(new_solution.x, dtype=float)
         # Store values for each dimension.
         function_diff = np.zeros((problem.dim, 3))
-        grad = np.zeros(problem.dim)
 
         # Compute step sizes
         step_forward = np.minimum(stepsize, upper_bound - new_x)
@@ -382,6 +376,4 @@ class ALOE(Solver):
         if np.any(backward_mask):
             fn_diff[backward_mask] = fn - function_diff[backward_mask, 1]
 
-        grad = fn_diff / fn_divisor
-
-        return grad
+        return fn_diff / fn_divisor

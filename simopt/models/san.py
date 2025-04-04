@@ -1,6 +1,5 @@
-"""
-Summary
--------
+"""Stochastic Activity Network (SAN) Model.
+
 Simulate duration of a stochastic activity network (SAN).
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/san.html>`__.
@@ -21,12 +20,13 @@ NUM_ARCS: Final[int] = 13
 
 
 class SAN(Model):
-    """
+    """Stochastic Activity Network (SAN) Model.
+
     A model that simulates a stochastic activity network problem with
     tasks that have exponentially distributed durations, and the selected
     means come with a cost.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of model
@@ -41,12 +41,12 @@ class SAN(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Arguments:
     ---------
     fixed_factors : nested dict
         fixed factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.Model
     """
@@ -107,6 +107,12 @@ class SAN(Model):
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the SAN model.
+
+        Args:
+            fixed_factors : dict
+                fixed factors of the simulation model
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
@@ -114,9 +120,7 @@ class SAN(Model):
         if self.factors["num_nodes"] <= 0:
             raise ValueError("num_nodes must be greater than 0.")
 
-    def dfs(
-        self, graph: dict[int, set], start: int, visited: set | None = None
-    ) -> set:
+    def dfs(self, graph: dict[int, set], start: int, visited: set | None = None) -> set:
         if visited is None:
             visited = set()
         visited.add(start)
@@ -129,15 +133,11 @@ class SAN(Model):
         if len(self.factors["arcs"]) <= 0:
             raise ValueError("The length of arcs must be greater than 0.")
         # Check graph is connected.
-        graph = {
-            node: set() for node in range(1, self.factors["num_nodes"] + 1)
-        }
+        graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
         for a in self.factors["arcs"]:
             graph[a[0]].add(a[1])
         visited = self.dfs(graph, 1)
-        if self.factors["num_nodes"] in visited:
-            return True
-        return False
+        return self.factors["num_nodes"] in visited
 
     def check_arc_means(self) -> bool:
         positive = True
@@ -153,15 +153,14 @@ class SAN(Model):
         return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -197,8 +196,7 @@ class SAN(Model):
 
         # Arc lengths
         arc_length = {
-            arc: exp_rng.expovariate(1 / arc_means[i])
-            for i, arc in enumerate(arcs)
+            arc: exp_rng.expovariate(1 / arc_means[i]) for i, arc in enumerate(arcs)
         }
 
         # Longest path
@@ -250,10 +248,9 @@ Minimize the duration of the longest path from a to i plus cost.
 
 
 class SANLongestPath(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -301,7 +298,7 @@ class SANLongestPath(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -310,7 +307,7 @@ class SANLongestPath(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
     """
@@ -410,6 +407,17 @@ class SANLongestPath(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the SANLongestPath problem.
+
+        Args:
+            name : str
+                user-specified name for problem
+            fixed_factors : dict
+                dictionary of user-specified problem factors
+            model_fixed_factors : dict
+                subset of user-specified non-decision factors to pass through to the
+                model
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -422,99 +430,61 @@ class SANLongestPath(Problem):
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive and x > 0
-        matching_len = len(self.factors["arc_costs"]) == len(
-            self.model.factors["arcs"]
-        )
+        matching_len = len(self.factors["arc_costs"]) == len(self.model.factors["arcs"])
         return positive and matching_len
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys.
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {"arc_means": vector[:]}
-        return factor_dict
+        return {"arc_means": vector[:]}
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        """Convert a dictionary with factor keys to a vector of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = factor_dict["arc_means"]
-        return vector
+        return factor_dict["arc_means"]
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        """Convert a dictionary with response keys to a vector of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["longest_path_length"],)
-        return objectives
+        return (response_dict["longest_path_length"],)
 
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
+    def deterministic_stochastic_constraints_and_gradients(self) -> tuple[tuple, tuple]:
+        """Compute deterministic components of stochastic constraints.
 
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of stochastic constraints
+        Returns:
+            tuple:
+                - tuple: The deterministic components of the stochastic constraints.
+                - tuple: The gradients of those deterministic components.
         """
         det_stoch_constraints = ()
         det_stoch_constraints_gradients = (
@@ -522,42 +492,36 @@ class SANLongestPath(Problem):
         )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
         det_objectives_gradients : tuple
             vector of gradients of deterministic components of objectives
         """
-        det_objectives = (
-            np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
-        )
+        det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
         det_objectives_gradients = (
             -np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
         )
         return det_objectives, det_objectives_gradients
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
@@ -566,23 +530,18 @@ class SANLongestPath(Problem):
         return all(is_positive)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
         """
-        x = tuple(
-            [
-                rand_sol_rng.lognormalvariate(lq=0.1, uq=10)
-                for _ in range(self.dim)
-            ]
+        return tuple(
+            [rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)]
         )
-        return x

@@ -1,6 +1,5 @@
-"""
-Summary
--------
+"""Example problem of deterministic function with noise.
+
 Simulate a synthetic problem with a deterministic objective function
 evaluated with noise.
 """
@@ -17,10 +16,9 @@ from simopt.utils import classproperty
 
 
 class ExampleModel(Model):
-    """
-    A model that is a deterministic function evaluated with noise.
+    """A model that is a deterministic function evaluated with noise.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of model
@@ -35,12 +33,12 @@ class ExampleModel(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Arguments:
     ---------
     fixed_factors : dict
         fixed_factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.Model
     """
@@ -76,6 +74,12 @@ class ExampleModel(Model):
         return {"x": self.check_x}
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the model.
+
+        Args:
+            fixed_factors (dict | None): fixed factors of the model.
+                If None, use default values.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
@@ -84,15 +88,14 @@ class ExampleModel(Model):
         return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Evaluate a deterministic function f(x) with stochastic noise.
+        """Evaluate a deterministic function f(x) with stochastic noise.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -117,10 +120,9 @@ Minimize f(x).
 
 
 class ExampleProblem(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -168,7 +170,7 @@ class ExampleProblem(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -177,7 +179,7 @@ class ExampleProblem(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
     """
@@ -284,6 +286,15 @@ class ExampleProblem(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the problem.
+
+        Args:
+            name (str): user-specified name for problem
+            fixed_factors (dict | None): fixed factors of the problem.
+                If None, use default values.
+            model_fixed_factors (dict | None): fixed factors of the model.
+                If None, use default values.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -293,86 +304,59 @@ class ExampleProblem(Problem):
         )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys.
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {"x": vector[:]}
-        return factor_dict
+        return {"x": vector[:]}
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        """Convert a dictionary with factor keys to a vector of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["x"])
-        return vector
+        return tuple(factor_dict["x"])
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        """Convert a dictionary with response keys to a vector of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         tuple
             vector of objectives
         """
-        objectives = (response_dict["est_f(x)"],)
-        return objectives
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
-
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
+        return (response_dict["est_f(x)"],)
 
     def deterministic_objectives_and_gradients(self, x: tuple) -> tuple:
-        """
-        Compute deterministic components of objectives for a solution `x`.
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         tuple
             vector of deterministic components of objectives
@@ -383,41 +367,15 @@ class ExampleProblem(Problem):
         det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        tuple
-            vector of deterministic components of stochastic constraints
-        tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         bool
             indicates if solution `x` satisfies the deterministic constraints.
@@ -427,25 +385,23 @@ class ExampleProblem(Problem):
         return super().check_deterministic_constraints(x)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         tuple
             vector of decision variables
         """
         # x = tuple([rand_sol_rng.uniform(-2, 2) for _ in range(self.dim)])
-        x = tuple(
+        return tuple(
             rand_sol_rng.mvnormalvariate(
                 mean_vec=[0] * self.dim,
                 cov=np.eye(self.dim),
                 factorized=False,
             )
         )
-        return x

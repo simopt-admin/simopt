@@ -1,10 +1,9 @@
-"""
-Summary
--------
-ADAM
+"""First-order gradient-based optimization of stochastic objective functions.
+
 An algorithm for first-order gradient-based optimization of
 stochastic objective functions, based on adaptive estimates of lower-order moments.
-A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/adam.html>`__.
+A detailed description of the solver can be found
+`here <https://simopt.readthedocs.io/en/latest/adam.html>`__.
 """
 
 from __future__ import annotations
@@ -25,11 +24,12 @@ from simopt.utils import classproperty
 
 
 class ADAM(Solver):
-    """
+    """First-order gradient-based optimization of stochastic objective functions.
+
     An algorithm for first-order gradient-based optimization of
     stochastic objective functions, based on adaptive estimates of lower-order moments.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of solver
@@ -51,14 +51,14 @@ class ADAM(Solver):
     rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
         list of RNGs used for the solver's internal purposes
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
 
-    See also
+    See Also:
     --------
     base.Solver
     """
@@ -93,7 +93,9 @@ class ADAM(Solver):
                 "default": 30,
             },
             "beta_1": {
-                "description": "exponential decay of the rate for the first moment estimates",
+                "description": (
+                    "exponential decay of the rate for the first moment estimates"
+                ),
                 "datatype": float,
                 "default": 0.9,
             },
@@ -131,16 +133,22 @@ class ADAM(Solver):
             "sensitivity": self.check_sensitivity,
         }
 
-    def __init__(
-        self, name: str = "ADAM", fixed_factors: dict | None = None
-    ) -> None:
+    def __init__(self, name: str = "ADAM", fixed_factors: dict | None = None) -> None:
+        """Initialize the ADAM solver.
+
+        Args:
+            name (str, optional): The name of the solver. Defaults to "ADAM".
+            fixed_factors (dict, optional): A dictionary of fixed factors.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
     def check_r(self) -> None:
         if self.factors["r"] <= 0:
             raise ValueError(
-                "The number of replications taken at each solution must be greater than 0."
+                "The number of replications taken at each solution must be greater "
+                "than 0."
             )
 
     def check_beta_1(self) -> None:
@@ -164,17 +172,16 @@ class ADAM(Solver):
             raise ValueError("Sensitivity must be greater than 0.")
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """
-        Run a single macroreplication of a solver on a problem.
+        """Run a single macroreplication of a solver on a problem.
 
-        Arguments
+        Arguments:
         ---------
         problem : Problem object
             simulation-optimization problem to solve
         crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
 
-        Returns
+        Returns:
         -------
         list[Solution]
             list of solutions recommended throughout the budget
@@ -206,7 +213,8 @@ class ADAM(Solver):
         expended_budget += r
         best_solution = new_solution
 
-        # Initialize the first moment vector, the second moment vector, and the timestep.
+        # Initialize the first moment vector, the second moment vector,
+        # and the timestep.
         m = np.zeros(problem.dim)
         v = np.zeros(problem.dim)
         t = 0
@@ -225,12 +233,10 @@ class ADAM(Solver):
             bounds_check = np.subtract(forward, backward)
             if problem.gradient_available:
                 # Use IPA gradient if available.
-                grad = (
-                    -problem.minmax[0]
-                    * new_solution.objectives_gradients_mean[0]
-                )
+                grad = -problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
-                # Use finite difference to estimate gradient if IPA gradient is not available.
+                # Use finite difference to estimate gradient if IPA gradient is
+                # not available.
                 grad = self._finite_diff(new_solution, bounds_check, problem)
                 expended_budget += (
                     2 * problem.dim - np.count_nonzero(bounds_check)
@@ -253,9 +259,9 @@ class ADAM(Solver):
             # Use r simulated observations to estimate the objective value.
             problem.simulate(new_solution, r)
             expended_budget += r
-            if (
-                new_solution.objectives_mean > best_solution.objectives_mean
-            ) ^ (problem.minmax[0] < 0):
+            if (new_solution.objectives_mean > best_solution.objectives_mean) ^ (
+                problem.minmax[0] < 0
+            ):
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
@@ -263,12 +269,14 @@ class ADAM(Solver):
         return recommended_solns, intermediate_budgets
 
     def _finite_diff(
-        self, new_solution: Solution, bounds_check: np.ndarray, problem: Problem
+        self,
+        new_solution: Solution,
+        bounds_check: np.ndarray,
+        problem: Problem,
     ) -> np.ndarray:
-        """
-        Compute the finite difference approximation of the gradient for a given solution.
+        """Compute the finite difference approximation of the gradient for a solution.
 
-        Arguments
+        Arguments:
         ---------
         new_solution : Solution
             The current solution to perturb.
@@ -277,7 +285,7 @@ class ADAM(Solver):
         problem : Problem
             The problem instance providing bounds and function evaluations.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             The approximated gradient of the function at the given solution.
@@ -290,7 +298,6 @@ class ADAM(Solver):
         new_x = np.array(new_solution.x, dtype=float)
 
         function_diff = np.zeros((problem.dim, 3))
-        grad = np.zeros(problem.dim)
 
         # Compute step sizes
         step_size = np.full(problem.dim, alpha)
@@ -319,6 +326,9 @@ class ADAM(Solver):
         x1[forward_mask, :] += function_diff[forward_mask, 2][:, np.newaxis]
         x2[backward_mask, :] -= function_diff[backward_mask, 2][:, np.newaxis]
 
+        # TODO: combine this with the version in ALOE. Test results might need
+        # regenerated since the ALOE algorithm only makes a subset of solutions.
+
         # Simulate perturbed solutions per dimension
         for i in range(problem.dim):
             x1_solution = self.create_new_solution(tuple(x1[:, i]), problem)
@@ -343,6 +353,4 @@ class ADAM(Solver):
         if np.any(backward_mask):
             fn_diff[backward_mask] = fn - function_diff[backward_mask, 1]
 
-        grad = fn_diff / fn_divisor
-
-        return grad
+        return fn_diff / fn_divisor

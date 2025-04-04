@@ -1,7 +1,7 @@
-"""
-Summary
--------
-Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for optimizing systems with multiple unknown parameters.
+"""Simultaneous Perturbation Stochastic Approximation (SPSA) Solver.
+
+Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for
+optimizing systems with multiple unknown parameters.
 """
 
 from __future__ import annotations
@@ -23,10 +23,12 @@ from simopt.utils import classproperty, make_nonzero
 
 
 class SPSA(Solver):
-    """
-    Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for optimizing systems with multiple unknown parameters.
+    """Simultaneous Perturbation Stochastic Approximation (SPSA) Solver.
 
-    Attributes
+    Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for
+    optimizing systems with multiple unknown parameters.
+
+    Attributes:
     ----------
     name : string
         name of solver
@@ -55,7 +57,7 @@ class SPSA(Solver):
     fixed_factors : dict
         fixed_factors of the solver
 
-    See also
+    See Also:
     --------
     base.Solver
     """
@@ -85,7 +87,9 @@ class SPSA(Solver):
                 "default": True,
             },
             "alpha": {
-                "description": "non-negative coefficient in the SPSA gain sequecence ak",
+                "description": (
+                    "non-negative coefficient in the SPSA gain sequecence ak"
+                ),
                 "datatype": float,
                 "default": 0.602,
             },
@@ -95,7 +99,9 @@ class SPSA(Solver):
                 "default": 0.101,
             },
             "step": {
-                "description": "initial desired magnitude of change in the theta elements",
+                "description": (
+                    "initial desired magnitude of change in the theta elements"
+                ),
                 "datatype": float,
                 "default": 0.1,
             },
@@ -110,17 +116,23 @@ class SPSA(Solver):
                 "default": 30,
             },
             "n_loss": {
-                "description": "number of loss function evaluations used in this gain calculation",
+                "description": (
+                    "number of loss function evaluations used in this gain calculation"
+                ),
                 "datatype": int,
                 "default": 2,
             },
             "eval_pct": {
-                "description": "percentage of the expected number of loss evaluations per run",
+                "description": (
+                    "percentage of the expected number of loss evaluations per run"
+                ),
                 "datatype": float,
                 "default": 2 / 3,
             },
             "iter_pct": {
-                "description": "percentage of the maximum expected number of iterations",
+                "description": (
+                    "percentage of the maximum expected number of iterations"
+                ),
                 "datatype": float,
                 "default": 0.1,
             },
@@ -140,9 +152,14 @@ class SPSA(Solver):
             "iter_pct": self.check_iter_pct,
         }
 
-    def __init__(
-        self, name: str = "SPSA", fixed_factors: dict | None = None
-    ) -> None:
+    def __init__(self, name: str = "SPSA", fixed_factors: dict | None = None) -> None:
+        """Initialize the SPSA solver.
+
+        Args:
+            name (str): Name of the solver.
+            fixed_factors (dict, optional): Fixed factors for the solver.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
@@ -165,7 +182,8 @@ class SPSA(Solver):
     def check_n_reps(self) -> None:
         if self.factors["n_reps"] <= 0:
             raise ValueError(
-                "The number of replications taken at each solution must be greater than 0."
+                "The number of replications taken at each solution must be greater "
+                "than 0."
             )
 
     def check_n_loss(self) -> None:
@@ -173,11 +191,11 @@ class SPSA(Solver):
             raise ValueError("n_loss must be greater than 0.")
 
     def check_eval_pct(self) -> None:
-        if 0 >= self.factors["eval_pct"] or self.factors["eval_pct"] > 1:
+        if self.factors["eval_pct"] <= 0 or self.factors["eval_pct"] > 1:
             raise ValueError("eval_pct must be between 0 and 1.")
 
     def check_iter_pct(self) -> None:
-        if 0 >= self.factors["iter_pct"] or self.factors["iter_pct"] > 1:
+        if self.factors["iter_pct"] <= 0 or self.factors["iter_pct"] > 1:
             raise ValueError("iter_pct must be between 0 and 1.")
 
     def check_problem_factors(self) -> bool:
@@ -185,7 +203,8 @@ class SPSA(Solver):
         return self.factors["n_loss"] % (2 * self.factors["gavg"]) == 0
 
     def _gen_simul_pert_vec(self, dim: int) -> NDArray[np.int_]:
-        """
+        """Generate a random perturbation vector.
+
         Generate a new simulatanious pertubation vector with a 50/50 probability
         discrete distribution, with values of -1 and 1. The vector size is the
         problem's dimension. The vector components are independent from each other.
@@ -195,7 +214,7 @@ class SPSA(Solver):
         dim : int
             Length of the vector.
 
-        Returns
+        Returns:
         -------
         NDArray[np.int_]
             A random vector of -1's and 1's.
@@ -204,8 +223,7 @@ class SPSA(Solver):
         return np.array(prob_list)
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """
-        Run a single macroreplication of a solver on a problem.
+        """Run a single macroreplication of a solver on a problem.
 
         Parameters
         ----------
@@ -214,7 +232,7 @@ class SPSA(Solver):
         crn_across_solns : bool
             indicates if CRN are used when simulating different solutions
 
-        Returns
+        Returns:
         -------
         list[Solution]
             list of solutions recommended throughout the budget
@@ -238,7 +256,8 @@ class SPSA(Solver):
         problem.simulate(theta_sol, self.factors["n_reps"])
         expended_budget += self.factors["n_reps"]
 
-        # Determine initial value for the parameters c, a, and A (Aalg) (according to Section III.B of Spall (1998)).
+        # Determine initial value for the parameters c, a, and A (Aalg)
+        # (according to Section III.B of Spall (1998)).
         objective_var = max(theta_sol.objectives_var)
         c: float = max(np.sqrt(objective_var / self.factors["gavg"]), 1e-4)
 
@@ -250,9 +269,7 @@ class SPSA(Solver):
         aalg = self.factors["iter_pct"] * num_evals / (2 * self.factors["gavg"])
         gbar = np.zeros((1, problem.dim))
 
-        for _ in range(
-            int(self.factors["n_loss"] / (2 * self.factors["gavg"]))
-        ):
+        for _ in range(int(self.factors["n_loss"] / (2 * self.factors["gavg"]))):
             ghat = np.zeros((1, problem.dim))
             for _ in range(self.factors["gavg"]):
                 # Generate random direction (delta).
@@ -270,9 +287,7 @@ class SPSA(Solver):
                     lower_bound,
                     upper_bound,
                 )
-                thetaplus_sol = self.create_new_solution(
-                    tuple(theta_forward), problem
-                )
+                thetaplus_sol = self.create_new_solution(tuple(theta_forward), problem)
                 thetaminus_sol = self.create_new_solution(
                     tuple(theta_backward), problem
                 )
@@ -284,24 +299,15 @@ class SPSA(Solver):
                 # (-minmax is needed to cast this as a minimization problem,
                 # but is not essential here because of the absolute value taken.)
                 step_weight_net = step_weight_plus + step_weight_minus
-                step_weight_net = make_nonzero(
-                    step_weight_net, "net_step_weight"
-                )
+                step_weight_net = make_nonzero(step_weight_net, "net_step_weight")
                 theta_mean_diff = (
-                    thetaplus_sol.objectives_mean
-                    - thetaminus_sol.objectives_mean
+                    thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
                 )
-                ghat += (neg_minmax * theta_mean_diff) / (
-                    step_weight_net * c * delta
-                )
+                ghat += (neg_minmax * theta_mean_diff) / (step_weight_net * c * delta)
             gbar += np.abs(ghat / self.factors["gavg"])
 
-        a_leftside = self.factors["step"] * (
-            (aalg + 1) ** self.factors["alpha"]
-        )
-        meangbar = np.mean(gbar) / (
-            self.factors["n_loss"] / (2 * self.factors["gavg"])
-        )
+        a_leftside = self.factors["step"] * ((aalg + 1) ** self.factors["alpha"])
+        meangbar = np.mean(gbar) / (self.factors["n_loss"] / (2 * self.factors["gavg"]))
         meangbar = make_nonzero(meangbar, "meangbar")
         a = a_leftside / meangbar
         # Run the main algorithm.
@@ -325,12 +331,8 @@ class SPSA(Solver):
             theta_backward, step_weight_minus = _check_cons(
                 theta_backward, theta, lower_bound, upper_bound
             )
-            thetaplus_sol = self.create_new_solution(
-                tuple(theta_forward), problem
-            )
-            thetaminus_sol = self.create_new_solution(
-                tuple(theta_backward), problem
-            )
+            thetaplus_sol = self.create_new_solution(tuple(theta_forward), problem)
+            thetaminus_sol = self.create_new_solution(tuple(theta_backward), problem)
             # Evaluate two points and update budget spent.
             problem.simulate(thetaplus_sol, self.factors["n_reps"])
             problem.simulate(thetaminus_sol, self.factors["n_reps"])
@@ -345,7 +347,8 @@ class SPSA(Solver):
             if best_solution_value is None:
                 # Record data from the initial solution.
                 best_solution_value = solution_value
-            # Check if new solution is better than the best recorded and update accordingly.
+            # Check if new solution is better than the best recorded and update
+            # accordingly.
             if solution_value < best_solution_value:
                 best_solution_value = solution_value
                 # Record data from the new best solution.
@@ -355,9 +358,7 @@ class SPSA(Solver):
             theta_mean_diff = (
                 thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
             )
-            ghat = (neg_minmax * theta_mean_diff * delta) / (
-                step_weight_net * c
-            )
+            ghat = (neg_minmax * theta_mean_diff * delta) / (step_weight_net * c)
             # Take step and check feasibility.
             theta_next = theta - (ak * ghat)
             theta, _ = _check_cons(theta_next, theta, lower_bound, upper_bound)
@@ -371,9 +372,14 @@ def _check_cons(
     lower_bound: np.ndarray,
     upper_bound: np.ndarray,
 ) -> tuple[np.ndarray, float]:
-    """Evaluates the distance from the new vector (candiate_x) compared to the current vector (new_x) respecting the vector's boundaries of feasibility.
-    Returns the evaluated vector (modified_x) and the weight (t2 - how much of a full step took) of the new vector.
-    The weight (t2) is used to calculate the weigthed average in the ftheta calculation."""
+    """Checks the feasibility of a new solution.
+
+    Evaluates the distance from the new vector (candiate_x) compared to the current
+    vector (new_x) respecting the vector's boundaries of feasibility.
+    Returns the evaluated vector (modified_x) and the weight
+    (t2 - how much of a full step took) of the new vector.
+    The weight (t2) is used to calculate the weigthed average in the ftheta calculation.
+    """
     # Compute step direction
     current_step = candidate_x - new_x
 

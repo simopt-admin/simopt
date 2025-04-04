@@ -1,6 +1,5 @@
-"""
-Summary
--------
+"""Iron Ore Inventory Problem.
+
 Simulate multiple periods of production and sales for an iron ore inventory problem.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/ironore.html>`__.
@@ -23,13 +22,14 @@ from simopt.utils import classproperty
 
 
 class IronOre(Model):
-    """
+    """Iron Ore Inventory Model.
+
     A model that simulates multiple periods of production and sales for an
     inventory problem with stochastic price determined by a mean-reverting
     random walk. Returns total profit, fraction of days producing iron, and
     mean stock.
 
-    Attributes
+    Attributes:
     ----------
     name : str
         name of model
@@ -44,12 +44,12 @@ class IronOre(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Arguments:
     ----------
     fixed_factors : dict
         fixed_factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.Model
     """
@@ -152,15 +152,19 @@ class IronOre(Model):
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the Iron Ore Inventory Model.
+
+        Args:
+            fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
     def check_mean_price(self) -> bool:
         if self.factors["mean_price"] <= 0:
-            raise ValueError(
-                "Mean iron ore price per unit must be greater than 0."
-            )
+            raise ValueError("Mean iron ore price per unit must be greater than 0.")
         return True
 
     def check_max_price(self) -> None:
@@ -216,20 +220,20 @@ class IronOre(Model):
             self.factors["mean_price"] > self.factors["max_price"]
         ):
             raise ValueError(
-                "mean_price must be greater than or equal to min_price and less than or equal to max_price."
+                "mean_price must be greater than or equal to min_price and less than "
+                "or equal to max_price."
             )
         return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -326,9 +330,7 @@ class IronOre(Model):
             "mean_stock": np.mean(stock),
         }
         gradients = {
-            response_key: {
-                factor_key: np.nan for factor_key in self.specifications
-            }
+            response_key: dict.fromkeys(self.specifications, np.nan)
             for response_key in responses
         }
         return responses, gradients
@@ -342,10 +344,9 @@ Maximize the expected total profit for iron ore inventory system.
 
 
 class IronOreMaxRev(Problem):
-    """
-    Class to make iron ore inventory simulation-optimization problems.
+    """Class to make iron ore inventory simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : str
         name of problem
@@ -389,7 +390,7 @@ class IronOreMaxRev(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name of problem
@@ -398,7 +399,7 @@ class IronOreMaxRev(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
     """
@@ -492,6 +493,15 @@ class IronOreMaxRev(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the Iron Ore Inventory Problem.
+
+        Args:
+            name (str, optional): Name of the problem. Defaults to "IRONORE-1".
+            fixed_factors (dict, optional): Fixed factors for the problem.
+                Defaults to None.
+            model_fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -501,98 +511,69 @@ class IronOreMaxRev(Problem):
         )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys.
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dict
             dictionary with factor keys and associated values
         """
-        factor_dict = {
+        return {
             "price_prod": vector[0],
             "inven_stop": vector[1],
             "price_stop": vector[2],
             "price_sell": vector[3],
         }
-        return factor_dict
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        """Convert a dictionary with factor keys to a vector of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dict
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (
+        return (
             factor_dict["price_prod"],
             factor_dict["inven_stop"],
             factor_dict["price_stop"],
             factor_dict["price_sell"],
         )
-        return vector
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        """Convert a dictionary with response keys to a vector of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dict
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["total_profit"],)
-        return objectives
+        return (response_dict["total_profit"],)
 
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
@@ -603,85 +584,62 @@ class IronOreMaxRev(Problem):
         det_objectives_gradients = ((0, 0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
         # Check box constraints.
-        box_feasible = super().check_deterministic_constraints(x)
-        return box_feasible
+        return super().check_deterministic_constraints(x)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
-        x : tuple
+        tuple
             vector of decision variables
         """
-        # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
-        x = (
+        # return (
+        #     rand_sol_rng.randint(70, 90),
+        #     rand_sol_rng.randint(2000, 8000),
+        #     rand_sol_rng.randint(30, 50),
+        #     rand_sol_rng.randint(90, 110),
+        # )
+        return (
             rand_sol_rng.lognormalvariate(10, 200),
             rand_sol_rng.lognormalvariate(1000, 10000),
             rand_sol_rng.lognormalvariate(10, 200),
             rand_sol_rng.lognormalvariate(10, 200),
         )
-        return x
 
 
+# TODO: figure out why this summary block is in the middle of the file
 """
 Summary
 -------
-Continuous version of the Maximization of the expected total profit for iron ore inventory system (removing the inven_stop from decision variables).
+Continuous version of the Maximization of the expected total profit for iron ore 
+inventory system (removing the inven_stop from decision variables).
 """
 
 
 class IronOreMaxRevCnt(Problem):
-    """
-    Class to make iron ore inventory simulation-optimization problems.
+    """Class to make iron ore inventory simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : str
         name of problem
@@ -725,7 +683,7 @@ class IronOreMaxRevCnt(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name of problem
@@ -734,7 +692,7 @@ class IronOreMaxRevCnt(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
     """
@@ -827,6 +785,15 @@ class IronOreMaxRevCnt(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the Iron Ore Inventory Problem.
+
+        Args:
+            name (str, optional): Name of the problem. Defaults to "IRONORECONT-1".
+            fixed_factors (dict, optional): Fixed factors for the problem.
+                Defaults to None.
+            model_fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -836,96 +803,67 @@ class IronOreMaxRevCnt(Problem):
         )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys.
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dict
             dictionary with factor keys and associated values
         """
-        factor_dict = {
+        return {
             "price_prod": vector[0],
             "price_stop": vector[1],
             "price_sell": vector[2],
         }
-        return factor_dict
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        """Convert a dictionary with factor keys to a vector of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dict
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = (
+        return (
             factor_dict["price_prod"],
             factor_dict["price_stop"],
             factor_dict["price_sell"],
         )
-        return vector
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        """Convert a dictionary with response keys to a vector of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dict
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["total_profit"],)
-        return objectives
+        return (response_dict["total_profit"],)
 
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
@@ -936,41 +874,15 @@ class IronOreMaxRevCnt(Problem):
         det_objectives_gradients = ((0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
@@ -978,24 +890,26 @@ class IronOreMaxRevCnt(Problem):
         return x[0] >= 0 and x[1] >= 0 and x[2] >= 0
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
         """
-        # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
+        # return (
+        #     rand_sol_rng.randint(70, 90),
+        #     rand_sol_rng.randint(30, 50),
+        #     rand_sol_rng.randint(90, 110),
+        # )
 
-        x = (
+        return (
             rand_sol_rng.lognormalvariate(10, 1000),
             rand_sol_rng.lognormalvariate(10, 1000),
             rand_sol_rng.lognormalvariate(10, 1000),
         )
-        return x

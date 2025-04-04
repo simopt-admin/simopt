@@ -1,6 +1,5 @@
-"""
-Summary
--------
+"""Dynamic Newsvendor Problem.
+
 Simulate a day's worth of sales for a newsvendor under dynamic consumer substitution.
 A detailed description of the model/problem can be found
 `here <https://simopt.readthedocs.io/en/latest/dynamnews.html>`__.
@@ -20,12 +19,13 @@ NUM_PRODUCTS: Final[int] = 10
 
 
 class DynamNews(Model):
-    """
+    """Dynamic Newsvendor Model.
+
     A model that simulates a day's worth of sales for a newsvendor
     with dynamic consumer substitution. Returns the profit and the
     number of products that stock out.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of model
@@ -40,12 +40,12 @@ class DynamNews(Model):
     check_factor_list : dict
         switch case for checking factor simulatability
 
-    Arguments
+    Arguments:
     ---------
     fixed_factors : dict
         fixed_factors of the simulation model
 
-    See also
+    See Also:
     --------
     base.Model
     """
@@ -115,6 +115,12 @@ class DynamNews(Model):
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the model.
+
+        Args:
+            fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
@@ -128,16 +134,15 @@ class DynamNews(Model):
 
     def check_c_utility(self) -> None:
         if len(self.factors["c_utility"]) != self.factors["num_prod"]:
-            raise ValueError(
-                "The length of c_utility must be equal to num_prod."
-            )
+            raise ValueError("The length of c_utility must be equal to num_prod.")
 
     def check_init_level(self) -> None:
         if any(np.array(self.factors["init_level"]) < 0) or (
             len(self.factors["init_level"]) != self.factors["num_prod"]
         ):
             raise ValueError(
-                "The length of init_level must be equal to num_prod and every element in init_level must be greater than or equal to zero."
+                "The length of init_level must be equal to num_prod and every element "
+                "in init_level must be greater than or equal to zero."
             )
 
     def check_mu(self) -> None:
@@ -149,7 +154,8 @@ class DynamNews(Model):
             len(self.factors["price"]) != self.factors["num_prod"]
         ):
             raise ValueError(
-                "The length of price must be equal to num_prod and every element in price must be greater than or equal to zero."
+                "The length of price must be equal to num_prod and every element in "
+                "price must be greater than or equal to zero."
             )
 
     def check_cost(self) -> None:
@@ -157,26 +163,27 @@ class DynamNews(Model):
             len(self.factors["cost"]) != self.factors["num_prod"]
         ):
             raise ValueError(
-                "The length of cost must be equal to num_prod and every element in cost must be greater than or equal to 0."
+                "The length of cost must be equal to num_prod and every element in "
+                "cost must be greater than or equal to 0."
             )
 
     def check_simulatable_factors(self) -> bool:
         if any(np.subtract(self.factors["price"], self.factors["cost"]) < 0):
             raise ValueError(
-                "Each element in price must be greater than its corresponding element in cost."
+                "Each element in price must be greater than its corresponding element "
+                "in cost."
             )
         return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication for the current model factors.
 
-        Arguments
+        Arguments:
         ---------
         rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
             rngs for model to use when simulating a replication
 
-        Returns
+        Returns:
         -------
         responses : dict
             performance measures of interest
@@ -251,9 +258,7 @@ class DynamNews(Model):
             "fill_rate": order_fill_rate,
         }
         gradients = {
-            response_key: {
-                factor_key: np.nan for factor_key in self.specifications
-            }
+            response_key: dict.fromkeys(self.specifications, np.nan)
             for response_key in responses
         }
         return responses, gradients
@@ -267,10 +272,9 @@ Maximize the expected profit for the continuous newsvendor problem.
 
 
 class DynamNewsMaxProfit(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems.
 
-    Attributes
+    Attributes:
     ----------
     name : string
         name of problem
@@ -318,7 +322,7 @@ class DynamNewsMaxProfit(Problem):
     specifications : dict
         details of each factor (for GUI, data validation, and defaults)
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for problem
@@ -327,7 +331,7 @@ class DynamNewsMaxProfit(Problem):
     model_fixed factors : dict
         subset of user-specified non-decision factors to pass through to the model
 
-    See also
+    See Also:
     --------
     base.Problem
     """
@@ -421,6 +425,15 @@ class DynamNewsMaxProfit(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the problem.
+
+        Args:
+            name (str, optional): Name of the problem. Defaults to "DYNAMNEWS-1".
+            fixed_factors (dict, optional): Fixed factors for the problem.
+                Defaults to None.
+            model_fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -430,86 +443,59 @@ class DynamNewsMaxProfit(Problem):
         )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        """Convert a vector of variables to a dictionary with factor keys.
 
-        Arguments
+        Arguments:
         ---------
         vector : tuple
             vector of values associated with decision variables
 
-        Returns
+        Returns:
         -------
         factor_dict : dictionary
             dictionary with factor keys and associated values
         """
-        factor_dict = {"init_level": vector[:]}
-        return factor_dict
+        return {"init_level": vector[:]}
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        """Convert a dictionary with factor keys to a vector of variables.
 
-        Arguments
+        Arguments:
         ---------
         factor_dict : dictionary
             dictionary with factor keys and associated values
 
-        Returns
+        Returns:
         -------
         vector : tuple
             vector of values associated with decision variables
         """
-        vector = tuple(factor_dict["init_level"])
-        return vector
+        return tuple(factor_dict["init_level"])
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        """Convert a dictionary with response keys to a vector of objectives.
 
-        Arguments
+        Arguments:
         ---------
         response_dict : dictionary
             dictionary with response keys and associated values
 
-        Returns
+        Returns:
         -------
         objectives : tuple
             vector of objectives
         """
-        objectives = (response_dict["profit"],)
-        return objectives
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
-
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
+        return (response_dict["profit"],)
 
     def deterministic_objectives_and_gradients(self, x: tuple) -> tuple:
-        """
-        Compute deterministic components of objectives for a solution `x`.
+        """Compute deterministic components of objectives for a solution `x`.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         det_objectives : tuple
             vector of deterministic components of objectives
@@ -520,41 +506,15 @@ class DynamNewsMaxProfit(Problem):
         det_objectives_gradients = ((0,),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
+        """Check if a solution `x` satisfies the problem's deterministic constraints.
 
-        Arguments
+        Arguments:
         ---------
         x : tuple
             vector of decision variables
 
-        Returns
+        Returns:
         -------
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
@@ -563,18 +523,16 @@ class DynamNewsMaxProfit(Problem):
         return all(greater_than_zero)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
+        """Generate a random solution for starting or restarting solvers.
 
-        Arguments
+        Arguments:
         ---------
         rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
             random-number generator used to sample a new random solution
 
-        Returns
+        Returns:
         -------
         x : tuple
             vector of decision variables
         """
-        x = tuple([rand_sol_rng.uniform(0, 10) for _ in range(self.dim)])
-        return x
+        return tuple([rand_sol_rng.uniform(0, 10) for _ in range(self.dim)])

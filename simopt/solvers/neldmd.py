@@ -1,10 +1,8 @@
-"""
-Summary
--------
-Nelder-Mead: An algorithm that maintains a simplex of points that moves around the feasible
-region according to certain geometric operations: reflection, expansion,
-contraction, and shrinking.
-A detailed description of the solver can be found
+"""Nelder-Mead Algorithm.
+
+Nelder-Mead: An algorithm that maintains a simplex of points that moves around the
+feasible region according to certain geometric operations: reflection, expansion,
+contraction, and shrinking. A detailed description of the solver can be found
 `here <https://simopt.readthedocs.io/en/latest/neldmd.html>`__.
 """
 
@@ -27,11 +25,13 @@ from simopt.utils import classproperty
 
 
 class NelderMead(Solver):
-    """The Nelder-Mead algorithm, which maintains a simplex of points that moves around the feasible
-    region according to certain geometric operations: reflection, expansion,
-    contraction, and shrinking.
+    """Nelder-Mead Algorithm.
 
-    Attributes
+    The Nelder-Mead algorithm, which maintains a simplex of points that moves around
+    the feasible region according to certain geometric operations: reflection,
+    expansion, contraction, and shrinking.
+
+    Attributes:
     ----------
     name : string
         name of solver
@@ -53,14 +53,14 @@ class NelderMead(Solver):
     rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
         list of RNGs used for the solver's internal purposes
 
-    Arguments
+    Arguments:
     ---------
     name : str
         user-specified name for solver
     fixed_factors : dict
         fixed_factors of the solver
 
-    See also
+    See Also:
     --------
     base.Solver
     """
@@ -128,7 +128,10 @@ class NelderMead(Solver):
                 "default": 10 ** (-7),
             },
             "initial_spread": {
-                "description": "fraction of the distance between bounds used to select initial points",
+                "description": (
+                    "fraction of the distance between bounds used to select initial "
+                    "points"
+                ),
                 "datatype": float,
                 "default": 1 / 10,
             },
@@ -147,16 +150,22 @@ class NelderMead(Solver):
             "initial_spread": self.check_initial_spread,
         }
 
-    def __init__(
-        self, name: str = "NELDMD", fixed_factors: dict | None = None
-    ) -> None:
+    def __init__(self, name: str = "NELDMD", fixed_factors: dict | None = None) -> None:
+        """Initialize the Nelder-Mead solver.
+
+        Args:
+            name (str): Name of the solver.
+            fixed_factors (dict, optional): Fixed factors for the solver.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
     def check_r(self) -> None:
         if self.factors["r"] <= 0:
             raise ValueError(
-                "The number of replications taken at each solution must be greater than 0."
+                "The number of replications taken at each solution must be greater "
+                "than 0."
             )
 
     def check_alpha(self) -> None:
@@ -184,15 +193,14 @@ class NelderMead(Solver):
             raise ValueError("Initial spread must be greater than 0.")
 
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """
-        Run a single macroreplication of a solver on a problem.
+        """Run a single macroreplication of a solver on a problem.
 
-        Arguments
+        Arguments:
         ---------
         problem : Problem object
             simulation-optimization problem to solve
 
-        Returns
+        Returns:
         -------
         list[Solution]
             list of solutions recommended throughout the budget
@@ -205,24 +213,18 @@ class NelderMead(Solver):
 
         # Check for sufficiently large budget.
         if problem.factors["budget"] < self.factors["r"] * n_pts:
-            err_msg = (
-                "Budget is too small for a good quality run of Nelder-Mead."
-            )
+            err_msg = "Budget is too small for a good quality run of Nelder-Mead."
             raise ValueError(err_msg)
 
         # Shrink variable bounds to avoid floating errors.
-        if problem.lower_bounds and not np.all(
-            np.isneginf(problem.lower_bounds)
-        ):
+        if problem.lower_bounds and not np.all(np.isneginf(problem.lower_bounds)):
             self.lower_bounds = (
                 np.array(problem.lower_bounds) + self.factors["sensitivity"]
             )
         else:
             self.lower_bounds = None
 
-        if problem.upper_bounds and not np.all(
-            np.isposinf(problem.upper_bounds)
-        ):
+        if problem.upper_bounds and not np.all(np.isposinf(problem.upper_bounds)):
             self.upper_bounds = (
                 np.array(problem.upper_bounds) - self.factors["sensitivity"]
             )
@@ -230,11 +232,7 @@ class NelderMead(Solver):
             self.upper_bounds = None
 
         # Initial dim + 1 points.
-        sol = [
-            self.create_new_solution(
-                problem.factors["initial_solution"], problem
-            )
-        ]
+        sol = [self.create_new_solution(problem.factors["initial_solution"], problem)]
 
         if self.lower_bounds is None or self.upper_bounds is None:
             sol.extend(
@@ -318,9 +316,7 @@ class NelderMead(Solver):
                     )
                     p_new = self._check_const(p_new, sol_0_x)
                     p_new = Solution(p_new, problem)
-                    p_new.attach_rngs(
-                        rng_list=self.solution_progenitor_rngs, copy=True
-                    )
+                    p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                     problem.simulate(p_new, r)
                     budget_spent += r
 
@@ -333,9 +329,7 @@ class NelderMead(Solver):
             # Evaluate reflected point.
             p_refl = tuple(p_refl.tolist())
             p_refl = Solution(p_refl, problem)
-            p_refl.attach_rngs(
-                rng_list=self.solution_progenitor_rngs, copy=True
-            )
+            p_refl.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
             problem.simulate(p_refl, r)
             budget_spent += r
             np_minmax = np.array(problem.minmax)
@@ -365,9 +359,7 @@ class NelderMead(Solver):
 
                 # Evaluate expansion point.
                 p_exp = Solution(p_exp, problem)
-                p_exp.attach_rngs(
-                    rng_list=self.solution_progenitor_rngs, copy=True
-                )
+                p_exp.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 problem.simulate(p_exp, r)
                 budget_spent += r
                 exp_fn_val = inv_minmax * p_exp.objectives_mean
@@ -381,9 +373,7 @@ class NelderMead(Solver):
                 # Record data if within budget.
                 if budget_spent <= problem.factors["budget"]:
                     intermediate_budgets.append(budget_spent)
-                    recommended_solns.append(
-                        p_exp if exp_fn_val < fn_low else p_refl
-                    )
+                    recommended_solns.append(p_exp if exp_fn_val < fn_low else p_refl)
 
             # Check if accept contraction or shrink.
             elif refl_fn_val > fn_sec:
@@ -400,9 +390,7 @@ class NelderMead(Solver):
 
                 # Evaluate contraction point.
                 p_cont = Solution(p_cont, problem)
-                p_cont.attach_rngs(
-                    rng_list=self.solution_progenitor_rngs, copy=True
-                )
+                p_cont.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 problem.simulate(p_cont, r)
                 budget_spent += r
                 cont_fn_val = inv_minmax * p_cont.objectives_mean
@@ -415,11 +403,13 @@ class NelderMead(Solver):
                     sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                     # Check if contraction point is new best.
-                    if cont_fn_val < fn_low:
+                    if (
+                        cont_fn_val < fn_low
+                        and budget_spent <= problem.factors["budget"]
+                    ):
                         # Record data from contraction point (new best).
-                        if budget_spent <= problem.factors["budget"]:
-                            intermediate_budgets.append(budget_spent)
-                            recommended_solns.append(p_cont)
+                        intermediate_budgets.append(budget_spent)
+                        recommended_solns.append(p_cont)
                 # Contraction fails -> simplex shrinks by delta with p_low fixed.
                 else:
                     # Set pre-loop variables
@@ -452,10 +442,7 @@ class NelderMead(Solver):
                     sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                     # Record data if there is a new best solution in the contraction.
-                    if (
-                        is_new_best
-                        and budget_spent <= problem.factors["budget"]
-                    ):
+                    if is_new_best and budget_spent <= problem.factors["budget"]:
                         intermediate_budgets.append(budget_spent)
                         recommended_solns.append(sort_sol[0])
 
@@ -464,41 +451,35 @@ class NelderMead(Solver):
     def _sort_and_end_update(
         self, problem: Problem, sol: Iterable[Solution]
     ) -> list[Solution]:
-        """
-        Sorts solutions based on their objectives while considering the problem's min/max direction.
+        """Sort solutions by objective values, accounting for minimization/maximization.
 
-        Arguments
-        ---------
-        problem : Problem
-            The simulation-optimization problem containing the objective direction (min/max).
-        sol : Iterable[Solution]
-            Iterable of solutions to be sorted.
+        Args:
+            problem (Problem): The simulation-optimization problem defining the
+                objective direction (minimize or maximize).
+            sol (Iterable[Solution]): An iterable of solutions to be sorted.
 
-        Returns
-        -------
-        list[Solution]
-            The sorted list of solutions.
+        Returns:
+            list[Solution]: A list of solutions sorted according to their
+                objective values.
         """
         minmax_array = np.array(problem.minmax)
-        sort_sol = sorted(
+        return sorted(
             sol,
             key=lambda s: np.dot(minmax_array, s.objectives_mean),
             reverse=True,
         )
-        return sort_sol
 
     def _check_const(
         self, new_point: Iterable[float], reference_point: Iterable[float]
     ) -> tuple:
-        """
-        Adjust a point to ensure it remains within the specified bounds.
+        """Adjust a point to ensure it remains within the specified bounds.
 
         new_point : Iterable[float]
             The proposed new point to be checked and adjusted if necessary.
         reference_point : Iterable[float]
             The original reference point used to compute movement direction.
 
-        Returns
+        Returns:
         -------
         tuple
             The modified point that adheres to the given bounds.
@@ -517,8 +498,7 @@ class NelderMead(Solver):
                 tmin = min(
                     tmin,
                     np.min(
-                        (self.upper_bounds[mask] - reference_point[mask])
-                        / step[mask]
+                        (self.upper_bounds[mask] - reference_point[mask]) / step[mask]
                     ),
                 )
 
@@ -528,8 +508,7 @@ class NelderMead(Solver):
                 tmin = min(
                     tmin,
                     np.min(
-                        (self.lower_bounds[mask] - reference_point[mask])
-                        / step[mask]
+                        (self.lower_bounds[mask] - reference_point[mask]) / step[mask]
                     ),
                 )
 
@@ -539,6 +518,4 @@ class NelderMead(Solver):
         # Remove rounding errors
         adjusted_point[np.abs(adjusted_point) < self.factors["sensitivity"]] = 0
 
-        adjusted_point_tuple = tuple(adjusted_point.tolist())
-
-        return adjusted_point_tuple
+        return tuple(adjusted_point.tolist())
