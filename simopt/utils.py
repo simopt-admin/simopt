@@ -1,3 +1,5 @@
+"""Utility functions for simopt."""
+
 from typing import Callable, Generic, Optional, TypeVar
 
 T = TypeVar("T", bound=type)
@@ -5,23 +7,47 @@ R = TypeVar("R")
 
 
 class ClassPropertyDescriptor(Generic[T, R]):
+    """Descriptor for class properties."""
+
     def __init__(self, fget: Callable[[type[T]], R]) -> None:
+        """Initialize the descriptor.
+
+        Args:
+            fget (Callable[[type[T]], R]): The function to get the class property.
+        """
         self.fget = fget
 
     def __get__(self, instance: Optional[object], owner: type[T]) -> R:
+        """Get the class property.
+
+        Args:
+            instance (Optional[object]): The instance of the class.
+            owner (type[T]): The class itself.
+
+        Returns:
+            R: The value of the class property.
+        """
         return self.fget(owner)
 
 
 def classproperty(
     func: Callable[[type[T]], R],
 ) -> ClassPropertyDescriptor[T, R]:
+    """Decorator to define a class property.
+
+    Args:
+        func (Callable[[type[T]], R]): The function to be decorated.
+
+    Returns:
+        ClassPropertyDescriptor[T, R]: The class property descriptor.
+    """
     return ClassPropertyDescriptor(func)
 
 
 def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> float:
     """Return a non-zero value to avoid division by zero.
 
-    Arguments
+    Arguments:
     ---------
     value : float
         The value to check.
@@ -30,7 +56,7 @@ def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> float:
     epsilon : float, optional (default=1e-15)
         The value to use if the original value is zero.
 
-    Returns
+    Returns:
     -------
     float
         The original value if it's not close to zero, otherwise a non-zero value.
