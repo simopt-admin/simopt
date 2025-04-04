@@ -1,0 +1,25 @@
+# ruff.toml
+line-length = 80
+select = [
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "B",
+    "N",
+    "UP",
+    "ANN0",
+    "ANN2",
+    "ANN4",
+    "ASYNC",
+    "A",
+    "RUF",
+    "NPY201",
+    "I",
+]
+
+[lint.isort]
+known-first-party = ["simopt", "mrg32k3a"]
+
+[lint.pep8-naming]
+classmethod-decorators = ["classproperty"]
