@@ -1,8 +1,5 @@
 """Create test cases for all compatible problem-solver pairs."""
 
-# TO RUN FROM TOP DIRECTORY:
-# python -m dev_tools.generate_experiment_results
-
 import os
 from pathlib import Path
 
@@ -15,27 +12,23 @@ NUM_MACROREPS = 10
 NUM_POSTREPS = 100
 
 # Constants for the test directory
-
-HOME_DIR = (Path(__file__).parent / "..").resolve()
+HOME_DIR = Path(__file__).resolve().parent.parent
 EXPECTED_RESULTS_DIR = HOME_DIR / "test" / "expected_results"
+
+# Change the working directory to the parent directory of this script
+os.chdir(HOME_DIR)
 
 
 # Based off the similar function in simopt/experiment_base.py
 def is_compatible(problem_name: str, solver_name: str) -> bool:
     """Check if a solver is compatible with a problem.
 
-    Parameters
-    ----------
-    problem_name : str
-        Name of the problem.
-    solver_name : str
-        Name of the solver.
+    Args:
+        problem_name (str): Name of the problem.
+        solver_name (str): Name of the solver.
 
-    Returns
-    -------
-    bool
-        True if the solver is compatible with the problem, False otherwise.
-
+    Returns:
+        bool: Whether the solver is compatible with the problem.
     """
     # Create a ProblemSolver object
     myexperiment = ProblemSolver(solver_name, problem_name)
@@ -47,13 +40,9 @@ def is_compatible(problem_name: str, solver_name: str) -> bool:
 def create_test(problem_name: str, solver_name: str) -> None:
     """Create a test case for a problem and solver.
 
-    Parameters
-    ----------
-    problem_name : str
-        Name of the problem.
-    solver_name : str
-        Name of the solver.
-
+    Args:
+        problem_name (str): Name of the problem.
+        solver_name (str): Name of the solver.
     """
     # Run the experiment to get the expected results
     myexperiment = ProblemSolver(solver_name, problem_name)
@@ -92,7 +81,7 @@ def create_test(problem_name: str, solver_name: str) -> None:
     results_filename = f"{file_problem_name}_{file_solver_name}.yaml"
     results_filepath = EXPECTED_RESULTS_DIR / results_filename
     # Write the results to the file
-    with open(results_filepath, "w") as f:
+    with Path.open(results_filepath, "w") as f:
         yaml.dump(results_dict, f)
 
 
@@ -108,7 +97,7 @@ def main() -> None:
 
     # Create the test directory if it doesn't exist
     # Create the expected directory if it doesn't exist
-    os.makedirs(EXPECTED_RESULTS_DIR, exist_ok=True)
+    Path.mkdir(EXPECTED_RESULTS_DIR, parents=True, exist_ok=True)
     existing_results = os.listdir(EXPECTED_RESULTS_DIR)
 
     # Don't generate any tests for pairs that already have tests generated
