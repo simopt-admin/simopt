@@ -206,13 +206,12 @@ class FixedSAN(Model):
             }
             for response_key in responses
         }
-        for i, factor_key in enumerate(self.specifications):
-            # Gradient for each factor
-            gradients["longest_path_length"][factor_key][i] = longest_path_gradient[i]
+        gradients["longest_path_length"]["arc_means"] = longest_path_gradient
 
         return responses, gradients
 
 
+# TODO: figure out why this docstring is in the middle of the file
 """
 Summary
 -------
@@ -398,12 +397,10 @@ class FixedSANLongestPath(Problem):
         )
 
     def check_arc_costs(self) -> bool:
-        positive = True
-        for x in list(self.factors["arc_costs"]):
-            positive = positive and x > 0
-        return (
-            len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]
-        ) and positive
+        """Check if all arc costs are positive and match the number of arcs."""
+        return len(self.factors["arc_costs"]) == self.model.factors["num_arcs"] and all(
+            x > 0 for x in self.factors["arc_costs"]
+        )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """Convert a vector of variables to a dictionary with factor keys.
@@ -498,8 +495,7 @@ class FixedSANLongestPath(Problem):
         satisfies : bool
             indicates if solution `x` satisfies the deterministic constraints.
         """
-        is_positive: list[bool] = [x_i >= 0 for x_i in x]
-        return all(is_positive)
+        return all(x_i >= 0 for x_i in x)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         """Generate a random solution for starting or restarting solvers.
