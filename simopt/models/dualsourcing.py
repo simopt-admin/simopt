@@ -560,7 +560,7 @@ class DualSourcingMinCost(Problem):
             + response_dict["average_holding_cost"],
         )
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         """Compute deterministic components of objectives for a solution `x`.
 
         Arguments:

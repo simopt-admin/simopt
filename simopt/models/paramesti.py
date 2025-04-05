@@ -380,7 +380,7 @@ class ParamEstiMaxLogLik(Problem):
         """
         return (response_dict["loglik"],)
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         """Compute deterministic components of objectives for a solution `x`.
 
         Arguments:
@@ -399,7 +399,7 @@ class ParamEstiMaxLogLik(Problem):
         det_objectives_gradients = ((0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, _x: tuple) -> bool:
         """Check if a solution `x` satisfies the problem's deterministic constraints.
 
         Arguments:

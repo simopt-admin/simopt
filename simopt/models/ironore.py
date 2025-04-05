@@ -565,7 +565,7 @@ class IronOreMaxRev(Problem):
         """
         return (response_dict["total_profit"],)
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         """Compute deterministic components of objectives for a solution `x`.
 
         Arguments:
@@ -855,7 +855,7 @@ class IronOreMaxRevCnt(Problem):
         """
         return (response_dict["total_profit"],)
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         """Compute deterministic components of objectives for a solution `x`.
 
         Arguments:

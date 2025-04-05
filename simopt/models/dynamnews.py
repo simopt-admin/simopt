@@ -487,7 +487,7 @@ class DynamNewsMaxProfit(Problem):
         """
         return (response_dict["profit"],)
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple:
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple:
         """Compute deterministic components of objectives for a solution `x`.
 
         Arguments:

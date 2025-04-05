@@ -284,7 +284,7 @@ class ExampleProblem(Problem):
         self,
         name: str = "EXAMPLE-1",
         fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,  # noqa: ARG002
     ) -> None:
         """Initialize the problem.
 
@@ -296,6 +296,7 @@ class ExampleProblem(Problem):
                 If None, use default values.
         """
         # Let the base class handle default arguments.
+        # TODO: check if model_fixed_factors should be passed to the model
         super().__init__(
             name=name,
             fixed_factors=fixed_factors,
@@ -348,7 +349,7 @@ class ExampleProblem(Problem):
         """
         return (response_dict["est_f(x)"],)
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple:
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple:
         """Compute deterministic components of objectives for a solution `x`.
 
         Arguments:

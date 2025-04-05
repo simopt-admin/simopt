@@ -590,7 +590,7 @@ class STRONG(Solver):
         # If new_x is a tuple, convert it to a numpy array
         if isinstance(new_x, tuple):
             new_x = np.array(new_x)
-        current_step = candidate_x_arr - new_x
+        current_step: np.ndarray = candidate_x_arr - new_x
         lower_bound_arr = np.array(lower_bound)
         upper_bound_arr = np.array(upper_bound)
         # The current step.
@@ -601,13 +601,13 @@ class STRONG(Solver):
             step_diff = (upper_bound_arr[pos_mask] - new_x[pos_mask]) / current_step[
                 pos_mask
             ]
-            min_step = min(min_step, np.min(step_diff))
+            min_step = min(min_step, float(np.min(step_diff)))
         neg_mask = current_step < 0
         if np.any(neg_mask):
             step_diff = (lower_bound_arr[neg_mask] - new_x[neg_mask]) / current_step[
                 neg_mask
             ]
-            min_step = min(min_step, np.min(step_diff))
+            min_step = min(min_step, float(np.min(step_diff)))
         # Calculate the modified x.
         return new_x + min_step * current_step
 

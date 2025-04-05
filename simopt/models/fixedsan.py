@@ -206,7 +206,9 @@ class FixedSAN(Model):
             }
             for response_key in responses
         }
-        gradients["longest_path_length"]["arc_means"] = longest_path_gradient
+        for i, factor_key in enumerate(self.specifications):
+            # Gradient for each factor
+            gradients["longest_path_length"][factor_key][i] = longest_path_gradient[i]
 
         return responses, gradients
 

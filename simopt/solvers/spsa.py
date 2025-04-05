@@ -397,14 +397,14 @@ def _check_cons(
 
         diff = upper_bound - new_x
         step_size = diff[pos_mask] / current_step[pos_mask]
-        min_step_size = min(min_step_size, np.min(step_size))
+        min_step_size = min(min_step_size, float(np.min(step_size)))
 
     # Check negative steps for a minimum
     neg_mask = current_step < 0
     if np.any(neg_mask):
         diff = lower_bound - new_x
         step_size = diff[neg_mask] / current_step[neg_mask]
-        min_step_size = min(min_step_size, np.min(step_size))
+        min_step_size = min(min_step_size, float(np.min(step_size)))
 
     # Calculate the modified x.
     modified_x = new_x + min_step_size * current_step

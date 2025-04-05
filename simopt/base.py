@@ -803,7 +803,7 @@ class Problem(ABC):
         """
         raise NotImplementedError
 
-    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:
+    def response_dict_to_objectives_gradients(self, _response_dict: dict) -> tuple:
         """Convert a dictionary with response keys to a vector of gradients.
 
         Can be overridden by subclasses if the objective is deterministic.
@@ -815,7 +815,7 @@ class Problem(ABC):
         Returns:
             tuple: Vector of gradients.
         """
-        return self.response_dict_to_objectives(response_dict)
+        return self.response_dict_to_objectives(_response_dict)
 
     def response_dict_to_stoch_constraints(self, _response_dict: dict) -> tuple:
         """Convert a response dictionary to a vector of stochastic constraint values.
@@ -864,7 +864,7 @@ class Problem(ABC):
         )
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, _x: tuple) -> bool:
         """Check if a solution `x` satisfies the problem's deterministic constraints.
 
         Args:
@@ -877,7 +877,7 @@ class Problem(ABC):
         # Check box constraints.
         return all(
             lb <= x_i <= ub
-            for x_i, lb, ub in zip(x, self.lower_bounds, self.upper_bounds)
+            for x_i, lb, ub in zip(_x, self.lower_bounds, self.upper_bounds)
         )
 
     @abstractmethod

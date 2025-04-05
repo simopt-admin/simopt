@@ -431,7 +431,7 @@ class FacilitySizingTotalCost(Problem):
         """
         return tuple(factor_dict["capacity"])
 
-    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
         """Convert a dictionary with factor keys to a gradient vector.
 
         Notes:
@@ -452,7 +452,7 @@ class FacilitySizingTotalCost(Problem):
         """
         return (np.nan * len(self.model.factors["capacity"]),)
 
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
         """Convert a dictionary with response keys to a vector of objectives.
 
         Arguments:
@@ -467,7 +467,7 @@ class FacilitySizingTotalCost(Problem):
         """
         return (0,)
 
-    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:
+    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:  # noqa: ARG002
         """Convert a dictionary with response keys to a vector of gradients.
 
         Notes:
@@ -820,7 +820,7 @@ class FacilitySizingMaxService(Problem):
         """
         return (1 - response_dict["stockout_flag"],)
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:  # noqa: ARG002
         """Compute deterministic components of objectives for a solution `x`.
 
         Arguments:

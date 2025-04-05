@@ -498,7 +498,7 @@ class ContaminationTotalCostDisc(Problem):
         """
         return tuple(factor_dict["prev_decision"])
 
-    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
         """Convert a dictionary with factor keys to a gradient vector.
 
         Notes:
@@ -519,7 +519,7 @@ class ContaminationTotalCostDisc(Problem):
         """
         return (np.nan * len(self.model.factors["prev_decision"]),)
 
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
         """Convert a dictionary with response keys to a vector of objectives.
 
         Arguments:
@@ -534,7 +534,7 @@ class ContaminationTotalCostDisc(Problem):
         """
         return (0,)
 
-    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:
+    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:  # noqa: ARG002
         """Convert a dictionary with response keys to a vector of gradients.
 
         Notes:
@@ -890,7 +890,7 @@ class ContaminationTotalCostCont(Problem):
         """
         return tuple(factor_dict["prev_decision"])
 
-    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
         """Convert a dictionary with factor keys to a gradient vector.
 
         Notes:
@@ -911,7 +911,7 @@ class ContaminationTotalCostCont(Problem):
         """
         return (np.nan * len(self.model.factors["prev_decision"]),)
 
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
         """Convert a dictionary with response keys to a vector of objectives.
 
         Arguments:
@@ -926,7 +926,7 @@ class ContaminationTotalCostCont(Problem):
         """
         return (0,)
 
-    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:
+    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:  # noqa: ARG002
         """Convert a dictionary with response keys to a vector of gradients.
 
         Notes:
