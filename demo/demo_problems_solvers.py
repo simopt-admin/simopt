@@ -11,7 +11,6 @@ from pathlib import Path
 # Append the parent directory (simopt package) to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-
 # Import the ProblemsSolvers class and other useful functions
 from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles
 

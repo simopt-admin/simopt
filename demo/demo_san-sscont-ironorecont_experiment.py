@@ -13,7 +13,6 @@ from pathlib import Path
 # Append the parent directory (simopt package) to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-
 from simopt.experiment_base import (
     ProblemSolver,
     plot_area_scatterplots,
