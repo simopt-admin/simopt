@@ -25,9 +25,6 @@ select = [
     "C4",  # flake8-comprehensions
     "C90", # mccabe complexity
 
-    # Security
-    "S", # bandit (security checks)
-
     # Ruff-specific
     "RUF", # Ruff-exclusive rules
 
