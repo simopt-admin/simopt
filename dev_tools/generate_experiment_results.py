@@ -1,6 +1,6 @@
 """Create test cases for all compatible problem-solver pairs."""
 
-import os
+import sys
 from pathlib import Path
 
 import yaml
@@ -15,8 +15,9 @@ NUM_POSTREPS = 100
 HOME_DIR = Path(__file__).resolve().parent.parent
 EXPECTED_RESULTS_DIR = HOME_DIR / "test" / "expected_results"
 
-# Change the working directory to the parent directory of this script
-os.chdir(HOME_DIR)
+# Add the SimOpt library to the system path
+if HOME_DIR not in sys.path:
+    sys.path.append(str(HOME_DIR))
 
 
 # Based off the similar function in simopt/experiment_base.py
@@ -98,7 +99,7 @@ def main() -> None:
     # Create the test directory if it doesn't exist
     # Create the expected directory if it doesn't exist
     Path.mkdir(EXPECTED_RESULTS_DIR, parents=True, exist_ok=True)
-    existing_results = os.listdir(EXPECTED_RESULTS_DIR)
+    existing_results = [path.name for path in EXPECTED_RESULTS_DIR.glob("*.yaml")]
 
     # Don't generate any tests for pairs that already have tests generated
     for pair in compatible_pairs:
