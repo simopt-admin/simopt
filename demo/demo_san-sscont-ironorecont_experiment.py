@@ -27,7 +27,7 @@ from simopt.experiment_base import (
 )
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     """Main function to run the demo script."""
     # Problems factors used in experiments
     # SAN
@@ -275,7 +275,10 @@ def main() -> None:
                             f"experiments/outputs/{file_name}.pickle"
                         )
                         # Rename problem to produce nicer plot labels.
-                        new_experiment.problem.name = rf"{problem}-1 with $\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
+                        new_experiment.problem.name = (
+                            f"{problem}-1 with "
+                            rf"$\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
+                        )
                         new_experiment.solver.name = solver_display
                         experiments_same_solver.append(new_experiment)
 
@@ -291,7 +294,10 @@ def main() -> None:
                                 f"experiments/outputs/{file_name}.pickle"
                             )
                             # Rename problem to produce nicer plot labels.
-                            new_experiment.problem.name = rf"{problem}-1 with $\sigma={sd}$ and hc={hc} and inv={inv}"
+                            new_experiment.problem.name = (
+                                f"{problem}-1 with "
+                                rf"$\sigma={sd}$ and hc={hc} and inv={inv}"
+                            )
                             new_experiment.solver.name = solver_display
                             experiments_same_solver.append(new_experiment)
 
@@ -363,7 +369,13 @@ def main() -> None:
             normalize=True,
             all_in_one=True,
         )
-        # plot_solvability_cdfs([experiments[solver_idx][i] for solver_idx in range(n_solvers)], solve_tol=0.2,  all_in_one=True, plot_CIs=True, print_max_hw=True)
+        # plot_solvability_cdfs(
+        #     [experiments[solver_idx][i] for solver_idx in range(n_solvers)],
+        #     solve_tol=0.2,
+        #     all_in_one=True,
+        #     plot_CIs=True,
+        #     print_max_hw=True,
+        # )
 
     # Plots for mu_D = 400 and mu_L = 6 (appreared in the paper)
     plot_progress_curves(
