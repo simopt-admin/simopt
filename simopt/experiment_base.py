@@ -1,4 +1,4 @@
-"""Provide base classes for problem-solver pairs and helper functions for reading/writing data and plotting."""
+"""Base classes for problem-solver pairs and I/O/plotting helper functions."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import os
 import pickle
 import subprocess
 import time
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -43,85 +44,10 @@ SIMOPT_TOPLEVEL = Path(__file__).resolve().parent.parent
 EXPERIMENT_DIR = SIMOPT_TOPLEVEL / "experiments" / time.strftime("%Y-%m-%d_%H-%M-%S")
 # Make sure the experiment directory gets created
 # TODO: move this into __init__
-EXPERIMENT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class ProblemSolver:
-    """Base class for running one solver on one problem.
-
-    Attributes:
-    ----------
-    solver : ``base.Solver``
-        Simulation-optimization solver.
-    problem : ``base.Problem``
-        Simulation-optimization problem.
-    n_macroreps : int
-        Number of macroreplications run.
-    file_name_path : Path
-        Path of .pickle file for saving ``experiment_base.ProblemSolver`` object.
-    all_recommended_xs : list [list [tuple]]
-        Sequences of recommended solutions from each macroreplication.
-    all_intermediate_budgets : list [list]
-        Sequences of intermediate budgets from each macroreplication.
-    timings : list [float]
-        Runtimes (in seconds) for each macroreplication.
-    n_postreps : int
-        Number of postreplications to take at each recommended solution.
-    crn_across_budget : bool
-        True if CRN used for post-replications at solutions recommended at
-        different times, otherwise False.
-    crn_across_macroreps : bool
-        True if CRN used for post-replications at solutions recommended on
-        different macroreplications, otherwise False.
-    all_post_replicates : list [list [list]]
-        All post-replicates from all solutions from all macroreplications.
-    all_est_objectives : numpy array [numpy array]
-        Estimated objective values of all solutions from all macroreplications.
-    n_postreps_init_opt : int
-        Number of postreplications to take at initial solution (x0) and
-        optimal solution (x*).
-    crn_across_init_opt : bool
-        True if CRN used for post-replications at solutions x0 and x*, otherwise False.
-    x0 : tuple
-        Initial solution (x0).
-    x0_postreps : list
-        Post-replicates at x0.
-    xstar : tuple
-        Proxy for optimal solution (x*).
-    xstar_postreps : list
-        Post-replicates at x*.
-    objective_curves : list [``experiment_base.Curve``]
-        Curves of estimated objective function values,
-        one for each macroreplication.
-    progress_curves : list [``experiment_base.Curve``]
-        Progress curves, one for each macroreplication.
-
-    Parameters
-    ----------
-    solver_name : str, optional
-        Name of solver.
-    problem_name : str, optional
-        Name of problem.
-    solver_rename : str, optional
-        User-specified name for solver.
-    problem_rename : str, optional
-        User-specified name for problem.
-    solver : ``base.Solver``, optional
-        Simulation-optimization solver.
-    problem : ``base.Problem``, optional
-        Simulation-optimization problem.
-    solver_fixed_factors : dict, optional
-        Dictionary of user-specified solver factors.
-    problem_fixed_factors : dict, optional
-        Dictionary of user-specified problem factors.
-    model_fixed_factors : dict, optional
-        Dictionary of user-specified model factors.
-    file_name_path : Path, optional
-        Path of .pickle file for saving ``experiment_base.ProblemSolver`` objects.
-    create_pickle : bool, optional
-        True if creating pickle file to store ProblemSolver object, False otherwise.
-
-    """
+    """Base class for running one solver on one problem."""
 
     @property
     def solver(self) -> Solver:
@@ -152,7 +78,7 @@ class ProblemSolver:
 
     @property
     def file_name_path(self) -> Path:
-        """Path of .pickle file for saving ``experiment_base.ProblemSolver`` object."""
+        """Path of .pickle file for saving ProblemSolver object."""
         return self.__file_name_path
 
     @file_name_path.setter
@@ -197,7 +123,7 @@ class ProblemSolver:
 
     @property
     def crn_across_budget(self) -> bool:
-        """True if CRN used for post-replications at solutions recommended at different times, otherwise False."""
+        """Whether CRN is used across solutions recommended at different times."""
         return self.__crn_across_budget
 
     @crn_across_budget.setter
@@ -206,7 +132,7 @@ class ProblemSolver:
 
     @property
     def crn_across_macroreps(self) -> bool:
-        """True if CRN used for post-replications at solutions recommended on different macroreplications, otherwise False."""
+        """Whether CRN is used across solutions from different macroreplications."""
         return self.__crn_across_macroreps
 
     @crn_across_macroreps.setter
@@ -233,7 +159,7 @@ class ProblemSolver:
 
     @property
     def n_postreps_init_opt(self) -> int:
-        """Number of postreps to take at initial solution (x0) and optimal solution (x*)."""
+        """Number of postreplications at initial (x0) and optimal (x*) solutions."""
         return self.__n_postreps_init_opt
 
     @n_postreps_init_opt.setter
@@ -242,7 +168,7 @@ class ProblemSolver:
 
     @property
     def crn_across_init_opt(self) -> bool:
-        """True if CRN used for post-replications at solutions x0 and x*, otherwise False."""
+        """Whether CRN is used for postreplications at x0 and x* solutions."""
         return self.__crn_across_init_opt
 
     @crn_across_init_opt.setter
@@ -287,7 +213,7 @@ class ProblemSolver:
 
     @property
     def objective_curves(self) -> list[Curve]:
-        """Curves of estimated objective function values, one for each macroreplication."""
+        """Estimated objective function curves, one per macroreplication."""
         return self.__objective_curves
 
     @objective_curves.setter
@@ -344,42 +270,25 @@ class ProblemSolver:
         file_name_path: Path | None = None,
         create_pickle: bool = True,
     ) -> None:
-        """Create a ProblemSolver object.
+        """Initializes a ProblemSolver object.
 
-        There are two ways to create a ProblemSolver object:
-        1. Provide the names of the solver and problem to look up in ``directory.py``.
-        2. Provide the solver and problem objects to pair.
+        You can either:
+        1. Provide solver and problem names to look them up via `directory.py`, or
+        2. Provide solver and problem objects directly.
 
-        Parameters
-        ----------
-        solver_name : str, optional
-            Name of solver.
-        problem_name : str, optional
-            Name of problem.
-        solver_rename : str, optional
-            User-specified name for solver.
-        problem_rename : str, optional
-            User-specified name for problem.
-        solver : ``base.Solver``, optional
-            Simulation-optimization solver.
-        problem : ``base.Problem``, optional
-            Simulation-optimization problem.
-        solver_fixed_factors : dict, optional
-            Dictionary of user-specified solver factors.
-        problem_fixed_factors : dict, optional
-            Dictionary of user-specified problem factors.
-        model_fixed_factors : dict, optional
-            Dictionary of user-specified model factors.
-        file_name_path : Path, optional
-            Path of .pickle file for saving ``experiment_base.ProblemSolver`` objects.
-        create_pickle : bool, optional
-            True if creating pickle file to store ProblemSolver object, False otherwise.
-
-        Raises:
-        ------
-        TypeError
-        ValueError
-
+        Args:
+            solver_name (str, optional): Name of the solver.
+            problem_name (str, optional): Name of the problem.
+            solver_rename (str, optional): User-defined name for the solver.
+            problem_rename (str, optional): User-defined name for the problem.
+            solver (Solver, optional): Simulation-optimization solver object.
+            problem (Problem, optional): Simulation-optimization problem object.
+            solver_fixed_factors (dict, optional): Fixed solver parameters.
+            problem_fixed_factors (dict, optional): Fixed problem parameters.
+            model_fixed_factors (dict, optional): Fixed model parameters.
+            file_name_path (Path, optional): Path to save a pickled ProblemSolver
+                object.
+            create_pickle (bool, optional): Whether to save the object as a pickle file.
         """
         # Default arguments
         if solver_fixed_factors is None:
@@ -388,37 +297,6 @@ class ProblemSolver:
             problem_fixed_factors = {}
         if model_fixed_factors is None:
             model_fixed_factors = {}
-        # Type checking
-        if not isinstance(solver_name, (str, type(None))):
-            error_msg = "Solver name must be a string or None."
-            raise TypeError(error_msg)
-        if not isinstance(problem_name, (str, type(None))):
-            error_msg = "Problem name must be a string or None."
-            raise TypeError(error_msg)
-        if not isinstance(solver_rename, (str, type(None))):
-            error_msg = "Solver rename must be a string or None."
-            raise TypeError(error_msg)
-        if not isinstance(problem_rename, (str, type(None))):
-            error_msg = "Problem rename must be a string or None."
-            raise TypeError(error_msg)
-        if not isinstance(solver, (Solver, type(None))):
-            error_msg = "Solver must be a Solver object or None."
-            raise TypeError(error_msg)
-        if not isinstance(problem, (Problem, type(None))):
-            error_msg = "Problem must be a Problem object or None."
-            raise TypeError(error_msg)
-        if not isinstance(solver_fixed_factors, dict):
-            error_msg = "Solver fixed factors must be a dictionary or None."
-            raise TypeError(error_msg)
-        if not isinstance(problem_fixed_factors, dict):
-            error_msg = "Problem fixed factors must be a dictionary or None."
-            raise TypeError(error_msg)
-        if not isinstance(model_fixed_factors, dict):
-            error_msg = "Model fixed factors must be a dictionary or None."
-            raise TypeError(error_msg)
-        if not isinstance(create_pickle, bool):
-            error_msg = "Create pickle must be a boolean."
-            raise TypeError(error_msg)
 
         # Initialize values
         self.create_pickle = create_pickle
@@ -480,16 +358,16 @@ class ProblemSolver:
         else:
             self.file_name_path = file_name_path
 
+        # Make sure the experiment directory exists
+        EXPERIMENT_DIR.mkdir(parents=True, exist_ok=True)
+
     # TODO: Convert this to throwing exceptions?
     # TODO: Convert this functionality to run automatically
     def check_compatibility(self) -> str:
         """Check whether the experiment's solver and problem are compatible.
 
         Returns:
-        -------
-        str
-            Error message in the event problem and solver are incompatible.
-
+            str: Error message in the event problem and solver are incompatible.
         """
         # make a string builder
         error_messages = []
@@ -546,32 +424,22 @@ class ProblemSolver:
         return "\n".join(error_messages)
 
     def run(self, n_macroreps: int) -> None:
-        """Run n_macroreps of the solver on the problem.
+        """Runs the solver on the problem for a given number of macroreplications.
 
-        Notes:
-        -----
-        RNGs dedicated for random problem instances and temporarily unused.
-        Under development.
+        Note:
+            RNGs for random problem instances are reserved but currently unused.
+            This method is under development.
 
-        Parameters
-        ----------
-        n_macroreps : int
-            Number of macroreplications of the solver to run on the problem.
+        Args:
+            n_macroreps (int): Number of macroreplications to run.
 
         Raises:
-        ------
-        TypeError
-        ValueError
-
+            ValueError: If `n_macroreps` is not positive.
         """
         # Local Imports
         from functools import partial
         from multiprocessing import Pool
 
-        # Type checking
-        if not isinstance(n_macroreps, int):
-            error_msg = "Number of macroreplications must be an integer."
-            raise TypeError(error_msg)
         # Value checking
         if n_macroreps <= 0:
             error_msg = "Number of macroreplications must be positive."
@@ -638,34 +506,23 @@ class ProblemSolver:
             self.record_experiment_results(file_name=file_name)
 
     def run_multithread(self, mrep: int, solver: Solver, problem: Problem) -> tuple:
-        """Run a single macroreplication of the solver on the problem.
+        """Runs one macroreplication of the solver on the problem.
 
-        Parameters
-        ----------
-        mrep : int
-            Index of the macroreplication.
+        Args:
+            mrep (int): Index of the macroreplication.
+            solver (Solver): The simulation-optimization solver to run.
+            problem (Problem): The problem to solve.
 
         Returns:
-        -------
-        int
-            Index of the macroreplication.
-        list
-            Recommended solutions from the solver.
-        list
-            Intermediate budgets from the solver.
-        float
-            Runtime for the macrorep
+            tuple: A tuple containing:
+                - int: Macroreplication index.
+                - list: Recommended solutions.
+                - list: Intermediate budgets.
+                - float: Runtime for the macroreplication.
 
         Raises:
-        ------
-        TypeError
-        ValueError
-
+            ValueError: If `mrep` is negative.
         """
-        # Type checking
-        if not isinstance(mrep, int):
-            error_msg = "Macroreplication index must be an integer."
-            raise TypeError(error_msg)
         # Value checking
         if mrep < 0:
             error_msg = "Macroreplication index must be non-negative."
@@ -736,38 +593,21 @@ class ProblemSolver:
         crn_across_budget: bool = True,
         crn_across_macroreps: bool = False,
     ) -> None:
-        """Run postreplications at solutions recommended by the solver.
+        """Runs postreplications at the solver's recommended solutions.
 
-        Parameters
-        ----------
-        n_postreps : int
-            Number of postreplications to take at each recommended solution.
-        crn_across_budget : bool, default=True
-            True if CRN used for post-replications at solutions recommended at different
-            times, otherwise False.
-        crn_across_macroreps : bool, default=False
-            True if CRN used for post-replications at solutions recommended on different
-            macroreplications, otherwise False.
+        Args:
+            n_postreps (int): Number of postreplications at each recommended solution.
+            crn_across_budget (bool, optional): If True, use CRN across solutions from
+                different time budgets. Defaults to True.
+            crn_across_macroreps (bool, optional): If True, use CRN across solutions
+                from different macroreplications. Defaults to False.
 
         Raises:
-        ------
-        TypeError
-        ValueError
-
+            ValueError: If `n_postreps` is not positive.
         """
         # Local Imports
         from multiprocessing import Pool
 
-        # Type checking
-        if not isinstance(n_postreps, int):
-            error_msg = "Number of postreplications must be an integer."
-            raise TypeError(error_msg)
-        if not isinstance(crn_across_budget, bool):
-            error_msg = "CRN across budget must be a boolean."
-            raise TypeError(error_msg)
-        if not isinstance(crn_across_macroreps, bool):
-            error_msg = "CRN across macroreplications must be a boolean."
-            raise TypeError(error_msg)
         # Value checking
         if n_postreps <= 0:
             error_msg = "Number of postreplications must be positive."
@@ -827,32 +667,21 @@ class ProblemSolver:
             self.record_experiment_results(file_name=file_name)
 
     def post_replicate_multithread(self, mrep: int) -> tuple:
-        """Run postreplications at solutions recommended by the solver.
+        """Runs postreplications for a given macroreplication's recommended solutions.
 
-        Parameters
-        ----------
-        mrep : int
-            Index of the macroreplication.
+        Args:
+            mrep (int): Index of the macroreplication.
 
         Returns:
-        -------
-        int
-            Index of the macroreplication.
-        list
-            Post-replicates for each recommended solution.
-        float
-            Runtime for the macroreplication.
+            tuple: A tuple containing:
+                - int: Macroreplication index.
+                - list: Postreplicates for each recommended solution.
+                - float: Runtime for the macroreplication.
 
         Raises:
-        ------
-        TypeError
-        ValueError
-
+            TypeError: If input types are incorrect.
+            ValueError: If `mrep` is negative.
         """
-        # Type checking
-        if not isinstance(mrep, int):
-            error_msg = "Macroreplication index must be an integer."
-            raise TypeError(error_msg)
         # Value checking
         if mrep < 0:
             error_msg = "Macroreplication index must be non-negative."
@@ -910,35 +739,17 @@ class ProblemSolver:
     def bootstrap_sample(
         self, bootstrap_rng: MRG32k3a, normalize: bool = True
     ) -> list[Curve]:
-        """Generate a bootstrap sample of estimated objective curves or estimated progress curves.
+        """Generates a bootstrap sample of estimated objective or progress curves.
 
-        Parameters
-        ----------
-        bootstrap_rng : ``mrg32k3a.mrg32k3a.MRG32k3a``
-            Random number generator to use for bootstrapping.
-        normalize : bool, default=True
-            True if progress curves are to be normalized w.r.t.
-            optimality gaps, otherwise False.
+        Args:
+            bootstrap_rng (MRG32k3a): Random number generator used for bootstrapping.
+            normalize (bool, optional): If True, normalize progress curves by optimality
+                gaps. Defaults to True.
 
         Returns:
-        -------
-        bootstrap_curves : list [``experiment_base.Curve``]
-            Bootstrapped estimated objective curves or estimated progress curves of all
-            solutions from all bootstrapped macroreplications.
-
-        Raises:
-        ------
-        TypeError
-
+            list[Curve]: Bootstrapped objective or progress curves from all
+                macroreplications.
         """
-        # Type checking
-        if not isinstance(bootstrap_rng, MRG32k3a):
-            error_msg = "Bootstrap RNG must be an MRG32k3a object."
-            raise TypeError(error_msg)
-        if not isinstance(normalize, bool):
-            error_msg = "Normalize must be a boolean."
-            raise TypeError(error_msg)
-
         bootstrap_curves = []
         # Uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1.
         # Subsubstream 0: reserved for this outer-level bootstrapping.
@@ -1090,25 +901,13 @@ class ProblemSolver:
                     bootstrap_curves.append(new_objective_curve)
         return bootstrap_curves
 
-    def record_experiment_results(self, file_name: os.PathLike | str) -> None:
-        """Save ``experiment_base.ProblemSolver`` object to .pickle file.
+    def record_experiment_results(self, file_name: str) -> None:
+        """Saves the ProblemSolver object to a .pickle file.
 
-        Parameters
-        ----------
-        file_name : str
-            Name of .pickle file for saving ``experiment_base.ProblemSolver`` objects.
-            File name is appended to the ``EXPERIMENT_DIR`` directory path.
-
-        Raises:
-        ------
-        FileNotFoundError
-
+        Args:
+            file_name (str): Name of the pickle file. It is saved under the
+                EXPERIMENT_DIR path.
         """
-        # Type checking
-        if not isinstance(file_name, (str, os.PathLike)):
-            error_msg = "File name must be a string or os.PathLike object."
-            raise TypeError(error_msg)
-
         file_path = EXPERIMENT_DIR / file_name
         folder_name = file_path.parent
 
@@ -1126,23 +925,12 @@ class ProblemSolver:
         logging.info(f"Saved experiment results to {file_path}")
 
     def log_experiment_results(self, print_solutions: bool = True) -> None:
-        """Create readable .txt file from a problem-solver pair's .pickle file.
+        """Creates a readable .txt log file from a problem-solver pair's .pickle file.
 
-        Parameters
-        ----------
-        print_solutions : bool, optional
-            True if recommended solutions are to be printed in the .txt file,
-            otherwise False.
-
-        Raises:
-        ------
-        TypeError
-
+        Args:
+            print_solutions (bool, optional): If True, include recommended solutions in
+                the .txt file. Defaults to True.
         """
-        # Type checking
-        if not isinstance(print_solutions, bool):
-            error_msg = "Print solutions must be a boolean."
-            raise TypeError(error_msg)
         results_filepath = EXPERIMENT_DIR / "experiment_results.txt"
 
         with results_filepath.open("w") as file:
@@ -1233,49 +1021,18 @@ def trim_solver_results(
     recommended_solutions: list[Solution],
     intermediate_budgets: list[int],
 ) -> tuple[list[Solution], list[int]]:
-    """Trim solutions recommended by solver after problem's max budget.
+    """Trims solver-recommended solutions beyond the problem's maximum budget.
 
-    Parameters
-    ----------
-    problem : ``base.Problem``
-        Problem object on which the solver was run.
-    recommended_solutions : list [``base.Solution``]
-        Solutions recommended by the solver.
-    intermediate_budgets : list [int]
-        Intermediate budgets at which solver recommended different solutions.
+    Args:
+        problem (Problem): The problem the solver was run on.
+        recommended_solutions (list[Solution]): Solutions recommended by the solver.
+        intermediate_budgets (list[int]): Budgets at which solutions were recommended.
 
     Returns:
-    -------
-    list [``base.Solution``]
-        Solutions recommended by the solver after trimming.
-    list [int]
-        Intermediate budgets at which solver recommended different solutions after
-        trimming.
-
-    Raises:
-    ------
-    TypeError
-
+        tuple: A tuple containing:
+            - list[Solution]: Trimmed list of recommended solutions.
+            - list[int]: Trimmed list of corresponding intermediate budgets.
     """
-    # Type checking
-    if not isinstance(problem, Problem):
-        error_msg = "Problem must be a Problem object."
-        raise TypeError(error_msg)
-    if not isinstance(recommended_solutions, list) or not all(
-        isinstance(solution, Solution) for solution in recommended_solutions
-    ):
-        error_msg = "Recommended solutions must be a list of Solution objects."
-        raise TypeError(error_msg)
-    if not isinstance(intermediate_budgets, list) or not all(
-        isinstance(budget, int) for budget in intermediate_budgets
-    ):
-        error_msg = "Intermediate budgets must be a list of integers."
-        if not isinstance(intermediate_budgets, list):
-            error_msg += f" Found {type(intermediate_budgets)}."
-        else:
-            error_msg += f" Found {[type(budget) for budget in intermediate_budgets]}."
-        raise TypeError(error_msg)
-
     # Remove solutions corresponding to intermediate budgets exceeding max budget.
     invalid_idxs = [
         idx
@@ -1295,22 +1052,17 @@ def trim_solver_results(
 
 
 def read_experiment_results(file_name_path: Path) -> ProblemSolver:
-    """Read in ``experiment_base.ProblemSolver`` object from .pickle file.
+    """Reads a ProblemSolver object from a .pickle file.
 
-    Parameters
-    ----------
-    file_name_path : Path
-        Path of .pickle file for reading ``experiment_base.ProblemSolver`` object.
+    Args:
+        file_name_path (Path): Path to the .pickle file.
 
     Returns:
-    -------
-    experiment : ``experiment_base.ProblemSolver``
-        Problem-solver pair that has been run or has been post-processed.
+        ProblemSolver: Loaded problem-solver pair that was previously run or
+            post-processed.
 
     Raises:
-    ------
-    TypeError
-
+        ValueError: If the file does not exist.
     """
     # Value checking
     if not file_name_path.exists():
@@ -1330,56 +1082,21 @@ def post_normalize(
     proxy_opt_x: tuple | None = None,
     create_pair_pickles: bool = False,
 ) -> None:
-    """Construct objective curves and (normalized) progress curves for a collection of experiments on a given problem.
+    """Constructs objective and normalized progress curves for a set of experiments.
 
-    Parameters
-    ----------
-    experiments : list [``experiment_base.ProblemSolver``]
-        Problem-solver pairs of different solvers on a common problem.
-    n_postreps_init_opt : int
-        Number of postreplications to take at initial x0 and optimal x*.
-    crn_across_init_opt : bool, default=True
-        True if CRN used for post-replications at solutions x0 and x*, otherwise False.
-    proxy_init_val : float, optional
-        Known objective function value of initial solution.
-    proxy_opt_val : float, optional
-        Proxy for or bound on optimal objective function value.
-    proxy_opt_x : tuple, optional
-        Proxy for optimal solution.
-    create_pair_pickles : bool, default = False
-        True if creating pickle files for each problem-solver pair, False otherwise.
-
-    Raises:
-    ------
-    TypeError
-    Exception
-
+    Args:
+        experiments (list[ProblemSolver]): Problem-solver pairs for different solvers on
+            the same problem.
+        n_postreps_init_opt (int): Number of postreplications at initial (x0) and
+            optimal (x*) solutions.
+        crn_across_init_opt (bool, optional): If True, use CRN for postreplications at
+            x0 and x*. Defaults to True.
+        proxy_init_val (float, optional): Known objective value of the initial solution.
+        proxy_opt_val (float, optional): Proxy or bound for the optimal objective value.
+        proxy_opt_x (tuple, optional): Proxy for the optimal solution.
+        create_pair_pickles (bool, optional): If True, create a pickle file for each
+            problem-solver pair. Defaults to False.
     """
-    # Type checking
-    if not isinstance(experiments, list) or not all(
-        isinstance(experiment, ProblemSolver) for experiment in experiments
-    ):
-        error_msg = "Experiments must be a list of ProblemSolver objects."
-        raise TypeError(error_msg)
-    if not isinstance(n_postreps_init_opt, int):
-        error_msg = "Number of postreplications at x0 and x* must be an integer."
-        raise TypeError(error_msg)
-    if not isinstance(crn_across_init_opt, bool):
-        error_msg = "CRN across x0 and x* must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(proxy_init_val, (int, float, type(None))):
-        error_msg = "Proxy initial value must be a float or None."
-        raise TypeError(error_msg)
-    if not isinstance(proxy_opt_val, (int, float, type(None))):
-        error_msg = "Proxy optimal value must be a float or None."
-        raise TypeError(error_msg)
-    if not isinstance(proxy_opt_x, (tuple, type(None))):
-        error_msg = "Proxy optimal solution must be a tuple or None."
-        raise TypeError(error_msg)
-    if not isinstance(create_pair_pickles, bool):
-        error_msg = "Create pair pickles must be a boolean."
-        raise TypeError(error_msg)
-
     # Check that all experiments have the same problem and same
     # post-experimental setup.
     ref_experiment = experiments[0]
@@ -1595,47 +1312,19 @@ def bootstrap_sample_all(
     bootstrap_rng: MRG32k3a,
     normalize: bool = True,
 ) -> list[list[list[Curve]]]:
-    """Generate bootstrap samples of estimated progress curves (normalized and unnormalized) from a set of experiments.
+    """Generates bootstrap samples of progress curves from multiple experiments.
 
-    Parameters
-    ----------
-    experiments : list [list [``experiment_base.ProblemSolver``]]
-        Problem-solver pairs of different solvers and/or problems.
-    bootstrap_rng : ``mrg32k3a.mrg32k3a.MRG32k3a``
-        Random number generator to use for bootstrapping.
-    normalize : bool, default=True
-        True if progress curves are to be normalized w.r.t. optimality gaps,
-        otherwise False.
+    Args:
+        experiments (list[list[ProblemSolver]]): Grid of problem-solver pairs, where
+            each inner list corresponds to different problems for a given solver.
+        bootstrap_rng (MRG32k3a): Random number generator used for bootstrapping.
+        normalize (bool, optional): If True, normalize progress curves by optimality
+            gaps. Defaults to True.
 
     Returns:
-    -------
-    list [list [list [``experiment_base.Curve``]]]
-        Bootstrapped estimated objective curves or estimated progress curves
-        of all solutions from all macroreplications.
-
-    Raises:
-    ------
-    TypeError
-
+        list[list[list[Curve]]]: Bootstrapped progress or objective curves for all
+            solutions from all macroreplications, grouped by solver and problem.
     """
-    # Type checking
-    if (
-        not isinstance(experiments, list)
-        or not all(isinstance(experiment_list, list) for experiment_list in experiments)
-        or not all(
-            [isinstance(experiment, ProblemSolver) for experiment in experiment_list]
-            for experiment_list in experiments
-        )
-    ):
-        error_msg = "Experiments must be a list of lists of ProblemSolver objects."
-        raise TypeError(error_msg)
-    if not isinstance(bootstrap_rng, MRG32k3a):
-        error_msg = "Bootstrap RNG must be an MRG32k3a object."
-        raise TypeError(error_msg)
-    if not isinstance(normalize, bool):
-        error_msg = "Normalize must be a boolean."
-        raise TypeError(error_msg)
-
     n_solvers = len(experiments)
     n_problems = len(experiments[0])
     bootstrap_curves = [[[] for _ in range(n_problems)] for _ in range(n_solvers)]
@@ -1653,112 +1342,73 @@ def bootstrap_sample_all(
     return bootstrap_curves
 
 
+class PlotType(Enum):
+    """Enum class for different types of plots and metrics.
+
+    Attributes:
+        ALL:
+        MEAN: estimated mean progress curve
+        QUANTILE: estimated beta quantile progress curve
+        AREA_MEAN: mean of area under progress curve
+        AREA_STD_DEV: standard deviation of area under progress curve
+        SOLVE_TIME_QUANTILE: beta quantile of solve time
+        SOLVE_TIME_CDF: cdf of solve time
+        CDF_SOLVABILITY: cdf solvability profile
+        QUANTILE_SOLVABILITY: quantile solvability profile
+        DIFF_CDF_SOLVABILITY: difference of cdf solvability profiles
+        DIFF_QUANTILE_SOLVABILITY: difference of quantile solvability profiles
+        AREA:
+        BOX:
+        VIOLIN:
+        TERMINAL_SCATTER:
+    """
+
+    ALL = "all"
+    MEAN = "mean"
+    QUANTILE = "quantile"
+    AREA_MEAN = "area_mean"
+    AREA_STD_DEV = "area_std_dev"
+    SOLVE_TIME_QUANTILE = "solve_time_quantile"
+    SOLVE_TIME_CDF = "solve_time_cdf"
+    CDF_SOLVABILITY = "cdf_solvability"
+    QUANTILE_SOLVABILITY = "quantile_solvability"
+    DIFF_CDF_SOLVABILITY = "diff_cdf_solvability"
+    DIFF_QUANTILE_SOLVABILITY = "diff_quantile_solvability"
+    AREA = "area"
+    BOX = "box"
+    VIOLIN = "violin"
+    TERMINAL_SCATTER = "terminal_scatter"
+
+
 def bootstrap_procedure(
     experiments: list[list[ProblemSolver]],
     n_bootstraps: int,
     conf_level: float,
-    plot_type: Literal[
-        "mean",
-        "quantile",
-        "area_mean",
-        "area_std_dev",
-        "solve_time_quantile",
-        "solve_time_cdf",
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-    ],
+    plot_type: PlotType,
     beta: float | None = None,
     solve_tol: float | None = None,
     estimator: float | Curve | None = None,
     normalize: bool = True,
 ) -> tuple[float, float] | tuple[Curve, Curve]:
-    """Obtain bootstrap sample and compute confidence intervals.
+    """Performs bootstrapping and computes confidence intervals for progress curves.
 
-    Parameters
-    ----------
-    experiments : list [list [``experiment_base.ProblemSolver``]]
-        Problem-solver pairs of different solvers and/or problems.
-    n_bootstraps : int
-        Number of times to generate a bootstrap sample of estimated progress curves.
-    conf_level : float
-        Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
-    plot_type : str
-            "mean" : estimated mean progress curve;
-
-            "quantile" : estimated beta quantile progress curve;
-
-            "area_mean" : mean of area under progress curve;
-
-            "area_std_dev" : standard deviation of area under progress curve;
-
-            "solve_time_quantile" : beta quantile of solve time;
-
-            "solve_time_cdf" : cdf of solve time;
-
-            "cdf_solvability" : cdf solvability profile;
-
-            "quantile_solvability" : quantile solvability profile;
-
-            "diff_cdf_solvability" : difference of cdf solvability profiles;
-
-            "diff_quantile_solvability" : difference of quantile solvability profiles.
-    beta : float, optional
-        Quantile to plot, e.g., beta quantile; in (0, 1).
-    solve_tol : float, optional
-        Relative optimality gap definining when a problem is solved; in (0, 1].
-    estimator : float or ``experiment_base.Curve``, optional
-        Main estimator, e.g., mean convergence curve from an experiment.
-    normalize : bool, default=True
-        True if progress curves are to be normalized w.r.t. optimality gaps,
-        otherwise False.
+    Args:
+        experiments (list[list[ProblemSolver]]): Grid of problem-solver pairs.
+        n_bootstraps (int): Number of bootstrap samples to generate.
+        conf_level (float): Confidence level for the interval (0 < conf_level < 1).
+        plot_type (PlotType): Type of plot/metric for which to compute the interval.
+        beta (float, optional): Quantile level (0 < beta < 1), used with some plot
+            types.
+        solve_tol (float, optional): Relative optimality gap that defines a "solved"
+            instance.
+        estimator (float or Curve, optional): Reference estimator for difference plot
+            types.
+        normalize (bool, optional): Whether to normalize progress curves. Defaults to
+            True.
 
     Returns:
-    -------
-    float | ``experiment_base.Curve``
-        Lower bound of bootstrap CI, as a float or curve.
-    float | ``experiment_base.Curve``]
-        Upper bound of bootstrap CI, as a float or curve.
-
-    Raises:
-    ------
-    TypeError
-    ValueError
-
+        tuple[float, float] or tuple[Curve, Curve]: Lower and upper bounds of the CI.
     """
-    # Type checking
-    if (
-        not isinstance(experiments, list)
-        or not all(isinstance(experiment_list, list) for experiment_list in experiments)
-        or not all(
-            [isinstance(experiment, ProblemSolver) for experiment in experiment_list]
-            for experiment_list in experiments
-        )
-    ):
-        error_msg = "Experiments must be a list of lists of ProblemSolver objects."
-        raise TypeError(error_msg)
-    if not isinstance(n_bootstraps, int):
-        error_msg = "Number of bootstraps must be an integer."
-        raise TypeError(error_msg)
-    if not isinstance(conf_level, (int, float)):
-        error_msg = "Confidence level must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(plot_type, str):
-        error_msg = "Plot type must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(beta, (int, float, type(None))):
-        error_msg = "Beta quantile must be a float or None."
-        raise TypeError(error_msg)
-    if not isinstance(solve_tol, (int, float, type(None))):
-        error_msg = "Solve tolerance must be a float or None."
-        raise TypeError(error_msg)
-    if not isinstance(estimator, (int, float, Curve, type(None))):
-        error_msg = "Estimator must be a float, Curve, or None."
-        raise TypeError(error_msg)
-    if not isinstance(normalize, bool):
-        error_msg = "Normalize must be a boolean."
-        raise TypeError(error_msg)
     # Value checking
     if n_bootstraps < 1:
         error_msg = "Number of bootstraps must be a positive integer."
@@ -1766,25 +1416,28 @@ def bootstrap_procedure(
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
         raise ValueError(error_msg)
-    if plot_type not in [
-        "mean",
-        "quantile",
-        "area_mean",
-        "area_std_dev",
-        "solve_time_quantile",
-        "solve_time_cdf",
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-    ]:
-        error_msg = "Plot type must be a valid string."
-        raise ValueError(error_msg)
     if beta is not None and not 0 < beta < 1:
         error_msg = "Beta quantile must be in (0, 1)."
         raise ValueError(error_msg)
     if solve_tol is not None and not 0 < solve_tol <= 1:
         error_msg = "Solve tolerance must be in (0, 1]."
+        raise ValueError(error_msg)
+    acceptable_plot_types = [
+        PlotType.MEAN,
+        PlotType.QUANTILE,
+        PlotType.AREA_MEAN,
+        PlotType.AREA_STD_DEV,
+        PlotType.SOLVE_TIME_QUANTILE,
+        PlotType.SOLVE_TIME_CDF,
+        PlotType.CDF_SOLVABILITY,
+        PlotType.QUANTILE_SOLVABILITY,
+        PlotType.DIFF_CDF_SOLVABILITY,
+        PlotType.DIFF_QUANTILE_SOLVABILITY,
+    ]
+    if plot_type not in acceptable_plot_types:
+        error_msg = (
+            f"Plot type must be one of {acceptable_plot_types}.\nReceived: {plot_type}"
+        )
         raise ValueError(error_msg)
 
     # Create random number generator for bootstrap sampling.
@@ -1804,7 +1457,11 @@ def bootstrap_procedure(
             )
         )
     # Distinguish cases where functional returns a scalar vs a curve.
-    if plot_type in ["area_mean", "area_std_dev", "solve_time_quantile"]:
+    if plot_type in [
+        PlotType.AREA_MEAN,
+        PlotType.AREA_STD_DEV,
+        PlotType.SOLVE_TIME_QUANTILE,
+    ]:
         if estimator is None:
             error_msg = (
                 "Estimator must be provided for functional that returns a scalar."
@@ -1879,18 +1536,7 @@ def bootstrap_procedure(
 
 def functional_of_curves(
     bootstrap_curves: list[list[list[Curve]]],
-    plot_type: Literal[
-        "mean",
-        "quantile",
-        "area_mean",
-        "area_std_dev",
-        "solve_time_quantile",
-        "solve_time_cdf",
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-    ],
+    plot_type: PlotType,
     beta: float | None = 0.5,
     solve_tol: float | None = 0.1,
 ) -> float | Curve:
@@ -1944,53 +1590,7 @@ def functional_of_curves(
         beta = 0.5
     if solve_tol is None:
         solve_tol = 0.1
-    # Type checking
-    if (
-        not isinstance(bootstrap_curves, list)
-        or not all(
-            isinstance(experiment_list_list, list)
-            for experiment_list_list in bootstrap_curves
-        )
-        or not all(
-            [isinstance(curve_list, list) for curve_list in curve_list_list]
-            for curve_list_list in bootstrap_curves
-        )
-        or not all(
-            [
-                [isinstance(curve, Curve) for curve in curve_list]
-                for curve_list in curve_list_list
-            ]
-            for curve_list_list in bootstrap_curves
-        )
-    ):
-        error_msg = (
-            "Bootstrap curves must be a list of lists of lists of Curve objects."
-        )
-        raise TypeError(error_msg)
-    if not isinstance(plot_type, str):
-        error_msg = "Plot type must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(beta, (int, float, type(None))):
-        error_msg = "Beta quantile must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(solve_tol, (int, float, type(None))):
-        error_msg = "Solve tolerance must be a float."
-        raise TypeError(error_msg)
     # Value checking
-    if plot_type not in [
-        "mean",
-        "quantile",
-        "area_mean",
-        "area_std_dev",
-        "solve_time_quantile",
-        "solve_time_cdf",
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-    ]:
-        error_msg = f"Plot type '{plot_type}' is not valid."
-        raise ValueError(error_msg)
     if not 0 < beta < 1:
         error_msg = "Beta quantile must be in (0, 1)."
         raise ValueError(error_msg)
@@ -1998,26 +1598,26 @@ def functional_of_curves(
         error_msg = "Solve tolerance must be in (0, 1]."
         raise ValueError(error_msg)
 
-    if plot_type == "mean":
+    if plot_type == PlotType.MEAN:
         # Single experiment --> returns a curve.
         return curve_utils.mean_of_curves(bootstrap_curves[0][0])
-    if plot_type == "quantile":
+    if plot_type == PlotType.QUANTILE:
         # Single experiment --> returns a curve.
         return curve_utils.quantile_of_curves(bootstrap_curves[0][0], beta=beta)
-    if plot_type == "area_mean":
+    if plot_type == PlotType.AREA_MEAN:
         # Single experiment --> returns a scalar.
         area_mean = np.mean(
             [curve.compute_area_under_curve() for curve in bootstrap_curves[0][0]]
         )
         return float(area_mean)
-    if plot_type == "area_std_dev":
+    if plot_type == PlotType.AREA_STD_DEV:
         # Single experiment --> returns a scalar.
         area_std_dev = np.std(
             [curve.compute_area_under_curve() for curve in bootstrap_curves[0][0]],
             ddof=1,
         )
         return float(area_std_dev)
-    if plot_type == "solve_time_quantile":
+    if plot_type == PlotType.SOLVE_TIME_QUANTILE:
         # Single experiment --> returns a scalar
         solve_time_quantile = np.quantile(
             [
@@ -2027,12 +1627,12 @@ def functional_of_curves(
             q=beta,
         )
         return float(solve_time_quantile)
-    if plot_type == "solve_time_cdf":
+    if plot_type == PlotType.SOLVE_TIME_CDF:
         # Single experiment --> returns a curve.
         return curve_utils.cdf_of_curves_crossing_times(
             bootstrap_curves[0][0], threshold=solve_tol
         )
-    if plot_type == "cdf_solvability":
+    if plot_type == PlotType.CDF_SOLVABILITY:
         # One solver, multiple problems --> returns a curve.
         return curve_utils.mean_of_curves(
             [
@@ -2042,7 +1642,7 @@ def functional_of_curves(
                 for progress_curves in bootstrap_curves[0]
             ]
         )
-    if plot_type == "quantile_solvability":
+    if plot_type == PlotType.QUANTILE_SOLVABILITY:
         # One solver, multiple problems --> returns a curve.
         return curve_utils.mean_of_curves(
             [
@@ -2052,7 +1652,7 @@ def functional_of_curves(
                 for progress_curves in bootstrap_curves[0]
             ]
         )
-    if plot_type == "diff_cdf_solvability":
+    if plot_type == PlotType.DIFF_CDF_SOLVABILITY:
         # Two solvers, multiple problems --> returns a curve.
         solvability_profile_1 = curve_utils.mean_of_curves(
             [
@@ -2073,7 +1673,7 @@ def functional_of_curves(
         return curve_utils.difference_of_curves(
             solvability_profile_1, solvability_profile_2
         )
-    if plot_type == "diff_quantile_solvability":
+    if plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
         # Two solvers, multiple problems --> returns a curve.
         solvability_profile_1 = curve_utils.mean_of_curves(
             [
@@ -2094,7 +1694,7 @@ def functional_of_curves(
         return curve_utils.difference_of_curves(
             solvability_profile_1, solvability_profile_2
         )
-    error_msg = "'{plot_type}' is not implemented."
+    error_msg = f"'{plot_type.value}' is not implemented."
     raise NotImplementedError(error_msg)
 
 
@@ -2346,7 +1946,7 @@ def check_common_problem_and_reference(
 
 def plot_progress_curves(
     experiments: list[ProblemSolver],
-    plot_type: Literal["all", "mean", "quantile"],
+    plot_type: PlotType,
     beta: float = 0.50,
     normalize: bool = True,
     all_in_one: bool = True,
@@ -2359,121 +1959,55 @@ def plot_progress_curves(
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
-) -> list[str | os.PathLike]:
-    """Plot individual or aggregate progress curves for one or more solvers on a single problem.
+) -> list[Path]:
+    """Plots individual or aggregate progress curves for solvers on a single problem.
 
-    Parameters
-    ----------
-    experiments : list [``experiment_base.ProblemSolver``]
-        Problem-solver pairs of different solvers on a common problem.
-    plot_type : str
-        String indicating which type of plot to produce:
-            "all" : all estimated progress curves
-            "mean" : estimated mean progress curve
-            "quantile" : estimated beta quantile progress curve.
-    beta : float, default=0.50
-        Quantile to plot, e.g., beta quantile; in (0, 1).
-    normalize : bool, default=True
-        True if progress curves are to be normalized w.r.t. optimality gaps,
-        otherwise False.
-    all_in_one : bool, default=True
-        True if curves are to be plotted together, otherwise False.
-    n_bootstraps : int, default = 100
-        Number of bootstrap samples.
-    conf_level : float, default = 0.95
-        Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
-    plot_conf_ints : bool, default=True
-        True if bootstrapping confidence intervals are to be plotted, otherwise False.
-    print_max_hw : bool, default=True
-        True if caption with max half-width is to be printed, otherwise False.
-    plot_title : str, opt
-        Optional title to override the one that is autmatically generated,
-        only applies if all_in_one is True.
-    legend_loc : str, default="best"
-        specificies location of legend
-    ext: str, default = '.png'
-        Extension to add to image file path to change file type
-    save_as_pickle: bool, default = False
-        True if plot should be saved to pickle file, False otherwise.
-    solver_set_name: str, default = "SOLVER_SET"
-        Use to change name of solver groups for plot titles.
+    Args:
+        experiments (list[ProblemSolver]): Problem-solver pairs for different solvers
+            on the same problem.
+        plot_type (PlotType): Type of plot to produce (ALL, MEAN, or QUANTILE).
+        beta (float, optional): Quantile level to plot (0 < beta < 1). Defaults to 0.50.
+        normalize (bool, optional): If True, normalize curves by optimality gaps.
+            Defaults to True.
+        all_in_one (bool, optional): If True, plot all curves in one figure.
+            Defaults to True.
+        n_bootstraps (int, optional): Number of bootstrap samples. Defaults to 100.
+        conf_level (float, optional): Confidence level for CIs (0 < conf_level < 1).
+            Defaults to 0.95.
+        plot_conf_ints (bool, optional): If True, plot bootstrapped confidence
+            intervals. Defaults to True.
+        print_max_hw (bool, optional): If True, print caption with max half-width.
+            Defaults to True.
+        plot_title (str, optional): Custom title for the plot
+            (used only if `all_in_one=True`).
+        legend_loc (str, optional): Location of legend (e.g., "best", "lower right").
+        ext (str, optional): File extension for saved plots (e.g., ".png").
+            Defaults to ".png".
+        save_as_pickle (bool, optional): If True, save plot as a pickle file.
+            Defaults to False.
+        solver_set_name (str, optional): Label for solver group in plot titles.
+            Defaults to "SOLVER_SET".
 
     Returns:
-    -------
-    file_list : list [str]
-        List compiling path names for plots produced.
+        list[Path]: List of file paths where the plots were saved.
 
     Raises:
-    ------
-    TypeError
-    ValueError
-
+        ValueError: If beta, conf_level, or n_bootstraps have invalid values.
     """
-    # Type checking
-    if not isinstance(experiments, list) or not all(
-        isinstance(experiment, ProblemSolver) for experiment in experiments
-    ):
-        error_msg = "Experiments must be a list of ProblemSolver objects."
-        raise TypeError(error_msg)
-    if not isinstance(plot_type, str):
-        error_msg = "Plot type must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(beta, (int, float)):
-        error_msg = "Beta quantile must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(normalize, bool):
-        error_msg = "Normalize must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(all_in_one, bool):
-        error_msg = "All in one must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(n_bootstraps, int):
-        error_msg = "Number of bootstraps must be an integer."
-        raise TypeError(error_msg)
-    if not isinstance(conf_level, (int, float)):
-        error_msg = "Confidence level must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(plot_conf_ints, bool):
-        error_msg = "Plot confidence intervals must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(print_max_hw, bool):
-        error_msg = "Print max halfwidth must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(plot_title, (str, type(None))):
-        error_msg = "Plot title must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(legend_loc, (str, type(None))):
-        error_msg = "Legend location must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(ext, str):
-        error_msg = "Extension must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(save_as_pickle, bool):
-        error_msg = "Save as pickle must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(solver_set_name, str):
-        error_msg = "Solver set name must be a string."
-        raise TypeError(error_msg)
     # Value checking
-    if plot_type not in ["all", "mean", "quantile"]:
-        error_msg = f"Plot type '{plot_type}' is not valid."
-        raise ValueError(error_msg)
     if not 0 < beta < 1:
-        error_msg = "Beta quantile must be in (0, 1)."
-        raise ValueError(error_msg)
+        raise ValueError("Beta quantile must be in (0, 1).")
     if n_bootstraps < 1:
-        error_msg = "Number of bootstraps must be a positive integer."
-        raise ValueError(error_msg)
+        raise ValueError("Number of bootstraps must be a positive integer.")
     if not 0 < conf_level < 1:
-        error_msg = "Confidence level must be in (0, 1)."
-        raise ValueError(error_msg)
+        raise ValueError("Confidence level must be in (0, 1).")
 
     if legend_loc is None:
         legend_loc = "best"
 
     # Check if problems are the same with the same x0 and x*.
     check_common_problem_and_reference(experiments)
-    file_list = []
+    file_list: list[Path] = []
     # Set up plot.
     n_experiments = len(experiments)
     if all_in_one:
@@ -2493,7 +2027,7 @@ def plot_progress_curves(
             experiment = experiments[exp_idx]
             color_str = "C" + str(exp_idx)
             estimator = None
-            if plot_type == "all":
+            if plot_type == PlotType.ALL:
                 # Plot all estimated progress curves.
                 if normalize:
                     handle = experiment.progress_curves[0].plot(color_str=color_str)
@@ -2503,14 +2037,14 @@ def plot_progress_curves(
                     handle = experiment.objective_curves[0].plot(color_str=color_str)
                     for curve in experiment.objective_curves[1:]:
                         curve.plot(color_str=color_str)
-            elif plot_type == "mean":
+            elif plot_type == PlotType.MEAN:
                 # Plot estimated mean progress curve.
                 if normalize:
                     estimator = curve_utils.mean_of_curves(experiment.progress_curves)
                 else:
                     estimator = curve_utils.mean_of_curves(experiment.objective_curves)
                 handle = estimator.plot(color_str=color_str)
-            else:  # Must be quantile.
+            elif plot_type == PlotType.QUANTILE:
                 # Plot estimated beta-quantile progress curve.
                 if normalize:
                     estimator = curve_utils.quantile_of_curves(
@@ -2521,8 +2055,11 @@ def plot_progress_curves(
                         experiment.objective_curves, beta
                     )
                 handle = estimator.plot(color_str=color_str)
+            else:
+                error_msg = f"'{plot_type.value}' is not implemented."
+                raise NotImplementedError(error_msg)
             solver_curve_handles.append(handle)
-            if (plot_conf_ints or print_max_hw) and plot_type != "all":
+            if (plot_conf_ints or print_max_hw) and plot_type != PlotType.ALL:
                 bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
                     experiments=[[experiment]],
                     n_bootstraps=n_bootstraps,
@@ -2553,7 +2090,7 @@ def plot_progress_curves(
             labels=[experiment.solver.name for experiment in experiments],
             loc=legend_loc,
         )
-        if print_max_hw and plot_type != "all":
+        if print_max_hw and plot_type != PlotType.ALL:
             report_max_halfwidth(
                 curve_pairs=curve_pairs,
                 normalize=normalize,
@@ -2582,7 +2119,7 @@ def plot_progress_curves(
                 beta=beta,
             )
             estimator = None
-            if plot_type == "all":
+            if plot_type == PlotType.ALL:
                 # Plot all estimated progress curves.
                 if normalize:
                     for curve in experiment.progress_curves:
@@ -2590,7 +2127,7 @@ def plot_progress_curves(
                 else:
                     for curve in experiment.objective_curves:
                         curve.plot()
-            elif plot_type == "mean":
+            elif plot_type == PlotType.MEAN:
                 # Plot estimated mean progress curve.
                 if normalize:
                     estimator = curve_utils.mean_of_curves(experiment.progress_curves)
@@ -2608,7 +2145,7 @@ def plot_progress_curves(
                         experiment.objective_curves, beta
                     )
                 estimator.plot()
-            if (plot_conf_ints or print_max_hw) and plot_type != "all":
+            if (plot_conf_ints or print_max_hw) and plot_type != PlotType.ALL:
                 # Note: "experiments" needs to be a list of list of ProblemSolvers.
                 bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
                     experiments=[[experiment]],
@@ -2669,7 +2206,7 @@ def plot_solvability_cdfs(
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
-) -> list[str | os.PathLike]:
+) -> list[Path]:
     """Plot the solvability cdf for one or more solvers on a single problem.
 
     Parameters
@@ -2702,7 +2239,7 @@ def plot_solvability_cdfs(
 
     Returns:
     -------
-    file_list : list [str | os.PathLike]
+    file_list : list [Path]
         List compiling path names for plots produced.
 
     Raises:
@@ -2772,7 +2309,7 @@ def plot_solvability_cdfs(
     if all_in_one:
         ref_experiment = experiments[0]
         setup_plot(
-            plot_type="solve_time_cdf",
+            plot_type=PlotType.SOLVE_TIME_CDF,
             solver_name=solver_set_name,
             problem_name=ref_experiment.problem.name,
             solve_tol=solve_tol,
@@ -2794,7 +2331,7 @@ def plot_solvability_cdfs(
                     experiments=[[experiment]],
                     n_bootstraps=n_bootstraps,
                     conf_level=conf_level,
-                    plot_type="solve_time_cdf",
+                    plot_type=PlotType.SOLVE_TIME_CDF,
                     solve_tol=solve_tol,
                     estimator=estimator,
                     normalize=True,
@@ -2828,7 +2365,7 @@ def plot_solvability_cdfs(
             save_plot(
                 solver_name="SOLVER SET",
                 problem_name=ref_experiment.problem.name,
-                plot_type="solve_time_cdf",
+                plot_type=PlotType.SOLVE_TIME_CDF,
                 normalize=True,
                 extra=solve_tol,
                 plot_title=plot_title,
@@ -2839,7 +2376,7 @@ def plot_solvability_cdfs(
     else:  # Plot separately.
         for experiment in experiments:
             setup_plot(
-                plot_type="solve_time_cdf",
+                plot_type=PlotType.SOLVE_TIME_CDF,
                 solver_name=experiment.solver.name,
                 problem_name=experiment.problem.name,
                 solve_tol=solve_tol,
@@ -2853,7 +2390,7 @@ def plot_solvability_cdfs(
                     experiments=[[experiment]],
                     n_bootstraps=n_bootstraps,
                     conf_level=conf_level,
-                    plot_type="solve_time_cdf",
+                    plot_type=PlotType.SOLVE_TIME_CDF,
                     solve_tol=solve_tol,
                     estimator=estimator,
                     normalize=True,
@@ -2885,7 +2422,7 @@ def plot_solvability_cdfs(
                 save_plot(
                     solver_name=experiment.solver.name,
                     problem_name=experiment.problem.name,
-                    plot_type="solve_time_cdf",
+                    plot_type=PlotType.SOLVE_TIME_CDF,
                     normalize=True,
                     extra=solve_tol,
                     ext=ext,
@@ -2912,7 +2449,7 @@ def plot_area_scatterplots(
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
     problem_set_name: str = "PROBLEM_SET",
-) -> list[str | os.PathLike]:
+) -> list[Path]:
     """Plot a scatter plot of mean and standard deviation of area under progress curves.
 
     Either one plot for each solver or one plot for all solvers.
@@ -3015,7 +2552,7 @@ def plot_area_scatterplots(
     if all_in_one:
         marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
         setup_plot(
-            plot_type="area",
+            plot_type=PlotType.AREA,
             solver_name=solver_set_name,
             problem_name=problem_set_name,
             plot_title=plot_title,
@@ -3047,7 +2584,7 @@ def plot_area_scatterplots(
                         experiments=[[experiment]],
                         n_bootstraps=n_bootstraps,
                         conf_level=conf_level,
-                        plot_type="area_mean",
+                        plot_type=PlotType.AREA_MEAN,
                         estimator=mean_estimator,
                         normalize=True,
                     )
@@ -3056,7 +2593,7 @@ def plot_area_scatterplots(
                             experiments=[[experiment]],
                             n_bootstraps=n_bootstraps,
                             conf_level=conf_level,
-                            plot_type="area_std_dev",
+                            plot_type=PlotType.AREA_STD_DEV,
                             estimator=std_dev_estimator,
                             normalize=True,
                         )
@@ -3106,7 +2643,7 @@ def plot_area_scatterplots(
             save_plot(
                 solver_name=solver_set_name,
                 problem_name=problem_set_name,
-                plot_type="area",
+                plot_type=PlotType.AREA,
                 normalize=True,
                 plot_title=plot_title,
                 ext=ext,
@@ -3117,7 +2654,7 @@ def plot_area_scatterplots(
         for solver_idx in range(n_solvers):
             ref_experiment = experiments[solver_idx][0]
             setup_plot(
-                plot_type="area",
+                plot_type=PlotType.AREA,
                 solver_name=ref_experiment.solver.name,
                 problem_name=problem_set_name,
             )
@@ -3138,7 +2675,7 @@ def plot_area_scatterplots(
                         experiments=[[experiment]],
                         n_bootstraps=n_bootstraps,
                         conf_level=conf_level,
-                        plot_type="area_mean",
+                        plot_type=PlotType.AREA_MEAN,
                         estimator=mean_estimator,
                         normalize=True,
                     )
@@ -3147,7 +2684,7 @@ def plot_area_scatterplots(
                             experiments=[[experiment]],
                             n_bootstraps=n_bootstraps,
                             conf_level=conf_level,
-                            plot_type="area_std_dev",
+                            plot_type=PlotType.AREA_STD_DEV,
                             estimator=std_dev_estimator,
                             normalize=True,
                         )
@@ -3196,7 +2733,7 @@ def plot_area_scatterplots(
                     save_plot(
                         solver_name=experiment.solver.name,
                         problem_name=problem_set_name,
-                        plot_type="area",
+                        plot_type=PlotType.AREA,
                         normalize=True,
                         ext=ext,
                         save_as_pickle=save_as_pickle,
@@ -3206,15 +2743,8 @@ def plot_area_scatterplots(
 
 
 def plot_solvability_profiles(
-    experiments: list[
-        list[ProblemSolver]
-    ],  # TODO: check if this should be list[ProblemSolver]
-    plot_type: Literal[
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-    ],
+    experiments: list[list[ProblemSolver]],
+    plot_type: PlotType,
     all_in_one: bool = True,
     n_bootstraps: int = 100,
     conf_level: float = 0.95,
@@ -3229,119 +2759,49 @@ def plot_solvability_profiles(
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
     problem_set_name: str = "PROBLEM_SET",
-) -> list[str | os.PathLike]:
-    """Plot the (difference of) solvability profiles for each solver on a set of problems.
+) -> list[Path]:
+    """Plots solvability or difference profiles for solvers on multiple problems.
 
-    Parameters
-    ----------
-    experiments : list [list [``experiment_base.ProblemSolver``]]
-        Problem-solver pairs used to produce plots.
-    plot_type : str
-        String indicating which type of plot to produce:
-            "cdf_solvability" : cdf-solvability profile;
-
-            "quantile_solvability" : quantile-solvability profile;
-
-            "diff_cdf_solvability" : difference of cdf-solvability profiles;
-
-            "diff_quantile_solvability" : difference of quantile-solvability profiles.
-    all_in_one : bool, default=True
-        True if curves are to be plotted together, otherwise False.
-    n_bootstraps : int, default=100
-        Number of bootstrap samples.
-    conf_level : float
-        Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
-    plot_conf_ints : bool, default=True
-        True if bootstrapping confidence intervals are to be plotted, otherwise False.
-    print_max_hw : bool, default=True
-        True if caption with max half-width is to be printed, otherwise False.
-    solve_tol : float, default=0.1
-        Relative optimality gap definining when a problem is solved; in (0, 1].
-    beta : float, default=0.5
-        Quantile to compute, e.g., beta quantile; in (0, 1).
-    ref_solver : str, optional
-        Name of solver used as benchmark for difference profiles.
-    plot_title : str, optional
-        Optional title to override the one that is autmatically generated,
-        only applies if all_in_one is True.
-    legend_loc : str, default="best"
-        specificies location of legend
-    ext: str, default = '.png'
-         Extension to add to image file path to change file type
-    save_as_pickle: bool, default = False
-         True if plot should be saved to pickle file, False otherwise.
-    solver_set_name: str, default = "SOLVER_SET"
-        Use to change name of solver groups for plot titles.
-    problem_set_name: str, default = "PROBLEM_SET"
-        USe to change name of problem groups for plot titles.
+    Args:
+        experiments (list[list[ProblemSolver]]): Problem-solver pairs used for plotting.
+        plot_type (PlotType): Type of solvability plot to produce:
+            - PlotType.CDF_SOLVABILITY
+            - PlotType.QUANTILE_SOLVABILITY
+            - PlotType.DIFF_CDF_SOLVABILITY
+            - PlotType.DIFF_QUANTILE_SOLVABILITY
+        all_in_one (bool, optional): If True, plot all curves together.
+            Defaults to True.
+        n_bootstraps (int, optional): Number of bootstrap samples. Defaults to 100.
+        conf_level (float, optional): Confidence level for intervals
+            (0 < conf_level < 1). Defaults to 0.95.
+        plot_conf_ints (bool, optional): If True, show bootstrapped confidence
+            intervals. Defaults to True.
+        print_max_hw (bool, optional): If True, print max half-width in caption.
+            Defaults to True.
+        solve_tol (float, optional): Optimality gap defining when a problem is
+            considered solved (0 < solve_tol ≤ 1). Defaults to 0.1.
+        beta (float, optional): Quantile level to compute (0 < beta < 1).
+            Defaults to 0.5.
+        ref_solver (str, optional): Name of the reference solver for difference plots.
+        plot_title (str, optional): Custom title for the plot
+            (used only if `all_in_one=True`).
+        legend_loc (str, optional): Location of the legend
+            (e.g., "best", "upper right").
+        ext (str, optional): File extension for saved plots (e.g., ".png").
+            Defaults to ".png".
+        save_as_pickle (bool, optional): If True, save plots as pickle files.
+            Defaults to False.
+        solver_set_name (str, optional): Name of solver group for plot titles.
+            Defaults to "SOLVER_SET".
+        problem_set_name (str, optional): Name of problem group for plot titles.
+            Defaults to "PROBLEM_SET".
 
     Returns:
-    -------
-    file_list : list [str]
-        List compiling path names for plots produced.
+        list[Path]: List of file paths for the plots produced.
 
     Raises:
-    ------
-    TypeError
-    ValueError
-
+        ValueError: If any input parameter is out of bounds or invalid.
     """
-    # Type checking
-    if (
-        not isinstance(experiments, list)
-        or not all(isinstance(experiment_list, list) for experiment_list in experiments)
-        or not all(
-            [isinstance(experiment, ProblemSolver) for experiment in experiment_list]
-            for experiment_list in experiments
-        )
-    ):
-        error_msg = "Experiments must be a list of lists of ProblemSolver objects."
-        raise TypeError(error_msg)
-    if not isinstance(plot_type, str):
-        error_msg = "Plot type must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(all_in_one, bool):
-        error_msg = "All in one must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(n_bootstraps, int):
-        error_msg = "Number of bootstraps must be an integer."
-        raise TypeError(error_msg)
-    if not isinstance(conf_level, (int, float)):
-        error_msg = "Confidence level must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(plot_conf_ints, bool):
-        error_msg = "Plot confidence intervals must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(print_max_hw, bool):
-        error_msg = "Print max halfwidth must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(solve_tol, (int, float)):
-        error_msg = "Solve tolerance must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(beta, (int, float)):
-        error_msg = "Beta quantile must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(ref_solver, (str, type(None))):
-        error_msg = "Reference solver must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(plot_title, (str, type(None))):
-        error_msg = "Plot title must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(legend_loc, (str, type(None))):
-        error_msg = "Legend location must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(ext, str):
-        error_msg = "Extension must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(save_as_pickle, bool):
-        error_msg = "Save as pickle must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(solver_set_name, str):
-        error_msg = "Solver set name must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(problem_set_name, str):
-        error_msg = "Problem set name must be a string."
-        raise TypeError(error_msg)
     # Value checking
     if n_bootstraps < 1:
         error_msg = "Number of bootstraps must be a positive integer."
@@ -3364,7 +2824,7 @@ def plot_solvability_profiles(
     n_solvers = len(experiments)
     n_problems = len(experiments[0])
     if all_in_one:
-        if plot_type == "cdf_solvability":
+        if plot_type == PlotType.CDF_SOLVABILITY:
             setup_plot(
                 plot_type=plot_type,
                 solver_name=solver_set_name,
@@ -3372,24 +2832,7 @@ def plot_solvability_profiles(
                 solve_tol=solve_tol,
                 plot_title=plot_title,
             )
-        elif plot_type == "quantile_solvability":
-            setup_plot(
-                plot_type=plot_type,
-                solver_name=solver_set_name,
-                problem_name=problem_set_name,
-                beta=beta,
-                solve_tol=solve_tol,
-                plot_title=plot_title,
-            )
-        elif plot_type == "diff_cdf_solvability":
-            setup_plot(
-                plot_type=plot_type,
-                solver_name=solver_set_name,
-                problem_name=problem_set_name,
-                solve_tol=solve_tol,
-                plot_title=plot_title,
-            )
-        elif plot_type == "diff_quantile_solvability":
+        elif plot_type == PlotType.QUANTILE_SOLVABILITY:
             setup_plot(
                 plot_type=plot_type,
                 solver_name=solver_set_name,
@@ -3398,6 +2841,26 @@ def plot_solvability_profiles(
                 solve_tol=solve_tol,
                 plot_title=plot_title,
             )
+        elif plot_type == PlotType.DIFF_CDF_SOLVABILITY:
+            setup_plot(
+                plot_type=plot_type,
+                solver_name=solver_set_name,
+                problem_name=problem_set_name,
+                solve_tol=solve_tol,
+                plot_title=plot_title,
+            )
+        elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
+            setup_plot(
+                plot_type=plot_type,
+                solver_name=solver_set_name,
+                problem_name=problem_set_name,
+                beta=beta,
+                solve_tol=solve_tol,
+                plot_title=plot_title,
+            )
+        else:
+            error_msg = f"Plot type {plot_type} is not supported."
+            raise ValueError(error_msg)
         curve_pairs = []
         solver_names = [
             solver_experiments[0].solver.name for solver_experiments in experiments
@@ -3411,19 +2874,25 @@ def plot_solvability_profiles(
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
                 sub_curve = None
-                if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
+                if plot_type in [
+                    PlotType.CDF_SOLVABILITY,
+                    PlotType.DIFF_CDF_SOLVABILITY,
+                ]:
                     sub_curve = curve_utils.cdf_of_curves_crossing_times(
                         curves=experiment.progress_curves, threshold=solve_tol
                     )
-                if plot_type in {
-                    "quantile_solvability",
-                    "diff_quantile_solvability",
-                }:
+                elif plot_type in [
+                    PlotType.QUANTILE_SOLVABILITY,
+                    PlotType.DIFF_QUANTILE_SOLVABILITY,
+                ]:
                     sub_curve = curve_utils.quantile_cross_jump(
                         curves=experiment.progress_curves,
                         threshold=solve_tol,
                         beta=beta,
                     )
+                else:
+                    error_msg = f"Plot type {plot_type} is not supported."
+                    raise ValueError(error_msg)
                 if sub_curve is not None:
                     solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
@@ -3433,7 +2902,7 @@ def plot_solvability_profiles(
             # CAUTION: Using mean above requires an equal number of macro-replications
             # per problem.
             solver_curves.append(solver_curve)
-            if plot_type in {"cdf_solvability", "quantile_solvability"}:
+            if plot_type in [PlotType.CDF_SOLVABILITY, PlotType.QUANTILE_SOLVABILITY]:
                 handle = solver_curve.plot(color_str=color_str)
                 solver_curve_handles.append(handle)
                 if plot_conf_ints or print_max_hw:
@@ -3463,7 +2932,7 @@ def plot_solvability_profiles(
                         )
                     if print_max_hw:
                         curve_pairs.append([bs_conf_int_lb_curve, bs_conf_int_ub_curve])
-        if plot_type == "cdf_solvability":
+        if plot_type == PlotType.CDF_SOLVABILITY:
             plt.legend(
                 handles=solver_curve_handles,
                 labels=solver_names,
@@ -3487,7 +2956,7 @@ def plot_solvability_profiles(
                     save_as_pickle=save_as_pickle,
                 )
             )
-        elif plot_type == "quantile_solvability":
+        elif plot_type == PlotType.QUANTILE_SOLVABILITY:
             plt.legend(
                 handles=solver_curve_handles,
                 labels=solver_names,
@@ -3511,7 +2980,10 @@ def plot_solvability_profiles(
                     save_as_pickle=save_as_pickle,
                 )
             )
-        elif plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
+        elif plot_type in [
+            PlotType.DIFF_CDF_SOLVABILITY,
+            PlotType.DIFF_QUANTILE_SOLVABILITY,
+        ]:
             if ref_solver is None:
                 error_msg = (
                     "Reference solver must be specified for difference profiles."
@@ -3578,7 +3050,7 @@ def plot_solvability_profiles(
                     conf_level=conf_level,
                     difference=True,
                 )
-            if plot_type == "diff_cdf_solvability":
+            if plot_type == PlotType.DIFF_CDF_SOLVABILITY:
                 file_list.append(
                     save_plot(
                         solver_name=solver_set_name,
@@ -3591,7 +3063,7 @@ def plot_solvability_profiles(
                         save_as_pickle=save_as_pickle,
                     )
                 )
-            elif plot_type == "diff_quantile_solvability":
+            elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
                 file_list.append(
                     save_plot(
                         solver_name=solver_set_name,
@@ -3604,6 +3076,9 @@ def plot_solvability_profiles(
                         save_as_pickle=save_as_pickle,
                     )
                 )
+        else:
+            error_msg = f"Plot type {plot_type} is not supported."
+            raise ValueError(error_msg)
     else:
         solver_names = [
             solver_experiments[0].solver.name for solver_experiments in experiments
@@ -3615,19 +3090,25 @@ def plot_solvability_profiles(
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
                 sub_curve = None
-                if plot_type in {"cdf_solvability", "diff_cdf_solvability"}:
+                if plot_type in [
+                    PlotType.CDF_SOLVABILITY,
+                    PlotType.DIFF_CDF_SOLVABILITY,
+                ]:
                     sub_curve = curve_utils.cdf_of_curves_crossing_times(
                         curves=experiment.progress_curves, threshold=solve_tol
                     )
-                if plot_type in {
-                    "quantile_solvability",
-                    "diff_quantile_solvability",
-                }:
+                elif plot_type in [
+                    PlotType.QUANTILE_SOLVABILITY,
+                    PlotType.DIFF_QUANTILE_SOLVABILITY,
+                ]:
                     sub_curve = curve_utils.quantile_cross_jump(
                         curves=experiment.progress_curves,
                         threshold=solve_tol,
                         beta=beta,
                     )
+                else:
+                    error_msg = f"Plot type {plot_type} is not supported."
+                    raise ValueError(error_msg)
                 if sub_curve is not None:
                     solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
@@ -3635,9 +3116,9 @@ def plot_solvability_profiles(
             # basic curves.
             solver_curve = curve_utils.mean_of_curves(solver_sub_curves)
             solver_curves.append(solver_curve)
-            if plot_type in {"cdf_solvability", "quantile_solvability"}:
+            if plot_type in {PlotType.CDF_SOLVABILITY, PlotType.QUANTILE_SOLVABILITY}:
                 # Set up plot.
-                if plot_type == "cdf_solvability":
+                if plot_type == PlotType.CDF_SOLVABILITY:
                     file_list.append(
                         setup_plot(
                             plot_type=plot_type,
@@ -3646,7 +3127,7 @@ def plot_solvability_profiles(
                             solve_tol=solve_tol,
                         )
                     )
-                elif plot_type == "quantile_solvability":
+                elif plot_type == PlotType.QUANTILE_SOLVABILITY:
                     file_list.append(
                         setup_plot(
                             plot_type=plot_type,
@@ -3662,7 +3143,7 @@ def plot_solvability_profiles(
                         experiments=[experiments[solver_idx]],
                         n_bootstraps=n_bootstraps,
                         conf_level=conf_level,
-                        plot_type=plot_type,  # type: ignore
+                        plot_type=plot_type,
                         solve_tol=solve_tol,
                         beta=beta,
                         estimator=solver_curve,
@@ -3693,7 +3174,7 @@ def plot_solvability_profiles(
                             normalize=True,
                             conf_level=conf_level,
                         )
-                if plot_type == "cdf_solvability":
+                if plot_type == PlotType.CDF_SOLVABILITY:
                     file_list.append(
                         save_plot(
                             solver_name=experiments[solver_idx][0].solver.name,
@@ -3705,7 +3186,7 @@ def plot_solvability_profiles(
                             save_as_pickle=save_as_pickle,
                         )
                     )
-                elif plot_type == "quantile_solvability":
+                elif plot_type == PlotType.QUANTILE_SOLVABILITY:
                     file_list.append(
                         save_plot(
                             solver_name=experiments[solver_idx][0].solver.name,
@@ -3717,7 +3198,10 @@ def plot_solvability_profiles(
                             save_as_pickle=save_as_pickle,
                         )
                     )
-        if plot_type in {"diff_cdf_solvability", "diff_quantile_solvability"}:
+        if plot_type in [
+            PlotType.DIFF_CDF_SOLVABILITY,
+            PlotType.DIFF_QUANTILE_SOLVABILITY,
+        ]:
             if ref_solver is None:
                 error_msg = (
                     "Reference solver must be specified for difference profiles."
@@ -3729,7 +3213,7 @@ def plot_solvability_profiles(
             ref_solver_idx = solver_names.index(ref_solver)
             for solver_idx in range(n_solvers):
                 if solver_idx is not ref_solver_idx:
-                    if plot_type == "diff_cdf_solvability":
+                    if plot_type == PlotType.DIFF_CDF_SOLVABILITY:
                         file_list.append(
                             setup_plot(
                                 plot_type=plot_type,
@@ -3738,7 +3222,7 @@ def plot_solvability_profiles(
                                 solve_tol=solve_tol,
                             )
                         )
-                    elif plot_type == "diff_quantile_solvability":
+                    elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
                         file_list.append(
                             setup_plot(
                                 plot_type=plot_type,
@@ -3761,7 +3245,7 @@ def plot_solvability_profiles(
                                 ],
                                 n_bootstraps=n_bootstraps,
                                 conf_level=conf_level,
-                                plot_type=plot_type,  # type: ignore
+                                plot_type=plot_type,
                                 solve_tol=solve_tol,
                                 beta=beta,
                                 estimator=diff_solver_curve,
@@ -3797,7 +3281,7 @@ def plot_solvability_profiles(
                                 conf_level=conf_level,
                                 difference=True,
                             )
-                    if plot_type == "diff_cdf_solvability":
+                    if plot_type == PlotType.DIFF_CDF_SOLVABILITY:
                         file_list.append(
                             save_plot(
                                 solver_name=experiments[solver_idx][0].solver.name,
@@ -3809,7 +3293,7 @@ def plot_solvability_profiles(
                                 save_as_pickle=save_as_pickle,
                             )
                         )
-                    elif plot_type == "diff_quantile_solvability":
+                    elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
                         file_list.append(
                             save_plot(
                                 solver_name=experiments[solver_idx][0].solver.name,
@@ -3826,81 +3310,42 @@ def plot_solvability_profiles(
 
 def plot_terminal_progress(
     experiments: list[ProblemSolver],
-    plot_type: Literal["box", "violin"] = "violin",
+    plot_type: PlotType = PlotType.VIOLIN,
     normalize: bool = True,
     all_in_one: bool = True,
     plot_title: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
-) -> list[str | os.PathLike]:
-    """Plot individual or aggregate terminal progress for one or more solvers on a single problem.
+) -> list[Path]:
+    """Plots terminal progress as box or violin plots for solvers on a single problem.
 
-    Parameters
-    ----------
-    experiments : list [``experiment_base.ProblemSolver``]
-        ProblemSolver pairs of different solvers on a common problem.
-    plot_type : str, default="violin"
-        String indicating which type of plot to produce:
-
-            "box" : comparative box plots;
-
-            "violin" : comparative violin plots.
-    normalize : bool, default=True
-        True if progress curves are to be normalized w.r.t. optimality gaps,
-        otherwise False.
-    all_in_one : bool, default=True
-        True if curves are to be plotted together, otherwise False.
-    plot_title : str, opt
-        Optional title to override the one that is autmatically generated,
-        only applies if all_in_one is True.
-    ext: str, default = '.png'
-        Extension to add to image file path to change file type
-    save_as_pickle: bool, default = False
-        True if plot should be saved to pickle file, False otherwise.
-    solver_set_name: str, default = "SOLVER_SET"
-        Use to change name of solver groups for plot titles.
+    Args:
+        experiments (list[ProblemSolver]): ProblemSolver pairs for different solvers on
+            a common problem.
+        plot_type (str, optional): Type of plot to generate: "box" or "violin".
+            Defaults to "violin".
+        normalize (bool, optional): If True, normalize progress curves by optimality
+            gaps. Defaults to True.
+        all_in_one (bool, optional): If True, plot all curves in one figure.
+            Defaults to True.
+        plot_title (str, optional): Custom title to override the default. Used only if
+            all_in_one is True.
+        ext (str, optional): File extension for saved plots (e.g., ".png").
+            Defaults to ".png".
+        save_as_pickle (bool, optional): If True, save the plot as a pickle file.
+            Defaults to False.
+        solver_set_name (str, optional): Label for solver group in plot titles.
+            Defaults to "SOLVER_SET".
 
     Returns:
-    -------
-    file_list : list [str]
-        List compiling path names for plots produced.
+        list[str]: List of file paths for the plots produced.
 
     Raises:
-    ------
-    TypeError
-    ValueError
-
+        ValueError: If an unsupported plot type is specified.
     """
-    # Type checking
-    if not isinstance(experiments, list) or not all(
-        isinstance(experiment, ProblemSolver) for experiment in experiments
-    ):
-        error_msg = "Experiments must be a list of ProblemSolver objects."
-        raise TypeError(error_msg)
-    if not isinstance(plot_type, str):
-        error_msg = "Plot type must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(normalize, bool):
-        error_msg = "Normalize must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(all_in_one, bool):
-        error_msg = "All in one must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(plot_title, (str, type(None))):
-        error_msg = "Plot title must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(ext, str):
-        error_msg = "Extension must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(save_as_pickle, bool):
-        error_msg = "Save as pickle must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(solver_set_name, str):
-        error_msg = "Solver set name must be a string."
-        raise TypeError(error_msg)
     # Value checking
-    if plot_type not in ["box", "violin"]:
+    if plot_type not in [PlotType.BOX, PlotType.VIOLIN]:
         error_msg = "Plot type must be either 'box' or 'violin'."
         raise ValueError(error_msg)
 
@@ -3936,13 +3381,13 @@ def plot_terminal_progress(
                 ]
                 for experiment in experiments
             ]
-        if plot_type == "box":
+        if plot_type == PlotType.BOX:
             plt.boxplot(terminal_data)
             plt.xticks(
                 range(1, n_experiments + 1),
                 labels=[experiment.solver.name for experiment in experiments],
             )
-        elif plot_type == "violin":
+        elif plot_type == PlotType.VIOLIN:
             import seaborn as sns
 
             # Construct dictionary of lists directly
@@ -3996,10 +3441,10 @@ def plot_terminal_progress(
             else:
                 curves = experiment.objective_curves
             terminal_data = [curve.y_vals[-1] for curve in curves]
-            if plot_type == "box":
+            if plot_type == PlotType.BOX:
                 plt.boxplot(terminal_data)
                 plt.xticks([1], labels=[experiment.solver.name])
-            if plot_type == "violin":
+            if plot_type == PlotType.VIOLIN:
                 terminal_data_dict = {
                     "Solver": [experiment.solver.name] * len(terminal_data),
                     "Terminal": terminal_data,
@@ -4037,7 +3482,7 @@ def plot_terminal_scatterplots(
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
     problem_set_name: str = "PROBLEM_SET",
-) -> list[str | os.PathLike]:
+) -> list[Path]:
     """Plot a scatter plot of mean and standard deviation of terminal progress.
 
     Either one plot for each solver or one plot for all solvers.
@@ -4115,7 +3560,7 @@ def plot_terminal_scatterplots(
     if all_in_one:
         marker_list = ["o", "v", "s", "*", "P", "X", "D", "V", ">", "<"]
         setup_plot(
-            plot_type="terminal_scatter",
+            plot_type=PlotType.TERMINAL_SCATTER,
             solver_name=solver_set_name,
             problem_name=problem_set_name,
             plot_title=plot_title,
@@ -4148,7 +3593,7 @@ def plot_terminal_scatterplots(
             save_plot(
                 solver_name=solver_set_name,
                 problem_name=problem_set_name,
-                plot_type="terminal_scatter",
+                plot_type=PlotType.TERMINAL_SCATTER,
                 normalize=True,
                 plot_title=plot_title,
                 ext=ext,
@@ -4159,7 +3604,7 @@ def plot_terminal_scatterplots(
         for solver_idx in range(n_solvers):
             ref_experiment = experiments[solver_idx][0]
             setup_plot(
-                plot_type="terminal_scatter",
+                plot_type=PlotType.TERMINAL_SCATTER,
                 solver_name=ref_experiment.solver.name,
                 problem_name=problem_set_name,
             )
@@ -4181,7 +3626,7 @@ def plot_terminal_scatterplots(
                     save_plot(
                         solver_name=experiment.solver.name,
                         problem_name=problem_set_name,
-                        plot_type="terminal_scatter",
+                        plot_type=PlotType.TERMINAL_SCATTER,
                         normalize=True,
                         ext=ext,
                         save_as_pickle=save_as_pickle,
@@ -4191,20 +3636,7 @@ def plot_terminal_scatterplots(
 
 
 def setup_plot(
-    plot_type: Literal[
-        "all",
-        "mean",
-        "quantile",
-        "solve_time_cdf",
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-        "area",
-        "box",
-        "violin",
-        "terminal_scatter",
-    ],
+    plot_type: PlotType,
     solver_name: str = "SOLVER SET",
     problem_name: str = "PROBLEM SET",
     normalize: bool = True,
@@ -4265,22 +3697,6 @@ def setup_plot(
 
     """
     # Value checking
-    if plot_type not in [
-        "all",
-        "mean",
-        "quantile",
-        "solve_time_cdf",
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-        "area",
-        "box",
-        "violin",
-        "terminal_scatter",
-    ]:
-        error_msg = f"Plot type '{plot_type}' is not recognized."
-        raise ValueError(error_msg)
     if isinstance(beta, float) and not 0 < beta < 1:
         error_msg = "Beta must be in (0, 1)."
         raise ValueError(error_msg)
@@ -4292,32 +3708,32 @@ def setup_plot(
     # Set up axes and axis labels.
     if normalize:
         plt.ylabel("Fraction of Initial Optimality Gap", size=14)
-        if plot_type != "box" and plot_type != "violin":
+        if plot_type != PlotType.BOX and plot_type != PlotType.VIOLIN:
             plt.xlabel("Fraction of Budget", size=14)
             plt.xlim((0, 1))
             plt.ylim((-0.1, 1.1))
             plt.tick_params(axis="both", which="major", labelsize=12)
     else:
         plt.ylabel("Objective Function Value", size=14)
-        if plot_type != "box" and plot_type != "violin":
+        if plot_type != PlotType.BOX and plot_type != PlotType.VIOLIN:
             plt.xlabel("Budget", size=14)
             plt.xlim((0, budget))
             plt.tick_params(axis="both", which="major", labelsize=12)
     # Specify title (plus alternative y-axis label and alternative axes).
-    if plot_type == "all":
+    if plot_type == PlotType.ALL:
         title = f"{solver_name} on {problem_name}\n"
         title += "Progress Curves" if normalize else "Objective Curves"
-    elif plot_type == "mean":
+    elif plot_type == PlotType.MEAN:
         title = f"{solver_name} on {problem_name}\n"
         title += "Mean Progress Curve" if normalize else "Mean Objective Curve"
-    elif plot_type == "quantile":
+    elif plot_type == PlotType.QUANTILE:
         if beta is None:
             error_msg = "Beta must be specified for quantile plot."
             raise ValueError(error_msg)
         beta_rounded = round(beta, 2)
         title = f"{solver_name} on {problem_name}\n{beta_rounded}-Quantile "
         title += "Progress Curve" if normalize else "Objective Curve"
-    elif plot_type == "solve_time_cdf":
+    elif plot_type == PlotType.SOLVE_TIME_CDF:
         if solve_tol is None:
             error_msg = "Solve tolerance must be specified for cdf plot."
             raise ValueError(error_msg)
@@ -4325,7 +3741,7 @@ def setup_plot(
         solve_tol_rounded = round(solve_tol, 2)
         title = f"{solver_name} on {problem_name}\n"
         title += f"CDF of {solve_tol_rounded}-Solve Times"
-    elif plot_type == "cdf_solvability":
+    elif plot_type == PlotType.CDF_SOLVABILITY:
         if solve_tol is None:
             error_msg = "Solve tolerance must be specified for cdf solvability plot."
             raise ValueError(error_msg)
@@ -4334,7 +3750,7 @@ def setup_plot(
             f"CDF-Solvability Profile for {solver_name}\n"
             f"Profile of CDFs of {round(solve_tol, 2)}-Solve Times"
         )
-    elif plot_type == "quantile_solvability":
+    elif plot_type == PlotType.QUANTILE_SOLVABILITY:
         if beta is None:
             error_msg = "Beta must be specified for quantile solvability plot."
             raise ValueError(error_msg)
@@ -4349,7 +3765,7 @@ def setup_plot(
             f"Profile of {round(beta, 2)}-Quantiles "
             f"of {round(solve_tol, 2)}-Solve Times"
         )
-    elif plot_type == "diff_cdf_solvability":
+    elif plot_type == PlotType.DIFF_CDF_SOLVABILITY:
         if solve_tol is None:
             error_msg = "Solve tolerance must be specified for cdf solvability plot."
             raise ValueError(error_msg)
@@ -4360,7 +3776,7 @@ def setup_plot(
         )
         plt.plot([0, 1], [0, 0], color="black", linestyle="--")
         plt.ylim((-1, 1))
-    elif plot_type == "diff_quantile_solvability":
+    elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
         if beta is None:
             error_msg = "Beta must be specified for quantile solvability plot."
             raise ValueError(error_msg)
@@ -4377,13 +3793,13 @@ def setup_plot(
         )
         plt.plot([0, 1], [0, 0], color="black", linestyle="--")
         plt.ylim((-1, 1))
-    elif plot_type == "area":
+    elif plot_type == PlotType.AREA:
         plt.xlabel("Mean Area", size=14)
         plt.ylabel("Std Dev of Area")
         # plt.xlim((0, 1))
         # plt.ylim((0, 0.5))
         title = f"{solver_name}\nAreas Under Progress Curves"
-    elif plot_type == "box" or plot_type == "violin":
+    elif plot_type == PlotType.BOX or plot_type == PlotType.VIOLIN:
         plt.xlabel("Solvers")
         if normalize:
             plt.ylabel("Terminal Progress")
@@ -4391,7 +3807,7 @@ def setup_plot(
         else:
             plt.ylabel("Terminal Objective")
             title = f"{solver_name} on {problem_name}"
-    elif plot_type == "terminal_scatter":
+    elif plot_type == PlotType.TERMINAL_SCATTER:
         plt.xlabel("Mean Terminal Progress", size=14)
         plt.ylabel("Std Dev of Terminal Progress")
         # plt.xlim((0, 1))
@@ -4409,26 +3825,13 @@ def setup_plot(
 def save_plot(
     solver_name: str,
     problem_name: str,
-    plot_type: Literal[
-        "all",
-        "mean",
-        "quantile",
-        "solve_time_cdf",
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-        "area",
-        "box",
-        "violin",
-        "terminal_scatter",
-    ],
+    plot_type: PlotType,
     normalize: bool,
     extra: float | list[float] | None = None,
     plot_title: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
-) -> str | os.PathLike:
+) -> Path:
     """Create new figure. Add labels to plot and reformat axes.
 
     Parameters
@@ -4481,53 +3884,45 @@ def save_plot(
 
     """
     # Form string name for plot filename.
-    if plot_type == "all":
+    if plot_type == PlotType.ALL:
         plot_name = "all_prog_curves"
-    elif plot_type == "mean":
+    elif plot_type == PlotType.MEAN:
         plot_name = "mean_prog_curve"
-    elif plot_type == "quantile":
+    elif plot_type == PlotType.QUANTILE:
         plot_name = f"{extra}_quantile_prog_curve"
-    elif plot_type == "solve_time_cdf":
+    elif plot_type == PlotType.SOLVE_TIME_CDF:
         plot_name = f"cdf_{extra}_solve_times"
-    elif plot_type == "cdf_solvability":
+    elif plot_type == PlotType.CDF_SOLVABILITY:
         plot_name = f"profile_cdf_{extra}_solve_times"
-    elif plot_type == "quantile_solvability":
-        if (
-            isinstance(extra, list)
-            and len(extra) == 2
-            and isinstance(extra[0], float)
-            and isinstance(extra[1], float)
-        ):
-            plot_name = f"profile_{extra[1]}_quantile_{extra[0]}_solve_times"
-        else:
+    elif plot_type == PlotType.QUANTILE_SOLVABILITY:
+        if not (isinstance(extra, list) and len(extra) >= 2):
             error_msg = (
                 "Extra must be a list of two floats for "
                 "'quantile_solvability' plot type."
             )
             raise ValueError(error_msg)
-    elif plot_type == "diff_cdf_solvability":
+        extra_0 = float(extra[0])
+        extra_1 = float(extra[1])
+        plot_name = f"profile_{extra_1}_quantile_{extra_0}_solve_times"
+    elif plot_type == PlotType.DIFF_CDF_SOLVABILITY:
         plot_name = f"diff_profile_cdf_{extra}_solve_times"
-    elif plot_type == "diff_quantile_solvability":
-        if (
-            isinstance(extra, list)
-            and len(extra) == 2
-            and isinstance(extra[0], float)
-            and isinstance(extra[1], float)
-        ):
-            plot_name = f"diff_profile_{extra[1]}_quantile_{extra[0]}_solve_times"
-        else:
+    elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
+        if not (isinstance(extra, list) and len(extra) == 2):
             error_msg = (
                 "Extra must be a list of two floats for "
                 "'diff_quantile_solvability' plot type."
             )
             raise ValueError(error_msg)
-    elif plot_type == "area":
+        extra_0 = float(extra[0])
+        extra_1 = float(extra[1])
+        plot_name = f"diff_profile_{extra_1}_quantile_{extra_0}_solve_times"
+    elif plot_type == PlotType.AREA:
         plot_name = "area_scatterplot"
-    elif plot_type == "box":
+    elif plot_type == PlotType.BOX:
         plot_name = "terminal_box"
-    elif plot_type == "violin":
+    elif plot_type == PlotType.VIOLIN:
         plot_name = "terminal_violin"
-    elif plot_type == "terminal_scatter":
+    elif plot_type == PlotType.TERMINAL_SCATTER:
         plot_name = "terminal_scatter"
     else:
         raise NotImplementedError(f"'{plot_type}' is not implemented.")
@@ -4736,7 +4131,7 @@ class ProblemsSolvers:
 
     @property
     def file_name_path(self) -> Path:
-        """Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object."""
+        """Path to the .pickle file for saving the ProblemsSolvers object."""
         return self.__file_name_path
 
     @file_name_path.setter
@@ -4745,7 +4140,7 @@ class ProblemsSolvers:
 
     @property
     def create_pair_pickles(self) -> bool:
-        """True if creating pickle files for each problem-solver pair, False otherwise."""
+        """Whether to create pickle files for each problem-solver pair."""
         return self.__create_pair_pickles
 
     @create_pair_pickles.setter
@@ -5127,36 +4522,18 @@ class ProblemsSolvers:
         crn_across_budget: bool = True,
         crn_across_macroreps: bool = False,
     ) -> None:
-        """For each problem-solver pair, run postreplications at solutions recommended by the solver on each macroreplication.
+        """Runs postreplications for each problem-solver pair on all macroreplications.
 
-        Parameters
-        ----------
-        n_postreps : int
-            Number of postreplications to take at each recommended solution.
-        crn_across_budget : bool, default=True
-            True if CRN used for post-replications at solutions recommended at
-            different times,
-            otherwise False.
-        crn_across_macroreps : bool, default=False
-            True if CRN used for post-replications at solutions recommended on different
-            macroreplications, otherwise False.
+        Args:
+            n_postreps (int): Number of postreplications per recommended solution.
+            crn_across_budget (bool, optional): If True, use CRN across solutions from
+                different time budgets. Defaults to True.
+            crn_across_macroreps (bool, optional): If True, use CRN across solutions
+                from different macroreplications. Defaults to False.
 
         Raises:
-        ------
-        TypeError
-        ValueError
-
+            ValueError: If n_postreps is not positive.
         """
-        # Type checking
-        if not isinstance(n_postreps, int):
-            error_msg = "Number of postreplications must be an integer."
-            raise TypeError(error_msg)
-        if not isinstance(crn_across_budget, bool):
-            error_msg = "CRN across budget must be a boolean."
-            raise TypeError(error_msg)
-        if not isinstance(crn_across_macroreps, bool):
-            error_msg = "CRN across macroreplications must be a boolean."
-            raise TypeError(error_msg)
         # Value checking
         if n_postreps <= 0:
             error_msg = "Number of postreplications must be positive."
@@ -5179,29 +4556,17 @@ class ProblemsSolvers:
     def post_normalize(
         self, n_postreps_init_opt: int, crn_across_init_opt: bool = True
     ) -> None:
-        """Construct objective curves and (normalized) progress curves for all collections of experiments on all given problem.
+        """Builds objective and progress curves for all experiment collections.
 
-        Parameters
-        ----------
-        n_postreps_init_opt : int
-            Number of postreplications to take at initial x0 and optimal x*.
-        crn_across_init_opt : bool, default=True
-            True if CRN used for post-replications at solutions x0 and x*,
-            otherwise False.
+        Args:
+            n_postreps_init_opt (int): Number of postreplications at initial (x0) and
+                optimal (x*) solutions.
+            crn_across_init_opt (bool, optional): If True, use CRN for postreplications
+                at x0 and x*. Defaults to True.
 
         Raises:
-        ------
-        TypeError
-        ValueError
-
+            ValueError: If `n_postreps_init_opt` is not positive.
         """
-        # Type checking
-        if not isinstance(n_postreps_init_opt, int):
-            error_msg = "Number of postreplications must be an integer."
-            raise TypeError(error_msg)
-        if not isinstance(crn_across_init_opt, bool):
-            error_msg = "CRN across initial and optimal solutions must be a boolean."
-            raise TypeError(error_msg)
         # Value checking
         if n_postreps_init_opt <= 0:
             error_msg = "Number of postreplications must be positive."
@@ -5221,46 +4586,41 @@ class ProblemsSolvers:
         self.record_group_experiment_results()
 
     def check_postreplicate(self) -> bool:
-        """Check to see if all experiments have been postreplicated.
+        """Checks whether all experiments have been postreplicated.
 
-        Return:
-        ------
-        bool
-            True if all experiments have been postreplicated, false otherwise.
-
+        Returns:
+            bool: Whether all experiments have been postreplicated
         """
-        for solver_idx in range(self.n_solvers):
-            for problem_idx in range(self.n_problems):
-                experiment = self.experiments[solver_idx][problem_idx]
-                if not experiment.has_postreplicated:
-                    return False
-        return True
+        return all(
+            experiment.has_postreplicated
+            for row in self.experiments
+            for experiment in row
+        )
 
     def check_postnormalize(self) -> bool:
-        """Check to see if all experiments have been postnormalized.
+        """Checks whether all experiments have been postnormalized.
 
-        Return:
-        ------
-        bool
-            True if all experiments have been postnormalized, false otherwise.
-
+        Returns:
+            bool: Whether all experiments have been postnormalized.
         """
-        for solver_idx in range(self.n_solvers):
-            for problem_idx in range(self.n_problems):
-                experiment = self.experiments[solver_idx][problem_idx]
-                if not experiment.has_postreplicated:
-                    return False
-        return True
+        return all(
+            experiment.has_postnormalized
+            for row in self.experiments
+            for experiment in row
+        )
 
     def record_group_experiment_results(self) -> None:
-        """Save ``experiment_base.ProblemsSolvers`` object to .pickle file."""
+        """Saves a ProblemsSolvers object to a .pickle file in the outputs directory."""
         output_dir = EXPERIMENT_DIR / "outputs"
         output_dir.mkdir(parents=True, exist_ok=True)
         with Path.open(self.file_name_path, "wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
     def log_group_experiment_results(self) -> None:
-        """Create readable .txt file describing the solvers and problems that make up the ProblemSolvers object."""
+        """Creates a .txt summary of solvers and problems in the ProblemSolvers object.
+
+        The file is saved in the 'logs/' folder next to the experiment's pickle file.
+        """
         # Create a new text file in experiment/{date/time of launch}/logs folder
         # with correct name.
         log_dir = self.file_name_path.parent.parent / "logs"
@@ -5380,22 +4740,18 @@ class ProblemsSolvers:
         solve_tols: list[float] | None = None,
         csv_filename: str = "df_solver_results",
     ) -> None:
-        """For each design point, calculate statistics from each macoreplication and print to csv.
+        """Calculates statistics from macroreplications and saves results to a CSV file.
 
-        Parameters
-        ----------
-        pair_list: list [``experiment_base.ProblemSolver``]
-            List of ProblemSolver objects.
-        solve_tols : list [float], default = [0.05, 0.10, 0.20, 0.50]
-            Relative optimality gap(s) definining when a problem is solved; in (0,1].
-        csv_filename : str, default="df_solver_results"
-            Name of .csv file to print output to.
+        Args:
+            pair_list (list[ProblemSolver]): List of ProblemSolver objects.
+            solve_tols (list[float], optional): Optimality gaps defining when a problem
+                is considered solved (values in (0, 1]).
+                Defaults to [0.05, 0.10, 0.20, 0.50].
+            csv_filename (str, optional): Name of the CSV file to write results to.
+                Defaults to "df_solver_results".
 
         Raises:
-        ------
-        TypeError
-        ValueError
-
+            ValueError: If any solve tolerance is not in the range (0, 1].
         """
         # Local imports
         import csv
@@ -5403,20 +4759,6 @@ class ProblemsSolvers:
         # Assign default values
         if solve_tols is None:
             solve_tols = [0.05, 0.10, 0.20, 0.50]
-        # Type checking
-        if not isinstance(pair_list, list) or not all(
-            isinstance(obj, ProblemSolver) for obj in pair_list
-        ):
-            error_msg = "Pair list must be a list of ProblemSolver objects."
-            raise TypeError(error_msg)
-        if not isinstance(solve_tols, list) or not all(
-            isinstance(tol, float) for tol in solve_tols
-        ):
-            error_msg = "Solve tols must be a list of floats or None."
-            raise TypeError(error_msg)
-        if not isinstance(csv_filename, str):
-            error_msg = "CSV filename must be a string."
-            raise TypeError(error_msg)
         # Value checking
         if not all(0 < tol <= 1 for tol in solve_tols):
             error_msg = "Solve tols must be in (0,1]."
@@ -5922,7 +5264,6 @@ def create_design(
 
         # Create solver factor design from .txt file of factor settings.
         command = f'{command_file} -s {n_stacks} "{source_file}" > "{design_file}"'
-        # TODO: investigate if shell is needed
         completed_process = subprocess.run(command, capture_output=True, shell=True)
         # If the design file doesn't exist, there was an error in the Ruby script.
         if not design_file.exists():
