@@ -1,4 +1,5 @@
-"""
+"""Demo for Data Farming Models.
+
 This script is intended to help with running a data-farming experiment on
 a simulation model. It creates a design of model factors and runs multiple
 replications at each configuration of the model. Outputs are printed to a file.

@@ -1,4 +1,5 @@
-"""
+"""Demo for an Experiment with SAN, SSCONT, and IRONORECONT problems.
+
 This script is intended to help with a large experiment with
 5 solvers (two versions of random search, ASTRO-DF, STRONG, and Nelder-Mead)
 and 60 problems (20 unique instances of problems from
@@ -27,6 +28,7 @@ from simopt.experiment_base import (
 
 
 def main() -> None:
+    """Main function to run the demo script."""
     # Problems factors used in experiments
     # SAN
     all_random_costs = [
@@ -181,7 +183,8 @@ def main() -> None:
                 problem_fixed_factors = {"budget": 1000}
                 problem_rename = f"IRONORECONT-1_sd={sd}_hc={hc}_inv={inv}"
 
-                # Temporarily store experiments on the same problem for post-normalization.
+                # Temporarily store experiments on the same problem for
+                # post-normalization.
                 experiments_same_problem = []
                 solver_fixed_factors = {}
                 for solver in solvers:
@@ -281,9 +284,7 @@ def main() -> None:
                 for sd in st_devs:
                     for hc in holding_costs:
                         for inv in inven_stops:
-                            problem_rename = (
-                                f"{problem}-1_sd={sd}_hc={hc}_inv={inv}"
-                            )
+                            problem_rename = f"{problem}-1_sd={sd}_hc={hc}_inv={inv}"
                             file_name = f"{solver}_on_{problem_rename}"
                             # Load experiment.
                             new_experiment = read_experiment_results(
@@ -388,9 +389,7 @@ def main() -> None:
     )
 
     plot_solvability_cdfs(
-        experiments=[
-            experiments[solver_idx][0] for solver_idx in range(n_solvers)
-        ],
+        experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
         solve_tol=0.2,
         all_in_one=True,
         plot_conf_ints=True,

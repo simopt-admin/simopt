@@ -1,4 +1,5 @@
-"""
+"""Demo for the ProblemsSolvers class.
+
 This script is intended to help with debugging problems and solvers.
 It create problem-solver groups (using the directory) and runs multiple
 macroreplications of each problem-solver pair.
@@ -16,6 +17,7 @@ from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles
 
 
 def main() -> None:
+    """Main function to run the demo script."""
     # !! When testing a new solver/problem, first go to directory.py.
     # There you should add the import statement and an entry in the respective
     # dictionary (or dictionaries).

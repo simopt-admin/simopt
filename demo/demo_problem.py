@@ -1,4 +1,5 @@
-"""
+"""Demo script for the Problem class.
+
 This script is intended to help with debugging a problem.
 It imports a problem, initializes a problem object with given factors,
 sets up pseudorandom number generators, and runs multiple replications
@@ -58,9 +59,7 @@ mysolution = Solution(x, myproblem)
 # The rest of this script requires no changes.
 
 # Create and attach rngs to solution
-rng_list = [
-    MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.model.n_rngs)
-]
+rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.model.n_rngs)]
 mysolution.attach_rngs(rng_list, copy=False)
 
 # Simulate a fixed number of replications (n_reps) at the solution x.
@@ -72,36 +71,41 @@ print(
     f"Ran {n_reps} replications of the {myproblem.name} problem at solution x = {x}.\n"
 )
 print(
-    f"The mean objective estimate was {round(mysolution.objectives_mean[0], 4)} with standard error {round(mysolution.objectives_stderr[0], 4)}."
+    f"The mean objective estimate was {round(mysolution.objectives_mean[0], 4)} with "
+    f"standard error {round(mysolution.objectives_stderr[0], 4)}."
 )
 print("The individual observations of the objective were:")
 for idx in range(n_reps):
     print(f"\t {round(mysolution.objectives[idx][0], 4)}")
 if myproblem.gradient_available:
-    print(
-        "\nThe individual observations of the gradients of the objective were:"
-    )
+    print("\nThe individual observations of the gradients of the objective were:")
     for idx in range(n_reps):
-        print(
-            f"\t {[round(g, 4) for g in mysolution.objectives_gradients[idx][0]]}"
-        )
+        print(f"\t {[round(g, 4) for g in mysolution.objectives_gradients[idx][0]]}")
 else:
     print("\nThis problem has no known gradients.")
 if myproblem.n_stochastic_constraints > 0:
     print(
-        f"\nThis problem has {myproblem.n_stochastic_constraints} stochastic constraints of the form E[LHS] <= 0."
+        f"\nThis problem has {myproblem.n_stochastic_constraints} stochastic "
+        "constraints of the form E[LHS] <= 0."
     )
     for stc_idx in range(myproblem.n_stochastic_constraints):
+        stoch_const_mean = mysolution.stoch_constraints_mean[stc_idx]
+        stoch_const_mean_round = round(stoch_const_mean, 4)
+        stoch_const_stderr = mysolution.stoch_constraints_stderr[stc_idx]
+        stoch_const_stderr_round = round(stoch_const_stderr, 4)
         print(
-            f"\tFor stochastic constraint #{stc_idx + 1}, the mean of the LHS was {round(mysolution.stoch_constraints_mean[stc_idx], 4)} with standard error {round(mysolution.stoch_constraints_stderr[stc_idx], 4)}."
+            f"\tFor stochastic constraint #{stc_idx + 1}, the mean of the LHS was "
+            f"{stoch_const_mean_round} with standard error {stoch_const_stderr_round}."
         )
         print("\tThe observations of the LHSs were:")
         for idx in range(n_reps):
-            assert mysolution.stoch_constraints is not None, (
-                "Stochastic constraints should not be None."
-            )
-            print(
-                f"\t\t {round(mysolution.stoch_constraints[idx][stc_idx], 4)}"
-            )
+            # Quick check to make sure the stochastic constraints are not None.
+            if mysolution.stoch_constraints is None:
+                error_msg = "Stochastic constraints should not be None."
+                raise ValueError(error_msg)
+            # Print out the current stochastic constraint value.
+            stoch_const = mysolution.stoch_constraints[stc_idx][idx]
+            stoch_const_round = round(stoch_const, 4)
+            print(f"\t\t {stoch_const_round}")
 else:
     print("\nThis problem has no stochastic constraints.")

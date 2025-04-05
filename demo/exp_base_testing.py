@@ -1,4 +1,5 @@
-"""
+"""Demo for the ProblemsSolvers class.
+
 This script is intended to help with running a data-farming experiment on
 a solver. It creates a design of solver factors and runs multiple
 macroreplications at each version of the solver. Outputs are printed to a file.
@@ -15,6 +16,7 @@ from simopt.experiment_base import ProblemsSolvers
 
 
 def main() -> None:
+    """Main function to run the demo script."""
     # Specify the name of the solver as it appears in directory.py
 
     solver_names = ["RNDSRCH", "RNDSRCH", "ASTRODF"]

@@ -1,4 +1,5 @@
-"""
+"""Demo Plotting Script.
+
 This script is intended to help with debugging problems and solvers.
 It create a problem-solver pairing (using the directory) and runs multiple
 macroreplications of the solver on the problem.
@@ -34,11 +35,7 @@ for problem_name in problem_names:
         myexperiment = ProblemSolver(solver_name, problem_name)
 
         file_name_path = (
-            "experiments/outputs/"
-            + solver_name
-            + "_on_"
-            + problem_name
-            + ".pickle"
+            "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
         )
 
         # Run a fixed number of macroreplications of the solver on the problem.
@@ -64,11 +61,7 @@ for solver_name in solver_names:
     # solver_experiments = []
     for problem_name in problem_names:
         file_name_path = (
-            "experiments/outputs/"
-            + solver_name
-            + "_on_"
-            + problem_name
-            + ".pickle"
+            "experiments/outputs/" + solver_name + "_on_" + problem_name + ".pickle"
         )
         myexperiment = read_experiment_results(file_name_path)
         myexperiments.append(myexperiment)
@@ -77,21 +70,15 @@ for solver_name in solver_names:
 
 print("Plotting results.")
 # Produce basic plots.
-plot_terminal_progress(
-    experiments=myexperiments, plot_type="box", normalize=False
-)
-plot_terminal_progress(
-    experiments=myexperiments, plot_type="box", normalize=True
-)
+plot_terminal_progress(experiments=myexperiments, plot_type="box", normalize=False)
+plot_terminal_progress(experiments=myexperiments, plot_type="box", normalize=True)
 plot_terminal_progress(
     experiments=myexperiments,
     plot_type="violin",
     normalize=False,
     all_in_one=False,
 )
-plot_terminal_progress(
-    experiments=myexperiments, plot_type="violin", normalize=True
-)
+plot_terminal_progress(experiments=myexperiments, plot_type="violin", normalize=True)
 # plot_terminal_scatterplots(experiments = myexperiments, all_in_one=False)
 
 # Plots will be saved in the folder experiments/plots.

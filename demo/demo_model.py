@@ -1,4 +1,5 @@
-"""
+"""Demo for Model Debugging.
+
 This script is intended to help with debugging a model.
 It imports a model, initializes a model object with given factors,
 sets up pseudorandom number generators, and runs one or more replications.
@@ -38,7 +39,8 @@ mymodel = MM1Queue(fixed_factors=fixed_factors)
 # Check fixed factors individually.
 for key, value in mymodel.factors.items():
     print(
-        f"The factor {key} is set as {value}. Is this simulatable? {bool(mymodel.check_simulatable_factor(key))}."
+        f"The factor {key} is set as {value}. "
+        f"Is this simulatable? {bool(mymodel.check_simulatable_factor(key))}."
     )
 # Check all factors collectively.
 print(

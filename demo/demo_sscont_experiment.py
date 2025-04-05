@@ -23,6 +23,7 @@ from simopt.experiment_base import (
 
 
 def main() -> None:
+    """Main function to run the demo script."""
     # Default values of the (s, S) model:
     # "demand_mean": 100.0
     # "lead_mean": 6.0
@@ -150,7 +151,9 @@ def main() -> None:
                 )
                 # Rename problem and solver to produce nicer plot labels.
                 new_experiment.solver.name = f"RS{rs_ss}"
-                new_experiment.problem.name = rf"SSCONT-1 with $\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
+                new_experiment.problem.name = (
+                    rf"SSCONT-1 with $\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
+                )
                 experiments_same_solver.append(new_experiment)
         experiments.append(experiments_same_solver)
     # Load ASTRO-DF results.
