@@ -510,7 +510,10 @@ class ProblemSolver:
         if self.solver.constraint_type.value < self.problem.constraint_type.value:
             solver_str = self.solver.constraint_type.name.lower()
             problem_str = self.problem.constraint_type.name.lower()
-            error_message = f"Solver can handle {solver_str} constraints, but problem has {problem_str} constraints."
+            error_message = (
+                f"Solver can handle {solver_str} constraints, "
+                f"but problem has {problem_str} constraints."
+            )
             error_messages.append(error_message)
         # Check variable types.
         if (
@@ -518,14 +521,20 @@ class ProblemSolver:
             and self.problem.variable_type != VariableType.DISCRETE
         ):
             problem_type = self.problem.variable_type.name.lower()
-            error_message = f"Solver is for discrete variables but problem variables are {problem_type}."
+            error_message = (
+                "Solver is for discrete variables, "
+                f"but problem variables are {problem_type}."
+            )
             error_messages.append(error_message)
         elif (
             self.solver.variable_type == VariableType.CONTINUOUS
             and self.problem.variable_type != VariableType.CONTINUOUS
         ):
             problem_type = self.problem.variable_type.name.lower()
-            error_message = f"Solver is for continuous variables but problem variables are {problem_type}."
+            error_message = (
+                "Solver is for continuous variables, "
+                f"but problem variables are {problem_type}."
+            )
             error_messages.append(error_message)
         # Check for existence of gradient estimates.
         if self.solver.gradient_needed and not self.problem.gradient_available:
@@ -603,23 +612,21 @@ class ProblemSolver:
             run_multithread_partial = partial(
                 self.run_multithread, solver=self.solver, problem=self.problem
             )
-            num_completed = 0
-            for (
+            for num_completed, (
                 mrep,
                 recommended_xs,
                 intermediate_budgets,
                 timing,
-            ) in process_pool.imap_unordered(
-                run_multithread_partial, range(n_macroreps)
+            ) in enumerate(
+                process_pool.imap_unordered(run_multithread_partial, range(n_macroreps))
             ):
                 self.all_recommended_xs[mrep] = recommended_xs
                 self.all_intermediate_budgets[mrep] = intermediate_budgets
                 self.timings[mrep] = timing
-                num_completed += 1
+                self.num_completed = num_completed + 1
 
-            logging.info(
-                f"Finished running {n_macroreps} macroreplications in {round(time.time() - function_start, 3)} seconds."
-            )
+            runtime = round(time.time() - function_start, 3)
+            logging.info(f"Finished running {n_macroreps} mreps in {runtime} seconds.")
 
         self.has_run = True
         self.has_postreplicated = False
@@ -665,7 +672,8 @@ class ProblemSolver:
             raise ValueError(error_msg)
 
         logging.debug(
-            f"Macroreplication {mrep + 1}: Starting Solver {solver.name} on Problem {problem.name}."
+            f"Macroreplication {mrep + 1}: "
+            f"Starting Solver {solver.name} on Problem {problem.name}."
         )
         # Create, initialize, and attach RNGs used for simulating solutions.
         progenitor_rngs = [
@@ -673,7 +681,8 @@ class ProblemSolver:
             for ss in range(problem.model.n_rngs)
         ]
         # Create a new set of RNGs for the solver based on the current macroreplication.
-        # Tried re-using the progentior RNGs, but we need to match the number needed by the solver, not the problem
+        # Tried re-using the progentior RNGs, but we need to match the number needed by
+        # the solver, not the problem
         solver_rngs = [
             MRG32k3a(
                 s_ss_sss_index=[
@@ -696,7 +705,9 @@ class ProblemSolver:
         toc = time.perf_counter()
         runtime = toc - tic
         logging.debug(
-            f"Macroreplication {mrep + 1}: Finished Solver {solver.name} on Problem {problem.name} in {runtime:0.4f} seconds."
+            f"Macroreplication {mrep + 1}: "
+            f"Finished Solver {solver.name} on Problem {problem.name} "
+            f"in {runtime:0.4f} seconds."
         )
 
         # Trim the recommended solutions and intermediate budgets
@@ -732,8 +743,8 @@ class ProblemSolver:
         n_postreps : int
             Number of postreplications to take at each recommended solution.
         crn_across_budget : bool, default=True
-            True if CRN used for post-replications at solutions recommended at different times,
-            otherwise False.
+            True if CRN used for post-replications at solutions recommended at different
+            times, otherwise False.
         crn_across_macroreps : bool, default=False
             True if CRN used for post-replications at solutions recommended on different
             macroreplications, otherwise False.
@@ -763,7 +774,8 @@ class ProblemSolver:
             raise ValueError(error_msg)
 
         logging.debug(
-            f"Setting up {n_postreps} postreplications for {self.n_macroreps} macroreplications of {self.solver.name} on {self.problem.name}."
+            f"Setting up {n_postreps} postreplications for {self.n_macroreps} mreps of "
+            f"{self.solver.name} on {self.problem.name}."
         )
 
         self.n_postreps = n_postreps
@@ -777,23 +789,20 @@ class ProblemSolver:
             )
         self.timings = [0.0 for _ in range(self.n_macroreps)]
 
-        self.function_start = time.time()
+        function_start = time.time()
 
         logging.info("Starting postreplications")
         num_processes = min(self.n_macroreps, os.cpu_count() or 1)
         with Pool(num_processes) as process_pool:
-            num_completed = 0
-            for mrep, post_rep, timing in process_pool.imap_unordered(
-                self.post_replicate_multithread, range(self.n_macroreps)
+            for num_completed, (mrep, post_rep, timing) in enumerate(
+                process_pool.imap_unordered(
+                    self.post_replicate_multithread, range(self.n_macroreps)
+                )
             ):
                 self.all_post_replicates[mrep] = post_rep
                 self.timings[mrep] = timing
-                num_completed += 1
-                # Update status bar here
+                self.num_completed = num_completed + 1
 
-            # # The all post replicates is tricky because it is a dictionary of lists of lists
-            # # We need to convert it to a list of lists of lists
-            # self.all_post_replicates = [self.all_post_replicates[i] for i in range(len(self.all_post_replicates.keys()))]
             # Store estimated objective for each macrorep for each budget.
             self.all_est_objectives = [
                 [
@@ -802,12 +811,12 @@ class ProblemSolver:
                 ]
                 for mrep in range(self.n_macroreps)
             ]
-        logging.info(
-            f"Finished running {self.n_macroreps} postreplications in {round(time.time() - self.function_start, 3)} seconds."
-        )
 
-        # Delete stuff we don't need to save
-        del self.function_start
+        runtime = round(time.time() - function_start, 3)
+        logging.info(
+            f"Finished running {self.n_macroreps} postreplications "
+            f"in {runtime} seconds."
+        )
 
         self.has_postreplicated = True
         self.has_postnormalized = False
@@ -850,7 +859,8 @@ class ProblemSolver:
             raise ValueError(error_msg)
 
         logging.debug(
-            f"Macroreplication {mrep + 1}: Starting postreplications for {self.solver.name} on {self.problem.name}."
+            f"Macroreplication {mrep + 1}: Starting postreplications for "
+            f"{self.solver.name} on {self.problem.name}."
         )
         # Create RNG list for the macroreplication.
         if self.crn_across_macroreps:
@@ -913,7 +923,8 @@ class ProblemSolver:
         Returns:
         -------
         bootstrap_curves : list [``experiment_base.Curve``]
-            Bootstrapped estimated objective curves or estimated progress curves of all solutions from all bootstrapped macroreplications.
+            Bootstrapped estimated objective curves or estimated progress curves of all
+            solutions from all bootstrapped macroreplications.
 
         Raises:
         ------
@@ -947,7 +958,8 @@ class ProblemSolver:
             [self.x0_postreps[postrep] for postrep in bs_postrep_idxs]
         )
         # Reset subsubstream if using CRN across budgets.
-        # This means the same postreplication indices will be used for resampling at x0 and x*.
+        # This means the same postreplication indices will be used for resampling at
+        # x0 and x*.
         if self.crn_across_init_opt:
             bootstrap_rng.reset_subsubstream()
         # Bootstrap sample postreplicates at reference optimal solution x*.
@@ -1030,7 +1042,8 @@ class ProblemSolver:
                         est_objectives.append(bs_optimal_obj_val)
                     # ... else solution other than x0 or x*.
                     else:
-                        # Uniformly resample N postreps (with replacement) from 0, 1, ..., N-1.
+                        # Uniformly resample N postreps (with replacement)
+                        # from 0, 1, ..., N-1.
                         bs_postrep_idxs = bootstrap_rng.choices(
                             range(self.n_postreps), k=self.n_postreps
                         )
@@ -1118,7 +1131,8 @@ class ProblemSolver:
         Parameters
         ----------
         print_solutions : bool, optional
-            True if recommended solutions are to be printed in the .txt file, otherwise False.
+            True if recommended solutions are to be printed in the .txt file,
+            otherwise False.
 
         Raises:
         ------
@@ -1161,45 +1175,57 @@ class ProblemSolver:
             # If results have been postreplicated, list the number of post-replications.
             if self.has_postreplicated:
                 file.write(
-                    f"{self.n_postreps} postreplications were run at each recommended solution.\n\n"
+                    f"{self.n_postreps} postreplications were run "
+                    "at each recommended solution.\n\n"
                 )
-            # If post-normalized, state initial solution (x0) and proxy optimal solution (x_star)
-            # and how many replications were taken of them (n_postreps_init_opt).
+            # If post-normalized, state initial solution (x0) and
+            # proxy optimal solution (x_star) and how many replications
+            # were taken of them (n_postreps_init_opt).
             if self.has_postnormalized:
+                init_sol = tuple([round(x, 4) for x in self.x0])
+                est_obj = round(np.mean(self.x0_postreps), 4)
                 file.write(
-                    f"The initial solution is {tuple([round(x, 4) for x in self.x0])}. Its estimated objective is {round(np.mean(self.x0_postreps), 4)}.\n"
+                    f"The initial solution is {init_sol}. "
+                    f"Its estimated objective is {est_obj}.\n"
                 )
                 if self.xstar is None:
                     file.write(
-                        f"No proxy optimal solution was used. A proxy optimal objective function value of {self.problem.optimal_value} was provided.\n"
+                        "No proxy optimal solution was used. "
+                        "A proxy optimal objective function value of "
+                        f"{self.problem.optimal_value} was provided.\n"
                     )
                 else:
+                    proxy_opt = tuple([round(x, 4) for x in self.xstar])
+                    est_obj = round(np.mean(self.xstar_postreps), 4)
                     file.write(
-                        f"The proxy optimal solution is {tuple([round(x, 4) for x in self.xstar])}. Its estimated objective is {round(np.mean(self.xstar_postreps), 4)}.\n"
+                        f"The proxy optimal solution is {proxy_opt}. "
+                        f"Its estimated objective is {est_obj}.\n"
                     )
                 file.write(
-                    f"{self.n_postreps_init_opt} postreplications were taken at x0 and x_star.\n\n"
+                    f"{self.n_postreps_init_opt} postreplications were taken "
+                    "at x0 and x_star.\n\n"
                 )
-            # Display recommended solution at each budget value for each macroreplication.
+            # Display recommended solution at each budget value for
+            # each macroreplication.
             file.write("Macroreplication Results:\n")
             for mrep in range(self.n_macroreps):
                 file.write(f"\nMacroreplication {mrep + 1}:\n")
-                for budget in range(len(self.all_intermediate_budgets[mrep])):
-                    file.write(
-                        f"\tBudget: {round(self.all_intermediate_budgets[mrep][budget], 4)}"
-                    )
+                mrep_int_budgets = self.all_intermediate_budgets[mrep]
+                for budget in range(len(mrep_int_budgets)):
+                    file.write(f"\tBudget: {round(mrep_int_budgets[budget], 4)}")
                     # Optionally print solutions.
                     if print_solutions:
-                        file.write(
-                            f"\tRecommended Solution: {tuple([round(x, 4) for x in self.all_recommended_xs[mrep][budget]])}"
-                        )
+                        all_rec_xs = self.all_recommended_xs[mrep][budget]
+                        rec_xs_tup = tuple([round(x, 4) for x in all_rec_xs])
+                        file.write(f"\tRecommended Solution: {rec_xs_tup}")
                     # If postreplicated, add estimated objective function values.
                     if self.has_postreplicated:
-                        file.write(
-                            f"\tEstimated Objective: {round(self.all_est_objectives[mrep][budget], 4)}\n"
-                        )
-                # file.write(f"\tThe time taken to complete this macroreplication was {round(self.timings[mrep], 2)} s.\n")
-        file.close()
+                        est_obj = self.all_est_objectives[mrep][budget]
+                        file.write(f"\tEstimated Objective: {round(est_obj, 4)}\n")
+                # file.write(
+                #     "\tThe time taken to complete this macroreplication was "
+                #     f"{round(self.timings[mrep], 2)} s.\n"
+                # )
 
 
 def trim_solver_results(
@@ -1223,7 +1249,8 @@ def trim_solver_results(
     list [``base.Solution``]
         Solutions recommended by the solver after trimming.
     list [int]
-        Intermediate budgets at which solver recommended different solutions after trimming.
+        Intermediate budgets at which solver recommended different solutions after
+        trimming.
 
     Raises:
     ------
@@ -1367,17 +1394,29 @@ def post_normalize(
                 "At least two experiments have different numbers of macro-replications."
             )
             raise Exception(error_msg)
-        # Check if experiment has been post-replicated and with common number of postreps.
+        # Check if experiment has been post-replicated
         if not experiment.has_run:
-            error_msg = f"The experiment of {experiment.solver.name} on {experiment.problem.name} has not been run."
+            error_msg = (
+                f"The experiment of {experiment.solver.name} on "
+                f"{experiment.problem.name} has not been run."
+            )
             raise Exception(error_msg)
         if not experiment.has_postreplicated:
-            error_msg = f"The experiment of {experiment.solver.name} on {experiment.problem.name} has not been post-replicated."
+            error_msg = (
+                f"The experiment of {experiment.solver.name} on "
+                f"{experiment.problem.name} has not been post-replicated."
+            )
             raise Exception(error_msg)
+        # Check if experiments have common number of post-replications.
         if getattr(experiment, "n_postreps", None) != getattr(
             ref_experiment, "n_postreps", None
         ):
-            error_msg = "At least two experiments have different numbers of post-replications.\nEstimation of optimal solution x* may be based on different numbers of post-replications."
+            error_msg = (
+                "At least two experiments have different numbers of "
+                "post-replications.\n"
+                "Estimation of optimal solution x* may be based on different numbers "
+                "of post-replications."
+            )
             raise Exception(error_msg)
     logging.info(f"Postnormalizing on Problem {ref_experiment.problem.name}.")
     # Take post-replications at common x0.
@@ -1415,10 +1454,8 @@ def post_normalize(
     # If proxy for f(x*) is specified...
     fstar_log_msg = "Finding f(x*) using "
     if proxy_opt_val is not None:
-        if proxy_opt_x is None:
-            xstar = None
-        else:
-            xstar = proxy_opt_x  # Assuming the provided x is optimal in this case.
+        # Assumes the provided x is optimal if provided
+        xstar = None if proxy_opt_x is None else proxy_opt_x
         logging.info(fstar_log_msg + "provided proxy f(x*).")
         xstar_postreps = [proxy_opt_val] * n_postreps_init_opt
     # ...else if proxy for x* is specified...
@@ -1674,7 +1711,8 @@ def bootstrap_procedure(
     estimator : float or ``experiment_base.Curve``, optional
         Main estimator, e.g., mean convergence curve from an experiment.
     normalize : bool, default=True
-        True if progress curves are to be normalized w.r.t. optimality gaps, otherwise False.
+        True if progress curves are to be normalized w.r.t. optimality gaps,
+        otherwise False.
 
     Returns:
     -------
@@ -2267,7 +2305,9 @@ def report_max_halfwidth(
         # xloc = 0.05 * budget of the problem
         xloc = 0.05 * curve_pairs[0][0].x_vals[-1]
         yloc = min_lower_bound - 0.25 * (max_upper_bound - min_lower_bound)
-    txt = f"The max halfwidth of the bootstrap {round(conf_level * 100)}% CIs is {round(max_halfwidth, 2)}."
+    boot_cis = round(conf_level * 100)
+    max_hw_round = round(max_halfwidth, 2)
+    txt = f"The max halfwidth of the bootstrap {boot_cis}% CIs is {max_hw_round}."
     plt.text(x=xloc, y=yloc, s=txt)
 
 
@@ -2283,29 +2323,25 @@ def check_common_problem_and_reference(
 
     Raises:
     ------
-    TypeError
     ValueError
-        If at least two experiments have different problem instances, starting solutions, or optimal solutions.
+        If at least two experiments have different problem instances,
+        starting solutions, or optimal solutions.
 
     """
-    # Type checking
-    if not isinstance(experiments, list) or not all(
-        isinstance(experiment, ProblemSolver) for experiment in experiments
-    ):
-        error_msg = "Experiments must be a list of ProblemSolver objects."
-        raise TypeError(error_msg)
-
     problem_list = [experiment.problem for experiment in experiments]
-    problem_err_msg = "All experiments must have the same problem."
-    assert all(elem == problem_list[0] for elem in problem_list), problem_err_msg
+    if not all(prob == problem_list[0] for prob in problem_list[1:]):
+        error_msg = "All experiments must have the same problem."
+        raise ValueError(error_msg)
 
     x0_list = [experiment.x0 for experiment in experiments]
-    x0_err_msg = "All experiments must have the same starting solution."
-    assert all(elem == x0_list[0] for elem in x0_list), x0_err_msg
+    if not all(start_sol == x0_list[0] for start_sol in x0_list[1:]):
+        error_msg = "All experiments must have the same starting solution."
+        raise ValueError(error_msg)
 
     xstar_list = [experiment.xstar for experiment in experiments]
-    xstar_err_msg = "All experiments must have the same optimal solution."
-    assert all(elem == xstar_list[0] for elem in xstar_list), xstar_err_msg
+    if not all(opt_sol == xstar_list[0] for opt_sol in xstar_list[1:]):
+        error_msg = "All experiments must have the same optimal solution."
+        raise ValueError(error_msg)
 
 
 def plot_progress_curves(
@@ -2351,7 +2387,8 @@ def plot_progress_curves(
     print_max_hw : bool, default=True
         True if caption with max half-width is to be printed, otherwise False.
     plot_title : str, opt
-        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+        Optional title to override the one that is autmatically generated,
+        only applies if all_in_one is True.
     legend_loc : str, default="best"
         specificies location of legend
     ext: str, default = '.png'
@@ -2486,7 +2523,6 @@ def plot_progress_curves(
                 handle = estimator.plot(color_str=color_str)
             solver_curve_handles.append(handle)
             if (plot_conf_ints or print_max_hw) and plot_type != "all":
-                # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                 bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
                     experiments=[[experiment]],
                     n_bootstraps=n_bootstraps,
@@ -2500,7 +2536,10 @@ def plot_progress_curves(
                     if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
                         bs_conf_int_ub_curve, (int, float)
                     ):
-                        error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
+                        error_msg = (
+                            "Bootstrap confidence intervals are not available "
+                            "for scalar estimators."
+                        )
                         raise ValueError(error_msg)
                     plot_bootstrap_conf_ints(
                         bs_conf_int_lb_curve,
@@ -2584,7 +2623,10 @@ def plot_progress_curves(
                     if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
                         bs_conf_int_ub_curve, (int, float)
                     ):
-                        error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
+                        error_msg = (
+                            "Bootstrap confidence intervals are not available "
+                            "for scalar estimators."
+                        )
                         raise ValueError(error_msg)
                     plot_bootstrap_conf_ints(bs_conf_int_lb_curve, bs_conf_int_ub_curve)
                 if print_max_hw:
@@ -2647,7 +2689,8 @@ def plot_solvability_cdfs(
     print_max_hw : bool, default=True
         True if caption with max half-width is to be printed, otherwise False.
     plot_title : str, opt
-        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+        Optional title to override the one that is autmatically generated,
+        only applies if all_in_one is True.
     legend_loc : str, default="best"
         specificies location of legend
     ext: str, default = '.png'
@@ -2747,7 +2790,6 @@ def plot_solvability_cdfs(
             handle = estimator.plot(color_str=color_str)
             solver_curve_handles.append(handle)
             if plot_conf_ints or print_max_hw:
-                # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                 bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
                     experiments=[[experiment]],
                     n_bootstraps=n_bootstraps,
@@ -2761,7 +2803,10 @@ def plot_solvability_cdfs(
                     if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
                         bs_conf_int_ub_curve, (int, float)
                     ):
-                        error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
+                        error_msg = (
+                            "Bootstrap confidence intervals are not available "
+                            "for scalar estimators."
+                        )
                         raise ValueError(error_msg)
                     plot_bootstrap_conf_ints(
                         bs_conf_int_lb_curve,
@@ -2804,7 +2849,6 @@ def plot_solvability_cdfs(
             )
             estimator.plot()
             if plot_conf_ints or print_max_hw:
-                # Note: "experiments" needs to be a list of list of Problem-Solver objects.
                 bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
                     experiments=[[experiment]],
                     n_bootstraps=n_bootstraps,
@@ -2818,7 +2862,10 @@ def plot_solvability_cdfs(
                     if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
                         bs_conf_int_ub_curve, (int, float)
                     ):
-                        error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
+                        error_msg = (
+                            "Bootstrap confidence intervals are not available "
+                            "for scalar estimators."
+                        )
                         raise ValueError(error_msg)
                     plot_bootstrap_conf_ints(bs_conf_int_lb_curve, bs_conf_int_ub_curve)
                 if print_max_hw:
@@ -2848,7 +2895,8 @@ def plot_solvability_cdfs(
     return file_list
 
 
-# TODO: Add the capability to compute and print the max halfwidth of the bootstrapped CI intervals.
+# TODO: Add the capability to compute and print the max halfwidth
+# of the bootstrapped CI intervals.
 def plot_area_scatterplots(
     experiments: list[
         list[ProblemSolver]
@@ -2889,7 +2937,8 @@ def plot_area_scatterplots(
     print_max_hw : bool, default=True
         True if caption with max half-width is to be printed, otherwise False.
     plot_title : str, opt
-        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+        Optional title to override the one that is autmatically generated,
+        only applies if all_in_one is True.
     legend_loc : str, default="best"
         specificies location of legend
     ext: str, default = '.png'
@@ -2994,7 +3043,6 @@ def plot_area_scatterplots(
                 mean_estimator = float(np.mean(areas))
                 std_dev_estimator = float(np.std(areas, ddof=1))
                 if plot_conf_ints:
-                    # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                     mean_bs_conf_int_lb, mean_bs_conf_int_ub = bootstrap_procedure(
                         experiments=[[experiment]],
                         n_bootstraps=n_bootstraps,
@@ -3023,7 +3071,10 @@ def plot_area_scatterplots(
                     if isinstance(std_dev_bs_conf_int_lb, (Curve)) or isinstance(
                         std_dev_bs_conf_int_ub, (Curve)
                     ):
-                        error_msg = "Standard deviation confidence intervals should be scalar values."
+                        error_msg = (
+                            "Standard deviation confidence intervals should "
+                            "be scalar values."
+                        )
                         raise ValueError(error_msg)
                     x_err = [
                         [mean_estimator - mean_bs_conf_int_lb],
@@ -3083,7 +3134,6 @@ def plot_area_scatterplots(
                 mean_estimator = float(np.mean(areas))
                 std_dev_estimator = float(np.std(areas, ddof=1))
                 if plot_conf_ints:
-                    # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                     mean_bs_conf_int_lb, mean_bs_conf_int_ub = bootstrap_procedure(
                         experiments=[[experiment]],
                         n_bootstraps=n_bootstraps,
@@ -3112,7 +3162,10 @@ def plot_area_scatterplots(
                     if isinstance(std_dev_bs_conf_int_lb, (Curve)) or isinstance(
                         std_dev_bs_conf_int_ub, (Curve)
                     ):
-                        error_msg = "Standard deviation confidence intervals should be scalar values."
+                        error_msg = (
+                            "Standard deviation confidence intervals should "
+                            "be scalar values."
+                        )
                         raise ValueError(error_msg)
                     x_err = [
                         [mean_estimator - mean_bs_conf_int_lb],
@@ -3209,7 +3262,8 @@ def plot_solvability_profiles(
     ref_solver : str, optional
         Name of solver used as benchmark for difference profiles.
     plot_title : str, optional
-        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+        Optional title to override the one that is autmatically generated,
+        only applies if all_in_one is True.
     legend_loc : str, default="best"
         specificies location of legend
     ext: str, default = '.png'
@@ -3373,15 +3427,16 @@ def plot_solvability_profiles(
                 if sub_curve is not None:
                     solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
-            # Exploit the fact that each solvability profile is an average of more basic curves.
+            # Exploit the fact that each solvability profile is an average of more
+            # basic curves.
             solver_curve = curve_utils.mean_of_curves(solver_sub_curves)
-            # CAUTION: Using mean above requires an equal number of macro-replications per problem.
+            # CAUTION: Using mean above requires an equal number of macro-replications
+            # per problem.
             solver_curves.append(solver_curve)
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
                 handle = solver_curve.plot(color_str=color_str)
                 solver_curve_handles.append(handle)
                 if plot_conf_ints or print_max_hw:
-                    # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                     bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
                         experiments=[experiments[solver_idx]],
                         n_bootstraps=n_bootstraps,
@@ -3396,7 +3451,10 @@ def plot_solvability_profiles(
                         if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
                             bs_conf_int_ub_curve, (int, float)
                         ):
-                            error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
+                            error_msg = (
+                                "Bootstrap confidence intervals are not available "
+                                "for scalar estimators."
+                            )
                             raise ValueError(error_msg)
                         plot_bootstrap_conf_ints(
                             bs_conf_int_lb_curve,
@@ -3472,7 +3530,6 @@ def plot_solvability_profiles(
                     handle = diff_solver_curve.plot(color_str=color_str)
                     solver_curve_handles.append(handle)
                     if plot_conf_ints or print_max_hw:
-                        # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                         bs_conf_int_lb_curve, bs_conf_int_ub_curve = (
                             bootstrap_procedure(
                                 experiments=[
@@ -3492,7 +3549,10 @@ def plot_solvability_profiles(
                             if isinstance(
                                 bs_conf_int_lb_curve, (int, float)
                             ) or isinstance(bs_conf_int_ub_curve, (int, float)):
-                                error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
+                                error_msg = (
+                                    "Bootstrap confidence intervals are not available "
+                                    "for scalar estimators."
+                                )
                                 raise ValueError(error_msg)
                             plot_bootstrap_conf_ints(
                                 bs_conf_int_lb_curve,
@@ -3571,7 +3631,8 @@ def plot_solvability_profiles(
                 if sub_curve is not None:
                     solver_sub_curves.append(sub_curve)
             # Plot solvability profile for the solver.
-            # Exploit the fact that each solvability profile is an average of more basic curves.
+            # Exploit the fact that each solvability profile is an average of more
+            # basic curves.
             solver_curve = curve_utils.mean_of_curves(solver_sub_curves)
             solver_curves.append(solver_curve)
             if plot_type in {"cdf_solvability", "quantile_solvability"}:
@@ -3597,7 +3658,6 @@ def plot_solvability_profiles(
                     )
                 handle = solver_curve.plot()
                 if plot_conf_ints or print_max_hw:
-                    # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                     bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
                         experiments=[experiments[solver_idx]],
                         n_bootstraps=n_bootstraps,
@@ -3612,7 +3672,10 @@ def plot_solvability_profiles(
                         if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
                             bs_conf_int_ub_curve, (int, float)
                         ):
-                            error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
+                            error_msg = (
+                                "Bootstrap confidence intervals are not available "
+                                "for scalar estimators."
+                            )
                             raise ValueError(error_msg)
                         plot_bootstrap_conf_ints(
                             bs_conf_int_lb_curve, bs_conf_int_ub_curve
@@ -3690,7 +3753,6 @@ def plot_solvability_profiles(
                     )
                     handle = diff_solver_curve.plot()
                     if plot_conf_ints or print_max_hw:
-                        # Note: "experiments" needs to be a list of list of ProblemSolver objects.
                         bs_conf_int_lb_curve, bs_conf_int_ub_curve = (
                             bootstrap_procedure(
                                 experiments=[
@@ -3710,7 +3772,10 @@ def plot_solvability_profiles(
                             if isinstance(
                                 bs_conf_int_lb_curve, (int, float)
                             ) or isinstance(bs_conf_int_ub_curve, (int, float)):
-                                error_msg = "Bootstrap confidence intervals are not available for scalar estimators."
+                                error_msg = (
+                                    "Bootstrap confidence intervals are not available "
+                                    "for scalar estimators."
+                                )
                                 raise ValueError(error_msg)
                             plot_bootstrap_conf_ints(
                                 bs_conf_int_lb_curve, bs_conf_int_ub_curve
@@ -3719,7 +3784,10 @@ def plot_solvability_profiles(
                             if isinstance(
                                 bs_conf_int_lb_curve, (int, float)
                             ) or isinstance(bs_conf_int_ub_curve, (int, float)):
-                                error_msg = "Max halfwidth is not available for scalar estimators."
+                                error_msg = (
+                                    "Max halfwidth is not available for "
+                                    "scalar estimators."
+                                )
                                 raise ValueError(error_msg)
                             report_max_halfwidth(
                                 curve_pairs=[
@@ -3784,7 +3852,8 @@ def plot_terminal_progress(
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
     plot_title : str, opt
-        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+        Optional title to override the one that is autmatically generated,
+        only applies if all_in_one is True.
     ext: str, default = '.png'
         Extension to add to image file path to change file type
     save_as_pickle: bool, default = False
@@ -3980,7 +4049,8 @@ def plot_terminal_scatterplots(
     all_in_one : bool, default=True
         True if curves are to be plotted together, otherwise False.
     plot_title : str, opt
-        Optional title to override the one that is autmatically generated, only applies if all_in_one is True.
+        Optional title to override the one that is autmatically generated,
+        only applies if all_in_one is True.
     legend_loc : str, default="best"
         specificies location of legend
     ext: str, default = '.png'
@@ -4194,31 +4264,6 @@ def setup_plot(
     ValueError
 
     """
-    # Type checking
-    if not isinstance(plot_type, str):
-        error_msg = "Plot type must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(solver_name, str):
-        error_msg = "Solver name must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(problem_name, str):
-        error_msg = "Problem name must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(normalize, bool):
-        error_msg = "Normalize must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(budget, (int, type(None))):
-        error_msg = "Budget must be an integer or None."
-        raise TypeError(error_msg)
-    if not isinstance(beta, (float, type(None))):
-        error_msg = "Beta must be a float or None."
-        raise TypeError(error_msg)
-    if not isinstance(solve_tol, (float, type(None))):
-        error_msg = "Solve tolerance must be a float or None."
-        raise TypeError(error_msg)
-    if not isinstance(plot_title, (str, type(None))):
-        error_msg = "Plot title must be a string or None."
-        raise TypeError(error_msg)
     # Value checking
     if plot_type not in [
         "all",
@@ -4260,37 +4305,35 @@ def setup_plot(
             plt.tick_params(axis="both", which="major", labelsize=12)
     # Specify title (plus alternative y-axis label and alternative axes).
     if plot_type == "all":
-        if normalize:
-            title = f"{solver_name} on {problem_name}\nProgress Curves"
-        else:
-            title = f"{solver_name} on {problem_name}\nObjective Curves"
+        title = f"{solver_name} on {problem_name}\n"
+        title += "Progress Curves" if normalize else "Objective Curves"
     elif plot_type == "mean":
-        if normalize:
-            title = f"{solver_name} on {problem_name}\nMean Progress Curve"
-        else:
-            title = f"{solver_name} on {problem_name}\nMean Objective Curve"
+        title = f"{solver_name} on {problem_name}\n"
+        title += "Mean Progress Curve" if normalize else "Mean Objective Curve"
     elif plot_type == "quantile":
         if beta is None:
             error_msg = "Beta must be specified for quantile plot."
             raise ValueError(error_msg)
-        if normalize:
-            title = f"{solver_name} on {problem_name}\n{round(beta, 2)}-Quantile Progress Curve"
-        else:
-            title = f"{solver_name} on {problem_name}\n{round(beta, 2)}-Quantile Objective Curve"
+        beta_rounded = round(beta, 2)
+        title = f"{solver_name} on {problem_name}\n{beta_rounded}-Quantile "
+        title += "Progress Curve" if normalize else "Objective Curve"
     elif plot_type == "solve_time_cdf":
         if solve_tol is None:
             error_msg = "Solve tolerance must be specified for cdf plot."
             raise ValueError(error_msg)
         plt.ylabel("Fraction of Macroreplications Solved", size=14)
-        title = (
-            f"{solver_name} on {problem_name}\nCDF of {round(solve_tol, 2)}-Solve Times"
-        )
+        solve_tol_rounded = round(solve_tol, 2)
+        title = f"{solver_name} on {problem_name}\n"
+        title += f"CDF of {solve_tol_rounded}-Solve Times"
     elif plot_type == "cdf_solvability":
         if solve_tol is None:
             error_msg = "Solve tolerance must be specified for cdf solvability plot."
             raise ValueError(error_msg)
         plt.ylabel("Problem Averaged Solve Fraction", size=14)
-        title = f"CDF-Solvability Profile for {solver_name}\nProfile of CDFs of {round(solve_tol, 2)}-Solve Times"
+        title = (
+            f"CDF-Solvability Profile for {solver_name}\n"
+            f"Profile of CDFs of {round(solve_tol, 2)}-Solve Times"
+        )
     elif plot_type == "quantile_solvability":
         if beta is None:
             error_msg = "Beta must be specified for quantile solvability plot."
@@ -4301,13 +4344,20 @@ def setup_plot(
             )
             raise ValueError(error_msg)
         plt.ylabel("Fraction of Problems Solved", size=14)
-        title = f"Quantile Solvability Profile for {solver_name}\nProfile of {round(beta, 2)}-Quantiles of {round(solve_tol, 2)}-Solve Times"
+        title = (
+            f"Quantile Solvability Profile for {solver_name}\n"
+            f"Profile of {round(beta, 2)}-Quantiles "
+            f"of {round(solve_tol, 2)}-Solve Times"
+        )
     elif plot_type == "diff_cdf_solvability":
         if solve_tol is None:
             error_msg = "Solve tolerance must be specified for cdf solvability plot."
             raise ValueError(error_msg)
         plt.ylabel("Difference in Problem Averaged Solve Fraction", size=14)
-        title = f"Difference of CDF-Solvability Profile for {solver_name}\nDifference of Profiles of CDFs of {round(solve_tol, 2)}-Solve Times"
+        title = (
+            f"Difference of CDF-Solvability Profile for {solver_name}\n"
+            f"Difference of Profiles of CDFs of {round(solve_tol, 2)}-Solve Times"
+        )
         plt.plot([0, 1], [0, 0], color="black", linestyle="--")
         plt.ylim((-1, 1))
     elif plot_type == "diff_quantile_solvability":
@@ -4320,7 +4370,11 @@ def setup_plot(
             )
             raise ValueError(error_msg)
         plt.ylabel("Difference in Fraction of Problems Solved", size=14)
-        title = f"Difference of Quantile Solvability Profile for {solver_name}\nDifference of Profiles of {round(beta, 2)}-Quantiles of {round(solve_tol, 2)}-Solve Times"
+        title = (
+            f"Difference of Quantile Solvability Profile for {solver_name}\n"
+            f"Difference of Profiles of {round(beta, 2)}-Quantiles "
+            f"of {round(solve_tol, 2)}-Solve Times"
+        )
         plt.plot([0, 1], [0, 0], color="black", linestyle="--")
         plt.ylim((-1, 1))
     elif plot_type == "area":
@@ -4426,47 +4480,6 @@ def save_plot(
     TypeError
 
     """
-    # Type checking
-    if not isinstance(solver_name, str):
-        error_msg = "Solver name must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(problem_name, str):
-        error_msg = "Problem name must be a string."
-        raise TypeError(error_msg)
-    if plot_type not in [
-        "all",
-        "mean",
-        "quantile",
-        "solve_time_cdf",
-        "cdf_solvability",
-        "quantile_solvability",
-        "diff_cdf_solvability",
-        "diff_quantile_solvability",
-        "area",
-        "box",
-        "violin",
-        "terminal_scatter",
-    ]:
-        error_msg = f"Plot type '{plot_type}' is not recognized."
-        raise ValueError(error_msg)
-    if not isinstance(normalize, bool):
-        error_msg = "Normalize must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(extra, (float, list, type(None))) or (
-        isinstance(extra, list) and not all(isinstance(e, float) for e in extra)
-    ):
-        error_msg = "Extra must be a float, list of floats, or None."
-        raise TypeError(error_msg)
-    if not isinstance(plot_title, (str, type(None))):
-        error_msg = "Plot title must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(ext, str):
-        error_msg = "Extension must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(save_as_pickle, bool):
-        error_msg = "Save as pickle must be a boolean."
-        raise TypeError(error_msg)
-
     # Form string name for plot filename.
     if plot_type == "all":
         plot_name = "all_prog_curves"
@@ -4487,7 +4500,10 @@ def save_plot(
         ):
             plot_name = f"profile_{extra[1]}_quantile_{extra[0]}_solve_times"
         else:
-            error_msg = "Extra must be a list of two floats for 'quantile_solvability' plot type."
+            error_msg = (
+                "Extra must be a list of two floats for "
+                "'quantile_solvability' plot type."
+            )
             raise ValueError(error_msg)
     elif plot_type == "diff_cdf_solvability":
         plot_name = f"diff_profile_cdf_{extra}_solve_times"
@@ -4500,7 +4516,10 @@ def save_plot(
         ):
             plot_name = f"diff_profile_{extra[1]}_quantile_{extra[0]}_solve_times"
         else:
-            error_msg = "Extra must be a list of two floats for 'diff_quantile_solvability' plot type."
+            error_msg = (
+                "Extra must be a list of two floats for "
+                "'diff_quantile_solvability' plot type."
+            )
             raise ValueError(error_msg)
     elif plot_type == "area":
         plot_name = "area_scatterplot"
@@ -4597,7 +4616,8 @@ class ProblemsSolvers:
         Each variant of solver with be crossed together with each vairant of problem.
         (Requires solver_names with a name provided for each index in solver_factors.)
     problem_factors: list [dict], optional
-        List of dictionaries that contain problem and model factors at different design points.
+        List of dictionaries that contain problem and model factors at different design
+        points.
         Each variant of problem will be crossed together with each variant of solver.
         (Requires problem_names with a name provided for each index in problem_factors.)
     solver_names : list [str], optional
@@ -4741,7 +4761,8 @@ class ProblemsSolvers:
     def experiment_name(self, experiment_name: str) -> None:
         self.__experiment_name = experiment_name
 
-    # TODO: If loading some ProblemSolver objects from file, check that their factors match those in the overall ProblemsSolvers.
+    # TODO: If loading some ProblemSolver objects from file, check that their factors
+    # match those in the overall ProblemsSolvers.
     def __init__(
         self,
         solver_factors: list[dict] | None = None,
@@ -4769,12 +4790,14 @@ class ProblemsSolvers:
         ----------
         solver_factors: list [dict], optional
             List of dictionaries that contain solver factors at different design points.
-            Each variant of solver with be crossed together with each vairant of problem.
-            (Requires solver_names with a name provided for each index in solver_factors.)
+            Each variant of solver with be crossed together with each vairant of
+            problem. (Requires solver_names with a name provided for each index
+            in solver_factors.)
         problem_factors: list [dict], optional
-            List of dictionaries that contain problem and model factors at different design points.
-            Each variant of problem will be crossed together with each variant of solver.
-            (Requires problem_names with a name provided for each index in problem_factors.)
+            List of dictionaries that contain problem and model factors at different
+            design points. Each variant of problem will be crossed together with each
+            variant of solver. (Requires problem_names with a name provided for each
+            index problem_factors.)
         solver_names : list [str], optional
             List of solver names.
         problem_names : list [str], optional
@@ -4798,88 +4821,7 @@ class ProblemsSolvers:
             True if creating pickle files for each problem-solver pair, False otherwise.
         experiment_name: str, optional
             Name of experiment to be appended to the beginning of output files.
-
-        Raises:
-        ------
-        TypeError
-
         """
-        # Type checking
-        if not isinstance(solver_factors, (list, type(None))) or (
-            isinstance(solver_factors, list)
-            and not all(isinstance(dp, dict) for dp in solver_factors)
-        ):
-            error_msg = "Solver factors must be a list of dictionaries or None."
-            raise TypeError(error_msg)
-        if not isinstance(problem_factors, (list, type(None))) or (
-            isinstance(problem_factors, list)
-            and not all(isinstance(dp, dict) for dp in problem_factors)
-        ):
-            error_msg = "Problem factors must be a list of dictionaries or None."
-            raise TypeError(error_msg)
-        if not isinstance(solver_names, (list, type(None))) or (
-            isinstance(solver_names, list)
-            and not all(isinstance(name, str) for name in solver_names)
-        ):
-            error_msg = "Solver names must be a list of strings or None."
-            raise TypeError(error_msg)
-        if not isinstance(problem_names, (list, type(None))) or (
-            isinstance(problem_names, list)
-            and not all(isinstance(name, str) for name in problem_names)
-        ):
-            error_msg = "Problem names must be a list of strings or None."
-            raise TypeError(error_msg)
-        if not isinstance(solver_renames, (list, type(None))) or (
-            isinstance(solver_renames, list)
-            and not all(isinstance(name, str) for name in solver_renames)
-        ):
-            error_msg = "Solver renames must be a list of strings or None."
-            raise TypeError(error_msg)
-        if not isinstance(problem_renames, (list, type(None))) or (
-            isinstance(problem_renames, list)
-            and not all(isinstance(name, str) for name in problem_renames)
-        ):
-            error_msg = "Problem renames must be a list of strings or None."
-            raise TypeError(error_msg)
-        if not isinstance(fixed_factors_filename, (str, type(None))):
-            error_msg = "Fixed factors filename must be a string or None."
-            raise TypeError(error_msg)
-        if not isinstance(solvers, (list, type(None))) or (
-            isinstance(solvers, list)
-            and not all(isinstance(solver, Solver) for solver in solvers)
-        ):
-            error_msg = "Solvers must be a list of Solver objects or None."
-            raise TypeError(error_msg)
-        if not isinstance(problems, (list, type(None))) or (
-            isinstance(problems, list)
-            and not all(isinstance(problem, Problem) for problem in problems)
-        ):
-            error_msg = "Problems must be a list of Problem objects or None."
-            raise TypeError(error_msg)
-        if not isinstance(experiments, (list, type(None))) or (
-            isinstance(experiments, list)
-            and not all(
-                isinstance(experiment_list, list) for experiment_list in experiments
-            )
-            and not all(
-                isinstance(experiment, ProblemSolver)
-                for experiment_list in experiments
-                for experiment in experiment_list
-            )
-        ):
-            error_msg = (
-                "Experiments must be a list of lists of ProblemSolver objects or None."
-            )
-            raise TypeError(error_msg)
-        if not isinstance(create_pair_pickles, bool):
-            error_msg = "Create pair pickles must be a boolean."
-            raise TypeError(error_msg)
-        if not isinstance(experiment_name, (str, type(None))):
-            error_msg = "Experiment name must be a string or None."
-            raise TypeError(error_msg)
-        # Value checking
-        # TODO: Implement this
-
         # set attributes for pickle create and experiment file names
         self.create_pair_pickles = create_pair_pickles
         if experiment_name is not None:
@@ -4926,8 +4868,10 @@ class ProblemsSolvers:
                     raise ValueError(error_msg)
                 # Get corresponding name of problem from names.
                 problem_name = problem_names[index]
-                fixed_factors = {}  # Will hold problem factor values for current dp.
-                model_fixed_factors = {}  # Will hold model factor values for current dp.
+                # Will hold problem factor values for current dp.
+                fixed_factors = {}
+                # Will hold model factor values for current dp.
+                model_fixed_factors = {}
                 # Create default instances of problem and model to compare factor names.
                 default_problem = problem_directory[problem_name]()
                 default_model = default_problem.model
@@ -4969,7 +4913,10 @@ class ProblemsSolvers:
                         problem_rename=self.problem_renames[prob_indx],
                         create_pickle=self.create_pair_pickles,
                         file_name_path=output_dir
-                        / f"{self.file_header}{self.solver_renames[sol_indx]}_on_{self.problem_renames[prob_indx]}",
+                        / (
+                            f"{self.file_header}"
+                            f"{self.solver_renames[sol_indx]}_on_{self.problem_renames[prob_indx]}"
+                        ),
                     )
                     for prob_indx, problem in enumerate(problems)
                 ]
@@ -5022,7 +4969,8 @@ class ProblemsSolvers:
             # Use this for naming file.
             self.solver_set = solver_names
             self.problem_set = problem_names
-            # Read in fixed solver/problem/model factors from .py file in the experiments folder.
+            # Read in fixed solver/problem/model factors from .py file in the
+            # experiments folder.
             # File should contain three dictionaries of dictionaries called
             #   - all_solver_fixed_factors
             #   - all_problem_fixed_factors
@@ -5046,47 +4994,45 @@ class ProblemsSolvers:
             # Create all problem-solver pairs (i.e., instances of ProblemSolver class).
             self.experiments = []
             for solver_idx in range(self.n_solvers):
+                solver_name = self.solver_names[solver_idx]
                 solver_experiments = []
                 for problem_idx in range(self.n_problems):
-                    filename = (
-                        output_dir
-                        / f"{self.solver_names[solver_idx]}_on_{self.problem_names[problem_idx]}.pickle"
+                    problem_name = self.problem_names[problem_idx]
+                    filename = f"{solver_name}_on_{problem_name}.pickle"
+                    filepath = output_dir / filename
+                    if Path.exists(filepath):
+                        with Path.open(filepath, "rb") as f:
+                            loaded_exp = pickle.load(f)
+                            solver_experiments.append(loaded_exp)
+                        continue
+                        # TODO: Check if the solver/problem/model factors in the file
+                        # match those for the ProblemsSolvers.
+                    if solver_names is None:
+                        error_msg = "Solver names must be provided if no file exists."
+                        raise ValueError(error_msg)
+                    if problem_names is None:
+                        error_msg = "Problem names must be provided if no file exists."
+                        raise ValueError(error_msg)
+                    # If no file exists, create new ProblemSolver object.
+                    logging.debug(
+                        f"No experiment file exists for {solver_name} on "
+                        f"{problem_name}. "
+                        "Creating new experiment."
                     )
-                    if Path.exists(filename):
-                        with Path.open(filename, "rb") as file:
-                            next_experiment = pickle.load(file)
-                        # TODO: Check if the solver/problem/model factors in the file match
-                        # those for the ProblemsSolvers.
-                    else:
-                        if solver_names is None:
-                            error_msg = (
-                                "Solver names must be provided if no file exists."
-                            )
-                            raise ValueError(error_msg)
-                        if problem_names is None:
-                            error_msg = (
-                                "Problem names must be provided if no file exists."
-                            )
-                            raise ValueError(error_msg)
-                        # If no file exists, create new ProblemSolver object.
-                        logging.debug(
-                            f"No experiment file exists for {self.solver_names[solver_idx]} on {self.problem_names[problem_idx]}. Creating new experiment."
-                        )
-                        next_experiment = ProblemSolver(
-                            solver_name=solver_names[solver_idx],
-                            problem_name=problem_names[problem_idx],
-                            solver_rename=self.solver_names[solver_idx],
-                            problem_rename=self.problem_names[problem_idx],
-                            solver_fixed_factors=self.all_solver_fixed_factors[
-                                self.solver_names[solver_idx]
-                            ],
-                            problem_fixed_factors=self.all_problem_fixed_factors[
-                                self.problem_names[problem_idx]
-                            ],
-                            model_fixed_factors=self.all_model_fixed_factors[
-                                self.problem_names[problem_idx]
-                            ],
-                        )
+                    # Lookup fixed factors for solver, problem, and model.
+                    solver_ff = self.all_solver_fixed_factors[solver_name]
+                    problem_ff = self.all_problem_fixed_factors[problem_name]
+                    model_ff = self.all_model_fixed_factors[problem_name]
+                    # Create new ProblemSolver object.
+                    next_experiment = ProblemSolver(
+                        solver_name=solver_names[solver_idx],
+                        problem_name=problem_names[problem_idx],
+                        solver_rename=solver_name,
+                        problem_rename=problem_name,
+                        solver_fixed_factors=solver_ff,
+                        problem_fixed_factors=problem_ff,
+                        model_fixed_factors=model_ff,
+                    )
                     solver_experiments.append(next_experiment)
                 self.experiments.append(solver_experiments)
                 self.solvers = [
@@ -5104,7 +5050,8 @@ class ProblemsSolvers:
                 solver_names_string = "_".join(self.solver_set)
             if self.problem_set is not None:
                 problem_names_string = "_".join(self.problem_set)
-            file_name = f"{self.file_header}group_{solver_names_string}_on_{problem_names_string}.pickle"
+            s_on_p = f"{solver_names_string}_on_{problem_names_string}"
+            file_name = f"{self.file_header}group_{s_on_p}.pickle"
             self.file_name_path = output_dir / file_name
         else:
             self.file_name_path = file_name_path
@@ -5121,15 +5068,20 @@ class ProblemsSolvers:
             Error message in the event any problem and solver are incompatible.
 
         """
-        error_str = ""
+        errors = []
         for solver_idx in range(self.n_solvers):
             for problem_idx in range(self.n_problems):
                 new_error_str = self.experiments[solver_idx][
                     problem_idx
                 ].check_compatibility()
-                if new_error_str != "":
-                    error_str += f"For solver {self.solver_names[solver_idx]} and problem {self.problem_names[problem_idx]}... {new_error_str}"
-        return error_str
+                if len(new_error_str) > 0:
+                    new_msg = (
+                        f"For solver {self.solver_names[solver_idx]} "
+                        f"and problem {self.problem_names[problem_idx]}... "
+                        + new_error_str
+                    )
+                    errors.append(new_msg)
+        return "\n".join(errors)
 
     def run(self, n_macroreps: int) -> None:
         """Run `n_macroreps` of each solver on each problem.
@@ -5160,8 +5112,10 @@ class ProblemsSolvers:
                 # If the problem-solver pair has not been run in this way before,
                 # run it now and save result to .pickle file.
                 if not experiment.has_run:
+                    # TODO: check if this should be prob on solv instead?
+                    s_on_p = f"{experiment.solver.name} on {experiment.problem.name}"
                     logging.debug(
-                        f"Running {n_macroreps} macro-replications of {experiment.solver.name} on {experiment.problem.name}."
+                        f"Running {n_macroreps} macro-replications of {s_on_p}."
                     )
                     experiment.run(n_macroreps)
         # Save ProblemsSolvers object to .pickle file.
@@ -5180,7 +5134,8 @@ class ProblemsSolvers:
         n_postreps : int
             Number of postreplications to take at each recommended solution.
         crn_across_budget : bool, default=True
-            True if CRN used for post-replications at solutions recommended at different times,
+            True if CRN used for post-replications at solutions recommended at
+            different times,
             otherwise False.
         crn_across_macroreps : bool, default=False
             True if CRN used for post-replications at solutions recommended on different
@@ -5210,12 +5165,11 @@ class ProblemsSolvers:
         for solver_index in range(self.n_solvers):
             for problem_index in range(self.n_problems):
                 experiment = self.experiments[solver_index][problem_index]
-                # If the problem-solver pair has not been post-replicated in this way before,
-                # post-process it now.
+                # If the problem-solver pair has not been post-replicated in this
+                # way before, post-process it now.
                 if not experiment.has_postreplicated:
-                    logging.debug(
-                        f"Post-processing {experiment.solver.name} on {experiment.problem.name}."
-                    )
+                    s_on_p = f"{experiment.solver.name} on {experiment.problem.name}"
+                    logging.debug(f"Post-processing {s_on_p}.")
                     experiment.post_replicate(
                         n_postreps, crn_across_budget, crn_across_macroreps
                     )
@@ -5307,7 +5261,8 @@ class ProblemsSolvers:
 
     def log_group_experiment_results(self) -> None:
         """Create readable .txt file describing the solvers and problems that make up the ProblemSolvers object."""
-        # Create a new text file in experiment/{date/time of launch}/logs folder with correct name.
+        # Create a new text file in experiment/{date/time of launch}/logs folder
+        # with correct name.
         log_dir = self.file_name_path.parent.parent / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         new_filename = self.file_name_path.name.replace(
@@ -5317,13 +5272,12 @@ class ProblemsSolvers:
 
         # Create text file.
         with Path.open(new_path, "w") as file:
+            seperator_len = 100
             # Title text file with experiment information.
             file.write(str(self.file_name_path))
             file.write("\n")
             # Write the name of each problem.
-            file.write(
-                "----------------------------------------------------------------------------------------------"
-            )
+            file.write("-" * seperator_len)
             file.write("\nProblems:\n\n")
             for i in range(self.n_problems):
                 file.write(f"{self.problem_names[i]}\n\t")
@@ -5338,23 +5292,17 @@ class ProblemsSolvers:
                 for key, value in self.problems[i].factors.items():
                     file.write(f"\t\t{key}: {value}\n")
                 file.write("\n")
-            file.write(
-                "----------------------------------------------------------------------------------------------"
-            )
+            file.write("-" * seperator_len)
             # Write the name of each Solver.
             file.write("\nSolvers:\n\n")
             # Write solver factors for each solver.
-            for j in range(self.n_solvers):
-                file.write(f"{self.solver_names[j]}\n\t")
-                file.write("Solver Factors:\n")
-                for key, value in self.solvers[
-                    j
-                ].factors.items():  # changed from i to j
+            for solv_idx in range(self.n_solvers):
+                file.write(f"{self.solver_names[solv_idx]}\n")
+                file.write("\tSolver Factors:\n")
+                for key, value in self.solvers[solv_idx].factors.items():
                     file.write(f"\t\t{key}: {value}\n")
                 file.write("\n")
-            file.write(
-                "----------------------------------------------------------------------------------------------"
-            )
+            file.write("-" * seperator_len)
             # Write the name of pickle files for each Problem-Solver pair if created.
             if self.create_pair_pickles:
                 file.write(
@@ -5362,12 +5310,11 @@ class ProblemsSolvers:
                 )
                 for solver_group in self.experiments:
                     for experiment in solver_group:
-                        directory, file_name = os.path.split(experiment.file_name_path)
+                        _, file_name = os.path.split(experiment.file_name_path)
                         file.write(f"{file_name}\n")
             # for p in self.problem_names:
             #     for s in self.solver_names:
             #         file.write(f"\t{s}_on_{p}.pickle\n")
-        file.close()
 
     def report_group_statistics(
         self,
@@ -5717,40 +5664,7 @@ def make_full_metaexperiment(
     -------
     metaexperiment : ``experiment_base.ProblemsSolvers``
         New ProblemsSolvers object.
-
-    Raises:
-    ------
-    TypeError
-
     """
-    # Type checking
-    if not isinstance(existing_experiments, list) or not all(
-        isinstance(experiment, ProblemSolver) for experiment in existing_experiments
-    ):
-        error_msg = "Existing experiments must be a list of ProblemSolver objects."
-        raise TypeError(error_msg)
-    if not isinstance(unique_solvers, list) or not all(
-        isinstance(solver, Solver) for solver in unique_solvers
-    ):
-        error_msg = "Unique solvers must be a list of Solver objects."
-        raise TypeError(error_msg)
-    if not isinstance(unique_problems, list) or not all(
-        isinstance(problem, Problem) for problem in unique_problems
-    ):
-        error_msg = "Unique problems must be a list of Problem objects."
-        raise TypeError(error_msg)
-    if (
-        not isinstance(missing_experiments, list)
-        or not all(isinstance(pair, tuple) for pair in missing_experiments)
-        or not all(len(pair) == 2 for pair in missing_experiments)
-        or not all(
-            isinstance(pair[0], Solver) and isinstance(pair[1], Problem)
-            for pair in missing_experiments
-        )
-    ):
-        error_msg = "Missing experiments must be a list of tuples of Solver and Problem objects."
-        raise TypeError(error_msg)
-
     # Ordering of solvers and problems in unique_solvers and unique_problems
     # is used to construct experiments.
     full_experiments = [[] * len(unique_problems) for _ in range(len(unique_solvers))]
@@ -5767,32 +5681,15 @@ def make_full_metaexperiment(
     return ProblemsSolvers(experiments=full_experiments)
 
 
-def validate_ruby_install() -> None:
-    """Check if Ruby is installed on the system or is on the system path.
-
-    Raises:
-    ------
-    Exception
-        If Ruby is not installed on the system or is not on the system path.
-    """
-    # Check if Ruby is on the system path
-    results = subprocess.run(
-        "ruby -v",
-        shell=True,
-        capture_output=True,
-    )
-    # If the return code isn't 0, then Ruby is not installed on the system
-    if results.returncode != 0:
-        error_msg = [
-            "Ruby is not installed on the system or is not on the system path.",
-            "Please install Ruby or add it to the system path.",
-            "If you just installed Ruby, you may need to restart your terminal/IDE.",
-        ]
-        error_msg = " ".join(error_msg)
-        raise Exception(error_msg)
-
-
 def lookup_datafarming_gem(design_type: str) -> str:
+    """Check if a compatible version of the datafarming Ruby gem is installed.
+
+    Args:
+        design_type (str): The type of design to check for.
+
+    Returns:
+        str: The name of the datafarming script to use.
+    """
     # Local imports
     import platform
 
@@ -5864,15 +5761,18 @@ def lookup_datafarming_gem(design_type: str) -> str:
         error_msg = []
         if len(version_check_results) == 1:
             error_msg.append(
-                f"Datafarming gem is installed, but the installed version {datafarming_versions} is not supported."
+                "Datafarming gem is installed, but the installed version "
+                f"{datafarming_versions} is not supported."
             )
         else:
             error_msg.append(
-                f"Datafarming gem is installed, but the installed versions {datafarming_versions} are not supported."
+                f"Datafarming gem is installed, but the installed versions "
+                f"{datafarming_versions} are not supported."
             )
         error_msg.append(f"Please install version {min_version} <= x < {max_version}.")
         error_msg.append(
-            "This can be done by running: `gem install datafarming -v 1.4' or by running the setup_simopt script for your platform."
+            "This can be done by running: `gem install datafarming -v 1.4' "
+            "or by running the setup_simopt script for your platform."
         )
         error_msg = " ".join(error_msg)
         raise Exception(error_msg)
@@ -5880,11 +5780,25 @@ def lookup_datafarming_gem(design_type: str) -> str:
     # we still can't run the stack script. This is likely due to the gem
     # not being in the system path. We'll let the user know that they need
     # to restart their terminal/IDE.
-    error_msg = "Ruby was able to detect the datafarming gem, but was unable to run the stack script. If you just installed the datafarming gem, it may be necessary to restart your terminal/IDE."
+    error_msg = (
+        "Ruby was able to detect the datafarming gem, but was unable to run the "
+        "stack script. If you just installed the datafarming gem, it may be necessary "
+        "to restart your terminal/IDE to refresh the system path."
+    )
     raise Exception(error_msg)
 
 
 def create_design_list_from_table(design_table: DataFrame) -> list:
+    """Create a list of solver or problem objects for each design point.
+
+    Args:
+        design_table (DataFrame): DataFrame containing the design table.
+            Each row represents a design point, and each column represents a factor.
+
+    Returns:
+        list[dict]: List of dictionaries, where each dictionary contains the factor
+            values for a design point.
+    """
     # Local imports
     import ast
 
@@ -5930,10 +5844,13 @@ def create_design(
     design_type : str, optional
         design type for ruby calculation. The default is 'nolhs'.
     cross_design_factors : dict, optional
-        dict of lists of values of factors to include in cross design. The default is None.
+        dict of lists of values of factors to include in cross design.
+        The default is None.
     class_type: str, optional
-        determines class type (solver, problem, or model) that design is over. Problem automatically combines problem factors with model factors. Choose model to run without any associated problem(s).
-        default is 'solver'
+        determines class type (solver, problem, or model) that design is over.
+        Problem automatically combines problem factors with model factors.
+        Choose model to run without any associated problem(s).
+        The default is 'solver'
     csv_filename: str, optional
         override default csv file name
 
@@ -5960,37 +5877,6 @@ def create_design(
         class_type = "solver"
     if csv_filename is None:
         csv_filename = factor_settings_filename
-
-    # Type checking
-    if not isinstance(name, str):
-        error_msg = "Name must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(factor_headers, list) or not all(
-        isinstance(header, str) for header in factor_headers
-    ):
-        error_msg = "Factor headers must be a list of strings."
-        raise TypeError(error_msg)
-    if not isinstance(factor_settings_filename, str):
-        error_msg = "Factor settings filename must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(fixed_factors, dict):
-        error_msg = "Fixed factors must be a dictionary."
-        raise TypeError(error_msg)
-    if not isinstance(n_stacks, int):
-        error_msg = "Number of stacks must be an integer."
-        raise TypeError(error_msg)
-    if not isinstance(design_type, str):
-        error_msg = "Design type must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(cross_design_factors, dict):
-        error_msg = "Cross design factors must be a dictionary or None."
-        raise TypeError(error_msg)
-    if not isinstance(class_type, str):
-        error_msg = "Class type must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(csv_filename, str):
-        error_msg = "CSV filename must be a string or None."
-        raise TypeError(error_msg)
 
     # TODO: add additional checking
     # Value checking
@@ -6031,13 +5917,12 @@ def create_design(
 
     # Only run the Ruby script if there are factors to change
     if len(factor_headers) > 0:
-        # Check if Ruby is installed on the system.
-        validate_ruby_install()
         # Check if the datafarming gem is installed
         command_file: str = lookup_datafarming_gem(design_type)
 
         # Create solver factor design from .txt file of factor settings.
         command = f'{command_file} -s {n_stacks} "{source_file}" > "{design_file}"'
+        # TODO: investigate if shell is needed
         completed_process = subprocess.run(command, capture_output=True, shell=True)
         # If the design file doesn't exist, there was an error in the Ruby script.
         if not design_file.exists():
@@ -6055,7 +5940,10 @@ def create_design(
                 encoding="utf-8",
             )
         except pd.errors.EmptyDataError:
-            error_msg = "Error in Ruby script. No data in design file.\nMake sure to select factors for data farming."
+            error_msg = (
+                "Error in Ruby script. No data in design file.\n"
+                "Make sure to select factors for data farming."
+            )
             raise Exception(error_msg) from pd.errors.EmptyDataError
         design_table.columns = factor_headers  # Add factor headers names to dt.
     else:
@@ -6097,9 +5985,8 @@ def create_design(
 
         new_design_table = pd.DataFrame()  # Temp empty value.
         for combination in combinations:
-            combination_dict = dict(
-                zip(cross_factor_names, combination)
-            )  # Dictionary containing current combination of cross design factor values.
+            # Dictionary containing current combination of cross design factor values.
+            combination_dict = dict(zip(cross_factor_names, combination))
             working_design_table = design_table.copy()
 
             for factor in combination_dict:
