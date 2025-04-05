@@ -540,7 +540,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_comboboxes["ntbk.ps_adding.problem.select"] = ttk.Combobox(
             self.tk_frames["ntbk.ps_adding.problem"],
             textvariable=self.selected_problem_name,
-            values=sorted(list(self.problem_full_name_to_class.keys())),
+            values=sorted(self.problem_full_name_to_class.keys()),
             state="readonly",
         )
         self.tk_comboboxes["ntbk.ps_adding.problem.select"].grid(
@@ -614,7 +614,7 @@ class NewExperimentWindow(Toplevel):
         self.tk_comboboxes["ntbk.ps_adding.solver.select"] = ttk.Combobox(
             self.tk_frames["ntbk.ps_adding.solver"],
             textvariable=self.selected_solver_name,
-            values=sorted(list(self.solver_full_name_to_class.keys())),
+            values=sorted(self.solver_full_name_to_class.keys()),
             state="readonly",
         )
         self.tk_comboboxes["ntbk.ps_adding.solver.select"].grid(
@@ -889,7 +889,7 @@ class NewExperimentWindow(Toplevel):
         self._hide_gen_design()
 
     def __update_problem_dropdown(self) -> None:
-        possible_problems = sorted(list(self.problem_full_name_to_class.keys()))
+        possible_problems = sorted(self.problem_full_name_to_class.keys())
         # For each solver in the current experiment, check all the possible
         # problems and remove the ones that are not compatible
         # Grab the name (index 1) out of the first element (index 0) of the
@@ -915,7 +915,7 @@ class NewExperimentWindow(Toplevel):
         )
 
     def __update_solver_dropdown(self) -> None:
-        possible_options = sorted(list(self.solver_full_name_to_class.keys()))
+        possible_options = sorted(self.solver_full_name_to_class.keys())
         # For each problem in the current experiment, check all the possible
         # solvers and remove the ones that are not compatible
         # Grab the name (index 1) out of the first element (index 0) of the
@@ -1505,7 +1505,7 @@ class NewExperimentWindow(Toplevel):
         self.add_exp_row(unique_name, is_imported=True)
 
     def _destroy_widget_children(self, widget: tk.Widget) -> None:
-        """_Destroy all children of a widget._
+        """_Destroy all children of a widget._.
 
         Args:
             widget (tk.Widget): _The widget whose children will be destroyed._
@@ -1530,7 +1530,7 @@ class NewExperimentWindow(Toplevel):
         first_row : int, optional
             First row to display factors.
 
-        Returns
+        Returns:
         -------
         int
             Index of the last row inserted.
@@ -1582,12 +1582,11 @@ class NewExperimentWindow(Toplevel):
         first_row : int, optional
             First row to display factors.
 
-        Returns
+        Returns:
         -------
         int
             Index of the last row displayed.
         """
-
         row_index = first_row
         # Loop through and add everything to the frame
         for factor_index, factor_name in enumerate(factor_dict):
@@ -1705,7 +1704,7 @@ class NewExperimentWindow(Toplevel):
         base_name : str
             base name that you want appended to become unique.
 
-        Returns
+        Returns:
         -------
         str
             new unique name.
@@ -1722,8 +1721,7 @@ class NewExperimentWindow(Toplevel):
                 count += 1
                 test_name = f"{base_name}_{count!s}"
             return test_name
-        else:
-            return base_name
+        return base_name
 
     def get_unique_experiment_name(self, base_name: str) -> str:
         return self.__get_unique_name(self.root_experiment_dict, base_name)
@@ -1757,7 +1755,7 @@ class NewExperimentWindow(Toplevel):
         # specifications for the model
         if isinstance(base_object, Problem):
             model_specifications = base_object.model.specifications
-            for factor in model_specifications.keys():
+            for factor in model_specifications:
                 specifications[factor] = model_specifications[factor]
         # Convert the specifications to a dictionary of DFFactor objects
         self.factor_dict = spec_dict_to_df_dict(specifications)
@@ -2894,8 +2892,7 @@ class NewExperimentWindow(Toplevel):
         if exp_name in search_dict:
             value = search_dict[exp_name].get()
             true_vals = ["yes", "true", "1"]
-            is_true = value.lower() in true_vals
-            return is_true
+            return value.lower() in true_vals
         return default_val
 
     # Functionally the same as the above function, but for integers
@@ -3642,14 +3639,14 @@ class NewExperimentWindow(Toplevel):
         problem_factor_set = set()  # holds names of problem factors
         for solver in self.plot_experiment.solvers:
             self.plot_solver_options.append(solver.name)
-            for factor in solver.factors.keys():
+            for factor in solver.factors:
                 solver_factor_set.add(factor)  # append factor names to list
 
         for problem in self.plot_experiment.problems:
             self.plot_problem_options.append(problem.name)
-            for factor in problem.factors.keys():
+            for factor in problem.factors:
                 problem_factor_set.add(factor)
-            for factor in problem.model.factors.keys():
+            for factor in problem.model.factors:
                 problem_factor_set.add(factor)
 
         # determine if all solvers in experiment have the same factor options
@@ -3682,7 +3679,7 @@ class NewExperimentWindow(Toplevel):
             self.solver_tree.heading(
                 "Solver Name", text="Solver Name"
             )  # set heading for name column
-            for factor in self.plot_experiment.solvers[0].factors.keys():
+            for factor in self.plot_experiment.solvers[0].factors:
                 self.solver_tree.heading(
                     factor, text=factor
                 )  # set column header text to factor names
@@ -4549,10 +4546,7 @@ class NewExperimentWindow(Toplevel):
         n_problems = len(exp_sublist[0])
         all_str = self.all_var.get()
         all_in = all_str.lower() == "yes"
-        if all_in:
-            legend = self.legend_var.get()
-        else:
-            legend = None
+        legend = self.legend_var.get() if all_in else None
         ext = self.ext_var.get()
         solver_set_name = self.solver_set_var.get()
         # get user input
@@ -4625,10 +4619,7 @@ class NewExperimentWindow(Toplevel):
         all_str = self.all_var.get()
         all_in = all_str.lower() == "yes"
         # only get legend location if all in one is selected
-        if all_in:
-            legend = self.legend_var.get()
-        else:
-            legend = None
+        legend = self.legend_var.get() if all_in else None
         ext = self.ext_var.get()
         solver_set_name = self.solver_set_var.get()
         solve_tol = float(self.solve_tol_var.get())
@@ -4809,10 +4800,7 @@ class NewExperimentWindow(Toplevel):
         all_str = self.all_var.get()
         all_in = all_str.lower() == "yes"
         # only get legend location if all in one is selected
-        if all_in:
-            legend = self.legend_var.get()
-        else:
-            legend = None
+        legend = self.legend_var.get() if all_in else None
         ext = self.ext_var.get()
         solver_set_name = self.solver_set_var.get()
         problem_set_name = self.problem_set_var.get()
@@ -4854,10 +4842,7 @@ class NewExperimentWindow(Toplevel):
         all_str = self.all_var.get()
         all_in = all_str.lower() == "yes"
         # only get legend location if all in one is selected
-        if all_in:
-            legend = self.legend_var.get()
-        else:
-            legend = None
+        legend = self.legend_var.get() if all_in else None
         ext = self.ext_var.get()
         solver_set_name = self.solver_set_var.get()
         problem_set_name = self.problem_set_var.get()
@@ -4967,7 +4952,7 @@ class NewExperimentWindow(Toplevel):
             error_msg = "Please select problems to plot."
             messagebox.showerror("Error", error_msg)
             return
-        elif len(self.selected_solvers) == 0:
+        if len(self.selected_solvers) == 0:
             error_msg = "Please select solvers to plot."
             messagebox.showerror("Error", error_msg)
             return
@@ -4988,9 +4973,8 @@ class NewExperimentWindow(Toplevel):
             )
             messagebox.showerror("Error", error_msg)
             return
-        else:
-            # Call the appropriate plot function
-            plot_types[self.plot_type]()
+        # Call the appropriate plot function
+        plot_types[self.plot_type]()
 
     def add_plot_to_notebook(
         self,
@@ -5717,10 +5701,7 @@ class NewExperimentWindow(Toplevel):
             axis_display = "Y"
             align_options = ["top", "center", "bottom"]
         # get spacing between ticks
-        if len(tick_pos) > 1:
-            space = tick_pos[1] - tick_pos[0]
-        else:
-            space = "none"
+        space = tick_pos[1] - tick_pos[0] if len(tick_pos) > 1 else "none"
 
         # display current information in entry widgets
         self.x_title_label = ttk.Label(

@@ -30,7 +30,7 @@ class DesignType(Enum):
 class DesignPoint:
     """Base class for design points represented as dictionaries of factors.
 
-    Attributes
+    Attributes:
     ----------
     model : ``base.Model``
         Model to simulate.
@@ -60,7 +60,7 @@ class DesignPoint:
         model : ``base.Model``
             Model with factors model_factors.
 
-        Raises
+        Raises:
         ------
         TypeError
 
@@ -88,7 +88,7 @@ class DesignPoint:
         copy : bool, default=True
             True if rng_list should be copied, otherwise False.
 
-        Raises
+        Raises:
         ------
         TypeError
 
@@ -116,7 +116,7 @@ class DesignPoint:
         num_macroreps : int, default=1
             Number of macroreplications to run at the design point; > 0.
 
-        Raises
+        Raises:
         ------
         TypeError
         ValueError
@@ -162,7 +162,7 @@ class DesignPoint:
 class DataFarmingExperiment:
     """Base class for data-farming experiments consisting of an model and design of associated factors.
 
-    Attributes
+    Attributes:
     ----------
     model : ``base.Model``
         Model on which the experiment is run.
@@ -215,7 +215,7 @@ class DataFarmingExperiment:
         design_type: Literal["nolhs"], default="nolhs"
             Type of design to be used.
 
-        Raises
+        Raises:
         ------
         TypeError
         ValueError
@@ -316,7 +316,7 @@ class DataFarmingExperiment:
         crn_across_design_pts : bool, default=True
             True if CRN are to be used across design points, otherwise False.
 
-        Raises
+        Raises:
         ------
         TypeError
         ValueError
@@ -368,7 +368,7 @@ class DataFarmingExperiment:
         csv_filename : str, default="raw_results"
             Name of .csv file to print output to.
 
-        Raises
+        Raises:
         ------
         TypeError
 
@@ -429,7 +429,7 @@ class DataFarmingExperiment:
 class DataFarmingMetaExperiment:
     """Base class for data-farming meta experiments consisting of problem-solver pairs and a design of associated factors.
 
-    Attributes
+    Attributes:
     ----------
     design : list [``experiment_base.ProblemSolver``]
         List of design points forming the design.
@@ -496,7 +496,7 @@ class DataFarmingMetaExperiment:
         cross_design_factors : dict, optional
             Dictionary of user-specified solver factors that will not be varied.
 
-        Raises
+        Raises:
         ------
         ValueError
             If n_stacks is less than or equal to 0.
@@ -705,7 +705,7 @@ class DataFarmingMetaExperiment:
         n_macroreps : int
             Number of macroreplications for each design point.
 
-        Raises
+        Raises:
         ------
         ValueError
             If n_macroreps is less than or equal to 0.

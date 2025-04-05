@@ -390,7 +390,7 @@ class PlotWindow(Toplevel):
             )
             self.bad_label.place(relx=0.45, rely=0.5)
             return
-        elif self.bad_label is not None:
+        if self.bad_label is not None:
             self.bad_label.destroy()
             self.bad_label = None
 
@@ -592,10 +592,7 @@ class PlotWindow(Toplevel):
 
         for i, new_plot in enumerate(path_name):
             place = self.num_plots + 1
-            if len(path_name) == 1:
-                prob_text = solver_lst
-            else:
-                prob_text = self.solver_menu.get(i)
+            prob_text = solver_lst if len(path_name) == 1 else self.solver_menu.get(i)
 
             self.problem_button_added = tk.Label(
                 master=self.tab_one,

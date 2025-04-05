@@ -32,7 +32,7 @@ def main() -> None:
             log_level = logging.DEBUG
             seterr(all="raise")
             break
-        elif arg == "--silent":
+        if arg == "--silent":
             log_level = logging.CRITICAL
             break
 

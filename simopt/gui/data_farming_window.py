@@ -223,7 +223,7 @@ class DataFarmingWindow(Toplevel):
         self.n_stacks = self.design_table.at[1, "Number Stacks"]
         self.model_var.set(self.model_name)
 
-        all_factor_names = [col for col in self.design_table.columns[1:-3]]
+        all_factor_names = list(self.design_table.columns[1:-3])
         self.factor_names = []  # names of factors included in design
         # determine what factors are included in design
         self.factor_status = {}  # dictionary that contains true/false for wheither factor is in design
@@ -232,10 +232,7 @@ class DataFarmingWindow(Toplevel):
         ]:  # col correspond to factor names, exclude index and information cols
             factor_set = set(self.design_table[col])
 
-            if len(factor_set) > 1:
-                design_factor = True
-            else:
-                design_factor = False
+            design_factor = len(factor_set) > 1
 
             self.factor_status[col] = design_factor
 
@@ -506,7 +503,7 @@ class DataFarmingWindow(Toplevel):
         fixed_factors : dict
             Dictionary containing fixed factor names not included in design and corresponding user selected value as str.
 
-        Returns
+        Returns:
         -------
         converted_fixed_factors : dict
             Dictrionary containing fixed factor names and corresponding values converted to proper data type.
@@ -1315,10 +1312,7 @@ class DataFarmingWindow(Toplevel):
 
         # Specify whether to use common random numbers across different versions
         # of the model.
-        if self.crn_var.get() == "Yes":
-            crn_across_design_pts = True
-        else:
-            crn_across_design_pts = False
+        crn_across_design_pts = self.crn_var.get() == "Yes"
 
         output_filename = os.path.join(
             DATA_FARMING_DIR,
