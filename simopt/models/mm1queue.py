@@ -13,7 +13,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class MM1Queue(Model):
@@ -53,22 +53,27 @@ class MM1Queue(Model):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "MM1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "MM1 Queue"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 3
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "lambda": {
@@ -103,13 +108,14 @@ class MM1Queue(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "lambda": self.check_lambda,
-            "mu": self.check_mu,
-            "epsilon": self.check_epsilon,
-            "warmup": self.check_warmup,
-            "people": self.check_people,
+            "lambda": self._check_lambda,
+            "mu": self._check_mu,
+            "epsilon": self._check_epsilon,
+            "warmup": self._check_warmup,
+            "people": self._check_people,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -122,23 +128,23 @@ class MM1Queue(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_lambda(self) -> None:
+    def _check_lambda(self) -> None:
         if self.factors["lambda"] <= 0:
             raise ValueError("lambda must be greater than 0.")
 
-    def check_mu(self) -> None:
+    def _check_mu(self) -> None:
         if self.factors["mu"] <= 0:
             raise ValueError("mu must be greater than 0.")
 
-    def check_warmup(self) -> None:
+    def _check_warmup(self) -> None:
         if self.factors["warmup"] < 0:
             raise ValueError("warmup must be greater than or equal to 0.")
 
-    def check_people(self) -> None:
+    def _check_people(self) -> None:
         if self.factors["people"] < 1:
             raise ValueError("people must be greater than or equal to 1.")
 
-    def check_epsilon(self) -> bool:
+    def _check_epsilon(self) -> bool:
         return self.factors["epsilon"] > 0
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
@@ -339,54 +345,67 @@ class MM1MinMeanSojournTime(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "MM1-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Mean Sojourn Time for MM1 Queue"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return True
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {"warmup": 50, "people": 200}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"mu"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -408,22 +427,26 @@ class MM1MinMeanSojournTime(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "cost": self.check_cost,
+            "cost": self._check_cost,
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0,) * cls.dim
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (np.inf,) * cls.dim
 
@@ -450,7 +473,7 @@ class MM1MinMeanSojournTime(Problem):
             model=MM1Queue,
         )
 
-    def check_cost(self) -> None:
+    def _check_cost(self) -> None:
         if self.factors["cost"] <= 0:
             raise ValueError("cost must be greater than 0.")
 

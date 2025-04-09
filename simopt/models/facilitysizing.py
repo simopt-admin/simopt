@@ -13,7 +13,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 NUM_FACILITIES: Final[int] = 3
 
@@ -51,22 +51,27 @@ class FacilitySize(Model):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "FACSIZE"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Facility Sizing"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 3
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "mean_vec": {
@@ -99,12 +104,13 @@ class FacilitySize(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "mean_vec": self.check_mean_vec,
-            "cov": self.check_cov,
-            "capacity": self.check_capacity,
-            "n_fac": self.check_n_fac,
+            "mean_vec": self._check_mean_vec,
+            "cov": self._check_cov,
+            "capacity": self._check_capacity,
+            "n_fac": self._check_n_fac,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -117,11 +123,11 @@ class FacilitySize(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_mean_vec(self) -> None:
+    def _check_mean_vec(self) -> None:
         if any(mean <= 0 for mean in self.factors["mean_vec"]):
             raise ValueError("All elements in mean_vec must be greater than 0.")
 
-    def check_cov(self) -> bool:
+    def _check_cov(self) -> bool:
         try:
             np.linalg.cholesky(np.array(self.factors["cov"]))
             return True
@@ -130,14 +136,15 @@ class FacilitySize(Model):
                 return False
             raise
 
-    def check_capacity(self) -> None:
+    def _check_capacity(self) -> None:
         if len(self.factors["capacity"]) != self.factors["n_fac"]:
             raise ValueError("The length of capacity must equal n_fac.")
 
-    def check_n_fac(self) -> None:
+    def _check_n_fac(self) -> None:
         if self.factors["n_fac"] <= 0:
             raise ValueError("n_fac must be greater than 0.")
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if len(self.factors["capacity"]) != self.factors["n_fac"]:
             raise ValueError("The length of capacity must be equal to n_fac.")
@@ -268,55 +275,68 @@ class FacilitySizingTotalCost(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "FACSIZE-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Total Cost for Facility Sizing"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return True
 
     @classproperty
-    def optimal_value(cls) -> float | None:
+    @override
+    def optimal_value(cls) -> None:
         return None
 
     @classproperty
-    def optimal_solution(cls) -> tuple | None:
+    @override
+    def optimal_solution(cls) -> None:
         # return (185, 185, 185)
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"capacity"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -343,23 +363,27 @@ class FacilitySizingTotalCost(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "installation_costs": self.check_installation_costs,
-            "epsilon": self.check_epsilon,
+            "installation_costs": self._check_installation_costs,
+            "epsilon": self._check_epsilon,
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["n_fac"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
@@ -386,7 +410,7 @@ class FacilitySizingTotalCost(Problem):
             model=FacilitySize,
         )
 
-    def check_installation_costs(self) -> None:
+    def _check_installation_costs(self) -> None:
         if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
             raise ValueError("The length of installation_costs must equal n_fac.")
         if any(elem < 0 for elem in self.factors["installation_costs"]):
@@ -394,7 +418,7 @@ class FacilitySizingTotalCost(Problem):
                 "All elements in installation_costs must be greater than or equal to 0."
             )
 
-    def check_epsilon(self) -> None:
+    def _check_epsilon(self) -> None:
         if self.factors["epsilon"] < 0 or self.factors["epsilon"] > 1:
             raise ValueError(
                 "epsilon must be greater than or equal to 0 and less than or equal "
@@ -649,55 +673,68 @@ class FacilitySizingMaxService(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "FACSIZE-2"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Service for Facility Sizing"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.DETERMINISTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
-    def optimal_solution(cls) -> tuple | None:
+    @override
+    def optimal_solution(cls) -> None:
         # return (175, 179, 143)
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"capacity"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -723,23 +760,27 @@ class FacilitySizingMaxService(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "installation_costs": self.check_installation_costs,
-            "installation_budget": self.check_installation_budget,
+            "installation_costs": self._check_installation_costs,
+            "installation_budget": self._check_installation_budget,
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["n_fac"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
@@ -766,13 +807,13 @@ class FacilitySizingMaxService(Problem):
             model=FacilitySize,
         )
 
-    def check_installation_costs(self) -> bool:
+    def _check_installation_costs(self) -> bool:
         return not (
             len(self.factors["installation_costs"]) != self.model.factors["n_fac"]
             or any(elem < 0 for elem in self.factors["installation_costs"])
         )
 
-    def check_installation_budget(self) -> bool:
+    def _check_installation_budget(self) -> bool:
         return self.factors["installation_budget"] > 0
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:

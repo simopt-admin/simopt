@@ -14,7 +14,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class RMITD(Model):
@@ -49,18 +49,22 @@ class RMITD(Model):
     """
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Revenue Management Temporal Demand"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "time_horizon": {
@@ -106,16 +110,17 @@ class RMITD(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "time_horizon": self.check_time_horizon,
-            "prices": self.check_prices,
-            "demand_means": self.check_demand_means,
-            "cost": self.check_cost,
-            "gamma_shape": self.check_gamma_shape,
-            "gamma_scale": self.check_gamma_scale,
-            "initial_inventory": self.check_initial_inventory,
-            "reservation_qtys": self.check_reservation_qtys,
+            "time_horizon": self._check_time_horizon,
+            "prices": self._check_prices,
+            "demand_means": self._check_demand_means,
+            "cost": self._check_cost,
+            "gamma_shape": self._check_gamma_shape,
+            "gamma_scale": self._check_gamma_scale,
+            "initial_inventory": self._check_initial_inventory,
+            "reservation_qtys": self._check_reservation_qtys,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -128,40 +133,41 @@ class RMITD(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_time_horizon(self) -> None:
+    def _check_time_horizon(self) -> None:
         if self.factors["time_horizon"] <= 0:
             raise ValueError("time_horizon must be greater than 0.")
 
-    def check_prices(self) -> None:
+    def _check_prices(self) -> None:
         if any(price <= 0 for price in self.factors["prices"]):
             raise ValueError("All elements in prices must be greater than 0.")
 
-    def check_demand_means(self) -> None:
+    def _check_demand_means(self) -> None:
         if any(demand_mean <= 0 for demand_mean in self.factors["demand_means"]):
             raise ValueError("All elements in demand_means must be greater than 0.")
 
-    def check_cost(self) -> None:
+    def _check_cost(self) -> None:
         if self.factors["cost"] <= 0:
             raise ValueError("cost must be greater than 0.")
 
-    def check_gamma_shape(self) -> None:
+    def _check_gamma_shape(self) -> None:
         if self.factors["gamma_shape"] <= 0:
             raise ValueError("gamma_shape must be greater than 0.")
 
-    def check_gamma_scale(self) -> None:
+    def _check_gamma_scale(self) -> None:
         if self.factors["gamma_scale"] <= 0:
             raise ValueError("gamma_scale must be greater than 0.")
 
-    def check_initial_inventory(self) -> None:
+    def _check_initial_inventory(self) -> None:
         if self.factors["initial_inventory"] <= 0:
             raise ValueError("initial_inventory must be greater than 0.")
 
-    def check_reservation_qtys(self) -> None:
+    def _check_reservation_qtys(self) -> None:
         if any(
             reservation_qty <= 0 for reservation_qty in self.factors["reservation_qtys"]
         ):
             raise ValueError("All elements in reservation_qtys must be greater than 0.")
 
+    @override
     def check_simulatable_factors(self) -> bool:
         # Check for matching number of periods.
         if len(self.factors["prices"]) != self.factors["time_horizon"]:
@@ -335,55 +341,67 @@ class RMITDMaxRevenue(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "RMITD-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Revenue for Revenue Management Temporal Demand"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.DETERMINISTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
-    def optimal_solution(cls) -> tuple | None:
-        # return (90, 50, 0)
+    @override
+    def optimal_solution(cls) -> None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"initial_inventory", "reservation_qtys"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -400,6 +418,7 @@ class RMITDMaxRevenue(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -407,14 +426,17 @@ class RMITDMaxRevenue(Problem):
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 3
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0,) * cls.dim
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (np.inf,) * cls.dim
 

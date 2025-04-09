@@ -16,7 +16,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class TableAllocation(Model):
@@ -67,18 +67,22 @@ class TableAllocation(Model):
     """
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Restaurant Table Allocation"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 3
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "n_hours": {
@@ -119,15 +123,16 @@ class TableAllocation(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "n_hours": self.check_n_hours,
-            "capacity": self.check_capacity,
-            "table_cap": self.check_table_cap,
-            "lambda": self.check_lambda,
-            "service_time_means": self.check_service_time_means,
-            "table_revenue": self.check_table_revenue,
-            "num_tables": self.check_num_tables,
+            "n_hours": self._check_n_hours,
+            "capacity": self._check_capacity,
+            "table_cap": self._check_table_cap,
+            "lambda": self._check_lambda,
+            "service_time_means": self._check_service_time_means,
+            "table_revenue": self._check_table_revenue,
+            "num_tables": self._check_num_tables,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -141,33 +146,34 @@ class TableAllocation(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_n_hours(self) -> None:
+    def _check_n_hours(self) -> None:
         if self.factors["n_hours"] <= 0:
             raise ValueError("n_hours must be greater than 0.")
 
-    def check_capacity(self) -> None:
+    def _check_capacity(self) -> None:
         if self.factors["capacity"] <= 0:
             raise ValueError("capacity must be greater than 0.")
 
-    def check_table_cap(self) -> None:
+    def _check_table_cap(self) -> None:
         if self.factors["table_cap"] <= [0, 0, 0, 0]:
             raise ValueError("All elements in table_cap must be greater than 0.")
 
-    def check_lambda(self) -> bool:
+    def _check_lambda(self) -> bool:
         return self.factors["lambda"] >= [0] * max(self.factors["table_cap"])
 
-    def check_service_time_means(self) -> bool:
+    def _check_service_time_means(self) -> bool:
         return self.factors["service_time_means"] > [0] * max(self.factors["table_cap"])
 
-    def check_table_revenue(self) -> bool:
+    def _check_table_revenue(self) -> bool:
         return self.factors["table_revenue"] >= [0] * max(self.factors["table_cap"])
 
-    def check_num_tables(self) -> None:
+    def _check_num_tables(self) -> None:
         if self.factors["num_tables"] < [0, 0, 0, 0]:
             raise ValueError(
                 "Each element in num_tables must be greater than or equal to 0."
             )
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if len(self.factors["num_tables"]) != len(self.factors["table_cap"]):
             raise ValueError(
@@ -389,54 +395,67 @@ class TableAllocationMaxRev(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "TABLEALLOCATION-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Revenue for Restaurant Table Allocation"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.DETERMINISTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
-    def optimal_value(cls) -> float | None:
+    @override
+    def optimal_value(cls) -> None:
         return None
 
     @classproperty
-    def optimal_solution(cls) -> tuple | None:
+    @override
+    def optimal_solution(cls) -> None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"num_tables"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -453,6 +472,7 @@ class TableAllocationMaxRev(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -460,14 +480,17 @@ class TableAllocationMaxRev(Problem):
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 4
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0,) * cls.dim
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (np.inf,) * cls.dim
 

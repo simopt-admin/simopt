@@ -12,7 +12,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class ExampleModel(Model):
@@ -44,22 +44,27 @@ class ExampleModel(Model):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "EXAMPLE"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Deterministic Function + Noise"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "x": {
@@ -70,8 +75,9 @@ class ExampleModel(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
-        return {"x": self.check_x}
+        return {"x": lambda: True}
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the model.
@@ -82,10 +88,6 @@ class ExampleModel(Model):
         """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
-
-    def check_x(self) -> bool:
-        # Assume f(x) can be evaluated at any x in R^d.
-        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate a deterministic function f(x) with stochastic noise.
@@ -185,54 +187,66 @@ class ExampleProblem(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "EXAMPLE-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Deterministic Function + Noise"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.UNCONSTRAINED
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return True
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         # Change if f is changed
         # TODO: figure out what f is
         return 0.0
 
     @property
+    @override
     def optimal_solution(self) -> tuple:
         # Change if f is changed
         # TODO: figure out what f is
         return (0,) * self.dim
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @property
+    @override
     def model_fixed_factors(self) -> dict:
         return {}
 
@@ -242,10 +256,12 @@ class ExampleProblem(Problem):
         pass
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"x"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -262,6 +278,7 @@ class ExampleProblem(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -269,14 +286,17 @@ class ExampleProblem(Problem):
         }
 
     @property
+    @override
     def dim(self) -> int:
         return len(self.factors["initial_solution"])
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (-np.inf,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 

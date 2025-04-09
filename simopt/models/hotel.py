@@ -14,7 +14,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class Hotel(Model):
@@ -46,18 +46,22 @@ class Hotel(Model):
     """
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Hotel Booking"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         def double_up(values: list[float]) -> list[float]:
             """Duplicate each value in the list once."""
@@ -191,18 +195,19 @@ class Hotel(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "num_products": self.check_num_products,
-            "lambda": self.check_lambda,
-            "num_rooms": self.check_num_rooms,
-            "discount_rate": self.check_discount_rate,
-            "rack_rate": self.check_rack_rate,
-            "product_incidence": self.check_product_incidence,
-            "time_limit": self.check_time_limit,
-            "time_before": self.check_time_before,
-            "runlength": self.check_runlength,
-            "booking_limits": self.check_booking_limits,
+            "num_products": self._check_num_products,
+            "lambda": self._check_lambda,
+            "num_rooms": self._check_num_rooms,
+            "discount_rate": self._check_discount_rate,
+            "rack_rate": self._check_rack_rate,
+            "product_incidence": self._check_product_incidence,
+            "time_limit": self._check_time_limit,
+            "time_before": self._check_time_before,
+            "runlength": self._check_runlength,
+            "booking_limits": self._check_booking_limits,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -215,28 +220,28 @@ class Hotel(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_products(self) -> None:
+    def _check_num_products(self) -> None:
         if self.factors["num_products"] <= 0:
             raise ValueError("num_products must be greater than 0.")
 
-    def check_lambda(self) -> None:
+    def _check_lambda(self) -> None:
         for i in self.factors["lambda"]:
             if i <= 0:
                 raise ValueError("All elements in lambda must be greater than 0.")
 
-    def check_num_rooms(self) -> None:
+    def _check_num_rooms(self) -> None:
         if self.factors["num_rooms"] <= 0:
             raise ValueError("num_rooms must be greater than 0.")
 
-    def check_discount_rate(self) -> None:
+    def _check_discount_rate(self) -> None:
         if self.factors["discount_rate"] <= 0:
             raise ValueError("discount_rate must be greater than 0.")
 
-    def check_rack_rate(self) -> None:
+    def _check_rack_rate(self) -> None:
         if self.factors["rack_rate"] <= 0:
             raise ValueError("rack_rate must be greater than 0.")
 
-    def check_product_incidence(self) -> None:
+    def _check_product_incidence(self) -> None:
         # TODO: fix check for product_incidence
         return
         # is_positive = [[i > 0 for i in j] for j in self.factors["product_incidence"]]
@@ -245,20 +250,20 @@ class Hotel(Model):
         #         "All elements in product_incidence must be greater than 0."
         #     )
 
-    def check_time_limit(self) -> None:
+    def _check_time_limit(self) -> None:
         for i in self.factors["time_limit"]:
             if i <= 0:
                 raise ValueError("All elements in time_limit must be greater than 0.")
 
-    def check_time_before(self) -> None:
+    def _check_time_before(self) -> None:
         if self.factors["time_before"] <= 0:
             raise ValueError("time_before must be greater than 0.")
 
-    def check_runlength(self) -> None:
+    def _check_runlength(self) -> None:
         if self.factors["runlength"] <= 0:
             raise ValueError("runlength must be greater than 0.")
 
-    def check_booking_limits(self) -> None:
+    def _check_booking_limits(self) -> None:
         for i in list(self.factors["booking_limits"]):
             if i <= 0 or i > self.factors["num_rooms"]:
                 raise ValueError(
@@ -266,6 +271,7 @@ class Hotel(Model):
                     "than num_rooms."
                 )
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if len(self.factors["lambda"]) != self.factors["num_products"]:
             raise ValueError("The length of lambda must equal num_products.")
@@ -437,54 +443,67 @@ class HotelRevenue(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "HOTEL-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Revenue for Hotel Booking"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"booking_limits"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -501,6 +520,7 @@ class HotelRevenue(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -508,14 +528,17 @@ class HotelRevenue(Problem):
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["num_products"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (self.model.factors["num_rooms"],) * self.dim
 
@@ -542,14 +565,11 @@ class HotelRevenue(Problem):
             model=Hotel,
         )
 
+    @override
     def check_initial_solution(self) -> bool:
         return len(self.factors["initial_solution"]) == self.dim
 
-    def check_budget(self) -> bool:
-        if self.factors["budget"] <= 0:
-            raise ValueError("budget must be greater than 0.")
-        return True
-
+    # TODO: figure out how Problem.check_simulatable_factors() works
     def check_simulatable_factors(self) -> bool:
         return not (
             len(self.lower_bounds) != self.dim or len(self.upper_bounds) != self.dim

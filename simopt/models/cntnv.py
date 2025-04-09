@@ -13,7 +13,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class CntNV(Model):
@@ -49,22 +49,27 @@ class CntNV(Model):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "CNTNEWS"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Continuous Newsvendor"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "purchase_price": {
@@ -100,14 +105,15 @@ class CntNV(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "purchase_price": self.check_purchase_price,
-            "sales_price": self.check_sales_price,
-            "salvage_price": self.check_salvage_price,
-            "order_quantity": self.check_order_quantity,
-            "Burr_c": self.check_burr_c,
-            "Burr_k": self.check_burr_k,
+            "purchase_price": self._check_purchase_price,
+            "sales_price": self._check_sales_price,
+            "salvage_price": self._check_salvage_price,
+            "order_quantity": self._check_order_quantity,
+            "Burr_c": self._check_burr_c,
+            "Burr_k": self._check_burr_k,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -120,34 +126,35 @@ class CntNV(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_purchase_price(self) -> None:
+    def _check_purchase_price(self) -> None:
         if self.factors["purchase_price"] <= 0:
             raise ValueError("Purchasing cost per unit must be greater than 0.")
 
-    def check_sales_price(self) -> None:
+    def _check_sales_price(self) -> None:
         if self.factors["sales_price"] <= 0:
             raise ValueError("Sales price per unit must be greater than 0.")
 
-    def check_salvage_price(self) -> None:
+    def _check_salvage_price(self) -> None:
         if self.factors["salvage_price"] <= 0:
             raise ValueError("Salvage cost per unit must be greater than 0.")
 
-    def check_order_quantity(self) -> None:
+    def _check_order_quantity(self) -> None:
         if self.factors["order_quantity"] <= 0:
             raise ValueError("Order quantity must be greater than 0.")
 
-    def check_burr_c(self) -> None:
+    def _check_burr_c(self) -> None:
         if self.factors["Burr_c"] <= 0:
             raise ValueError(
                 "Burr Type XII cdf shape parameter must be greater than 0."
             )
 
-    def check_burr_k(self) -> None:
+    def _check_burr_k(self) -> None:
         if self.factors["Burr_k"] <= 0:
             raise ValueError(
                 "Burr Type XII cdf shape parameter must be greater than 0."
             )
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if (
             self.factors["salvage_price"]
@@ -308,48 +315,59 @@ class CntNVMaxProfit(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "CNTNEWS-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Profit for Continuous Newsvendor"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return True
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         # TODO: Generalize to function of factors.
         # return (0.1878,)
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {
             "purchase_price": 5.0,
@@ -360,10 +378,12 @@ class CntNVMaxProfit(Problem):
         }
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"order_quantity"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -380,6 +400,7 @@ class CntNVMaxProfit(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -387,14 +408,17 @@ class CntNVMaxProfit(Problem):
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0,)
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (np.inf,)
 

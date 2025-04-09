@@ -20,7 +20,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class ALOE(Solver):
@@ -61,22 +61,27 @@ class ALOE(Solver):
     """
 
     @classproperty
+    @override
     def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_needed(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
@@ -131,17 +136,18 @@ class ALOE(Solver):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "crn_across_solns": self.check_crn_across_solns,
-            "r": self.check_r,
-            "theta": self.check_theta,
-            "gamma": self.check_gamma,
-            "alpha_max": self.check_alpha_max,
-            "alpha_0": self.check_alpha_0,
-            "epsilon_f": self.check_epsilon_f,
-            "sensitivity": self.check_sensitivity,
-            "lambda": self.check_lambda,
+            "r": self._check_r,
+            "theta": self._check_theta,
+            "gamma": self._check_gamma,
+            "alpha_max": self._check_alpha_max,
+            "alpha_0": self._check_alpha_0,
+            "epsilon_f": self._check_epsilon_f,
+            "sensitivity": self._check_sensitivity,
+            "lambda": self._check_lambda,
         }
 
     def __init__(self, name: str = "ALOE", fixed_factors: dict | None = None) -> None:
@@ -155,38 +161,38 @@ class ALOE(Solver):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-    def check_r(self) -> None:
+    def _check_r(self) -> None:
         if self.factors["r"] <= 0:
             raise ValueError(
                 "The number of replications taken at each solution must be greater "
                 "than 0."
             )
 
-    def check_theta(self) -> None:
+    def _check_theta(self) -> None:
         if self.factors["theta"] <= 0 or self.factors["theta"] >= 1:
             raise ValueError("Theta must be between 0 and 1.")
 
-    def check_gamma(self) -> None:
+    def _check_gamma(self) -> None:
         if self.factors["gamma"] <= 0 or self.factors["gamma"] >= 1:
             raise ValueError("Gamma must be between 0 and 1.")
 
-    def check_alpha_max(self) -> None:
+    def _check_alpha_max(self) -> None:
         if self.factors["alpha_max"] <= 0:
             raise ValueError("The maximum step size must be greater than 0.")
 
-    def check_alpha_0(self) -> None:
+    def _check_alpha_0(self) -> None:
         if self.factors["alpha_0"] <= 0:
             raise ValueError("The initial step size must be greater than 0.")
 
-    def check_epsilon_f(self) -> None:
+    def _check_epsilon_f(self) -> None:
         if self.factors["epsilon_f"] <= 0:
             raise ValueError("epsilon_f must be greater than 0.")
 
-    def check_sensitivity(self) -> None:
+    def _check_sensitivity(self) -> None:
         if self.factors["sensitivity"] <= 0:
             raise ValueError("Sensitivity must be greater than 0.")
 
-    def check_lambda(self) -> None:
+    def _check_lambda(self) -> None:
         if self.factors["lambda"] <= 0:
             raise ValueError("Lambda must be greater than 0.")
 

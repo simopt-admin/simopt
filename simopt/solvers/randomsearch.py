@@ -17,7 +17,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class RandomSearch(Solver):
@@ -61,30 +61,37 @@ class RandomSearch(Solver):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "RNDSRCH"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Random Search"
 
     @classproperty
+    @override
     def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.MIXED
 
     @classproperty
+    @override
     def gradient_needed(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
@@ -100,10 +107,11 @@ class RandomSearch(Solver):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "crn_across_solns": self.check_crn_across_solns,
-            "sample_size": self.check_sample_size,
+            "sample_size": self._check_sample_size,
         }
 
     def __init__(
@@ -119,7 +127,7 @@ class RandomSearch(Solver):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-    def check_sample_size(self) -> None:
+    def _check_sample_size(self) -> None:
         if self.factors["sample_size"] <= 0:
             raise ValueError("Sample size must be greater than 0.")
 

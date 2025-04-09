@@ -13,7 +13,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 # TODO: figure out if this should ever be anything other than 13
 NUM_ARCS: Final[int] = 13
@@ -52,18 +52,22 @@ class FixedSAN(Model):
     """
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Fixed Stochastic Activity Network"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "num_arcs": {
@@ -84,11 +88,12 @@ class FixedSAN(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "num_arcs": self.check_num_arcs,
-            "num_nodes": self.check_num_nodes,
-            "arc_means": self.check_arc_means,
+            "num_arcs": self._check_num_arcs,
+            "num_nodes": self._check_num_nodes,
+            "arc_means": self._check_arc_means,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -101,15 +106,15 @@ class FixedSAN(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_arcs(self) -> None:
+    def _check_num_arcs(self) -> None:
         if self.factors["num_arcs"] <= 0:
             raise ValueError("num_arcs must be greater than 0.")
 
-    def check_num_nodes(self) -> None:
+    def _check_num_nodes(self) -> None:
         if self.factors["num_nodes"] <= 0:
             raise ValueError("num_nodes must be greater than 0.")
 
-    def check_arc_means(self) -> bool:
+    def _check_arc_means(self) -> bool:
         return all(x > 0 for x in list(self.factors["arc_means"]))
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
@@ -285,54 +290,67 @@ class FixedSANLongestPath(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "FIXEDSAN-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Mean Longest Path for Fixed Stochastic Activity Network"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return True
 
     @classproperty
-    def optimal_value(cls) -> float | None:
+    @override
+    def optimal_value(cls) -> None:
         return None
 
     @classproperty
-    def optimal_solution(cls) -> tuple | None:
+    @override
+    def optimal_solution(cls) -> None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"arc_means"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -354,6 +372,7 @@ class FixedSANLongestPath(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -362,14 +381,17 @@ class FixedSANLongestPath(Problem):
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["num_arcs"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (1e-2,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 

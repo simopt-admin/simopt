@@ -37,7 +37,7 @@ max-complexity = 8
 
 [lint.pydocstyle]
 convention = "google"
-ignore-decorators = ["simopt.utils.classproperty"]
+ignore-decorators = ["simopt.utils.override"]
 
 [lint.isort]
 known-first-party = ["simopt", "mrg32k3a"]

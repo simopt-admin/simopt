@@ -20,7 +20,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class ADAM(Solver):
@@ -64,22 +64,27 @@ class ADAM(Solver):
     """
 
     @classproperty
+    @override
     def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_needed(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
@@ -122,15 +127,16 @@ class ADAM(Solver):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "crn_across_solns": self.check_crn_across_solns,
-            "r": self.check_r,
-            "beta_1": self.check_beta_1,
-            "beta_2": self.check_beta_2,
-            "alpha": self.check_alpha,
-            "epsilon": self.check_epsilon,
-            "sensitivity": self.check_sensitivity,
+            "r": self._check_r,
+            "beta_1": self._check_beta_1,
+            "beta_2": self._check_beta_2,
+            "alpha": self._check_alpha,
+            "epsilon": self._check_epsilon,
+            "sensitivity": self._check_sensitivity,
         }
 
     def __init__(self, name: str = "ADAM", fixed_factors: dict | None = None) -> None:
@@ -144,30 +150,30 @@ class ADAM(Solver):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-    def check_r(self) -> None:
+    def _check_r(self) -> None:
         if self.factors["r"] <= 0:
             raise ValueError(
                 "The number of replications taken at each solution must be greater "
                 "than 0."
             )
 
-    def check_beta_1(self) -> None:
+    def _check_beta_1(self) -> None:
         if self.factors["beta_1"] <= 0 or self.factors["beta_1"] >= 1:
             raise ValueError("Beta 1 must be between 0 and 1.")
 
-    def check_beta_2(self) -> None:
+    def _check_beta_2(self) -> None:
         if self.factors["beta_2"] > 0 and self.factors["beta_2"] >= 1:
             raise ValueError("Beta 2 must be less than 1.")
 
-    def check_alpha(self) -> None:
+    def _check_alpha(self) -> None:
         if self.factors["alpha"] <= 0:
             raise ValueError("Alpha must be greater than 0.")
 
-    def check_epsilon(self) -> None:
+    def _check_epsilon(self) -> None:
         if self.factors["epsilon"] <= 0:
             raise ValueError("Epsilon must be greater than 0.")
 
-    def check_sensitivity(self) -> None:
+    def _check_sensitivity(self) -> None:
         if self.factors["sensitivity"] <= 0:
             raise ValueError("Sensitivity must be greater than 0.")
 

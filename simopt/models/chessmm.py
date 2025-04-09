@@ -14,7 +14,7 @@ from scipy import special
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 MEAN_ELO: Final[int] = 1200
 MAX_ALLOWABLE_DIFF: Final[int] = 150
@@ -53,22 +53,27 @@ class ChessMatchmaking(Model):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "CHESS"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Chess Matchmaking"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "elo_mean": {
@@ -101,13 +106,14 @@ class ChessMatchmaking(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "elo_mean": self.check_elo_mean,
-            "elo_sd": self.check_elo_sd,
-            "poisson_rate": self.check_poisson_rate,
-            "num_players": self.check_num_players,
-            "allowable_diff": self.check_allowable_diff,
+            "elo_mean": self._check_elo_mean,
+            "elo_sd": self._check_elo_sd,
+            "poisson_rate": self._check_poisson_rate,
+            "num_players": self._check_num_players,
+            "allowable_diff": self._check_allowable_diff,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -120,36 +126,37 @@ class ChessMatchmaking(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_elo_mean(self) -> None:
+    def _check_elo_mean(self) -> None:
         if self.factors["elo_mean"] <= 0:
             raise ValueError(
                 "Mean of normal distribution for Elo rating must be greater than 0."
             )
 
-    def check_elo_sd(self) -> None:
+    def _check_elo_sd(self) -> None:
         if self.factors["elo_sd"] <= 0:
             raise ValueError(
                 "Standard deviation of normal distribution for Elo rating must be "
                 "greater than 0."
             )
 
-    def check_poisson_rate(self) -> None:
+    def _check_poisson_rate(self) -> None:
         if self.factors["poisson_rate"] <= 0:
             raise ValueError(
                 "Rate of Poisson process for player arrivals must be greater than 0."
             )
 
-    def check_num_players(self) -> None:
+    def _check_num_players(self) -> None:
         if self.factors["num_players"] <= 0:
             raise ValueError("Number of players must be greater than 0.")
 
-    def check_allowable_diff(self) -> None:
+    def _check_allowable_diff(self) -> None:
         if self.factors["allowable_diff"] <= 0:
             raise ValueError(
                 "The maximum mallowable different between Elo ratings must be greater "
                 "than 0."
             )
 
+    @override
     def check_simulatable_factors(self) -> bool:
         # No factors need cross-checked
         return True
@@ -310,54 +317,67 @@ class ChessAvgDifference(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "CHESS-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Avg Difference for Chess Matchmaking"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set:
         return {"allowable_diff"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -379,22 +399,26 @@ class ChessAvgDifference(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "upper_time": self.check_upper_time,
+            "upper_time": self._check_upper_time,
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0,)
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (2400,)
 
@@ -417,7 +441,7 @@ class ChessAvgDifference(Problem):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors, model_fixed_factors, ChessMatchmaking)
 
-    def check_upper_time(self) -> None:
+    def _check_upper_time(self) -> None:
         if self.factors["upper_time"] <= 0:
             raise ValueError("The upper bound on wait time must be greater than 0.")
 

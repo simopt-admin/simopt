@@ -45,6 +45,12 @@ def classproperty(
     return ClassPropertyDescriptor(func)
 
 
+def override(obj: T) -> T:
+    """Decorator to mark a method as overridden."""
+    obj.__override__ = True
+    return obj
+
+
 def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> float:
     """Return a non-zero value to avoid division by zero.
 

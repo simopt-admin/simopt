@@ -21,7 +21,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class NelderMead(Solver):
@@ -66,30 +66,37 @@ class NelderMead(Solver):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "NELDMD"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Nelder-Mead"
 
     @classproperty
+    @override
     def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_needed(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
@@ -138,16 +145,17 @@ class NelderMead(Solver):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "crn_across_solns": self.check_crn_across_solns,
-            "r": self.check_r,
-            "alpha": self.check_alpha,
-            "gammap": self.check_gammap,
-            "betap": self.check_betap,
-            "delta": self.check_delta,
-            "sensitivity": self.check_sensitivity,
-            "initial_spread": self.check_initial_spread,
+            "r": self._check_r,
+            "alpha": self._check_alpha,
+            "gammap": self._check_gammap,
+            "betap": self._check_betap,
+            "delta": self._check_delta,
+            "sensitivity": self._check_sensitivity,
+            "initial_spread": self._check_initial_spread,
         }
 
     def __init__(self, name: str = "NELDMD", fixed_factors: dict | None = None) -> None:
@@ -161,34 +169,34 @@ class NelderMead(Solver):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-    def check_r(self) -> None:
+    def _check_r(self) -> None:
         if self.factors["r"] <= 0:
             raise ValueError(
                 "The number of replications taken at each solution must be greater "
                 "than 0."
             )
 
-    def check_alpha(self) -> None:
+    def _check_alpha(self) -> None:
         if self.factors["alpha"] <= 0:
             raise ValueError("Alpha must be greater than 0.")
 
-    def check_gammap(self) -> None:
+    def _check_gammap(self) -> None:
         if self.factors["gammap"] <= 1:
             raise ValueError("Gammap must be greater than 1.")
 
-    def check_betap(self) -> None:
+    def _check_betap(self) -> None:
         if (self.factors["betap"] <= 0) or (self.factors["betap"] >= 1):
             raise ValueError("betap must be between 0 and 1.")
 
-    def check_delta(self) -> None:
+    def _check_delta(self) -> None:
         if (self.factors["delta"] <= 0) or (self.factors["delta"] >= 1):
             raise ValueError("Delta must be between 0 and 1.")
 
-    def check_sensitivity(self) -> None:
+    def _check_sensitivity(self) -> None:
         if self.factors["sensitivity"] <= 0:
             raise ValueError("Sensitivity must be greater than 0.")
 
-    def check_initial_spread(self) -> None:
+    def _check_initial_spread(self) -> None:
         if self.factors["initial_spread"] <= 0:
             raise ValueError("Initial spread must be greater than 0.")
 

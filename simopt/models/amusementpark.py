@@ -16,7 +16,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 INF = float("inf")
 
@@ -61,14 +61,17 @@ class AmusementPark(Model):
     """
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 3
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 4
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "park_capacity": {
@@ -154,15 +157,15 @@ class AmusementPark(Model):
     def check_factor_list(self) -> dict[str, Callable]:
         """Switch case for checking factor simulatability."""
         return {
-            "park_capacity": self.check_park_capacity,
-            "number_attractions": self.check_number_attractions,
-            "time_open": self.check_time_open,
-            "queue_capacities": self.check_queue_capacities,
-            "depart_probabilities": self.check_depart_probabilities,
-            "arrival_gammas": self.check_arrival_gammas,
-            "transition_probabilities": self.check_transition_probabilities,
-            "erlang_shape": self.check_erlang_shape,
-            "erlang_scale": self.check_erlang_scale,
+            "park_capacity": self._check_park_capacity,
+            "number_attractions": self._check_number_attractions,
+            "time_open": self._check_time_open,
+            "queue_capacities": self._check_queue_capacities,
+            "depart_probabilities": self._check_depart_probabilities,
+            "arrival_gammas": self._check_arrival_gammas,
+            "transition_probabilities": self._check_transition_probabilities,
+            "erlang_shape": self._check_erlang_shape,
+            "erlang_scale": self._check_erlang_scale,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -171,22 +174,22 @@ class AmusementPark(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors.
-    def check_park_capacity(self) -> None:
+    def _check_park_capacity(self) -> None:
         if self.factors["park_capacity"] < 0:
             raise ValueError("Park capacity must be greater than or equal to 0.")
 
-    def check_number_attractions(self) -> None:
+    def _check_number_attractions(self) -> None:
         if self.factors["number_attractions"] < 0:
             raise ValueError("Number of attractions must be greater than 0.")
 
-    def check_time_open(self) -> None:
+    def _check_time_open(self) -> None:
         if self.factors["time_open"] < 0:
             raise ValueError("Time open must be greater than or equal to 0.")
 
-    def check_queue_capacities(self) -> bool:
+    def _check_queue_capacities(self) -> bool:
         return all(cap >= 0 for cap in self.factors["queue_capacities"])
 
-    def check_depart_probabilities(self) -> bool:
+    def _check_depart_probabilities(self) -> bool:
         if (
             len(self.factors["depart_probabilities"])
             != self.factors["number_attractions"]
@@ -197,14 +200,14 @@ class AmusementPark(Model):
             )
         return all(0 <= prob <= 1 for prob in self.factors["depart_probabilities"])
 
-    def check_arrival_gammas(self) -> bool:
+    def _check_arrival_gammas(self) -> bool:
         if len(self.factors["arrival_gammas"]) != self.factors["number_attractions"]:
             raise ValueError(
                 "The number of arrivals must match the number of attractions."
             )
         return all(gamma >= 0 for gamma in self.factors["arrival_gammas"])
 
-    def check_transition_probabilities(self) -> bool:
+    def _check_transition_probabilities(self) -> bool:
         """Validate the structure and consistency of the transition matrix.
 
         Checks that the transition matrix is square (same number of rows and columns),
@@ -231,7 +234,7 @@ class AmusementPark(Model):
             "Check that each row and depart probability sums to 1."
         )
 
-    def check_erlang_shape(self) -> bool:
+    def _check_erlang_shape(self) -> bool:
         """Validate the Erlang shape parameters for each attraction.
 
         Checks that the number of shape parameters matches the number of attractions,
@@ -250,7 +253,7 @@ class AmusementPark(Model):
             )
         return all(gamma >= 0 for gamma in self.factors["erlang_shape"])
 
-    def check_erlang_scale(self) -> bool:
+    def _check_erlang_scale(self) -> bool:
         """Validate the Erlang scale parameters for each attraction.
 
         Checks that the number of scale parameters matches the number of attractions,
@@ -268,6 +271,7 @@ class AmusementPark(Model):
             )
         return all(gamma >= 0 for gamma in self.factors["erlang_scale"])
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if sum(self.factors["queue_capacities"]) > self.factors["park_capacity"]:
             raise ValueError(
@@ -567,54 +571,67 @@ class AmusementParkMinDepart(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "AMUSEMENTPARK-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Total Departed Visitors for Amusement Park"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.DETERMINISTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"queue_capacities"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -632,6 +649,7 @@ class AmusementParkMinDepart(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -639,14 +657,17 @@ class AmusementParkMinDepart(Problem):
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["number_attractions"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (self.model.factors["park_capacity"],) * self.dim
 

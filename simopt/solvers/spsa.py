@@ -19,7 +19,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty, make_nonzero
+from simopt.utils import classproperty, make_nonzero, override
 
 
 class SPSA(Solver):
@@ -63,22 +63,27 @@ class SPSA(Solver):
     """
 
     @classproperty
+    @override
     def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_needed(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
@@ -139,17 +144,18 @@ class SPSA(Solver):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "crn_across_solns": self.check_crn_across_solns,
-            "alpha": self.check_alpha,
-            "gamma": self.check_gamma,
-            "step": self.check_step,
-            "gavg": self.check_gavg,
-            "n_reps": self.check_n_reps,
-            "n_loss": self.check_n_loss,
-            "eval_pct": self.check_eval_pct,
-            "iter_pct": self.check_iter_pct,
+            "alpha": self._check_alpha,
+            "gamma": self._check_gamma,
+            "step": self._check_step,
+            "gavg": self._check_gavg,
+            "n_reps": self._check_n_reps,
+            "n_loss": self._check_n_loss,
+            "eval_pct": self._check_eval_pct,
+            "iter_pct": self._check_iter_pct,
         }
 
     def __init__(self, name: str = "SPSA", fixed_factors: dict | None = None) -> None:
@@ -163,42 +169,47 @@ class SPSA(Solver):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-    def check_alpha(self) -> None:
+    def _check_alpha(self) -> None:
         if self.factors["alpha"] <= 0:
             raise ValueError("Alpha must be greater than 0.")
 
-    def check_gamma(self) -> None:
+    def _check_gamma(self) -> None:
         if self.factors["gamma"] <= 0:
             raise ValueError("Gamma must be greater than 0.")
 
-    def check_step(self) -> None:
+    def _check_step(self) -> None:
         if self.factors["step"] <= 0:
             raise ValueError("Step must be greater than 0.")
 
-    def check_gavg(self) -> None:
+    def _check_gavg(self) -> None:
         if self.factors["gavg"] <= 0:
             raise ValueError("gavg must be greater than 0.")
 
-    def check_n_reps(self) -> None:
+    def _check_n_reps(self) -> None:
         if self.factors["n_reps"] <= 0:
             raise ValueError(
                 "The number of replications taken at each solution must be greater "
                 "than 0."
             )
 
-    def check_n_loss(self) -> None:
+    def _check_n_loss(self) -> None:
         if self.factors["n_loss"] <= 0:
             raise ValueError("n_loss must be greater than 0.")
 
-    def check_eval_pct(self) -> None:
+    def _check_eval_pct(self) -> None:
         if self.factors["eval_pct"] <= 0 or self.factors["eval_pct"] > 1:
             raise ValueError("eval_pct must be between 0 and 1.")
 
-    def check_iter_pct(self) -> None:
+    def _check_iter_pct(self) -> None:
         if self.factors["iter_pct"] <= 0 or self.factors["iter_pct"] > 1:
             raise ValueError("iter_pct must be between 0 and 1.")
 
     def check_problem_factors(self) -> bool:
+        """Determine if the joint settings of problem factors are permissible.
+
+        Returns:
+            bool: True if problem factors are permissible; False otherwise.
+        """
         # Check divisibility for the for loop.
         return self.factors["n_loss"] % (2 * self.factors["gavg"]) == 0
 

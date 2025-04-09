@@ -41,4 +41,4 @@ class {class_name}(ExperimentTest, ExperimentTestMixin):
     @property
     def filepath(self):
         return Path(r'{full_path!s}')
-""")  # noqa: S102
+""")

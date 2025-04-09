@@ -14,7 +14,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class ParameterEstimation(Model):
@@ -46,22 +46,27 @@ class ParameterEstimation(Model):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "PARAMESTI"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Gamma Parameter Estimation"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "xstar": {
@@ -77,8 +82,9 @@ class ParameterEstimation(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
-        return {"xstar": self.check_xstar, "x": self.check_x}
+        return {"xstar": self._check_xstar, "x": self._check_x}
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the model.
@@ -90,14 +96,15 @@ class ParameterEstimation(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_xstar(self) -> None:
+    def _check_xstar(self) -> None:
         if any(xstar_i <= 0 for xstar_i in self.factors["xstar"]):
             raise ValueError("All elements in xstar must be greater than 0.")
 
-    def check_x(self) -> None:
+    def _check_x(self) -> None:
         if any(x_i <= 0 for x_i in self.factors["x"]):
             raise ValueError("All elements in x must be greater than 0.")
 
+    @override
     def check_simulatable_factors(self) -> bool:
         # Check for dimension of x and xstar.
         x_len = len(self.factors["x"])
@@ -226,42 +233,52 @@ class ParamEstiMaxLogLik(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "PARAMESTI-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Log Likelihood for Gamma Parameter Estimation"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @property
+    @override
     def optimal_solution(self) -> tuple | None:
         solution = self.model.factors["xstar"]
         if isinstance(solution, list):
@@ -269,14 +286,17 @@ class ParamEstiMaxLogLik(Problem):
         return solution
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"x"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -293,6 +313,7 @@ class ParamEstiMaxLogLik(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -300,14 +321,17 @@ class ParamEstiMaxLogLik(Problem):
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0.1,) * cls.dim
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (10,) * cls.dim
 

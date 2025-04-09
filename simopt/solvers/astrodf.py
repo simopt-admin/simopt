@@ -40,7 +40,7 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class ASTRODF(Solver):
@@ -81,26 +81,32 @@ class ASTRODF(Solver):
     """
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "ASTRO-DF"
 
     @classproperty
+    @override
     def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_needed(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
@@ -166,15 +172,16 @@ class ASTRODF(Solver):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "crn_across_solns": self.check_crn_across_solns,  # type: ignore
-            "eta_1": self.check_eta_1,
-            "eta_2": self.check_eta_2,
-            "gamma_1": self.check_gamma_1,
-            "gamma_2": self.check_gamma_2,
-            "lambda_min": self.check_lambda_min,
-            "ps_sufficient_reduction": self.check_ps_sufficient_reduction,
+            "crn_across_solns": self.check_crn_across_solns,
+            "eta_1": self._check_eta_1,
+            "eta_2": self._check_eta_2,
+            "gamma_1": self._check_gamma_1,
+            "gamma_2": self._check_gamma_2,
+            "lambda_min": self._check_lambda_min,
+            "ps_sufficient_reduction": self._check_ps_sufficient_reduction,
         }
 
     def __init__(
@@ -262,27 +269,27 @@ class ASTRODF(Solver):
         """Set the Hessian approximation."""
         self._h_k = value
 
-    def check_eta_1(self) -> None:
+    def _check_eta_1(self) -> None:
         if self.factors["eta_1"] <= 0:
             raise ValueError("Eta 1 must be greater than 0.")
 
-    def check_eta_2(self) -> None:
+    def _check_eta_2(self) -> None:
         if self.factors["eta_2"] <= self.factors["eta_1"]:
             raise ValueError("Eta 2 must be greater than Eta 1.")
 
-    def check_gamma_1(self) -> None:
+    def _check_gamma_1(self) -> None:
         if self.factors["gamma_1"] <= 1:
             raise ValueError("Gamma 1 must be greater than 1.")
 
-    def check_gamma_2(self) -> None:
+    def _check_gamma_2(self) -> None:
         if self.factors["gamma_2"] >= 1 or self.factors["gamma_2"] <= 0:
             raise ValueError("Gamma 2 must be between 0 and 1.")
 
-    def check_lambda_min(self) -> None:
+    def _check_lambda_min(self) -> None:
         if self.factors["lambda_min"] <= 2:
             raise ValueError("The minimum sample size must be greater than 2.")
 
-    def check_ps_sufficient_reduction(self) -> None:
+    def _check_ps_sufficient_reduction(self) -> None:
         if self.factors["ps_sufficient_reduction"] < 0:
             raise ValueError(
                 "ps_sufficient reduction must be greater than or equal to 0."
@@ -374,6 +381,17 @@ class ASTRODF(Solver):
     def select_interpolation_points(
         self, delta_k: float, f_index: int
     ) -> tuple[list, list]:
+        """Select interpolation points for the local model.
+
+        Args:
+            delta_k (float): The current trust-region radius.
+            f_index (int): The index of the farthest design point.
+
+        Returns:
+            tuple[list, list]: A tuple containing:
+                - var_y (list): The interpolation points.
+                - var_z (list): The reused design point.
+        """
         if self.incumbent_x is None:
             raise ValueError("incumbent_x should be initialized before use")
 

@@ -15,7 +15,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class SSCont(Model):
@@ -75,18 +75,22 @@ class SSCont(Model):
     """
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "(s, S) Inventory"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 7
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "demand_mean": {
@@ -150,18 +154,19 @@ class SSCont(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "demand_mean": self.check_demand_mean,
-            "lead_mean": self.check_lead_mean,
-            "backorder_cost": self.check_backorder_cost,
-            "holding_cost": self.check_holding_cost,
-            "fixed_cost": self.check_fixed_cost,
-            "variable_cost": self.check_variable_cost,
-            "s": self.check_s,
-            "S": self.check_S,
-            "n_days": self.check_n_days,
-            "warmup": self.check_warmup,
+            "demand_mean": self._check_demand_mean,
+            "lead_mean": self._check_lead_mean,
+            "backorder_cost": self._check_backorder_cost,
+            "holding_cost": self._check_holding_cost,
+            "fixed_cost": self._check_fixed_cost,
+            "variable_cost": self._check_variable_cost,
+            "s": self._check_s,
+            "S": self._check_S,
+            "n_days": self._check_n_days,
+            "warmup": self._check_warmup,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -175,46 +180,47 @@ class SSCont(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_demand_mean(self) -> None:
+    def _check_demand_mean(self) -> None:
         if self.factors["demand_mean"] <= 0:
             raise ValueError("demand_mean must be greater than 0.")
 
-    def check_lead_mean(self) -> None:
+    def _check_lead_mean(self) -> None:
         if self.factors["lead_mean"] <= 0:
             raise ValueError("lead_mean must be greater than 0.")
 
-    def check_backorder_cost(self) -> None:
+    def _check_backorder_cost(self) -> None:
         if self.factors["backorder_cost"] <= 0:
             raise ValueError("backorder_cost must be greater than 0.")
 
-    def check_holding_cost(self) -> None:
+    def _check_holding_cost(self) -> None:
         if self.factors["holding_cost"] <= 0:
             raise ValueError("holding_cost must be greater than 0.")
 
-    def check_fixed_cost(self) -> None:
+    def _check_fixed_cost(self) -> None:
         if self.factors["fixed_cost"] <= 0:
             raise ValueError("fixed_cost must be greater than 0.")
 
-    def check_variable_cost(self) -> None:
+    def _check_variable_cost(self) -> None:
         if self.factors["variable_cost"] <= 0:
             raise ValueError("variable_cost must be greater than 0.")
 
-    def check_s(self) -> None:
+    def _check_s(self) -> None:
         if self.factors["s"] <= 0:
             raise ValueError("s must be greater than 0.")
 
-    def check_S(self) -> None:  # noqa: N802
+    def _check_S(self) -> None:  # noqa: N802
         if self.factors["S"] <= 0:
             raise ValueError("S must be greater than 0.")
 
-    def check_n_days(self) -> None:
+    def _check_n_days(self) -> None:
         if self.factors["n_days"] < 1:
             raise ValueError("n_days must be greater than or equal to 1.")
 
-    def check_warmup(self) -> None:
+    def _check_warmup(self) -> None:
         if self.factors["warmup"] < 0:
             raise ValueError("warmup must be greater than or equal to 0.")
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if self.factors["s"] >= self.factors["S"]:
             raise ValueError("s must be less than S.")
@@ -441,54 +447,67 @@ class SSContMinCost(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "SSCONT-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Total Cost for (s, S) Inventory"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {"demand_mean": 100.0, "lead_mean": 6.0}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"s", "S"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -505,6 +524,7 @@ class SSContMinCost(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -512,14 +532,17 @@ class SSContMinCost(Problem):
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0,) * cls.dim
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (np.inf,) * cls.dim
 

@@ -18,7 +18,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class IronOre(Model):
@@ -55,14 +55,17 @@ class IronOre(Model):
     """
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 3
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "mean_price": {
@@ -134,21 +137,22 @@ class IronOre(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "mean_price": self.check_mean_price,
-            "max_price": self.check_max_price,
-            "min_price": self.check_min_price,
-            "capacity": self.check_capacity,
-            "st_dev": self.check_st_dev,
-            "holding_cost": self.check_holding_cost,
-            "prod_cost": self.check_prod_cost,
-            "max_prod_perday": self.check_max_prod_perday,
-            "price_prod": self.check_price_prod,
-            "inven_stop": self.check_inven_stop,
-            "price_stop": self.check_price_stop,
-            "price_sell": self.check_price_sell,
-            "n_days": self.check_n_days,
+            "mean_price": self._check_mean_price,
+            "max_price": self._check_max_price,
+            "min_price": self._check_min_price,
+            "capacity": self._check_capacity,
+            "st_dev": self._check_st_dev,
+            "holding_cost": self._check_holding_cost,
+            "prod_cost": self._check_prod_cost,
+            "max_prod_perday": self._check_max_prod_perday,
+            "price_prod": self._check_price_prod,
+            "inven_stop": self._check_inven_stop,
+            "price_stop": self._check_price_stop,
+            "price_sell": self._check_price_sell,
+            "n_days": self._check_n_days,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -162,59 +166,60 @@ class IronOre(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_mean_price(self) -> bool:
+    def _check_mean_price(self) -> bool:
         if self.factors["mean_price"] <= 0:
             raise ValueError("Mean iron ore price per unit must be greater than 0.")
         return True
 
-    def check_max_price(self) -> None:
+    def _check_max_price(self) -> None:
         if self.factors["max_price"] <= 0:
             raise ValueError("max_price must be greater than 0.")
 
-    def check_min_price(self) -> None:
+    def _check_min_price(self) -> None:
         if self.factors["min_price"] < 0:
             raise ValueError("min_price must be greater than or equal to 0.")
 
-    def check_capacity(self) -> None:
+    def _check_capacity(self) -> None:
         if self.factors["capacity"] < 0:
             raise ValueError("capacity must be greater than or equal to 0.")
 
-    def check_st_dev(self) -> None:
+    def _check_st_dev(self) -> None:
         if self.factors["st_dev"] <= 0:
             raise ValueError("st_dev must be greater than 0.")
 
-    def check_holding_cost(self) -> None:
+    def _check_holding_cost(self) -> None:
         if self.factors["holding_cost"] <= 0:
             raise ValueError("holding_cost must be greater than 0.")
 
-    def check_prod_cost(self) -> None:
+    def _check_prod_cost(self) -> None:
         if self.factors["prod_cost"] <= 0:
             raise ValueError("prod_cost must be greater than 0.")
 
-    def check_max_prod_perday(self) -> None:
+    def _check_max_prod_perday(self) -> None:
         if self.factors["max_prod_perday"] <= 0:
             raise ValueError("max_prod_perday must be greater than 0.")
 
-    def check_price_prod(self) -> None:
+    def _check_price_prod(self) -> None:
         if self.factors["price_prod"] <= 0:
             raise ValueError("price_prod must be greater than 0.")
 
-    def check_inven_stop(self) -> None:
+    def _check_inven_stop(self) -> None:
         if self.factors["inven_stop"] <= 0:
             raise ValueError("inven_stop must be greater than 0.")
 
-    def check_price_stop(self) -> None:
+    def _check_price_stop(self) -> None:
         if self.factors["price_stop"] <= 0:
             raise ValueError("price_stop must be greater than 0.")
 
-    def check_price_sell(self) -> None:
+    def _check_price_sell(self) -> None:
         if self.factors["price_sell"] <= 0:
             raise ValueError("price_sell must be greater than 0.")
 
-    def check_n_days(self) -> None:
+    def _check_n_days(self) -> None:
         if self.factors["n_days"] < 1:
             raise ValueError("n_days must be greater than or equal to 1.")
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if (self.factors["min_price"] > self.factors["mean_price"]) or (
             self.factors["mean_price"] > self.factors["max_price"]
@@ -405,54 +410,67 @@ class IronOreMaxRev(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "IRONORE-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Revenue for Iron Ore"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.MIXED
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"price_prod", "inven_stop", "price_stop", "price_sell"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -469,6 +487,7 @@ class IronOreMaxRev(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -476,14 +495,17 @@ class IronOreMaxRev(Problem):
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 4
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0,) * cls.dim
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (np.inf,) * cls.dim
 
@@ -698,54 +720,67 @@ class IronOreMaxRevCnt(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "IRONORECONT-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Revenue for Continuous Iron Ore"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"price_prod", "price_stop", "price_sell"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -761,6 +796,7 @@ class IronOreMaxRevCnt(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -768,14 +804,17 @@ class IronOreMaxRevCnt(Problem):
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 3
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0.0,) * cls.dim
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (np.inf,) * cls.dim
 

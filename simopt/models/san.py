@@ -14,7 +14,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 NUM_ARCS: Final[int] = 13
 
@@ -52,18 +52,22 @@ class SAN(Model):
     """
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Stochastic Activity Network"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "num_nodes": {
@@ -99,11 +103,12 @@ class SAN(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "num_nodes": self.check_num_nodes,
-            "arcs": self.check_arcs,
-            "arc_means": self.check_arc_means,
+            "num_nodes": self._check_num_nodes,
+            "arcs": self._check_arcs,
+            "arc_means": self._check_arc_means,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -116,35 +121,38 @@ class SAN(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_nodes(self) -> None:
+    def _check_num_nodes(self) -> None:
         if self.factors["num_nodes"] <= 0:
             raise ValueError("num_nodes must be greater than 0.")
 
-    def dfs(self, graph: dict[int, set], start: int, visited: set | None = None) -> set:
+    def __dfs(
+        self, graph: dict[int, set], start: int, visited: set | None = None
+    ) -> set:
         if visited is None:
             visited = set()
         visited.add(start)
 
         for next_point in graph[start] - visited:
-            self.dfs(graph, next_point, visited)
+            self.__dfs(graph, next_point, visited)
         return visited
 
-    def check_arcs(self) -> bool:
+    def _check_arcs(self) -> bool:
         if len(self.factors["arcs"]) <= 0:
             raise ValueError("The length of arcs must be greater than 0.")
         # Check graph is connected.
         graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
         for a in self.factors["arcs"]:
             graph[a[0]].add(a[1])
-        visited = self.dfs(graph, 1)
+        visited = self.__dfs(graph, 1)
         return self.factors["num_nodes"] in visited
 
-    def check_arc_means(self) -> bool:
+    def _check_arc_means(self) -> bool:
         positive = True
         for x in list(self.factors["arc_means"]):
             positive = positive and (x > 0)
         return positive
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if len(self.factors["arc_means"]) != len(self.factors["arcs"]):
             raise ValueError(
@@ -313,54 +321,67 @@ class SANLongestPath(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "SAN-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Mean Longest Path for Stochastic Activity Network"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return True
 
     @classproperty
-    def optimal_value(cls) -> float | None:
+    @override
+    def optimal_value(cls) -> None:
         return None
 
     @classproperty
-    def optimal_solution(cls) -> tuple | None:
+    @override
+    def optimal_solution(cls) -> None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"arc_means"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -382,22 +403,26 @@ class SANLongestPath(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "arc_costs": self.check_arc_costs,
+            "arc_costs": self._check_arc_costs,
         }
 
     @property
+    @override
     def dim(self) -> int:
         return len(self.model.factors["arcs"])
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (1e-2,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
@@ -426,7 +451,7 @@ class SANLongestPath(Problem):
             model=SAN,
         )
 
-    def check_arc_costs(self) -> bool:
+    def _check_arc_costs(self) -> bool:
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive and x > 0

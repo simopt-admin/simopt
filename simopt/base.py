@@ -678,7 +678,6 @@ class Problem(ABC):
 
         Returns:
             bool: True if problem factors are permissible; False otherwise.
-
         """
         return True
 

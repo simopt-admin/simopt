@@ -13,7 +13,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 NUM_STAGES: Final[int] = 5
 
@@ -51,18 +51,22 @@ class Contamination(Model):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "CONTAM"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "contam_rate_alpha": {
@@ -126,16 +130,17 @@ class Contamination(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "contam_rate_alpha": self.check_contam_rate_alpha,
-            "contam_rate_beta": self.check_contam_rate_beta,
-            "restore_rate_alpha": self.check_restore_rate_alpha,
-            "restore_rate_beta": self.check_restore_rate_beta,
-            "initial_rate_alpha": self.check_initial_rate_alpha,
-            "initial_rate_beta": self.check_initial_rate_beta,
-            "stages": self.check_stages,
-            "prev_decision": self.check_prev_decision,
+            "contam_rate_alpha": self._check_contam_rate_alpha,
+            "contam_rate_beta": self._check_contam_rate_beta,
+            "restore_rate_alpha": self._check_restore_rate_alpha,
+            "restore_rate_beta": self._check_restore_rate_beta,
+            "initial_rate_alpha": self._check_initial_rate_alpha,
+            "initial_rate_beta": self._check_initial_rate_beta,
+            "stages": self._check_stages,
+            "prev_decision": self._check_prev_decision,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -148,42 +153,45 @@ class Contamination(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_contam_rate_alpha(self) -> None:
+    def _check_contam_rate_alpha(self) -> None:
         if self.factors["contam_rate_alpha"] <= 0:
             raise ValueError("contam_rate_alpha must be greater than 0.")
 
-    def check_contam_rate_beta(self) -> None:
+    def _check_contam_rate_beta(self) -> None:
         if self.factors["contam_rate_beta"] <= 0:
             raise ValueError("contam_rate_beta must be greater than 0.")
 
-    def check_restore_rate_alpha(self) -> None:
+    def _check_restore_rate_alpha(self) -> None:
         if self.factors["restore_rate_alpha"] <= 0:
             raise ValueError("restore_rate_alpha must be greater than 0.")
 
-    def check_restore_rate_beta(self) -> None:
+    def _check_restore_rate_beta(self) -> None:
         if self.factors["restore_rate_beta"] <= 0:
             raise ValueError("restore_rate_beta must be greater than 0.")
 
-    def check_initial_rate_alpha(self) -> None:
+    def _check_initial_rate_alpha(self) -> None:
         if self.factors["initial_rate_alpha"] <= 0:
             raise ValueError("initial_rate_alpha must be greater than 0.")
 
-    def check_initial_rate_beta(self) -> None:
+    def _check_initial_rate_beta(self) -> None:
         if self.factors["initial_rate_beta"] <= 0:
             raise ValueError("initial_rate_beta must be greater than 0.")
 
-    def check_prev_cost(self) -> None:
+    def _check_prev_cost(self) -> None:
         if any(cost <= 0 for cost in self.factors["prev_cost"]):
             raise ValueError("All costs in prev_cost must be greater than 0.")
 
-    def check_stages(self) -> None:
+    def _check_stages(self) -> None:
         if self.factors["stages"] <= 0:
             raise ValueError("Stages must be greater than 0.")
 
-    def check_prev_decision(self) -> None:
-        if any(u < 0 or u > 1 for u in self.factors["prev_decision"]):
-            raise ValueError("All elements in prev_decision must be between 0 and 1.")
+    def _check_prev_decision(self) -> None:
+        if not all(0 <= u <= 1 for u in self.factors["prev_decision"]):
+            raise ValueError(
+                "All elements in prev_decision must be in the range [0, 1]."
+            )
 
+    @override
     def check_simulatable_factors(self) -> bool:
         # Check for matching number of stages.
         if len(self.factors["prev_decision"]) != self.factors["stages"]:
@@ -331,54 +339,67 @@ class ContaminationTotalCostDisc(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "CONTAM-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Total Cost for Discrete Contamination"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @property
+    @override
     def n_stochastic_constraints(self) -> int:
         return self.model.factors["stages"]
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return True
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"prev_decision"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -409,24 +430,28 @@ class ContaminationTotalCostDisc(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "prev_cost": self.check_prev_cost,
-            "error_prob": self.check_error_prob,
-            "upper_thres": self.check_upper_thres,
+            "prev_cost": self._check_prev_cost,
+            "error_prob": self._check_error_prob,
+            "upper_thres": self._check_upper_thres,
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["stages"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.model.factors["stages"]
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (1,) * self.model.factors["stages"]
 
@@ -453,19 +478,19 @@ class ContaminationTotalCostDisc(Problem):
             model=Contamination,
         )
 
-    def check_prev_cost(self) -> bool:
+    def _check_prev_cost(self) -> bool:
         return not (
             len(self.factors["prev_cost"]) != self.dim
             or any(elem < 0 for elem in self.factors["prev_cost"])
         )
 
-    def check_error_prob(self) -> bool:
+    def _check_error_prob(self) -> bool:
         return not (
             len(self.factors["error_prob"]) != self.dim
             or all(error < 0 for error in self.factors["error_prob"])
         )
 
-    def check_upper_thres(self) -> bool:
+    def _check_upper_thres(self) -> bool:
         return len(self.factors["upper_thres"]) == self.dim
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
@@ -703,54 +728,67 @@ class ContaminationTotalCostCont(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "CONTAM-2"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Total Cost for Continuous Contamination"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @property
+    @override
     def n_stochastic_constraints(self) -> int:
         return self.model.factors["stages"]
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return True
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"prev_decision"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -782,24 +820,28 @@ class ContaminationTotalCostCont(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "prev_cost": self.check_prev_cost,
-            "error_prob": self.check_error_prob,
-            "upper_thres": self.check_upper_thres,
+            "prev_cost": self._check_prev_cost,
+            "error_prob": self._check_error_prob,
+            "upper_thres": self._check_upper_thres,
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["stages"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.model.factors["stages"]
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (1,) * self.model.factors["stages"]
 
@@ -826,30 +868,29 @@ class ContaminationTotalCostCont(Problem):
             model=Contamination,
         )
 
+    @override
     def check_initial_solution(self) -> bool:
         return not (
             len(self.factors["initial_solution"]) != self.dim
             or all(u < 0 or u > 1 for u in self.factors["initial_solution"])
         )
 
-    def check_prev_cost(self) -> bool:
+    def _check_prev_cost(self) -> bool:
         return not (
             len(self.factors["prev_cost"]) != self.dim
             or any(elem < 0 for elem in self.factors["prev_cost"])
         )
 
-    def check_budget(self) -> bool:
-        return self.factors["budget"] > 0
-
-    def check_error_prob(self) -> bool:
+    def _check_error_prob(self) -> bool:
         return not (
             len(self.factors["error_prob"]) != self.dim
             or all(error < 0 for error in self.factors["error_prob"])
         )
 
-    def check_upper_thres(self) -> bool:
+    def _check_upper_thres(self) -> bool:
         return len(self.factors["upper_thres"]) == self.dim
 
+    # TODO: figure out how Problem.check_simulatable_factors() works
     def check_simulatable_factors(self) -> bool:
         lower_len = len(self.lower_bounds)
         upper_len = len(self.upper_bounds)

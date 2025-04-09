@@ -14,7 +14,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 NUM_NETWORKS: Final = 10
 
@@ -48,18 +48,22 @@ class Network(Model):
     """
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Communication Networks System"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 3
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "process_prob": {
@@ -122,17 +126,18 @@ class Network(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "process_prob": self.check_process_prob,
-            "cost_process": self.check_cost_process,
-            "cost_time": self.check_cost_time,
-            "mode_transit_time": self.check_mode_transit_time,
-            "lower_limits_transit_time": self.check_lower_limits_transit_time,
-            "upper_limits_transit_time": self.check_upper_limits_transit_time,
-            "arrival_rate": self.check_arrival_rate,
-            "n_messages": self.check_n_messages,
-            "n_networks": self.check_n_networks,
+            "process_prob": self._check_process_prob,
+            "cost_process": self._check_cost_process,
+            "cost_time": self._check_cost_time,
+            "mode_transit_time": self._check_mode_transit_time,
+            "lower_limits_transit_time": self._check_lower_limits_transit_time,
+            "upper_limits_transit_time": self._check_upper_limits_transit_time,
+            "arrival_rate": self._check_arrival_rate,
+            "n_messages": self._check_n_messages,
+            "n_networks": self._check_n_networks,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -145,7 +150,7 @@ class Network(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_process_prob(self) -> None:
+    def _check_process_prob(self) -> None:
         # Make sure probabilities are between 0 and 1.
         # Make sure probabilities sum up to 1.
         if (
@@ -157,15 +162,15 @@ class Network(Model):
                 "all of the elements in process_prob must equal 1."
             )
 
-    def check_cost_process(self) -> None:
+    def _check_cost_process(self) -> None:
         if any(cost_i <= 0 for cost_i in self.factors["cost_process"]):
             raise ValueError("All elements in cost_process must be greater than 0.")
 
-    def check_cost_time(self) -> None:
+    def _check_cost_time(self) -> None:
         if any(cost_time_i <= 0 for cost_time_i in self.factors["cost_time"]):
             raise ValueError("All elements in cost_time must be greater than 0.")
 
-    def check_mode_transit_time(self) -> None:
+    def _check_mode_transit_time(self) -> None:
         if any(
             transit_time_i <= 0 for transit_time_i in self.factors["mode_transit_time"]
         ):
@@ -173,30 +178,31 @@ class Network(Model):
                 "All elements in mode_transit_time must be greater than 0."
             )
 
-    def check_lower_limits_transit_time(self) -> None:
+    def _check_lower_limits_transit_time(self) -> None:
         if any(lower_i <= 0 for lower_i in self.factors["lower_limits_transit_time"]):
             raise ValueError(
                 "All elements in lower_limits_transit_time must be greater than 0."
             )
 
-    def check_upper_limits_transit_time(self) -> None:
+    def _check_upper_limits_transit_time(self) -> None:
         if any(upper_i <= 0 for upper_i in self.factors["upper_limits_transit_time"]):
             raise ValueError(
                 "All elements in upper_limits_transit_time must be greater than 0."
             )
 
-    def check_arrival_rate(self) -> None:
+    def _check_arrival_rate(self) -> None:
         if self.factors["arrival_rate"] <= 0:
             raise ValueError("arrival_rate must be greater than 0.")
 
-    def check_n_messages(self) -> None:
+    def _check_n_messages(self) -> None:
         if self.factors["n_messages"] <= 0:
             raise ValueError("n_messages must be greater than 0.")
 
-    def check_n_networks(self) -> None:
+    def _check_n_networks(self) -> None:
         if self.factors["n_networks"] <= 0:
             raise ValueError("n_networks must be greater than 0.")
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if len(self.factors["process_prob"]) != self.factors["n_networks"]:
             raise ValueError("The length of process_prob must equal n_networks.")
@@ -423,54 +429,67 @@ class NetworkMinTotalCost(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "NETWORK-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Total Cost for Communication Networks System"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.DETERMINISTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"process_prob"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -487,6 +506,7 @@ class NetworkMinTotalCost(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -494,14 +514,17 @@ class NetworkMinTotalCost(Problem):
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["n_networks"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (1,) * self.dim
 

@@ -13,7 +13,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 NUM_PRODUCTS: Final[int] = 10
 
@@ -51,18 +51,22 @@ class DynamNews(Model):
     """
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Dynamic Newsvendor"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 4
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "num_prod": {
@@ -103,15 +107,16 @@ class DynamNews(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "num_prod": self.check_num_prod,
-            "num_customer": self.check_num_customer,
-            "c_utility": self.check_c_utility,
-            "mu": self.check_mu,
-            "init_level": self.check_init_level,
-            "price": self.check_price,
-            "cost": self.check_cost,
+            "num_prod": self._check_num_prod,
+            "num_customer": self._check_num_customer,
+            "c_utility": self._check_c_utility,
+            "mu": lambda: None,
+            "init_level": self._check_init_level,
+            "price": self._check_price,
+            "cost": self._check_cost,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -124,19 +129,19 @@ class DynamNews(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_prod(self) -> None:
+    def _check_num_prod(self) -> None:
         if self.factors["num_prod"] <= 0:
             raise ValueError("num_prod must be greater than 0.")
 
-    def check_num_customer(self) -> None:
+    def _check_num_customer(self) -> None:
         if self.factors["num_customer"] <= 0:
             raise ValueError("num_customer must be greater than 0.")
 
-    def check_c_utility(self) -> None:
+    def _check_c_utility(self) -> None:
         if len(self.factors["c_utility"]) != self.factors["num_prod"]:
             raise ValueError("The length of c_utility must be equal to num_prod.")
 
-    def check_init_level(self) -> None:
+    def _check_init_level(self) -> None:
         if any(np.array(self.factors["init_level"]) < 0) or (
             len(self.factors["init_level"]) != self.factors["num_prod"]
         ):
@@ -145,11 +150,7 @@ class DynamNews(Model):
                 "in init_level must be greater than or equal to zero."
             )
 
-    def check_mu(self) -> None:
-        # TODO: figure out if mu has any constraints
-        pass
-
-    def check_price(self) -> None:
+    def _check_price(self) -> None:
         if any(np.array(self.factors["price"]) < 0) or (
             len(self.factors["price"]) != self.factors["num_prod"]
         ):
@@ -158,7 +159,7 @@ class DynamNews(Model):
                 "price must be greater than or equal to zero."
             )
 
-    def check_cost(self) -> None:
+    def _check_cost(self) -> None:
         if any(np.array(self.factors["cost"]) < 0) or (
             len(self.factors["cost"]) != self.factors["num_prod"]
         ):
@@ -167,6 +168,7 @@ class DynamNews(Model):
                 "cost must be greater than or equal to 0."
             )
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if any(np.subtract(self.factors["price"], self.factors["cost"]) < 0):
             raise ValueError(
@@ -337,54 +339,67 @@ class DynamNewsMaxProfit(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "DYNAMNEWS-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Profit for Dynamic Newsvendor"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"init_level"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -401,6 +416,7 @@ class DynamNewsMaxProfit(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -408,14 +424,17 @@ class DynamNewsMaxProfit(Problem):
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["num_prod"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 

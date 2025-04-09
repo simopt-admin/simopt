@@ -13,7 +13,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class DualSourcing(Model):
@@ -75,14 +75,17 @@ class DualSourcing(Model):
     """
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 3
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "n_days": {
@@ -149,20 +152,21 @@ class DualSourcing(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "n_days": self.check_n_days,
-            "initial_inv": self.check_initial_inv,
-            "cost_reg": self.check_cost_reg,
-            "cost_exp": self.check_cost_exp,
-            "lead_reg": self.check_lead_reg,
-            "lead_exp": self.check_lead_exp,
-            "holding_cost": self.check_holding_cost,
-            "penalty_cost": self.check_penalty_cost,
-            "st_dev": self.check_st_dev,
-            "mu": self.check_mu,
-            "order_level_reg": self.check_order_level_reg,
-            "order_level_exp": self.check_order_level_exp,
+            "n_days": self._check_n_days,
+            "initial_inv": self._check_initial_inv,
+            "cost_reg": self._check_cost_reg,
+            "cost_exp": self._check_cost_exp,
+            "lead_reg": self._check_lead_reg,
+            "lead_exp": self._check_lead_exp,
+            "holding_cost": self._check_holding_cost,
+            "penalty_cost": self._check_penalty_cost,
+            "st_dev": self._check_st_dev,
+            "mu": self._check_mu,
+            "order_level_reg": self._check_order_level_reg,
+            "order_level_exp": self._check_order_level_exp,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -176,54 +180,55 @@ class DualSourcing(Model):
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_n_days(self) -> None:
+    def _check_n_days(self) -> None:
         if self.factors["n_days"] < 1:
             raise ValueError("n_days must be greater than or equal to 1.")
 
-    def check_initial_inv(self) -> None:
+    def _check_initial_inv(self) -> None:
         if self.factors["initial_inv"] < 0:
             raise ValueError("initial_inv must be greater than or equal to 0.")
 
-    def check_cost_reg(self) -> None:
+    def _check_cost_reg(self) -> None:
         if self.factors["cost_reg"] <= 0:
             raise ValueError("cost_reg must be greater than 0.")
 
-    def check_cost_exp(self) -> None:
+    def _check_cost_exp(self) -> None:
         if self.factors["cost_exp"] <= 0:
             raise ValueError("cost_exp must be greater than 0.")
 
-    def check_lead_reg(self) -> None:
+    def _check_lead_reg(self) -> None:
         if self.factors["lead_reg"] < 0:
             raise ValueError("lead_reg must be greater than or equal to 0.")
 
-    def check_lead_exp(self) -> None:
+    def _check_lead_exp(self) -> None:
         if self.factors["lead_exp"] < 0:
             raise ValueError("lead_exp must be greater than or equal to 0.")
 
-    def check_holding_cost(self) -> None:
+    def _check_holding_cost(self) -> None:
         if self.factors["holding_cost"] <= 0:
             raise ValueError("holding_cost must be greater than 0.")
 
-    def check_penalty_cost(self) -> None:
+    def _check_penalty_cost(self) -> None:
         if self.factors["penalty_cost"] <= 0:
             raise ValueError("penalty_cost must be greater than 0.")
 
-    def check_st_dev(self) -> None:
+    def _check_st_dev(self) -> None:
         if self.factors["st_dev"] <= 0:
             raise ValueError("st-dev must be greater than 0.")
 
-    def check_mu(self) -> None:
+    def _check_mu(self) -> None:
         if self.factors["mu"] <= 0:
             raise ValueError("mu must be greater than 0.")
 
-    def check_order_level_reg(self) -> None:
+    def _check_order_level_reg(self) -> None:
         if self.factors["order_level_reg"] < 0:
             raise ValueError("order_level_reg must be greater than or equal to 0.")
 
-    def check_order_level_exp(self) -> None:
+    def _check_order_level_exp(self) -> None:
         if self.factors["order_level_exp"] < 0:
             raise ValueError("order_level_exp must be greater than or equal to 0.")
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if (self.factors["lead_exp"] > self.factors["lead_reg"]) or (
             self.factors["cost_exp"] < self.factors["cost_reg"]
@@ -401,54 +406,67 @@ class DualSourcingMinCost(Problem):
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "DUALSOURCING-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Min Cost for Dual Sourcing"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (-1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"order_level_exp", "order_level_reg"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -465,6 +483,7 @@ class DualSourcingMinCost(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -472,14 +491,17 @@ class DualSourcingMinCost(Problem):
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0, 0)
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (np.inf, np.inf)
 
