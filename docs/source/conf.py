@@ -1,10 +1,15 @@
-# If you have added/deleted files/modules, you will need to run the following sphinx commands from simopt/simopt/docs and push to github
-# for those changes to be reflected on readthedocs
+# noqa: D100
+# If you have added/deleted files/modules, you will need to run the following sphinx
+# commands from simopt/simopt/docs and push to github for those changes to be reflected
+# on readthedocs
 
-# sphinx-apidoc -o . .. -f     # pushing after running this should be enough for readthedocs to be able to generate documentation
-# make clean                   # this command and the next one are for building the html locally
-# make html
+# pushing after running this should be enough for readthedocs to be able to
+# generate documentation:
+# `sphinx-apidoc -o . .. -f`
 
+# This command and the next one are for building the html locally
+# `make clean`
+# `make html`
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -18,13 +23,19 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
 import sys
+from pathlib import Path
 
 from sphinx.ext.apidoc import main
 
-sys.path.insert(0, os.path.abspath("../simopt"))
-sys.path.insert(0, os.path.abspath(".."))
+simopt_path = Path("..", "simopt").resolve()
+project_root = Path("..").resolve()
+
+# Insert paths if they are not already in sys.path
+for path in [simopt_path, project_root]:
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
 # -- Project information -----------------------------------------------------
 
@@ -93,4 +104,7 @@ latex_engine = "xelatex"
 html_static_path = ["_static"]
 
 
-main(["-o", os.path.abspath("."), os.path.abspath(".."), "-f"])
+output_dir = Path().resolve()
+source_dir = Path("..").resolve()
+
+main(["-o", str(output_dir), str(source_dir), "-f"])
