@@ -1,4 +1,6 @@
+from pathlib import Path
 from typing import Any
 
 def classproperty(func: Any) -> Any: ...  # noqa: ANN401
 def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> float: ...
+def resolve_file_path(target: str | Path, directory: str | Path) -> Path: ...

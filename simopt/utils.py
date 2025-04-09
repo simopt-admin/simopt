@@ -1,5 +1,6 @@
 """Utility functions for simopt."""
 
+from pathlib import Path
 from typing import Callable, Generic, Optional, TypeVar
 
 T = TypeVar("T", bound=type)
@@ -80,3 +81,30 @@ def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> float:
     )
     logging.warning(warning_msg)
     return new_value
+
+
+def resolve_file_path(target: str | Path, directory: str | Path) -> Path:
+    """Resolve a file path against a base directory.
+
+    Args:
+        target (str | Path): The target file path to resolve.
+        directory (str | Path): The base directory to resolve against.
+
+    Returns:
+        Path: The resolved file path.
+
+    Raises:
+        ValueError: If the target is a directory.
+    """
+    # If the target is a directory, raise an error
+    if Path(target).is_dir():
+        raise ValueError(f"Target {target} is a directory, not a file.")
+    # If it's already a Path object, resolve it directly
+    if isinstance(target, Path):
+        return target.resolve()
+    # Otherwise, we know it's a string
+    # We need to check if it's a fully qualified path or a relative path
+    if Path(target).is_absolute():
+        return Path(target).resolve()
+    # If it's a relative path, resolve it against the directory
+    return (Path(directory) / target).resolve()

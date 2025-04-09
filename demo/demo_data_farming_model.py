@@ -64,15 +64,15 @@ def main() -> None:
     # Create DataFarmingExperiment object.
     myexperiment = DataFarmingExperiment(
         model_name=model_name,
-        factor_settings_filename=factor_settings_filename,
+        factor_settings_file_name=factor_settings_filename,
         factor_headers=factor_headers,
-        design_filepath=design_filename,
+        design_path=design_filename,
         model_fixed_factors={},
     )
 
     # Run replications and print results to file.
     myexperiment.run(n_reps=n_reps, crn_across_design_pts=crn_across_design_pts)
-    myexperiment.print_to_csv(csv_filename=output_filename)
+    myexperiment.print_to_csv(csv_file_name=output_filename)
 
 
 if __name__ == "__main__":

@@ -251,9 +251,9 @@ class DataFarmingWindow(Toplevel):
             self.factor_datatype = self.model_object.specifications[factor].get(
                 "datatype"
             )
-            self.factor_description = self.model_object.specifications[
-                factor
-            ].get("description")
+            self.factor_description = self.model_object.specifications[factor].get(
+                "description"
+            )
 
             if not self.factor_status[factor]:
                 self.factor_default = self.default_factors[factor]
@@ -261,9 +261,7 @@ class DataFarmingWindow(Toplevel):
             else:
                 self.factor_default = "Cannot Edit Design Factor"
 
-            self.factors_frame.grid_rowconfigure(
-                self.factor_que_length, weight=1
-            )
+            self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
             if self.factor_datatype is int:
                 self.str_type = "int"
@@ -442,8 +440,7 @@ class DataFarmingWindow(Toplevel):
 
     def mod_design(self) -> None:
         self.default_values = [
-            self.default_value.get()
-            for self.default_value in self.default_values_list
+            self.default_value.get() for self.default_value in self.default_values_list
         ]  # default value of each factor
         factor_index = 0
         for factor in self.default_factors:
@@ -524,9 +521,7 @@ class DataFarmingWindow(Toplevel):
                 tuple_str = fixed_val[1:-1].split(",")
                 # determine if last tuple value is empty
                 if last_val != ",":
-                    converted_fixed_factors[factor] = tuple(
-                        float(s) for s in tuple_str
-                    )
+                    converted_fixed_factors[factor] = tuple(float(s) for s in tuple_str)
                 else:
                     tuple_exclude_last = tuple_str[:-1]
                     float_tuple = [float(s) for s in tuple_exclude_last]
@@ -557,13 +552,9 @@ class DataFarmingWindow(Toplevel):
         self.factor_canvas.grid_columnconfigure(0, weight=1)
         self.factor_canvas.grid(row=4, column=0, sticky="nsew")
         self.factors_frame = tk.Frame(master=self.factor_canvas)
-        self.factor_canvas.create_window(
-            (0, 0), window=self.factors_frame, anchor="nw"
-        )
+        self.factor_canvas.create_window((0, 0), window=self.factors_frame, anchor="nw")
 
-        self.factors_frame.grid_rowconfigure(
-            self.factor_que_length + 1, weight=1
-        )
+        self.factors_frame.grid_rowconfigure(self.factor_que_length + 1, weight=1)
 
         self.factors_title_frame = tk.Frame(master=self)
         self.factors_title_frame.grid(row=3, column=0, sticky="nsew")
@@ -676,22 +667,20 @@ class DataFarmingWindow(Toplevel):
             self.factor_datatype = self.model_object.specifications[factor].get(
                 "datatype"
             )
-            self.factor_description = self.model_object.specifications[
-                factor
-            ].get("description")
+            self.factor_description = self.model_object.specifications[factor].get(
+                "description"
+            )
             self.factor_default = self.model_object.specifications[factor].get(
                 "default"
             )
-            self.factor_isDatafarmable = self.model_object.specifications[
-                factor
-            ].get("isDatafarmable")
+            self.factor_isDatafarmable = self.model_object.specifications[factor].get(
+                "isDatafarmable"
+            )
 
             # Values to help with formatting
             entry_width = 10
 
-            self.factors_frame.grid_rowconfigure(
-                self.factor_que_length, weight=1
-            )
+            self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
             # Add label for factor names
             self.factorname_label = tk.Label(
@@ -711,9 +700,7 @@ class DataFarmingWindow(Toplevel):
                 self.factor_datatype is float
                 and self.factor_isDatafarmable is not False
             ):
-                self.factors_frame.grid_rowconfigure(
-                    self.factor_que_length, weight=1
-                )
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
                 self.str_type = "float"
 
@@ -753,9 +740,7 @@ class DataFarmingWindow(Toplevel):
                     command=self.include_factor,
                     width=5,
                 )
-                self.checkbox.grid(
-                    row=self.factor_que_length, column=3, sticky="nsew"
-                )
+                self.checkbox.grid(row=self.factor_que_length, column=3, sticky="nsew")
                 self.checkstate_list.append(self.checkstate)
 
                 self.check_widgets[factor] = self.checkbox
@@ -846,12 +831,9 @@ class DataFarmingWindow(Toplevel):
                 self.factor_que_length += 1
 
             elif (
-                self.factor_datatype is int
-                and self.factor_isDatafarmable is not False
+                self.factor_datatype is int and self.factor_isDatafarmable is not False
             ):
-                self.factors_frame.grid_rowconfigure(
-                    self.factor_que_length, weight=1
-                )
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
                 self.str_type = "int"
 
@@ -889,9 +871,7 @@ class DataFarmingWindow(Toplevel):
                     variable=self.checkstate,
                     command=self.include_factor,
                 )
-                self.checkbox.grid(
-                    row=self.factor_que_length, column=3, sticky="nsew"
-                )
+                self.checkbox.grid(row=self.factor_que_length, column=3, sticky="nsew")
                 self.checkstate_list.append(self.checkstate)
 
                 self.check_widgets[factor] = self.checkbox
@@ -953,13 +933,8 @@ class DataFarmingWindow(Toplevel):
 
                 self.factor_que_length += 1
 
-            elif (
-                self.factor_datatype is list
-                or self.factor_isDatafarmable is False
-            ):
-                self.factors_frame.grid_rowconfigure(
-                    self.factor_que_length, weight=1
-                )
+            elif self.factor_datatype is list or self.factor_isDatafarmable is False:
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
                 if self.factor_datatype is list:
                     self.str_type = "list"
@@ -1017,9 +992,7 @@ class DataFarmingWindow(Toplevel):
                 self.factor_que_length += 1
 
             elif self.factor_datatype is tuple:
-                self.factors_frame.grid_rowconfigure(
-                    self.factor_que_length, weight=1
-                )
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
                 self.str_type = "tuple"
 
@@ -1116,9 +1089,7 @@ class DataFarmingWindow(Toplevel):
             self.design_tree.column(column, width=100)
 
         for index, row in design_table.iterrows():
-            self.design_tree.insert(
-                "", index, text=index, values=tuple(row)[:-3]
-            )
+            self.design_tree.insert("", index, text=index, values=tuple(row)[:-3])
 
         # Create a horizontal scrollbar
         xscrollbar = ttk.Scrollbar(
@@ -1222,12 +1193,10 @@ class DataFarmingWindow(Toplevel):
 
         # Get experiment information
         for factor_index, factor in enumerate(self.model_object.specifications):
-            factor_datatype = self.model_object.specifications[factor].get(
-                "datatype"
+            factor_datatype = self.model_object.specifications[factor].get("datatype")
+            is_datafarmable_factor = self.model_object.specifications[factor].get(
+                "isDatafarmable"
             )
-            is_datafarmable_factor = self.model_object.specifications[
-                factor
-            ].get("isDatafarmable")
             factor_include = check_values[factor_index]
 
             # get user inputs for design factors
@@ -1322,17 +1291,15 @@ class DataFarmingWindow(Toplevel):
         # Create DataFarmingExperiment object.
         myexperiment = DataFarmingExperiment(
             model_name=self.model_object.name,
-            factor_settings_filename=None,
+            factor_settings_file_name=None,
             factor_headers=self.factor_names,
-            design_filepath=self.design_filename,
+            design_path=self.design_filename,
             model_fixed_factors=self.fixed_factors,
         )
 
         # Run replications and print results to file.
-        myexperiment.run(
-            n_reps=n_reps, crn_across_design_pts=crn_across_design_pts
-        )
-        myexperiment.print_to_csv(csv_filename=output_filename)
+        myexperiment.run(n_reps=n_reps, crn_across_design_pts=crn_across_design_pts)
+        myexperiment.print_to_csv(csv_file_name=output_filename)
 
         # run confirmation message
         tk.messagebox.showinfo(
@@ -1363,15 +1330,15 @@ class DataFarmingWindow(Toplevel):
             self.factor_datatype = self.model_object.specifications[factor].get(
                 "datatype"
             )
-            self.factor_description = self.model_object.specifications[
-                factor
-            ].get("description")
+            self.factor_description = self.model_object.specifications[factor].get(
+                "description"
+            )
             self.factor_default = self.model_object.specifications[factor].get(
                 "default"
             )
-            self.factor_isDatafarmable = self.model_object.specifications[
-                factor
-            ].get("isDatafarmable")
+            self.factor_isDatafarmable = self.model_object.specifications[factor].get(
+                "isDatafarmable"
+            )
 
             # Disable / enable experiment option widgets depending on factor type
             if (

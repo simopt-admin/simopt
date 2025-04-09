@@ -29,7 +29,7 @@ from simopt.directory import (
     problem_directory,
     solver_directory,
 )
-from simopt.utils import make_nonzero
+from simopt.utils import make_nonzero, resolve_file_path
 
 # Imports exclusively used when type checking
 # Prevents imports from being executed at runtime
@@ -267,7 +267,7 @@ class ProblemSolver:
         solver_fixed_factors: dict | None = None,
         problem_fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
-        file_name_path: Path | None = None,
+        file_name_path: Path | str | None = None,
         create_pickle: bool = True,
     ) -> None:
         """Initializes a ProblemSolver object.
@@ -286,7 +286,7 @@ class ProblemSolver:
             solver_fixed_factors (dict, optional): Fixed solver parameters.
             problem_fixed_factors (dict, optional): Fixed problem parameters.
             model_fixed_factors (dict, optional): Fixed model parameters.
-            file_name_path (Path, optional): Path to save a pickled ProblemSolver
+            file_name_path (Path | str, optional): Path to save a pickled ProblemSolver
                 object.
             create_pickle (bool, optional): Whether to save the object as a pickle file.
         """
@@ -297,6 +297,10 @@ class ProblemSolver:
             problem_fixed_factors = {}
         if model_fixed_factors is None:
             model_fixed_factors = {}
+
+        # Resolve file name path
+        if file_name_path is not None:
+            file_name_path = resolve_file_path(file_name_path, directory=EXPERIMENT_DIR)
 
         # Initialize values
         self.create_pickle = create_pickle
@@ -679,7 +683,6 @@ class ProblemSolver:
                 - float: Runtime for the macroreplication.
 
         Raises:
-            TypeError: If input types are incorrect.
             ValueError: If `mrep` is negative.
         """
         # Value checking
@@ -931,9 +934,9 @@ class ProblemSolver:
             print_solutions (bool, optional): If True, include recommended solutions in
                 the .txt file. Defaults to True.
         """
-        results_filepath = EXPERIMENT_DIR / "experiment_results.txt"
+        results_file_path = EXPERIMENT_DIR / "experiment_results.txt"
 
-        with results_filepath.open("w") as file:
+        with results_file_path.open("w") as file:
             # Title txt file with experiment information.
             file.write(str(self.file_name_path))
             file.write("\n")
@@ -1051,11 +1054,11 @@ def trim_solver_results(
     return recommended_solutions, intermediate_budgets
 
 
-def read_experiment_results(file_name_path: Path) -> ProblemSolver:
+def read_experiment_results(file_name_path: Path | str) -> ProblemSolver:
     """Reads a ProblemSolver object from a .pickle file.
 
     Args:
-        file_name_path (Path): Path to the .pickle file.
+        file_name_path (Path | str): Path to the .pickle file.
 
     Returns:
         ProblemSolver: Loaded problem-solver pair that was previously run or
@@ -1064,11 +1067,7 @@ def read_experiment_results(file_name_path: Path) -> ProblemSolver:
     Raises:
         ValueError: If the file does not exist.
     """
-    # Value checking
-    if not file_name_path.exists():
-        error_msg = f"File {file_name_path} does not exist."
-        raise ValueError(error_msg)  # Change to FileNotFoundError?
-
+    file_name_path = resolve_file_path(file_name_path, EXPERIMENT_DIR)
     with file_name_path.open("rb") as file:
         return pickle.load(file)
 
@@ -1540,50 +1539,31 @@ def functional_of_curves(
     beta: float | None = 0.5,
     solve_tol: float | None = 0.1,
 ) -> float | Curve:
-    """Compute a functional of the bootstrapped objective/progress curves.
+    """Computes a functional of bootstrapped objective or progress curves.
 
-    Parameters
-    ----------
-    bootstrap_curves : list [list [list [``experiment_base.Curve``]]]
-        Bootstrapped estimated objective curves or estimated progress curves
-        of all solutions from all macroreplications.
-    plot_type : str
-        String indicating which type of plot to produce:
-            "mean" : estimated mean progress curve;
-
-            "quantile" : estimated beta quantile progress curve;
-
-            "area_mean" : mean of area under progress curve;
-
-            "area_std_dev" : standard deviation of area under progress curve;
-
-            "solve_time_quantile" : beta quantile of solve time;
-
-            "solve_time_cdf" : cdf of solve time;
-
-            "cdf_solvability" : cdf solvability profile;
-
-            "quantile_solvability" : quantile solvability profile;
-
-            "diff_cdf_solvability" : difference of cdf solvability profiles;
-
-            "diff_quantile_solvability" : difference of quantile solvability profiles;
-    beta : float, default=0.5
-        Quantile to plot, e.g., beta quantile; in (0, 1).
-    solve_tol : float, default=0.1
-        Relative optimality gap definining when a problem is solved; in (0, 1].
+    Args:
+        bootstrap_curves (list[list[list[Curve]]]): Bootstrapped curves for all
+            solutions across all macroreplications.
+        plot_type (PlotType): Type of functional to compute:
+            - PlotType.MEAN
+            - PlotType.QUANTILE
+            - PlotType.AREA_MEAN
+            - PlotType.AREA_STD_DEV
+            - PlotType.SOLVE_TIME_QUANTILE
+            - PlotType.SOLVE_TIME_CDF
+            - PlotType.CDF_SOLVABILITY
+            - PlotType.QUANTILE_SOLVABILITY
+            - PlotType.DIFF_CDF_SOLVABILITY
+            - PlotType.DIFF_QUANTILE_SOLVABILITY
+        beta (float, optional): Quantile level (0 < beta < 1). Defaults to 0.5.
+        solve_tol (float, optional): Optimality gap for defining a solved instance
+            (0 < solve_tol ≤ 1). Defaults to 0.1.
 
     Returns:
-    -------
-    "Curve" | float
-        Functional of bootstrapped curves, e.g, mean progress curves,
-        mean area under progress curve, quantile of crossing time, etc.
+        Curve or float: The computed functional of the curves.
 
     Raises:
-    ------
-    TypeError
-    ValueError
-
+        ValueError: If input values are invalid or unsupported for the given plot_type.
     """
     # Set default arguments
     if beta is None:
@@ -1598,104 +1578,84 @@ def functional_of_curves(
         error_msg = "Solve tolerance must be in (0, 1]."
         raise ValueError(error_msg)
 
-    if plot_type == PlotType.MEAN:
-        # Single experiment --> returns a curve.
-        return curve_utils.mean_of_curves(bootstrap_curves[0][0])
-    if plot_type == PlotType.QUANTILE:
-        # Single experiment --> returns a curve.
-        return curve_utils.quantile_of_curves(bootstrap_curves[0][0], beta=beta)
-    if plot_type == PlotType.AREA_MEAN:
-        # Single experiment --> returns a scalar.
-        area_mean = np.mean(
-            [curve.compute_area_under_curve() for curve in bootstrap_curves[0][0]]
-        )
-        return float(area_mean)
-    if plot_type == PlotType.AREA_STD_DEV:
-        # Single experiment --> returns a scalar.
-        area_std_dev = np.std(
-            [curve.compute_area_under_curve() for curve in bootstrap_curves[0][0]],
-            ddof=1,
-        )
-        return float(area_std_dev)
-    if plot_type == PlotType.SOLVE_TIME_QUANTILE:
-        # Single experiment --> returns a scalar
-        solve_time_quantile = np.quantile(
+    single_curves = bootstrap_curves[0][0]
+    solver_1_curves = bootstrap_curves[0]
+    solver_2_curves = bootstrap_curves[1] if len(bootstrap_curves) > 1 else None
+
+    dispatch = {
+        PlotType.MEAN: lambda: curve_utils.mean_of_curves(single_curves),
+        PlotType.QUANTILE: lambda: curve_utils.quantile_of_curves(
+            single_curves, beta=beta
+        ),
+        PlotType.AREA_MEAN: lambda: float(
+            np.mean([c.compute_area_under_curve() for c in single_curves])
+        ),
+        PlotType.AREA_STD_DEV: lambda: float(
+            np.std([c.compute_area_under_curve() for c in single_curves], ddof=1)
+        ),
+        PlotType.SOLVE_TIME_QUANTILE: lambda: float(
+            np.quantile(
+                [c.compute_crossing_time(threshold=solve_tol) for c in single_curves],
+                q=beta,
+            )
+        ),
+        PlotType.SOLVE_TIME_CDF: lambda: curve_utils.cdf_of_curves_crossing_times(
+            single_curves, threshold=solve_tol
+        ),
+        PlotType.CDF_SOLVABILITY: lambda: curve_utils.mean_of_curves(
             [
-                curve.compute_crossing_time(threshold=solve_tol)
-                for curve in bootstrap_curves[0][0]
-            ],
-            q=beta,
-        )
-        return float(solve_time_quantile)
-    if plot_type == PlotType.SOLVE_TIME_CDF:
-        # Single experiment --> returns a curve.
-        return curve_utils.cdf_of_curves_crossing_times(
-            bootstrap_curves[0][0], threshold=solve_tol
-        )
-    if plot_type == PlotType.CDF_SOLVABILITY:
-        # One solver, multiple problems --> returns a curve.
-        return curve_utils.mean_of_curves(
-            [
-                curve_utils.cdf_of_curves_crossing_times(
-                    curves=progress_curves, threshold=solve_tol
-                )
-                for progress_curves in bootstrap_curves[0]
+                curve_utils.cdf_of_curves_crossing_times(curves, threshold=solve_tol)
+                for curves in solver_1_curves
             ]
-        )
-    if plot_type == PlotType.QUANTILE_SOLVABILITY:
-        # One solver, multiple problems --> returns a curve.
-        return curve_utils.mean_of_curves(
+        ),
+        PlotType.QUANTILE_SOLVABILITY: lambda: curve_utils.mean_of_curves(
             [
-                curve_utils.quantile_cross_jump(
-                    curves=progress_curves, threshold=solve_tol, beta=beta
-                )
-                for progress_curves in bootstrap_curves[0]
+                curve_utils.quantile_cross_jump(curves, threshold=solve_tol, beta=beta)
+                for curves in solver_1_curves
             ]
-        )
-    if plot_type == PlotType.DIFF_CDF_SOLVABILITY:
-        # Two solvers, multiple problems --> returns a curve.
-        solvability_profile_1 = curve_utils.mean_of_curves(
-            [
-                curve_utils.cdf_of_curves_crossing_times(
-                    curves=progress_curves, threshold=solve_tol
-                )
-                for progress_curves in bootstrap_curves[0]
-            ]
-        )
-        solvability_profile_2 = curve_utils.mean_of_curves(
-            [
-                curve_utils.cdf_of_curves_crossing_times(
-                    curves=progress_curves, threshold=solve_tol
-                )
-                for progress_curves in bootstrap_curves[1]
-            ]
-        )
-        return curve_utils.difference_of_curves(
-            solvability_profile_1, solvability_profile_2
-        )
-    if plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
-        # Two solvers, multiple problems --> returns a curve.
-        solvability_profile_1 = curve_utils.mean_of_curves(
-            [
-                curve_utils.quantile_cross_jump(
-                    curves=progress_curves, threshold=solve_tol, beta=beta
-                )
-                for progress_curves in bootstrap_curves[0]
-            ]
-        )
-        solvability_profile_2 = curve_utils.mean_of_curves(
-            [
-                curve_utils.quantile_cross_jump(
-                    curves=progress_curves, threshold=solve_tol, beta=beta
-                )
-                for progress_curves in bootstrap_curves[1]
-            ]
-        )
-        return curve_utils.difference_of_curves(
-            solvability_profile_1, solvability_profile_2
-        )
-    error_msg = f"'{plot_type.value}' is not implemented."
-    raise NotImplementedError(error_msg)
+        ),
+        PlotType.DIFF_CDF_SOLVABILITY: lambda: curve_utils.difference_of_curves(
+            curve_utils.mean_of_curves(
+                [
+                    curve_utils.cdf_of_curves_crossing_times(
+                        curves, threshold=solve_tol
+                    )
+                    for curves in solver_1_curves
+                ]
+            ),
+            curve_utils.mean_of_curves(
+                [
+                    curve_utils.cdf_of_curves_crossing_times(
+                        curves, threshold=solve_tol
+                    )
+                    for curves in solver_2_curves  # type: ignore
+                ]
+            ),
+        ),
+        PlotType.DIFF_QUANTILE_SOLVABILITY: lambda: curve_utils.difference_of_curves(
+            curve_utils.mean_of_curves(
+                [
+                    curve_utils.quantile_cross_jump(
+                        curves, threshold=solve_tol, beta=beta
+                    )
+                    for curves in solver_1_curves
+                ]
+            ),
+            curve_utils.mean_of_curves(
+                [
+                    curve_utils.quantile_cross_jump(
+                        curves, threshold=solve_tol, beta=beta
+                    )
+                    for curves in solver_2_curves  # type: ignore
+                ]
+            ),
+        ),
+    }
+
+    try:
+        return dispatch[plot_type]()
+    except KeyError as e:
+        raise NotImplementedError(f"'{plot_type.value}' is not implemented.") from e
 
 
 # TODO: double check observations type and return type
@@ -1729,23 +1689,9 @@ def compute_bootstrap_conf_int(
 
     Raises:
     ------
-    TypeError
     ValueError
 
     """
-    # Type checking
-    if not isinstance(observations, list):
-        error_msg = "Observations must be a list."
-        raise TypeError(error_msg)
-    if not isinstance(conf_level, (int, float)):
-        error_msg = "Confidence level must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(bias_correction, bool):
-        error_msg = "Bias correction must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(overall_estimator, (int, float, type(None))):
-        error_msg = "Overall estimator must be a float or None."
-        raise TypeError(error_msg)
     # Value checking
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
@@ -1797,23 +1743,7 @@ def plot_bootstrap_conf_ints(
         Upper bounds of bootstrap CIs, as curves.
     color_str : str, default="C0"
         String indicating line color, e.g., "C0", "C1", etc.
-
-    Raises:
-    ------
-    TypeError
-
     """
-    # Type checking
-    if not isinstance(bs_conf_int_lower_bounds, Curve):
-        error_msg = "Lower bounds must be a Curve object."
-        raise TypeError(error_msg)
-    if not isinstance(bs_conf_int_upper_bounds, Curve):
-        error_msg = "Upper bounds must be a Curve object."
-        raise TypeError(error_msg)
-    if not isinstance(color_str, str):
-        error_msg = "Color string must be a string."
-        raise TypeError(error_msg)
-
     bs_conf_int_lower_bounds.plot(color_str=color_str, curve_type=CurveType.CONF_BOUND)
     bs_conf_int_upper_bounds.plot(color_str=color_str, curve_type=CurveType.CONF_BOUND)
     # Shade space between curves.
@@ -1849,30 +1779,9 @@ def report_max_halfwidth(
 
     Raises:
     ------
-    TypeError
     ValueError
 
     """
-    # Type checking
-    if (
-        not isinstance(curve_pairs, list)
-        or not all(isinstance(curve_pair, list) for curve_pair in curve_pairs)
-        or not all(
-            [isinstance(curve, Curve) for curve in curve_pair]
-            for curve_pair in curve_pairs
-        )
-    ):
-        error_msg = "Curve pairs must be a list of lists of Curve objects."
-        raise TypeError(error_msg)
-    if not isinstance(normalize, bool):
-        error_msg = "Normalize must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(conf_level, (int, float)):
-        error_msg = "Confidence level must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(difference, bool):
-        error_msg = "Difference must be a boolean."
-        raise TypeError(error_msg)
     # Value checking
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
@@ -2207,86 +2116,37 @@ def plot_solvability_cdfs(
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
 ) -> list[Path]:
-    """Plot the solvability cdf for one or more solvers on a single problem.
+    """Plots solvability CDFs for one or more solvers on a single problem.
 
-    Parameters
-    ----------
-    experiments : list [``experiment_base.ProblemSolver``]
-        Problem-solver pairs of different solvers on a common problem.
-    solve_tol : float, default=0.1
-        Relative optimality gap definining when a problem is solved; in (0, 1].
-    all_in_one : bool, default=True
-        True if curves are to be plotted together, otherwise False.
-    n_bootstraps : int, default=100
-        Number of bootstrap samples.
-    conf_level : float, default=0.95
-        Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
-    plot_conf_ints : bool, default=True
-        True if bootstrapping confidence intervals are to be plotted, otherwise False.
-    print_max_hw : bool, default=True
-        True if caption with max half-width is to be printed, otherwise False.
-    plot_title : str, opt
-        Optional title to override the one that is autmatically generated,
-        only applies if all_in_one is True.
-    legend_loc : str, default="best"
-        specificies location of legend
-    ext: str, default = '.png'
-        Extension to add to image file path to change file type
-    save_as_pickle: bool, default = False
-        True if plot should be saved to pickle file, False otherwise.
-    solver_set_name: str, default = "SOLVER_SET"
-        Use to change name of solver groups for plot titles.
+    Args:
+        experiments (list[ProblemSolver]): Problem-solver pairs for different solvers
+            on a common problem.
+        solve_tol (float, optional): Optimality gap that defines when a problem is
+            considered solved (0 < solve_tol ≤ 1). Defaults to 0.1.
+        all_in_one (bool, optional): If True, plot all curves together.
+            Defaults to True.
+        n_bootstraps (int, optional): Number of bootstrap samples. Defaults to 100.
+        conf_level (float, optional): Confidence level for intervals
+            (0 < conf_level < 1). Defaults to 0.95.
+        plot_conf_ints (bool, optional): If True, include bootstrapped confidence
+            intervals. Defaults to True.
+        print_max_hw (bool, optional): If True, print the max half-width in the caption.
+            Defaults to True.
+        plot_title (str, optional): Custom title to override the generated one
+            (used only if all_in_one is True).
+        legend_loc (str, optional): Location of the plot legend (e.g., "best").
+        ext (str, optional): File extension for saved plots. Defaults to ".png".
+        save_as_pickle (bool, optional): If True, save plots as pickle files.
+            Defaults to False.
+        solver_set_name (str, optional): Label for solver group in plot titles.
+            Defaults to "SOLVER_SET".
 
     Returns:
-    -------
-    file_list : list [Path]
-        List compiling path names for plots produced.
+        list[Path]: List of file paths for the generated plots.
 
     Raises:
-    ------
-    TypeError
-    ValueError
-
+        ValueError: If any input parameter is out of bounds or invalid.
     """
-    # Type checking
-    if not isinstance(experiments, list) or not all(
-        isinstance(experiment, ProblemSolver) for experiment in experiments
-    ):
-        error_msg = "Experiments must be a list of ProblemSolver objects."
-        raise TypeError(error_msg)
-    if not isinstance(solve_tol, (int, float)):
-        error_msg = "Solve tolerance must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(all_in_one, bool):
-        error_msg = "All in one must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(n_bootstraps, int):
-        error_msg = "Number of bootstraps must be an integer."
-        raise TypeError(error_msg)
-    if not isinstance(conf_level, (int, float)):
-        error_msg = "Confidence level must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(plot_conf_ints, bool):
-        error_msg = "Plot confidence intervals must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(print_max_hw, bool):
-        error_msg = "Print max halfwidth must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(plot_title, (str, type(None))):
-        error_msg = "Plot title must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(legend_loc, (str, type(None))):
-        error_msg = "Legend location must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(ext, str):
-        error_msg = "Extension must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(save_as_pickle, bool):
-        error_msg = "Save as pickle must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(solver_set_name, str):
-        error_msg = "Solver set name must be a string."
-        raise TypeError(error_msg)
     # Value checking
     if not 0 < solve_tol <= 1:
         error_msg = "Solve tolerance must be in (0, 1]."
@@ -2435,14 +2295,12 @@ def plot_solvability_cdfs(
 # TODO: Add the capability to compute and print the max halfwidth
 # of the bootstrapped CI intervals.
 def plot_area_scatterplots(
-    experiments: list[
-        list[ProblemSolver]
-    ],  # TODO: check if this should be list[ProblemSolver]
+    experiments: list[list[ProblemSolver]],
     all_in_one: bool = True,
     n_bootstraps: int = 100,
     conf_level: float = 0.95,
     plot_conf_ints: bool = True,
-    print_max_hw: bool = True,
+    print_max_hw: bool = True,  # noqa: ARG001
     plot_title: str | None = None,
     legend_loc: str = "best",
     ext: str = ".png",
@@ -2450,93 +2308,42 @@ def plot_area_scatterplots(
     solver_set_name: str = "SOLVER_SET",
     problem_set_name: str = "PROBLEM_SET",
 ) -> list[Path]:
-    """Plot a scatter plot of mean and standard deviation of area under progress curves.
+    """Plots scatterplots of mean vs. standard deviation of area under progress curves.
 
-    Either one plot for each solver or one plot for all solvers.
+    Can generate either one plot per solver or a combined plot for all solvers.
 
-    Notes:
-    -----
-    TODO: Add the capability to compute and print the max halfwidth of
-    the bootstrapped CI intervals.
+    Note:
+        The `print_max_hw` flag is currently not implemented.
 
-    Parameters
-    ----------
-    experiments : list [list [``experiment_base.ProblemSolver``]]
-        Problem-solver pairs used to produce plots.
-    all_in_one : bool, default=True
-        True if curves are to be plotted together, otherwise False.
-    n_bootstraps : int, default=100
-        Number of bootstrap samples.
-    conf_level : float
-        Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
-    plot_conf_ints : bool, default=True
-        True if bootstrapping confidence intervals are to be plotted, otherwise False.
-    print_max_hw : bool, default=True
-        True if caption with max half-width is to be printed, otherwise False.
-    plot_title : str, opt
-        Optional title to override the one that is autmatically generated,
-        only applies if all_in_one is True.
-    legend_loc : str, default="best"
-        specificies location of legend
-    ext: str, default = '.png'
-        Extension to add to image file path to change file type
-    save_as_pickle: bool, default = False
-        True if plot should be saved to pickle file, False otherwise.
-    solver_set_name: str, default = "SOLVER_SET"
-        Use to change name of solver groups for plot titles.
-    problem_set_name: str, default = "PROBLEM_SET"
-        USe to change name of problem groups for plot titles.
+    Args:
+        experiments (list[list[ProblemSolver]]): Problem-solver pairs used for plotting.
+        all_in_one (bool, optional): If True, plot all solvers together.
+            Defaults to True.
+        n_bootstraps (int, optional): Number of bootstrap samples. Defaults to 100.
+        conf_level (float, optional): Confidence level for CIs (0 < conf_level < 1).
+            Defaults to 0.95.
+        plot_conf_ints (bool, optional): If True, show bootstrapped confidence
+            intervals. Defaults to True.
+        print_max_hw (bool, optional): Placeholder for printing max half-widths.
+            Currently unused.
+        plot_title (str, optional): Custom title for the plot
+            (applies only if `all_in_one=True`).
+        legend_loc (str, optional): Location of the legend
+            (e.g., "best", "lower right").
+        ext (str, optional): File extension for saved plots. Defaults to ".png".
+        save_as_pickle (bool, optional): If True, save plot as a pickle file.
+            Defaults to False.
+        solver_set_name (str, optional): Label for solver group in plot titles.
+            Defaults to "SOLVER_SET".
+        problem_set_name (str, optional): Label for problem group in plot titles.
+            Defaults to "PROBLEM_SET".
 
     Returns:
-    -------
-    file_list : list [str]
-        List compiling path names for plots produced.
+        list[Path]: List of file paths for the plots produced.
 
     Raises:
-    ------
-    TypeError
-    ValueError
-
+        ValueError: If `n_bootstraps` is not positive or `conf_level` is outside (0, 1).
     """
-    # Type checking
-    if not isinstance(experiments, list) or not all(
-        isinstance(experiment, list) for experiment in experiments
-    ):
-        error_msg = "Experiments must be a list of lists of ProblemSolver objects."
-        raise TypeError(error_msg)
-    if not isinstance(all_in_one, bool):
-        error_msg = "All in one must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(n_bootstraps, int):
-        error_msg = "Number of bootstraps must be an integer."
-        raise TypeError(error_msg)
-    if not isinstance(conf_level, (int, float)):
-        error_msg = "Confidence level must be a float."
-        raise TypeError(error_msg)
-    if not isinstance(plot_conf_ints, bool):
-        error_msg = "Plot confidence intervals must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(print_max_hw, bool):
-        error_msg = "Print max halfwidth must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(plot_title, (str, type(None))):
-        error_msg = "Plot title must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(legend_loc, str):
-        error_msg = "Legend location must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(ext, str):
-        error_msg = "Extension must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(save_as_pickle, bool):
-        error_msg = "Save as pickle must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(solver_set_name, str):
-        error_msg = "Solver set name must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(problem_set_name, str):
-        error_msg = "Problem set name must be a string."
-        raise TypeError(error_msg)
     # Value checking
     if n_bootstraps < 1:
         error_msg = "Number of bootstraps must be a positive integer."
@@ -3509,47 +3316,9 @@ def plot_terminal_scatterplots(
 
     Returns:
     -------
-    file_list : list [str]
+    file_list : list [Path]
         List compiling path names for plots produced.
-
-    Raises:
-    ------
-    TypeError
-
     """
-    # Type checking
-    if (
-        not isinstance(experiments, list)
-        or not all(isinstance(experiment_list, list) for experiment_list in experiments)
-        or not all(
-            [isinstance(experiment, ProblemSolver) for experiment in experiment_list]
-            for experiment_list in experiments
-        )
-    ):
-        error_msg = "Experiments must be a list of lists of ProblemSolver objects."
-        raise TypeError(error_msg)
-    if not isinstance(all_in_one, bool):
-        error_msg = "All in one must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(plot_title, (str, type(None))):
-        error_msg = "Plot title must be a string or None."
-        raise TypeError(error_msg)
-    if not isinstance(legend_loc, (str, type(None))):
-        error_msg = "Legend location must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(ext, str):
-        error_msg = "Extension must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(save_as_pickle, bool):
-        error_msg = "Save as pickle must be a boolean."
-        raise TypeError(error_msg)
-    if not isinstance(solver_set_name, str):
-        error_msg = "Solver set name must be a string."
-        raise TypeError(error_msg)
-    if not isinstance(problem_set_name, str):
-        error_msg = "Problem set name must be a string."
-        raise TypeError(error_msg)
-
     if legend_loc is None:
         legend_loc = "best"
 
@@ -3692,7 +3461,6 @@ def setup_plot(
 
     Raises:
     ------
-    TypeError
     ValueError
 
     """
@@ -3875,13 +3643,8 @@ def save_plot(
 
     Returns:
     -------
-    path_name : str
-        Path name pointing to location where plot will be saved.
-
-    Raises:
-    ------
-    TypeError
-
+    path_name : Path
+        Path pointing to location where plot will be saved.
     """
     # Form string name for plot filename.
     if plot_type == PlotType.ALL:
@@ -3951,7 +3714,7 @@ def save_plot(
         extended_path_name = path_name.with_suffix(ext)
 
         # If file doesn't exist, break out of loop
-        if not Path.exists(extended_path_name):
+        if not extended_path_name.exists():
             break
 
         # If file exists, increment counter and try again
@@ -3964,8 +3727,8 @@ def save_plot(
     if save_as_pickle:
         fig = plt.gcf()
         pickle_path = path_name.with_suffix(".pkl")
-        with Path.open(pickle_path, "wb") as f:
-            pickle.dump(fig, f)
+        with pickle_path.open("wb") as pickle_file:
+            pickle.dump(fig, pickle_file)
     # Return path_name for use in GUI.
     return extended_path_name
 
@@ -4394,9 +4157,9 @@ class ProblemsSolvers:
                 for problem_idx in range(self.n_problems):
                     problem_name = self.problem_names[problem_idx]
                     filename = f"{solver_name}_on_{problem_name}.pickle"
-                    filepath = output_dir / filename
-                    if Path.exists(filepath):
-                        with Path.open(filepath, "rb") as f:
+                    file_path = output_dir / filename
+                    if file_path.exists():
+                        with file_path.open("rb") as f:
                             loaded_exp = pickle.load(f)
                             solver_experiments.append(loaded_exp)
                         continue
@@ -4488,14 +4251,9 @@ class ProblemsSolvers:
 
         Raises:
         ------
-        TypeError
         ValueError
 
         """
-        # Type checking
-        if not isinstance(n_macroreps, int):
-            error_msg = "Number of macroreplications must be an integer."
-            raise TypeError(error_msg)
         # Value checking
         if n_macroreps <= 0:
             error_msg = "Number of macroreplications must be positive."
@@ -4613,7 +4371,7 @@ class ProblemsSolvers:
         """Saves a ProblemsSolvers object to a .pickle file in the outputs directory."""
         output_dir = EXPERIMENT_DIR / "outputs"
         output_dir.mkdir(parents=True, exist_ok=True)
-        with Path.open(self.file_name_path, "wb") as file:
+        with self.file_name_path.open("wb") as file:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
     def log_group_experiment_results(self) -> None:
@@ -4631,7 +4389,7 @@ class ProblemsSolvers:
         new_path = log_dir / new_filename
 
         # Create text file.
-        with Path.open(new_path, "w") as file:
+        with new_path.open("w") as file:
             seperator_len = 100
             # Title text file with experiment information.
             file.write(str(self.file_name_path))
@@ -4670,7 +4428,7 @@ class ProblemsSolvers:
                 )
                 for solver_group in self.experiments:
                     for experiment in solver_group:
-                        _, file_name = os.path.split(experiment.file_name_path)
+                        file_name = experiment.file_name_path.name
                         file.write(f"{file_name}\n")
             # for p in self.problem_names:
             #     for s in self.solver_names:
@@ -4681,33 +4439,21 @@ class ProblemsSolvers:
         solve_tols: list[float] | None = None,
         csv_filename: str = "df_solver_results",
     ) -> None:
-        """Report statistics for all solvers on all problems.
+        """Reports statistics for all solvers across all problems.
 
-        Parameters
-        ----------
-        solve_tols : list [float], optional
-            Relative optimality gap(s) definining when a problem is solved; in (0,1].
-        csv_filename : str, optional
-            Name of .csv file to print output to. Do not include '.csv' extension.
+        Args:
+            solve_tols (list[float], optional): Optimality gaps defining when a problem
+                is considered solved (values in (0, 1]).
+                Defaults to [0.05, 0.10, 0.20, 0.50].
+            csv_filename (str, optional): Name of the output CSV file (without '.csv').
+                Defaults to "df_solver_results".
 
         Raises:
-        ------
-        TypeError
-        ValueError
-
+            ValueError: If any solve tolerance is not in the range (0, 1].
         """
         # Assign default values
         if solve_tols is None:
             solve_tols = [0.05, 0.10, 0.20, 0.50]
-        # Type checking
-        if not isinstance(solve_tols, list) or not all(
-            isinstance(tol, float) for tol in solve_tols
-        ):
-            error_msg = "Solve tols must be a list of floats or None."
-            raise TypeError(error_msg)
-        if not isinstance(csv_filename, str):
-            error_msg = "CSV filename must be a string."
-            raise TypeError(error_msg)
         # Value checking
         if not all(0 < tol <= 1 for tol in solve_tols):
             error_msg = "Solve tols must be in (0,1]."
@@ -4770,7 +4516,7 @@ class ProblemsSolvers:
         log_dir.mkdir(parents=True, exist_ok=True)
 
         file_path = log_dir / f"{csv_filename}.csv"
-        with Path.open(file_path, mode="w", newline="") as output_file:
+        with file_path.open(mode="w", newline="") as output_file:
             csv_writer = csv.writer(
                 output_file,
                 delimiter=",",
@@ -4872,114 +4618,67 @@ class ProblemsSolvers:
 
 
 def read_group_experiment_results(
-    file_name_path: Path,
+    file_path: Path | str,
 ) -> ProblemsSolvers:
-    """Read in ``experiment_base.ProblemsSolvers`` object from .pickle file.
+    """Reads a ProblemsSolvers object from a .pickle file.
 
-    Parameters
-    ----------
-    file_name_path : Path
-        Path of .pickle file for reading ``experiment_base.ProblemsSolvers`` object.
+    Args:
+        file_path (Path): Path to the .pickle file.
 
     Returns:
-    -------
-    groupexperiment : ``experiment_base.ProblemsSolvers``
-        Problem-solver group that has been run or has been post-processed.
+        ProblemsSolvers: A group of problem-solver experiments that were run
+            or post-processed.
 
     Raises:
-    ------
-    TypeError
-    ValueError
-
+        FileNotFoundError: If the file does not exist.
     """
-    # Value checking
-    if not Path.exists(file_name_path):
-        error_msg = "File name path does not exist."
-        raise ValueError(error_msg)
-
-    with Path.open(file_name_path, "rb") as file:
+    file_path = resolve_file_path(file_path, EXPERIMENT_DIR / "outputs")
+    with file_path.open("rb") as file:
         return pickle.load(file)
 
 
 def find_unique_solvers_problems(
     experiments: list[ProblemSolver],
 ) -> tuple[list[Solver], list[Problem]]:
-    """Identify the unique problems and solvers in a collection of experiments.
+    """Finds unique solvers and problems from a list of ProblemSolver experiments.
 
-    Parameters
-    ----------
-    experiments : list [``experiment_base.ProblemSolver``]
-        ProblemSolver pairs of different solvers on different problems.
+    Args:
+        experiments (list[ProblemSolver]): List of problem-solver pairs.
 
     Returns:
-    -------
-    list [``base.Solver``]
-        Unique solvers.
-    list [``base.Problem``]
-        Unique problems.
-
-    Raises:
-    ------
-    TypeError
-
+        tuple[list[Solver], list[Problem]]: A tuple containing:
+            - A list of unique solvers.
+            - A list of unique problems.
     """
-    # Type checking
-    if not isinstance(experiments, list) or not all(
-        isinstance(experiment, ProblemSolver) for experiment in experiments
-    ):
-        error_msg = "Experiments must be a list of ProblemSolver objects."
-        raise TypeError(error_msg)
-
     unique_solvers = list({experiment.solver for experiment in experiments})
     unique_problems = list({experiment.problem for experiment in experiments})
-    # unique_solvers = []
-    # unique_problems = []
-    # for experiment in experiments:
-    #     if experiment.solver not in unique_solvers:
-    #         unique_solvers.append(experiment.solver)
-    #     if experiment.problem not in unique_problems:
-    #         unique_problems.append(experiment.problem)
     return unique_solvers, unique_problems
 
 
 def find_missing_experiments(
     experiments: list[ProblemSolver],
 ) -> tuple[list[Solver], list[Problem], list[tuple[Solver, Problem]]]:
-    """Identify problem-solver pairs that are not part of a list of experiments.
+    """Finds missing problem-solver pairs from a list of experiments.
 
-    Parameters
-    ----------
-    experiments : list [``experiment_base.ProblemSolver``]
-        Problem-solver pairs of different solvers on different problems.
+    Args:
+        experiments (list[ProblemSolver]): List of problem-solver pairs.
 
     Returns:
-    -------
-    list [``base.Solver``]
-        List of solvers present in the list of experiments
-    list [``base.Problem``]
-        List of problems present in the list of experiments.
-    list [tuple [``base.Solver``, ``base.Problem``]]
-        List of names of missing problem-solver pairs.
-
-    Raises:
-    ------
-    TypeError
-
+        tuple: A tuple containing:
+            - list[Solver]: Unique solvers present in the experiments.
+            - list[Problem]: Unique problems present in the experiments.
+            - list[tuple[Solver, Problem]]: Problem-solver pairs that are missing.
     """
-    # Type checking
-    if not isinstance(experiments, list) or not all(
-        isinstance(experiment, ProblemSolver) for experiment in experiments
-    ):
-        error_msg = "Experiments must be a list of ProblemSolver objects."
-        raise TypeError(error_msg)
-
-    pairs = [(experiment.solver, experiment.problem) for experiment in experiments]
+    pairs = {(experiment.solver, experiment.problem) for experiment in experiments}
     unique_solvers, unique_problems = find_unique_solvers_problems(experiments)
-    missing = []
-    for solver in unique_solvers:
-        for problem in unique_problems:
-            if (solver, problem) not in pairs:
-                missing.append((solver, problem))
+
+    missing = [
+        (solver, problem)
+        for solver in unique_solvers
+        for problem in unique_problems
+        if (solver, problem) not in pairs
+    ]
+
     return unique_solvers, unique_problems, missing
 
 
@@ -4989,26 +4688,18 @@ def make_full_metaexperiment(
     unique_problems: list[Problem],
     missing_experiments: list[tuple[Solver, Problem]],
 ) -> ProblemsSolvers:
-    """Create experiment objects for missing problem-solver pairs and run them.
+    """Creates experiments for missing problem-solver pairs.
 
-    Parameters
-    ----------
-    existing_experiments : list [``experiment_base.ProblemSolver``]
-        Problem-solver pairs of different solvers on different problems.
-    unique_solvers : list [``base.Solver objects``]
-        List of solvers present in the list of experiments.
-    unique_problems : list [``base.Problem``]
-        List of problems present in the list of experiments.
-    missing_experiments : list [tuple [``base.Solver``, ``base.Problem``]]
-        List of missing problem-solver pairs.
+    Args:
+        existing_experiments (list[ProblemSolver]): Existing problem-solver experiments.
+        unique_solvers (list[Solver]): Solvers present in the existing experiments.
+        unique_problems (list[Problem]): Problems present in the existing experiments.
+        missing_experiments (list[tuple[Solver, Problem]]): Problem-solver pairs that
+            have not yet been run.
 
     Returns:
-    -------
-    metaexperiment : ``experiment_base.ProblemsSolvers``
-        New ProblemsSolvers object.
+        ProblemsSolvers: A new ProblemsSolvers object containing the completed set.
     """
-    # Ordering of solvers and problems in unique_solvers and unique_problems
-    # is used to construct experiments.
     full_experiments = [[] * len(unique_problems) for _ in range(len(unique_solvers))]
     for experiment in existing_experiments:
         solver_idx = unique_solvers.index(experiment.solver)
@@ -5169,48 +4860,30 @@ def create_design(
     cross_design_factors: dict | None = None,
     csv_filename: str | None = None,
 ) -> list:
-    """Create a design of solver or problem factors using Ruby.
+    """Creates a design of solver, problem, or model factors using Ruby.
 
-    Parameters
-    ----------
-    name : str
-        Name of solver, problem, or model.
-    factor_headers : list[str]
-        List of factor names that are changing in the design.
-    factor_settings_filename : str
-        name of factor settings file within data_farming_experiments folder.
-    fixed_factors : dict
-        dict of fixed factor values that are different that defaults.
-    n_stacks : int, optional
-        number of stacks for ruby calculation. The default is '1'.
-    design_type : str, optional
-        design type for ruby calculation. The default is 'nolhs'.
-    cross_design_factors : dict, optional
-        dict of lists of values of factors to include in cross design.
-        The default is None.
-    class_type: str, optional
-        determines class type (solver, problem, or model) that design is over.
-        Problem automatically combines problem factors with model factors.
-        Choose model to run without any associated problem(s).
-        The default is 'solver'
-    csv_filename: str, optional
-        override default csv file name
+    Args:
+        name (str): Name of the solver, problem, or model.
+        factor_headers (list[str]): Names of factors that vary in the design.
+        factor_settings_filename (str): Filename of the factor settings file located in
+            the `data_farming_experiments` folder.
+        fixed_factors (dict): Dictionary of fixed factor values that override defaults.
+        class_type (Literal["solver", "problem", "model"], optional): Type of class the
+            design is built for. Use "problem" to combine problem and model factors,
+            or "model" to run independently of any problem. Defaults to "solver".
+        n_stacks (int, optional): Number of Ruby stacks. Defaults to 1.
+        design_type (Literal["nolhs"], optional): Type of Ruby design.
+            Defaults to "nolhs".
+        cross_design_factors (dict, optional): Dictionary of lists of cross-design
+            factor values. Defaults to None.
+        csv_filename (str, optional): Override the default name of the output CSV file.
 
     Returns:
-    -------
-    design_list : list
-        list that contains a dict of factor values for every design point.
-
-    Throws
-    ------
-    Exception
-        If ruby is not installed on the system or if the design type is not valid.
+        list[dict]: A list of dictionaries, where each dictionary represents a design
 
     Raises:
-    ------
-    TypeError
-    ValueError
-
+        ValueError: If input validation fails.
+        Exception: If Ruby is not installed or the design type is unsupported.
     """
     # Default values
     if cross_design_factors is None:
