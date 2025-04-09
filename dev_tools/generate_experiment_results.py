@@ -5,19 +5,18 @@ from pathlib import Path
 
 import yaml
 
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from simopt.directory import problem_directory, solver_directory
 from simopt.experiment_base import ProblemSolver, post_normalize
 
 NUM_MACROREPS = 10
 NUM_POSTREPS = 100
 
-# Constants for the test directory
+# Setup the SimOpt directory structure
 HOME_DIR = Path(__file__).resolve().parent.parent
 EXPECTED_RESULTS_DIR = HOME_DIR / "test" / "expected_results"
-
-# Add the SimOpt library to the system path
-if HOME_DIR not in sys.path:
-    sys.path.append(str(HOME_DIR))
 
 
 # Based off the similar function in simopt/experiment_base.py

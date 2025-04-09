@@ -5,18 +5,17 @@
 
 import argparse
 import logging
-import os
+import sys
 import time
 from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from simopt.directory import problem_directory, solver_directory
 from simopt.experiment_base import ProblemSolver, post_normalize
-
-# Change the working directory to the parent directory of this script
-HOME_DIR = Path(__file__).resolve().parent.parent
-os.chdir(HOME_DIR)
 
 
 def load_arguments() -> tuple[str, list[str], list[str], str, int, int]:
