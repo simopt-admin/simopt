@@ -569,11 +569,11 @@ class HotelRevenue(Problem):
     def check_initial_solution(self) -> bool:
         return len(self.factors["initial_solution"]) == self.dim
 
-    # TODO: figure out how Problem.check_simulatable_factors() works
-    def check_simulatable_factors(self) -> bool:
-        return not (
-            len(self.lower_bounds) != self.dim or len(self.upper_bounds) != self.dim
-        )
+    # # TODO: figure out how Problem.check_simulatable_factors() works
+    # def check_simulatable_factors(self) -> bool:
+    #     return not (
+    #         len(self.lower_bounds) != self.dim or len(self.upper_bounds) != self.dim
+    #     )
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """Convert a vector of variables to a dictionary with factor keys.

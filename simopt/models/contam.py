@@ -890,16 +890,16 @@ class ContaminationTotalCostCont(Problem):
     def _check_upper_thres(self) -> bool:
         return len(self.factors["upper_thres"]) == self.dim
 
-    # TODO: figure out how Problem.check_simulatable_factors() works
-    def check_simulatable_factors(self) -> bool:
-        lower_len = len(self.lower_bounds)
-        upper_len = len(self.upper_bounds)
-        if lower_len != upper_len or lower_len != self.dim:
-            error_msg = (
-                f"Lower bounds: {lower_len}, Upper bounds: {upper_len}, Dim: {self.dim}"
-            )
-            raise ValueError(error_msg)
-        return True
+    # # TODO: figure out how Problem.check_simulatable_factors() works
+    # def check_simulatable_factors(self) -> bool:
+    #     lower_len = len(self.lower_bounds)
+    #     upper_len = len(self.upper_bounds)
+    #     if lower_len != upper_len or lower_len != self.dim:
+    #         error_msg = (
+    #             f"Lower bounds: {lower_len}, Upper bounds: {upper_len}, Dim: {self.dim}"
+    #         )
+    #         raise ValueError(error_msg)
+    #     return True
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         """Convert a vector of variables to a dictionary with factor keys.
