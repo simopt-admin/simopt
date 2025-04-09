@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from simopt.experiment_base import (
+    PlotType,
     ProblemSolver,
     plot_area_scatterplots,
     plot_progress_curves,
@@ -219,7 +220,7 @@ def main() -> None:  # noqa: C901
     )
     plot_solvability_profiles(
         experiments,
-        plot_type="cdf_solvability",
+        plot_type=PlotType.CDF_SOLVABILITY,
         solve_tol=0.1,
         all_in_one=True,
         plot_conf_ints=True,
@@ -227,7 +228,7 @@ def main() -> None:  # noqa: C901
     )
     plot_solvability_profiles(
         experiments,
-        plot_type="quantile_solvability",
+        plot_type=PlotType.QUANTILE_SOLVABILITY,
         solve_tol=0.1,
         beta=0.5,
         all_in_one=True,
@@ -236,7 +237,7 @@ def main() -> None:  # noqa: C901
     )
     plot_solvability_profiles(
         experiments=experiments,
-        plot_type="diff_cdf_solvability",
+        plot_type=PlotType.DIFF_CDF_SOLVABILITY,
         solve_tol=0.1,
         ref_solver="ASTRO-DF",
         all_in_one=True,
@@ -245,7 +246,7 @@ def main() -> None:  # noqa: C901
     )
     plot_solvability_profiles(
         experiments=experiments,
-        plot_type="diff_quantile_solvability",
+        plot_type=PlotType.DIFF_QUANTILE_SOLVABILITY,
         solve_tol=0.1,
         beta=0.5,
         ref_solver="ASTRO-DF",
@@ -258,7 +259,7 @@ def main() -> None:  # noqa: C901
     for i in range(n_problems):
         plot_progress_curves(
             [experiments[solver_idx][i] for solver_idx in range(n_solvers)],
-            plot_type="mean",
+            plot_type=PlotType.MEAN,
             all_in_one=True,
             plot_conf_ints=True,
             print_max_hw=True,
@@ -266,7 +267,7 @@ def main() -> None:  # noqa: C901
         )
         plot_terminal_progress(
             [experiments[solver_idx][i] for solver_idx in range(n_solvers)],
-            plot_type="violin",
+            plot_type=PlotType.VIOLIN,
             normalize=True,
             all_in_one=True,
         )

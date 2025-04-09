@@ -14,6 +14,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from simopt.experiment_base import (
+    PlotType,
     ProblemSolver,
     plot_area_scatterplots,
     plot_progress_curves,
@@ -312,7 +313,7 @@ def main() -> None:  # noqa: C901
 
     plot_solvability_profiles(
         experiments,
-        plot_type="cdf_solvability",
+        plot_type=PlotType.CDF_SOLVABILITY,
         solve_tol=alpha,
         all_in_one=True,
         plot_conf_ints=enable_confidence_intervals,
@@ -320,7 +321,7 @@ def main() -> None:  # noqa: C901
     )
     plot_solvability_profiles(
         experiments,
-        plot_type="quantile_solvability",
+        plot_type=PlotType.QUANTILE_SOLVABILITY,
         solve_tol=alpha,
         beta=0.5,
         all_in_one=True,
@@ -329,7 +330,7 @@ def main() -> None:  # noqa: C901
     )
     plot_solvability_profiles(
         experiments=experiments,
-        plot_type="diff_cdf_solvability",
+        plot_type=PlotType.DIFF_CDF_SOLVABILITY,
         solve_tol=alpha,
         ref_solver="ASTRO-DF",
         all_in_one=True,
@@ -338,7 +339,7 @@ def main() -> None:  # noqa: C901
     )
     plot_solvability_profiles(
         experiments=experiments,
-        plot_type="diff_quantile_solvability",
+        plot_type=PlotType.DIFF_QUANTILE_SOLVABILITY,
         solve_tol=alpha,
         beta=0.5,
         ref_solver="ASTRO-DF",
@@ -357,14 +358,14 @@ def main() -> None:  # noqa: C901
     for i in range(n_problems):
         plot_progress_curves(
             [experiments[solver_idx][i] for solver_idx in range(n_solvers)],
-            plot_type="mean",
+            plot_type=PlotType.MEAN,
             all_in_one=True,
             plot_conf_ints=enable_confidence_intervals,
             print_max_hw=True,
         )
         plot_terminal_progress(
             [experiments[solver_idx][i] for solver_idx in range(n_solvers)],
-            plot_type="violin",
+            plot_type=PlotType.VIOLIN,
             normalize=True,
             all_in_one=True,
         )
@@ -379,20 +380,20 @@ def main() -> None:  # noqa: C901
     # Plots for mu_D = 400 and mu_L = 6 (appreared in the paper)
     plot_progress_curves(
         [experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-        plot_type="all",
+        plot_type=PlotType.ALL,
         all_in_one=True,
     )
 
     plot_progress_curves(
         [experiments[solver_idx][0] for solver_idx in range(3, 4)],
-        plot_type="all",
+        plot_type=PlotType.ALL,
         all_in_one=True,
         normalize=False,
     )
 
     plot_progress_curves(
         [experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-        plot_type="mean",
+        plot_type=PlotType.ALL,
         all_in_one=True,
         plot_conf_ints=True,
         print_max_hw=False,
@@ -409,7 +410,7 @@ def main() -> None:  # noqa: C901
 
     plot_terminal_progress(
         [experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-        plot_type="violin",
+        plot_type=PlotType.VIOLIN,
         normalize=False,
         all_in_one=True,
     )

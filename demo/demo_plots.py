@@ -13,6 +13,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Import the ProblemSolver class and other useful functions
 from simopt.experiment_base import (
+    PlotType,
     ProblemSolver,
     plot_terminal_progress,
     post_normalize,
@@ -72,16 +73,20 @@ def main() -> None:
 
     print("Plotting results.")
     # Produce basic plots.
-    plot_terminal_progress(experiments=myexperiments, plot_type="box", normalize=False)
-    plot_terminal_progress(experiments=myexperiments, plot_type="box", normalize=True)
+    plot_terminal_progress(
+        experiments=myexperiments, plot_type=PlotType.BOX, normalize=False
+    )
+    plot_terminal_progress(
+        experiments=myexperiments, plot_type=PlotType.BOX, normalize=True
+    )
     plot_terminal_progress(
         experiments=myexperiments,
-        plot_type="violin",
+        plot_type=PlotType.VIOLIN,
         normalize=False,
         all_in_one=False,
     )
     plot_terminal_progress(
-        experiments=myexperiments, plot_type="violin", normalize=True
+        experiments=myexperiments, plot_type=PlotType.VIOLIN, normalize=True
     )
     # plot_terminal_scatterplots(experiments = myexperiments, all_in_one=False)
 

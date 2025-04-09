@@ -13,6 +13,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Import the ProblemSolver class and other useful functions
 from simopt.experiment_base import (
+    PlotType,
     ProblemSolver,
     plot_progress_curves,
     plot_solvability_cdfs,
@@ -68,11 +69,15 @@ def main() -> None:
 
     print("Plotting results.")
     # Produce basic plots of the solver on the problem.
-    plot_progress_curves(experiments=[myexperiment], plot_type="all", normalize=False)
-    plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
+    plot_progress_curves(
+        experiments=[myexperiment], plot_type=PlotType.ALL, normalize=False
+    )
+    plot_progress_curves(
+        experiments=[myexperiment], plot_type=PlotType.MEAN, normalize=False
+    )
     plot_progress_curves(
         experiments=[myexperiment],
-        plot_type="quantile",
+        plot_type=PlotType.QUANTILE,
         beta=0.90,
         normalize=False,
     )

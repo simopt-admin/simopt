@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Import the ProblemsSolvers class and other useful functions
-from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles
+from simopt.experiment_base import PlotType, ProblemsSolvers, plot_solvability_profiles
 
 
 def main() -> None:
@@ -48,7 +48,7 @@ def main() -> None:
     print("Plotting results.")
     # Produce basic plots of the solvers on the problems.
     plot_solvability_profiles(
-        experiments=mymetaexperiment.experiments, plot_type="cdf_solvability"
+        experiments=mymetaexperiment.experiments, plot_type=PlotType.CDF_SOLVABILITY
     )
 
     # Plots will be saved in the folder experiments/plots.
