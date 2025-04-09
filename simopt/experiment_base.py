@@ -4858,8 +4858,7 @@ def create_design(
     n_stacks: int = 1,
     design_type: Literal["nolhs"] = "nolhs",
     cross_design_factors: dict | None = None,
-    csv_filename: str | None = None,
-) -> list:
+) -> list[dict]:
     """Creates a design of solver, problem, or model factors using Ruby.
 
     Args:
@@ -4876,7 +4875,6 @@ def create_design(
             Defaults to "nolhs".
         cross_design_factors (dict, optional): Dictionary of lists of cross-design
             factor values. Defaults to None.
-        csv_filename (str, optional): Override the default name of the output CSV file.
 
     Returns:
         list[dict]: A list of dictionaries, where each dictionary represents a design
@@ -4890,8 +4888,6 @@ def create_design(
         cross_design_factors = {}
     if class_type is None:
         class_type = "solver"
-    if csv_filename is None:
-        csv_filename = factor_settings_filename
 
     # TODO: add additional checking
     # Value checking
