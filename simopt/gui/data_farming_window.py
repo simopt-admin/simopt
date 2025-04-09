@@ -1217,21 +1217,24 @@ class DataFarmingWindow(Toplevel):
             if factor_include:
                 self.factor_names.append(factor)
 
-                if (
+                if not (
                     factor_datatype in (float, int)
-                    and is_datafarmable_factor is not False
+                    and is_datafarmable_factor
                 ):
-                    factor_min = str(min_values[maxmin_index])
-                    factor_max = str(max_values[maxmin_index])
-                    maxmin_index += 1
+                    error_msg = "Factor datatype not supported."
+                    logging.error(error_msg)
 
-                    if factor_datatype is float:
-                        factor_dec = str(dec_values[dec_index])
-                        dec_index += 1
+                factor_min = str(min_values[maxmin_index])
+                factor_max = str(max_values[maxmin_index])
+                maxmin_index += 1
 
-                    elif factor_datatype is int:
-                        factor_dec = "0"
-
+                if factor_datatype is float:
+                    # NOTE: this doesn't work with 1e-XX values
+                    factor_dec = str(dec_values[dec_index])
+                    dec_index += 1
+                else: # factor is int
+                    factor_dec = "0"
+ 
                 data_insert = f"{factor_min} {factor_max} {factor_dec}\n"
                 file_name = f"{self.experiment_name}.txt"
                 file_path = DATA_FARMING_DIR / file_name
@@ -1265,7 +1268,6 @@ class DataFarmingWindow(Toplevel):
             n_stacks=n_stacks,
             design_type=design_type,
             class_type="model",
-            csv_filename=self.csv_filename,
         )
         # Pop up message that csv design file has been created
         messagebox.showinfo(
