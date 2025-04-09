@@ -1608,7 +1608,6 @@ class ProblemSolver:
                                     norm_array = np.where(constraint<0, 0, constraint)
                                     feas_score = -1*np.linalg.norm(norm_array,ord=norm_degree)
                             scores.append(feas_score)
-                        print('scores', scores)
                         bootstrap_feasibility_curves.append(
                             Curve(
                                 x_vals=self.all_intermediate_budgets[mrep],
@@ -3113,6 +3112,7 @@ def plot_progress_curves(
     conf_level: float = 0.95,
     plot_conf_ints: bool = True,
     print_max_hw: bool = True,
+    plot_optimal: bool = False,
     plot_title: str | None = None,
     legend_loc: str | None = None,
     ext: str = ".png",
@@ -3312,6 +3312,8 @@ def plot_progress_curves(
                     curve_pairs.append(
                         [bs_conf_int_lb_curve, bs_conf_int_ub_curve]
                     )
+                if plot_optimal and not normalize:
+                    plt.axhline(y=experiment.fstar, color='red', linestyle = '--', linewidth=.75)
         plt.legend(
             handles=solver_curve_handles,
             labels=[experiment.solver.name for experiment in experiments],
@@ -4315,7 +4317,7 @@ def plot_feasibility(
                         plot_title=plot_title,
                         extra=extra,
                         ext=ext,
-                        save_as_pickle=False,
+                        save_as_pickle=save_as_pickle,
                         plotly_fig=fig
                     )
                 )
@@ -4421,7 +4423,7 @@ def plot_feasibility(
                     save_plot(
                         solver_name=solver_set_name,
                         problem_name=ref_experiment.problem.name,
-                        plot_type="feasiblity_violin",
+                        plot_type="feasibility_violin",
                         normalize=False,
                         extra=extra,
                         plot_title=plot_title,
@@ -5362,6 +5364,7 @@ def plot_terminal_progress(
     plot_type: Literal["box", "violin"] = "violin",
     normalize: bool = True,
     all_in_one: bool = True,
+    plot_optimal: bool = False,
     plot_title: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
@@ -5489,7 +5492,6 @@ def plot_terminal_progress(
                 "Solvers": solver_names,
                 "Terminal": terminal_values,
             }
-            print(terminal_data_dict)
             terminal_data_df = pd.DataFrame(terminal_data_dict)
             # sns.violinplot(x="Solvers", y="Terminal", data=terminal_data_df, inner="stick", scale="width", showmeans=True, bw = 0.2,  cut=2)
             sns.violinplot(
@@ -5505,6 +5507,8 @@ def plot_terminal_progress(
                 plt.ylabel("Terminal Progress")
             else:
                 plt.ylabel("Terminal Objective")
+            if plot_optimal and not normalize:
+                plt.axhline(y=ref_experiment.fstar, color='red', linestyle = '--', linewidth=.75)
         file_list.append(
             save_plot(
                 solver_name=solver_set_name,
@@ -5557,6 +5561,8 @@ def plot_terminal_progress(
                 plt.ylabel("Terminal Progress")
             else:
                 plt.ylabel("Terminal Objective")
+            if plot_optimal and not normalize:
+                plt.axhline(y=experiment.fstar, color='red', linestyle = '--', linewidth=.75)
             file_list.append(
                 save_plot(
                     solver_name=experiment.solver.name,
@@ -6258,7 +6264,10 @@ def save_plot(
 
     # save plot as pickle
     if save_as_pickle:
-        fig = plt.gcf()
+        if plot_type != "feasibility_contour":
+            fig = plt.gcf()
+        else:
+            fig = plotly_fig
         pickle_path = f"{new_path_name}.pkl"
         with open(pickle_path, "wb") as f:
             pickle.dump(fig, f)

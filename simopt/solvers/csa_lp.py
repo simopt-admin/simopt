@@ -256,6 +256,7 @@ class CSA_LP(Solver):  # noqa: N801
         if n_violated_cons == 1:
             d = grads[0]
         else:
+            print("tried grad", grads)
             # normalization
             grads = grads / np.linalg.norm(grads, axis=1).reshape(
                 n_violated_cons, 1
@@ -324,8 +325,11 @@ class CSA_LP(Solver):  # noqa: N801
         Ce = problem.Ce
         de = problem.de
 
-        lower = np.array(problem.lower_bounds)
-        upper = np.array(problem.upper_bounds)
+        # lower = np.array(problem.lower_bounds)
+        # upper = np.array(problem.upper_bounds)
+        # temp adjustment for san problem
+        lower = np.array(13*(100,))
+        upper = np.array(13*(0.1,))
 
         recommended_solns = []
         intermediate_budgets = []

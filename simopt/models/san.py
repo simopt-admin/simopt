@@ -438,7 +438,8 @@ class SANLongestPath(Problem):
             model_fixed_factors=model_fixed_factors,
             model=SAN,
         )
-
+        
+        
     def check_arc_costs(self) -> bool:
         positive = True
         for x in list(self.factors["arc_costs"]):
@@ -772,7 +773,7 @@ class SANLongestPathStochastic(Problem):
 
     @property
     def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+        return (100,) * self.dim
 
     def __init__(
         self,
@@ -787,6 +788,10 @@ class SANLongestPathStochastic(Problem):
             model_fixed_factors=model_fixed_factors,
             model=SAN,
         )
+        self.Ci = None
+        self.Ce = None
+        self.di = None
+        self.de = None
 
     def check_arc_costs(self) -> bool:
         positive = True
