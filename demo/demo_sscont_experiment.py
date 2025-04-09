@@ -22,7 +22,7 @@ from simopt.experiment_base import (
 )
 
 
-def main() -> None:  # noqa: C901
+def main() -> None:
     """Main function to run the demo script."""
     # Default values of the (s, S) model:
     # "demand_mean": 100.0

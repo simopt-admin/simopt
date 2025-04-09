@@ -27,7 +27,7 @@ from simopt.experiment_base import (
 )
 
 
-def main() -> None:  # noqa: C901
+def main() -> None:
     """Main function to run the demo script."""
     # Problems factors used in experiments
     # SAN

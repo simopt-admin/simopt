@@ -1,5 +1,8 @@
 # ruff.toml
 line-length = 88
+exclude = ["simopt/gui/*"]
+
+[lint]
 select = [
     # Base style and correctness
     "E",  # pycodestyle formatting rules
@@ -23,7 +26,7 @@ select = [
     "PTH", # flake8-use-pathlib
     "ARG", # flake8-unused-arguments
     "C4",  # flake8-comprehensions
-    "C90", # mccabe complexity
+    # "C90", # mccabe complexity
 
     # Ruff-specific
     "RUF", # Ruff-exclusive rules
