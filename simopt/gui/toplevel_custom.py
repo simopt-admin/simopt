@@ -104,8 +104,7 @@ class Toplevel(tk.Toplevel):
         width = int(screen_width * scale)
         height = int(screen_height * scale)
         x = int((screen_width / 2) - (width / 2))
-        y = int(
-            (screen_height / 2) - (height / 1.9)
-        )  # Slight adjustment for taskbar
+        # Slight adjustment for taskbar
+        y = int((screen_height / 2) - (height / 1.9))
         position = f"{width}x{height}+{x}+{y}"
         self.geometry(position)

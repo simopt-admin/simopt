@@ -208,13 +208,9 @@ class PlotWindow(Toplevel):
             master=self, text="Plotting Workspace", style="Bold.TLabel"
         )
 
-        self.queue_label_frame = ttk.LabelFrame(
-            master=self, labelwidget=workspace_lbl
-        )
+        self.queue_label_frame = ttk.LabelFrame(master=self, labelwidget=workspace_lbl)
 
-        self.queue_canvas = tk.Canvas(
-            master=self.queue_label_frame, borderwidth=0
-        )
+        self.queue_canvas = tk.Canvas(master=self.queue_label_frame, borderwidth=0)
 
         self.queue_frame = ttk.Frame(master=self.queue_canvas)
         self.vert_scroll_bar = Scrollbar(
@@ -266,9 +262,7 @@ class PlotWindow(Toplevel):
                 text=heading,
                 font=nametofont("TkHeadingFont"),
             )
-            label.grid(
-                row=0, column=self.heading_list.index(heading), padx=10, pady=3
-            )
+            label.grid(row=0, column=self.heading_list.index(heading), padx=10, pady=3)
 
         self.instruction_label.place(relx=0.3, y=0)
 
@@ -289,9 +283,7 @@ class PlotWindow(Toplevel):
         self.post_normal_all_button.place(relx=0.01, rely=0.92)
 
         # self.queue_label_frame.place(x=10, rely=.7, relheight=.3, relwidth=1)
-        self.queue_label_frame.place(
-            x=10, rely=0.56, relheight=0.35, relwidth=0.99
-        )
+        self.queue_label_frame.place(x=10, rely=0.56, relheight=0.35, relwidth=0.99)
 
         self.param_label = []
         self.param_entry = []
@@ -308,9 +300,7 @@ class PlotWindow(Toplevel):
             (0, 0), window=self.CI_frame, anchor="nw", tags="self.queue_frame"
         )
 
-        self.CI_label_frame.place(
-            relx=0.4, rely=0.15, relheight=0.2, relwidth=0.3
-        )
+        self.CI_label_frame.place(relx=0.4, rely=0.15, relheight=0.2, relwidth=0.3)
 
         self.settings_label_frame = ttk.LabelFrame(
             master=self, text="Error Estimation Setting and Parameters"
@@ -584,9 +574,7 @@ class PlotWindow(Toplevel):
             )
             param_list = {}
         else:
-            error_msg = (
-                f"Plot type {self.plot_type_list[-1]} is not a valid plot type."
-            )
+            error_msg = f"Plot type {self.plot_type_list[-1]} is not a valid plot type."
             logging.error(error_msg)
             raise ValueError(error_msg)
 
@@ -642,9 +630,7 @@ class PlotWindow(Toplevel):
                 justify="center",
                 command=partial(self.clear_row, place - 1),
             )
-            self.clear_plot.grid(
-                row=place, column=3, sticky="nsew", padx=10, pady=3
-            )
+            self.clear_plot.grid(row=place, column=3, sticky="nsew", padx=10, pady=3)
 
             self.view_plot = tk.Button(
                 master=self.tab_one,
@@ -652,18 +638,14 @@ class PlotWindow(Toplevel):
                 justify="center",
                 command=partial(self.view_one_plot, new_plot),
             )
-            self.view_plot.grid(
-                row=place, column=4, sticky="nsew", padx=10, pady=3
-            )
+            self.view_plot.grid(row=place, column=4, sticky="nsew", padx=10, pady=3)
 
             self.plot_path = tk.Label(
                 master=self.tab_one,
                 text=new_plot,
                 justify="center",
             )
-            self.plot_path.grid(
-                row=place, column=6, sticky="nsew", padx=10, pady=3
-            )
+            self.plot_path.grid(row=place, column=6, sticky="nsew", padx=10, pady=3)
             # self.view_plot.pack()
             self.change_on_hover(self.view_plot, "red", "yellow")
             self.all_path_names.append(new_plot)
@@ -687,14 +669,10 @@ class PlotWindow(Toplevel):
         """
         # adjusting backgroung of the widget
         # background on entering widget
-        button.bind(
-            "<Enter>", func=lambda e: button.config(background=color_on_hover)
-        )
+        button.bind("<Enter>", func=lambda e: button.config(background=color_on_hover))
 
         # background color on leving widget
-        button.bind(
-            "<Leave>", func=lambda e: button.config(background=color_on_leave)
-        )
+        button.bind("<Leave>", func=lambda e: button.config(background=color_on_leave))
 
     def solver_select_function(self) -> None:
         # if user clicks plot type then a solver, this is update parameters
@@ -800,9 +778,7 @@ class PlotWindow(Toplevel):
         )
         self.CI_canvas.grid_rowconfigure(0)
 
-        self.CI_label_frame.place(
-            relx=0.4, rely=0.15, relheight=0.3, relwidth=0.25
-        )
+        self.CI_label_frame.place(relx=0.4, rely=0.15, relheight=0.3, relwidth=0.25)
 
         self.settings_label_frame.destroy()
         self.settings_label_frame = ttk.LabelFrame(

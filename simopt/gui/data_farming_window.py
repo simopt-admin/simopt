@@ -1,7 +1,10 @@
+"""GUI for data farming experiments."""
+
 import ast
-import os
+import logging
 import tkinter as tk
-from tkinter import filedialog, ttk
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 from tkinter.font import nametofont
 
 import pandas as pd
@@ -28,7 +31,8 @@ class DataFarmingWindow(Toplevel):
         root : tk.Tk
             The root window of the application.
         forced_creation : bool, optional
-            If True, the window will be created even if it already exists, by default False.
+            Whether the window will be created even if it already exists.
+                Defautls to False.
 
         """
         if not forced_creation:
@@ -140,6 +144,7 @@ class DataFarmingWindow(Toplevel):
             widget.destroy()
 
     def load_design(self) -> None:
+        """Load design from a CSV file."""
         # Clear previous selections
         self.clear_frame(frame=self.factors_frame)
         self.clear_frame(frame=self.create_design_frame)
@@ -206,11 +211,12 @@ class DataFarmingWindow(Toplevel):
         self.headerdefault_label.grid(row=0, column=2, sticky=tk.N + tk.W)
 
         # Name of design csv file
-        self.csv_filename = filedialog.askopenfilename()
+        selected_file = filedialog.askopenfilename()
+        self.csv_filename = Path(selected_file).resolve()
 
         # get experiment name
-        filename = os.path.basename(self.csv_filename)
-        name, ext = os.path.splitext(filename)
+        filename = self.csv_filename.name
+        name = filename.split(".")[0]
         # remove design from name if present
         self.experiment_name = name.replace("_design", "")
 
@@ -224,20 +230,19 @@ class DataFarmingWindow(Toplevel):
         self.model_var.set(self.model_name)
 
         all_factor_names = list(self.design_table.columns[1:-3])
-        self.factor_names = []  # names of factors included in design
-        # determine what factors are included in design
-        self.factor_status = {}  # dictionary that contains true/false for wheither factor is in design
-        for col in self.design_table.columns[
-            1:-3
-        ]:  # col correspond to factor names, exclude index and information cols
+        # names of factors included in design
+        self.factor_names = []
+        # dictionary that contains true/false for whether factor is in design
+        self.factor_status = {}
+        # col correspond to factor names, exclude index and information cols
+        for col in self.design_table.columns[1:-3]:
             factor_set = set(self.design_table[col])
-
             design_factor = len(factor_set) > 1
-
             self.factor_status[col] = design_factor
 
         # get default values for fixed factors
-        self.default_factors = {}  # contains only factors not in design, factor default vals input as str
+        # contains only factors not in design, factor default vals input as str
+        self.default_factors = {}
         for factor in self.factor_status:
             if not self.factor_status[factor]:
                 self.default_factors[factor] = self.design_table.at[1, factor]
@@ -335,6 +340,7 @@ class DataFarmingWindow(Toplevel):
         self.run_button.configure(state="disabled")
 
     def enable_run_button(self) -> None:
+        """Enable the run button."""
         self.run_button.configure(state="normal")
 
     def show_design_options(self) -> None:
@@ -442,30 +448,32 @@ class DataFarmingWindow(Toplevel):
         self.default_values = [
             self.default_value.get() for self.default_value in self.default_values_list
         ]  # default value of each factor
-        factor_index = 0
-        for factor in self.default_factors:
-            # self.default_values = [self.default_value.get() for self.default_value in self.default_values_list] # default value of each factor
+        for factor_index, factor in enumerate(self.default_factors):
+            # self.default_values = [
+            #     self.default_value.get()
+            #     for self.default_value in self.default_values_list
+            # ]  # default value of each factor
             new_val = self.default_values[factor_index]
             self.design_table[factor] = new_val
             self.default_factors[factor] = new_val
-            factor_index += 1
 
         self.experiment_name = (
             self.design_filename_var.get()
         )  # name of design file specified by user
 
-        self.csv_filename = os.path.join(
-            DATA_FARMING_DIR, f"{self.experiment_name}_design.csv"
-        )
+        design_csv_name = f"{self.experiment_name}_design.csv"
+
+        self.csv_filename = DATA_FARMING_DIR / design_csv_name
 
         self.design_table.to_csv(self.csv_filename, index=False)
 
         # read new design csv and convert to df
         self.design_table = pd.read_csv(self.csv_filename, index_col=False)
 
-        tk.messagebox.showinfo(
+        messagebox.showinfo(
             "Information",
-            f"Design has been modified. {self.experiment_name}_design.csv has been created in {DATA_FARMING_DIR}. ",
+            f"Design has been modified. "
+            f"{design_csv_name} has been created in {DATA_FARMING_DIR}. ",
         )
 
         self.display_design_tree()
@@ -473,19 +481,16 @@ class DataFarmingWindow(Toplevel):
 
     def con_design(self) -> None:
         # Create design txt file
-        self.experiment_name = (
-            self.design_filename_var.get()
-        )  # name of design file specified by user
+        # Load name specified by user
+        self.experiment_name = self.design_filename_var.get()
+        self.design_filename = f"{self.experiment_name}_design.csv"
+        file_path = DATA_FARMING_DIR / self.design_filename
         self.design_table[self.factor_names].to_csv(
-            os.path.join(
-                DATA_FARMING_DIR,
-                f"{self.experiment_name}_design.txt",
-            ),
+            file_path,
             sep="\t",
             index=False,
             header=False,
         )
-        self.design_filename = f"{self.experiment_name}_design"
 
         # get fixed factors in proper data type
         self.fixed_factors = self.convert_proper_datatype(self.default_factors)
@@ -498,12 +503,14 @@ class DataFarmingWindow(Toplevel):
         Parameters
         ----------
         fixed_factors : dict
-            Dictionary containing fixed factor names not included in design and corresponding user selected value as str.
+            Dictionary containing fixed factor names not included in design and
+                corresponding user selected value as str.
 
         Returns:
         -------
-        converted_fixed_factors : dict
-            Dictrionary containing fixed factor names and corresponding values converted to proper data type.
+        dict
+            Dictrionary containing fixed factor names and corresponding values
+                converted to proper data type.
 
         """
         converted_fixed_factors = {}
@@ -535,13 +542,13 @@ class DataFarmingWindow(Toplevel):
         return converted_fixed_factors
 
     # Display Model Factors
-    def show_model_factors(self, *args: tuple) -> None:
+    def show_model_factors(self, _: tk.StringVar) -> object:
         """Show model factors in GUI.
 
         Parameters
         ----------
-        args : tuple
-            Tuple containing model name selected by user.
+        _ : tk.StringVar
+            The selected model from the drop down menu.
 
         """
         self.factor_canvas.destroy()
@@ -1088,8 +1095,8 @@ class DataFarmingWindow(Toplevel):
             self.design_tree.heading(column, text=column)
             self.design_tree.column(column, width=100)
 
-        for index, row in design_table.iterrows():
-            self.design_tree.insert("", index, text=index, values=tuple(row)[:-3])
+        for index, row in enumerate(design_table.itertuples(index=False)):
+            self.design_tree.insert("", index, text=str(index), values=row[:-3])
 
         # Create a horizontal scrollbar
         xscrollbar = ttk.Scrollbar(
@@ -1162,8 +1169,13 @@ class DataFarmingWindow(Toplevel):
         self.fixed_str = {}
 
         # user specified design options
-        n_stacks = self.stack_var.get()
+        n_stacks = int(self.stack_var.get())
         design_type = self.design_var.get()
+        if design_type != "nolhs":
+            error_msg = "Design type not supported."
+            logging.error(error_msg)
+            messagebox.showerror("Error", error_msg)
+            return
         # List to hold names of all factors part of model to be displayed in csv
         self.factor_names = []  # names of model factors included in experiment
         self.fixed_factors = {}  # fixed factor names and corresponding value
@@ -1178,9 +1190,10 @@ class DataFarmingWindow(Toplevel):
         max_values = [max_val.get() for max_val in self.max_list]
         dec_values = [dec_val.get() for dec_val in self.dec_list]
 
-        with open(
-            os.path.join(DATA_FARMING_DIR, f"{self.experiment_name}.txt"),
-        ) as self.model_design_factors:
+        # Create an empty file to append to later
+        file_name = f"{self.experiment_name}.txt"
+        file_path = DATA_FARMING_DIR / file_name
+        with file_path.open() as self.model_design_factors:
             self.model_design_factors.write("")
 
         # values to index through factors
@@ -1220,12 +1233,10 @@ class DataFarmingWindow(Toplevel):
                         factor_dec = "0"
 
                 data_insert = f"{factor_min} {factor_max} {factor_dec}\n"
+                file_name = f"{self.experiment_name}.txt"
+                file_path = DATA_FARMING_DIR / file_name
 
-                with open(
-                    os.path.join(
-                        DATA_FARMING_DIR,
-                        f"{self.experiment_name}.txt",
-                    ),
+                with file_path.open(
                     mode="a",
                 ) as self.model_design_factors:
                     self.model_design_factors.write(data_insert)
@@ -1242,9 +1253,8 @@ class DataFarmingWindow(Toplevel):
         # convert fixed factors to proper data type
         self.fixed_factors = self.convert_proper_datatype(def_factor_str)
         self.design_filename = f"{self.experiment_name}_design"
-        self.csv_filename = os.path.join(
-            DATA_FARMING_DIR, f"{self.experiment_name}_design.csv"
-        )
+        design_csv = f"{self.experiment_name}_design.csv"
+        self.csv_filename = DATA_FARMING_DIR / design_csv
 
         """ Use create_design to create a design txt file & design csv"""
         self.design_list = create_design(
@@ -1258,9 +1268,9 @@ class DataFarmingWindow(Toplevel):
             csv_filename=self.csv_filename,
         )
         # Pop up message that csv design file has been created
-        tk.messagebox.showinfo(
+        messagebox.showinfo(
             "Information",
-            f"Design file {self.experiment_name}_design.csv has been created in {DATA_FARMING_DIR}. ",
+            f"Design file {design_csv} has been created in {DATA_FARMING_DIR}.",
         )
 
         # Display Design Values
@@ -1283,10 +1293,8 @@ class DataFarmingWindow(Toplevel):
         # of the model.
         crn_across_design_pts = self.crn_var.get() == "Yes"
 
-        output_filename = os.path.join(
-            DATA_FARMING_DIR,
-            f"{self.experiment_name}_raw_results",
-        )
+        raw_results = f"{self.experiment_name}_raw_results"
+        output_filename = DATA_FARMING_DIR / raw_results
 
         # Create DataFarmingExperiment object.
         myexperiment = DataFarmingExperiment(
@@ -1302,7 +1310,7 @@ class DataFarmingWindow(Toplevel):
         myexperiment.print_to_csv(csv_file_name=output_filename)
 
         # run confirmation message
-        tk.messagebox.showinfo(
+        messagebox.showinfo(
             "Run Completed",
             f"Experiment Completed. Output file can be found at {output_filename}",
         )

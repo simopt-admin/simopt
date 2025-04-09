@@ -22,9 +22,7 @@ class MainMenuWindow(Toplevel):
             The main window of the GUI
 
         """
-        super().__init__(
-            root, title="SimOpt GUI - Main Menu", exit_on_close=True
-        )
+        super().__init__(root, title="SimOpt GUI - Main Menu", exit_on_close=True)
         # Set the size of the window to XX% of the screen size
         size_percent = 50
         self.center_window(size_percent / 100.0)
@@ -42,9 +40,7 @@ class MainMenuWindow(Toplevel):
         )
         self.title_label.grid(row=0, column=0, pady=10, sticky="nsew")
 
-        self.separator = ttk.Separator(
-            master=self.menu_frame, orient="horizontal"
-        )
+        self.separator = ttk.Separator(master=self.menu_frame, orient="horizontal")
         self.separator.grid(row=1, column=0, pady=10, sticky="nsew")
 
         # Button to open model data farming window
