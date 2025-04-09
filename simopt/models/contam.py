@@ -896,7 +896,9 @@ class ContaminationTotalCostCont(Problem):
     #     upper_len = len(self.upper_bounds)
     #     if lower_len != upper_len or lower_len != self.dim:
     #         error_msg = (
-    #             f"Lower bounds: {lower_len}, Upper bounds: {upper_len}, Dim: {self.dim}"
+    #             f"Lower bounds: {lower_len}, "
+    #             f"Upper bounds: {upper_len}, "
+    #             f"Dim: {self.dim}"
     #         )
     #         raise ValueError(error_msg)
     #     return True
