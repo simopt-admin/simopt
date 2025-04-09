@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 import cvxpy as cp
+
 # import matplotlib.pyplot as plt
 from collections.abc import Callable
 from simopt.utils import classproperty
@@ -64,7 +65,7 @@ class CSA_LP(Solver):  # noqa: N801
             },
             "tolerance": {
                 "description": "tolerence function",
-                "datatype": float, # TODO: change to Callable
+                "datatype": float,  # TODO: change to Callable
                 "default": 0.01,
             },
             "max_iters": {
@@ -73,7 +74,7 @@ class CSA_LP(Solver):  # noqa: N801
                 "default": 300,
             },
         }
-    
+
     # TODO: eliminate this
     def return_true(self) -> bool:
         return True
@@ -97,12 +98,11 @@ class CSA_LP(Solver):  # noqa: N801
 
     def __init__(
         self, name: str = "CSA_LP", fixed_factors: dict | None = None
-    ) -> None:      
+    ) -> None:
         if fixed_factors is None:
             fixed_factors = {"max_iters": 300}
 
         super().__init__(name, fixed_factors)
-
 
     def default_step_f(self, k: int) -> float:
         """
@@ -116,7 +116,7 @@ class CSA_LP(Solver):  # noqa: N801
     def check_max_iters(self) -> bool:
         return self.factors["max_iters"] > 0
 
-    def is_feasible(self, x, Ci, di, Ce, de, lower, upper):
+    def is_feasible(self, x, Ci, di, Ce, de, lower, upper) -> bool:
         """
         Check whether a solution x is feasible to the problem.
 
@@ -328,8 +328,8 @@ class CSA_LP(Solver):  # noqa: N801
         # lower = np.array(problem.lower_bounds)
         # upper = np.array(problem.upper_bounds)
         # temp adjustment for san problem
-        lower = np.array(13*(100,))
-        upper = np.array(13*(0.1,))
+        lower = np.array(13 * (100,))
+        upper = np.array(13 * (0.1,))
 
         recommended_solns = []
         intermediate_budgets = []
