@@ -65,7 +65,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "/test/*", "*main*"]
 
 # -- HTML output -------------------------------------------------------------
 
-html_theme = "default"
+html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 # LaTeX config (if using)
