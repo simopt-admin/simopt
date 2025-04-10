@@ -2,7 +2,7 @@
 
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = .
+SOURCEDIR     = source
 BUILDDIR      = _build
 
 .PHONY: help clean apidocs Makefile
@@ -16,8 +16,9 @@ clean:
 	rm -rf "$(BUILDDIR)"/*
 
 # Generate .rst files from the simopt package
+# NOTE: need one for each module
 apidocs:
-	sphinx-apidoc -o source ../simopt -f --module-first
+	PYTHONPATH=.. sphinx-apidoc -o source ../simopt -f --module-first
 
 # Catch-all: routes all other targets to sphinx-build -M
 %:

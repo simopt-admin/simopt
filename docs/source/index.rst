@@ -34,9 +34,11 @@ Contents
 
 .. toctree::
    :maxdepth: 4
+   :caption: API Reference
    
-   modules
-
+   simopt
+   simopt.models
+   simopt.solvers
 
 Acknowledgments
 -------------------

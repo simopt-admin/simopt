@@ -16,7 +16,7 @@ from pathlib import Path
 
 # -- Path setup --------------------------------------------------------------
 
-project_root = Path(__file__).resolve().parent.parent
+project_root = Path(__file__).resolve().parents[2]  # 2 folders up
 sys.path.insert(0, str(project_root))
 
 # -- Project information -----------------------------------------------------
@@ -61,7 +61,14 @@ napoleon_attr_annotations = True
 templates_path = ["_templates"]
 
 # Be careful not to exclude important files
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "/test/*", "*main*"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "/test/",
+    "/dev_tools/",
+    "*main*",
+]
 
 # -- HTML output -------------------------------------------------------------
 
