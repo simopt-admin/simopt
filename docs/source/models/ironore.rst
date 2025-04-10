@@ -1,8 +1,8 @@
 Model: Iron Ore Production with Exogenous Stochastic Price (IRONORE)
 ====================================================================
 
-Description:
-------------
+Description
+-----------
 Iron ore is traded on the spot market, facing an exogenous, stochastic price. There
 is enormous demand for iron, and so for the purposes of a small or medium-sized iron ore mine, we assume
 that any quantity of ore can be instantaneously sold at current market rates.
@@ -30,14 +30,14 @@ The daily order of operations in the simulation is as follows:
 
   5. Charge a holding cost of :math:`h` per unit (after production and sales).
 
-Sources of Randomness:
-----------------------
+Sources of Randomness
+---------------------
 1. Let :math:`P_t` be a meanreverting random walk, such that :math:`P_t = \mbox{trunc}(P_t - 1 + N_t (\mu,\sigma))`, 
 where :math:`N_t` is a normal random variable with standard deviation :math:`\sigma` and mean :math:`\mu_t = \mbox{sgn}(\mu_0 − P_t−1) * (| \mu_0 − P_t − 1 |)^{\frac{1}{4}}`.
 Here :math:`\mbox{trunc}(x)` truncates the price to lie between a specified minimum and maximum price.
 
-Model Factors:
---------------
+Model Factors
+-------------
 * mean_price: Mean iron ore price per unit.
 
     * Default: 100.0
@@ -91,8 +91,8 @@ Model Factors:
     * Default: 365
 
 
-Respones:
----------
+Respones
+--------
 * total_profit: The total profit over the time period
 
 * frac_producing: The fraction of days spent producing iron ore
@@ -100,55 +100,55 @@ Respones:
 * mean_stock: The average stocks over the time period
 
 
-References:
------------
+References
+----------
 N/A
 
 
 Optimization Problem: Maximize Profit (IRONORE-1)
 =================================================
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * price_prod
 * inven_stop
 * price_stop
 * price_sell
 
-Objectives:
------------
+Objectives
+----------
 Maximize total_profit over the :math:`T` time periods.
 
-Constraints:
-------------
+Constraints
+-----------
 All decision variables should be non-negative.
 Logically, we should also have price_stop <= price_prod <= price_sell, but this is not enforced.
 
-Problem Factors:
-----------------
+Problem Factors
+---------------
 * budget: Max # of replications for a solver to take
 
   * Default: 1000
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 * N/A
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 * initial_solution: :math:`x_1 = 80`, :math:`x_2 = 7000`, :math:`x_3 = 40`, :math:`x_4=100`
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 * :math:`x_1`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 10 and 200.
 * :math:`x_2`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 1000 and 10000.
 * :math:`x_3`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 10 and 200.
 * :math:`x_4`: Sample an lognormal random variate with 2.5- and 97.5-percentiles of 10 and 200.
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 Unknown
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 Unknown

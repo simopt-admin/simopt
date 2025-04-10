@@ -1,15 +1,15 @@
 Solver: Adaptive Line-search with Oracle Estimations (ALOE)
 ===========================================================
 
-Description:
-------------
+Description
+-----------
 The solver is a stochastic line search algorithm  with the gradient estimate recomputed in each iteration,
 whether or not a step is accepted. The algorithm includes the relaxation of the Armijo condition by 
 an additive constant :math:`2\epsilon_f`.
 
 
-Modifications & Implementation:
--------------------------------
+Modifications & Implementation
+------------------------------
 For each iteration, first compute the gradient approximation :math:`g_k` using either
 the IPA gradient estimates or finite difference estimates.
 Then, the algorithm checks for sufficient decrease. Let :math:`x_k^{+} = x_k - \alpha_k g_k`. Estimate the objective
@@ -26,8 +26,8 @@ Helper functions:
 The finite_diff function uses finite difference methods to estimate the gradient of the objective function.
 
 
-Scope:
-------
+Scope
+-----
 * objective_type: single
 
 * constraint_type: box
@@ -35,8 +35,8 @@ Scope:
 * variable_type: continuous
 
 
-Solver Factors:
----------------
+Solver Factors
+--------------
 * crn_across_solns: Use CRN across solutions?
 
     * Default: True
@@ -70,6 +70,6 @@ Solver Factors:
     * Default: 10^(-7)
 
 
-References:
------------
+References
+----------
 This solver is adapted from the article Jin, B., Scheinberg, K., & Xie, M. (2021). High probability complexity bounds for line search based on stochastic oracles. Advances in Neural Information Processing Systems, 34, 9193-9203.

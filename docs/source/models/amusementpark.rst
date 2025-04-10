@@ -1,8 +1,8 @@
 Model: Amusement Park Queues (AMUSEMENT)
-==========================================
+========================================
 
-Description:
-------------
+Description
+-----------
 This model simulates an amusement park with 7 attractions. Visitors arrive at
 each attraction according to a poisson distribution with a rate :math:`\gamma_i = 1`,
 :math:`i = 1,. . . , 7`. Each attraction can only take one visitor at a time, while
@@ -38,8 +38,8 @@ distribution with shape parameter :math:`k = 2`` and rate :math:`\lambda = 9`.
 The park opens at 9AM and closes at 5PM, and time is measured in minutes.
 When the park closes, all visitors in the queue leave immediately.
 
-Sources of Randomness:
-----------------------
+Sources of Randomness
+---------------------
 There are 3 sources of randomness in this model:
 
 * The arrival rate of visitors as a poisson distribution with rate of 1 for all :math:`i = 1, . . . , 7`.
@@ -67,8 +67,8 @@ where :math:`\beta` is the scale parameter, which is the reciprocal of the rate 
 Accordingly, the reciprocal of desired rate values should be used in the erlang_scale parameter.
 
 
-Model Factors:
---------------
+Model Factors
+-------------
 * park_capacity: The total number of visitors waiting for attractions that can be maintained through park facilities, distributed across the attractions.
 
     * Default: 350
@@ -127,8 +127,8 @@ Model Factors:
     * **Columns** represent the next ride the tourist chooses to go to.
 
 
-Responses:
-----------
+Responses
+---------
 * total_departed: The total number of visitors to leave the park due to full queues.
 
 * percent_departed: The percentage of visitors to leave the park due to full queues.
@@ -137,8 +137,8 @@ Responses:
 
 * attraction_utilization_percentages: The percent utilizations for each attraction.
 
-References:
------------
+References
+----------
 This model is adapted from the article:
 Vill’en-Altamirano, J. (2009). Restart Simulation of Networks of Queues with
 Erlang Service Times. *Proceedings of the 2009 Winter Simulation Conference.*
@@ -146,44 +146,44 @@ Erlang Service Times. *Proceedings of the 2009 Winter Simulation Conference.*
 Optimization Problem: Minimize Total Departed Visitors (AMUSEMENT-1)
 ====================================================================
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * queue_capacities
 
-Objectives:
------------
+Objectives
+----------
 Minimize total number of departed visitors.
 
-Constraints:
-------------
+Constraints
+-----------
 * park_capacity = 350
 
 * :math:`\sum_{i=1}^{7}` queue_capacities = park_capacity
 
 * queue_capacities :math:`\ge` 0
 
-Problem Factors:
-----------------
+Problem Factors
+---------------
 * Budget: Max # of replications for a solver to take.
 
   * Default: 1000
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 * N/A
 
-Starting Solution:
-------------------
+Starting Solution
+-----------------
 * queue_capacities = [50, 50, 50, 50, 50, 50, 50]
 
-Random Solutions:
-------------------
+Random Solutions
+----------------
 Generate a solution uniformly from a space of vectors of length 7 that sum up to 350.
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 unknown
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 unknown

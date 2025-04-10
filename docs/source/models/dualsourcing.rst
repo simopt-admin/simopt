@@ -1,8 +1,8 @@
 Model: Dual Sourcing System (DUALSOURCING)
 ==========================================
 
-Description:
-------------
+Description
+-----------
 Consider a single-stage, incapacitated, manufacturing location facing stochastic demand. 
 The manufacturer can buy the material from a “regular” supplier at cost :math:`c_r` per unit, or, 
 if needed, she can get some or all of the material “expedited” at some premium cost :math:`c_e` 
@@ -25,12 +25,12 @@ including the expedited order placed in the current period). Similarly, it tries
 inventory position :math:`IP_n^r` to the target parameter :math:`z_r`. Thus, under this model, we carry two inventory positions, 
 one for regular orders and another for expedited orders.
 
-Sources of Randomness:
-----------------------
+Sources of Randomness
+---------------------
 Demand follows a normal distribution. 
 
-Model Factors:
---------------
+Model Factors
+-------------
 * n_days: Number of days to simulate.
 
     * Default: 1000
@@ -79,16 +79,16 @@ Model Factors:
 
     * Default: 50
 
-Responses:
-----------
+Responses
+---------
 * average_holding_cost: The average holding cost over the time period.
 
 * average_penalty_cost: The average penalty cost over the time period.
 
 * average_ordering_cost: The average ordering cost over the time period.
 
-References:
------------
+References
+----------
 This model is adapted from the article `Veeraraghavan, S and Scheller-Wolf, A. Now or Later: 
 A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations Research (4), 850- 864. 
 <https://repository.upenn.edu/oid_papers/121/>`_
@@ -97,43 +97,43 @@ A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations R
 Optimization Problem: Minimize total cost (DUALSOURCING-1)
 ==========================================================
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * order_level_exp
 * order_level_reg
 
-Objectives:
------------
+Objectives
+----------
 Minimize the expected total cost: sum of average_holding_cost, average_penalty_cost, average_ordering_cost.
 
-Constraints:
-------------
+Constraints
+-----------
 order_level_exp and order_level_reg are both non-negative.
 
-Problem Factors:
-----------------
+Problem Factors
+---------------
 * budget: Max # of replications for a solver to take.
 
   * Default: 1000
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 N/A
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 * order_level_exp: 50
 
 * order_level_reg: 80
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 Draw order_level_exp from Uniform(40,60) and order_level_reg from Uniform(70,90).
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 Unknown.
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 Unknown.

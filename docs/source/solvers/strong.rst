@@ -1,8 +1,8 @@
 Solver: Stochastic Trust-Region Response-Surface Method (STRONG)
 ================================================================
 
-Description:
-------------
+Description
+-----------
 The solver estimates the shape of the underlying response distribution, 
 through function evaluations taken within a neighborhood of the incumbent solution.
 STRONG has two stages in each iteration where a sub trust region is defined: 
@@ -11,8 +11,8 @@ polynomial. If stage II fails to generate a good solution, an inner loop is init
 where value, gradient, and Hessian of the center point are further calculated.
 
 
-Modifications & Implementation:
--------------------------------
+Modifications & Implementation
+------------------------------
 Process within a stage:
 We first find the Cauchy Point and the new solution in order to create a polynomial.
 Then, the solver either shrinks trust region size, or moves the center point while the
@@ -27,8 +27,8 @@ There are 3 helper functions in addition to the main algorithm.
 
     * **finite_diff** uses finite difference to estimate gradients and BFGS to estimate the Hessian matrix.
 
-Scope:
-------
+Scope
+-----
 * objective_type: single
 
 * constraint_type: box
@@ -36,8 +36,8 @@ Scope:
 * variable_type: continuous
 
 
-Solver Factors:
----------------
+Solver Factors
+--------------
 * crn_across_solns: Use CRN across solutions?
 
     * Default: True
@@ -86,8 +86,8 @@ Solver Factors:
 
     * Default: 1.01
 
-References:
------------
+References
+----------
 This solver is adapted from the article Kuo-Hao Chang, L. Jeff Hong, Hong Wan, (2013).
 Stochastic Trust-Region Response-Surface Method (STRONG) - A New Response-Surface Framework for Simulation Optimization.
 *INFORMS Journal on Computing*, 25(2):230-243.

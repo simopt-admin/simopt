@@ -1,8 +1,8 @@
 Model: Stochastic Activity Network (SAN)
 ========================================
 
-Description:
-------------
+Description
+-----------
 Consider a stochastic activity network (SAN) where each arc :math:`i`
 is associated with a task with random duration :math:`X_i`. Task durations
 are independent. SANs are also known as PERT networks and are used in planning
@@ -14,12 +14,12 @@ An example SAN with 13 arcs is given in the following figure:
   :alt: The SAN diagram has failed to display
   :width: 500
 
-Sources of Randomness:
-----------------------
+Sources of Randomness
+---------------------
 1. Task durations are exponentially distributed with mean :math:`\theta_i`.
 
-Model Factors:
---------------
+Model Factors
+-------------
 * num_nodes: Number of nodes.
 
     * Default: 9
@@ -33,13 +33,13 @@ Model Factors:
 
     * Default: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
-Responses:
-----------
+Responses
+---------
 * longest_path_length: Length/duration of the longest path.
 
 
-References:
------------
+References
+----------
 This model is adapted from Avramidis, A.N., Wilson, J.R. (1996).
 Integrated variance reduction strategies for simulation. *Operations Research* 44, 327-346.
 (https://pubsonline.informs.org/doi/abs/10.1287/opre.44.2.327)
@@ -47,12 +47,12 @@ Integrated variance reduction strategies for simulation. *Operations Research* 4
 Optimization Problem: Minimize Longest Path Plus Penalty (SAN-1)
 ================================================================
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * arc_means
 
-Objectives:
------------
+Objectives
+----------
 Suppose that we can select :math:`\theta_i > 0` for each :math:`i`,
 but there is an associated cost. In particular, we want to minimize :math:`ET(\theta) + f(\theta)`,
 where :math:`T(\theta)` is the (random) duration of the longest path from :math:`a`
@@ -62,12 +62,12 @@ is the number of arcs.
 The objective function is convex in :math:`\theta`. An IPA estimator of the gradient
 is also given in the code.
 
-Constraints:
-------------
+Constraints
+-----------
 We require that :math:`theta_i > 0` for each :math:`i`.
 
-Problem Factors:
-----------------
+Problem Factors
+---------------
 * budget: Max # of replications for a solver to take.
 
   * Default: 10000
@@ -76,23 +76,23 @@ Problem Factors:
 
   * Default: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 * N/A
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 * initial_solution: (8,) * 13
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 Sample each arc mean uniformly from a lognormal distribution with 
 2.5- and 97.5-percentiles at 0.1 and 10 respectively.
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 Unknown
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 Unknown

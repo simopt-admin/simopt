@@ -1,12 +1,12 @@
 Solver: Adaptive Sampling Trust-Region Optimization for Derivative-Free Simulations (ASTRODF)
 =============================================================================================
 
-Description:
-------------
+Description
+-----------
 The solver progressively builds local models (quadratic with diagonal Hessian) using interpolation on a set of points on the coordinate bases of the best (incumbent) solution. Solving the local models within a trust region (closed ball around the incumbent solution) at each iteration suggests a candidate solution for the next iteration. If the candidate solution is worse than the best interpolation point, it is replaced with the latter (a.k.a. direct search). The solver then decides whether to accept the candidate solution and expand the trust-region or reject it and shrink the trust-region based on a success ratio test. The sample size at each visited point is determined adaptively and based on closeness to optimality.
 
-Modifications & Implementation:
--------------------------------
+Modifications & Implementation
+------------------------------
 
 **construct_model**: Construct the "qualified" local model for each iteration k with the center point x_k, reconstruct with new points in a shrunk trust-region if the model fails the criticality condition. The criticality condition keeps the model gradient norm and the trust-region size in lock-step.
 
@@ -26,8 +26,8 @@ Modifications & Implementation:
 
 **iterate**: Run one iteration of trust-region algorithm by bulding and solving a local model and updating the current incumbent and trust-region radius, and saving the data.
 
-Scope:
-------
+Scope
+-----
 * objective_type: single
 
 * constraint_type: box
@@ -36,8 +36,8 @@ Scope:
 
 * gradient_observations: not available
 
-Solver Factors:
----------------
+Solver Factors
+--------------
 * crn_across_solns: Use CRN across solutions?
 
     * Default: True
@@ -75,8 +75,8 @@ Solver Factors:
     * Default: 0.1
 
 
-References:
------------
+References
+----------
 This solver is adapted from the article Ha, Y., Shashaani, S., and Tran-Dinh, Q. (2021).
 Improved Complexity Of Trust-Region Optimization For Zeroth-Order Stochastic Oracles with Adaptive Sampling
 *Proceedings of 2021 Winter Simulation Conference*, doi: 10.1109/WSC52266.2021.9715529.

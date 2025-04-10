@@ -1,8 +1,8 @@
 Model: Multi-Stage Revenue Management with Inter-Temporal Dependence (RMITD)
 ============================================================================
 
-Description:
-------------
+Description
+-----------
 
 Consider the following inventory system: A businessperson initially purchases
 :math:`b` units of a product to sell to customers over a fixed time horizon.
@@ -22,13 +22,13 @@ it has mean :math:`kθ = 1` and standard deviation :math:`{\sqrt{k}}θ = 1/ {\sq
 :math:` Y_1, . . . , Y_T` are i.i.d. exponential with mean 1 and 
 :math:`μ_t` are positive constants for all :math:`t`.
 
-Sources of Randomness:
-----------------------
+Sources of Randomness
+---------------------
 Two sources of randomness are used to generate the :math:`X`'s and :math:`Y`'s that 
 form demands.
 
-Model Factors:
---------------
+Model Factors
+-------------
 * Time Horizon (T): Period of time that is considered.
 
     * Default: 3
@@ -62,13 +62,13 @@ Model Factors:
     * Default: :math:`r_2 = 50`, :math:`r_3 = 30`. 
 
 
-Responses:
-----------
+Responses
+---------
 
 * Revenue: Total revenue of given model
 
-References:
------------
+References
+----------
 This example is adapted (almost verbatim) from test problem 2 by Prof. J.M. Harrison for class OIT 603
 at Stanford University. (https://www.gsb.stanford.edu/faculty-research/faculty/j-michael-harrison) 
 
@@ -76,38 +76,38 @@ at Stanford University. (https://www.gsb.stanford.edu/faculty-research/faculty/j
 Optimization Problem: Maximize Total Revenue
 ============================================
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 
 * Initial Inventory (b)
 
 * Reservation Quantities (:math:`r_t`)
 
-Objectives:
------------
+Objectives
+----------
 
 Maximize total revenue.
 
-Constraints:
-------------
+Constraints
+-----------
 
 The reserve quantities are decreasing and less than the initial capacity, i.e.,
 :math:`b >= r_2 >= r_3`
 
-Problem Factors:
-----------------
+Problem Factors
+---------------
   
 * Budget: Max # of replications for a solver to take.
 
   * Default: 10000
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 
 * N/A
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 
 * :math:`b = 100`
 
@@ -115,17 +115,17 @@ Starting Solution:
 
 * :math:`r_3 = 30`
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 
 If multiple solutions are needed for Reservation Quantity (r), use :math:`r_2` ∼ Uniform(40,60) and :math:`r_3` ∼ Uniform(20,40).
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 
 Unknown
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 
 Unknown

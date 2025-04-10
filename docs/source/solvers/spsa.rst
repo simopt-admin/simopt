@@ -1,18 +1,18 @@
 Solver: Simultaneous Perturbation Stochastic Approximation (SPSA)
 =================================================================
 
-Description:
-------------
+Description
+-----------
 SPSA is an iterative algorithm that approximates the gradient based on function evaluations taken at two points: one in a random direction and the other in the opposite direction.
 
-Modifications & Implementation:
--------------------------------
+Modifications & Implementation
+------------------------------
 SPSA's main feature is the gradient approximation that requires only two objective function measurements per iteration.
 The gradient approximtation calculation used in this solver is the weigthed average of the two objective function measurements,
 with the weights reflecting the distances between the two neighbors and the incumbent solution.
 
-Scope:
-------
+Scope
+-----
 * objective_type: single
 
 * constraint_type: box
@@ -21,8 +21,8 @@ Scope:
 
 * gradient_observations: not available
 
-Solver Factors:
----------------
+Solver Factors
+--------------
 * crn_across_solns: Use CRN across solutions?
 
     * Default: True
@@ -59,7 +59,7 @@ Solver Factors:
 
     * Default: 0.1
 
-References:
------------
+References
+----------
 This solver is adapted from the article Spall, J. C. (1998). Implementation of simultaneous perturbation algorithm for stochastic optimization. IEEE Transactions on Aerospace and Electronic Systems 34(3):817-823.
 (https://ieeexplore.ieee.org/document/705889)

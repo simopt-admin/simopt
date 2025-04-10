@@ -1,8 +1,8 @@
 Model: Facility Sizing
 ======================
 
-Description:
-------------
+Description
+-----------
 
 The facility-sizing problem is formulated as follows: :math:`m` facilities are to be installed, each with capacity
 :math:`xi ≥ 0, i = 1, . . . , m`. Then the random demand :math:`ξi` arrives at facility :math:`i`, with a known joint distribution
@@ -10,12 +10,12 @@ of the random vector :math:`ξ = (ξ1, . . . , ξm)`.
 
 A realization of the demand, :math:`ξ = (ξ1, . . . , ξm)`, is said to be satisfied by the capacity :math:`x` if :math:`xi ≥ ξi, ∀i = 1, . . . , m`. 
 
-Sources of Randomness:
-----------------------
+Sources of Randomness
+---------------------
 1. random demand vector :math:`ξ` follows a multivariate normal distribution and correlation coefficients :math:`ρi,j` , :math:`i != j` .
 
-Model Factors:
---------------
+Model Factors
+-------------
 * :math:`\mu`: Mean vector of the multivariate normal distribution.
     * Default: [100, 100, 100]
 
@@ -29,8 +29,8 @@ Model Factors:
     * Default: 3
 
 
-Respones:
----------
+Respones
+--------
 * :math:`stockout_flag`:
                   0: all facilities satisfy the demand 
                            1: at least one of the facilities did not satisfy the demand
@@ -42,8 +42,8 @@ Respones:
           the amount of total demand which cannot be satisfied 
 
 
-References:
------------
+References
+----------
 This model is adapted from the article Rengarajan, T., & Morton, D.P. (2009). Estimating the Efficient Frontier of a Probabilistic Bicriteria Model. Proceedings of the 2009 Winter Simulation Conference. `(https://www.informs-sim.org/wsc09papers/048.pdf)`
 
 
@@ -58,21 +58,21 @@ The probability of failing to satisfy demand :math:`ξ = (ξ_1, . . . , ξ_m)` i
 
 Meanwhile, the unit cost of installing facility i is :math:`ci`, and hence the total cost is :math:`\sum_{i=1}^n c_i x_i`. 
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * :math:`capacity` 
 
-Objectives:
------------
+Objectives
+----------
 Minimize the (deterministic) total cost of installing capacity.
 
-Constraints:
-------------
+Constraints
+-----------
 1 stochastic constraint: :math:`P(Stockout) <= epsilon`.
 Box constraints: 0 < :math:`x_i` < infinity for all :math:`i`.
 
-Problem Factors:
-----------------
+Problem Factors
+---------------
 * budget: Max # of replications for a solver to take.
       * Default: 10000
 
@@ -82,24 +82,24 @@ Problem Factors:
 * installation_costs: Cost to install a unit of capacity at each facility 
       * Default: (1, 1, 1)
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 None
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 * capacity: (300, 300, 300)
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 * Each facility's capacity is Uniform(0, 300).
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 None
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 None
 
 
@@ -109,21 +109,21 @@ Optimization Problem: Maximize Service Level (FACSIZE-2)
 Our goal is to maximize the probability of not stocking out subject to a budget
 constraint on the total cost of installing capacity.
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * :math:`capacity` 
 
-Objectives:
------------
+Objectives
+----------
 Maximize the probability of not stocking out.
 
-Constraints:
-------------
+Constraints
+-----------
 1 deterministic constraint: sum of facility capacity installation costs less than an installation budget.
 Box constraints: 0 < :math:`x_i` < infinity for all :math:`i`.
 
-Problem Factors:
-----------------
+Problem Factors
+---------------
 * budget: Max # of replications for a solver to take.
       * Default: 10000
 
@@ -133,22 +133,22 @@ Problem Factors:
 * installation_budget: Total budget for installation costs.
       * Default: 500.0
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 None
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 * capacity: (100, 100, 100)
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 * Use acceptance rejection to generate capacity vectors uniformly from space of vectors summing to less than installation budget.
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 None
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 None

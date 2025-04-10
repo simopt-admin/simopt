@@ -1,15 +1,15 @@
 Solver: ADAM
 ============
 
-Description:
-------------
+Description
+-----------
 The solver is for efficient stochastic optimization that only requires first-order gradients
 with little memory requirement. The method computes individual adaptive learning rates for
 different parameters from estimates of first and second moments of the gradients.
 
 
-Modifications & Implementation:
--------------------------------
+Modifications & Implementation
+------------------------------
 At each timestep :math:`t`, we first evaluate the gradient w.r.t the current solution :math:`x`, either using
 the IPA gradient estimates or finite difference estimates.
 Then, the algorithm updates exponential moving averages of the gradient :math:`m_t` and the squared gradient
@@ -26,8 +26,8 @@ The finite_diff function uses finite difference methods to estimate the gradient
 objective function.
 
 
-Scope:
-------
+Scope
+-----
 * objective_type: single
 
 * constraint_type: box
@@ -35,8 +35,8 @@ Scope:
 * variable_type: continuous
 
 
-Solver Factors:
----------------
+Solver Factors
+--------------
 * crn_across_solns: Use CRN across solutions?
 
     * Default: True
@@ -66,6 +66,6 @@ Solver Factors:
     * Default: 10^(-7)
 
 
-References:
------------
+References
+----------
 This solver is adapted from the article Kingma, D. P., & Ba, J. (2014). Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980.

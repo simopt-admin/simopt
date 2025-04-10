@@ -1,8 +1,8 @@
 Model: Chess Matchmaking Optimization (CHESS)
 =============================================
 
-Description:
-------------
+Description
+-----------
 Chess players are rated using the Elo rating system, which assigns a (non-unique)
 number to each player based on their level of skill. The model simulates an online
 chess-matchmaking platform, which tries to match players of similar skill level.
@@ -15,8 +15,8 @@ unmatched player with Elo rating within :math:`x` of the first player's Elo rati
 are matched. If not, then the player waits for an opponent with an appropriate Elo
 rating to arrive.
 
-Sources of Randomness:
-----------------------
+Sources of Randomness
+---------------------
 1. To create the Elo distribution, first generate a normal distribution with mean
 :math:`1200` and standard deviation :math:`\frac{1200}{\sqrt(2)*\text{erfcinv}(\frac{1}{50})}`,
 where erfcinv is the inverse complementary error function. This results in a distribution
@@ -24,8 +24,8 @@ where the 1st percentile is at :math:`0`, and the 99th percentile is at :math:`2
 Next, truncate the distribution at :math:`0` and :math:`2400`.
 2. A stationary Poisson process with rate :math:`\lambda` for arrivals.
 
-Model Factors:
---------------
+Model Factors
+-------------
 * elo_mean: Mean of normal distribution for Elo rating.
 
     * Default: 1200.0
@@ -46,14 +46,14 @@ Model Factors:
 
     * Default: 150.0
 
-Responses:
-----------
+Responses
+---------
 * avg_diff: The average Elo difference between all pairs.
 
 * avg_wait_time: The average waiting time.
 
-References:
------------
+References
+----------
 Original author of this problem is Bryan Chong (March 15, 2015).
 
 
@@ -62,22 +62,22 @@ Original author of this problem is Bryan Chong (March 15, 2015).
 Optimization Problem: Minimize Average Elo Difference (CHESS-1)
 ===============================================================
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * allowable_diff
 
-Objectives:
------------
+Objectives
+----------
 Minimize the average Elo difference between all pairs of matched players.
 
-Constraints:
-------------
+Constraints
+-----------
 Maximum allowable difference is between 0 and 2400.
 
 The average waiting time is :math:`\leq \delta`.
 
-Problem Factors:
-----------------
+Problem Factors
+---------------
 * budget: Max # of replications for a solver to take.
 
   * Default: 1000
@@ -86,23 +86,23 @@ Problem Factors:
 
   * Default: 5.0
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 * N/A
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 * initial_solution: (150,)
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 First draw :math:`x` from a normal distribution with mean :math:`150` and standard
 deviation :math:`50`, then set :math:`x = \min(\max(x, 0), 2400)`.
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 Unknown
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 Unknown

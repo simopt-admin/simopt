@@ -1,8 +1,8 @@
 Model: Parameter Estimation (PARAMESTI)
 =======================================
 
-Description:
-------------
+Description
+-----------
 A model that simulates maximum likelihood estimation for the parameters of
 a two-dimensional gamma distribution.
 
@@ -24,12 +24,12 @@ and that
 is a consistent estimator of :math:`g(x)`.
 Observations are generated from the distribution specified by a given :math:`x_star`.
 
-Sources of Randomness:
-----------------------
+Sources of Randomness
+---------------------
 y is a 2-D vector that contributes randomness. Both elements of y are gamma random variables.
 
-Model Factors:
---------------
+Model Factors
+-------------
 * x_star: the unknown 2-D parameter that maximizes the expected log likelihood function.
 
     * Default: [2, 5]
@@ -38,52 +38,52 @@ Model Factors:
 
     * Default: [1, 1]
 
-Respones:
----------
+Respones
+--------
 * loglik: log likelihood of the pdf.
 
-References:
------------
+References
+----------
 This model is designed by Raghu Pasupathy (Virginia Tech) and Shane G. Henderson (Cornell) in 2007.
 
 
 Optimization Problem: Max Log Likelihood (ParamEstiMaxLogLik)
 =============================================================
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * x
 
-Objectives:
------------
+Objectives
+----------
 Minimize the log likelihood of a 2-D gamma random variable.
 
-Constraints:
-------------
+Constraints
+-----------
 x is in the square (0, 10) × (0, 10).
 
-Problem Factors:
-----------------
+Problem Factors
+---------------
 * budget: Maximum number of replications for a solver to take.
 
   * Default: 1000
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 N/A
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 * x: [1, 1]
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 Generate :math:`x` i.i.d. uniformly in the square (0, 10) × (0, 10).
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 x = [2, 5]
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 Known, but not evaluated.

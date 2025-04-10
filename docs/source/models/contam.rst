@@ -1,8 +1,8 @@
 Model: Contamination Control Problem (CONTAM)
 =============================================
 
-Description:
-------------
+Description
+-----------
 Consider a food supply chain consisting of :math:`n` stages. Pathogenic microorganisms
 and other poisonous elements can contaminate some fraction of the food supply at each 
 stage. Specifically, let the growth rate of contamination at stage :math:`i` of the
@@ -13,13 +13,13 @@ with associated prevention cost :math:`c_i`. Let the binary variable :math:`u_i`
 whether a prevention measure is executed at stage :math:`i`.
 
 
-Sources of Randomness:
-----------------------
+Sources of Randomness
+---------------------
 1. Contamination rate :math:`\Lambda_i ~ Beta(1, \frac{17}{3})` for :math:`i = 1, 2, ..., n`;
 2. Restoration rate :math:`\Gamma_i ~ Beta(1, \frac{3}{7})` for :math:`i = 1, 2, ..., n`;
 
-Model Factors:
---------------
+Model Factors
+-------------
 * contam_rate_alpha: Alpha parameter of beta distribution for growth rate of contamination at each stage.
 
     * Default: 1.0
@@ -52,13 +52,13 @@ Model Factors:
 
     * Default: (0, 0, 0, 0, 0)
 
-Responses:
-----------
+Responses
+---------
 * level: A list of contamination levels over time.
 
 
-References:
------------
+References
+----------
 This model is adapted from the article "Contamination control in food supply chain" [1].
 Prepared by Kaeyoung Shin and Raghu Pasupathy of Virginia Tech, 12/18/2010.
 
@@ -71,28 +71,28 @@ https://dl.acm.org/doi/abs/10.5555/2433508.2433840
 Optimization Problem: Minimize Prevention Costs (CONTAM-1)
 ==========================================================
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * prev_decision
 
-Objectives:
------------
+Objectives
+----------
 Minimize the (deterministic) total cost of prevention efforts (prev_cost * prev_decision).
 
 .. image:: _static/contam.PNG
   :alt: The CONTAM formulation has failed to display
   :width: 400
 
-Constraints:
-------------
+Constraints
+-----------
 Each element of `prev_decision` is binary. (See above.)
 
 The contaminated fraction :math:`X_i` at the stage :math:`i`
 should not exceed a pre-specified upper limit :math:`p_i` with 
 probability at least :math:`1 - \epsilon_i`. 
 
-Problem Factors:
-----------------
+Problem Factors
+---------------
 * budget: Max # of replications for a solver to take.
 
   * Default: 10000
@@ -109,48 +109,48 @@ Problem Factors:
 
   * Default: [0.1, 0.1, 0.1, 0.1, 0.1]
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 * N/A
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 * initial_solution: (1, 1, 1, 1, 1)
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 Generate a tuple of Bernoulli(0.5) random variables.
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 Unknown
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 Unknown
 
 
 Optimization Problem: ContaminationTotalCostCont (CONTAM-2)
 ===========================================================
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * prev_decision
 
-Objectives:
------------
+Objectives
+----------
 Minimize the (deterministic) total cost of prevention efforts (prev_cost * prev_decision).
 
-Constraints:
-------------
+Constraints
+-----------
 Each element of `prev_decision` in the interval [0, 1].
 
 The contaminated fraction :math:`X_i` at the stage :math:`i`
 should not exceed a pre-specified upper limit :math:`p_i` with 
 probability at least :math:`1 - \epsilon_i`. 
 
-Problem Factors:
-----------------  
+Problem Factors
+---------------
 * budget: Max # of replications for a solver to take.
 
   * Default: 10000
@@ -167,22 +167,22 @@ Problem Factors:
 
   * Default: [0.1, 0.1, 0.1, 0.1, 0.1]
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 * N/A
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 * initial_solution: (1, 1, 1, 1, 1)
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 Generate a tuple of Uniform(0, 1) random variables.
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 Unknown
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 Unknown

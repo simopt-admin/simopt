@@ -1,8 +1,8 @@
 Model: Hotel Revenue Management (HOTEL)
 =======================================
 
-Description:
-------------
+Description
+-----------
 Most of the revenue for a hotel comes from guests staying in its rooms. Assume a
 given hotel has only two rates: rack rate and discount rate, which pay :math:`p_f`
 and :math:`p_d` per night, respectively. Furthermore, let each different combination
@@ -89,12 +89,12 @@ at least one of the resources). For this small example, we have:
   :alt: The HOTEL matrix has failed to display
   :width: 300
 
-Sources of Randomness:
-----------------------
+Sources of Randomness
+---------------------
 1. Stationary Poisson process with rate :math:`\lambda_i` for guest arrivals for product :math:`i`.
 
-Model Factors:
---------------
+Model Factors
+-------------
 * num_products: Number of products: (rate, length of stay).
 
     * Default: 56
@@ -135,13 +135,13 @@ Model Factors:
 
     * Default: tuple of 56 100's
 
-Responses:
-----------
+Responses
+---------
 * revenue: Expected revenue.
 
 
-References:
------------
+References
+----------
 N/A
 
 
@@ -150,42 +150,42 @@ N/A
 Optimization Problem: Maximize Revenue (HOTEL-1)
 ================================================
 
-Decision Variables:
--------------------
+Decision Variables
+------------------
 * booking_limits
 
-Objectives:
------------
+Objectives
+----------
 Maximize the expected revenue.
 
-Constraints:
-------------
+Constraints
+-----------
 Lower bounded by 0 and upper bounded by the total number of rooms.
 
-Problem Factors:
-----------------  
+Problem Factors
+---------------
 * budget: Max # of replications for a solver to take.
 
   * Default: 10000
 
-Fixed Model Factors:
---------------------
+Fixed Model Factors
+-------------------
 * N/A
 
-Starting Solution: 
-------------------
+Starting Solution
+-----------------
 * initial_solution: Initial solution.
 
   * Default: tuple of 56 zeros
 
-Random Solutions: 
------------------
+Random Solutions
+----------------
 Let each :math:`b_i` (element in tuple) be distributed Uniformly :math:`(0, C)`.
 
-Optimal Solution:
------------------
+Optimal Solution
+----------------
 Unknown
 
-Optimal Objective Function Value:
----------------------------------
+Optimal Objective Function Value
+--------------------------------
 Unknown
