@@ -16,8 +16,15 @@ from pathlib import Path
 
 # -- Path setup --------------------------------------------------------------
 
-project_root = Path(__file__).resolve().parents[2]  # 2 folders up
-sys.path.insert(0, str(project_root))
+# Get the /src directory
+src_path = Path(__file__).resolve().parent
+# Use that to get the /docs directory and other /docs/* directories
+docs_path = src_path.parent
+template_path = docs_path / "_templates"
+static_path = docs_path / "_static"
+# Get the top level directory of the project and add it to the path
+project_path = docs_path.parent
+sys.path.insert(0, str(project_path))
 
 # -- Project information -----------------------------------------------------
 
@@ -58,7 +65,7 @@ napoleon_use_param = True
 napoleon_use_rtype = True
 napoleon_attr_annotations = True
 
-templates_path = ["_templates"]
+templates_path = [str(template_path)]
 
 # Be careful not to exclude important files
 exclude_patterns = [
@@ -73,7 +80,7 @@ exclude_patterns = [
 # -- HTML output -------------------------------------------------------------
 
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
+html_static_path = [str(static_path)]
 
 # LaTeX config (if using)
 latex_engine = "xelatex"

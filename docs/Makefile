@@ -1,9 +1,11 @@
 # Sphinx Makefile with catch-all support and apidocs generation
 
-SPHINXOPTS    ?=
+SPHINXOPTS    ?= -j auto # Use parallel build
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = _build
+TOPLEVEL      = ..
+IGNORED_DIRS  = $(TOPLEVEL)/dev_tools
 
 .PHONY: help clean apidocs Makefile
 
@@ -16,9 +18,8 @@ clean:
 	rm -rf "$(BUILDDIR)"/*
 
 # Generate .rst files from the simopt package
-# NOTE: need one for each module
 apidocs:
-	PYTHONPATH=.. sphinx-apidoc -o source ../simopt -f --module-first
+	sphinx-apidoc -f --module-first -o "$(SOURCEDIR)" "$(TOPLEVEL)" "$(IGNORED_DIRS)"
 
 # Catch-all: routes all other targets to sphinx-build -M
 %:
