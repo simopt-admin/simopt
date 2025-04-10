@@ -1,11 +1,5 @@
-Model Overview
+Models & Problems
 ==============
-
-This section provides a high-level overview of all the models available in SimOpt.
-Each model simulates a different class of system and is accompanied by full API documentation.
-
-Model Descriptions
-------------------
 
 .. toctree::
    :maxdepth: 1

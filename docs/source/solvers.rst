@@ -1,11 +1,5 @@
-Solver Overview
-===============
-
-This section provides high-level descriptions of each solver implemented in SimOpt.
-Each solver is described conceptually, with detailed API references available via the links.
-
-Solver Descriptions
--------------------
+Solvers
+=======
 
 .. toctree::
    :maxdepth: 1
