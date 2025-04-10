@@ -15,13 +15,17 @@ from typing import Literal
 import pandas as pd
 from numpy import inf
 
+import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import Model
-from simopt.directory import model_directory, solver_directory
 from simopt.experiment_base import EXPERIMENT_DIR, ProblemSolver, post_normalize
 from simopt.utils import resolve_file_path
 
 DATA_FARMING_DIR = EXPERIMENT_DIR / "data_farming"
+
+# Workaround for AutoAPI
+model_directory = directory.model_directory
+solver_directory = directory.solver_directory
 
 
 class DesignType(Enum):

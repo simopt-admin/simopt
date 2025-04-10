@@ -10,11 +10,7 @@ from tkinter.font import nametofont
 from typing import Literal
 
 from PIL import Image, ImageTk
-
-from simopt.directory import (
-    problem_unabbreviated_directory,
-    solver_unabbreviated_directory,
-)
+import simopt.directory as directory
 from simopt.experiment_base import (
     ProblemSolver,
     plot_area_scatterplots,
@@ -26,6 +22,8 @@ from simopt.experiment_base import (
 )
 from simopt.gui.toplevel_custom import Toplevel
 
+problem_unabbreviated_directory = directory.problem_unabbreviated_directory
+solver_unabbreviated_directory = directory.solver_unabbreviated_directory
 
 class PlotWindow(Toplevel):
     """Plot Window Page of the GUI.

@@ -8,8 +8,12 @@ import yaml
 # Append the parent directory (simopt package) to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from simopt.directory import problem_directory, solver_directory
+import simopt.directory as directory
 from simopt.experiment_base import ProblemSolver, post_normalize
+
+# Workaround for AutoAPI
+problem_directory = directory.problem_directory
+solver_directory = directory.solver_directory
 
 NUM_MACROREPS = 10
 NUM_POSTREPS = 100

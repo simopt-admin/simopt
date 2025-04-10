@@ -18,18 +18,20 @@ import numpy as np
 import pandas as pd
 
 import simopt.curve_utils as curve_utils
+import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
 from simopt.curve import (
     Curve,
     CurveType,
 )
-from simopt.directory import (
-    model_directory,
-    problem_directory,
-    solver_directory,
-)
 from simopt.utils import make_nonzero, resolve_file_path
+
+# Workaround for AutoAPI
+model_directory = directory.model_directory
+problem_directory = directory.problem_directory
+solver_directory = directory.solver_directory
+
 
 # Imports exclusively used when type checking
 # Prevents imports from being executed at runtime

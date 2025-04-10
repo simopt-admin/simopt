@@ -18,12 +18,7 @@ from PIL import Image, ImageTk
 
 from simopt.base import Problem, Solver
 from simopt.data_farming_base import DATA_FARMING_DIR
-from simopt.directory import (
-    problem_directory,
-    problem_unabbreviated_directory,
-    solver_directory,
-    solver_unabbreviated_directory,
-)
+import simopt.directory as directory
 from simopt.experiment_base import (
     ProblemSolver,
     ProblemsSolvers,
@@ -39,6 +34,11 @@ from simopt.experiment_base import (
 from simopt.gui.df_object import DFFactor, spec_dict_to_df_dict
 from simopt.gui.toplevel_custom import Toplevel
 
+# Workaround for AutoAPI
+problem_directory = directory.problem_directory
+solver_directory = directory.solver_directory
+problem_unabbreviated_directory = directory.problem_unabbreviated_directory
+solver_unabbreviated_directory = directory.solver_unabbreviated_directory
 
 class NewExperimentWindow(Toplevel):
     """New Experiment Window."""

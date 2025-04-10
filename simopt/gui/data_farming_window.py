@@ -2,6 +2,7 @@
 
 import ast
 import logging
+from re import A
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -10,15 +11,15 @@ from tkinter.font import nametofont
 import pandas as pd
 
 from simopt.data_farming_base import DATA_FARMING_DIR, DataFarmingExperiment
-from simopt.directory import (
-    model_directory,
-    model_unabbreviated_directory,
-)
+import simopt.directory as directory
 from simopt.experiment_base import (
     create_design,
 )
 from simopt.gui.toplevel_custom import Toplevel
 
+# Workaround for AutoAPI
+model_directory = directory.model_directory
+model_unabbreviated_directory = directory.model_unabbreviated_directory
 
 class DataFarmingWindow(Toplevel):
     """Class to create the data farming window."""
