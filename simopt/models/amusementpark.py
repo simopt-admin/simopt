@@ -608,20 +608,8 @@ class AmusementParkMinDepart(Problem):
             "queue_capacities": vector[:],
         }
 
+    @override
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """Convert a dictionary with factor keys to a vector of variables.
-
-        Parameters
-        ----------
-        factor_dict : dict
-            dictionary with factor keys and associated values
-
-        Returns:
-        -------
-        tuple
-            vector of values associated with decision variables
-
-        """
         return tuple(factor_dict["queue_capacities"])
 
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:

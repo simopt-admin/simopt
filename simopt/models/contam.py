@@ -497,19 +497,8 @@ class ContaminationTotalCostDisc(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"prev_decision": vector[:]}
 
+    @override
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """Convert a dictionary with factor keys to a vector of variables.
-
-        Arguments:
-        ---------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-
-        Returns:
-        -------
-        vector : tuple
-            vector of values associated with decision variables
-        """
         return tuple(factor_dict["prev_decision"])
 
     def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
@@ -896,19 +885,8 @@ class ContaminationTotalCostCont(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"prev_decision": vector[:]}
 
+    @override
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """Convert a dictionary with factor keys to a vector of variables.
-
-        Arguments:
-        ---------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-
-        Returns:
-        -------
-        vector : tuple
-            vector of values associated with decision variables
-        """
         return tuple(factor_dict["prev_decision"])
 
     def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
