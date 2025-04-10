@@ -541,19 +541,8 @@ class DualSourcingMinCost(Problem):
             factor_dict["order_level_reg"],
         )
 
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """Convert a dictionary with response keys to a vector of objectives.
-
-        Arguments:
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns:
-        -------
-        objectives : tuple
-            vector of objectives
-        """
         return (
             response_dict["average_ordering_cost"]
             + response_dict["average_penalty_cost"]

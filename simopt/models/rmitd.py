@@ -477,19 +477,8 @@ class RMITDMaxRevenue(Problem):
             *tuple(factor_dict["reservation_qtys"]),
         )
 
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """Convert a dictionary with response keys to a vector of objectives.
-
-        Arguments:
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns:
-        -------
-        objectives : tuple
-            vector of objectives
-        """
         return (response_dict["revenue"],)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:

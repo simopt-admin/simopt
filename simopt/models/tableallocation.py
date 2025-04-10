@@ -525,19 +525,8 @@ class TableAllocationMaxRev(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["num_tables"],)
 
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """Convert a dictionary with response keys to a vector of objectives.
-
-        Arguments:
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns:
-        -------
-        objectives : tuple
-            vector of objectives
-        """
         return (response_dict["total_revenue"],)
 
     def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:

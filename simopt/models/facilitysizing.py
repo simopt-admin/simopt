@@ -454,19 +454,8 @@ class FacilitySizingTotalCost(Problem):
         """
         return (np.nan * len(self.model.factors["capacity"]),)
 
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
-        """Convert a dictionary with response keys to a vector of objectives.
-
-        Arguments:
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns:
-        -------
-        objectives : tuple
-            vector of objectives
-        """
         return (0,)
 
     def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:  # noqa: ARG002
@@ -802,19 +791,8 @@ class FacilitySizingMaxService(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["capacity"])
 
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """Convert a dictionary with response keys to a vector of objectives.
-
-        Arguments:
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns:
-        -------
-        objectives : tuple
-            vector of objectives
-        """
         return (1 - response_dict["stockout_flag"],)
 
     def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:  # noqa: ARG002

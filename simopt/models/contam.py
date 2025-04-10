@@ -522,19 +522,8 @@ class ContaminationTotalCostDisc(Problem):
         """
         return (np.nan * len(self.model.factors["prev_decision"]),)
 
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
-        """Convert a dictionary with response keys to a vector of objectives.
-
-        Arguments:
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns:
-        -------
-        objectives : tuple
-            vector of objectives
-        """
         return (0,)
 
     def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:  # noqa: ARG002
@@ -910,19 +899,8 @@ class ContaminationTotalCostCont(Problem):
         """
         return (np.nan * len(self.model.factors["prev_decision"]),)
 
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
-        """Convert a dictionary with response keys to a vector of objectives.
-
-        Arguments:
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns:
-        -------
-        objectives : tuple
-            vector of objectives
-        """
         return (0,)
 
     def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:  # noqa: ARG002

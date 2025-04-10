@@ -485,19 +485,8 @@ class MM1MinMeanSojournTime(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["mu"],)
 
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """Convert a dictionary with response keys to a vector of objectives.
-
-        Arguments:
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns:
-        -------
-        objectives : tuple
-            vector of objectives
-        """
         return (response_dict["avg_sojourn_time"],)
 
     def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
