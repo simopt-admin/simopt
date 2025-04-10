@@ -13,9 +13,26 @@ After visiting each attraction, a visitor leaves the park with probability 0.2.
 Otherwise, the visitor goes to another attraction according to the transition
 matrix:
 
-.. image:: _static/amusementpark.png
-  :alt: The transition matrix has failed to display
-  :width: 700
++---+-----+-----+-----+-----+-----+-----+-----+
+|   |  1  |  2  |  3  |  4  |  5  |  6  |  7  |
++===+=====+=====+=====+=====+=====+=====+=====+
+| 1 | 0.1 | 0.1 | 0.1 | 0.1 | 0.2 | 0.2 | 0.0 |
++---+-----+-----+-----+-----+-----+-----+-----+
+| 2 | 0.1 | 0.1 | 0.1 | 0.1 | 0.2 | 0.2 | 0.0 |
++---+-----+-----+-----+-----+-----+-----+-----+
+| 3 | 0.1 | 0.1 | 0.1 | 0.1 | 0.2 | 0.2 | 0.0 |
++---+-----+-----+-----+-----+-----+-----+-----+
+| 4 | 0.1 | 0.1 | 0.1 | 0.1 | 0.2 | 0.2 | 0.0 |
++---+-----+-----+-----+-----+-----+-----+-----+
+| 5 | 0.1 | 0.1 | 0.1 | 0.1 | 0.0 | 0.1 | 0.3 |
++---+-----+-----+-----+-----+-----+-----+-----+
+| 6 | 0.1 | 0.1 | 0.1 | 0.1 | 0.1 | 0.0 | 0.3 |
++---+-----+-----+-----+-----+-----+-----+-----+
+| 7 | 0.1 | 0.1 | 0.1 | 0.1 | 0.1 | 0.1 | 0.2 |
++---+-----+-----+-----+-----+-----+-----+-----+
+
+* **Rows** represent the ride a tourist is currently at (i.e., the ride they just completed).
+* **Columns** represent the next ride the tourist chooses to go to.
 
 The time that a visitor spends at an attraction follows an Erlang
 distribution with shape parameter :math:`k = 2`` and rate :math:`\lambda = 9`.
@@ -89,9 +106,28 @@ Model Factors:
 
     * Default:
 
-    .. image:: _static/amusementpark.png
-      :alt: The transition matrix has failed to display
-      :width: 700
+        +---+-----+-----+-----+-----+-----+-----+-----+
+        |   |  1  |  2  |  3  |  4  |  5  |  6  |  7  |
+        +===+=====+=====+=====+=====+=====+=====+=====+
+        | 1 | 0.1 | 0.1 | 0.1 | 0.1 | 0.2 | 0.2 | 0.0 |
+        +---+-----+-----+-----+-----+-----+-----+-----+
+        | 2 | 0.1 | 0.1 | 0.1 | 0.1 | 0.2 | 0.2 | 0.0 |
+        +---+-----+-----+-----+-----+-----+-----+-----+
+        | 3 | 0.1 | 0.1 | 0.1 | 0.1 | 0.2 | 0.2 | 0.0 |
+        +---+-----+-----+-----+-----+-----+-----+-----+
+        | 4 | 0.1 | 0.1 | 0.1 | 0.1 | 0.2 | 0.2 | 0.0 |
+        +---+-----+-----+-----+-----+-----+-----+-----+
+        | 5 | 0.1 | 0.1 | 0.1 | 0.1 | 0.0 | 0.1 | 0.3 |
+        +---+-----+-----+-----+-----+-----+-----+-----+
+        | 6 | 0.1 | 0.1 | 0.1 | 0.1 | 0.1 | 0.0 | 0.3 |
+        +---+-----+-----+-----+-----+-----+-----+-----+
+        | 7 | 0.1 | 0.1 | 0.1 | 0.1 | 0.1 | 0.1 | 0.2 |
+        +---+-----+-----+-----+-----+-----+-----+-----+
+
+    * **Rows** represent the ride a tourist is currently at (i.e., the ride they just completed).
+    * **Columns** represent the next ride the tourist chooses to go to.
+    * The probabilities in each row do not sum to 1; the remainder is the probability that the tourist leaves the park.
+
 
 Responses:
 ----------
