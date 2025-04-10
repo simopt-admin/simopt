@@ -1,6 +1,11 @@
 simopt.solvers package
 ======================
 
+.. automodule:: simopt.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Submodules
 ----------
 
@@ -56,14 +61,6 @@ simopt.solvers.strong module
 ----------------------------
 
 .. automodule:: simopt.solvers.strong
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: simopt.solvers
    :members:
    :show-inheritance:
    :undoc-members:

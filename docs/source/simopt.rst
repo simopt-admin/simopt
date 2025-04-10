@@ -1,6 +1,11 @@
 simopt package
 ==============
 
+.. automodule:: simopt
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Subpackages
 -----------
 
@@ -73,14 +78,6 @@ simopt.utils module
 -------------------
 
 .. automodule:: simopt.utils
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: simopt
    :members:
    :show-inheritance:
    :undoc-members:

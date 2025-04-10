@@ -1,6 +1,11 @@
 simopt.models package
 =====================
 
+.. automodule:: simopt.models
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Submodules
 ----------
 
@@ -144,14 +149,6 @@ simopt.models.tableallocation module
 ------------------------------------
 
 .. automodule:: simopt.models.tableallocation
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: simopt.models
    :members:
    :show-inheritance:
    :undoc-members:

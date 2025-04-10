@@ -17,7 +17,7 @@ clean:
 
 # Generate .rst files from the simopt package
 apidocs:
-	sphinx-apidoc -o source ../simopt -f
+	sphinx-apidoc -o source ../simopt -f --module-first
 
 # Catch-all: routes all other targets to sphinx-build -M
 %:
