@@ -54,19 +54,14 @@ def override(obj: T) -> T:
 def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> float:
     """Return a non-zero value to avoid division by zero.
 
-    Arguments:
-    ---------
-    value : float
-        The value to check.
-    name : str
-        The name of the variable.
-    epsilon : float, optional (default=1e-15)
-        The value to use if the original value is zero.
+    Args:
+        value (float): The value to check.
+        name (str): The name of the variable.
+        epsilon (float, optional): The value to use if the original value is zero.
+            Default is 1e-15.
 
     Returns:
-    -------
-    float
-        The original value if it's not close to zero, otherwise a non-zero value.
+        float: The original value if it's not close to zero, otherwise a non-zero value.
     """
     # Delayed import to avoid lagging when importing the module
     import numpy as np

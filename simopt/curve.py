@@ -31,25 +31,7 @@ class CurveType(Enum):
 
 
 class Curve:
-    """Base class for all curves.
-
-    Attributes:
-    ----------
-    x_vals : list [float]
-        Values of horizontal components.
-    y_vals : list [float]
-        Values of vertical components.
-    n_points : int
-        Number of values in x- and y- vectors.
-
-    Parameters
-    ----------
-    x_vals : list [float]
-        Values of horizontal components.
-    y_vals : list [float]
-        Values of vertical components.
-
-    """
+    """Base class for all curves."""
 
     @property
     def x_vals(self) -> tuple[float, ...]:
@@ -71,17 +53,14 @@ class Curve:
     ) -> None:
         """Initialize a curve with x- and y-values.
 
-        Parameters
-        ----------
-        x_vals : Sequence[int | float]
-            Values of horizontal components.
-        y_vals : Sequence[int | float]
-            Values of vertical components.
+        Args:
+            x_vals (Sequence[int | float]): Values of horizontal components.
+            y_vals (Sequence[int | float]): Values of vertical components.
 
         Raises:
-        ------
-        TypeError
-        ValueError
+            TypeError: If x_vals or y_vals are not numeric.
+            ValueError: If x_vals and y_vals have different lengths or if they contain
+                non-numeric values.
         """
         try:
             # Ensure x_vals and y_vals have the same length before conversion
@@ -106,20 +85,14 @@ class Curve:
     def lookup(self, x_val: float) -> float:
         """Lookup the y-value of the curve at an intermediate x-value.
 
-        Parameters
-        ----------
-        x_val : float
-            X-value at which to lookup the y-value.
+        Args:
+            x_val (float): X-value to lookup.
 
         Returns:
-        -------
-        float
-            Y-value corresponding to x, or NaN if x_val is out of range.
+            float: Y-value corresponding to x, or NaN if x_val is out of range.
 
         Raises:
-        ------
-        TypeError
-            If x_val is not numeric.
+            TypeError: If x_val is not numeric.
         """
         from bisect import bisect_right
 
@@ -138,20 +111,14 @@ class Curve:
     def compute_crossing_time(self, threshold: float) -> float:
         """Compute the first time at which a curve drops below a given threshold.
 
-        Parameters
-        ----------
-        threshold : float
-            Value for which to find first crossing time.
+        Args:
+            threshold (float): Value for which to find the first crossing time.
 
         Returns:
-        -------
-        float
-            First time at which a curve drops below threshold.
+            float: First time at which the curve drops below the threshold.
 
         Raises:
-        ------
-        TypeError
-            If threshold is not numeric.
+            TypeError: If threshold is not numeric.
         """
         from bisect import bisect_right
 
@@ -173,9 +140,7 @@ class Curve:
         """Compute the area under a curve.
 
         Returns:
-        -------
-        float
-            Area under the curve.
+            float: Area under the curve.
         """
         x_diffs = (x_next - x for x, x_next in zip(self.x_vals[:-1], self.x_vals[1:]))
         area_contributions = (y * dx for y, dx in zip(self.y_vals[:-1], x_diffs))
@@ -185,20 +150,14 @@ class Curve:
     def curve_to_mesh(self, mesh: Iterable[float]) -> Curve:
         """Create a curve defined at equally spaced x values.
 
-        Parameters
-        ----------
-        mesh : Iterable[float]
-            Collection of uniformly spaced x-values.
+        Args:
+            mesh (Iterable[float]): Collection of uniformly spaced x-values.
 
         Returns:
-        -------
-        ``experiment_base.Curve``
-            Curve with equally spaced x-values.
+            Curve: A curve with equally spaced x-values.
 
         Raises:
-        ------
-        TypeError
-            If mesh is not an iterable of numeric values.
+            TypeError: If mesh is not an iterable of numeric values.
         """
         try:
             # Ensure mesh contains valid numeric values
@@ -218,10 +177,7 @@ class Curve:
         """Create a curve with duplicate x- and y-values to indicate steps.
 
         Returns:
-        -------
-        ``experiment_base.Curve``
-            Curve with duplicate x- and y-values.
-
+            Curve: A curve with duplicate x- and y-values.
         """
         from itertools import chain, repeat
 
@@ -241,22 +197,15 @@ class Curve:
     ) -> Line2D:
         """Plot a curve.
 
-        Parameters
-        ----------
-        color_str : str, default="C0"
-            String indicating line color, e.g., "C0", "C1", etc.
-        curve_type : CurveType, default=CurveType.REGULAR
-            Type of line: REGULAR (solid) or CONF_BOUND (dashed).
+        Args:
+            color_str (str): String indicating line color, e.g., "C0", "C1", etc.
+            curve_type (CurveType): Type of line.
 
         Returns:
-        -------
-        matplotlib.lines.Line2D
-            Curve handle, to use when creating legends.
+            Line2D: Curve handle, useful when creating legends.
 
         Raises:
-        ------
-        ValueError
-            If an invalid curve type is provided.
+            ValueError: If an invalid curve type is provided.
         """
         from matplotlib.pyplot import step
 
