@@ -43,7 +43,7 @@ Respones:
 * loglik: log likelihood of the pdf.
 
 References:
-===========
+-----------
 This model is designed by Raghu Pasupathy (Virginia Tech) and Shane G. Henderson (Cornell) in 2007.
 
 
