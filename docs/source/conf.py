@@ -20,6 +20,7 @@ from pathlib import Path
 src_path = Path(__file__).resolve().parent
 # Use that to get the /docs directory and other /docs/* directories
 docs_path = src_path.parent
+build_path = docs_path / "_build"
 template_path = docs_path / "_templates"
 static_path = docs_path / "_static"
 # Get the top level directory of the project and add it to the path
@@ -39,17 +40,18 @@ master_doc = "index"
 
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",  # Google/Numpy-style docstrings
+    "autoapi.extension",  # main AutoAPI extension
 ]
 
-autosummary_generate = True
-autodoc_typehints = "description"
+autoapi_type = "python"
+autoapi_dirs = [str(project_path / "simopt")]
 
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
-}
+# Optional configs
+autoapi_keep_files = False  # Don't keep the generated .rst files
+autoapi_add_toctree_entry = True  # Automatically adds API TOC
+autoapi_python_class_content = "both"  # Include docstring from __init__ and class-level
+autoapi_options = ["members", "undoc-members", "show-inheritance"]
 
 # Napoleon settings
 napoleon_google_docstring = True

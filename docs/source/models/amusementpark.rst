@@ -13,7 +13,7 @@ After visiting each attraction, a visitor leaves the park with probability 0.2.
 Otherwise, the visitor goes to another attraction according to the transition
 matrix:
 
-.. image:: amusementpark.png
+.. image:: _static/amusementpark.png
   :alt: The transition matrix has failed to display
   :width: 700
 
@@ -47,6 +47,7 @@ Alternatively, the pdf can be expressed as
 where :math:`\beta` is the scale parameter, which is the reciprocal of the rate parameter.
 
 * Note: In this model, Erlang variates are generated through the gamma distribution with the scale (:math:`\beta:`) parameter set to 1/9.
+
 Accordingly, the reciprocal of desired rate values should be used in the erlang_scale parameter.
 
 
@@ -87,7 +88,8 @@ Model Factors:
 * transition_probabilities: The transition matrix that describes the probability of a visitor visiting each attraction after their current attraction.
 
     * Default:
-    .. image:: amusementpark.png
+
+    .. image:: _static/amusementpark.png
       :alt: The transition matrix has failed to display
       :width: 700
 

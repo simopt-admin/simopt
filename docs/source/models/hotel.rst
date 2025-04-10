@@ -70,7 +70,7 @@ If the booking limits for each product are :math:`b_1 = 10`, :math:`b_2 = 8`, :m
 :math:`b_5 = 1` and the following requests are received, the booking limits would be updated
 in the following way as decisions to accept or reject a given order are made:
 
-.. image:: hotel.PNG
+.. image:: _static/hotel.PNG
   :alt: The HOTEL table has failed to display
   :width: 800
 
@@ -85,7 +85,7 @@ otherwise. Then, if we accept a request for product :math:`i`, we must update th
 limits of all products :math:`j` such that :math:`A_j^T \cdot A_i \geq 1` (they share
 at least one of the resources). For this small example, we have:
 
-.. image:: hotel2.PNG
+.. image:: _static/hotel2.PNG
   :alt: The HOTEL matrix has failed to display
   :width: 300
 

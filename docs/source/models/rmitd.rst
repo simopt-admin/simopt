@@ -24,7 +24,7 @@ it has mean :math:`kθ = 1` and standard deviation :math:`{\sqrt{k}}θ = 1/ {\sq
 
 Sources of Randomness:
 ----------------------
-Two sources of randomness are used to generate the :math:`X`s and :math:`Y`s that
+Two sources of randomness are used to generate the :math:`X`'s and :math:`Y`'s that 
 form demands.
 
 Model Factors:

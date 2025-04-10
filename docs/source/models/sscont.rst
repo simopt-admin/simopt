@@ -25,7 +25,7 @@ If multiple solutions are needed, use :math:`s âˆ¼Uniform(700,1000)`, :math:`S â
 
 *Optimal Solution:* Unknown
 
-.. image:: sscont.png
+.. image:: _static/sscont.png
   :alt: The example table has failed to display
   :width: 800
 

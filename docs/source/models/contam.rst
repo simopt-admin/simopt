@@ -79,7 +79,7 @@ Objectives:
 -----------
 Minimize the (deterministic) total cost of prevention efforts (prev_cost * prev_decision).
 
-.. image:: contam.PNG
+.. image:: _static/contam.PNG
   :alt: The CONTAM formulation has failed to display
   :width: 400
 

@@ -19,3 +19,4 @@ dependencies:
   - ruff
   - pip:
     - mrg32k3a
+    - sphinx-autoapi

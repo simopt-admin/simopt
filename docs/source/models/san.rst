@@ -10,7 +10,7 @@ large-scale projects.
 
 An example SAN with 13 arcs is given in the following figure:
 
-.. image:: san.PNG
+.. image:: _static/san.PNG
   :alt: The SAN diagram has failed to display
   :width: 500
 
