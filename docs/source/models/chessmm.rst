@@ -53,7 +53,7 @@ Responses:
 * avg_wait_time: The average waiting time.
 
 References:
-===========
+-----------
 Original author of this problem is Bryan Chong (March 15, 2015).
 
 

@@ -40,7 +40,7 @@ Respones:
 
 
 References:
-===========
+-----------
 This example is adapted from Cheng, R and Kleijnen,J.(1999). Improved Design of Queueing Simulation Experience with Highly Heteroscedastic Responses. Operations Research, v. 47, n. 5, pp. 762-777 (https://pubsonline.informs.org/doi/abs/10.1287/opre.47.5.762)
 
 

@@ -59,7 +59,7 @@ Solver Factors:
 
 
 References:
-===========
+-----------
 This solver is adapted from the article Russell R. Barton and John S. Ivey, Jr., (1996).
 Nelder-Mead Simplex Modifications for Simulation Optimization.
 *Management Science*, 42(7):954-973.

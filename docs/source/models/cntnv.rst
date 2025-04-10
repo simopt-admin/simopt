@@ -51,7 +51,7 @@ Responses:
 * Profit: The daily profit; can be negative if a loss is incurred.
 
 References: 
-===========
+-----------
 
 Evan L. Porteus. Stochastic inventory theory. In D. P. Heyman and M. J. Sobel, editors,
 Stochastic Models, volume 2 of Handbooks in Operations Research and Management Science,

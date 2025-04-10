@@ -104,7 +104,7 @@ Responses:
 * attraction_utilization_percentages: The percent utilizations for each attraction.
 
 References:
-===========
+-----------
 This model is adapted from the article:
 Vill’en-Altamirano, J. (2009). Restart Simulation of Networks of Queues with
 Erlang Service Times. *Proceedings of the 2009 Winter Simulation Conference.*

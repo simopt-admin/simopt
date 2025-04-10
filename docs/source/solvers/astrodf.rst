@@ -76,7 +76,7 @@ Solver Factors:
 
 
 References:
-===========
+-----------
 This solver is adapted from the article Ha, Y., Shashaani, S., and Tran-Dinh, Q. (2021).
 Improved Complexity Of Trust-Region Optimization For Zeroth-Order Stochastic Oracles with Adaptive Sampling
 *Proceedings of 2021 Winter Simulation Conference*, doi: 10.1109/WSC52266.2021.9715529.

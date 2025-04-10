@@ -67,5 +67,5 @@ Solver Factors:
 
 
 References:
-===========
+-----------
 This solver is adapted from the article Kingma, D. P., & Ba, J. (2014). Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980.

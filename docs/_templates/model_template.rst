@@ -41,7 +41,7 @@ Responses:
 
 
 References:
-===========
+-----------
 This model is adapted from the article <article name with full citation + hyperlink to journal/arxiv page> 
 
 

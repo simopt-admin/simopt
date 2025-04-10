@@ -72,7 +72,7 @@ Respones:
 
 
 References:
-===========
+-----------
 This model is adapted from the article Mahajan, S., & van Ryzin, G. (2001).
 Stocking Retail Assortments under Dynamic Consumer Substitution.
 *Operations Research*, 49(3), 334-351.

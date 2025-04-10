@@ -56,7 +56,7 @@ Responses:
 
 
 References:
-===========
+-----------
 Barton, R. R., & Meckesheimer, M. (2006). Metamodel-Based Simulation Optimization.
 S.G. Henderson and B.L. Nelson (Eds.), Handbook in OR & MS, Vol. 13.
 

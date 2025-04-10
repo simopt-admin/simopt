@@ -38,5 +38,5 @@ Solver Factors:
 
 
 References:
-===========
+-----------
 This solver is adapted from the article <article name with full citation + hyperlink to journal/arxiv page>

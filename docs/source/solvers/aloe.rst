@@ -71,5 +71,5 @@ Solver Factors:
 
 
 References:
-===========
+-----------
 This solver is adapted from the article Jin, B., Scheinberg, K., & Xie, M. (2021). High probability complexity bounds for line search based on stochastic oracles. Advances in Neural Information Processing Systems, 34, 9193-9203.

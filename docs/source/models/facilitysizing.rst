@@ -43,7 +43,7 @@ Respones:
 
 
 References:
-===========
+-----------
 This model is adapted from the article Rengarajan, T., & Morton, D.P. (2009). Estimating the Efficient Frontier of a Probabilistic Bicriteria Model. Proceedings of the 2009 Winter Simulation Conference. `(https://www.informs-sim.org/wsc09papers/048.pdf)`
 
 

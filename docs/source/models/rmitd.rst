@@ -68,7 +68,7 @@ Responses:
 * Revenue: Total revenue of given model
 
 References:
-===========
+-----------
 This example is adapted (almost verbatim) from test problem 2 by Prof. J.M. Harrison for class OIT 603
 at Stanford University. (https://www.gsb.stanford.edu/faculty-research/faculty/j-michael-harrison) 
 

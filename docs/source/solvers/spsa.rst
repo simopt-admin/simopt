@@ -60,6 +60,6 @@ Solver Factors:
     * Default: 0.1
 
 References:
-===========
+-----------
 This solver is adapted from the article Spall, J. C. (1998). Implementation of simultaneous perturbation algorithm for stochastic optimization. IEEE Transactions on Aerospace and Electronic Systems 34(3):817-823.
 (https://ieeexplore.ieee.org/document/705889)

@@ -39,7 +39,7 @@ Responses:
 
 
 References:
-===========
+-----------
 This model is adapted from Avramidis, A.N., Wilson, J.R. (1996).
 Integrated variance reduction strategies for simulation. *Operations Research* 44, 327-346.
 (https://pubsonline.informs.org/doi/abs/10.1287/opre.44.2.327)

@@ -58,7 +58,7 @@ Responses:
 * service_rate: Fraction of customer arrivals that are seated.
 
 References:
-===========
+-----------
 Original author of this problem is Bryan Chong (March 10, 2015).
 
 

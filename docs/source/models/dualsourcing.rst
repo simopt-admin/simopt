@@ -88,7 +88,7 @@ Responses:
 * average_ordering_cost: The average ordering cost over the time period.
 
 References:
-===========
+-----------
 This model is adapted from the article `Veeraraghavan, S and Scheller-Wolf, A. Now or Later: 
 A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations Research (4), 850- 864. 
 <https://repository.upenn.edu/oid_papers/121/>`_

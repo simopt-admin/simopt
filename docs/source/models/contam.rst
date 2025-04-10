@@ -58,7 +58,7 @@ Responses:
 
 
 References:
-===========
+-----------
 This model is adapted from the article "Contamination control in food supply chain" [1].
 Prepared by Kaeyoung Shin and Raghu Pasupathy of Virginia Tech, 12/18/2010.
 

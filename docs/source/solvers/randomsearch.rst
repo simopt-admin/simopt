@@ -31,7 +31,7 @@ Solver Factors:
 
 
 References:
-===========
+-----------
 This solver is adapted from the article Chia, Y.L. and Glynn, P.W., (2013). 
 Limit Theorems for Simulation-Based Optimization via Random Search. 
 *ACM Transactions on Modeling and Computer Simulation (TOMACS)*, 23(3), pp.1-18.
