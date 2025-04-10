@@ -9,61 +9,61 @@ simopt.solvers.adam module
 
 .. automodule:: simopt.solvers.adam
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 simopt.solvers.aloe module
 --------------------------
 
 .. automodule:: simopt.solvers.aloe
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 simopt.solvers.astrodf module
 -----------------------------
 
 .. automodule:: simopt.solvers.astrodf
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 simopt.solvers.neldmd module
 ----------------------------
 
 .. automodule:: simopt.solvers.neldmd
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 simopt.solvers.randomsearch module
 ----------------------------------
 
 .. automodule:: simopt.solvers.randomsearch
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 simopt.solvers.spsa module
 --------------------------
 
 .. automodule:: simopt.solvers.spsa
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 simopt.solvers.strong module
 ----------------------------
 
 .. automodule:: simopt.solvers.strong
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: simopt.solvers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

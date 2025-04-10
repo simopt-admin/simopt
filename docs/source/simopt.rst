@@ -18,45 +18,69 @@ simopt.GUI module
 
 .. automodule:: simopt.GUI
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 simopt.base module
 ------------------
 
 .. automodule:: simopt.base
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
+
+simopt.curve module
+-------------------
+
+.. automodule:: simopt.curve
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+simopt.curve\_utils module
+--------------------------
+
+.. automodule:: simopt.curve_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 simopt.data\_farming\_base module
 ---------------------------------
 
 .. automodule:: simopt.data_farming_base
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 simopt.directory module
 -----------------------
 
 .. automodule:: simopt.directory
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 simopt.experiment\_base module
 ------------------------------
 
 .. automodule:: simopt.experiment_base
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
+
+simopt.utils module
+-------------------
+
+.. automodule:: simopt.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: simopt
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
