@@ -549,19 +549,8 @@ class NetworkMinTotalCost(Problem):
             model=Network,
         )
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """Convert a vector of variables to a dictionary with factor keys.
-
-        Arguments:
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns:
-        -------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-        """
         return {"process_prob": vector[:]}
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:

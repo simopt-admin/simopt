@@ -493,19 +493,8 @@ class ContaminationTotalCostDisc(Problem):
     def _check_upper_thres(self) -> bool:
         return len(self.factors["upper_thres"]) == self.dim
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """Convert a vector of variables to a dictionary with factor keys.
-
-        Arguments:
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns:
-        -------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-        """
         return {"prev_decision": vector[:]}
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
@@ -903,19 +892,8 @@ class ContaminationTotalCostCont(Problem):
     #         raise ValueError(error_msg)
     #     return True
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """Convert a vector of variables to a dictionary with factor keys.
-
-        Arguments:
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns:
-        -------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-        """
         return {"prev_decision": vector[:]}
 
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:

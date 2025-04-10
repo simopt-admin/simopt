@@ -463,19 +463,8 @@ class RMITDMaxRevenue(Problem):
             model=RMITD,
         )
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """Convert a vector of variables to a dictionary with factor keys.
-
-        Arguments:
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns:
-        -------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-        """
         return {
             "initial_inventory": vector[0],
             "reservation_qtys": list(vector[0:]),

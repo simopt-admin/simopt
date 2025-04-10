@@ -527,19 +527,8 @@ class DualSourcingMinCost(Problem):
             model=DualSourcing,
         )
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """Convert a vector of variables to a dictionary with factor keys.
-
-        Arguments:
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns:
-        -------
-        factor_dict : dict
-            dictionary with factor keys and associated values
-        """
         return {
             "order_level_exp": vector[0],
             "order_level_reg": vector[1],

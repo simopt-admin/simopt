@@ -532,19 +532,8 @@ class IronOreMaxRev(Problem):
             model=IronOre,
         )
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """Convert a vector of variables to a dictionary with factor keys.
-
-        Arguments:
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns:
-        -------
-        factor_dict : dict
-            dictionary with factor keys and associated values
-        """
         return {
             "price_prod": vector[0],
             "inven_stop": vector[1],
@@ -841,19 +830,8 @@ class IronOreMaxRevCnt(Problem):
             model=IronOre,
         )
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """Convert a vector of variables to a dictionary with factor keys.
-
-        Arguments:
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns:
-        -------
-        factor_dict : dict
-            dictionary with factor keys and associated values
-        """
         return {
             "price_prod": vector[0],
             "price_stop": vector[1],

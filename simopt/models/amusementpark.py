@@ -33,31 +33,6 @@ class AmusementPark(Model):
     arrival rate, a next attraction transition matrix, and attraction
     durations based on an Erlang distribution. Returns the total number
     and percent of tourists to leave the park due to full queues.
-
-    Parameters
-    ----------
-    name : str
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Arguments:
-    ---------
-    fixed_factors : dict
-        fixed_factors of the simulation model
-
-    See Also:
-    --------
-    base.Model
-
     """
 
     @classproperty
@@ -304,22 +279,17 @@ class AmusementPark(Model):
         ) -> int:
             """Select a single element from a population based on weights.
 
-            Designed to be faster than random's choices() when only one
-            element is needed.
+            Designed to be faster than `random.choices()` when only one element
+            is needed.
 
-            Parameters
-            ----------
-            population : list
-                The population to select from.
-            weights : list
-                The weights for each element in the population.
-            rng : MRG32k3a
-                The random number generator to use for selection.
+            Args:
+                population (Sequence[int]): The population to select from.
+                weights (Sequence[float]): The weights for each element in the
+                    population.
+                rng (MRG32k3a): The random number generator to use for selection.
 
             Returns:
-            -------
-            int
-                The selected element from the population.
+                int: The selected element from the population.
             """
             # Calculate cumulative weights
             cum_weights = list(itertools.accumulate(weights))
@@ -332,17 +302,13 @@ class AmusementPark(Model):
         def set_completion(i: int, new_time: float) -> None:
             """Set the completion time for an attraction.
 
-            Update the minimum completion time and index if necessary.
-            This function doesn't offer much (if any) performance gain
-            with small numbers of attractions, but with larger numbers
-            it is significantly faster".
+            Updates the minimum completion time and index if necessary.
+            This function doesn't offer much (if any) performance gain with small
+            numbers of attractions, but with larger numbers it is significantly faster.
 
-            Parameters
-            ----------
-            i : int
-                The index of the attraction
-            new_time : float
-                The new completion time for the attraction
+            Args:
+                i (int): The index of the attraction.
+                new_time (float): The new completion time for the attraction.
             """
             nonlocal min_completion_time, min_completion_index
             completion_times[i] = new_time
@@ -510,65 +476,8 @@ class AmusementPark(Model):
         return responses, gradients
 
 
-"""
-Summary
--------
-Minimize the total departed tourists.
-"""
-
-
 class AmusementParkMinDepart(Problem):
-    """Class to make amusement park simulation-optimization problems.
-
-    Attributes:
-    ----------
-    name : str
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : str
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : str
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : tuple
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : base.Model
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : [list]  [rng.mrg32k3a.MRG32k3a]
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-
-    See Also:
-    --------
-    base.Problem
-
-    """
+    """Class to make amusement park simulation-optimization problems."""
 
     @classproperty
     @override
@@ -679,15 +588,11 @@ class AmusementParkMinDepart(Problem):
     ) -> None:
         """Initialize the Amusement Park Minimize Departures Problem.
 
-        Parameters
-        ----------
-        name : str
-            user-specified name of problem
-        fixed_factors : dict
-            dictionary of user-specified problem factors
-        model_fixed_factors : dict
-            subset of user-specified non-decision factors to pass through to the model
-
+        Args:
+            name (str): User-specified name of the problem.
+            fixed_factors (dict | None): Dictionary of user-specified problem factors.
+            model_fixed_factors (dict | None): Subset of user-specified non-decision
+                factors to pass through to the model.
         """
         # Let the base class handle default arguments.
         super().__init__(
@@ -697,20 +602,8 @@ class AmusementParkMinDepart(Problem):
             model=AmusementPark,
         )
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict[str, tuple]:
-        """Convert a vector of variables to a dictionary with factor keys.
-
-        Parameters
-        ----------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns:
-        -------
-        dict[str, tuple]
-            dictionary with factor keys and associated values
-
-        """
         return {
             "queue_capacities": vector[:],
         }
