@@ -28,7 +28,7 @@ release = "1.1.1"
 
 # -- General configuration ---------------------------------------------------
 
-master_doc = "source/index"
+master_doc = "index"
 
 extensions = [
     "sphinx.ext.autodoc",
