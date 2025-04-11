@@ -89,13 +89,13 @@ Problem Factors
 ^^^^^^^^^^^^^^^
 
 * budget: Max # of replications for a solver to take.
-  * Default: 10000
+    * Default: 10000
 * prev_cost: Cost of prevention in each stage.
-  * Default: [1, 1, 1, 1, 1]
+    * Default: [1, 1, 1, 1, 1]
 * error_prob: Allowable error probability in each stage.
-  * Default: [0.2, 0.2, 0.2, 0.2, 0.2]
+    * Default: [0.2, 0.2, 0.2, 0.2, 0.2]
 * upper_thres: Upper limit of amount of contamination in each stage.
-  * Default: [0.1, 0.1, 0.1, 0.1, 0.1]
+    * Default: [0.1, 0.1, 0.1, 0.1, 0.1]
 
 Fixed Model Factors
 ^^^^^^^^^^^^^^^^^^^
@@ -148,13 +148,13 @@ Problem Factors
 ^^^^^^^^^^^^^^^
 
 * budget: Max # of replications for a solver to take.
-  * Default: 10000
+    * Default: 10000
 * prev_cost: Cost of prevention in each stage.
-  * Default: [1, 1, 1, 1, 1]
+    * Default: [1, 1, 1, 1, 1]
 * error_prob: Allowable error probability in each stage.
-  * Default: [0.2, 0.2, 0.2, 0.2, 0.2]
+    * Default: [0.2, 0.2, 0.2, 0.2, 0.2]
 * upper_thres: Upper limit of amount of contamination in each stage.
-  * Default: [0.1, 0.1, 0.1, 0.1, 0.1]
+    * Default: [0.1, 0.1, 0.1, 0.1, 0.1]
 
 Fixed Model Factors
 ^^^^^^^^^^^^^^^^^^^

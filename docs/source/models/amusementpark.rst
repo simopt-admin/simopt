@@ -153,7 +153,7 @@ Problem Factors
 ^^^^^^^^^^^^^^^
 
 * Budget: Max # of replications for a solver to take.
-  * Default: 1000
+    * Default: 1000
 
 Fixed Model Factors
 ^^^^^^^^^^^^^^^^^^^

@@ -77,9 +77,9 @@ Problem Factors
 ^^^^^^^^^^^^^^^
 
 * budget: Max # of replications for a solver to take.
-  * Default: 10000
+    * Default: 10000
 * arc_costs: Cost associated to each arc.
-  * Default: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+    * Default: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
 Fixed Model Factors
 ^^^^^^^^^^^^^^^^^^^

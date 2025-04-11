@@ -159,7 +159,7 @@ Problem Factors
 ^^^^^^^^^^^^^^^
 
 * budget: Max # of replications for a solver to take.
-  * Default: 10000
+    * Default: 10000
 
 Fixed Model Factors
 ^^^^^^^^^^^^^^^^^^^
@@ -170,7 +170,7 @@ Starting Solution
 ^^^^^^^^^^^^^^^^^
 
 * initial_solution: Initial solution.
-  * Default: tuple of 56 zeros
+    * Default: tuple of 56 zeros
 
 Random Solutions
 ^^^^^^^^^^^^^^^^

@@ -13,7 +13,6 @@ stage I optimizes a first-order polynomial, and stage II optimizes a second-orde
 polynomial. If stage II fails to generate a good solution, an inner loop is initiated 
 where value, gradient, and Hessian of the center point are further calculated.
 
-
 Modifications & Implementation
 ------------------------------
 

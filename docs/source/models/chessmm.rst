@@ -80,9 +80,9 @@ Problem Factors
 ^^^^^^^^^^^^^^^
 
 * budget: Max # of replications for a solver to take.
-  * Default: 1000
+    * Default: 1000
 * upper_time: Upper bound on wait time.
-  * Default: 5.0
+    * Default: 5.0
 
 Fixed Model Factors
 ^^^^^^^^^^^^^^^^^^^
