@@ -1,4 +1,4 @@
-Model: Example
-==============
+Example
+=======
 
 Documentation for this model is not yet available.

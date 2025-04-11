@@ -1,8 +1,3 @@
-.. SimOpt documentation master file, created by
-   sphinx-quickstart on Tue May  4 15:52:46 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to SimOpt's documentation!
 ==================================
 
@@ -17,9 +12,7 @@ The `models <simopt.models.html>`_ library contains the simulation logic to simu
 The source code consists of the following modules:
 
 * The `base.py <autoapi/simopt/base/index.html>`_ module contains class definitions for models, problems, and solvers.
-
 * The `experiment_base.py <autoapi/simopt/experiment_base/index.html>`_ module contains class definitions and functions for running experiments with simulation-optimization solvers. 
-
 * The `data_farming_base.py <autoapi/simopt/data_farming_base/index.html>`_ module contains class definitions and functions for running data-farming experiments.
 
 Contents
@@ -39,7 +32,7 @@ Contents
    autoapi/index
 
 Acknowledgments
--------------------
+---------------
 
 An earlier website for `SimOpt <http://www.simopt.org>`_ was developed through work supported by the National Science Foundation under grant nos. DMI-0400287, CMMI-0800688 and CMMI-1200315.
 Recent work on the development of SimOpt has been supported by the National Science Foundation under grant nos. DGE-1650441, CMMI-1537394, CMMI-1254298, CMMI-1536895, IIS-1247696, and TRIPODS+X DMS-1839346, by the Air Force Office of Scientific Research under grant nos. FA9550-12-1-0200, FA9550-15-1-0038, and FA9550-16-1-0046, and by the Army Research Office under grant no. W911NF-17-1-0094.

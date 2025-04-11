@@ -1,6 +1,9 @@
 
+(s,S) Inventory System
+======================
+
 Model: (s,S) Inventory System
-=============================
+-----------------------------
 
 This example is adapted (almost verbatim) from the article Kleijnen, J.P.C. et al. Constrained Optimization in Simulation: A Novel Approach, Discussion Paper 2008-95, Tilburg University, Center for Economic Research.
 
@@ -28,7 +31,6 @@ If multiple solutions are needed, use :math:`s âˆ¼Uniform(700,1000)`, :math:`S â
 .. image:: _static/sscont.png
   :alt: The example table has failed to display
   :width: 800
-
 
 .. examples of using math, first is for centered math on its own line, second is for inline
 

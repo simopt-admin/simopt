@@ -1,8 +1,12 @@
+Hotel Revenue Management
+========================
+
 Model: Hotel Revenue Management (HOTEL)
-=======================================
+---------------------------------------
 
 Description
------------
+^^^^^^^^^^^
+
 Most of the revenue for a hotel comes from guests staying in its rooms. Assume a
 given hotel has only two rates: rack rate and discount rate, which pay :math:`p_f`
 and :math:`p_d` per night, respectively. Furthermore, let each different combination
@@ -62,6 +66,7 @@ to find the optimal set of booking limits, to illustrate how booking limits are 
 one may look at the following, small-scale example:
 
 Assume a hotel offers only the following 5 products:
+
 1. Two night stay arriving Monday.
 2. Two night stay arriving Tuesday.
 3. Two night stay arriving Wednesday.
@@ -92,102 +97,90 @@ at least one of the resources). For this small example, we have:
   :width: 300
 
 Sources of Randomness
----------------------
+^^^^^^^^^^^^^^^^^^^^^
+
 1. Stationary Poisson process with rate :math:`\lambda_i` for guest arrivals for product :math:`i`.
 
 Model Factors
--------------
+^^^^^^^^^^^^^
+
 * num_products: Number of products: (rate, length of stay).
-
     * Default: 56
-
 * lambda: Arrival rates for each product.
-
     * Default: Take :math:`\lambda_i = \frac{1}{168}, \frac{2}{168}, \frac{3}{168}, \frac{2}{168}, \frac{1}{168}, \frac{0.5}{168}, \frac{0.25}{168}` for 1-night, 2-night, ..., 7-night stay respectively.
-
 * num_rooms: Hotel capacity.
-
     * Default: 100
-
 * discount_rate: Discount rate.
-
     * Default: 100
-
 * rack_rate: Rack rate (full price).
-
     * Default: 200
-
 * product_incidence: Incidence matrix.
-
     * Default: Let each row be a resource available and each column a product, having a 1 in entry :math:`(i,j)` if product :math:`j` uses resource :math:`i`, and 0 otherwise.
-
 * time_limit: Time after which orders of each product no longer arrive (e.g. Mon night stops at 3am Tues or t=27).
-
     * Default: list of 14 27's, 12 51's, 10 75's, 8 99's, 6 123's, 4 144's, and 2 168's
-
 * time_before: Hours before :math:`t=0` to start running (e.g. 168 means start at time -168).
-
     * Default: 168
-
 * runlength: Runlength of simulation (in hours) after t=0.
-
     * Default: 168
-
 * booking_limits: Booking limits.
-
     * Default: tuple of 56 100's
 
 Responses
----------
+^^^^^^^^^
+
 * revenue: Expected revenue.
 
-
 References
-----------
+^^^^^^^^^^
+
 N/A
 
-
-
-
 Optimization Problem: Maximize Revenue (HOTEL-1)
-================================================
+------------------------------------------------
 
 Decision Variables
-------------------
+^^^^^^^^^^^^^^^^^^
+
 * booking_limits
 
 Objectives
-----------
+^^^^^^^^^^
+
 Maximize the expected revenue.
 
 Constraints
------------
+^^^^^^^^^^^
+
 Lower bounded by 0 and upper bounded by the total number of rooms.
 
 Problem Factors
----------------
-* budget: Max # of replications for a solver to take.
+^^^^^^^^^^^^^^^
 
+* budget: Max # of replications for a solver to take.
   * Default: 10000
 
 Fixed Model Factors
--------------------
+^^^^^^^^^^^^^^^^^^^
+
 * N/A
 
 Starting Solution
------------------
-* initial_solution: Initial solution.
+^^^^^^^^^^^^^^^^^
 
+* initial_solution: Initial solution.
   * Default: tuple of 56 zeros
 
 Random Solutions
-----------------
+^^^^^^^^^^^^^^^^
+
 Let each :math:`b_i` (element in tuple) be distributed Uniformly :math:`(0, C)`.
 
 Optimal Solution
-----------------
+^^^^^^^^^^^^^^^^
+
 Unknown
 
 Optimal Objective Function Value
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Unknown

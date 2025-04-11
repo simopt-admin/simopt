@@ -1,8 +1,12 @@
+Dual Sourcing System
+====================
+
 Model: Dual Sourcing System (DUALSOURCING)
-==========================================
+------------------------------------------
 
 Description
------------
+^^^^^^^^^^^
+
 Consider a single-stage, incapacitated, manufacturing location facing stochastic demand. 
 The manufacturer can buy the material from a “regular” supplier at cost :math:`c_r` per unit, or, 
 if needed, she can get some or all of the material “expedited” at some premium cost :math:`c_e` 
@@ -26,114 +30,99 @@ inventory position :math:`IP_n^r` to the target parameter :math:`z_r`. Thus, und
 one for regular orders and another for expedited orders.
 
 Sources of Randomness
----------------------
+^^^^^^^^^^^^^^^^^^^^^
+
 Demand follows a normal distribution. 
 
 Model Factors
--------------
+^^^^^^^^^^^^^
+
 * n_days: Number of days to simulate.
-
     * Default: 1000
-
 * initial_inv: Initial inventory.
-
     * Default: 40
-
 * cost_reg: Regular ordering cost per unit.
-  
     * Default: 100.00
-
 * cost_exp: Expedited ordering cost per unit.
-
     * Default: 110.00
-
 * lead_reg: Lead time for regular orders in days.
-  
     * Default: 110.00
-
 * lead_exp: Lead time for expedited orders in days.
-
     * Default: 0
-
 * holding_cost: Holding cost per unit per period.
-
     * Default: 5.00
-
 * penalty_cost: Penalty cost per unit per period for backlogging.
-  
     * Default: 495.00
-
 * st_dev: Standard deviation of demand distribution.
-  
     * Default: 10.0
-
 * mu: Mean of demand distribution.
-
     * Default: 30.0
-
 * order_level_reg: Order-up-to level for regular orders.
-  
     * Default: 80
-
 * order_level_exp: Order-up-to level for expedited orders.
-
     * Default: 50
 
 Responses
----------
+^^^^^^^^^
+
 * average_holding_cost: The average holding cost over the time period.
-
 * average_penalty_cost: The average penalty cost over the time period.
-
 * average_ordering_cost: The average ordering cost over the time period.
 
 References
-----------
+^^^^^^^^^^
+
 This model is adapted from the article `Veeraraghavan, S and Scheller-Wolf, A. Now or Later: 
 A simple policy for Effective Dual Sourcing in Capacitated Systems. Operations Research (4), 850- 864. 
 <https://repository.upenn.edu/oid_papers/121/>`_
 
-
 Optimization Problem: Minimize total cost (DUALSOURCING-1)
-==========================================================
+----------------------------------------------------------
 
 Decision Variables
-------------------
+^^^^^^^^^^^^^^^^^^
+
 * order_level_exp
 * order_level_reg
 
 Objectives
-----------
+^^^^^^^^^^
+
 Minimize the expected total cost: sum of average_holding_cost, average_penalty_cost, average_ordering_cost.
 
 Constraints
------------
+^^^^^^^^^^^
+
 order_level_exp and order_level_reg are both non-negative.
 
 Problem Factors
----------------
-* budget: Max # of replications for a solver to take.
+^^^^^^^^^^^^^^^
 
+* budget: Max # of replications for a solver to take.
   * Default: 1000
 
 Fixed Model Factors
--------------------
+^^^^^^^^^^^^^^^^^^^
+
 N/A
 
 Starting Solution
------------------
-* order_level_exp: 50
+^^^^^^^^^^^^^^^^^
 
+* order_level_exp: 50
 * order_level_reg: 80
 
 Random Solutions
-----------------
+^^^^^^^^^^^^^^^^
+
 Draw order_level_exp from Uniform(40,60) and order_level_reg from Uniform(70,90).
 
 Optimal Solution
-----------------
+^^^^^^^^^^^^^^^^
+
 Unknown.
 
 Optimal Objective Function Value
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Unknown.
