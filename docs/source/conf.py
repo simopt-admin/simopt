@@ -32,24 +32,23 @@ release = "1.1.1"
 # -- General configuration ---------------------------------------------------
 
 master_doc = "index"
-
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",  # Google/Numpy-style docstrings
     "autoapi.extension",  # main AutoAPI extension
 ]
+templates_path = ["_templates"]
 
+# AutoAPI settings
 autoapi_type = "python"
 autoapi_dirs = [str(project_path / "simopt")]
 main_path = str(project_path / "simopt" / "__main__.py")
 gui_file_path = str(project_path / "simopt" / "GUI.py")
 gui_folder_path = str(project_path / "simopt" / "gui")
 autoapi_ignore = [main_path, gui_file_path, gui_folder_path]
-
-# Optional configs
-autoapi_keep_files = False  # Don't keep the generated .rst files
-autoapi_add_toctree_entry = True  # Automatically adds API TOC
-autoapi_python_class_content = "both"  # Include docstring from __init__ and class-level
+autoapi_keep_files = False
+autoapi_add_toctree_entry = False
+autoapi_python_class_content = "both"  # Include docstring from __init__ & class-level
 autoapi_options = ["members", "undoc-members", "show-inheritance"]
 
 # Napoleon settings
@@ -65,8 +64,6 @@ napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = True
 napoleon_attr_annotations = True
-
-templates_path = ["_templates"]
 
 # Be careful not to exclude important files
 exclude_patterns = [
@@ -84,8 +81,8 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 html_logo = "_static/simopt_logo.png"
 html_theme_options = {
-    "logo_only": True,
-    "style_nav_header_background": "#343131",
+    "logo_only": True,  # No name since it is in the logo
+    "style_nav_header_background": "#343131",  # Same color as accent color
 }
 
 # LaTeX config (if using)
