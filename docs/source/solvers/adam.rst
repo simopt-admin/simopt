@@ -1,6 +1,8 @@
 ADAM
 ====
 
+See the :mod:`simopt.solvers.adam` module for API details.
+
 Description
 -----------
 

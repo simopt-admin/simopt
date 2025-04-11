@@ -1,6 +1,8 @@
 Iron Ore Production
 ===================
 
+See the :mod:`simopt.models.ironore` module for API details.
+
 Model: Iron Ore Production with Exogenous Stochastic Price (IRONORE)
 --------------------------------------------------------------------
 

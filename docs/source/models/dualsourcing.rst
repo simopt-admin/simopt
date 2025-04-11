@@ -1,6 +1,8 @@
 Dual Sourcing System
 ====================
 
+See the :mod:`simopt.models.dualsourcing` module for API details.
+
 Model: Dual Sourcing System (DUALSOURCING)
 ------------------------------------------
 

@@ -1,6 +1,8 @@
 Facility Sizing
 ===============
 
+See the :mod:`simopt.models.facilitysizing` module for API details.
+
 Model: Facility Sizing
 ----------------------
 

@@ -1,6 +1,8 @@
 M/M/1 Queue
 ===========
 
+See the :mod:`simopt.models.mm1queue` module for API details.
+
 Model: M/M/1 Queue
 ------------------
 

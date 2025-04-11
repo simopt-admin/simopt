@@ -1,6 +1,8 @@
 Amusement Park Queueing
 =======================
 
+See the :mod:`simopt.models.amusementpark` module for API details.
+
 Model: Amusement Park Queues (AMUSEMENT)
 ----------------------------------------
 

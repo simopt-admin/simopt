@@ -1,6 +1,8 @@
 Revenue Management
 ==================
 
+See the :mod:`simopt.models.rmitd` module for API details.
+
 Model: Multi-Stage Revenue Management with Inter-Temporal Dependence (RMITD)
 ----------------------------------------------------------------------------
 

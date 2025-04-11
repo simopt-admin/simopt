@@ -1,6 +1,8 @@
 Random Search (RNDSRCH)
 =======================
 
+See the :mod:`simopt.solvers.randomsearch` module for API details.
+
 Description
 -----------
 

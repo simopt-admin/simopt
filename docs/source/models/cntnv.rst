@@ -1,6 +1,8 @@
 Continuous Newsvendor
 =====================
 
+See the :mod:`simopt.models.cntnv` module for API details.
+
 Model: Continuous Newsvendor Problem (CNTNV)
 --------------------------------------------
 

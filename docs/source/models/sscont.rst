@@ -2,6 +2,8 @@
 (s,S) Inventory System
 ======================
 
+See the :mod:`simopt.models.sscont` module for API details.
+
 Model: (s,S) Inventory System
 -----------------------------
 

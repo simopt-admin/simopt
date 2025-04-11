@@ -1,6 +1,8 @@
 Chess Matchmaking
 =================
 
+See the :mod:`simopt.models.chessmm` module for API details.
+
 Model: Chess Matchmaking Optimization (CHESS)
 ---------------------------------------------
 

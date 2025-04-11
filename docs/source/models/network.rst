@@ -1,6 +1,8 @@
 Network Queueing System Design
 ==============================
 
+See the :mod:`simopt.models.network` module for API details.
+
 Model: Network Queueing System Design (Network)
 -----------------------------------------------
 

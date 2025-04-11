@@ -1,6 +1,8 @@
 Parameter Estimation
 ====================
 
+See the :mod:`simopt.models.paramesti` module for API details.
+
 Model: Parameter Estimation (PARAMESTI)
 ---------------------------------------
 

@@ -1,6 +1,8 @@
 Hotel Revenue Management
 ========================
 
+See the :mod:`simopt.models.hotel` module for API details.
+
 Model: Hotel Revenue Management (HOTEL)
 ---------------------------------------
 

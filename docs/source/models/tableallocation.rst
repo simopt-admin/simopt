@@ -1,6 +1,8 @@
 Restaurant Table Management
 ===========================
 
+See the :mod:`simopt.models.tableallocation` module for API details.
+
 Model: Restaurant Table Management (TABLEALLOCATION)
 ----------------------------------------------------
 

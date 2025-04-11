@@ -1,6 +1,8 @@
 Newsvendor under Dynamic Consumer Substitution
 ==============================================
 
+See the :mod:`simopt.models.dynamnews` module for API details.
+
 Model: Newsvendor under Dynamic Consumer Substitution (DYNAMNEWS)
 -----------------------------------------------------------------
 

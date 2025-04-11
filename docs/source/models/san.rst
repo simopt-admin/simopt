@@ -1,6 +1,8 @@
 Stochastic Activity Network
 ===========================
 
+See the :mod:`simopt.models.san` module for API details.
+
 Model: Stochastic Activity Network (SAN)
 ----------------------------------------
 

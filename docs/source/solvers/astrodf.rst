@@ -1,6 +1,8 @@
 Adaptive Sampling Trust-Region Optimization for Derivative-Free Simulations (ASTRODF)
 =====================================================================================
 
+See the :mod:`simopt.solvers.astrodf` module for API details.
+
 Description
 -----------
 

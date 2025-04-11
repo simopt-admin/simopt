@@ -1,6 +1,8 @@
 Stochastic Trust-Region Response-Surface Method (STRONG)
 ========================================================
 
+See the :mod:`simopt.solvers.strong` module for API details.
+
 Description
 -----------
 

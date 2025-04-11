@@ -1,6 +1,8 @@
 Contamination Control
 =====================
 
+See the :mod:`simopt.models.contam` module for API details.
+
 Model: Contamination Control Problem (CONTAM)
 ---------------------------------------------
 
