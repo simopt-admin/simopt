@@ -16,15 +16,10 @@ from pathlib import Path
 
 # -- Path setup --------------------------------------------------------------
 
-# Get the /src directory
+# Figure out the top-level directory and add it to the system path
+# This is necessary to import the simopt package
 src_path = Path(__file__).resolve().parent
-# Use that to get the /docs directory and other /docs/* directories
-docs_path = src_path.parent
-build_path = docs_path / "_build"
-template_path = docs_path / "_templates"
-static_path = docs_path / "_static"
-# Get the top level directory of the project and add it to the path
-project_path = docs_path.parent
+project_path = src_path.parents[1]
 sys.path.insert(0, str(project_path))
 
 # -- Project information -----------------------------------------------------
@@ -71,7 +66,7 @@ napoleon_use_param = True
 napoleon_use_rtype = True
 napoleon_attr_annotations = True
 
-templates_path = [str(template_path)]
+templates_path = ["_templates"]
 
 # Be careful not to exclude important files
 exclude_patterns = [
@@ -86,14 +81,12 @@ exclude_patterns = [
 # -- HTML output -------------------------------------------------------------
 
 html_theme = "sphinx_rtd_theme"
-html_static_path = [str(static_path)]
+html_static_path = ["_static"]
+html_logo = "_static/simopt_logo.png"
+html_theme_options = {
+    "logo_only": True,
+    "style_nav_header_background": "#343131",
+}
 
 # LaTeX config (if using)
 latex_engine = "xelatex"
-
-# -- DO NOT run sphinx-apidoc here ------------------------------------------
-# If you want to generate API docs, do it manually or in a separate script.
-# For example:
-# `sphinx-apidoc -o source ../simopt -f`
-#
-# Running it here can break builds on Read the Docs due to repeated calls.
