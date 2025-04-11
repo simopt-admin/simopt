@@ -1344,25 +1344,7 @@ def bootstrap_sample_all(
 
 
 class PlotType(Enum):
-    """Enum class for different types of plots and metrics.
-
-    Attributes:
-        ALL:
-        MEAN: estimated mean progress curve
-        QUANTILE: estimated beta quantile progress curve
-        AREA_MEAN: mean of area under progress curve
-        AREA_STD_DEV: standard deviation of area under progress curve
-        SOLVE_TIME_QUANTILE: beta quantile of solve time
-        SOLVE_TIME_CDF: cdf of solve time
-        CDF_SOLVABILITY: cdf solvability profile
-        QUANTILE_SOLVABILITY: quantile solvability profile
-        DIFF_CDF_SOLVABILITY: difference of cdf solvability profiles
-        DIFF_QUANTILE_SOLVABILITY: difference of quantile solvability profiles
-        AREA:
-        BOX:
-        VIOLIN:
-        TERMINAL_SCATTER:
-    """
+    """Enum class for different types of plots and metrics."""
 
     ALL = "all"
     MEAN = "mean"
@@ -3574,8 +3556,7 @@ def save_plot(
             - DIFF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
             - DIFF_QUANTILE_SOLVABILITY: Difference of quantile solvability profiles.
             - AREA: Area scatterplot.
-            - TERMINAL_SCATTER: Scatterplot of mean and standard deviation of terminal
-                progress.
+            - TERMINAL_SCATTER: Scatterplot of mean and std dev of terminal progress.
         normalize (bool): Whether to normalize with respect to optimality gaps.
         extra (float | list[float], optional): Extra number(s) specifying quantile
             (e.g., beta) and/or solve tolerance.

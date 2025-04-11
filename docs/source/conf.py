@@ -46,6 +46,10 @@ extensions = [
 
 autoapi_type = "python"
 autoapi_dirs = [str(project_path / "simopt")]
+main_path = str(project_path / "simopt" / "__main__.py")
+gui_file_path = str(project_path / "simopt" / "GUI.py")
+gui_folder_path = str(project_path / "simopt" / "gui")
+autoapi_ignore = [main_path, gui_file_path, gui_folder_path]
 
 # Optional configs
 autoapi_keep_files = False  # Don't keep the generated .rst files

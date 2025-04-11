@@ -35,21 +35,61 @@ class DesignType(Enum):
 
 
 class DesignPoint:
-    """Base class for design points represented as dictionaries of factors.
+    """Base class for design points represented as dictionaries of factors."""
 
-    Attributes:
-        model (Model): Model to simulate.
-        model_factors (dict): Model factor names and values.
-        rng_list (list[MRG32k3a]): Random number generators for use when running
-            replications at the solution.
-        n_reps (int): Number of replications run at a design point.
-        responses (dict): Responses observed from replications.
-        gradients (dict[dict]): Gradients of responses (with respect to model factors)
-            from replications.
+    @property
+    def model(self) -> Model:
+        """Model to simulate."""
+        return self._model
 
-    Args:
-        model (Model): Model with factors `model_factors`.
-    """
+    @model.setter
+    def model(self, model: Model) -> None:
+        self._model = model
+
+    @property
+    def model_factors(self) -> dict:
+        """Model factor names and values."""
+        return self._model_factors
+
+    @model_factors.setter
+    def model_factors(self, model_factors: dict) -> None:
+        self._model_factors = model_factors
+
+    @property
+    def rng_list(self) -> list[MRG32k3a]:
+        """RNGs for use when running replications at the solution."""
+        return self._rng_list
+
+    @rng_list.setter
+    def rng_list(self, rng_list: list[MRG32k3a]) -> None:
+        self._rng_list = rng_list
+
+    @property
+    def n_reps(self) -> int:
+        """Number of replications run at a design point."""
+        return self._n_reps
+
+    @n_reps.setter
+    def n_reps(self, n_reps: int) -> None:
+        self._n_reps = n_reps
+
+    @property
+    def responses(self) -> dict:
+        """Responses observed from replications."""
+        return self._responses
+
+    @responses.setter
+    def responses(self, responses: dict) -> None:
+        self._responses = responses
+
+    @property
+    def gradients(self) -> dict:
+        """Gradients of responses (with respect to model factors) from replications."""
+        return self._gradients
+
+    @gradients.setter
+    def gradients(self, gradients: dict) -> None:
+        self._gradients = gradients
 
     def __init__(self, model: Model) -> None:
         """Initialize a design point with a model object.

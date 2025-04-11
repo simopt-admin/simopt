@@ -263,7 +263,7 @@ class Solver(ABC):
             tuple:
                 - list [Solution]: List of solutions recommended throughout the budget.
                 - list [int]: List of intermediate budgets when recommended solutions
-                change.
+                    change.
         """
         raise NotImplementedError
 

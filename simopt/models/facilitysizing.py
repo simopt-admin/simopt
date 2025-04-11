@@ -137,7 +137,7 @@ class FacilitySize(Model):
             tuple: A tuple containing:
                 - dict: The responses dictionary, with keys:
                     - "stockout_flag" (bool): True if at least one facility failed to satisfy demand;
-                    False otherwise.
+                        False otherwise.
                     - "n_fac_stockout" (int): Number of facilities that could not satisfy demand.
                     - "n_cut" (int): Total number of demand units that could not be satisfied.
                 - dict: Gradient estimates for each response.
