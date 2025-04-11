@@ -1,10 +1,4 @@
-"""
-Summary
--------
-Simulate expected revenue for a hotel.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/hotel.html>`__.
-"""
+"""Simulate expected revenue for a hotel."""
 
 from __future__ import annotations
 
@@ -15,52 +9,52 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class Hotel(Model):
-    """
-    A model that simulates business of a hotel with Poisson arrival rate.
-
-    Attributes
-    ----------
-    name : string
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI and data validation)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Arguments
-    ---------
-    fixed_factors : nested dict
-        fixed factors of the simulation model
-
-    See also
-    --------
-    base.Model
-    """
+    """A model that simulates business of a hotel with Poisson arrival rate."""
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Hotel Booking"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
+        def double_up(values: list[float]) -> list[float]:
+            """Duplicate each value in the list once."""
+            return [x for x in values for _ in range(2)]
+
+        def gen_binary_list(pattern: list[int]) -> list[int]:
+            """Generate a binary list from alternating 0 and 1 runs.
+
+            Args:
+                pattern (list[int]): A list of run lengths. Even-indexed values
+                    correspond to 0s, odd-indexed to 1s. For example:
+                    bitstring([3, 2, 4]) → [0, 0, 0, 1, 1, 0, 0, 0, 0]
+
+            Returns:
+                list[int]: Expanded binary sequence.
+            """
+            result = []
+            current_bit = 0
+            for count in pattern:
+                result.extend([current_bit] * count)
+                current_bit = 1 - current_bit  # flip 0 to 1 or 1 to 0
+            return result
+
         return {
             "num_products": {
                 "description": "number of products: (rate, length of stay)",
@@ -70,69 +64,41 @@ class Hotel(Model):
             "lambda": {
                 "description": "arrival rates for each product",
                 "datatype": list,
-                "default": (
-                    (1 / 168)
-                    * np.array(
+                "default": [
+                    x / 168
+                    for x in double_up(
                         [
                             1,
-                            1,
-                            2,
                             2,
                             3,
-                            3,
-                            2,
                             2,
                             1,
-                            1,
-                            0.5,
                             0.5,
                             0.25,
-                            0.25,
                             1,
-                            1,
-                            2,
                             2,
                             3,
-                            3,
                             2,
-                            2,
-                            1,
                             1,
                             0.5,
-                            0.5,
                             1,
-                            1,
-                            2,
                             2,
                             3,
+                            2,
+                            1,
+                            1,
+                            2,
                             3,
                             2,
-                            2,
                             1,
-                            1,
-                            1,
-                            1,
-                            2,
                             2,
                             3,
-                            3,
-                            2,
-                            2,
-                            1,
                             1,
                             2,
-                            2,
-                            3,
-                            3,
-                            1,
-                            1,
-                            2,
-                            2,
-                            1,
                             1,
                         ]
                     )
-                ).tolist(),
+                ],
             },
             "num_rooms": {
                 "description": "hotel capacity",
@@ -153,432 +119,36 @@ class Hotel(Model):
                 "description": "incidence matrix",
                 "datatype": list,
                 "default": [
-                    [
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                    ],
-                    [
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                    ],
-                    [
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                    ],
-                    [
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                    ],
-                    [
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                    ],
-                    [
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        0,
-                        0,
-                    ],
-                    [
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1,
-                        1,
-                        0,
-                        0,
-                        1,
-                        1,
-                        1,
-                        1,
-                    ],
+                    gen_binary_list([0, 14, 42]),
+                    gen_binary_list([2, 24, 30]),
+                    gen_binary_list([4, 10, 2, 20, 20]),
+                    gen_binary_list([6, 8, 4, 8, 2, 16, 12]),
+                    gen_binary_list([8, 6, 6, 6, 4, 6, 2, 12, 6]),
+                    gen_binary_list([10, 4, 8, 4, 6, 4, 4, 4, 2, 8, 2]),
+                    gen_binary_list([12, 2, 10, 2, 8, 2, 6, 2, 4, 2, 2, 4]),
                 ],
             },
             "time_limit": {
-                "description": "time after which orders of each product no longer arrive (e.g. Mon night stops at 3am Tues or t=27)",
+                "description": (
+                    "time after which orders of each product no longer arrive "
+                    "(e.g. Mon night stops at 3am Tues or t=27)"
+                ),
                 "datatype": list,
-                "default": np.concatenate(
-                    (
-                        27 * np.ones(14),
-                        51 * np.ones(12),
-                        75 * np.ones(10),
-                        99 * np.ones(8),
-                        123 * np.ones(6),
-                        144 * np.ones(4),
-                        168 * np.ones(2),
-                    ),
-                    axis=None,
-                ).tolist(),
+                "default": (
+                    [27] * 14
+                    + [51] * 12
+                    + [75] * 10
+                    + [99] * 8
+                    + [123] * 6
+                    + [144] * 4
+                    + [168] * 2
+                ),
             },
             "time_before": {
-                "description": "hours before t=0 to start running (e.g. 168 means start at time -168)",
+                "description": (
+                    "hours before t=0 to start running "
+                    "(e.g. 168 means start at time -168)"
+                ),
                 "datatype": int,
                 "default": 168,
             },
@@ -595,48 +165,53 @@ class Hotel(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "num_products": self.check_num_products,
-            "lambda": self.check_lambda,
-            "num_rooms": self.check_num_rooms,
-            "discount_rate": self.check_discount_rate,
-            "rack_rate": self.check_rack_rate,
-            "product_incidence": self.check_product_incidence,
-            "time_limit": self.check_time_limit,
-            "time_before": self.check_time_before,
-            "runlength": self.check_runlength,
-            "booking_limits": self.check_booking_limits,
+            "num_products": self._check_num_products,
+            "lambda": self._check_lambda,
+            "num_rooms": self._check_num_rooms,
+            "discount_rate": self._check_discount_rate,
+            "rack_rate": self._check_rack_rate,
+            "product_incidence": self._check_product_incidence,
+            "time_limit": self._check_time_limit,
+            "time_before": self._check_time_before,
+            "runlength": self._check_runlength,
+            "booking_limits": self._check_booking_limits,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the Hotel model.
+
+        Args:
+            fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_num_products(self) -> None:
+    def _check_num_products(self) -> None:
         if self.factors["num_products"] <= 0:
             raise ValueError("num_products must be greater than 0.")
 
-    def check_lambda(self) -> None:
+    def _check_lambda(self) -> None:
         for i in self.factors["lambda"]:
             if i <= 0:
-                raise ValueError(
-                    "All elements in lambda must be greater than 0."
-                )
+                raise ValueError("All elements in lambda must be greater than 0.")
 
-    def check_num_rooms(self) -> None:
+    def _check_num_rooms(self) -> None:
         if self.factors["num_rooms"] <= 0:
             raise ValueError("num_rooms must be greater than 0.")
 
-    def check_discount_rate(self) -> None:
+    def _check_discount_rate(self) -> None:
         if self.factors["discount_rate"] <= 0:
             raise ValueError("discount_rate must be greater than 0.")
 
-    def check_rack_rate(self) -> None:
+    def _check_rack_rate(self) -> None:
         if self.factors["rack_rate"] <= 0:
             raise ValueError("rack_rate must be greater than 0.")
 
-    def check_product_incidence(self) -> None:
+    def _check_product_incidence(self) -> None:
         # TODO: fix check for product_incidence
         return
         # is_positive = [[i > 0 for i in j] for j in self.factors["product_incidence"]]
@@ -645,39 +220,35 @@ class Hotel(Model):
         #         "All elements in product_incidence must be greater than 0."
         #     )
 
-    def check_time_limit(self) -> None:
+    def _check_time_limit(self) -> None:
         for i in self.factors["time_limit"]:
             if i <= 0:
-                raise ValueError(
-                    "All elements in time_limit must be greater than 0."
-                )
+                raise ValueError("All elements in time_limit must be greater than 0.")
 
-    def check_time_before(self) -> None:
+    def _check_time_before(self) -> None:
         if self.factors["time_before"] <= 0:
             raise ValueError("time_before must be greater than 0.")
 
-    def check_runlength(self) -> None:
+    def _check_runlength(self) -> None:
         if self.factors["runlength"] <= 0:
             raise ValueError("runlength must be greater than 0.")
 
-    def check_booking_limits(self) -> None:
+    def _check_booking_limits(self) -> None:
         for i in list(self.factors["booking_limits"]):
             if i <= 0 or i > self.factors["num_rooms"]:
                 raise ValueError(
-                    "All elements in booking_limits must be greater than 0 and less than num_rooms."
+                    "All elements in booking_limits must be greater than 0 and less "
+                    "than num_rooms."
                 )
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if len(self.factors["lambda"]) != self.factors["num_products"]:
             raise ValueError("The length of lambda must equal num_products.")
         if len(self.factors["time_limit"]) != self.factors["num_products"]:
-            raise ValueError(
-                "The length of time_limit must equal num_products."
-            )
+            raise ValueError("The length of time_limit must equal num_products.")
         if len(self.factors["booking_limits"]) != self.factors["num_products"]:
-            raise ValueError(
-                "The length of booking_limits must equal num_products."
-            )
+            raise ValueError("The length of booking_limits must equal num_products.")
         # TODO: get rid of this conversion to np.array
         np_array = np.array(self.factors["product_incidence"])
         # m, n = np_array.shape
@@ -690,21 +261,18 @@ class Hotel(Model):
         return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication for the current model factors.
 
-        Arguments
-        ---------
-        rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-            rngs for model to use when simulating a replication
+        Args:
+            rng_list (list[MRG32k3a]): Random number generators used to simulate
+                the replication.
 
-        Returns
-        -------
-        responses : dict
-            performance measures of interest
-            "revenue" = expected revenue
-        gradients : dict of dicts
-            gradient estimates for each response
+        Returns:
+            tuple[dict, dict]: A tuple containing:
+                - responses (dict): Performance measures of interest, including:
+                    - "revenue": Expected revenue.
+                - gradients (dict): A dictionary of gradient estimates for each
+                    response.
         """
         booking_limits = list(self.factors["booking_limits"])
         product_incidence = np.array(self.factors["product_incidence"])
@@ -738,9 +306,7 @@ class Hotel(Model):
 
         # Min-heap for tracking next arrival events (arrival_time, product_idx)
         heap = [
-            (arrival[i], i)
-            for i in range(num_products)
-            if arrival[i] <= time_limit[i]
+            (arrival[i], i) for i in range(num_products) if arrival[i] <= time_limit[i]
         ]
         heapq.heapify(heap)
 
@@ -750,9 +316,7 @@ class Hotel(Model):
                 break
             if booking_limits[product_idx] > 0:
                 rate = rack_rate if product_idx % 2 == 0 else discount_rate
-                total_revenue += rate * np.sum(
-                    product_incidence[:, product_idx]
-                )
+                total_revenue += rate * np.sum(product_incidence[:, product_idx])
                 for i in range(num_products):
                     if conflicts[product_idx, i] and booking_limits[i] > 0:
                         booking_limits[i] -= 1
@@ -768,136 +332,77 @@ class Hotel(Model):
         # Compose responses and gradients.
         responses = {"revenue": total_revenue}
         gradients = {
-            response_key: {
-                factor_key: np.nan for factor_key in self.specifications
-            }
+            response_key: dict.fromkeys(self.specifications, np.nan)
             for response_key in responses
         }
         return responses, gradients
 
 
-"""
-Summary
--------
-Maximize the expected revenue.
-"""
-
-
 class HotelRevenue(Problem):
-    """
-    Base class to implement simulation-optimization problems.
-
-    Attributes
-    ----------
-    name : string
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    lower_bounds : tuple
-        lower bound for each decision variable
-    upper_bounds : tuple
-        upper bound for each decision variable
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : tuple
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : Model object
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : list
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-
-    Arguments
-    ---------
-    name : str
-        user-specified name for problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
-
-    See also
-    --------
-    base.Problem
-    """
+    """Base class to implement simulation-optimization problems."""
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "HOTEL-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Revenue for Hotel Booking"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def optimal_value(cls) -> float | None:
         return None
 
     @classproperty
+    @override
     def optimal_solution(cls) -> tuple | None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"booking_limits"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -914,6 +419,7 @@ class HotelRevenue(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -921,14 +427,17 @@ class HotelRevenue(Problem):
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["num_products"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (self.model.factors["num_rooms"],) * self.dim
 
@@ -938,6 +447,15 @@ class HotelRevenue(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the HotelRevenue problem.
+
+        Args:
+            name (str, optional): Name of the problem. Defaults to "HOTEL-1".
+            fixed_factors (dict, optional): Fixed factors for the problem.
+                Defaults to None.
+            model_fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -946,171 +464,43 @@ class HotelRevenue(Problem):
             model=Hotel,
         )
 
+    @override
     def check_initial_solution(self) -> bool:
         return len(self.factors["initial_solution"]) == self.dim
 
-    def check_budget(self) -> bool:
-        if self.factors["budget"] <= 0:
-            raise ValueError("budget must be greater than 0.")
-        return True
+    # # TODO: figure out how Problem.check_simulatable_factors() works
+    # def check_simulatable_factors(self) -> bool:
+    #     return not (
+    #         len(self.lower_bounds) != self.dim or len(self.upper_bounds) != self.dim
+    #     )
 
-    def check_simulatable_factors(self) -> bool:
-        if len(self.lower_bounds) != self.dim:
-            return False
-        elif len(self.upper_bounds) != self.dim:
-            return False
-        else:
-            return True
-
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        return {"booking_limits": vector[:]}
 
-        Arguments
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns
-        -------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-        """
-        factor_dict = {"booking_limits": vector[:]}
-        return factor_dict
-
+    @override
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        return tuple(factor_dict["booking_limits"])
 
-        Arguments
-        ---------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-
-        Returns
-        -------
-        vector : tuple
-            vector of values associated with decision variables
-        """
-        vector = tuple(factor_dict["booking_limits"])
-        return vector
-
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        return (response_dict["revenue"],)
 
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        objectives : tuple
-            vector of objectives
-        """
-        objectives = (response_dict["revenue"],)
-        return objectives
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
-
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
+    @override
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         det_objectives = (0,)
         det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
+    @override
+    def check_deterministic_constraints(self, _x: tuple) -> bool:
         return True
 
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
-
-        Arguments
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample a new random solution
-
-        Returns
-        -------
-        x : tuple
-            vector of decision variables
-        """
-        x = tuple(
+        return tuple(
             [
                 rand_sol_rng.randint(0, self.model.factors["num_rooms"])
                 for _ in range(self.dim)
             ]
         )
-        return x

@@ -1,0 +1,22 @@
+name: simopt-docs
+channels:
+  - conda-forge
+dependencies:
+  # Base Python
+  - python=3.12
+  # Sphinx and its dependencies
+  - sphinx
+  - sphinx_rtd_theme
+  # SimOpt dependencies
+  - numpy
+  - scipy
+  - jupyter
+  - matplotlib
+  - pandas
+  - seaborn
+  - pillow
+  - pip
+  - ruff
+  - pip:
+    - mrg32k3a
+    - sphinx-autoapi

@@ -41,23 +41,20 @@ class ExperimentTest(unittest.TestCase):
         raise NotImplementedError(error_msg)
 
     def setUp(self) -> None:
+        """Set up the experiment and load expected results."""
         # Set the name of the experiment file
-        with open(self.filepath, "rb") as f:
+        with self.filepath.open("rb") as f:
             expected_results = yaml.load(f, Loader=yaml.Loader)
 
         self.num_macroreps = expected_results["num_macroreps"]
         self.num_postreps = expected_results["num_postreps"]
         self.expected_problem_name = expected_results["problem_name"]
         self.expected_solver_name = expected_results["solver_name"]
-        self.expected_all_recommended_xs = expected_results[
-            "all_recommended_xs"
-        ]
+        self.expected_all_recommended_xs = expected_results["all_recommended_xs"]
         self.expected_all_intermediate_budgets = expected_results[
             "all_intermediate_budgets"
         ]
-        self.expected_all_est_objectives = expected_results[
-            "all_est_objectives"
-        ]
+        self.expected_all_est_objectives = expected_results["all_est_objectives"]
         self.expected_objective_curves = expected_results["objective_curves"]
         self.expected_progress_curves = expected_results["progress_curves"]
 
@@ -88,6 +85,7 @@ class ExperimentTestMixin:
     """
 
     def test_run(self: Any) -> None:
+        """Test the run method of the experiment."""
         ps_names = f"{self.expected_problem_name} | {self.expected_solver_name}"
         # Check actual run results against expected
         self.myexperiment.run(n_macroreps=self.num_macroreps)
@@ -104,8 +102,7 @@ class ExperimentTestMixin:
             self.assertEqual(
                 len(rec_xs),
                 len(expected_rec_xs),
-                f"[{ps_names} | {mrep}] "
-                f"Length of recommended solutions do not match",
+                f"[{ps_names} | {mrep}] Length of recommended solutions do not match",
             )
             # For each list of recommended solutions
             for sol_list_idx in range(len(rec_xs)):
@@ -135,8 +132,7 @@ class ExperimentTestMixin:
             self.assertEqual(
                 len(int_budg),
                 len(expected_int_budg),
-                f"[{ps_names} | {mrep}] "
-                f"Length of intermediate budgets do not match",
+                f"[{ps_names} | {mrep}] Length of intermediate budgets do not match",
             )
             # For each list of intermediate budgets
             for sol_list_idx in range(len(int_budg)):
@@ -152,6 +148,7 @@ class ExperimentTestMixin:
                 )
 
     def test_post_replicate(self: Any) -> None:
+        """Test the post_replicate method of the experiment."""
         ps_names = f"{self.expected_problem_name} | {self.expected_solver_name}"
         # Simulate results from the run method
         self.myexperiment = ProblemSolver(
@@ -178,8 +175,7 @@ class ExperimentTestMixin:
             self.assertEqual(
                 len(est_obj),
                 len(expected_est_obj),
-                f"[{ps_names} | {mrep}] "
-                f"Length of estimated objectives do not match",
+                f"[{ps_names} | {mrep}] Length of estimated objectives do not match",
             )
             # For each list in the estimated objectives
             for objective_idx in range(len(est_obj)):
@@ -195,6 +191,7 @@ class ExperimentTestMixin:
                 )
 
     def test_post_normalize(self: Any) -> None:
+        """Test the post_normalize method of the experiment."""
         ps_names = f"{self.expected_problem_name} | {self.expected_solver_name}"
         # Simulate results from the post_replicate method
         self.myexperiment = ProblemSolver(
@@ -210,18 +207,14 @@ class ExperimentTestMixin:
         self.myexperiment.has_run = True
         self.myexperiment.has_postreplicated = True
         # Check actual post-normalization results against expected
-        post_normalize(
-            [self.myexperiment], n_postreps_init_opt=self.num_postreps
-        )
+        post_normalize([self.myexperiment], n_postreps_init_opt=self.num_postreps)
 
         objective_curves = [
-            [curve.x_vals, curve.y_vals]
-            for curve in self.myexperiment.objective_curves
+            [curve.x_vals, curve.y_vals] for curve in self.myexperiment.objective_curves
         ]
 
         progress_curves = [
-            [curve.x_vals, curve.y_vals]
-            for curve in self.myexperiment.progress_curves
+            [curve.x_vals, curve.y_vals] for curve in self.myexperiment.progress_curves
         ]
 
         for mrep in range(self.num_macroreps):
@@ -232,8 +225,7 @@ class ExperimentTestMixin:
             self.assertEqual(
                 len(obj_curves),
                 len(expected_obj_curves),
-                f"[{ps_names} | {mrep}] "
-                f"Number of objective curves do not match",
+                f"[{ps_names} | {mrep}] Number of objective curves do not match",
             )
             # Make sure that curves are only checked if they exist
             # TODO: check if this is necessary
@@ -270,8 +262,7 @@ class ExperimentTestMixin:
                             obj_curve_x_val,
                             expected_obj_curve_x_val,
                             5,
-                            f"[{ps_names} | {mrep} | {x_index}] "
-                            f"X values do not match",
+                            f"[{ps_names} | {mrep} | {x_index}] X values do not match",
                         )
                 for y_index in range(len(obj_curve_y)):
                     obj_curve_y_val = obj_curve_y[y_index]
@@ -289,8 +280,7 @@ class ExperimentTestMixin:
                             obj_curve_y_val,
                             expected_obj_curve_y_val,
                             5,
-                            f"[{ps_names} | {mrep} | {y_index}] "
-                            f"Y values do not match",
+                            f"[{ps_names} | {mrep} | {y_index}] Y values do not match",
                         )
 
             # Check to make sure the same number of progress curves are present
@@ -340,8 +330,7 @@ class ExperimentTestMixin:
                                 rel_tol=1e-8,
                                 abs_tol=1e-8,
                             ),
-                            f"[{ps_names} | {mrep} | {x_index}] "
-                            f"X values do not match",
+                            f"[{ps_names} | {mrep} | {x_index}] X values do not match",
                         )
                 for y_index in range(len(prog_curve_y)):
                     prog_curve_y_val = prog_curve_y[y_index]
@@ -362,6 +351,5 @@ class ExperimentTestMixin:
                                 rel_tol=1e-8,
                                 abs_tol=1e-8,
                             ),
-                            f"[{ps_names} | {mrep} | {y_index}] "
-                            f"Y values do not match",
+                            f"[{ps_names} | {mrep} | {y_index}] Y values do not match",
                         )

@@ -1,4 +1,5 @@
-"""
+"""Demo script for the ProblemSolver class.
+
 This script is intended to help with debugging problems and solvers.
 It create a problem-solver pairing (using the directory) and runs multiple
 macroreplications of the solver on the problem.
@@ -10,9 +11,9 @@ from pathlib import Path
 # Append the parent directory (simopt package) to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-
 # Import the ProblemSolver class and other useful functions
 from simopt.experiment_base import (
+    PlotType,
     ProblemSolver,
     plot_progress_curves,
     plot_solvability_cdfs,
@@ -21,6 +22,7 @@ from simopt.experiment_base import (
 
 
 def main() -> None:
+    """Main function to run the demo script."""
     # !! When testing a new solver/problem, first go to directory.py.
     # There you should add the import statement and an entry in the respective
     # dictionary (or dictionaries).
@@ -68,14 +70,14 @@ def main() -> None:
     print("Plotting results.")
     # Produce basic plots of the solver on the problem.
     plot_progress_curves(
-        experiments=[myexperiment], plot_type="all", normalize=False
+        experiments=[myexperiment], plot_type=PlotType.ALL, normalize=False
     )
     plot_progress_curves(
-        experiments=[myexperiment], plot_type="mean", normalize=False
+        experiments=[myexperiment], plot_type=PlotType.MEAN, normalize=False
     )
     plot_progress_curves(
         experiments=[myexperiment],
-        plot_type="quantile",
+        plot_type=PlotType.QUANTILE,
         beta=0.90,
         normalize=False,
     )

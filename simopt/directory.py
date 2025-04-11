@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-"""Provide dynamically discovered dictionary directories listing solvers, problems, and models."""
+"""Provide dynamically discovered dictionary directories.
+
+Lists solvers, problems, and models found in the SimOpt package.
+"""
 
 import importlib
 import pkgutil

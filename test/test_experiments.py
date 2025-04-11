@@ -1,4 +1,4 @@
-"""Dynamically generate test classes for each YAML file in the expected results directory.
+"""Dynamically generate test classes for each YAML in the expected results directory.
 
 This script automatically creates test classes for each YAML file in the
 `expected_results` directory. This allows for easy addition of new test cases

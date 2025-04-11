@@ -1,6 +1,5 @@
-"""
-Summary
--------
+"""Random Search Solver.
+
 Randomly sample solutions from the feasible region.
 Can handle stochastic constraints.
 A detailed description of the solver can be found `here <https://simopt.readthedocs.io/en/latest/randomsearch.html>`__.
@@ -18,73 +17,48 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class RandomSearch(Solver):
-    """
+    """Random Search Solver.
+
     A solver that randomly samples solutions from the feasible region.
     Take a fixed number of replications at each solution.
-
-    Attributes
-    ----------
-    name : string
-        name of solver
-    objective_type : string
-        description of objective types:
-            "single" or "multi"
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_needed : bool
-        indicates if gradient of objective function is needed
-    factors : dict
-        changeable factors (i.e., parameters) of the solver
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used for the solver's internal purposes
-
-    Arguments
-    ---------
-    name : str
-        user-specified name for solver
-    fixed_factors : dict
-        fixed_factors of the solver
-
-    See also
-    --------
-    base.Solver
     """
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "RNDSRCH"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Random Search"
 
     @classproperty
+    @override
     def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.MIXED
 
     @classproperty
+    @override
     def gradient_needed(cls) -> bool:
         return False
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
@@ -100,38 +74,32 @@ class RandomSearch(Solver):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "crn_across_solns": self.check_crn_across_solns,
-            "sample_size": self.check_sample_size,
+            "sample_size": self._check_sample_size,
         }
 
     def __init__(
         self, name: str = "RNDSRCH", fixed_factors: dict | None = None
     ) -> None:
+        """Initialize Random Search solver.
+
+        Args:
+            name (str): user-specified name for solver
+            fixed_factors (dict, optional): fixed_factors of the solver.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-    def check_sample_size(self) -> None:
+    def _check_sample_size(self) -> None:
         if self.factors["sample_size"] <= 0:
             raise ValueError("Sample size must be greater than 0.")
 
+    @override
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """
-        Run a single macroreplication of a solver on a problem.
-
-        Arguments
-        ---------
-        problem : Problem
-            simulation-optimization problem to solve
-
-        Returns
-        -------
-        list[Solution]
-            list of solutions recommended throughout the budget
-        list[int]
-            list of intermediate budgets when recommended solutions changes
-        """
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         # Start at initial solution and record as best.
@@ -152,9 +120,7 @@ class RandomSearch(Solver):
             expended_budget += sample_size
             # Check for improvement relative to incumbent best solution.
             # Also check for feasibility w.r.t. stochastic constraints.
-            mean_diff = (
-                new_solution.objectives_mean - best_solution.objectives_mean
-            )
+            mean_diff = new_solution.objectives_mean - best_solution.objectives_mean
             if all(problem.minmax * mean_diff > 0) and all(
                 new_solution.stoch_constraints_mean[idx] <= 0
                 for idx in stoch_constraint_range

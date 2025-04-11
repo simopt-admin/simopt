@@ -1,4 +1,5 @@
-"""
+"""Demo for the ProblemsSolvers class.
+
 This script is intended to help with debugging problems and solvers.
 It create problem-solver groups (using the directory) and runs multiple
 macroreplications of each problem-solver pair.
@@ -10,12 +11,12 @@ from pathlib import Path
 # Append the parent directory (simopt package) to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-
 # Import the ProblemsSolvers class and other useful functions
-from simopt.experiment_base import ProblemsSolvers, plot_solvability_profiles
+from simopt.experiment_base import PlotType, ProblemsSolvers, plot_solvability_profiles
 
 
 def main() -> None:
+    """Main function to run the demo script."""
     # !! When testing a new solver/problem, first go to directory.py.
     # There you should add the import statement and an entry in the respective
     # dictionary (or dictionaries).
@@ -47,7 +48,7 @@ def main() -> None:
     print("Plotting results.")
     # Produce basic plots of the solvers on the problems.
     plot_solvability_profiles(
-        experiments=mymetaexperiment.experiments, plot_type="cdf_solvability"
+        experiments=mymetaexperiment.experiments, plot_type=PlotType.CDF_SOLVABILITY
     )
 
     # Plots will be saved in the folder experiments/plots.

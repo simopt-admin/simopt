@@ -1,3 +1,8 @@
+"""Curve utility functions.
+
+This module provides utility functions for manipulating and analyzing curves.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -13,36 +18,28 @@ if TYPE_CHECKING:
 
 
 def mean_of_curves(curves: Iterable[Curve]) -> Curve:
-    """Compute pointwise (w.r.t. x-values) mean of curves.
+    """Compute the pointwise mean of a collection of curves.
 
-    Starting and ending x-values must coincide for all curves.
+    All curves must have identical starting and ending x-values.
 
-    Parameters
-    ----------
-    curves : Iterable [``experiment_base.Curve``]
-        Collection of curves to aggregate.
+    Args:
+        curves (Iterable[Curve]): A collection of curves to aggregate.
 
-    Returns
-    -------
-    ``experiment_base.Curve object``
-        Mean curve.
+    Returns:
+        Curve: A curve representing the pointwise mean across all input curves.
 
-    Raises
-    ------
-    TypeError
+    Raises:
+        TypeError: If the input is not an iterable of Curve objects.
     """
     from statistics import mean
 
     try:
         # Collect unique x-values across all curves
-        unique_x_vals = sorted(
-            {x_val for curve in curves for x_val in curve.x_vals}
-        )
+        unique_x_vals = sorted({x_val for curve in curves for x_val in curve.x_vals})
 
         # Compute pointwise means using generator expressions
         mean_y_vals = [
-            mean(curve.lookup(x_val) for curve in curves)
-            for x_val in unique_x_vals
+            mean(curve.lookup(x_val) for curve in curves) for x_val in unique_x_vals
         ]
 
         return Curve(x_vals=unique_x_vals, y_vals=mean_y_vals)
@@ -54,42 +51,32 @@ def mean_of_curves(curves: Iterable[Curve]) -> Curve:
 
 
 def quantile_of_curves(curves: Iterable[Curve], beta: float) -> Curve:
-    """Compute pointwise (w.r.t. x values) quantile of curves.
+    """Compute the pointwise quantile of a collection of curves.
 
-    Starting and ending x values must coincide for all curves.
+    All curves must have identical starting and ending x-values.
 
-    Parameters
-    ----------
-    curves : Iterable [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-    beta : float
-        Quantile level.
+    Args:
+        curves (Iterable[Curve]): A collection of curves to aggregate.
+        beta (float): The quantile level to compute (e.g., 0.5 for median).
 
-    Returns
-    -------
-    ``experiment_base.Curve``
-        Quantile curve.
+    Returns:
+        Curve: A curve representing the pointwise quantile across the input curves.
 
-    Raises
-    ------
-    TypeError
+    Raises:
+        TypeError: If input is not a valid collection of Curve objects.
     """
     from statistics import quantiles
 
     try:
         # Collect unique x-values across all curves
-        unique_x_vals = sorted(
-            {x_val for curve in curves for x_val in curve.x_vals}
-        )
+        unique_x_vals = sorted({x_val for curve in curves for x_val in curve.x_vals})
 
         # Precompute quantile index
         quantile_idx = int(beta * 99)
 
         # Compute pointwise quantiles
         quantile_y_vals = [
-            quantiles((curve.lookup(x_val) for curve in curves), n=100)[
-                quantile_idx
-            ]
+            quantiles((curve.lookup(x_val) for curve in curves), n=100)[quantile_idx]
             for x_val in unique_x_vals
         ]
 
@@ -105,35 +92,27 @@ def quantile_of_curves(curves: Iterable[Curve], beta: float) -> Curve:
         raise TypeError(error_msg) from e
 
 
-def cdf_of_curves_crossing_times(
-    curves: Iterable[Curve], threshold: float
-) -> Curve:
-    """Compute the cdf of crossing times of curves.
+def cdf_of_curves_crossing_times(curves: Iterable[Curve], threshold: float) -> Curve:
+    """Compute the CDF of crossing times from a collection of curves.
 
-    Parameters
-    ----------
-    curves : list [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-    threshold : float
-        Value for which to find first crossing time.
+    The crossing time is defined as the first x-value where a curve crosses a given
+    threshold.
 
-    Returns
-    -------
-    ``experiment_base.Curve``
-        CDF of crossing times.
+    Args:
+        curves (list[Curve]): A list of curves to analyze.
+        threshold (float): The y-value at which to detect the first crossing.
 
-    Raises
-    ------
-    TypeError
+    Returns:
+        Curve: A curve representing the cumulative distribution of crossing times.
 
+    Raises:
+        TypeError: If input is not a list of Curve objects.
     """
     from bisect import bisect_right
 
     try:
-        # Compute crossing times once (errors will naturally raise if `curves` is invalid)
-        crossing_times = [
-            curve.compute_crossing_time(threshold) for curve in curves
-        ]
+        # Compute crossing times once
+        crossing_times = [curve.compute_crossing_time(threshold) for curve in curves]
 
         # Collect unique crossing times (excluding infinity)
         finite_crossing_times = {t for t in crossing_times if t < float("inf")}
@@ -164,30 +143,24 @@ def cdf_of_curves_crossing_times(
 def quantile_cross_jump(
     curves: Iterable[Curve], threshold: float, beta: float
 ) -> Curve:
-    """Compute a simple curve with a jump at the quantile of the crossing times.
+    """Compute a curve with a jump at the quantile of the crossing times.
 
-    Parameters
-    ----------
-    curves : list [``experiment_base.Curve``]
-        Collection of curves to aggregate.
-    threshold : float
-        Value for which to find first crossing time.
-    beta : float
-        Quantile level.
+    The curve is piecewise-constant with a single jump located at the specified quantile
+    of the first crossing times across the input curves.
 
-    Returns
-    -------
-    ``experiment_base.Curve``
-        Piecewise-constant curve with a jump at the quantile crossing time (if finite).
+    Args:
+        curves (list[Curve]): A list of curves to analyze.
+        threshold (float): The y-value at which to detect the first crossing.
+        beta (float): The quantile level (e.g., 0.5 for median crossing time).
 
-    Raises
-    ------
-    TypeError
+    Returns:
+        Curve: A piecewise-constant curve with a jump at the quantile crossing time,
+        if finite.
 
+    Raises:
+        TypeError: If input types are incorrect.
     """
     from statistics import quantiles
-
-    """Computes the quantile crossing time curve based on the given threshold and beta quantile."""
 
     try:
         # Compute crossing times once
@@ -195,17 +168,14 @@ def quantile_cross_jump(
             curve.compute_crossing_time(threshold=threshold) for curve in curves
         ]
 
-        # Compute quantile using built-in `statistics.quantiles()` instead of `np.quantile()`
-        quantile_idx = int(
-            beta * 99
-        )  # Convert beta into an index (assuming n=100 quantiles)
+        # Convert beta into an index (assuming n=100 quantiles)
+        quantile_idx = int(beta * 99)
         solve_time_quantile = quantiles(crossing_times, n=100)[quantile_idx]
 
         # Handle NaN and infinity cases
         if math.isinf(solve_time_quantile) or math.isnan(solve_time_quantile):
             return Curve(x_vals=[0, 1], y_vals=[0, 0])
-        else:
-            return Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
+        return Curve(x_vals=[0, solve_time_quantile, 1], y_vals=[0, 1, 1])
 
     except AttributeError as e:
         error_msg = "Curves must be an iterable of Curve objects."
@@ -218,24 +188,19 @@ def quantile_cross_jump(
 
 
 def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
-    """Compute the difference of two curves (Curve 1 - Curve 2).
+    """Compute the difference between two curves (curve_1 - curve_2).
 
-    Parameters
-    ----------
-    curve_1: ``experiment_base.Curve``
-        First curve to take the difference of.
-    curve_2 : ``experiment_base.Curve``
-        Second curve to take the difference of.
+    The x-values of both curves must align exactly.
 
-    Returns
-    -------
-    ``experiment_base.Curve``
-        Difference of curves.
+    Args:
+        curve_1 (Curve): The first curve (minuend).
+        curve_2 (Curve): The second curve (subtrahend).
 
-    Raises
-    ------
-    TypeError
+    Returns:
+        Curve: A curve representing the pointwise difference.
 
+    Raises:
+        TypeError: If inputs are not Curve instances or are incompatible.
     """
     try:
         # Collect unique x-values from both curves
@@ -243,8 +208,7 @@ def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
 
         # Compute difference in y-values
         difference_y_vals = [
-            curve_1.lookup(x_val) - curve_2.lookup(x_val)
-            for x_val in unique_x_vals
+            curve_1.lookup(x_val) - curve_2.lookup(x_val) for x_val in unique_x_vals
         ]
 
         return Curve(x_vals=unique_x_vals, y_vals=difference_y_vals)
@@ -256,25 +220,18 @@ def difference_of_curves(curve_1: Curve, curve_2: Curve) -> Curve:
 
 
 def max_difference_of_curves(curve_1: Curve, curve_2: Curve) -> float:
-    """Compute the maximum difference of two curves (Curve 1 - Curve 2).
+    """Compute the maximum pointwise difference between two curves (curve_1 - curve_2).
 
-    Parameters
-    ----------
-    curve_1: ``experiment_base.Curve``
-        First curve to take the difference of.
-    curve_2 : ``experiment_base.Curve``
-        Curves to take the difference of.
+    Args:
+        curve_1 (Curve): The first curve (minuend).
+        curve_2 (Curve): The second curve (subtrahend).
 
-    Returns
-    -------
-    float
-        Maximum difference of curves.
+    Returns:
+        float: The maximum difference between the two curves at any x-value.
 
-    Raises
-    ------
-    TypeError
+    Raises:
+        TypeError: If the inputs are not Curve instances or are incompatible.
     """
-
     try:
         # Compute the difference curve and return the max y-value
         return max(difference_of_curves(curve_1, curve_2).y_vals)

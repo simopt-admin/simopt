@@ -1,3 +1,5 @@
+"""Main menu window of the GUI."""
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter.font import nametofont
@@ -16,15 +18,10 @@ class MainMenuWindow(Toplevel):
     def __init__(self, root: tk.Tk) -> None:
         """Initialize the main menu window of the GUI.
 
-        Parameters
-        ----------
-        root : tk.Tk
-            The main window of the GUI
-
+        Args:
+            root (tk.Tk): The main window of the GUI.
         """
-        super().__init__(
-            root, title="SimOpt GUI - Main Menu", exit_on_close=True
-        )
+        super().__init__(root, title="SimOpt GUI - Main Menu", exit_on_close=True)
         # Set the size of the window to XX% of the screen size
         size_percent = 50
         self.center_window(size_percent / 100.0)
@@ -42,9 +39,7 @@ class MainMenuWindow(Toplevel):
         )
         self.title_label.grid(row=0, column=0, pady=10, sticky="nsew")
 
-        self.separator = ttk.Separator(
-            master=self.menu_frame, orient="horizontal"
-        )
+        self.separator = ttk.Separator(master=self.menu_frame, orient="horizontal")
         self.separator.grid(row=1, column=0, pady=10, sticky="nsew")
 
         # Button to open model data farming window
@@ -81,6 +76,7 @@ class MainMenuWindow(Toplevel):
         self.lift()
 
     def set_main_menu_style_changes(self) -> None:
+        """Set the style of the main menu window."""
         self.header_font = nametofont("TkHeadingFont").copy()
         header_font_size = self.header_font.cget("size")
         scaled_header_font_size = int(header_font_size * FONT_SCALE)

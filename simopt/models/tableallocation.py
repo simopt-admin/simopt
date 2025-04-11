@@ -1,10 +1,4 @@
-"""
-Summary
--------
-Simulate multiple periods of arrival and seating at a restaurant.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/tableallocation.html>`__.
-"""
+"""Simulate multiple periods of arrival and seating at a restaurant."""
 
 from __future__ import annotations
 
@@ -17,68 +11,34 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty
+from simopt.utils import classproperty, override
 
 
 class TableAllocation(Model):
-    """
+    """Table Allocation Model.
+
     A model that simulates a table capacity allocation problem at a restaurant
     with a homogenous Poisson arrvial process and exponential service times.
     Returns expected maximum revenue.
-
-    Attributes
-    ----------
-    name : str
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Parameters
-    ----------
-    fixed_factors : dict
-        fixed_factors of the simulation model
-
-        ``n_hours``
-            Number of hours to simulate (`int`)
-        ``capacity``
-            Maximum total capacity (`int`)
-        ``table_cap``
-            Capacity of each type of table (`int`)
-        ``lambda``
-            Average number of arrivals per hour (`flt`)
-        ``service_time_means``
-            Mean service time in minutes (`flt`)
-        ``table_revenue``
-            Per table revenue earned (`flt`)
-        ``num_tables``
-            Number of tables of each capacity (`int`)
-
-    See also
-    --------
-    base.Model
     """
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Restaurant Table Allocation"
 
     @classproperty
+    @override
     def n_rngs(cls) -> int:
         return 3
 
     @classproperty
+    @override
     def n_responses(cls) -> int:
         return 2
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "n_hours": {
@@ -119,98 +79,94 @@ class TableAllocation(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "n_hours": self.check_n_hours,
-            "capacity": self.check_capacity,
-            "table_cap": self.check_table_cap,
-            "lambda": self.check_lambda,
-            "service_time_means": self.check_service_time_means,
-            "table_revenue": self.check_table_revenue,
-            "num_tables": self.check_num_tables,
+            "n_hours": self._check_n_hours,
+            "capacity": self._check_capacity,
+            "table_cap": self._check_table_cap,
+            "lambda": self._check_lambda,
+            "service_time_means": self._check_service_time_means,
+            "table_revenue": self._check_table_revenue,
+            "num_tables": self._check_num_tables,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the Table Allocation Model.
+
+        Args:
+            fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_n_hours(self) -> None:
+    def _check_n_hours(self) -> None:
         if self.factors["n_hours"] <= 0:
             raise ValueError("n_hours must be greater than 0.")
 
-    def check_capacity(self) -> None:
+    def _check_capacity(self) -> None:
         if self.factors["capacity"] <= 0:
             raise ValueError("capacity must be greater than 0.")
 
-    def check_table_cap(self) -> None:
+    def _check_table_cap(self) -> None:
         if self.factors["table_cap"] <= [0, 0, 0, 0]:
-            raise ValueError(
-                "All elements in table_cap must be greater than 0."
-            )
+            raise ValueError("All elements in table_cap must be greater than 0.")
 
-    def check_lambda(self) -> bool:
+    def _check_lambda(self) -> bool:
         return self.factors["lambda"] >= [0] * max(self.factors["table_cap"])
 
-    def check_service_time_means(self) -> bool:
-        return self.factors["service_time_means"] > [0] * max(
-            self.factors["table_cap"]
-        )
+    def _check_service_time_means(self) -> bool:
+        return self.factors["service_time_means"] > [0] * max(self.factors["table_cap"])
 
-    def check_table_revenue(self) -> bool:
-        return self.factors["table_revenue"] >= [0] * max(
-            self.factors["table_cap"]
-        )
+    def _check_table_revenue(self) -> bool:
+        return self.factors["table_revenue"] >= [0] * max(self.factors["table_cap"])
 
-    def check_num_tables(self) -> None:
+    def _check_num_tables(self) -> None:
         if self.factors["num_tables"] < [0, 0, 0, 0]:
             raise ValueError(
                 "Each element in num_tables must be greater than or equal to 0."
             )
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if len(self.factors["num_tables"]) != len(self.factors["table_cap"]):
             raise ValueError(
                 "The length of num_tables must be equal to the length of table_cap."
             )
-        elif len(self.factors["lambda"]) != max(self.factors["table_cap"]):
+        if len(self.factors["lambda"]) != max(self.factors["table_cap"]):
             raise ValueError(
                 "The length of lamda must be equal to the maximum value in table_cap."
             )
-        elif len(self.factors["lambda"]) != len(
-            self.factors["service_time_means"]
-        ):
+        if len(self.factors["lambda"]) != len(self.factors["service_time_means"]):
             raise ValueError(
-                "The length of lambda must be equal to the length of service_time_means."
+                "The length of lambda must be equal to the length of "
+                "service_time_means."
             )
-        elif len(self.factors["service_time_means"]) != len(
+        if len(self.factors["service_time_means"]) != len(
             self.factors["table_revenue"]
         ):
             raise ValueError(
-                "The length of service_time_means must be equal to the length of table_revenue."
+                "The length of service_time_means must be equal to the length of "
+                "table_revenue."
             )
-        else:
-            return True
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication for the current model factors.
 
-        Arguments
-        ---------
-        rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
-            rngs for model to use when simulating a replication
+        Args:
+            rng_list (list[MRG32k3a]): Random number generators used to simulate
+                the replication.
 
-        Returns
-        -------
-        responses : dict
-            performance measures of interest
-
-            ``total_revenue``
-                Total revenue earned over the simulation period.
-            ``service_rate``
-                Fraction of customer arrivals that are seated.
-
+        Returns:
+            tuple[dict, dict]: A tuple containing:
+                - responses (dict): Performance measures of interest, including:
+                    - "total_revenue": Total revenue earned over the simulation period.
+                    - "service_rate": Fraction of customer arrivals that are seated.
+                - gradients (dict): A dictionary of gradient estimates for
+                    each response.
         """
 
         def fast_weighted_choice(
@@ -218,22 +174,17 @@ class TableAllocation(Model):
         ) -> int:
             """Select a single element from a population based on weights.
 
-            Designed to be faster than random's choices() when only one
-            element is needed.
+            Designed to be faster than `random.choices()` when only one element
+            is needed.
 
-            Parameters
-            ----------
-            population : list
-                The population to select from.
-            weights : list
-                The weights for each element in the population.
-            rng : MRG32k3a
-                The random number generator to use for selection.
+            Args:
+                population (Sequence[int]): The population to select from.
+                weights (Sequence[float]): The weights for each element in the
+                    population.
+                rng (MRG32k3a): The random number generator to use for selection.
 
-            Returns
-            -------
-            int
-                The selected element from the population.
+            Returns:
+                int: The selected element from the population.
             """
             # Calculate cumulative weights
             cum_weights = list(itertools.accumulate(weights))
@@ -286,9 +237,7 @@ class TableAllocation(Model):
                 table_size_idx += 1
 
             # Find smallest available table.
-            def find_table(
-                table_size_idx: int, n: int
-            ) -> tuple[int, int] | None:
+            def find_table(table_size_idx: int, n: int) -> tuple[int, int] | None:
                 for k in range(table_size_idx, len(num_tables)):
                     for j in range(num_tables[k]):
                         # Check if table is currently available.
@@ -318,132 +267,77 @@ class TableAllocation(Model):
             "service_rate": sum(found) / len(found),
         }
         gradients = {
-            response_key: {
-                factor_key: np.nan for factor_key in self.specifications
-            }
+            response_key: dict.fromkeys(self.specifications, np.nan)
             for response_key in responses
         }
         return responses, gradients
 
 
-"""
-Summary
--------
-Maximize the total expected revenue for a restaurant operation.
-"""
-
-
 class TableAllocationMaxRev(Problem):
-    """
-    Class to make table allocation simulation-optimization problems.
-
-    Attributes
-    ----------
-    name : str
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : str
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : str
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : tuple
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : base.Model
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-
-    Arguments
-    ---------
-    name : str
-        user-specified name of problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
-
-    See also
-    --------
-    base.Problem
-    """
+    """Class to make table allocation simulation-optimization problems."""
 
     @classproperty
+    @override
     def class_name_abbr(cls) -> str:
         return "TABLEALLOCATION-1"
 
     @classproperty
+    @override
     def class_name(cls) -> str:
         return "Max Revenue for Restaurant Table Allocation"
 
     @classproperty
+    @override
     def n_objectives(cls) -> int:
         return 1
 
     @classproperty
+    @override
     def n_stochastic_constraints(cls) -> int:
         return 0
 
     @classproperty
+    @override
     def minmax(cls) -> tuple[int]:
         return (1,)
 
     @classproperty
+    @override
     def constraint_type(cls) -> ConstraintType:
         return ConstraintType.DETERMINISTIC
 
     @classproperty
+    @override
     def variable_type(cls) -> VariableType:
         return VariableType.DISCRETE
 
     @classproperty
+    @override
     def gradient_available(cls) -> bool:
         return False
 
     @classproperty
-    def optimal_value(cls) -> float | None:
+    @override
+    def optimal_value(cls) -> None:
         return None
 
     @classproperty
-    def optimal_solution(cls) -> tuple | None:
+    @override
+    def optimal_solution(cls) -> None:
         return None
 
     @classproperty
+    @override
     def model_default_factors(cls) -> dict:
         return {}
 
     @classproperty
+    @override
     def model_decision_factors(cls) -> set[str]:
         return {"num_tables"}
 
     @classproperty
+    @override
     def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
@@ -460,6 +354,7 @@ class TableAllocationMaxRev(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
@@ -467,14 +362,17 @@ class TableAllocationMaxRev(Problem):
         }
 
     @classproperty
+    @override
     def dim(cls) -> int:
         return 4
 
     @classproperty
+    @override
     def lower_bounds(cls) -> tuple:
         return (0,) * cls.dim
 
     @classproperty
+    @override
     def upper_bounds(cls) -> tuple:
         return (np.inf,) * cls.dim
 
@@ -484,6 +382,15 @@ class TableAllocationMaxRev(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the Table Allocation Problem.
+
+        Args:
+            name (str, optional): Name of the problem. Defaults to "TABLEALLOCATION-1".
+            fixed_factors (dict, optional): Fixed factors for the problem.
+                Defaults to None.
+            model_fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -492,159 +399,35 @@ class TableAllocationMaxRev(Problem):
             model=TableAllocation,
         )
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        return {"num_tables": vector[:]}
 
-        Arguments
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns
-        -------
-        factor_dict : dict
-            dictionary with factor keys and associated values
-        """
-        factor_dict = {"num_tables": vector[:]}
-        return factor_dict
-
+    @override
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        return (factor_dict["num_tables"],)
 
-        Arguments
-        ---------
-        factor_dict : dict
-            dictionary with factor keys and associated values
-
-        Returns
-        -------
-        vector : tuple
-            vector of values associated with decision variables
-        """
-        vector = (factor_dict["num_tables"],)
-        return vector
-
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        return (response_dict["total_revenue"],)
 
-        Arguments
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        objectives : tuple
-            vector of objectives
-        """
-        objectives = (response_dict["total_revenue"],)
-        return objectives
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
-
-        Arguments
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
+    @override
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         det_objectives = (0,)
         det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
+    @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
         return (
             np.sum(np.multiply(self.model_fixed_factors["table_cap"], x))
             <= self.model_fixed_factors["capacity"]
         )
 
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
-
-        Arguments
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
-            random-number generator used to sample a new random solution
-
-        Returns
-        -------
-        x : tuple
-            vector of decision variables
-        """
         # Add new tables of random size to the restaurant until the capacity is reached.
-        # TO DO: Replace this with call to integer_random_vector_from_simplex().
+        # TODO: Replace this with call to integer_random_vector_from_simplex().
         # The different-weight case is not yet implemented.
         allocated = 0
         num_tables = [0, 0, 0, 0]
