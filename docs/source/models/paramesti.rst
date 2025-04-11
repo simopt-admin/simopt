@@ -16,7 +16,7 @@ Say a simulation generates output data :math:`{Y_j}`, :math:`Y_j \in [0, \infty]
 that are i.i.d and known to come from a distribution with the two-dimensional density function
 
 .. math:: f(y1, y2; x^*) = \frac{e^{-y1} y_1^{x^*_1 y_2 - 1}{\Gamma(x^*_1 y_2)} \frac{e^{-y2} y_2^{x^*_2 - 1}{\Gamma(x^*_2)}, y1, y2 > 0,
-    
+
 where :math:`x^* ≡ (x^*_1, x^*_2)`` is the unknown vector of parameters.
 
 Noting that :math:`x_star` maximizes the function

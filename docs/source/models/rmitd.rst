@@ -64,7 +64,6 @@ References
 This example is adapted (almost verbatim) from test problem 2 by Prof. J.M. Harrison for class OIT 603
 at Stanford University. (https://www.gsb.stanford.edu/faculty-research/faculty/j-michael-harrison) 
 
-
 Optimization Problem: Maximize Total Revenue
 --------------------------------------------
 
@@ -87,7 +86,7 @@ The reserve quantities are decreasing and less than the initial capacity, i.e.,
 
 Problem Factors
 ^^^^^^^^^^^^^^^
-  
+
 * Budget: Max # of replications for a solver to take.
   * Default: 10000
 

@@ -39,5 +39,5 @@ If multiple solutions are needed, use :math:`s âˆ¼Uniform(700,1000)`, :math:`S â
 .. .. math::
 
    \frac{ \sum_{t=0}^{N}f(t,k) }{N}
-   
+
 .. Since Pythagoras, we know that :math:`\frac{ \sum_{t=0}^{N}f(t,k) }{N}`
