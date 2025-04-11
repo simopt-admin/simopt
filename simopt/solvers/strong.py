@@ -31,39 +31,6 @@ class STRONG(Solver):
 
     A trust-region-based algorithm that fits first- or second-order models through
     function evaluations taken within a neighborhood of the incumbent solution.
-
-    Attributes:
-    ----------
-    name : string
-        name of solver
-    objective_type : string
-        description of objective types:
-            "single" or "multi"
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_needed : bool
-        indicates if gradient of objective function is needed
-    factors : dict
-        changeable factors (i.e., parameters) of the solver
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used for the solver's internal purposes
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name for solver
-    fixed_factors : dict
-        fixed_factors of the solver
-
-    See Also:
-    --------
-    base.Solver
     """
 
     @classproperty
@@ -231,23 +198,8 @@ class STRONG(Solver):
         if self.factors["lambda_2"] <= 1:
             raise ValueError("lambda_2 must be greater than 1.")
 
+    @override
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """Run a single macroreplication of a solver on a problem.
-
-        Arguments:
-        ---------
-        problem : Problem object
-            simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
-
-        Returns:
-        -------
-        recommended_solns : list of Solution objects
-            list of solutions recommended throughout the budget
-        intermediate_budgets : list of ints
-            list of intermediate budgets when recommended solutions changes
-        """
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0

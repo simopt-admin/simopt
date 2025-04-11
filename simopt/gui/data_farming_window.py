@@ -2,7 +2,6 @@
 
 import ast
 import logging
-from re import A
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -10,8 +9,8 @@ from tkinter.font import nametofont
 
 import pandas as pd
 
-from simopt.data_farming_base import DATA_FARMING_DIR, DataFarmingExperiment
 import simopt.directory as directory
+from simopt.data_farming_base import DATA_FARMING_DIR, DataFarmingExperiment
 from simopt.experiment_base import (
     create_design,
 )
@@ -21,20 +20,17 @@ from simopt.gui.toplevel_custom import Toplevel
 model_directory = directory.model_directory
 model_unabbreviated_directory = directory.model_unabbreviated_directory
 
+
 class DataFarmingWindow(Toplevel):
     """Class to create the data farming window."""
 
     def __init__(self, root: tk.Tk, forced_creation: bool = False) -> None:
         """Initialize the data farming window.
 
-        Parameters
-        ----------
-        root : tk.Tk
-            The root window of the application.
-        forced_creation : bool, optional
-            Whether the window will be created even if it already exists.
-                Defautls to False.
-
+        Args:
+            root (tk.Tk): The root window of the application.
+            forced_creation (bool, optional): Whether to create the window even if it
+                already exists. Defaults to False.
         """
         if not forced_creation:
             super().__init__(
@@ -135,11 +131,8 @@ class DataFarmingWindow(Toplevel):
     def clear_frame(self, frame: tk.Frame) -> None:
         """Clear all widgets from a frame.
 
-        Parameters
-        ----------
-        frame : tk.Frame
-            Name of frame that you wish to delete all widgets from.
-
+        Args:
+            frame (tk.Frame): The frame to clear.
         """
         for widget in frame.winfo_children():
             widget.destroy()
@@ -499,20 +492,15 @@ class DataFarmingWindow(Toplevel):
         self.enable_run_button()
 
     def convert_proper_datatype(self, fixed_factors: dict) -> dict:
-        """Convert fixed factors to proper data type.
+        """Convert fixed factor values from strings to their proper data types.
 
-        Parameters
-        ----------
-        fixed_factors : dict
-            Dictionary containing fixed factor names not included in design and
-                corresponding user selected value as str.
+        Args:
+            fixed_factors (dict): Dictionary containing fixed factor names and
+                user-selected values as strings.
 
         Returns:
-        -------
-        dict
-            Dictrionary containing fixed factor names and corresponding values
-                converted to proper data type.
-
+            dict: Dictionary with fixed factor names and values converted to their
+                appropriate data types.
         """
         converted_fixed_factors = {}
 
@@ -544,13 +532,10 @@ class DataFarmingWindow(Toplevel):
 
     # Display Model Factors
     def show_model_factors(self, _: tk.StringVar) -> object:
-        """Show model factors in GUI.
+        """Show model factors in the GUI.
 
-        Parameters
-        ----------
-        _ : tk.StringVar
-            The selected model from the drop down menu.
-
+        Args:
+            _ (tk.StringVar): The selected model from the drop-down menu.
         """
         self.factor_canvas.destroy()
 
@@ -1151,14 +1136,12 @@ class DataFarmingWindow(Toplevel):
         )
         self.run_button.grid(row=0, column=2, sticky=tk.E, padx=30)
 
-    def create_design(self, *args: tuple) -> None:
-        """Create a design txt file and design csv file based on user specified design options.
+    def create_design(self, *_: tuple) -> None:
+        """Create a design `.txt` and `.csv` file based on user-specified options.
 
-        Parameters
-        ----------
-        args : tuple
-            Tuple containing the number of stacks and design type.
-
+        Args:
+            _ (tuple): Tuple containing the number of stacks and the design type
+                (unused positional arguments).
         """
         self.create_design_frame = tk.Frame(master=self)
         self.create_design_frame.grid(row=6, column=0)
@@ -1218,10 +1201,7 @@ class DataFarmingWindow(Toplevel):
             if factor_include:
                 self.factor_names.append(factor)
 
-                if not (
-                    factor_datatype in (float, int)
-                    and is_datafarmable_factor
-                ):
+                if not (factor_datatype in (float, int) and is_datafarmable_factor):
                     error_msg = "Factor datatype not supported."
                     logging.error(error_msg)
 
@@ -1233,9 +1213,9 @@ class DataFarmingWindow(Toplevel):
                     # NOTE: this doesn't work with 1e-XX values
                     factor_dec = str(dec_values[dec_index])
                     dec_index += 1
-                else: # factor is int
+                else:  # factor is int
                     factor_dec = "0"
- 
+
                 data_insert = f"{factor_min} {factor_max} {factor_dec}\n"
                 file_name = f"{self.experiment_name}.txt"
                 file_path = DATA_FARMING_DIR / file_name
@@ -1279,14 +1259,12 @@ class DataFarmingWindow(Toplevel):
         # Display Design Values
         self.display_design_tree()
 
-    def run_experiment(self, *args: tuple) -> None:
-        """Run experiment with specified design and experiment options.
+    def run_experiment(self, *_: tuple) -> None:
+        """Run an experiment using the specified design and experiment options.
 
-        Parameters
-        ----------
-        args : tuple
-            Tuple containing the number of replications and whether to use common random numbers.
-
+        Args:
+            _ (tuple): Tuple containing the number of replications and whether to use
+                common random numbers (CRN).
         """
         # Specify a common number of replications to run of the model at each
         # design point.
@@ -1318,14 +1296,11 @@ class DataFarmingWindow(Toplevel):
             f"Experiment Completed. Output file can be found at {output_filename}",
         )
 
-    def include_factor(self, *args: tuple) -> None:
-        """Include factor in experiment and enable experiment options.
+    def include_factor(self, *_: tuple) -> None:
+        """Include a factor in the experiment and enable related experiment options.
 
-        Parameters
-        ----------
-        args : tuple
-            Tuple containing the factor name and checkstate value.
-
+        Args:
+            _ (tuple): Tuple containing the factor name and its checkstate value.
         """
         self.check_values = [
             self.checkstate.get() for self.checkstate in self.checkstate_list

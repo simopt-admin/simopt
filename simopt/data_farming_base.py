@@ -38,39 +38,27 @@ class DesignPoint:
     """Base class for design points represented as dictionaries of factors.
 
     Attributes:
-    ----------
-    model : ``base.Model``
-        Model to simulate.
-    model_factors : dict
-        Model factor names and values.
-    rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
-        Rngs for model to use when running replications at the solution.
-    n_reps : int
-        Number of replications run at a design point.
-    responses : dict
-        Responses observed from replications.
-    gradients : dict [dict]
-        Gradients of responses (w.r.t. model factors) observed from replications.
+        model (Model): Model to simulate.
+        model_factors (dict): Model factor names and values.
+        rng_list (list[MRG32k3a]): Random number generators for use when running
+            replications at the solution.
+        n_reps (int): Number of replications run at a design point.
+        responses (dict): Responses observed from replications.
+        gradients (dict[dict]): Gradients of responses (with respect to model factors)
+            from replications.
 
-    Parameters
-    ----------
-    model : ``base.Model``
-        Model with factors model_factors.
-
+    Args:
+        model (Model): Model with factors `model_factors`.
     """
 
     def __init__(self, model: Model) -> None:
-        """Initialize design point with a model object.
+        """Initialize a design point with a model object.
 
-        Parameters
-        ----------
-        model : ``base.Model``
-            Model with factors model_factors.
+        Args:
+            model (Model): Model with factors `model_factors`.
 
         Raises:
-        ------
-        TypeError
-
+            TypeError: If `model` is not an instance of the `Model` class.
         """
         # Type checking
         if not isinstance(model, Model):
@@ -88,42 +76,22 @@ class DesignPoint:
     def attach_rngs(self, rng_list: list[MRG32k3a], copy: bool = True) -> None:
         """Attach a list of random-number generators to the design point.
 
-        Parameters
-        ----------
-        rng_list : list [``mrg32k3a.mrg32k3a.MRG32k3a``]
-            List of random-number generators used to run simulation replications.
-        copy : bool, default=True
-            True if rng_list should be copied, otherwise False.
-
-        Raises:
-        ------
-        TypeError
-
+        Args:
+            rng_list (list[MRG32k3a]): List of random-number generators used to run
+                simulation replications.
+            copy (bool, optional): Whether to copy the provided `rng_list`.
+                Defaults to True.
         """
-        # Type checking
-        if not isinstance(rng_list, list) or not all(
-            isinstance(rng, MRG32k3a) for rng in rng_list
-        ):
-            error_msg = "rng_list must be a list of MRG32k3a objects."
-            raise TypeError(error_msg)
-        if not isinstance(copy, bool):
-            error_msg = "copy must be a boolean."
-            raise TypeError(error_msg)
-
-        if copy:
-            self.rng_list = [deepcopy(rng) for rng in rng_list]
-        else:
-            self.rng_list = rng_list
+        self.rng_list = [deepcopy(rng) for rng in rng_list] if copy else rng_list
 
     def simulate(self, num_macroreps: int = 1) -> None:
-        """Simulates macroreplications and updates response and gradient data.
+        """Simulate macroreplications and update response and gradient data.
 
         Args:
             num_macroreps (int, optional): Number of macroreplications to run (> 0).
                 Defaults to 1.
 
         Raises:
-            TypeError: If input type is invalid.
             ValueError: If `num_macroreps` is not positive.
         """
         # Value checking
@@ -262,26 +230,15 @@ class DataFarmingExperiment:
     def run(self, n_reps: int = 10, crn_across_design_pts: bool = True) -> None:
         """Run a fixed number of macroreplications at each design point.
 
-        Parameters
-        ----------
-        n_reps : int, default=10
-            Number of replications run at each design point.
-        crn_across_design_pts : bool, default=True
-            True if CRN are to be used across design points, otherwise False.
+        Args:
+            n_reps (int, optional): Number of replications run at each design point.
+                Defaults to 10.
+            crn_across_design_pts (bool, optional): Whether to use common random numbers
+                (CRN) across design points. Defaults to True.
 
         Raises:
-        ------
-        TypeError
-        ValueError
-
+            ValueError: If `n_reps` is not positive.
         """
-        # Type checking
-        if not isinstance(n_reps, int):
-            error_msg = "n_reps must be an integer."
-            raise TypeError(error_msg)
-        if not isinstance(crn_across_design_pts, bool):
-            error_msg = "crn_across_design_pts must be a boolean."
-            raise TypeError(error_msg)
         # Value checking
         if n_reps <= 0:
             error_msg = "Number of replications must be greater than 0."
@@ -557,24 +514,18 @@ class DataFarmingMetaExperiment:
         model_fixed_factors: dict | None = None,
         n_macroreps: int = 10,
     ) -> None:
-        """Run n_macroreps of each problem-solver design point.
+        """Run `n_macroreps` of each problem-solver design point.
 
-        Parameters
-        ----------
-        problem_name : str
-            Name of problem.
-        problem_fixed_factors : dict, default=None
-            Dictionary of user-specified problem factors that will not be varied.
-        model_fixed_factors : dict, default=None
-            Dictionary of user-specified model factors that will not be varied.
-        n_macroreps : int
-            Number of macroreplications for each design point.
+        Args:
+            problem_name (str): Name of the problem.
+            problem_fixed_factors (dict | None, optional): Dictionary of user-specified
+                problem factors that will not be varied.
+            model_fixed_factors (dict | None, optional): Dictionary of user-specified
+                model factors that will not be varied.
+            n_macroreps (int): Number of macroreplications for each design point.
 
         Raises:
-        ------
-        ValueError
-            If n_macroreps is less than or equal to 0.
-
+            ValueError: If `n_macroreps` is less than or equal to 0.
         """
         # Value checking
         if n_macroreps <= 0:

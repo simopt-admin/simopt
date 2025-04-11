@@ -10,8 +10,10 @@ from tkinter.font import nametofont
 from typing import Literal
 
 from PIL import Image, ImageTk
+
 import simopt.directory as directory
 from simopt.experiment_base import (
+    PlotType,
     ProblemSolver,
     plot_area_scatterplots,
     plot_progress_curves,
@@ -25,19 +27,9 @@ from simopt.gui.toplevel_custom import Toplevel
 problem_unabbreviated_directory = directory.problem_unabbreviated_directory
 solver_unabbreviated_directory = directory.solver_unabbreviated_directory
 
+
 class PlotWindow(Toplevel):
-    """Plot Window Page of the GUI.
-
-    Arguments:
-    ---------
-    master : tk.Tk
-        Tkinter window created from Experiment_Window.run_single_function
-    myexperiment : object(Experiment)
-        Experiment object created in Experiment_Window.run_single_function
-    experiment_list : list
-        List of experiment object arguments
-
-    """
+    """Plot Window Page of the GUI."""
 
     def __init__(
         self,
@@ -46,19 +38,14 @@ class PlotWindow(Toplevel):
         experiment_list: list,
         meta_list: list[ProblemSolver] | None = None,
     ) -> None:
-        """Initialize the Plot_Window class.
+        """Initialize the PlotWindow class.
 
-        Parameters
-        ----------
-        root : tk.Tk
-            The root window of the application.
-        main_window : tk.Tk
-            The main window of the application.
-        experiment_list : list, optional
-            List of experiment object arguments, by default None.
-        meta_list : object, optional
-            MetaList object, by default None.
-
+        Args:
+            root (tk.Tk): The root window of the application.
+            main_window (tk.Tk): The main window of the application.
+            experiment_list (list): List of experiment objects.
+            meta_list (list[ProblemSolver] | None, optional): List of `ProblemSolver`
+                objects used for meta-plotting. Defaults to None.
         """
         super().__init__(root, title="SimOpt GUI - Plotting Page")
         self.center_window(0.8)  # 80% scaling
@@ -152,7 +139,10 @@ class PlotWindow(Toplevel):
 
         self.instruction_label = tk.Label(
             master=self,  # window label is used in
-            text="Welcome to the Plotting Page of SimOpt \n Select Problems and Solvers to Plot",
+            text=(
+                "Welcome to the Plotting Page of SimOpt\n"
+                "Select Problems and Solvers to Plot"
+            ),
             justify="center",
         )
 
@@ -167,10 +157,17 @@ class PlotWindow(Toplevel):
 
         # from experiments.inputs.all_factors.py:
         self.problem_list = problem_unabbreviated_directory
-        # stays the same, has to change into a special type of variable via tkinter function
+        # stays the same, has to change into a special type of variable via tkinter
+        # function
         self.problem_var = tk.StringVar(master=self)
 
-        # self.problem_menu = tk.Listbox(self, self.problem_var, "Problem", *self.all_problems, command=self.experiment_list[0].problem.name)
+        # self.problem_menu = tk.Listbox(
+        #     self,
+        #     self.problem_var,
+        #     "Problem",
+        #     *self.all_problems,
+        #     command=self.experiment_list[0].problem.name,
+        # )
         self.plot_menu = ttk.OptionMenu(
             self,
             self.plot_var,
@@ -185,7 +182,8 @@ class PlotWindow(Toplevel):
 
         # from experiments.inputs.all_factors.py:
         self.solver_list = solver_unabbreviated_directory
-        # stays the same, has to change into a special type of variable via tkinter function
+        # stays the same, has to change into a special type of variable via tkinter
+        # function
         self.solver_var = tk.StringVar(master=self)
 
         self.add_button = ttk.Button(
@@ -320,35 +318,12 @@ class PlotWindow(Toplevel):
             relx=0.65, rely=0.15, relheight=0.2, relwidth=0.3
         )
 
-        """
-            # Confidence Interval Checkbox
-            entry1 = tk.Checkbutton(self.settings_canvas, variable=self.params[0], onvalue=True, offvalue=False)
-            entry1.select()
-            # entry1 = ttk.OptionMenu(self.settings_canvas, self.params[0], "True", *tf_list)
-            label1 = tk.Label(master=self.settings_canvas, text="Confidence Intervals", font=f"{TEXT_FAMILY} 14")
-            label1.grid(row=0, column=0, padx=10, pady=3)
-            entry1.grid(row=0, column=1, padx=10, pady=3)
-
-            # Plot Together Checkbox
-            entry = tk.Checkbutton(self.settings_canvas, variable=self.params[1], onvalue=True, offvalue=False)
-            entry.select()
-            # Creates the Check Mark that checks whether the plots will be plot together
-            label = tk.Label(master=self.settings_canvas, text="Plot Together", font=f"{TEXT_FAMILY} 14")
-            label.grid(row=1, column=0, padx=10, pady=3)
-            entry.grid(row=1, column=1, padx=10, pady=3)
-
-            entry2 = tk.Checkbutton(self.settings_canvas, variable=self.params[2], onvalue=True, offvalue=False)
-            entry2.select()
-            label2 = tk.Label(master=self.settings_canvas, text="Print Max HW", font=f"{TEXT_FAMILY} 14")
-            label2.grid(row=2, column=0, padx=10, pady=3)
-            entry2.grid(row=2, column=1, padx=10, pady=3)
-            """
-
     def add_plot(self) -> None:
         self.plot_exp_list = []
 
         solver_lst = ""
-        # Appends experiment that is part of the experiment list if it matches what was chosen in the solver menu
+        # Appends experiment that is part of the experiment list if it matches what was
+        # chosen in the solver menu
         for i in self.solver_menu.curselection():
             solver_lst = solver_lst + self.solver_menu.get(i) + " "
             for j in self.problem_menu.curselection():
@@ -407,7 +382,7 @@ class PlotWindow(Toplevel):
         if self.plot_type_list[-1] == "All Progress Curves":
             path_name = plot_progress_curves(
                 exp_list,
-                plot_type="all",
+                plot_type=PlotType.ALL,
                 normalize=bool(param_value_list[1]),
                 all_in_one=bool(param_value_list[0]),
             )
@@ -415,7 +390,7 @@ class PlotWindow(Toplevel):
         if self.plot_type_list[-1] == "Mean Progress Curve":
             path_name = plot_progress_curves(
                 exp_list,
-                plot_type="mean",
+                plot_type=PlotType.MEAN,
                 normalize=bool(param_value_list[3]),
                 all_in_one=bool(param_value_list[1]),
                 plot_conf_ints=bool(param_value_list[0]),
@@ -433,7 +408,7 @@ class PlotWindow(Toplevel):
         elif self.plot_type_list[-1] == "Quantile Progress Curve":
             path_name = plot_progress_curves(
                 exp_list,
-                plot_type="quantile",
+                plot_type=PlotType.QUANTILE,
                 beta=param_value_list[3],
                 normalize=bool(param_value_list[4]),
                 plot_conf_ints=bool(param_value_list[0]),
@@ -483,7 +458,7 @@ class PlotWindow(Toplevel):
         elif self.plot_type_list[-1] == "CDF Solvability":
             path_name = plot_solvability_profiles(
                 list_exp_list,
-                plot_type="cdf_solvability",
+                plot_type=PlotType.CDF_SOLVABILITY,
                 plot_conf_ints=bool(param_value_list[0]),
                 print_max_hw=bool(param_value_list[1]),
                 solve_tol=param_value_list[2],
@@ -501,7 +476,7 @@ class PlotWindow(Toplevel):
         elif self.plot_type_list[-1] == "Quantile Solvability":
             path_name = plot_solvability_profiles(
                 list_exp_list,
-                plot_type="quantile_solvability",
+                plot_type=PlotType.QUANTILE_SOLVABILITY,
                 plot_conf_ints=bool(param_value_list[0]),
                 print_max_hw=bool(param_value_list[1]),
                 solve_tol=param_value_list[2],
@@ -521,7 +496,7 @@ class PlotWindow(Toplevel):
         elif self.plot_type_list[-1] == "CDF Difference Plot":
             path_name = plot_solvability_profiles(
                 list_exp_list,
-                plot_type="diff_cdf_solvability",
+                plot_type=PlotType.DIFF_CDF_SOLVABILITY,
                 plot_conf_ints=bool(param_value_list[0]),
                 print_max_hw=bool(param_value_list[1]),
                 solve_tol=param_value_list[2],
@@ -540,7 +515,7 @@ class PlotWindow(Toplevel):
         elif self.plot_type_list[-1] == "Quantile Difference Plot":
             path_name = plot_solvability_profiles(
                 list_exp_list,
-                plot_type="diff_quantile_solvability",
+                plot_type=PlotType.DIFF_QUANTILE_SOLVABILITY,
                 plot_conf_ints=bool(param_value_list[0]),
                 print_max_hw=bool(param_value_list[1]),
                 solve_tol=param_value_list[2],
@@ -653,24 +628,19 @@ class PlotWindow(Toplevel):
     def change_on_hover(
         self, button: tk.Button, color_on_hover: str, color_on_leave: str
     ) -> None:
-        """Change the color of the button when the mouse is hovered over it.
+        """Change the color of a button when hovered over.
 
-        Parameters
-        ----------
-        button : tk.Button
-            The button that will change color when hovered over.
-        color_on_hover : str
-            The color the button will change to when hovered over.
-        color_on_leave : str
-            The color the button will change to when the mouse leaves the button.
-
+        Args:
+            button (tk.Button): The button to apply the hover effect to.
+            color_on_hover (str): The color the button changes to when hovered.
+            color_on_leave (str): The color the button reverts to when the mouse leaves.
         """
         # adjusting backgroung of the widget
         # background on entering widget
-        button.bind("<Enter>", func=lambda e: button.config(background=color_on_hover))
+        button.bind("<Enter>", func=lambda _: button.config(background=color_on_hover))
 
         # background color on leving widget
-        button.bind("<Leave>", func=lambda e: button.config(background=color_on_leave))
+        button.bind("<Leave>", func=lambda _: button.config(background=color_on_leave))
 
     def solver_select_function(self) -> None:
         # if user clicks plot type then a solver, this is update parameters

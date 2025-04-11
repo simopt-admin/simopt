@@ -16,9 +16,9 @@ from matplotlib.text import Text
 from matplotlib.ticker import MultipleLocator
 from PIL import Image, ImageTk
 
+import simopt.directory as directory
 from simopt.base import Problem, Solver
 from simopt.data_farming_base import DATA_FARMING_DIR
-import simopt.directory as directory
 from simopt.experiment_base import (
     ProblemSolver,
     ProblemsSolvers,
@@ -39,6 +39,7 @@ problem_directory = directory.problem_directory
 solver_directory = directory.solver_directory
 problem_unabbreviated_directory = directory.problem_unabbreviated_directory
 solver_unabbreviated_directory = directory.solver_unabbreviated_directory
+
 
 class NewExperimentWindow(Toplevel):
     """New Experiment Window."""
@@ -1401,22 +1402,15 @@ class NewExperimentWindow(Toplevel):
         frame: ttk.Frame,
         first_row: int = 0,
     ) -> int:
-        """Insert the headers for the factors into the frame.
+        """Insert the headers for the factors into the given frame.
 
-        Parameters
-        ----------
-        frame : tk.Frame
-            Frame to display factors.
-        factor_heading_list : list[str]
-            List of factor headings.
-        first_row : int, optional
-            First row to display factors.
+        Args:
+            frame (ttk.Frame): The frame to display factor headers in.
+            first_row (int, optional): The row index at which to start inserting
+                headers. Defaults to 0.
 
         Returns:
-        -------
-        int
-            Index of the last row inserted.
-
+            int: The index of the last row inserted.
         """
         header_columns = [
             "Factor Name",
@@ -1453,21 +1447,17 @@ class NewExperimentWindow(Toplevel):
         factor_dict: dict[str, DFFactor],
         first_row: int = 2,
     ) -> int:
-        """Insert the factors into the frame.
+        """Insert the factors into the given frame.
 
-        Parameters
-        ----------
-        frame : ttk.Frame
-            Frame to display factors.
-        factors : dict[str, DFFactor]
-            Dictionary of factors.
-        first_row : int, optional
-            First row to display factors.
+        Args:
+            frame (ttk.Frame): The frame to display the factors in.
+            factor_dict (dict[str, DFFactor]): Dictionary mapping factor names to
+                `DFFactor` objects.
+            first_row (int, optional): The row index at which to start inserting
+                factors. Defaults to 2.
 
         Returns:
-        -------
-        int
-            Index of the last row displayed.
+            int: The index of the last row displayed.
         """
         row_index = first_row
         # Loop through and add everything to the frame
@@ -1575,20 +1565,14 @@ class NewExperimentWindow(Toplevel):
         self.tk_entries["design_opts.name"].insert(0, unique_name)
 
     def __get_unique_name(self, dict_lookup: dict, base_name: str) -> str:
-        """Determine unique name from dictionary.
+        """Generate a unique name by appending a number to a base name if needed.
 
-        Parameters
-        ----------
-        dict_lookup : dict
-            dictionary where you want to determine unique name from.
-        base_name : str
-            base name that you want appended to become unique.
+        Args:
+            dict_lookup (dict): Dictionary to check existing names against.
+            base_name (str): Desired base name to make unique.
 
         Returns:
-        -------
-        str
-            new unique name.
-
+            str: A unique name not present in `dict_lookup`.
         """
         if base_name in dict_lookup:
             # remove suffix from base_name if applicable
@@ -1604,12 +1588,36 @@ class NewExperimentWindow(Toplevel):
         return base_name
 
     def get_unique_experiment_name(self, base_name: str) -> str:
+        """Generate a unique experiment name.
+
+        Args:
+            base_name (str): Desired base name to make unique.
+
+        Returns:
+            str: A unique name not present in `root_experiment_dict`.
+        """
         return self.__get_unique_name(self.root_experiment_dict, base_name)
 
     def get_unique_problem_name(self, base_name: str) -> str:
+        """Generate a unique problem name.
+
+        Args:
+            base_name (str): Desired base name to make unique.
+
+        Returns:
+            str: A unique name not present in `root_problem_dict`.
+        """
         return self.__get_unique_name(self.root_problem_dict, base_name)
 
     def get_unique_solver_name(self, base_name: str) -> str:
+        """Generate a unique solver name.
+
+        Args:
+            base_name (str): Desired base name to make unique.
+
+        Returns:
+            str: A unique name not present in `root_solver_dict`.
+        """
         return self.__get_unique_name(self.root_solver_dict, base_name)
 
     def __show_data_farming_core(
@@ -1617,11 +1625,10 @@ class NewExperimentWindow(Toplevel):
     ) -> None:
         """Show data farming options for a solver or problem.
 
-        Parameters
-        ----------
-        base_object : Solver or Problem
-            Solver or Problem object.
-
+        Args:
+            base_object (Solver | Problem): The solver or problem object to display
+                options for.
+            frame (ttk.Frame): The frame in which to display the data farming options.
         """
         # Check if the base object is a Problem or Solver
         if not isinstance(base_object, (Problem, Solver)):
@@ -1804,9 +1811,11 @@ class NewExperimentWindow(Toplevel):
         self.tk_buttons["gen_design.add"].grid()
 
     def create_solver_design(self) -> None:
+        """Create a design for the solver."""
         self.__create_design_core("Solver")
 
     def create_problem_design(self) -> None:
+        """Create a design for the problem."""
         self.__create_design_core("Problem")
 
     def display_design_tree(
@@ -1815,6 +1824,23 @@ class NewExperimentWindow(Toplevel):
         design_table: pd.DataFrame | None = None,
         master_frame: ttk.Frame | None = None,
     ) -> None:
+        """Display the design tree in the GUI.
+
+        Displays a Treeview widget populated with design points from either a
+        provided CSV file or a DataFrame. Automatically handles formatting,
+        scrollbar setup, and label configuration.
+
+        Args:
+            csv_filename (str | None): Optional path to a CSV file containing
+                the design.
+            design_table (pd.DataFrame | None): Optional DataFrame containing
+                the design data.
+            master_frame (ttk.Frame | None): Optional parent frame to render
+                the design tree in. Defaults to the general design display frame.
+
+        Raises:
+            ValueError: If neither `csv_filename` nor `design_table` is provided.
+        """
         if csv_filename is None and design_table is None:
             error_msg = "Either csv_filename or dataframe must be provided."
             raise ValueError(error_msg)
@@ -1909,7 +1935,12 @@ class NewExperimentWindow(Toplevel):
         )
 
     def __read_in_generated_design(self) -> pd.DataFrame:
-        # Get the design table from the treeview
+        """Extract the design table from the current Treeview widget.
+
+        Returns:
+            pd.DataFrame: A DataFrame representing the design as entered or displayed
+                in the Treeview.
+        """
         design_table = pd.DataFrame(columns=self.design_tree["columns"])
         for child in self.design_tree.get_children():
             values = self.design_tree.item(child)["values"]
@@ -1917,11 +1948,21 @@ class NewExperimentWindow(Toplevel):
         return design_table
 
     def add_problem_design_to_experiment(self) -> None:
+        """Add a problem design (from the design tree) to the current experiment.
+
+        Reads the current design table, converts it into a list of problem instances,
+        checks for name collisions, and updates the experiment with the new problem
+        design.
+
+        Raises:
+            messagebox.showerror: If the design name is already in use.
+        """
         design_name = self.design_name.get()
         if design_name in self.root_problem_dict:
             messagebox.showerror(
                 "Error",
-                f"The design name {design_name} is already in use. Please choose a different name.",
+                f"The design name {design_name} is already in use. "
+                f"Please choose a different name.",
             )
             return
         selected_name = self.selected_problem_name.get()
@@ -1949,11 +1990,21 @@ class NewExperimentWindow(Toplevel):
         self._hide_gen_design()
 
     def add_solver_design_to_experiment(self) -> None:
+        """Add a solver design (from the design tree) to the current experiment.
+
+        Reads the current design table, converts it into a list of solver instances,
+        checks for name collisions, and updates the experiment with the new solver
+        design.
+
+        Raises:
+            messagebox.showerror: If the design name is already in use.
+        """
         design_name = self.design_name.get()
         if design_name in self.root_solver_dict:
             messagebox.showerror(
                 "Error",
-                f"The design name {design_name} is already in use. Please choose a different name.",
+                f"The design name {design_name} is already in use. "
+                f"Please choose a different name.",
             )
             return
         selected_name = self.selected_solver_name.get()
@@ -1981,6 +2032,15 @@ class NewExperimentWindow(Toplevel):
         self._hide_gen_design()
 
     def __view_design(self, design_list: list[list]) -> None:
+        """Display a design in the GUI from a list of design points.
+
+        Converts a list of design dictionaries into a DataFrame, formats it
+        for display, and passes it to the design tree viewer.
+
+        Args:
+            design_list (list[list]): A nested list where each item contains a
+                dictionary representing a design point.
+        """
         # Create an empty dataframe to display the design tree
         column_names = list(design_list[0][0].keys())
         num_rows = len(design_list)
@@ -1996,16 +2056,33 @@ class NewExperimentWindow(Toplevel):
         )
 
     def view_problem_design(self, problem_save_name: str) -> None:
+        """Display a saved problem design in the design tree view.
+
+        Args:
+            problem_save_name (str): The name associated with the saved problem design.
+        """
         problem = self.root_problem_dict[problem_save_name]
         self.__view_design(problem)
 
     def view_solver_design(self, solver_save_name: str) -> None:
+        """Display a saved solver design in the design tree view.
+
+        Args:
+            solver_save_name (str): The name associated with the saved solver design.
+        """
         solver = self.root_solver_dict[solver_save_name]
         self.__view_design(solver)
 
     def __delete_from_current_experiment(
         self, root_dict: dict, list_name: str, save_name: str
     ) -> None:
+        """Delete a saved item from the current experiment and update the GUI.
+
+        Args:
+            root_dict (dict): Dictionary containing saved designs (problems or solvers).
+            list_name (str): GUI key prefix for the display widgets.
+            save_name (str): The name of the item to delete.
+        """
         # Delete from root dict
         del root_dict[save_name]
         # Delete from GUI
@@ -2021,6 +2098,11 @@ class NewExperimentWindow(Toplevel):
         del self.tk_buttons[del_bttn_name]
 
     def delete_problem(self, problem_name: str) -> None:
+        """Delete a saved problem design from the current experiment.
+
+        Args:
+            problem_name (str): The name of the problem design to delete.
+        """
         self.__delete_from_current_experiment(
             self.root_problem_dict,
             "curr_exp.lists.problems",
@@ -2032,6 +2114,11 @@ class NewExperimentWindow(Toplevel):
         self.__update_solver_dropdown()
 
     def delete_solver(self, solver_name: str) -> None:
+        """Delete a saved solver design from the current experiment.
+
+        Args:
+            solver_name (str): The name of the solver design to delete.
+        """
         self.__delete_from_current_experiment(
             self.root_solver_dict,
             "curr_exp.lists.solvers",
@@ -5434,7 +5521,9 @@ class NewExperimentWindow(Toplevel):
             self.axis_var,
             "Select Axis",
             *["X-Axis", "Y-Axis"],
-            command=lambda axis: self.show_axis_options(axis, file_path, image_frame),
+            command=lambda axis: self.show_axis_options(
+                str(axis), file_path, image_frame
+            ),
         )
         self.select_axis_menu.grid(row=0, column=1)
         self.edit_x_axis_frame = tk.Frame(

@@ -1,8 +1,4 @@
-"""Simulate a single day of operation for an amusement park queuing problem.
-
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/amusementpark.html>`__.
-"""
+"""Simulate a single day of operation for an amusement park queuing problem."""
 
 from __future__ import annotations
 
@@ -616,54 +612,22 @@ class AmusementParkMinDepart(Problem):
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         return (response_dict["total_departed"],)
 
+    @override
     def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        """Compute deterministic components of objectives for a solution `x`.
-
-        Args:
-            x (tuple): vector of decision variables
-
-        Returns:
-            tuple:
-                - tuple: vector of deterministic components of objectives
-                - tuple: vector of gradients of deterministic components of objectives
-        """
         det_objectives = (0,)
         det_objectives_gradients = ()
         return det_objectives, det_objectives_gradients
 
+    @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """Check if a solution `x` satisfies the problem's deterministic constraints.
-
-        Parameters
-        ----------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        bool
-            indicates if solution `x` satisfies the deterministic constraints.
-
-        """
         # Check box constraints.
         if not super().check_deterministic_constraints(x):
             return False
         # Check if sum of queue capacities is less than park capacity.
         return sum(x) <= self.model.factors["park_capacity"]
 
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """Generate a random solution for starting or restarting solvers.
-
-        Arguments:
-        ---------
-        rand_sol_rng : rng.mrg32k3a.MRG32k3a
-            random-number generator used to sample a new random solution
-
-        Returns:
-        -------
-        tuple
-            vector of decision variables
-        """
         num_elements: int = self.model.factors["number_attractions"]
         summation: int = self.model.factors["park_capacity"]
         vector = rand_sol_rng.integer_random_vector_from_simplex(

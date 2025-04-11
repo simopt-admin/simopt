@@ -1669,30 +1669,22 @@ def compute_bootstrap_conf_int(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Construct a bootstrap confidence interval for an estimator.
 
-    Parameters
-    ----------
-    observations : list[float | int]
-        Estimators from all bootstrap instances.
-    conf_level : float
-        Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
-    bias_correction : bool, default=True
-        True if bias-corrected bootstrap CIs (via percentile method) are to be used,
-        otherwise False.
-    overall_estimator : float, optional
-        Estimator to compute bootstrap confidence interval of;
-        required for bias corrected CI.
+    Args:
+        observations (list[float | int]): Estimators from all bootstrap instances.
+        conf_level (float): Confidence level for confidence intervals, i.e., 1 - gamma;
+            must be in (0, 1).
+        bias_correction (bool, optional): Whether to use bias-corrected bootstrap CIs
+            (via the percentile method). Defaults to True.
+        overall_estimator (float | None, optional): The estimator to compute the CI
+            around. Required if`bias_correction` is True.
 
     Returns:
-    -------
-    ndarray[float]
-        Lower bound of bootstrap CI.
-    ndarray[float]
-        Upper bound of bootstrap CI.
+        tuple[np.ndarray, np.ndarray]: A tuple containing the lower and upper bounds of
+            the bootstrap confidence interval.
 
     Raises:
-    ------
-    ValueError
-
+        ValueError: If `conf_level` is not in (0, 1), or if `overall_estimator` is None
+            when `bias_correction` is True.
     """
     # Value checking
     if not 0 < conf_level < 1:
@@ -1737,14 +1729,13 @@ def plot_bootstrap_conf_ints(
 ) -> None:
     """Plot bootstrap confidence intervals.
 
-    Parameters
-    ----------
-    bs_conf_int_lower_bounds : ``experiment_base.Curve``
-        Lower bounds of bootstrap CIs, as curves.
-    bs_conf_int_upper_bounds : ``experiment_base.Curve``
-        Upper bounds of bootstrap CIs, as curves.
-    color_str : str, default="C0"
-        String indicating line color, e.g., "C0", "C1", etc.
+    Args:
+        bs_conf_int_lower_bounds (Curve): Lower bounds of bootstrap confidence
+            intervals, as curves.
+        bs_conf_int_upper_bounds (Curve): Upper bounds of bootstrap confidence
+            intervals, as curves.
+        color_str (str, optional): String indicating line color, e.g., "C0", "C1", etc.
+            Defaults to "C0".
     """
     bs_conf_int_lower_bounds.plot(color_str=color_str, curve_type=CurveType.CONF_BOUND)
     bs_conf_int_upper_bounds.plot(color_str=color_str, curve_type=CurveType.CONF_BOUND)
@@ -1765,24 +1756,19 @@ def report_max_halfwidth(
     conf_level: float,
     difference: bool = False,
 ) -> None:
-    """Compute and print caption for max halfwidth of one or more bootstrap CI curves.
+    """Print caption for the max halfwidth of bootstrap confidence interval curves.
 
-    Parameters
-    ----------
-    curve_pairs : list [list [``experiment_base.Curve``]]
-        List of paired bootstrap CI curves.
-    normalize : bool
-        True if progress curves are to be normalized w.r.t. optimality gaps,
-        otherwise False.
-    conf_level : float
-        Confidence level for confidence intervals, i.e., 1-gamma; in (0, 1).
-    difference : bool
-        True if the plot is for difference profiles, otherwise False.
+    Args:
+        curve_pairs (list[list[Curve]]): A list of paired bootstrap CI curves.
+        normalize (bool): Whether to normalize progress curves with respect to
+            optimality gaps.
+        conf_level (float): Confidence level for confidence intervals
+            (must be in (0, 1)).
+        difference (bool, optional): Whether the plot is for difference profiles.
+            Defaults to False.
 
     Raises:
-    ------
-    ValueError
-
+        ValueError: If `conf_level` is not in (0, 1) or if `curve_pairs` is empty.
     """
     # Value checking
     if not 0 < conf_level < 1:
@@ -1825,19 +1811,15 @@ def report_max_halfwidth(
 def check_common_problem_and_reference(
     experiments: list[ProblemSolver],
 ) -> None:
-    """Check if a collection of experiments have the same problem, x0, and x*.
+    """Check if a collection of experiments share the same problem, x0, and x*.
 
-    Parameters
-    ----------
-    experiments : list [``experiment_base.ProblemSolver``]
-        Problem-solver pairs of different solvers on a common problem.
+    Args:
+        experiments (list[ProblemSolver]): Problem-solver pairs of different solvers
+            on a common problem.
 
     Raises:
-    ------
-    ValueError
-        If at least two experiments have different problem instances,
-        starting solutions, or optimal solutions.
-
+        ValueError: If any experiments have different problem instances,
+            starting solutions (`x0`), or optimal solutions (`x*`).
     """
     problem_list = [experiment.problem for experiment in experiments]
     if not all(prob == problem_list[0] for prob in problem_list[1:]):
@@ -3292,34 +3274,30 @@ def plot_terminal_scatterplots(
     solver_set_name: str = "SOLVER_SET",
     problem_set_name: str = "PROBLEM_SET",
 ) -> list[Path]:
-    """Plot a scatter plot of mean and standard deviation of terminal progress.
+    """Plot scatter plots of the mean and standard deviation of terminal progress.
 
-    Either one plot for each solver or one plot for all solvers.
+    Either creates one plot per solver or a combined plot for all solvers.
 
-    Parameters
-    ----------
-    experiments : list [list [``experiment_base.ProblemSolver``]]
-        ProblemSolver pairs used to produce plots.
-    all_in_one : bool, default=True
-        True if curves are to be plotted together, otherwise False.
-    plot_title : str, opt
-        Optional title to override the one that is autmatically generated,
-        only applies if all_in_one is True.
-    legend_loc : str, default="best"
-        specificies location of legend
-    ext: str, default = '.png'
-        Extension to add to image file path to change file type
-    save_as_pickle: bool, default = False
-        True if plot should be saved to pickle file, False otherwise.
-    solver_set_name: str, default = "SOLVER_SET"
-        Use to change name of solver groups for plot titles.
-    problem_set_name: str, default = "PROBLEM_SET"
-        USe to change name of problem groups for plot titles.
+    Args:
+        experiments (list[list[ProblemSolver]]): Problem-solver pairs used to produce
+            plots.
+        all_in_one (bool, optional): Whether to plot all solvers in one figure.
+            Defaults to True.
+        plot_title (str | None, optional): Title to override the autogenerated one
+            (only applies if `all_in_one` is True).
+        legend_loc (str | None, optional): Location of the legend (e.g., "best").
+            Defaults to None.
+        ext (str, optional): File extension to use for output images.
+            Defaults to ".png".
+        save_as_pickle (bool, optional): Whether to also save the plots as `.pickle`
+            files. Defaults to False.
+        solver_set_name (str, optional): Name for the solver group used in plot titles.
+            Defaults to "SOLVER_SET".
+        problem_set_name (str, optional): Name for the problem group used in plot
+            titles. Defaults to "PROBLEM_SET".
 
     Returns:
-    -------
-    file_list : list [Path]
-        List compiling path names for plots produced.
+        list[Path]: A list of file paths to the plots produced.
     """
     if legend_loc is None:
         legend_loc = "best"
@@ -3416,55 +3394,34 @@ def setup_plot(
     solve_tol: float | None = None,
     plot_title: str | None = None,
 ) -> None:
-    """Create new figure. Add labels to plot and reformat axes.
+    """Create a new figure, add labels to the plot, and reformat axes.
 
-    Parameters
-    ----------
-    plot_type : str
-        String indicating which type of plot to produce:
-            "all" : all estimated progress curves;
-
-            "mean" : estimated mean progress curve;
-
-            "quantile" : estimated beta quantile progress curve;
-
-            "solve_time_cdf" : cdf of solve time;
-
-            "cdf_solvability" : cdf solvability profile;
-
-            "quantile_solvability" : quantile solvability profile;
-
-            "diff_cdf_solvability" : difference of cdf solvability profiles;
-
-            "diff_quantile_solvability" : difference of quantile solvability profiles;
-
-            "area" : area scatterplot;
-
-            "box" : box plot of terminal progress;
-
-            "violin" : violin plot of terminal progress;
-
-            "terminal_scatter" : scatterplot of mean and std dev of terminal progress.
-    solver_name : str, default="SOLVER_SET"
-        Name of solver.
-    problem_name : str, default="PROBLEM_SET"
-        Name of problem.
-    normalize : bool, default=True
-        True if progress curves are to be normalized w.r.t. optimality gaps,
-        otherwise False.
-    budget : int, optional
-        Budget of problem, measured in function evaluations.
-    beta : float, optional
-        Quantile to compute, e.g., beta quantile; in (0, 1).
-    solve_tol : float, optional
-        Relative optimality gap definining when a problem is solved; in (0, 1].
-    plot_title : str, optional
-        Optional title to override the one that is autmatically generated.
+    Args:
+        plot_type (PlotType): Type of plot to produce. Valid options include:
+            - ALL: All estimated progress curves.
+            - MEAN: Estimated mean progress curve.
+            - QUANTILE: Estimated beta quantile progress curve.
+            - SOLVE_TIME_CDF: CDF of solve time.
+            - CDF_SOLVABILITY: CDF solvability profile.
+            - QUANTILE_SOLVABILITY: Quantile solvability profile.
+            - DIFF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
+            - DIFF_QUANTILE_SOLVABILITY: Difference of quantile solvability profiles.
+            - AREA: Area scatterplot.
+            - BOX: Box plot of terminal progress.
+            - VIOLIN: Violin plot of terminal progress.
+            - TERMINAL_SCATTER: Scatterplot of mean and std dev of terminal progress.
+        solver_name (str, optional): Name of the solver. Defaults to "SOLVER SET".
+        problem_name (str, optional): Name of the problem. Defaults to "PROBLEM SET".
+        normalize (bool, optional): Whether to normalize with respect to optimality
+            gaps. Defaults to True.
+        budget (int, optional): Function evaluation budget.
+        beta (float, optional): Quantile to compute (must be in (0, 1)).
+        solve_tol (float, optional): Relative optimality gap for declaring a solve
+            (must be in (0, 1]).
+        plot_title (str, optional): Title to override the automatically generated one.
 
     Raises:
-    ------
-    ValueError
-
+        ValueError: If any inputs are invalid.
     """
     # Value checking
     if isinstance(beta, float) and not 0 < beta < 1:
@@ -3602,51 +3559,34 @@ def save_plot(
     ext: str = ".png",
     save_as_pickle: bool = False,
 ) -> Path:
-    """Create new figure. Add labels to plot and reformat axes.
+    """Create and save a plot with appropriate labels and formatting.
 
-    Parameters
-    ----------
-    solver_name : str
-        Name of solver.
-    problem_name : str
-        Name of problem.
-    plot_type : str
-        String indicating which type of plot to produce:
-            "all" : all estimated progress curves;
-
-            "mean" : estimated mean progress curve;
-
-            "quantile" : estimated beta quantile progress curve;
-
-            "solve_time_cdf" : cdf of solve time;
-
-            "cdf_solvability" : cdf solvability profile;
-
-            "quantile_solvability" : quantile solvability profile;
-
-            "diff_cdf_solvability" : difference of cdf solvability profiles;
-
-            "diff_quantile_solvability" : difference of quantile solvability profiles;
-
-            "area" : area scatterplot;
-
-            "terminal_scatter" : scatterplot of mean and std dev of terminal progress.
-    normalize : bool
-        True if progress curves are to be normalized w.r.t. optimality gaps,
-        otherwise False.
-    extra : float | list [float], optional
-        Extra number(s) specifying quantile (e.g., beta) and/or solve tolerance.
-    plot_title: str, opt
-        Will change name of save file if generic title is overwritten.
-    ext: str, default = '.png'
-        Extension to add to image file path to change file type
-    save_as_pickle: bool, default = False
-        True if plot should be saved to pickle file, False otherwise.
+    Args:
+        solver_name (str): Name of the solver.
+        problem_name (str): Name of the problem.
+        plot_type (PlotType): Type of plot to produce. Valid options include:
+            - ALL: All estimated progress curves.
+            - MEAN: Estimated mean progress curve.
+            - QUANTILE: Estimated beta quantile progress curve.
+            - SOLVE_TIME_CDF: CDF of solve time.
+            - CDF_SOLVABILITY: CDF solvability profile.
+            - QUANTILE_SOLVABILITY: Quantile solvability profile.
+            - DIFF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
+            - DIFF_QUANTILE_SOLVABILITY: Difference of quantile solvability profiles.
+            - AREA: Area scatterplot.
+            - TERMINAL_SCATTER: Scatterplot of mean and standard deviation of terminal
+                progress.
+        normalize (bool): Whether to normalize with respect to optimality gaps.
+        extra (float | list[float], optional): Extra number(s) specifying quantile
+            (e.g., beta) and/or solve tolerance.
+        plot_title (str | None, optional): If provided, overrides the default title
+            and filename.
+        ext (str, optional): File extension for the saved plot. Defaults to ".png".
+        save_as_pickle (bool, optional): Whether to save the plot as a pickle file.
+            Defaults to False.
 
     Returns:
-    -------
-    path_name : Path
-        Path pointing to location where plot will be saved.
+        Path: Path pointing to the location where the plot will be saved.
     """
     # Form string name for plot filename.
     if plot_type == PlotType.ALL:
@@ -3736,75 +3676,7 @@ def save_plot(
 
 
 class ProblemsSolvers:
-    """Base class for running one or more solver on one or more problem.
-
-    Attributes:
-    ----------
-    solver_names : list [str]
-        List of solver names.
-    n_solvers : int
-        Number of solvers.
-    problem_names : list [str]
-        List of problem names.
-    n_problems : int
-        Number of problems.
-    solvers : list [``base.Solver``]
-        List of solvers.
-    problems : list [``base.Problem``]
-        List of problems.
-    all_solver_fixed_factors : dict [dict]
-        Fixed solver factors for each solver:
-            outer key is solver name;
-            inner key is factor name.
-    all_problem_fixed_factors : dict [dict]
-        Fixed problem factors for each problem:
-            outer key is problem name;
-            inner key is factor name.
-    all_model_fixed_factors : dict of dict
-        Fixed model factors for each problem:
-            outer key is problem name;
-            inner key is factor name.
-    experiments : list [list [``experiment_base.ProblemSolver``]]
-        All problem-solver pairs.
-    file_name_path : Path
-        Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object.
-
-    Parameters
-    ----------
-    solver_factors: list [dict], optional
-        List of dictionaries that contain solver factors at different design points.
-        Each variant of solver with be crossed together with each vairant of problem.
-        (Requires solver_names with a name provided for each index in solver_factors.)
-    problem_factors: list [dict], optional
-        List of dictionaries that contain problem and model factors at different design
-        points.
-        Each variant of problem will be crossed together with each variant of solver.
-        (Requires problem_names with a name provided for each index in problem_factors.)
-    solver_names : list [str], optional
-        List of solver names.
-    problem_names : list [str], optional
-        List of problem names.
-    solver_renames : list [str], optional
-        User-specified names for solvers.
-    problem_renames : list [str], optional
-        User-specified names for problems.
-    fixed_factors_filename : str, optional
-        Name of .py file containing dictionaries of fixed factors
-        for solvers/problems/models.
-    solvers : list [``base.Solver``], optional
-        List of solvers.
-    problems : list [``base.Problem``], optional
-        List of problems.
-    experiments : list [list [``experiment_base.ProblemSolver``]], optional
-        All problem-solver pairs.
-    file_name_path : Path
-        Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object.
-    create_pair_pickles : bool, optional
-        True if creating pickle files for each problem-solver pair, False otherwise.
-    experiment_name: str, optional
-        Name of experiment to be appended to the beginning of output files.
-
-    """
+    """Base class for running one or more solver on one or more problem."""
 
     @property
     def solver_names(self) -> list[str]:
@@ -3939,48 +3811,35 @@ class ProblemsSolvers:
         create_pair_pickles: bool = False,
         experiment_name: str | None = None,
     ) -> None:
-        """Initialize ProblemsSolvers object.
+        """Initialize a ProblemsSolvers object.
 
-        There are three ways to create a ProblemsSolvers object:
-        1. Provide the names of the solvers and problems to look up in directory.py.
-        2. Provide the lists of unique solver and problem objects to pair.
-        3. Provide a list of list of ProblemSolver objects.
+        There are three ways to initialize a ProblemsSolvers object:
+        1. Provide the names of solvers and problems (for lookup in `directory.py`).
+        2. Provide lists of solver and problem objects to pair directly.
+        3. Provide a full list of `ProblemSolver` objects (as nested lists).
 
-        Parameters
-        ----------
-        solver_factors: list [dict], optional
-            List of dictionaries that contain solver factors at different design points.
-            Each variant of solver with be crossed together with each vairant of
-            problem. (Requires solver_names with a name provided for each index
-            in solver_factors.)
-        problem_factors: list [dict], optional
-            List of dictionaries that contain problem and model factors at different
-            design points. Each variant of problem will be crossed together with each
-            variant of solver. (Requires problem_names with a name provided for each
-            index problem_factors.)
-        solver_names : list [str], optional
-            List of solver names.
-        problem_names : list [str], optional
-            List of problem names.
-        solver_renames : list [str], optional
-            User-specified names for solvers.
-        problem_renames : list [str], optional
-            User-specified names for problems.
-        fixed_factors_filename : str, optional
-            Name of .py file containing dictionaries of fixed factors
-            for solvers/problems/models.
-        solvers : list [``base.Solver``], optional
-            List of solvers.
-        problems : list [``base.Problem``], optional
-            List of problems.
-        experiments : list [list [``experiment_base.ProblemSolver``]], optional
-            All problem-solver pairs.
-        file_name_path : Path, optional
-            Path of .pickle file for saving ``experiment_base.ProblemsSolvers`` object.
-        create_pair_pickles : bool, optional
-            True if creating pickle files for each problem-solver pair, False otherwise.
-        experiment_name: str, optional
-            Name of experiment to be appended to the beginning of output files.
+        Args:
+            solver_factors (list[dict] | None): List of solver factor dictionaries,
+                one per design point. Requires `solver_names` to match the number
+                of entries.
+            problem_factors (list[dict] | None): List of problem/model factor
+                dictionaries, one per design point. Requires `problem_names` to match
+                the number of entries.
+            solver_names (list[str] | None): List of solver names to look up.
+            problem_names (list[str] | None): List of problem names to look up.
+            solver_renames (list[str] | None): User-specified labels for solvers.
+            problem_renames (list[str] | None): User-specified labels for problems.
+            fixed_factors_filename (str | None): Name of a `.py` file containing
+                fixed factor dictionaries.
+            solvers (list[Solver] | None): List of `Solver` objects to use directly.
+            problems (list[Problem] | None): List of `Problem` objects to use directly.
+            experiments (list[list[ProblemSolver]] | None): Explicit problem-solver
+                pairings.
+            file_name_path (Path | None): Output path for saving the
+                `ProblemsSolvers` object.
+            create_pair_pickles (bool): Whether to create individual `.pickle` files
+                for each problem-solver pair.
+            experiment_name (str | None): Optional name to prefix output files.
         """
         # set attributes for pickle create and experiment file names
         self.create_pair_pickles = create_pair_pickles
@@ -4223,10 +4082,7 @@ class ProblemsSolvers:
         """Check whether all experiments' solvers and problems are compatible.
 
         Returns:
-        -------
-        error_str : str
-            Error message in the event any problem and solver are incompatible.
-
+            str: Error message in the event any problem and solver are incompatible.
         """
         errors = []
         for solver_idx in range(self.n_solvers):
@@ -4246,15 +4102,12 @@ class ProblemsSolvers:
     def run(self, n_macroreps: int) -> None:
         """Run `n_macroreps` of each solver on each problem.
 
-        Parameters
-        ----------
-        n_macroreps : int
-            Number of macroreplications of the solver to run on the problem.
+        Args:
+            n_macroreps (int): Number of macroreplications to run per problem-solver
+                pair.
 
         Raises:
-        ------
-        ValueError
-
+            ValueError: If `n_macroreps` is not positive.
         """
         # Value checking
         if n_macroreps <= 0:

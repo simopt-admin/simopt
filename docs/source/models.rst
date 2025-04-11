@@ -1,5 +1,5 @@
 Models & Problems
-==============
+=================
 
 .. toctree::
    :maxdepth: 1

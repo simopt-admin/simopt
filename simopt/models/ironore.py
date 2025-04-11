@@ -1,13 +1,8 @@
-"""Iron Ore Inventory Problem.
+"""Simulate production and sales over multiple periods for an iron ore inventory."""
 
-Simulate multiple periods of production and sales for an iron ore inventory problem.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/ironore.html>`__.
-
-Changed get_random_solution quantiles
-    from 10 and 200 => mean=59.887, sd=53.338, p(X>100)=0.146
-    to 10 and 1000 => mean=199.384, sd=343.925, p(X>100)=0.5
-"""
+# Changed get_random_solution quantiles
+#     from 10 and 200 => mean=59.887, sd=53.338, p(X>100)=0.146
+#     to 10 and 1000 => mean=199.384, sd=343.925, p(X>100)=0.5
 
 from __future__ import annotations
 
@@ -28,30 +23,6 @@ class IronOre(Model):
     inventory problem with stochastic price determined by a mean-reverting
     random walk. Returns total profit, fraction of days producing iron, and
     mean stock.
-
-    Attributes:
-    ----------
-    name : str
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Arguments:
-    ----------
-    fixed_factors : dict
-        fixed_factors of the simulation model
-
-    See Also:
-    --------
-    base.Model
     """
 
     @classproperty
@@ -233,18 +204,18 @@ class IronOre(Model):
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
-        Arguments:
-        ---------
-        rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
-            rngs for model to use when simulating a replication
+        Args:
+            rng_list (list[MRG32k3a]): Random number generators used to simulate
+                the replication.
 
         Returns:
-        -------
-        responses : dict
-            performance measures of interest
-            "total_profit" = The total profit over the time period
-            "frac_producing" = The fraction of days spent producing iron ore
-            "mean_stock" = The average stocks over the time period
+            tuple[dict, dict]: A tuple containing:
+                - responses (dict): Performance measures of interest, including:
+                    - "total_profit": The total profit over the time period.
+                    - "frac_producing": The fraction of days spent producing iron ore.
+                    - "mean_stock": The average stock over the time period.
+                - gradients (dict): A dictionary of gradient estimates for each
+                    response.
         """
         n_days: int = self.factors["n_days"]
         min_price: float = self.factors["min_price"]
@@ -341,73 +312,8 @@ class IronOre(Model):
         return responses, gradients
 
 
-"""
-Summary
--------
-Maximize the expected total profit for iron ore inventory system.
-"""
-
-
 class IronOreMaxRev(Problem):
-    """Class to make iron ore inventory simulation-optimization problems.
-
-    Attributes:
-    ----------
-    name : str
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : str
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : str
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : float
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : base.Model
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name of problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
-
-    See Also:
-    --------
-    base.Problem
-    """
+    """Class to make iron ore inventory simulation-optimization problems."""
 
     @classproperty
     @override
@@ -554,54 +460,14 @@ class IronOreMaxRev(Problem):
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         return (response_dict["total_profit"],)
 
+    @override
     def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        """Compute deterministic components of objectives for a solution `x`.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
         det_objectives = (0,)
         det_objectives_gradients = ((0, 0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:
-        """Check if a solution `x` satisfies the problem's deterministic constraints.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
-        # Check box constraints.
-        return super().check_deterministic_constraints(x)
-
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """Generate a random solution for starting or restarting solvers.
-
-        Arguments:
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
-            random-number generator used to sample a new random solution
-
-        Returns:
-        -------
-        tuple
-            vector of decision variables
-        """
         # return (
         #     rand_sol_rng.randint(70, 90),
         #     rand_sol_rng.randint(2000, 8000),
@@ -616,75 +482,8 @@ class IronOreMaxRev(Problem):
         )
 
 
-# TODO: figure out why this summary block is in the middle of the file
-"""
-Summary
--------
-Continuous version of the Maximization of the expected total profit for iron ore 
-inventory system (removing the inven_stop from decision variables).
-"""
-
-
 class IronOreMaxRevCnt(Problem):
-    """Class to make iron ore inventory simulation-optimization problems.
-
-    Attributes:
-    ----------
-    name : str
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : str
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : str
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : tuple
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : base.Model
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name of problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
-
-    See Also:
-    --------
-    base.Problem
-    """
+    """Class to make iron ore inventory simulation-optimization problems."""
 
     @classproperty
     @override
@@ -828,59 +627,23 @@ class IronOreMaxRevCnt(Problem):
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         return (response_dict["total_profit"],)
 
+    @override
     def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        """Compute deterministic components of objectives for a solution `x`.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
         det_objectives = (0,)
         det_objectives_gradients = ((0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
+    @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """Check if a solution `x` satisfies the problem's deterministic constraints.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
         return x[0] >= 0 and x[1] >= 0 and x[2] >= 0
 
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """Generate a random solution for starting or restarting solvers.
-
-        Arguments:
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
-            random-number generator used to sample a new random solution
-
-        Returns:
-        -------
-        x : tuple
-            vector of decision variables
-        """
         # return (
         #     rand_sol_rng.randint(70, 90),
         #     rand_sol_rng.randint(30, 50),
         #     rand_sol_rng.randint(90, 110),
         # )
-
         return (
             rand_sol_rng.lognormalvariate(10, 1000),
             rand_sol_rng.lognormalvariate(10, 1000),

@@ -30,39 +30,6 @@ class NelderMead(Solver):
     The Nelder-Mead algorithm, which maintains a simplex of points that moves around
     the feasible region according to certain geometric operations: reflection,
     expansion, contraction, and shrinking.
-
-    Attributes:
-    ----------
-    name : string
-        name of solver
-    objective_type : string
-        description of objective types:
-            "single" or "multi"
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_needed : bool
-        indicates if gradient of objective function is needed
-    factors : dict
-        changeable factors (i.e., parameters) of the solver
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used for the solver's internal purposes
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name for solver
-    fixed_factors : dict
-        fixed_factors of the solver
-
-    See Also:
-    --------
-    base.Solver
     """
 
     @classproperty
@@ -200,21 +167,8 @@ class NelderMead(Solver):
         if self.factors["initial_spread"] <= 0:
             raise ValueError("Initial spread must be greater than 0.")
 
+    @override
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """Run a single macroreplication of a solver on a problem.
-
-        Arguments:
-        ---------
-        problem : Problem object
-            simulation-optimization problem to solve
-
-        Returns:
-        -------
-        list[Solution]
-            list of solutions recommended throughout the budget
-        list[int]
-            list of intermediate budgets when recommended solutions changes
-        """
         # Designate random number generator for random sampling.
         get_rand_soln_rng = self.rng_list[1]
         n_pts = problem.dim + 1
@@ -482,15 +436,14 @@ class NelderMead(Solver):
     ) -> tuple:
         """Adjust a point to ensure it remains within the specified bounds.
 
-        new_point : Iterable[float]
-            The proposed new point to be checked and adjusted if necessary.
-        reference_point : Iterable[float]
-            The original reference point used to compute movement direction.
+        Args:
+            new_point (Iterable[float]): The proposed new point to be checked and
+                adjusted if necessary.
+            reference_point (Iterable[float]): The original reference point used to
+                compute movement direction.
 
         Returns:
-        -------
-        tuple
-            The modified point that adheres to the given bounds.
+            tuple: The modified point that adheres to the given bounds.
         """
         # Make sure everything is a NumPy array
         new_point = np.array(new_point)

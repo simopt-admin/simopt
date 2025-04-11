@@ -2,8 +2,6 @@
 
 An algorithm for first-order gradient-based optimization of
 stochastic objective functions, based on adaptive estimates of lower-order moments.
-A detailed description of the solver can be found
-`here <https://simopt.readthedocs.io/en/latest/adam.html>`__.
 """
 
 from __future__ import annotations
@@ -28,39 +26,6 @@ class ADAM(Solver):
 
     An algorithm for first-order gradient-based optimization of
     stochastic objective functions, based on adaptive estimates of lower-order moments.
-
-    Attributes:
-    ----------
-    name : string
-        name of solver
-    objective_type : string
-        description of objective types:
-            "single" or "multi"
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_needed : bool
-        indicates if gradient of objective function is needed
-    factors : dict
-        changeable factors (i.e., parameters) of the solver
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used for the solver's internal purposes
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name for solver
-    fixed_factors : dict
-        fixed_factors of the solver
-
-    See Also:
-    --------
-    base.Solver
     """
 
     @classproperty
@@ -177,23 +142,8 @@ class ADAM(Solver):
         if self.factors["sensitivity"] <= 0:
             raise ValueError("Sensitivity must be greater than 0.")
 
+    @override
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """Run a single macroreplication of a solver on a problem.
-
-        Arguments:
-        ---------
-        problem : Problem object
-            simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
-
-        Returns:
-        -------
-        list[Solution]
-            list of solutions recommended throughout the budget
-        list[int]
-            list of intermediate budgets when recommended solutions changes
-        """
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0
@@ -282,19 +232,15 @@ class ADAM(Solver):
     ) -> np.ndarray:
         """Compute the finite difference approximation of the gradient for a solution.
 
-        Arguments:
-        ---------
-        new_solution : Solution
-            The current solution to perturb.
-        bounds_check : np.ndarray
-            Array indicating which perturbation method to use per dimension.
-        problem : Problem
-            The problem instance providing bounds and function evaluations.
+        Args:
+            new_solution (Solution): The current solution to perturb.
+            bounds_check (np.ndarray): Array indicating which perturbation method to
+                use per dimension.
+            problem (Problem): The problem instance providing bounds and function
+                evaluations.
 
         Returns:
-        -------
-        np.ndarray
-            The approximated gradient of the function at the given solution.
+            np.ndarray: The approximated gradient of the function at the given solution.
         """
         r = self.factors["r"]
         alpha = self.factors["alpha"]

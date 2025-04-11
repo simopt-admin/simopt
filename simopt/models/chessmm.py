@@ -1,9 +1,4 @@
-"""Chess Matchmaking Model.
-
-Simulate matching of chess players on an online platform.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/chessmm.html>`__.
-"""
+"""Simulate matching of chess players on an online platform."""
 
 from __future__ import annotations
 
@@ -26,30 +21,6 @@ class ChessMatchmaking(Model):
     A model that simulates a matchmaking problem with a Elo (truncated normal)
     distribution of players and Poisson arrivals and returns the average difference
     between matched players.
-
-    Attributes:
-    ----------
-    name : string
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI and data validation)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Arguments:
-    ---------
-    fixed_factors : nested dict
-        fixed factors of the simulation model
-
-    See Also:
-    --------
-    base.Model
     """
 
     @classproperty
@@ -164,19 +135,16 @@ class ChessMatchmaking(Model):
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict[str, dict]]:
         """Simulate a single replication for the current model factors.
 
-        Arguments:
-        ---------
-        rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-            rngs for model to use when simulating a replication
+        Args:
+            rng_list (list[MRG32k3a]): List of random number generators used to simulate
+                the replication.
 
         Returns:
-        -------
-        dict
-            performance measures of interest
-            "avg_diff" = the average Elo difference between all pairs
-            "avg_wait_time" = the average waiting time
-        dict[str, dict]
-            gradient estimates for each response
+            tuple[dict, dict[str, dict]]: A tuple containing:
+                - dict: Performance measures of interest, including:
+                    - "avg_diff": Average Elo difference between all pairs.
+                    - "avg_wait_time": Average waiting time.
+                - dict[str, dict]: Gradient estimates for each response.
         """
         # Constants
         num_players = self.factors["num_players"]
@@ -241,80 +209,8 @@ class ChessMatchmaking(Model):
         return responses, gradients
 
 
-"""
-Summary
--------
-Minimize the expected Elo difference between all pairs of matched
-players subject to the expected waiting time being sufficiently small.
-"""
-
-
 class ChessAvgDifference(Problem):
-    """Base class to implement simulation-optimization problems.
-
-    Attributes:
-    ----------
-    name : string
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    lower_bounds : tuple
-        lower bound for each decision variable
-    upper_bounds : tuple
-        upper bound for each decision variable
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : tuple
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : Model object
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : list
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-            prev_cost : list
-                cost of prevention
-            upper_thres : float > 0
-                upper limit of amount of contamination
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name for problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
-
-    See Also:
-    --------
-    base.Problem
-    """
+    """Base class to implement simulation-optimization problems."""
 
     @classproperty
     @override
@@ -485,52 +381,16 @@ class ChessAvgDifference(Problem):
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
+    @override
     def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        """Compute deterministic components of objectives for a solution `x`.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
         det_objectives = (0,)
         det_objectives_gradients = ()
         return det_objectives, det_objectives_gradients
 
+    @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """Check if a solution `x` satisfies the problem's deterministic constraints.
+        return all(x_val > 0 for x_val in x)
 
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
-        is_greater_than_zero: list[bool] = [x_val > 0 for x_val in x]
-        return all(is_greater_than_zero)
-
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """Generate a random solution for starting or restarting solvers.
-
-        Arguments:
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample a new random solution
-
-        Returns:
-        -------
-        x : tuple
-            vector of decision variables
-        """
         return (min(max(0, rand_sol_rng.normalvariate(150, 50)), 2400),)

@@ -27,39 +27,6 @@ class SPSA(Solver):
 
     Simultaneous perturbation stochastic approximation (SPSA) is an algorithm for
     optimizing systems with multiple unknown parameters.
-
-    Attributes:
-    ----------
-    name : string
-        name of solver
-    objective_type : string
-        description of objective types:
-            "single" or "multi"
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_needed : bool
-        indicates if gradient of objective function is needed
-    factors : dict
-        changeable factors (i.e., parameters) of the solver
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used for the solver's internal purposes
-
-    Parameters
-    ----------
-    name : str
-        user-specified name for solver
-    fixed_factors : dict
-        fixed_factors of the solver
-
-    See Also:
-    --------
-    base.Solver
     """
 
     @classproperty
@@ -220,36 +187,16 @@ class SPSA(Solver):
         discrete distribution, with values of -1 and 1. The vector size is the
         problem's dimension. The vector components are independent from each other.
 
-        Parameters
-        ----------
-        dim : int
-            Length of the vector.
+        Args:
+            dim (int): The length of the vector.
 
         Returns:
-        -------
-        NDArray[np.int_]
-            A random vector of -1's and 1's.
+            NDArray[np.int_]: A random vector of -1's and 1's.
         """
-        prob_list = self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim)
-        return np.array(prob_list)
+        return np.array(self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim))
 
+    @override
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """Run a single macroreplication of a solver on a problem.
-
-        Parameters
-        ----------
-        problem : Problem object
-            simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
-
-        Returns:
-        -------
-        list[Solution]
-            list of solutions recommended throughout the budget
-        list[int]
-            list of intermediate budgets when recommended solutions changes
-        """
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0

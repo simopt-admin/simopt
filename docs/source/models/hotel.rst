@@ -14,7 +14,9 @@ of length of stay, arrival date and rate paid be a "product" so that the followi
 2. One night stay, discount rate arriving Monday
 3. Two night stay, rack rate arriving Monday
 4. Two night stay, discount rate arriving Monday
-5. ...
+
+...
+
 55. One night stay, rack rate arriving Sunday
 56. One night stay, discount rate arriving Sunday
 

@@ -1,9 +1,4 @@
-"""Dual Sourcing Inventory Problem.
-
-Simulate multiple periods of ordering and sales for a dual sourcing inventory problem.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/dualsourcing.html>`__.
-"""
+"""Simulate periods of ordering and sales for a dual sourcing inventory problem."""
 
 from __future__ import annotations
 
@@ -22,56 +17,6 @@ class DualSourcing(Model):
     A model that simulates multiple periods of ordering and sales for a single-staged,
     dual sourcing inventory problem with stochastic demand. Returns average holding
     cost, average penalty cost, and average ordering cost per period.
-
-    Attributes:
-    ----------
-    name : str
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Parameters
-    ----------
-    fixed_factors : dict
-        fixed_factors of the simulation model
-
-        ``n_days``
-            Number of days to simulate (`int`)
-        ``initial_inv``
-            Initial inventory (`int`)
-        ``cost_reg``
-            Regular ordering cost per unit (`flt`)
-        ``cost_exp``
-            Expedited ordering cost per unit (`flt`)
-        ``lead_reg``
-            Lead time for regular orders in days (`int`)
-        ``lead_exp``
-            Lead time for expedited orders in days (`int`)
-        ``holding_cost``
-            Holding cost per unit per period (`flt`)
-        ``penalty_cost``
-            Penalty cost per unit per period for backlogging(`flt`)
-        ``st_dev``
-            Standard deviation of demand distribution (`flt`)
-        ``mu``
-            Mean of demand distribution (`flt`)
-        ``order_level_reg``
-            Order-up-to level for regular orders (`int`)
-        ``order_level_exp``
-            Order-up-to level for expedited orders (`int`)
-
-
-    See Also:
-    --------
-    base.Model
     """
 
     @classproperty
@@ -242,22 +187,21 @@ class DualSourcing(Model):
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
-        Arguments:
-        ---------
-        rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
-            rngs for model to use when simulating a replication
+        Args:
+            rng_list (list[MRG32k3a]): Random number generators used to simulate
+                the replication.
 
         Returns:
-        -------
-        responses : dict
-            performance measures of interest
-
-            ``average_holding_cost``
-                The average holding cost over the time period
-            ``average_penalty_cost``
-                The average penalty cost over the time period
-            ``average_ordering_cost``
-                The average ordering cost over the time period
+            tuple[dict, dict]: A tuple containing:
+                - responses (dict): Performance measures of interest:
+                    - "average_holding_cost": The average holding cost over the
+                        time period.
+                    - "average_penalty_cost": The average penalty cost over the
+                        time period.
+                    - "average_ordering_cost": The average ordering cost over the
+                        time period.
+                - gradients (dict): A dictionary of gradient estimates for
+                    each response.
         """
         n_days: int = self.factors["n_days"]
         n_days_range = range(n_days)
@@ -337,73 +281,8 @@ class DualSourcing(Model):
         return responses, gradients
 
 
-"""
-Summary
--------
-Minimize the expected total cost for dual-sourcing inventory system.
-"""
-
-
 class DualSourcingMinCost(Problem):
-    """Class to make dual-sourcing inventory simulation-optimization problems.
-
-    Attributes:
-    ----------
-    name : str
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : str
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : str
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : tuple
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : base.Model
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name of problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
-
-    See Also:
-    --------
-    base.Problem
-    """
+    """Class to make dual-sourcing inventory simulation-optimization problems."""
 
     @classproperty
     @override
@@ -549,51 +428,16 @@ class DualSourcingMinCost(Problem):
             + response_dict["average_holding_cost"],
         )
 
+    @override
     def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        """Compute deterministic components of objectives for a solution `x`.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
         det_objectives = (0,)
         det_objectives_gradients = ((0, 0),)
         return det_objectives, det_objectives_gradients
 
+    @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """Check if a solution `x` satisfies the problem's deterministic constraints.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
         return x[0] >= 0 and x[1] >= 0
 
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """Generate a random solution for starting or restarting solvers.
-
-        Arguments:
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
-            random-number generator used to sample a new random solution
-
-        Returns:
-        -------
-        x : tuple
-            vector of decision variables
-        """
         return (rand_sol_rng.randint(40, 60), rand_sol_rng.randint(70, 90))

@@ -44,41 +44,7 @@ from simopt.utils import classproperty, override
 
 
 class ASTRODF(Solver):
-    """The ASTRO-DF solver.
-
-    Attributes:
-    ----------
-    name : string
-        name of solver
-    objective_type : string
-        description of objective types:
-            "single" or "multi"
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_needed : bool
-        indicates if gradient of objective function is needed
-    factors : dict
-        changeable factors (i.e., parameters) of the solver
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used for the solver's internal purposes
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name for solver
-    fixed_factors : dict
-        fixed_factors of the solver
-
-    See Also:
-    --------
-    base.Solver
-    """
+    """The ASTRO-DF solver."""
 
     @classproperty
     @override
@@ -189,12 +155,11 @@ class ASTRODF(Solver):
     ) -> None:
         """Initialize the ASTRO-DF solver.
 
-        Arguments:
-        ---------
-        name : str
-            user-specified name for solver
-        fixed_factors : dict
-            fixed_factors of the solver
+        Args:
+            name (str, optional): User-specified name for the solver.
+                Defaults to "ASTRODF".
+            fixed_factors (dict, optional): Fixed factors of the solver.
+                Defaults to None.
         """
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
@@ -1134,21 +1099,8 @@ class ASTRODF(Solver):
         self.visited_pts_list = []
         self.kappa = None
 
+    @override
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """Run a single macroreplication of a solver on a problem.
-
-        Arguments:
-        ---------
-        problem : Problem object
-            simulation-optimization problem to solve
-
-        Returns:
-        -------
-        recommended_solns : list of Solution objects
-            list of solutions recommended throughout the budget
-        intermediate_budgets : list of ints
-            list of intermediate budgets when recommended solutions changes
-        """
         self.problem = problem
         self._initialize_solving()
 

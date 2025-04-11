@@ -1,9 +1,4 @@
-"""Facility Sizing Problem.
-
-Simulate demand at facilities.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/facilitysizing.html>`__.
-"""
+"""Simulate demand at facilities."""
 
 from __future__ import annotations
 
@@ -21,33 +16,8 @@ NUM_FACILITIES: Final[int] = 3
 class FacilitySize(Model):
     """Facility Sizing Model.
 
-    A model that simulates a facilitysize problem with a
-    multi-variate normal distribution.
-    Returns the probability of violating demand in each scenario.
-
-    Attributes:
-    ----------
-    name : string
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI and data validation)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Arguments:
-    ---------
-    fixed_factors : nested dict
-        fixed factors of the simulation model
-
-    See Also:
-    --------
-    base.Model
+    A model that simulates a facilitysize problem with a multi-variate normal
+    distribution. Returns the probability of violating demand in each scenario.
     """
 
     @classproperty
@@ -201,78 +171,8 @@ class FacilitySize(Model):
         return responses, gradients
 
 
-"""
-Summary
--------
-Minimize the (deterministic) total cost of installing capacity at
-facilities subject to a chance constraint on stockout probability.
-"""
-
-
 class FacilitySizingTotalCost(Problem):
-    """Base class to implement simulation-optimization problems.
-
-    Attributes:
-    ----------
-    name : string
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    lower_bounds : tuple
-        lower bound for each decision variable
-    upper_bounds : tuple
-        upper bound for each decision variable
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : float
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : Model object
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name for problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
-
-    See Also:
-    --------
-    base.Problem
-    """
+    """Base class to implement simulation-optimization problems."""
 
     @classproperty
     @override
@@ -433,50 +333,16 @@ class FacilitySizingTotalCost(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["capacity"])
 
+    @override
     def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
-        """Convert a dictionary with factor keys to a gradient vector.
-
-        Notes:
-        -----
-        A subclass of ``base.Problem`` can have its own custom
-        ``factor_dict_to_vector_gradients`` method if the
-        objective is deterministic.
-
-        Parameters
-        ----------
-        factor_dict : dict
-            Dictionary with factor keys and associated values.
-
-        Returns:
-        -------
-        vector : tuple
-            Vector of partial derivatives associated with decision variables.
-        """
         return (np.nan * len(self.model.factors["capacity"]),)
 
     @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
         return (0,)
 
-    def response_dict_to_objectives_gradients(self, response_dict: dict) -> tuple:  # noqa: ARG002
-        """Convert a dictionary with response keys to a vector of gradients.
-
-        Notes:
-        -----
-        A subclass of ``base.Problem`` can have its own custom
-        ``response_dict_to_objectives_gradients`` method if the
-        objective is deterministic.
-
-        Parameters
-        ----------
-        response_dict : dict
-            Dictionary with response keys and associated values.
-
-        Returns:
-        -------
-        tuple
-            Vector of gradients.
-        """
+    @override
+    def response_dict_to_objectives_gradients(self, _response_dict: dict) -> tuple:
         return ((0,) * len(self.model.factors["capacity"]),)
 
     def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
@@ -507,54 +373,14 @@ class FacilitySizingTotalCost(Problem):
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
+    @override
     def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        """Compute deterministic components of objectives for a solution `x`.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
         det_objectives = (np.dot(self.factors["installation_costs"], x),)
         det_objectives_gradients = (tuple(self.factors["installation_costs"]),)
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:
-        """Check if a solution `x` satisfies the problem's deterministic constraints.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
-        # Check box constraints.
-        return super().check_deterministic_constraints(x)
-
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """Generate a random solution for starting or restarting solvers.
-
-        Arguments:
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample a new random solution
-
-        Returns:
-        -------
-        x : tuple
-            vector of decision variables
-        """
         cov_matrix = np.diag([x**2 for x in self.factors["initial_solution"]])
         x = rand_sol_rng.mvnormalvariate(
             self.factors["initial_solution"], cov_matrix, factorized=False
@@ -566,78 +392,8 @@ class FacilitySizingTotalCost(Problem):
         return tuple(x)
 
 
-"""
-Summary
--------
-Maximize the probability of not stocking out subject to a budget
-constraint on the total cost of installing capacity.
-"""
-
-
 class FacilitySizingMaxService(Problem):
-    """Base class to implement simulation-optimization problems.
-
-    Attributes:
-    ----------
-    name : string
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    lower_bounds : tuple
-        lower bound for each decision variable
-    upper_bounds : tuple
-        upper bound for each decision variable
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : tuple
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : Model object
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name for problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
-
-    See Also:
-    --------
-    base.Problem
-    """
+    """Base class to implement simulation-optimization problems."""
 
     @classproperty
     @override
@@ -795,60 +551,27 @@ class FacilitySizingMaxService(Problem):
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         return (1 - response_dict["stockout_flag"],)
 
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:  # noqa: ARG002
-        """Compute deterministic components of objectives for a solution `x`.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        tuple
-            vector of deterministic components of objectives
-        tuple
-            vector of gradients of deterministic components of objectives
-        """
+    @override
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         det_objectives = (0,)
         det_objectives_gradients = ((0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
+    @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """Check if a solution `x` satisfies the problem's deterministic constraints.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
-        # Check budget constraint.
+        # Check budget constraint
         budget_feasible = (
             np.dot(self.factors["installation_costs"], x)
             <= self.factors["installation_budget"]
         )
-        # Check box constraints.
-        box_feasible = super().check_deterministic_constraints(x)
-        return budget_feasible * box_feasible
+        if not budget_feasible:
+            return False
 
+        # Check box constraints from the base class
+        return super().check_deterministic_constraints(x)
+
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """Generate a random solution for starting or restarting solvers.
-
-        Arguments:
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample a new random solution
-
-        Returns:
-        -------
-        tuple
-            vector of decision variables
-        """
         # Generate random vector of length # of facilities of continuous values
         # summing to less than or equal to installation budget.
         x = rand_sol_rng.continuous_random_vector_from_simplex(

@@ -1,9 +1,4 @@
-"""Hotel Expected Revenue Model.
-
-Simulate expected revenue for a hotel.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/hotel.html>`__.
-"""
+"""Simulate expected revenue for a hotel."""
 
 from __future__ import annotations
 
@@ -18,32 +13,7 @@ from simopt.utils import classproperty, override
 
 
 class Hotel(Model):
-    """A model that simulates business of a hotel with Poisson arrival rate.
-
-    Attributes:
-    ----------
-    name : string
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI and data validation)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Arguments:
-    ---------
-    fixed_factors : nested dict
-        fixed factors of the simulation model
-
-    See Also:
-    --------
-    base.Model
-    """
+    """A model that simulates business of a hotel with Poisson arrival rate."""
 
     @classproperty
     @override
@@ -293,18 +263,16 @@ class Hotel(Model):
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
-        Arguments:
-        ---------
-        rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-            rngs for model to use when simulating a replication
+        Args:
+            rng_list (list[MRG32k3a]): Random number generators used to simulate
+                the replication.
 
         Returns:
-        -------
-        responses : dict
-            performance measures of interest
-            "revenue" = expected revenue
-        gradients : dict of dicts
-            gradient estimates for each response
+            tuple[dict, dict]: A tuple containing:
+                - responses (dict): Performance measures of interest, including:
+                    - "revenue": Expected revenue.
+                - gradients (dict): A dictionary of gradient estimates for each
+                    response.
         """
         booking_limits = list(self.factors["booking_limits"])
         product_incidence = np.array(self.factors["product_incidence"])
@@ -370,77 +338,8 @@ class Hotel(Model):
         return responses, gradients
 
 
-"""
-Summary
--------
-Maximize the expected revenue.
-"""
-
-
 class HotelRevenue(Problem):
-    """Base class to implement simulation-optimization problems.
-
-    Attributes:
-    ----------
-    name : string
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    lower_bounds : tuple
-        lower bound for each decision variable
-    upper_bounds : tuple
-        upper bound for each decision variable
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : tuple
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : Model object
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : list
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name for problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
-
-    See Also:
-    --------
-    base.Problem
-    """
+    """Base class to implement simulation-optimization problems."""
 
     @classproperty
     @override
@@ -587,53 +486,18 @@ class HotelRevenue(Problem):
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
         return (response_dict["revenue"],)
 
+    @override
     def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        """Compute deterministic components of objectives for a solution `x`.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
         det_objectives = (0,)
         det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
+    @override
     def check_deterministic_constraints(self, _x: tuple) -> bool:
-        """Check if a solution `x` satisfies the problem's deterministic constraints.
-
-        Arguments:
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns:
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
         return True
 
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """Generate a random solution for starting or restarting solvers.
-
-        Arguments:
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample a new random solution
-
-        Returns:
-        -------
-        x : tuple
-            vector of decision variables
-        """
         return tuple(
             [
                 rand_sol_rng.randint(0, self.model.factors["num_rooms"])

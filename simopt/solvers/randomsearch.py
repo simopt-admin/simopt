@@ -25,39 +25,6 @@ class RandomSearch(Solver):
 
     A solver that randomly samples solutions from the feasible region.
     Take a fixed number of replications at each solution.
-
-    Attributes:
-    ----------
-    name : string
-        name of solver
-    objective_type : string
-        description of objective types:
-            "single" or "multi"
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_needed : bool
-        indicates if gradient of objective function is needed
-    factors : dict
-        changeable factors (i.e., parameters) of the solver
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used for the solver's internal purposes
-
-    Arguments:
-    ---------
-    name : str
-        user-specified name for solver
-    fixed_factors : dict
-        fixed_factors of the solver
-
-    See Also:
-    --------
-    base.Solver
     """
 
     @classproperty
@@ -131,21 +98,8 @@ class RandomSearch(Solver):
         if self.factors["sample_size"] <= 0:
             raise ValueError("Sample size must be greater than 0.")
 
+    @override
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """Run a single macroreplication of a solver on a problem.
-
-        Arguments:
-        ---------
-        problem : Problem
-            simulation-optimization problem to solve
-
-        Returns:
-        -------
-        list[Solution]
-            list of solutions recommended throughout the budget
-        list[int]
-            list of intermediate budgets when recommended solutions changes
-        """
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         # Start at initial solution and record as best.
