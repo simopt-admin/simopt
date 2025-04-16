@@ -1,679 +1,979 @@
-"""
-Summary
--------
-Simulate a single day of traffic for queuing problem.
-@author: kevin
+"""Simulate a single day of traffic for queuing problem."""
 
-"""
-import numpy as np
-import math
-from base import Model, Problem
-import warnings
 import csv
-import string
+import math
+from pathlib import Path
+from typing import Callable
+
+import numpy as np
+
+from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty, override
 
 
-"""
-Defines the Road object class
-"""
 class Road:
-    def __init__(self, roadid, startpoint, endpoint, direction):
-        self.roadid = roadid
-        self.startpoint = startpoint
-        self.endpoint = endpoint
-        self.direction = direction
-        self.queue = list()
-        self.status = False
-        self.queue_hist = {} # to store queue length at each time point
-        self.road_length = 10 # length of this road
-        self.overflow = False
-        self.overflow_queue = {} # to store queue length of incoming roads at each time point when overflowed
-        self.incoming_roads = list()
-        self.schedule = list()
+    """Defines the Road object class."""
 
-    """
-    Updates the light from red to green and vice versa
-    
-    Arguments
-    ---------
-    schedule: list
-        all times where a light changes status    
-    t: float
-        current time in system
-    """
-    def update_light(self, schedule, t):
+    @property
+    def roadid(self) -> int:
+        """ID of the road."""
+        return self._roadid
+
+    @roadid.setter
+    def roadid(self, value: int) -> None:
+        self._roadid = value
+
+    @property
+    def startpoint(self) -> str:
+        """Starting point of the road."""
+        return self._startpoint
+
+    @startpoint.setter
+    def startpoint(self, value: str) -> None:
+        self._startpoint = value
+
+    @property
+    def endpoint(self) -> str:
+        """Ending point of the road."""
+        return self._endpoint
+
+    @endpoint.setter
+    def endpoint(self, value: str) -> None:
+        self._endpoint = value
+
+    @property
+    def direction(self) -> str:
+        """Direction of the road."""
+        return self._direction
+
+    @direction.setter
+    def direction(self, value: str) -> None:
+        self._direction = value
+
+    @property
+    def queue(self) -> list:
+        """Queue of cars on the road."""
+        return self._queue
+
+    @queue.setter
+    def queue(self, value: list) -> None:
+        self._queue = value
+
+    @property
+    def status(self) -> bool:
+        """Status of the road light."""
+        return self._status
+
+    @status.setter
+    def status(self, value: bool) -> None:
+        self._status = value
+
+    @property
+    def queue_hist(self) -> dict:
+        """History of queue lengths."""
+        return self._queue_hist
+
+    @queue_hist.setter
+    def queue_hist(self, value: dict) -> None:
+        self._queue_hist = value
+
+    @property
+    def road_length(self) -> float:
+        """Length of the road."""
+        return self._road_length
+
+    @road_length.setter
+    def road_length(self, value: float) -> None:
+        self._road_length = value
+
+    @property
+    def overflow(self) -> bool:
+        """Indicates if the road is overflowed."""
+        return self._overflow
+
+    @overflow.setter
+    def overflow(self, value: bool) -> None:
+        self._overflow = value
+
+    @property
+    def overflow_queue(self) -> dict:
+        """Queue length of incoming roads when overflowed."""
+        return self._overflow_queue
+
+    @overflow_queue.setter
+    def overflow_queue(self, value: dict) -> None:
+        self._overflow_queue = value
+
+    @property
+    def incoming_roads(self) -> list:
+        """List of incoming roads."""
+        return self._incoming_roads
+
+    @incoming_roads.setter
+    def incoming_roads(self, value: list) -> None:
+        self._incoming_roads = value
+
+    @property
+    def schedule(self) -> list:
+        """Schedule of the road light."""
+        return self._schedule
+
+    @schedule.setter
+    def schedule(self, value: list) -> None:
+        self._schedule = value
+
+    @property
+    def nextchange(self) -> float:
+        """Next change time of the road light."""
+        return self._nextchange
+
+    @nextchange.setter
+    def nextchange(self, value: float) -> None:
+        self._nextchange = value
+
+    def __init__(
+        self, roadid: int, startpoint: str, endpoint: str, direction: str
+    ) -> None:
+        """Initialize the Road object."""
+        self._roadid = roadid
+        self._startpoint = startpoint
+        self._endpoint = endpoint
+        self._direction = direction
+        self._queue = []
+        self._status = False
+        self._queue_hist = {}  # to store queue length at each time point
+        self._road_length = 10
+        self._overflow = False
+        # to store queue length of incoming roads at each time point when overflowed
+        self._overflow_queue = {}
+        self._incoming_roads = []
+        self._schedule = []
+        self._nextchange = 0  # TODO: confirm this
+
+    def update_light(self, schedule: list, t: float) -> None:
+        """Updates the light from red to green and vice versa.
+
+        Arguments:
+        ---------
+        schedule: list
+            all times where a light changes status
+        t: float
+            current time in system
+        """
         for time in schedule:
             if time == t:
-                if self.status == True:
+                if self.status:
                     self.status = False
                 else:
                     self.status = True
                     if len(self.queue) > 0 and self.queue[0] != 0:
                         self.queue[0].starttime = t
-        
-"""
-Defines the Intersection object class
-"""
+
+
 class Intersection:
-    def __init__(self, name, roads):
-        self.name = name
+    """Defines the Intersection object class."""
+
+    @property
+    def name(self) -> str:
+        """Name of the intersection."""
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self._name = value
+
+    @property
+    def schedule(self) -> list:
+        """Schedule of the intersection."""
+        return self._schedule
+
+    @schedule.setter
+    def schedule(self, value: list) -> None:
+        self._schedule = value
+
+    @property
+    def horizontalroads(self) -> list[Road]:
+        """List of horizontal roads."""
+        return self._horizontalroads
+
+    @horizontalroads.setter
+    def horizontalroads(self, value: list[Road]) -> None:
+        self._horizontalroads = value
+
+    @property
+    def verticalroads(self) -> list[Road]:
+        """List of vertical roads."""
+        return self._verticalroads
+
+    @verticalroads.setter
+    def verticalroads(self, value: list[Road]) -> None:
+        self._verticalroads = value
+
+    @property
+    def offset(self) -> int:
+        """Offset of the intersection."""
+        return self._offset
+
+    @offset.setter
+    def offset(self, value: int) -> None:
+        self._offset = value
+
+    def __init__(self, name: str, _: list[Road]) -> None:
+        """Initialize the Intersection object.
+
+        Arguments:
+        ---------
+        name: str
+            name of the intersection
+        roads: list[Road]
+            list of all roads in the system
+        """
+        self._name = name
         self.schedule = []
-        self.horizontalroads = []
-        self.verticalroads = []
-        self.offset = 0
+        self._horizontalroads = []
+        self._verticalroads = []
+        self._offset = 0
+        # self._roads = roads
 
-    """
-    Sets specific roads as attributes of the intersection they belong to
-    
-    Arguments
-    ---------
-    roads: list
-        list of all roads in the system
-    """    
-    def connect_roads(self, roads, offset):
-        for Road in roads:
-            if Road.endpoint == self.name:
-                direction = Road.direction
-                if direction == 'East' or direction == 'West':
-                    self.horizontalroads.append(Road)
-                    if offset == 0:
-                        Road.status = True
-                    else:
-                        Road.status = False
+    def connect_roads(self, roads: list, offset: int) -> None:
+        """Sets specific roads as attributes of the intersection they belong to.
+
+        Arguments:
+        ---------
+        roads: list
+            list of all roads in the system
+        offset: int
+            offset of the intersection
+        """
+        for road in roads:
+            if road.endpoint == self.name:
+                if road.direction in ["East", "West"]:
+                    self.horizontalroads.append(road)
+                    road.status = offset == 0
                 else:
-                    self.verticalroads.append(Road)
-                    if offset == 0:
-                        Road.status = False
-                    else:
-                        Road.status = True
+                    self.verticalroads.append(road)
+                    road.status = offset != 0
 
-"""
-Defines the Car object class
-"""        
+
 class Car:
-    def __init__(self, carid, arrival, path, visits):
-        self.identify = carid
-        self.arrival = arrival
-        self.initialarrival = arrival
-        self.path = path
-        self.locationindex = 0
-        self.timewaiting = 0
-        self.primarrival = arrival
-        self.placeInQueue = None
-        self.nextstart = None
-        self.moving = False
-        self.nextSecArrival = None
-        self.prevstop = 0
-        self.visits = visits
-        self.finished = False
-        
-    def update_location(self):
+    """Defines the Car object class."""
+
+    @property
+    def identify(self) -> int:
+        """ID of the car."""
+        return self._identify
+
+    @identify.setter
+    def identify(self, value: int) -> None:
+        self._identify = value
+
+    @property
+    def arrival(self) -> float:
+        """Arrival time of the car."""
+        return self._arrival
+
+    @arrival.setter
+    def arrival(self, value: float) -> None:
+        self._arrival = value
+
+    @property
+    def initialarrival(self) -> float:
+        """Initial arrival time of the car."""
+        return self._initialarrival
+
+    @initialarrival.setter
+    def initialarrival(self, value: float) -> None:
+        self._initialarrival = value
+
+    @property
+    def path(self) -> list:
+        """Path of the car."""
+        return self._path
+
+    @path.setter
+    def path(self, value: list) -> None:
+        self._path = value
+
+    @property
+    def locationindex(self) -> int:
+        """Index of the car's current location."""
+        return self._locationindex
+
+    @locationindex.setter
+    def locationindex(self, value: int) -> None:
+        self._locationindex = value
+
+    @property
+    def timewaiting(self) -> float:
+        """Time the car has been waiting."""
+        return self._timewaiting
+
+    @timewaiting.setter
+    def timewaiting(self, value: float) -> None:
+        self._timewaiting = value
+
+    @property
+    def primarrival(self) -> float:
+        """Primary arrival time of the car."""
+        return self._primarrival
+
+    @primarrival.setter
+    def primarrival(self, value: float) -> None:
+        self._primarrival = value
+
+    @property
+    def place_in_queue(self) -> int | None:
+        """Position of the car in the queue."""
+        return self._place_in_queue
+
+    @place_in_queue.setter
+    def place_in_queue(self, value: int | None) -> None:
+        self._place_in_queue = value
+
+    @property
+    def nextstart(self) -> float | None:
+        """Next start time of the car."""
+        return self._nextstart
+
+    @nextstart.setter
+    def nextstart(self, value: float | None) -> None:
+        self._nextstart = value
+
+    @property
+    def moving(self) -> bool:
+        """Indicates if the car is moving."""
+        return self._moving
+
+    @moving.setter
+    def moving(self, value: bool) -> None:
+        self._moving = value
+
+    @property
+    def next_sec_arrival(self) -> float | None:
+        """Next second arrival time of the car."""
+        return self._nextSecArrival
+
+    @next_sec_arrival.setter
+    def next_sec_arrival(self, value: float | None) -> None:
+        self._nextSecArrival = value
+
+    @property
+    def prevstop(self) -> float:
+        """Previous stop of the car."""
+        return self._prevstop
+
+    @prevstop.setter
+    def prevstop(self, value: int) -> None:
+        self._prevstop = value
+
+    @property
+    def visits(self) -> list:
+        """List of visits of the car."""
+        return self._visits
+
+    @visits.setter
+    def visits(self, value: list) -> None:
+        self._visits = value
+
+    @property
+    def finished(self) -> bool:
+        """Indicates if the car has finished its path."""
+        return self._finished
+
+    @finished.setter
+    def finished(self, value: bool) -> None:
+        self._finished = value
+
+    def __init__(
+        self, carid: int, arrival: int | float, path: list[Road], visits: list[str]
+    ) -> None:
+        """Initialize the Car object."""
+        self._identify = carid
+        self._arrival = arrival
+        self._initialarrival = arrival
+        self._path = path
+        self._locationindex = 0
+        self._timewaiting = 0
+        self._primarrival = arrival
+        self._place_in_queue = None
+        self._nextstart = None
+        self._moving = False
+        self._nextSecArrival = None
+        self._prevstop = 0
+        self._visits = visits
+        self._finished = False
+
+    def update_location(self) -> None:
+        """Update the car's location index."""
         self.locationindex += 1
 
+
 class TrafficLight(Model):
-    """
+    """Traffic Light Model.
+    
     A model that simulates a series of intersections and their light \
     schedules. As cars travel through the system, their waiting \
     time is tracked.
-
-    Attributes
-    ----------
-    name : string
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI and data validation)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Arguments
-    ---------
-    fixed_factors : nested dict
-        fixed factors of the simulation model
-
-    See also
-    --------
-    base.Model
     """
 
-    def __init__(self, fixed_factors={}):
-        self.name = "TrafficLight"
-        self.n_rngs = 3
-        self.n_responses = 1
-        self.specifications = {
-            "lambdas": {
-                "description": "Rate parameter of the time interval distribution, in seconds, for generating each car.",
-                "datatype": list,
-                "default": [2, 2, 0, 1, 2, 2, 0, 1]
-            },
-            
-            "runtime": {
-                "description": "The number of seconds that the traffic model runs", 
-                "datatype": float,
-                "default": 7200
-            },
+    @classproperty
+    @override
+    def n_rngs(cls) -> int:
+        return 3
 
+    @classproperty
+    @override
+    def n_responses(cls) -> int:
+        return 1
+
+    @classproperty
+    @override
+    def specifications(cls) -> dict[str, dict]:
+        return {
+            "lambdas": {
+                "description": (
+                    "Rate parameter of the time interval distribution (in seconds) "
+                    "for generating each car."
+                ),
+                "datatype": list,
+                "default": [2, 2, 0, 1, 2, 2, 0, 1],
+            },
+            "runtime": {
+                "description": "The number of seconds that the traffic model runs",
+                "datatype": float,
+                "default": 7200,
+            },
             "numintersections": {
                 "description": "The number of intersections in the traffic model",
                 "datatype": int,
-                "default": 4
+                "default": 4,
             },
-            
             "decision_vector": {
-                "description": "Delay, in seconds, in light schedule based on distance from first intersection",
+                "description": (
+                    "Delay, in seconds, in light schedule based on distance from "
+                    "first intersection"
+                ),
                 "datatype": list,
-                "default": [1, 2, 3]
+                "default": [1, 2, 3],
             },
-            
-
             "speed": {
                 "description": "Constant speed in meter/second for the cars",
                 "datatype": float,
-                "default": 5
+                "default": 5,
             },
-
             "carlength": {
                 "description": "Length in meters of each car",
                 "datatype": float,
-                "default": 4.5
+                "default": 4.5,
             },
-                    
             "reaction": {
                 "description": "Reaction time in seconds of cars in queue",
                 "datatype": float,
-                "default": 0.1
+                "default": 0.1,
             },
-
             "transition_probs": {
-                "description": "The transition probability of a car end at each point from their current starting point.",
+                "description": (
+                    "The transition probability of a car end at each point from their "
+                    "current starting point."
+                ),
                 "datatype": list,
-                "default": [0.7, 0.3, 0.3, 0.2, 0.25, 0.1, 0.15]
+                "default": [0.7, 0.3, 0.3, 0.2, 0.25, 0.1, 0.15],
             },
-            
-            "pause":{
+            "pause": {
                 "description": "The pause in seconds before move on a green light",
                 "datatype": float,
-                "default" : 0.1
+                "default": 0.1,
             },
-            
-            "car_distance" : {
+            "car_distance": {
                 "description": "The distance between cars",
                 "datatype": float,
-                "default" : 0.5
+                "default": 0.5,
             },
-            
-            "length_arteries" : {
-                "description": "The length in meters of artery roads", 
+            "length_arteries": {
+                "description": "The length in meters of artery roads",
                 "datatype": float,
-                "default" : 100
+                "default": 100,
             },
-            
-            "length_veins" : {
-                "description": "The length in meters of vein road", 
+            "length_veins": {
+                "description": "The length in meters of vein road",
                 "datatype": float,
-                "default" : 100
+                "default": 100,
             },
-            
-            "redlight_arteries" : {
-                "description": "The length of redlight duration of artery roads in each intersection", 
+            "redlight_arteries": {
+                "description": (
+                    "The length of redlight duration of artery roads in "
+                    "each intersection"
+                ),
                 "datatype": list,
-                "default" : [10, 10, 10, 10]
+                "default": [10, 10, 10, 10],
             },
-            
-            "redlight_veins" : {
-                "description": "The length of redlight duration of vein roads in each intersection", 
+            "redlight_veins": {
+                "description": (
+                    "The length of redlight duration of vein roads in each intersection"
+                ),
                 "datatype": list,
-                "default" : [20, 20, 20, 20]
-            }
+                "default": [20, 20, 20, 20],
+            },
         }
 
-        self.check_factor_list = {
-            "lambdas": self.check_lambdas,
-            "numintersections": self.check_numintersections,
-            "decision_vector": self.check_decision_vector,
-            "speed": self.check_speed,
-            "carlength": self.check_carlength,
-            "reaction": self.check_reaction,
-            "transition_probs": self.check_transition_probs,
-            "pause": self.check_pause,
-            "car_distance": self.check_car_distance,
-            "length_arteries": self.check_length_arteries,
-            "length_veins": self.check_length_veins,
-            "redlight_arteries": self.check_redlight_arteries,
-            "redlight_veins": self.check_redlight_veins
+    @property
+    @override
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
+            "runtime": self._check_runtime,
+            "lambdas": self._check_lambdas,
+            "numintersections": self._check_numintersections,
+            "decision_vector": self._check_decision_vector,
+            "speed": self._check_speed,
+            "carlength": self._check_carlength,
+            "reaction": self._check_reaction,
+            "transition_probs": self._check_transition_probs,
+            "pause": self._check_pause,
+            "car_distance": self._check_car_distance,
+            "length_arteries": self._check_length_arteries,
+            "length_veins": self._check_length_veins,
+            "redlight_arteries": self._check_redlight_arteries,
+            "redlight_veins": self._check_redlight_veins,
         }
-        # Set factors of the simulation model
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the Traffic Light Model.
+
+        Args:
+            fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
+        # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_lambdas(self):
+    def _check_lambdas(self) -> bool:
         if (self.factors["lambdas"][2] != 0) or (self.factors["lambdas"][6] != 0):
-            return FALSE
-        return (max(self.factors['lambdas'][3], self.factors['lambdas'][7]) <= min([self.factors['lambdas'][i] for i in [0, 1, 4, 5]]))
-    
-    def check_runtime(self):
+            return False
+        return max(self.factors["lambdas"][3], self.factors["lambdas"][7]) <= min(
+            [self.factors["lambdas"][i] for i in [0, 1, 4, 5]]
+        )
+
+    def _check_runtime(self) -> bool:
         return self.factors["runtime"] > 0
 
-    def check_numintersections(self):
+    def _check_numintersections(self) -> bool:
         return self.factors["numintersections"] > 0
 
-    def check_decision_vector(self):
-        for value in self.factors["decision_vector"]:
-            if value < 0:
-                return False
-            else:
-                return True
+    def _check_decision_vector(self) -> bool:
+        return all(value >= 0 for value in self.factors["decision_vector"])
 
-    def check_speed(self):
+    def _check_speed(self) -> bool:
         return self.factors["speed"] > 0
-    
-    def check_carlength(self):
+
+    def _check_carlength(self) -> bool:
         return self.factors["carlength"] > 0
-    
-    def check_reaction(self):
+
+    def _check_reaction(self) -> bool:
         return self.factors["reaction"] > 0
 
-    def check_transition_probs(self):
-        if any([transition_prob < 0 for transition_prob in self.factors["transition_probs"]]):
+    def _check_transition_probs(self) -> bool:
+        if any(
+            transition_prob < 0 for transition_prob in self.factors["transition_probs"]
+        ):
             return False
         p16, p17, p21, p23, p41, p43, p47 = self.factors["transition_probs"]
-        transition_matrix =  np.array([
-                            [0  , 0 , 0  , 0  , 0  , p16, p17, 0],
-                            [p21, 0 , p23, 0  , p21, 0  , p23, 0],
-                            [0  , 0 , 0  , 0  , 0  , 0  , 0  , 0],
-                            [p41, p41, p43, 0 , p41, 0  , p47, 0],
-                            [0  , p16, p17, 0 , 0  , 0  , 0  , 0],
-                            [p21, 0  , p23, 0 , p21, 0  , p23, 0],
-                            [0  , 0  , 0  , 0  , 0  , 0  , 0  , 0],
-                            [p41, 0  , p47, 0  , p41, p41, p43, 0]])
+        transition_matrix = np.array(
+            [
+                [0, 0, 0, 0, 0, p16, p17, 0],
+                [p21, 0, p23, 0, p21, 0, p23, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [p41, p41, p43, 0, p41, 0, p47, 0],
+                [0, p16, p17, 0, 0, 0, 0, 0],
+                [p21, 0, p23, 0, p21, 0, p23, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [p41, 0, p47, 0, p41, p41, p43, 0],
+            ]
+        )
         prob_sum = np.sum(transition_matrix[:, :], axis=1).tolist()
         del prob_sum[2]
         del prob_sum[5]
-        return all([x == 1 for x in prob_sum]) 
-    
-    def check_pause(self):
+        return all(x == 1 for x in prob_sum)
+
+    def _check_pause(self) -> bool:
         return self.factors["pause"] > 0
-    
-    def check_car_distance(self):
+
+    def _check_car_distance(self) -> bool:
         return self.factors["car_distance"] > 0
-    
-    def check_length_arteries(self):
+
+    def _check_length_arteries(self) -> bool:
         return self.factors["length_arteries"] > 0
-    
-    def check_length_veins(self):
+
+    def _check_length_veins(self) -> bool:
         return self.factors["length_veins"] > 0
-    
-    def check_redlight_arteries(self):
-        return self.factors["redlight_arteries"] > 0
-    
-    def check_redlight_veins(self):
-        return self.factors["redlight_veins"] > 0
-    
-    def check_simulatable_factors(self):                                   
-        return True
-       
-    def replicate(self, rng_list):
-        """
-        Simulate a single replication for the current model factors.
 
-        Arguments
-        ---------
-        rng_list : list of rng.MRG32k3a objects
-            rngs for model to use when simulating a replication
+    def _check_redlight_arteries(self) -> bool:
+        return all(redlight > 0 for redlight in self.factors["redlight_arteries"])
 
-        Returns
-        -------
-        responses : dict
-            performance measures of interest
-            "WaitingTime" = average time waiting at a light
-        gradients : dict of dicts
-            gradient estimates for each response
+    def _check_redlight_veins(self) -> bool:
+        return all(redlight > 0 for redlight in self.factors["redlight_veins"])
+
+    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+        """Simulate a single replication for the current model factors.
+
+        Args:
+            rng_list (list[MRG32k3a]): Random number generators used to simulate
+                the replication.
+
+        Returns:
+            tuple[dict, dict]: A tuple containing two dictionaries:
+                - responses (dict): Performance measures of interest.
+                    - "WaitingTime" = average time waiting at a light
+                - gradients (dict): Gradient estimates for each response.
         """
-        
-        #Designate separate RNGs for start, end positions and interarrival times
+        # Designate separate RNGs for start, end positions and interarrival times
         start_rng = rng_list[0]
         end_rng = rng_list[1]
         arrival_rng = rng_list[2]
 
-        #Initializes variables to start the simulation
+        # Initializes variables to start the simulation
         t = 0
-        nextcargen = 0
+        next_car_gen = 0
         outbounds = self.factors["runtime"] + 1
-        carSimIndex = 0
-        nextStart = outbounds
-        nextSecArrival = outbounds
-        minPrimArrival = 0
-        start_prob = [x/sum(self.factors["lambdas"]) for x in self.factors["lambdas"]]
-        
-        
-        #offset of 12 roads
-        self.factors["offset"] = [0, 
-                                  self.factors["decision_vector"][0], 
-                                  self.factors["redlight_veins"][0],
-                                  self.factors["decision_vector"][0]+self.factors["redlight_veins"][1],
-                                  0,
-                                  self.factors["decision_vector"][0],
-                                  self.factors["decision_vector"][1],
-                                  self.factors["decision_vector"][2],
-                                  self.factors["decision_vector"][1]+self.factors["redlight_veins"][2],
-                                  self.factors["decision_vector"][2]+self.factors["redlight_veins"][3],
-                                  self.factors["decision_vector"][1],
-                                  self.factors["decision_vector"][2]]
-        print("offset:", self.factors["offset"])
-        
-        #transition matrix
+        car_sim_index = 0
+        next_start = outbounds
+        next_sec_arrival = outbounds
+        min_prim_arrival = 0
+        start_prob = [x / sum(self.factors["lambdas"]) for x in self.factors["lambdas"]]
+
+        # offset of 12 roads
+        self.factors["offset"] = [
+            0,
+            self.factors["decision_vector"][0],
+            self.factors["redlight_veins"][0],
+            self.factors["decision_vector"][0] + self.factors["redlight_veins"][1],
+            0,
+            self.factors["decision_vector"][0],
+            self.factors["decision_vector"][1],
+            self.factors["decision_vector"][2],
+            self.factors["decision_vector"][1] + self.factors["redlight_veins"][2],
+            self.factors["decision_vector"][2] + self.factors["redlight_veins"][3],
+            self.factors["decision_vector"][1],
+            self.factors["decision_vector"][2],
+        ]
+
+        # transition matrix
         p16, p17, p21, p23, p41, p43, p47 = self.factors["transition_probs"]
-        transition_matrix =  np.array([
-                            [0  , 0 , 0  , 0  , 0  , p16, p17, 0],
-                            [p21, 0 , p23, 0  , p21, 0  , p23, 0],
-                            [0  , 0 , 0  , 0  , 0  , 0  , 0  , 0],
-                            [p41, p41, p43, 0 , p41, 0  , p47, 0],
-                            [0  , p16, p17, 0 , 0  , 0  , 0  , 0],
-                            [p21, 0  , p23, 0 , p21, 0  , p23, 0],
-                            [0  , 0  , 0  , 0  , 0  , 0  , 0  , 0],
-                            [p41, 0  , p47, 0  , p41, p41, p43, 0]])
-        
-        
-        
-        #Draw out map of all locations in system
-        roadmap = np.array([
-                ['','N1','N2', ''], 
-                ['W1', 'A', 'B', 'E1'], 
-                ['W2', 'C', 'D', 'E2'],
-                ['', 'S1', 'S2', '']])
-        #List each location and the locations that are next accessible   
-        graph = {'A': ['N1', 'B', 'C'],
-                'B': ['N2', 'E1', 'D'],
-                'C': ['A', 'S1', 'W2'],
-                'D': ['C', 'B', 'S2'],
-                'N1': ['A'],
-                'N2': ['B'],
-                'E1': [],
-                'E2': ['D'],
-                'S2': ['D'],
-                'S1': ['C'],
-                'W2': [],
-                'W1': ['A'],
-                }
+        transition_matrix = np.array(
+            [
+                [0, 0, 0, 0, 0, p16, p17, 0],
+                [p21, 0, p23, 0, p21, 0, p23, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [p41, p41, p43, 0, p41, 0, p47, 0],
+                [0, p16, p17, 0, 0, 0, 0, 0],
+                [p21, 0, p23, 0, p21, 0, p23, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [p41, 0, p47, 0, p41, p41, p43, 0],
+            ]
+        )
 
-        
-        #Lists each location in the system
+        # Draw out map of all locations in system
+        roadmap = np.array(
+            [
+                ["", "N1", "N2", ""],
+                ["W1", "A", "B", "E1"],
+                ["W2", "C", "D", "E2"],
+                ["", "S1", "S2", ""],
+            ]
+        )
+        # List each location and the locations that are next accessible
+        graph: dict[str, list[str]] = {
+            "A": ["N1", "B", "C"],
+            "B": ["N2", "E1", "D"],
+            "C": ["A", "S1", "W2"],
+            "D": ["C", "B", "S2"],
+            "N1": ["A"],
+            "N2": ["B"],
+            "E1": [],
+            "E2": ["D"],
+            "S2": ["D"],
+            "S1": ["C"],
+            "W2": [],
+            "W1": ["A"],
+        }
+
+        # Lists each location in the system
         points = list(graph.keys())
-        
-        """
-        Find the shortest path between two points # NO lEFT TURN
 
-        Arguments
-        ---------
-        graph: dictionary
-            dictionary with all locations and their connections
-        start: string
-            name of starting location
-        end: string
-            name of ending location
-        path: list
-            list of locations that represent the car's path            
+        def find_shortest_path(
+            graph: dict[str, list[str]],
+            start: str,
+            end: str,
+            path: list[str] | None = None,
+        ) -> list[str] | None:
+            """Find the shortest path between two points.
 
-        Returns
-        -------
-        shortest: list
-            list of locations that represent the shortest path from 
-            start to finish
-        """
-        def find_shortest_path(graph, start, end, path=[]):
-            path = path + [start]
-            #print("current path", path)
-            #Path starts and ends at the same point
+            NOTE: NO LEFT TURN
+
+            Arguments:
+            ---------
+            graph: dict[str, list[str]]
+                dictionary with all locations and their connections
+            start: string
+                name of starting location
+            end: string
+                name of ending location
+            path: list[str] | None, optional
+                list of locations that represent the car's path
+
+            Returns:
+            -------
+            list | None
+                list of locations that represent the shortest path from start to finish.
+                None if no path exists.
+            """
+            if path is None:
+                path = []
+            path = [*path, start]
+            # Path starts and ends at the same point
             if start == end:
                 return path
-                
+
             shortest = None
             for node in graph[start]:
-                #print("node ", node)
-                #if node not in path:
+                # if node not in path:
                 if sum(x == node for x in path) < 2:
-                    if len(path) >= 2: # no left turn
+                    if len(path) >= 2:  # no left turn
                         direction1 = find_direction(path[-2], path[-1], roadmap)
                         direction2 = find_direction(path[-1], node, roadmap)
-                        turn = find_turn(direction1+direction2)
-                        #print(turn)
-                        if (turn in ['Right', 'Straight']):
+                        turn = find_turn(direction1 + direction2)
+                        if turn in ["Right", "Straight"]:
                             newpath = find_shortest_path(graph, node, end, path)
-                            if newpath:
-                                if not shortest or len(newpath) < len(shortest):
-                                    shortest = newpath
+                            if newpath and (
+                                not shortest or len(newpath) < len(shortest)
+                            ):
+                                shortest = newpath
                     else:
                         newpath = find_shortest_path(graph, node, end, path)
-                        if newpath:
-                            if not shortest or len(newpath) < len(shortest):
-                                shortest = newpath
+                        if newpath and (not shortest or len(newpath) < len(shortest)):
+                            shortest = newpath
             return shortest
 
-        """
-        Generates shortest path through two random start and end locations
+        def generate_path(start: int) -> list[str]:
+            """Generates shortest path through two random start and end locations.
 
-        Returns
-        -------
-        path: list
-            list of locations that car visits
-        """
-        def generate_path(start):
+            Returns:
+            -------
+            list[str]
+                list of locations that car visits
+            """
             path = None
             while path is None:
-                end = end_rng.choices(population=range(8), weights=transition_matrix[start])[0]
-                path = find_shortest_path(graph,
-                                          points[start+self.factors["numintersections"]],
-                                          points[end+self.factors["numintersections"]])
+                end = end_rng.choices(
+                    population=range(8), weights=transition_matrix[start]
+                )[0]
+                path = find_shortest_path(
+                    graph,
+                    points[start + self.factors["numintersections"]],
+                    points[end + self.factors["numintersections"]],
+                )
             return path
 
-        """
-        Takes in road and finds its direction based on the map
+        def find_direction(start: str, end: str, roadmap: np.ndarray) -> str:
+            """Takes in road and finds its direction based on the map.
 
-        Arguments
-        ---------
-        start: string
-            name of starting location
-        end: string
-            name of ending location
-        roadmap: array
-            array of all points in system          
+            Arguments:
+            ---------
+            start: string
+                name of starting location
+            end: string
+                name of ending location
+            roadmap: array
+                array of all points in system
 
-        Returns
-        -------
-        direction: string
-            direction that the road is facing
-        """
-        def find_direction(start, end, roadmap):
+            Returns:
+            -------
+            string
+                direction that the road is facing
+            """
             yloc1, xloc1 = np.where(roadmap == start)
             yloc2, xloc2 = np.where(roadmap == end)
             if xloc1 > xloc2:
-                direction = 'West'
+                direction = "West"
             elif xloc1 < xloc2:
-                direction = 'East'
+                direction = "East"
             elif yloc1 > yloc2:
-                direction = 'North'
+                direction = "North"
             else:
-                direction = 'South'
+                direction = "South"
             return direction
-        
-        """
-        Assigns the direction of a turn when given two roads
 
-        Arguments
-        ---------
-        roadcombo: string
-            combined directions of roads           
+        def find_turn(roadcombo: str) -> str:
+            """Assigns the direction of a turn when given two roads.
 
-        Returns
-        -------
-        turn: string
-            direction of turn
-        """
-        def find_turn(roadcombo):
-            turnkey = {'Straight': ['WestWest', 'EastEast', 'SouthSouth', 'NorthNorth'], 
-                    'Left': ['NorthWest', 'EastNorth', 'SouthEast', 'WestSouth'], 
-                    'Right': ['NorthEast', 'WestNorth', 'SouthWest', 'EastSouth'],
-                       'Uturn': ['NorthSouth', 'SouthNorth', 'EastWest', 'WestEast']
-                    }
-            turn = ''
+            Arguments:
+            ---------
+            roadcombo: string
+                combined directions of roads
+
+            Returns:
+            -------
+            string
+                direction of turn
+            """
+            turnkey = {
+                "Straight": ["WestWest", "EastEast", "SouthSouth", "NorthNorth"],
+                "Left": ["NorthWest", "EastNorth", "SouthEast", "WestSouth"],
+                "Right": ["NorthEast", "WestNorth", "SouthWest", "EastSouth"],
+                "Uturn": ["NorthSouth", "SouthNorth", "EastWest", "WestEast"],
+            }
+            turn = ""
             for key, values in turnkey.items():
                 for value in values:
                     if roadcombo == value:
                         turn = key
             return turn
-        
-        
+
         road_pair = [
-            ("N1", "A"), ("N2", "B"), ("W1", "A"), ("A", "B"),
-            ("C",  "A"), ("D",  "B"), ("A",  "C"), ("B", "D"),
-            ("D",  "C"), ("E2", "D"), ("S1", "C"), ("S2", "D"),
-            ("A", "N1"), ("B", "N2"), ("B", "E1"), ("C", "W2"),
-            ("C", "S1"), ("D", "S2")]
-        
-        #Generates list of all road objects in the system
-        roads = list()    
-        roadid = 0
-        for (key, value) in road_pair:
-                direction = find_direction(key, value, roadmap)
-                roads.append(Road(roadid, key, value, direction))
-                roads[roadid].nextchange = outbounds
-                if direction == 'West' or direction == 'East':
-                    roads[roadid].road_length = self.factors["length_veins"]
-                else:
-                    roads[roadid].road_length = self.factors["length_arteries"]
-                roads[roadid].queue.append(0)
-                # print('Road', roadid, ':', key, value, direction)
-                roadid += 1
-        
+            ("N1", "A"),
+            ("N2", "B"),
+            ("W1", "A"),
+            ("A", "B"),
+            ("C", "A"),
+            ("D", "B"),
+            ("A", "C"),
+            ("B", "D"),
+            ("D", "C"),
+            ("E2", "D"),
+            ("S1", "C"),
+            ("S2", "D"),
+            ("A", "N1"),
+            ("B", "N2"),
+            ("B", "E1"),
+            ("C", "W2"),
+            ("C", "S1"),
+            ("D", "S2"),
+        ]
+
+        # Generates list of all road objects in the system
+        roads: list[Road] = []
+        for roadid, (key, value) in enumerate(road_pair):
+            direction = find_direction(key, value, roadmap)
+            roads.append(Road(roadid, key, value, direction))
+            roads[roadid].nextchange = outbounds  # TODO: fix this
+            if direction == "West" or direction == "East":
+                roads[roadid].road_length = self.factors["length_veins"]
+            else:
+                roads[roadid].road_length = self.factors["length_arteries"]
+            roads[roadid].queue.append(0)
+
         # add incoming roads
-        # only when startpoints are A, B, C, D have the overflow with overflow queue length issue
-        start_points = np.array([key for (key, value) in road_pair])
+        # only when startpoints are A, B, C, D have the overflow with overflow queue
+        # length issue
+        start_points = np.array([key for key, _ in road_pair])
         for road in roads:
             endpoint = road.endpoint
             if endpoint in {"A", "B", "C", "D"}:
                 indices = np.where(endpoint == start_points)[0]
                 for i in indices:
                     if i < 12:
-                        turn = find_turn(road.direction+roads[i].direction)
-                        if turn != 'Left':
+                        turn = find_turn(road.direction + roads[i].direction)
+                        if turn != "Left":
                             roads[i].incoming_roads.append(road)
 
-        # check incoming roads
-        for road in roads:
-            if len(road.incoming_roads) > 0:
-                print(road.roadid, " incoming roads:", [r.roadid for r in road.incoming_roads])
-        """
-        Finds the roads that a car will take on its path 
+        def find_roads(visits: list[str]) -> list[Road]:
+            """Finds the roads that a car will take on its path.
 
-        Arguments
-        ---------
-        visits: list
-            all locations in a car's path        
+            Arguments:
+            ---------
+            visits: list[str]
+                all locations in a car's path
 
-        Returns
-        -------
-        path: list
-            list of road objects that the car travels on
-        """  
-        def find_roads(visits):
-            path = list()
+            Returns:
+            -------
+            list[Road]
+                list of road objects that the car travels on
+            """
+            path: list[Road] = []
             for i in range(len(visits) - 1):
-                    for road in roads:
-                        if road.startpoint == visits[i] and road.endpoint == visits[i + 1]:
-                            path.append(road)
-            return path         
-           
-        
-        #Generates list of all intersection objects
-        intersections = list()
+                for road in roads:
+                    if road.startpoint == visits[i] and road.endpoint == visits[i + 1]:
+                        path.append(road)
+            return path
+
+        # Generates list of all intersection objects
+        intersections = []
+        decision_vectors: list[int] = self.factors["decision_vector"]
         for i in range(self.factors["numintersections"]):
             location = points[i]
             intersections.append(Intersection(location, roads))
-            if i == 0:
-                offset = 0
-            else:
-                offset = self.factors["decision_vector"][i-1]
-            #print('Intersection index', i)
-            #schedule = gen_lightschedule(self.factors["interval"], intersections[i], i)
-            #intersections[i].schedule = schedule
-            #print('Intersection', intersections[i].name, ':',  schedule)
+            offset = 0 if i == 0 else decision_vectors[i - 1]
             intersections[i].connect_roads(roads, offset)
-        
+
         """
         Generates light schedule of road 
-        """ 
-        
+        """
+
         greenlight_arteries = self.factors["redlight_veins"]
-        greenlight_veins = self.factors["redlight_arteries"]        
-        
-        
+        greenlight_veins = self.factors["redlight_arteries"]
+
         for roadid in range(12):
             offset = self.factors["offset"][roadid]
             road = roads[roadid]
             ind = ["A", "B", "C", "D"].index(road.endpoint)
-            if road.direction == 'West' or road.direction == 'East':
+            if road.direction == "West" or road.direction == "East":
                 interval = [self.factors["redlight_veins"][ind], greenlight_veins[ind]]
             else:
-                interval = [greenlight_arteries[ind], self.factors["redlight_arteries"][ind]]
-            #print(roadid, road.direction, road.startpoint, road.endpoint, ind, interval)
+                interval = [
+                    greenlight_arteries[ind],
+                    self.factors["redlight_arteries"][ind],
+                ]
             for i in range(math.ceil(self.factors["runtime"] / min(interval)) + 2):
                 if i == 0:
                     road.schedule.append(0)
-                elif i %2 == 0: #even time index, A: red -> green, V: green -> red
-                        road.schedule.append(road.schedule[-1] +interval[1])
-                else: #odd time index, A: green -> red, V: red -> green 
+                elif i % 2 == 0:  # even time index, A: red -> green, V: green -> red
+                    road.schedule.append(road.schedule[-1] + interval[1])
+                else:  # odd time index, A: green -> red, V: red -> green
                     if i == 1:
-                        offsetcalc = (offset % interval[0])
+                        offsetcalc = offset % interval[0]
                         if offsetcalc == 0:
                             offsetcalc = interval[0]
                         road.schedule.append(road.schedule[-1] + offsetcalc)
                     else:
                         road.schedule.append(road.schedule[-1] + interval[0])
-            print("road", roadid, " schedule: ", road.schedule)
-        
-        
-        
-        """
-        Finds the next time any intersection light will change signal   
 
-        Arguments
-        ---------
-        intersections: list
-            list of all intersection objects
-        t: float
-            current time in system
+        def find_nextlightchange_road(roads: list, t: float) -> float:
+            """Finds the next time any intersection light will change signal.
 
-        Returns
-        -------
-        mintimechange: float
-            time that the next light changes
-        location: list
-            list of locations that a light changes at
-        """    
-        def find_nextlightchange_road(roads, t):
-            mintimechange = self.factors["runtime"]
-            #Loops through roads to find a minimum light changing time
+            Arguments:
+            ---------
+            roads: list
+                list of all intersection objects
+            t: float
+                current time in system
+
+            Returns:
+            -------
+            float
+                time that the next light changes
+            """
+            # TODO: figure out if this also needs returned:
+            # list
+            #     list of locations that a light changes at
+
+            mintimechange: float = self.factors["runtime"]
+            # Loops through roads to find a minimum light changing time
             for road in roads[:12]:
                 nextchange = min([i for i in road.schedule if i > t])
                 if nextchange <= mintimechange:
                     mintimechange = nextchange
             return mintimechange
-        
-        """
-        Updates the intersections with their new light status        
 
-        Arguments
-        ---------
-        t: float
-            current time in system
-        intersections: list
-            list of all intersection objects
-        """      
-        def update_road_lights(t, roads):
+        def update_road_lights(t: float, roads: list) -> None:
+            """Updates the intersections with their new light status.
+
+            Arguments:
+            ---------
+            t: float
+                current time in system
+            roads: list
+                list of all intersection objects
+            """
             if t == 0:
                 nextlightlocation = roads[:12]
             else:
@@ -682,609 +982,645 @@ class TrafficLight(Model):
                     if t in road.schedule:
                         nextlightlocation.append(road)
             for road in nextlightlocation:
-                #print('Road', road.roadid, 'was before:', road.status)
                 road.update_light(road.schedule, t)
                 road.nextchange = min(i for i in road.schedule if i > t)
-            status = list()
-            nextc = list()
+            status = []
+            nextc = []
             for road in roads[:12]:
-                if road.status == True:
+                if road.status is True:
                     status.append("Green")
                 else:
                     status.append("Red")
                 nextc.append(road.nextchange)
-            print("Time:", t,' Road status: ', status, ' next change: ',nextc)
-        
-        
-        """
-        Generates list of all car objects as they are created  
 
-        Arguments
-        ---------
-        initialarrival: float
-            time that a car is introduced to the system
-        """
-        cars = list()
-        def gen_car(t):
+        cars = []
+
+        def gen_car(t: float) -> float:
+            """Generates list of all car objects as they are created.
+
+            Arguments:
+            ---------
+            t: float
+                time that a car is introduced to the system
+
+            Returns:
+            -------
+            float
+                time that the next car is introduced to the system
+            """
             # choose start point
             start = start_rng.choices(population=range(8), weights=start_prob)[0]
             initialarrival = t + arrival_rng.expovariate(self.factors["lambdas"][start])
             visits = generate_path(start)
-            while visits == None or len(visits) == 1:
+            while visits is None or len(visits) == 1:
                 visits = generate_path(start)
             identify = len(cars)
             path = find_roads(visits)
             cars.append(Car(identify, initialarrival, path, visits))
             cars[identify].nextstart = outbounds
             cars[identify].nextSecArrival = outbounds
-            # print('Car', identify, ':', visits)
             return initialarrival
-        
-        
-        """
-        Finds a car's place in queue and assigns it a new start time      
 
-        Arguments
-        ---------
-        car: Car
-            car object
-        raod: Road
-            road object
-        t: float
-            current time in system
-        """       
-        def find_place_in_queue(car, road, t):
+        def find_place_in_queue(car: Car, road: Road, t: float) -> None:
+            """Finds a car's place in queue and assigns it a new start time.
+
+            Arguments:
+            ---------
+            car: Car
+                car object
+            road: Road
+                road object
+            t: float
+                current time in system
+            """
             queueindex = len(road.queue) - 1
             while road.queue[queueindex] == 0 and queueindex > 0:
                 queueindex -= 1
-            #Car is not the first in its queue
-            if queueindex != 0 or road.queue[0] != 0: 
-                #Car is second in queue
+            # Car is not the first in its queue
+            if queueindex != 0 or road.queue[0] != 0:
+                # Car is second in queue
                 if len(road.queue) == queueindex + 1:
                     road.queue.append(car)
-                #Car is third or later in queue   duplicated with at first   
-                #else:
+                # Car is third or later in queue   duplicated with at first
+                # else:
                 #    road.queue[queueindex + 1] = car
-                car.placeInQueue = queueindex + 1
-                car.nextstart = road.queue[queueindex].nextstart + self.factors["reaction"]
-            #Car is the first in its queue
-            else: 
+                car.place_in_queue = queueindex + 1
+                car.nextstart = (
+                    road.queue[queueindex].nextstart + self.factors["reaction"]
+                )
+            # Car is the first in its queue
+            else:
                 road.queue[queueindex] = car
-                car.placeInQueue = queueindex
-                #Car is at the end of its path
+                car.place_in_queue = queueindex
+                # Car is at the end of its path
                 if car.locationindex == len(car.path) - 1:
                     car.nextstart = outbounds
-                    car.nextSecArrival = outbounds
-                #Car still has a road to travel to
+                    car.next_sec_arrival = outbounds
+                # Car still has a road to travel to
                 else:
-                    #Light is green on the road that the car is on
-                    if road.status == True:
+                    # Light is green on the road that the car is on
+                    if road.status is True:
                         car.nextstart = t
-                    #Light is red on the road that the car is on
-                    else:    
+                    # Light is red on the road that the car is on
+                    else:
                         car.nextstart = road.nextchange
-            
-        #Lights are turned on and the first car is created
+
+        # Lights are turned on and the first car is created
         update_road_lights(0, roads)
-        gen_car(nextcargen)
-        currentcar = cars[carSimIndex]
+        gen_car(next_car_gen)
+        currentcar = cars[car_sim_index]
         movingcar = cars[0]
         arrivingcar = movingcar
-        current_finished = -1
-        #Loops through time until runtime is reached
+        # Loops through time until runtime is reached
         sumwait = 0
         finishedcars = 0
         cars_wait = {}
         cars_total = {}
-        Overflow_total = {}
-        Overflow_len_total = {}
-        with open("./Cars_detail.csv", mode="w", newline="") as output_file:
-            csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        overflow_total = {}
+        overflow_len_total = {}
+        with Path("./Cars_detail.csv").open(mode="w", newline="") as output_file:
+            csv_writer = csv.writer(
+                output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+            )
             # Print headers.
             output_file.write("Cars,Action,Position,Road,Time\n")
+            avgwait = 0
+            avgtotal = 0
             while t < self.factors["runtime"]:
-                #Assigns the next time a light changes
-                nextLightTime = find_nextlightchange_road(roads, t)
-                #The next event is a car being introduced to the system
-                if min(minPrimArrival, nextLightTime, nextStart, nextSecArrival, nextcargen) == minPrimArrival:
-                    t = minPrimArrival
+                # Assigns the next time a light changes
+                next_light_time = find_nextlightchange_road(roads, t)
+                # The next event is a car being introduced to the system
+                if (
+                    min(
+                        min_prim_arrival,
+                        next_light_time,
+                        next_start,
+                        next_sec_arrival,
+                        next_car_gen,
+                    )
+                    == min_prim_arrival
+                ):
+                    t = min_prim_arrival
                     for i in range(12, 18):
                         roads[i].nextchange = t
-                    cars[carSimIndex].prevstop = t
-                    # print('Car', cars[carSimIndex].identify, 'is arriving first at time', t)
+                    cars[car_sim_index].prevstop = t
                     action = "Start"
-                    csv_writer.writerow([cars[carSimIndex].identify]+[action]+[cars[carSimIndex].visits[cars[carSimIndex].locationindex]]+[cars[carSimIndex].path[cars[carSimIndex].locationindex].roadid]+[t])
-                    #A new car is generated
-                    nextcargen = gen_car(t)
-                    minPrimArrival = nextcargen
-                    carSimIndex += 1
-                    
-                
-                    #The arriving car arrives into the system based on its path
-                    currentcar = cars[carSimIndex - 1]
+                    csv_writer.writerow(
+                        [
+                            cars[car_sim_index].identify,
+                            action,
+                            cars[car_sim_index].visits[
+                                cars[car_sim_index].locationindex
+                            ],
+                            cars[car_sim_index]
+                            .path[cars[car_sim_index].locationindex]
+                            .roadid,
+                            t,
+                        ]
+                    )
+                    # A new car is generated
+                    next_car_gen = gen_car(t)
+                    min_prim_arrival = next_car_gen
+                    car_sim_index += 1
+
+                    # The arriving car arrives into the system based on its path
+                    currentcar = cars[car_sim_index - 1]
                     initroad = currentcar.path[currentcar.locationindex]
                     find_place_in_queue(currentcar, initroad, t)
-                       
-                #The next event is a light changing    
-                elif min(minPrimArrival, nextLightTime, nextStart, nextSecArrival, nextcargen) == nextLightTime:
-                    t = nextLightTime
+
+                # The next event is a light changing
+                elif (
+                    min(
+                        min_prim_arrival,
+                        next_light_time,
+                        next_start,
+                        next_sec_arrival,
+                        next_car_gen,
+                    )
+                    == next_light_time
+                ):
+                    t = next_light_time
                     for i in range(12, 18):
                         roads[i].nextchange = t
-                    #Roads that change lights at this time are updated
+                    # Roads that change lights at this time are updated
                     update_road_lights(t, roads)
-                         
-                #The next event is a car starting to move            
-                elif min(minPrimArrival, nextLightTime, nextStart, nextSecArrival, nextcargen) == nextStart:
-                    t = nextStart
+
+                # The next event is a car starting to move
+                elif (
+                    min(
+                        min_prim_arrival,
+                        next_light_time,
+                        next_start,
+                        next_sec_arrival,
+                        next_car_gen,
+                    )
+                    == next_start
+                ):
+                    t = next_start
                     for i in range(12, 18):
                         roads[i].nextchange = t
-                    
-                    # print('Time:', t, 'Car', movingcar.identify, 'is starting from road', movingcar.path[movingcar.locationindex].roadid, 'at spot', movingcar.placeInQueue)
+
                     action = "Leave"
-                    csv_writer.writerow([movingcar.identify]+[action]+[movingcar.visits[movingcar.locationindex]]+[movingcar.path[movingcar.locationindex].roadid]+[t])
-                    #Car is the first in its queue
-                    if movingcar.placeInQueue == 0:
-                        #Car's next arrival is set
-                        #movingcar.nextSecArrival = t + (self.factors["distance"] / self.factors["speed"])
+                    csv_writer.writerow(
+                        [
+                            movingcar.identify,
+                            action,
+                            movingcar.visits[movingcar.locationindex],
+                            movingcar.path[movingcar.locationindex].roadid,
+                            t,
+                        ]
+                    )
+                    # Car is the first in its queue
+                    if movingcar.place_in_queue == 0:
+                        # Car's next arrival is set
+                        # movingcar.nextSecArrival = t + (
+                        #     self.factors["distance"] / self.factors["speed"]
+                        # )
                         # change the distance to by road
-                        print("Time:", t, "Car", movingcar.identify, 'is starting from road', movingcar.path[movingcar.locationindex].roadid)
-                        movingcar.nextSecArrival = t + self.factors["pause"] +(movingcar.path[movingcar.locationindex].road_length / self.factors["speed"])
-                         
-                    #Car is not the first in its queue
+                        movingcar.nextSecArrival = (
+                            t
+                            + self.factors["pause"]
+                            + (
+                                movingcar.path[movingcar.locationindex].road_length
+                                / self.factors["speed"]
+                            )
+                        )
+
+                    # Car is not the first in its queue
                     else:
-                        #Car's next arrival time is set
-                        movingcar.nextSecArrival = t + (self.factors['car_distance']+ self.factors["carlength"] / self.factors["speed"])
-                    
-                    #Car leaves its current queue and is 'moving'
-                    movingcar.path[movingcar.locationindex].queue[movingcar.placeInQueue] = 0
+                        # Car's next arrival time is set
+                        movingcar.nextSecArrival = t + (
+                            self.factors["car_distance"]
+                            + self.factors["carlength"] / self.factors["speed"]
+                        )
+
+                    # Car leaves its current queue and is 'moving'
+                    movingcar.path[movingcar.locationindex].queue[
+                        movingcar.place_in_queue
+                    ] = 0
                     movingcar.moving = True
-                    movingcar.timewaiting = movingcar.timewaiting + (t - movingcar.prevstop)
+                    movingcar.timewaiting = movingcar.timewaiting + (
+                        t - movingcar.prevstop
+                    )
                     movingcar.nextstart = outbounds
-                    nextStart = outbounds
-               
-                #The next event is a car arriving within the system 
-                elif min(minPrimArrival, nextLightTime, nextStart, nextSecArrival, nextcargen) == nextSecArrival:
-                    t = nextSecArrival
+                    next_start = outbounds
+
+                # The next event is a car arriving within the system
+                elif (
+                    min(
+                        min_prim_arrival,
+                        next_light_time,
+                        next_start,
+                        next_sec_arrival,
+                        next_car_gen,
+                    )
+                    == next_sec_arrival
+                ):
+                    t = next_sec_arrival
                     for i in range(12, 18):
                         roads[i].nextchange = t
-                
-                    #Car is first in its queue 
-                    if arrivingcar.placeInQueue == 0:
-                        #Car changes the road it is traveling on 
+
+                    # Car is first in its queue
+                    if arrivingcar.place_in_queue == 0:
+                        # Car changes the road it is traveling on
                         arrivingcar.update_location()
                         currentroad = arrivingcar.path[arrivingcar.locationindex]
-                        #Car is assigned its location and given a new start time
+                        # Car is assigned its location and given a new start time
                         find_place_in_queue(arrivingcar, currentroad, t)
-                    #Car is not the first in its queue
+                    # Car is not the first in its queue
                     else:
-                        #Car moves up in its queue
+                        # Car moves up in its queue
                         currentroad = arrivingcar.path[arrivingcar.locationindex]
-                        currentroad.queue[arrivingcar.placeInQueue] = 0
-                        currentroad.queue[arrivingcar.placeInQueue - 1] = arrivingcar
-                        arrivingcar.placeInQueue -= 1
-                        #Current road has a green light
-                        if currentroad.status == True:
+                        currentroad.queue[arrivingcar.place_in_queue] = 0
+                        currentroad.queue[arrivingcar.place_in_queue - 1] = arrivingcar
+                        arrivingcar.place_in_queue -= 1
+                        # Current road has a green light
+                        if currentroad.status is True:
                             arrivingcar.nextstart = t
-                        #Current road has a red light
+                        # Current road has a red light
                         else:
                             arrivingcar.nextstart = currentroad.nextchange
-                    print('Time:', t, 'Car', arrivingcar.identify, 'is arriving at road', arrivingcar.path[arrivingcar.locationindex].roadid, 'at queue position', arrivingcar.placeInQueue)
-                    action = 'Arrival'
-                    csv_writer.writerow([arrivingcar.identify]+[action]+[arrivingcar.visits[arrivingcar.locationindex]]+[arrivingcar.path[arrivingcar.locationindex].roadid]+[t])
+                    action = "Arrival"
+                    csv_writer.writerow(
+                        [
+                            arrivingcar.identify,
+                            action,
+                            arrivingcar.visits[arrivingcar.locationindex],
+                            arrivingcar.path[arrivingcar.locationindex].roadid,
+                            t,
+                        ]
+                    )
 
-                    #Car is no longer 'moving'
+                    # Car is no longer 'moving'
                     movingcar.moving = False
                     arrivingcar.nextSecArrival = outbounds
-                    nextSecArrival = outbounds
+                    next_sec_arrival = outbounds
                     arrivingcar.prevstop = t
-                
+
                 carindex = 0
-                minSecArrival = outbounds
-                minStart = outbounds
-                #Finds the next car to start moving and the next car to arrive
+                min_sec_arrival = outbounds
+                min_start = outbounds
+                # Finds the next car to start moving and the next car to arrive
                 while carindex < len(cars) - 1:
                     testcar = cars[carindex]
-                    #Car is elligible to be the next starting car
-                    if min(nextStart, testcar.nextstart) == testcar.nextstart and testcar.nextstart != outbounds:
-                        minStart = testcar.nextstart
+                    # Car is elligible to be the next starting car
+                    if (
+                        min(next_start, testcar.nextstart) == testcar.nextstart
+                        and testcar.nextstart != outbounds
+                    ):
+                        min_start = testcar.nextstart
                         movingcar = testcar
-                    #Car is elligible to be the next arriving car
-                    if min(minSecArrival, testcar.nextSecArrival) == testcar.nextSecArrival and testcar.nextSecArrival != outbounds:
-                        minSecArrival = testcar.nextSecArrival
+                    # Car is elligible to be the next arriving car
+                    if (
+                        min(min_sec_arrival, testcar.nextSecArrival)
+                        == testcar.nextSecArrival
+                        and testcar.nextSecArrival != outbounds
+                    ):
+                        min_sec_arrival = testcar.nextSecArrival
                         arrivingcar = testcar
-                    #Next car is tested and the next events are set
+                    # Next car is tested and the next events are set
                     carindex += 1
-                    nextSecArrival = minSecArrival
-                    nextStart = minStart
-            
+                    next_sec_arrival = min_sec_arrival
+                    next_start = min_start
+
                 # sumwait = 0
                 # finishedcars = 0
                 for car in cars:
-                    if (car.locationindex == len(car.path) - 1) and (car.finished == False): # car arrived
-                        # print('Car', car.identify, 'waiting time:', car.timewaiting)
+                    if (car.locationindex == len(car.path) - 1) and (
+                        car.finished is False
+                    ):  # car arrived
                         action = "Finish"
-                        csv_writer.writerow([car.identify]+[action]+[car.visits[car.locationindex]]+[car.path[car.locationindex].roadid]+[t])
+                        csv_writer.writerow(
+                            [
+                                car.identify,
+                                action,
+                                car.visits[car.locationindex],
+                                car.path[car.locationindex].roadid,
+                                t,
+                            ]
+                        )
                         car.finished = True
                         cars_wait[car.identify] = car.timewaiting
                         cars_total[car.identify] = t - car.initialarrival
-                        # created a list to store which car has arrived. And compare current car identify with the list
-                        # if current car.identity < identities in the list, then print A WRANING MESSAGE AND STOP.
+                        # created a list to store which car has arrived and compare
+                        # current car identify with the list
+                        # if current car.identity < identities in the list, then print
+                        # A WARNING MESSAGE AND STOP.
                         # if car.identify >= current_finished:
                         #     current_finished = car.identify
                         # else:
-                        #     print(' WARN!! Car ', car.identify, ' finished later than Car', current_finished)
-                        #     return 
+                        #     print(
+                        #         " WARN!! Car ",
+                        #         car.identify,
+                        #         " finished later than Car",
+                        #         current_finished,
+                        #     )
+                        #     return None
                         sumwait += car.timewaiting
                         finishedcars += 1
-    # in the first several interations, there is no finishedcars
+                # in the first several interations, there is no finishedcars
                 if finishedcars > 0:
-                    avgwait = sumwait /  finishedcars
-                    # print('Finished cars', finishedcars, ' Average waiting time:', avgwait)
+                    avgwait = sumwait / finishedcars
                     # when all finished compute average total time
-                    avgtotal = sum(cars_total.values())/len(cars_total)
+                    avgtotal = sum(cars_total.values()) / len(cars_total)
                 else:
                     avgwait = 0
                     avgtotal = 0
-                    
+
                 # record queue length of each road and update overflow status
-                Overflow_total[t] = 0
+                overflow_total[t] = 0
                 for roadid in range(12):
                     # num of cars in queue
                     cars_in_queue = sum([x != 0 for x in roads[roadid].queue])
-                    #queue length = (car_length+ car_distance) * num(cars in queue) - car_distance
-                    roads[roadid].queue_hist[t] = max(0, cars_in_queue*(self.factors['car_distance']+ self.factors["carlength"])-self.factors['car_distance'])
+                    # queue length =
+                    #   (car_length+ car_distance) * num(cars in queue) - car_distance
+                    roads[roadid].queue_hist[t] = max(
+                        0,
+                        cars_in_queue
+                        * (self.factors["car_distance"] + self.factors["carlength"])
+                        - self.factors["car_distance"],
+                    )
                     # if there is overflow status
-                    if (roads[roadid].road_length <= roads[roadid].queue_hist[t]):
+                    if roads[roadid].road_length <= roads[roadid].queue_hist[t]:
                         roads[roadid].overflow = True
-                        #print("Overflowed road: ", roadid, "at time:", t)
-                        Overflow_total[t] = 1
+                        overflow_total[t] = 1
                     else:
                         roads[roadid].overflow = False
-                
-                # after queue len is calculated, deal with overflow
-                # when a road is overflowed, 1. cars in incoming roads cannot get in; 2. calculated oveflow len
-                current_overflow_len = list()
+
+                # after queue len is calculated, deal with overflow when a road
+                # is overflowed:
+                #   1. cars in incoming roads cannot get in
+                #   2. calculated oveflow len
+                current_overflow_len = []
                 for roadid in range(12):
-                    if roads[roadid].overflow == True:
-                        # add incoming roads queue length
-                        if len(roads[roadid].incoming_roads) > 0:
-                            # calculate oeverflow queue lenth
-                            overflow_queue = [r.queue_hist[t] for r in roads[roadid].incoming_roads]
-                            roads[roadid].overflow_queue[t] = sum(overflow_queue)
-                            current_overflow_len.append(sum(overflow_queue))
-                            # update start time of cars in queue of incoming roads
-                            # start time of the last car in overflowed road
-                            last_start = max([x.nextstart for x in roads[roadid].queue if x != 0])
-                            for r in roads[roadid].incoming_roads:
-                                # if there are cars in queue
-                                for car_q in r.queue:
-                                    last_start = last_start+self.factors["reaction"]
-                                    if car_q != 0:
-                                        # first car in queue in the incoming road
-                                        if car_q.placeInQueue == 0:
-                                            car_q.nextstart = max(car_q.nextstart, last_start)
-                                        # second and later car in queue in the incoming road
-                                        else:
-                                            car_q.nextstart = max(car_q.nextstart, last_start)
-                if(len(current_overflow_len) > 0):
-                    Overflow_len_total[t] = sum(current_overflow_len)/len(current_overflow_len)
+                    if roads[roadid].overflow and len(roads[roadid].incoming_roads) > 0:
+                        # calculate oeverflow queue lenth
+                        overflow_queue = [
+                            r.queue_hist[t] for r in roads[roadid].incoming_roads
+                        ]
+                        roads[roadid].overflow_queue[t] = sum(overflow_queue)
+                        current_overflow_len.append(sum(overflow_queue))
+                        # update start time of cars in queue of incoming roads
+                        # start time of the last car in overflowed road
+                        last_start = max(
+                            [x.nextstart for x in roads[roadid].queue if x != 0]
+                        )
+                        for r in roads[roadid].incoming_roads:
+                            # if there are cars in queue
+                            for car_q in r.queue:
+                                last_start = last_start + self.factors["reaction"]
+                                if car_q != 0:
+                                    # first car in queue in the incoming road
+                                    if car_q.place_in_queue == 0:
+                                        car_q.nextstart = max(
+                                            car_q.nextstart, last_start
+                                        )
+                                    # second and later car in queue in the incoming road
+                                    else:
+                                        car_q.nextstart = max(
+                                            car_q.nextstart, last_start
+                                        )
+                if len(current_overflow_len) > 0:
+                    overflow_len_total[t] = sum(current_overflow_len) / len(
+                        current_overflow_len
+                    )
                 else:
-                    Overflow_len_total[t] = 0 
-                
-                                    
+                    overflow_len_total[t] = 0
+
         # compute ave queue length for each road
         avg_queue_length = 0
-        OverflowPercentage = []
-        OverflowAveLen = []
+        overflow_percentage = []
+        overflow_avg_len = []
         for roadid in range(12):
             # use dictionary to get list of t and queue_len
             # (t - t-1)*queue_len/max(t)
             queue_len = list(roads[roadid].queue_hist.values())
             queue_time = list(roads[roadid].queue_hist.keys())
-            time_dif = [queue_time[i + 1] - queue_time[i] for i in range(len(queue_time)-1)]
-            avg_queue = sum([x * y for x, y in zip(queue_len[:-1], time_dif)])/t
-            avg_queue_length = avg_queue_length+avg_queue
-            #overflow queue time of each road
-            overflow_ind = [1*(q >= roads[roadid].road_length) for q in queue_len]
-            #Overflow_total.append(overflow_ind[:-1])
-            overflow_duration = sum([x * y for x, y in zip(overflow_ind[:-1], time_dif)])
-            overflow_perc = overflow_duration/t*100
-            OverflowPercentage.append(overflow_perc)
+            time_dif = [
+                queue_time[i + 1] - queue_time[i] for i in range(len(queue_time) - 1)
+            ]
+            avg_queue = sum([x * y for x, y in zip(queue_len[:-1], time_dif)]) / t
+            avg_queue_length = avg_queue_length + avg_queue
+            # overflow queue time of each road
+            overflow_ind = [1 * (q >= roads[roadid].road_length) for q in queue_len]
+            # Overflow_total.append(overflow_ind[:-1])
+            overflow_duration = sum(
+                [x * y for x, y in zip(overflow_ind[:-1], time_dif)]
+            )
+            overflow_perc = overflow_duration / t * 100
+            overflow_percentage.append(overflow_perc)
             # overflow queue length
             # never overflow
             if overflow_duration == 0:
                 overflow_len_dur = 0
             else:
                 overflow_len = list(roads[roadid].overflow_queue.values())
-                overflow_len_sum = sum([x * y for x, y in zip(overflow_len[:-1], time_dif)])
-                overflow_len_dur = overflow_len_sum/overflow_duration
-            OverflowAveLen.append(overflow_len_dur)
-        
+                overflow_len_sum = sum(
+                    [x * y for x, y in zip(overflow_len[:-1], time_dif)]
+                )
+                overflow_len_dur = overflow_len_sum / overflow_duration
+            overflow_avg_len.append(overflow_len_dur)
+
         # total overflow index
-        Overflow_total_ind = list(Overflow_total.values())
-        Overflow_total_time = list(Overflow_total.keys())
-        Overflow_total_len = list(Overflow_len_total.values())
-        time_dif = [Overflow_total_time[i + 1] - Overflow_total_time[i] for i in range(len(Overflow_total_time)-1)]
-        overflow_system_duration = sum([x * y for x, y in zip(Overflow_total_ind[:-1], time_dif)])
-        overflow_system_perc = overflow_system_duration/t*100
-        if overflow_system_perc < 51:
-            overflow_system_perc_over_51 = False
-        else:
-            overflow_system_perc_over_51 = True
-        #overflow queue length
+        overflow_total_ind = list(overflow_total.values())
+        overflow_total_time = list(overflow_total.keys())
+        overflow_total_len = list(overflow_len_total.values())
+        time_dif = [
+            overflow_total_time[i + 1] - overflow_total_time[i]
+            for i in range(len(overflow_total_time) - 1)
+        ]
+        overflow_system_duration = sum(
+            [x * y for x, y in zip(overflow_total_ind[:-1], time_dif)]
+        )
+        overflow_system_perc = overflow_system_duration / t * 100
+        overflow_system_perc_over_51 = not overflow_system_perc < 51
+        # overflow queue length
         if overflow_system_duration == 0:
-            OverflowAveLen_system = 0
+            overflow_avg_len_system = 0
         else:
-            overflow_system_len = sum([x * y for x, y in zip(Overflow_total_len[:-1], time_dif)])
-            OverflowAveLen_system = overflow_system_len/overflow_system_duration
-        
-        
+            overflow_system_len = sum(
+                [x * y for x, y in zip(overflow_total_len[:-1], time_dif)]
+            )
+            overflow_avg_len_system = overflow_system_len / overflow_system_duration
+
         # average queue
-        avg_queue_length = avg_queue_length/12
-        
+        avg_queue_length = avg_queue_length / 12
+
         # how to calculate system overflow len
-        
-        with open('SummaryTime.csv', 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames = ['Cars_id', 'WaitingTime', 'TotalTime'])
+
+        with Path("SummaryTime.csv").open("w") as csvfile:
+            writer = csv.DictWriter(
+                csvfile, fieldnames=["Cars_id", "WaitingTime", "TotalTime"]
+            )
             writer.writeheader()
-            #writer.writerows(cars_wait)
-            for key in cars_wait.keys():
-                csvfile.write("%s,%s,%s\n"%(key,cars_wait[key],cars_total[key]))
+            # writer.writerows(cars_wait)
+            for key in cars_wait:
+                csvfile.write(f"{key},{cars_wait[key]},{cars_total[key]}\n")
         # Compose responses and gradients.
-        responses = {"WaitingTime": avgwait, "SystemTime": avgtotal, "AvgQueueLen": avg_queue_length,
-                    "OverflowPercentage":overflow_system_perc, "OverflowPercentageOver51":overflow_system_perc_over_51,
-                    "OverflowAveLen":OverflowAveLen_system}
-        gradients = {response_key: {factor_key: np.nan for factor_key in self.specifications} for response_key in responses}
+        responses = {
+            "WaitingTime": avgwait,
+            "SystemTime": avgtotal,
+            "AvgQueueLen": avg_queue_length,
+            "OverflowPercentage": overflow_system_perc,
+            "OverflowPercentageOver51": overflow_system_perc_over_51,
+            "OverflowAveLen": overflow_avg_len_system,
+        }
+        gradients = {
+            response_key: dict.fromkeys(self.specifications, np.nan)
+            for response_key in responses
+        }
         return responses, gradients
-            
+
 
 class MinWaitingTime(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Minimum waiting time problem."""
 
-    Attributes
-    ----------
-    name : string
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    lower_bounds : tuple
-        lower bound for each decision variable
-    upper_bounds : tuple
-        upper bound for each decision variable
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : float
-        optimal objective function value
-    optimal_solution : list
-        optimal solution
-    model : Model object
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : list of rng.MRG32k3a objects
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
+    @classproperty
+    @override
+    def n_objectives(cls) -> int:
+        return 1
 
-    Arguments
-    ---------
-    name : str
-        user-specified name for problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed_factors : dict
-        subset of user-specified non-decision factors to pass through to the model
+    @classproperty
+    @override
+    def n_stochastic_constraints(cls) -> int:
+        return 0
 
-    See also
-    --------
-    base.Problem
-    """
+    @classproperty
+    @override
+    def minmax(cls) -> tuple[int]:
+        return (-1,)
 
-    def __init__(self, name="TRAFFICCONTROL-1", fixed_factors={}, model_fixed_factors={}):
-        self.name = name
-        self.dim = 3
-        self.n_objectives = 1
-        self.n_stochastic_constraints = 0
-        self.minmax = (-1,)
-        self.constraint_type = "box"
-        self.variable_type = "continuous"
-        self.gradient_available = False
-        self.optimal_value = None
-        self.optimal_solution = None  
-        self.model_default_factors = {
-            "runtime": 50
-            }
-        self.model_decision_factors = {"decision_vector"}      
-        self.factors = fixed_factors
-        self.specifications = {
+    @classproperty
+    @override
+    def constraint_type(cls) -> ConstraintType:
+        return ConstraintType.BOX
+
+    @classproperty
+    @override
+    def variable_type(cls) -> VariableType:
+        return VariableType.CONTINUOUS
+
+    @classproperty
+    @override
+    def gradient_available(cls) -> bool:
+        return False
+
+    @classproperty
+    @override
+    def optimal_value(cls) -> None:
+        return None
+
+    @classproperty
+    @override
+    def optimal_solution(cls) -> None:
+        return None
+
+    @classproperty
+    @override
+    def model_default_factors(cls) -> dict:
+        return {"runtime": 50}
+
+    @classproperty
+    @override
+    def model_decision_factors(cls) -> set[str]:
+        return {"decision_vector"}
+
+    @classproperty
+    @override
+    def specifications(cls) -> dict[str, dict]:
+        return {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
                 "datatype": tuple,
-                "default": (1, 1, 1)
+                "default": (1, 1, 1),
             },
             "budget": {
                 "description": "Max # of replications for a solver to take.",
                 "datatype": int,
-                "default": 100
-            }
+                "default": 100,
+            },
         }
-        self.check_factor_list = {
+
+    @property
+    @override
+    def check_factor_list(self) -> dict[str, Callable]:
+        return {
             "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget
+            "budget": self.check_budget,
         }
-        super().__init__(fixed_factors, model_fixed_factors)
-        # Instantiate model with fixed factors and overwritten defaults.
-        self.model = TrafficLight(self.model_fixed_factors)
-        self.lower_bounds = (0,)*3
-        self.upper_bounds = (min(self.model.factors["redlight_arteries"]+self.model.factors["redlight_veins"]),)*3
-    def vector_to_factor_dict(self, vector):
+
+    @classproperty
+    @override
+    def dim(cls) -> int:
+        return 3
+
+    @classproperty
+    @override
+    def lower_bounds(cls) -> tuple:
+        return (0,) * cls.dim
+
+    @property
+    @override
+    def upper_bounds(self) -> tuple:
+        bound = min(
+            self.model.factors["redlight_arteries"]
+            + self.model.factors["redlight_veins"]
+        )
+        return (bound,) * self.dim
+
+    def __init__(
+        self,
+        name: str = "TRAFFICCONTROL-1",
+        fixed_factors: dict | None = None,
+        model_fixed_factors: dict | None = None,
+    ) -> None:
+        """Initialize the MinWaitingTime problem.
+
+        Args:
+            name (str, optional): Name of the problem. Defaults to "TABLEALLOCATION-1".
+            fixed_factors (dict, optional): Fixed factors for the problem.
+                Defaults to None.
+            model_fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
         """
-        Convert a vector of variables to a dictionary with factor keys
+        # Let the base class handle default arguments.
+        super().__init__(
+            name=name,
+            fixed_factors=fixed_factors,
+            model_fixed_factors=model_fixed_factors,
+            model=TrafficLight,
+        )
 
-        Arguments
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
+    @override
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
+        return {"decision_vector": vector}
 
-        Returns
-        -------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-        """
-        factor_dict = {
-            "decision_vector": vector                               
-        }
-        return factor_dict
+    @override
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+        # TODO: change this to decision variable
+        return tuple(factor_dict["decision_vector"])
 
-    def factor_dict_to_vector(self, factor_dict):
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+    @override
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
+        return (response_dict["WaitingTime"],)
 
-        Arguments
-        ---------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-
-        Returns
-        -------
-        vector : tuple
-            vector of values associated with decision variables
-        """
-        vector = tuple(factor_dict["decision_vector"])                               #change this to decision variable
-        return vector
-
-    def response_dict_to_objectives(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
-
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        objectives : tuple
-            vector of objectives
-        """
-        objectives = (response_dict["WaitingTime"],)       
-        return objectives
-
-    def response_dict_to_stoch_constraints(self, response_dict):
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] >= 0
-
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = None
-        return stoch_constraints
-
-    def deterministic_objectives_and_gradients(self, x):
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
+    @override
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         det_objectives = (0,)
-        det_objectives_gradients = ((0,)*3,)
+        det_objectives_gradients = ((0,) * self.dim,)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(self, x):
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic
-            constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = None
-        det_stoch_constraints_gradients = None
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
-    def check_deterministic_constraints(self, x):
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
-        box_feasible = super().check_deterministic_constraints(x)
-
-
-
-    def get_random_solution(self, rand_sol_rng):
-        """
-        Generate a random solution for starting or restarting solvers.
-
-        Arguments
-        ---------
-        rand_sol_rng : rng.MRG32k3a object
-            random-number generator used to sample a new random solution
-
-        Returns
-        -------
-        x : tuple
-            vector of decision variables
-        """
-        x = tuple([rand_sol_rng.uniform(0, min(self.model.factors["redlight_arteries"]+self.model.factors["redlight_veins"])) for _ in range(self.dim)])
-        return x
+    @override
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+        return tuple(
+            [
+                rand_sol_rng.uniform(
+                    0,
+                    min(
+                        self.model.factors["redlight_arteries"]
+                        + self.model.factors["redlight_veins"]
+                    ),
+                )
+                for _ in range(self.dim)
+            ]
+        )
