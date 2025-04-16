@@ -23,3 +23,4 @@ Models & Problems
    models/san
    models/sscont
    models/tableallocation
+   models/trafficsignal
