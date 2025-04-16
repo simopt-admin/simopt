@@ -1,7 +1,7 @@
 """Script to run experiments from the command line."""
 
 # Sample usage for running a single experiment with viztracer:
-# `viztracer --min_duration 0.05ms dev_tools/run_experiment.py --problems=CHESS-1 --num_macroreps=1` # noqa: E501
+# `viztracer --min_duration 0.05ms utils/run_experiment.py --problems=CHESS-1 --num_macroreps=1` # noqa: E501
 
 import argparse
 import logging
