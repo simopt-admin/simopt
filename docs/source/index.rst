@@ -40,6 +40,13 @@ Contents
 
    autoapi/simopt/index
 
+.. toctree::
+   :maxdepth: 1
+   :caption: External Resources
+
+   SimOpt Repo <https://github.com/simopt-admin/simopt>
+   MRG32k3a RNG Repo <https://github.com/simopt-admin/mrg32k3a>
+
 Acknowledgments
 ---------------
 
