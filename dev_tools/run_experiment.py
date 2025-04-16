@@ -281,6 +281,9 @@ def main() -> None:
     )
 
     valid_pairs = create_experiments(problems, solvers)
+    if len(valid_pairs) == 0:
+        logging.warning("No valid problem-solver pairs found.")
+        return
     partial_funcs = gen_partial_funcs(valid_pairs, method, num_macroreps, num_postreps)
     runtimes = run_partials(partial_funcs)
     logging.info("Execution complete.")
