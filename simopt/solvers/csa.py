@@ -257,7 +257,7 @@ class CSA(Solver):
     def solve(self, problem):
         max_iters = self.factors["max_iters"]
         r = self.factors["r"]
-        max_gamma = self.factors["max_gamma"]
+        #max_gamma = self.factors["max_gamma"]
 
         # t = 1 #first max step size
         dim = problem.dim
@@ -332,7 +332,7 @@ class CSA(Solver):
                     expended_budget += budget_spent
 
             # step-size
-            t = self.factors["step_f"](k)
+            t = self.factors["step_f"](self, k=k)
 
             # new_x = cur_x + t * direction
             new_x = self.prox_fn(t * grad, cur_x, Ci, di, Ce, de, lower, upper)

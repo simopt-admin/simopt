@@ -46,10 +46,12 @@ from simopt.base import Solution
 # Working example for CntNVMaxProfit problem.
 # -----------------------------------------------
 from simopt.models.cntnv import CntNVMaxProfit
+from simopt.models.san import SANLongestPathStochastic as SAN
 
 fixed_factors = {"initial_solution": (2,), "budget": 500}
-myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-x = (3,)
+#myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
+myproblem = SAN()
+x = (1,)*13
 mysolution = Solution(x, myproblem)
 # -----------------------------------------------
 

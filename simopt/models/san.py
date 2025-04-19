@@ -745,7 +745,7 @@ class SANLongestPathStochastic(Problem):
                 "datatype": list,
                 "default": CONST_NODES 
             },
-            "max_length_to_node": {
+            "length_to_node_constraint": {
                 "description": "Max length to corresponding constraint nodes",
                 "datatype": list,
                 "default":  [100]*len(CONST_NODES) 
@@ -759,7 +759,7 @@ class SANLongestPathStochastic(Problem):
             "budget": self.check_budget,
             "arc_costs": self.check_arc_costs,
             "constraint_nodes": self.check_constrain_nodes,
-            "max_length_to_node": self.check_max_length_to_node
+            "length_to_node_constraint": self.check_max_length_to_node
         }
 
     @property
@@ -792,6 +792,7 @@ class SANLongestPathStochastic(Problem):
         self.Ce = None
         self.di = None
         self.de = None
+
 
     def check_arc_costs(self) -> bool:
         positive = True
@@ -906,11 +907,17 @@ class SANLongestPathStochastic(Problem):
         det_stoch_constraints_gradients : tuple
             vector of gradients of deterministic components of stochastic constraints
         """
-        det_stoch_constraints = tuple( [-1* z for z in self.factors["max_length_to_node"]])
-        det_stoch_constraints_gradients = (
-            ((0,)* self.n_stochastic_constraints) * self.dim,
-        )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
+        det_stoch_constraints = tuple( [-1* z for z in self.factors["length_to_node_constraint"]])
+        det_stoch_constraints_gradients = tuple(
+            [(0.0,) * self.dim for _ in range(self.n_stochastic_constraints)]
+            ) 
+
+        # det_stoch_constraints_gradients = (
+        #     ((0,)* self.n_stochastic_constraints) * self.dim,
+        # )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
+    
+        
 
     def deterministic_objectives_and_gradients(
         self, x: tuple

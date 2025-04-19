@@ -256,7 +256,6 @@ class CSA_LP(Solver):  # noqa: N801
         if n_violated_cons == 1:
             d = grads[0]
         else:
-            print("tried grad", grads)
             # normalization
             grads = grads / np.linalg.norm(grads, axis=1).reshape(
                 n_violated_cons, 1
@@ -325,11 +324,9 @@ class CSA_LP(Solver):  # noqa: N801
         Ce = problem.Ce
         de = problem.de
 
-        # lower = np.array(problem.lower_bounds)
-        # upper = np.array(problem.upper_bounds)
-        # temp adjustment for san problem
-        lower = np.array(13 * (100,))
-        upper = np.array(13 * (0.1,))
+        lower = np.array(problem.lower_bounds)
+        upper = np.array(problem.upper_bounds)
+
 
         recommended_solns = []
         intermediate_budgets = []
@@ -415,7 +412,7 @@ class CSA_LP(Solver):  # noqa: N801
                 infeasible_step = t
                 last_is_feasible = 0
             else:
-                t = self.factors["step_f"](k)
+                t = self.factors["step_f"](self,k=k)
 
             # step-size
             # t = self.factors["step_f"](k)
@@ -423,7 +420,6 @@ class CSA_LP(Solver):  # noqa: N801
             # print("grad: ", grad)
             # new_x = cur_x + t * direction
             new_x = self.prox_fn(t * grad, cur_x, Ci, di, Ce, de, lower, upper)
-
             candidate_solution = self.create_new_solution(tuple(new_x), problem)
             # Use r simulated observations to estimate the objective value.
             problem.simulate(candidate_solution, r)

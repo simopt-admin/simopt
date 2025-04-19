@@ -32,18 +32,18 @@ from simopt.solvers.csa import CSA
 
 def main() -> None:
     
-    constraint_nodes = [5,7]
+    constraint_nodes = [5, 7]
     
-    max_length_to_node = [5,5]
+    max_length_to_node = [20, 20]
     
-    initial = (5,)*13
+    initial = (3,)*13
     
-    fixed_factors = {"constraint_nodes": constraint_nodes, "max_length_to_node": max_length_to_node, "initial_solution": initial, "budget": 2000}
+    fixed_factors = {"constraint_nodes": constraint_nodes, "length_to_node_constraint": max_length_to_node, "initial_solution": initial, "budget": 2000}
     
-    solvers = [ CSA_LP()]
-
+    solvers = [ CSA()]
+    
     problem =  SANLongestPathStochastic(fixed_factors=fixed_factors)   
-    #problem.upper_bounds = 13*(10,)
+    #problem.upper_bounds = 13*(100,)
     #problem.lower_bounds = 13*(0.1,)
     #problem = SANLongestPath()
     
@@ -85,7 +85,7 @@ def main() -> None:
     #plot_terminal_progress(experiments=myexperiment.experiments)
     #print(myexperiment.experiments[1][0].feasibility_curves)
     #plot_feasibility(myexperiment.experiments, plot_type= "scatter")
-    #plot_progress_curves(myexperiment.experiments[0] + myexperiment.experiments[1], "mean", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=False, save_as_pickle=True)
+    plot_progress_curves(myexperiment.experiments[0], "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=False, save_as_pickle=True)
     #plot_feasibility(myexperiment.experiments,  all_in_one=True, two_sided=True, plot_optimal=False, solver_set_name="RNDSRCH")
     #plot_feasibility(myexperiment.experiments, "contour",  all_in_one=True, color_fill = False, two_sided=True, plot_conf_ints=False, save_as_pickle=True)
     #plot_feasibility(myexperiment.experiments, "contour",  all_in_one=False, color_fill = False, two_sided=True, plot_conf_ints=False)
@@ -93,7 +93,7 @@ def main() -> None:
     plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=True, two_sided=True, plot_optimal=True,save_as_pickle=True) 
     #plot_feasibility(myexperiment.experiments, "violin",  all_in_one=True, two_sided=True,save_as_pickle=True)
     #plot_feasibility(myexperiment.experiments, "violin",score_type= "inf_norm", norm_degree=2,  all_in_one=False)
-    #plot_feasibility_progress(myexperiment.experiments,plot_type =  "mean", score_type = "inf_norm", all_in_one=True, two_sided=False, save_as_pickle=True)
+    plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True, two_sided=True, save_as_pickle=True)
     #plot_terminal_progress(myexperiment.experiments[0] + myexperiment.experiments[1], plot_type = 'violin',  normalize=False, plot_optimal=True, save_as_pickle=True)
     #plot_feasibility_progress(myexperiment.experiments, plot_type = "mean",all_in_one=True)
     #plot_feasibility_progress(myexperiment.experiments, plot_type = "quantile", all_in_one=True)
