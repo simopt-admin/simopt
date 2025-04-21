@@ -313,7 +313,6 @@ class CntNV(Model):
                         if s[i] <= max_spp:
                            demand[i]+=1
 
-        
         stock_material = self.factors['order_quantity'] # use this for continuous 
 
         # # Generate binomial r.v for material levels based on yield rates

@@ -27,8 +27,8 @@ mat_to_prod = [[1, 2, 1, 3],
 process_cost = [.1,.1]
 sales_price = [10,15]
 total_budget = 10000
-order_quantity = [20,20,20,20]
-n = 100 # number simulation replications
+order_quantity = [5,5,5,5]
+n = 1000 # number simulation replications
 
 # Experiment 1
 corr_matrix = [[1,0], [0,1]]
@@ -71,6 +71,9 @@ mean_so_2 = np.mean(stockout_qty_2)
 prob_so_1 = np.mean(stockout_1)
 prob_so_2 = np.mean(stockout_2)
 
+
+
+
 hw_profit = 1.96*np.std(profit)/np.sqrt(n)
 hw_so_1 = 1.96*np.std(stockout_qty_1)/np.sqrt(n)
 hw_so_2 = 1.96*np.std(stockout_qty_2)/np.sqrt(n)
@@ -102,14 +105,14 @@ stockout_qty_2 = []
 stockout_1 = []
 stockout_2 = []
 fixed_factors = {"rank_corr": corr_matrix,
-                 "poi_mean": means, 
-                 "t_intervals": t_intervals, 
-                 "total_budget": total_budget, 
-                 "order_quantity": order_quantity,
-                 "num_product": n_products,
-                 "mat_to_prod": mat_to_prod,
-                 "process_cost": process_cost,
-                 "sales_price": sales_price}
+                  "poi_mean": means, 
+                  "t_intervals": t_intervals, 
+                  "total_budget": total_budget, 
+                  "order_quantity": order_quantity,
+                  "num_product": n_products,
+                  "mat_to_prod": mat_to_prod,
+                  "process_cost": process_cost,
+                  "sales_price": sales_price}
 mymodel = CntNV(fixed_factors)
 # running replications.
 rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
@@ -164,14 +167,14 @@ stockout_qty_2 = []
 stockout_1 = []
 stockout_2 = []
 fixed_factors = {"rank_corr": corr_matrix,
-                 "poi_mean": means, 
-                 "t_intervals": t_intervals, 
-                 "total_budget": total_budget, 
-                 "order_quantity": order_quantity,
-                 "num_product": n_products,
-                 "mat_to_prod": mat_to_prod,
-                 "process_cost": process_cost,
-                 "sales_price": sales_price}
+                  "poi_mean": means, 
+                  "t_intervals": t_intervals, 
+                  "total_budget": total_budget, 
+                  "order_quantity": order_quantity,
+                  "num_product": n_products,
+                  "mat_to_prod": mat_to_prod,
+                  "process_cost": process_cost,
+                  "sales_price": sales_price}
 mymodel = CntNV(fixed_factors)
 # running replications.
 rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
