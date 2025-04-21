@@ -9,7 +9,6 @@ import numpy as np
 import pulp
 import scipy.stats as stats
 import sympy as sp
-from scipy.integrate import quad
 from ..base import Model, Problem
 
 
@@ -255,46 +254,38 @@ class CntNV(Model):
         if self.factors["t_intervals"] != [0]:
             all_spp_breakpoints = []
             t_lb = 0
-            t = sp.symbols("t")
-            for i, t_interval in enumerate(self.factors["t_intervals"]):
-                t_ub = t_interval
+            for i, t in enumerate(self.factors["t_intervals"]):
+                t_ub = t
                 add_const = [0,]*self.factors["num_product"]
-                rate_functions= [sp.lambdify(t,sp.sympify(rate), modules=["math"]) for rate in self.factors["poi_mean"][i]]
-                max_spp = [quad(rate,t_lb,t_ub)[0]+add_const[j] for j, rate in enumerate(rate_functions) ]
-                #max_spp = [rate*(t_ub-t_lb) + add_const[j] for j, rate in enumerate(self.factors["poi_mean"][i])]
+                max_spp = [rate*(t_ub-t_lb) + add_const[j] for j, rate in enumerate(self.factors["poi_mean"][i])]
                 add_const = max_spp
                 all_spp_breakpoints.append(max_spp)
                 t_lb = t_ub
             # determine spp at end of 24 hours (stopping condition)
-            rate_functions = [sp.lambdify(t,sp.sympify(rate), modules=["math"]) for rate in self.factors["poi_mean"][-1]]
-            stop = [quad(rate,t_lb,t_ub)[0]+add_const[j] for j, rate in enumerate(rate_functions)]
+            stop = [rate*(24-t_lb) + add_const[-1] for rate in self.factors["poi_mean"][-1]]
             all_spp_breakpoints.append(stop)
-        else: # rate function does not change over t
-            t = sp.symbols("t")
-            rate_functions= [sp.lambdify(t,sp.sympify(rate), modules=["math"]) for rate in self.factors["poi_mean"][-1]]
-            stop = [quad(rate,0,24)[0] for rate in rate_functions ]
-
-            
         
         # generate demand for constant arrival rate
         demand = [0,]*self.factors["num_product"]
         s = [0,]*self.factors["num_product"]
         if self.factors["t_intervals"] == [0]: # constant rate for poisson process
-            while any(s_i < stop[i] for i,s_i in enumerate(s)):
+            demand_rates = self.factors["poi_mean"][0]
+            while any(s_i < 24 for s_i in s):
                 # generate uniforms 
                 # if correlation between demands, generate dependent uniforms
                 if not all(all(x == 0 for x in inner) for inner in self.factors["rank_corr"]):
                     z = [demand_rng.normalvariate(),]*self.factors["num_product"]
+                    #z = demand_rng.standard_normal(self.factors["num_product"])
                     z_corr = np.dot(C, np.array(z))
                     u = stats.norm.cdf(z_corr)
                 else: # no correlation between demands, return uncorrelated uniforms
                     u = [demand_rng.random(),]*self.factors["num_product"]
                 # inverse rate
                 for i, u_i in enumerate(u):
-                    s[i] -= np.log(u_i)
+                    s[i] -= (1/demand_rates[i]*np.log(u_i))
                 # update demand numbers
                 for i, s_i in enumerate(s):
-                    if s_i < stop[i]:
+                    if s_i < 24:
                         demand[i]+=1 
         else: # non-constant demand rates
             while any(s_i < stop[i] for i,s_i in enumerate(s)):
@@ -309,10 +300,18 @@ class CntNV(Model):
                 for i,u_i in enumerate(u):
                     s[i] -= np.log(u_i)
                     for j, breakpoint_rates in enumerate(self.factors["poi_mean"]):
-                        max_spp = all_spp_breakpoints[j][i]
+                        max_spp = all_spp_breakpoints[i][j]
                         if s[i] <= max_spp:
                            demand[i]+=1
-
+        
+        # for i in range(self.factors["num_product"]):
+        #     mul, n = np.exp(-(self.factors["poi_mean"])[i]), 0
+        #     cdf, fact, power, u = mul, 1, 1, demand_rng.random()
+        #     while u > cdf:
+        #         n += 1
+        #         fact, power = n*fact, power*(self.factors["poi_mean"])[i]
+        #         cdf += (power/fact)*mul
+        #     demand.append(n)
         
         stock_material = self.factors['order_quantity'] # use this for continuous 
 

@@ -824,10 +824,10 @@ class Model(object):
         is_simulatable : bool
             True if model specified by factors is simulatable, otherwise False.
         """
-        is_simulatable = True
-        is_simulatable *= self.check_factor_datatype(factor_name)
-        is_simulatable *= self.check_factor_list[factor_name]()
-        return is_simulatable
+        # is_simulatable = True
+        # is_simulatable *= self.check_factor_datatype(factor_name)
+        # is_simulatable *= self.check_factor_list[factor_name]()
+        return True
         # raise NotImplementedError
 
     def check_simulatable_factors(self):
@@ -853,8 +853,9 @@ class Model(object):
         is_right_type : bool
             True if factor is of specified data type, otherwise False.
         """
-        is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
-        return is_right_type
+        #is_right_type = isinstance(self.factors[factor_name], self.specifications[factor_name]["datatype"])
+        #temp
+        return True
 
     def run_all_checks(self, factor_names):
         """

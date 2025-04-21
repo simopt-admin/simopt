@@ -30,8 +30,15 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 # Working example for MM1 model.
 # -----------------------------------------------
 from simopt.models.mm1queue import MM1Queue
-fixed_factors = {"lambda": 3.0, "mu": 8.0}
-mymodel = MM1Queue(fixed_factors)
+from simopt.models.cntnv import CntNV 
+corr_matrix = [[1,0,0], [0,1,0], [0,0,1]]
+means = [[1,'100*t',1]]
+t_intervals = [0]
+
+fixed_factors = {"rank_corr": corr_matrix, "poi_mean": means, "t_intervals": t_intervals}
+
+
+mymodel = CntNV(fixed_factors)
 # -----------------------------------------------
 
 # The rest of this script requires no changes.
@@ -58,3 +65,4 @@ for outerkey in gradients:
     print(f"\tFor the response {outerkey}:")
     for innerkey, value in gradients[outerkey].items():
         print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
+ 
