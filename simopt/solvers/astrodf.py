@@ -464,12 +464,15 @@ class ASTRODF(Solver):
                     / (delta_k ** (self.delta_power / 2))
                 )
 
-            # Make sure kappa is not None
-            k = kappa or self.kappa
-            if k is None:
-                error_msg = "Cannot compute kappa. Ensure it is initialized before use."
-                logging.error(error_msg)
-                raise ValueError(error_msg)
+            # Set k to the right kappa
+            if kappa is not None:
+                k = kappa
+            elif self.kappa is not None:
+                k = self.kappa
+            else:
+                # TODO: figure out if we need to raise an error instead
+                logging.warning("kappa is not set. Using default value of 0.")
+                k = 0
             # Compute stopping time
             stopping = self.get_stopping_time(pilot_run, sig2, delta_k, k)
 
