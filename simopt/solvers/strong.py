@@ -518,8 +518,10 @@ class STRONG(Solver):
 
         val = float(np.dot(grad, hessian @ grad))
         val_dt = delta_t * val
-        tau = 1 if val <= 0 else min(1, norm(grad) ** 3 / val_dt)
-        candidate_x = new_x - tau * delta_t * grad / norm(grad)
+        grad_norm = float(norm(grad))
+        grad_norm = make_nonzero(grad_norm, "grad_norm")
+        tau = 1 if val <= 0 else min(1, grad_norm**3 / val_dt)
+        candidate_x = new_x - tau * delta_t * grad / grad_norm
         return self.check_cons(candidate_x, new_x, lower_bound, upper_bound)
 
     def check_cons(
