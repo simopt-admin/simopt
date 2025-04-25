@@ -905,9 +905,7 @@ class TrafficLight(Model):
             offset = 0 if i == 0 else decision_vectors[i - 1]
             intersections[i].connect_roads(roads, offset)
 
-        """
-        Generates light schedule of road 
-        """
+        # Generates light schedule of road
 
         greenlight_arteries = self.factors["redlight_veins"]
         greenlight_veins = self.factors["redlight_arteries"]
@@ -1474,6 +1472,16 @@ class TrafficLight(Model):
 
 class MinWaitingTime(Problem):
     """Minimum waiting time problem."""
+
+    @classproperty
+    @override
+    def class_name_abbr(cls) -> str:
+        return "TRAFFICCONTROL-1"
+
+    @classproperty
+    @override
+    def class_name(cls) -> str:
+        return "Min Waiting Time for Traffic Light"
 
     @classproperty
     @override
