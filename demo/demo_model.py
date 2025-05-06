@@ -5,14 +5,16 @@ It imports a model, initializes a model object with given factors,
 sets up pseudorandom number generators, and runs one or more replications.
 """
 
+# Import standard libraries
 import sys
 from pathlib import Path
 
 # Append the parent directory (simopt package) to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-# Import random number generator.
+# Import modules that might depend on the simopt package
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt.utils import print_table
 
 
 def main() -> None:
@@ -69,54 +71,6 @@ def main() -> None:
             ["w.r.t Factor", "Gradient"],
             gradients[outerkey],
         )
-
-
-def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None:
-    """Print a table with headers and data.
-
-    Args:
-        name (str): Name of the table.
-        headers (list[str]): List of column headers.
-        data (list[tuple]): List of rows, each row is a tuple of values.
-    """
-    # Convert data out of dict (if necessary)
-    if isinstance(data, dict):
-        data = list(data.items())
-    # Calculate the maximum length of each column
-    data_widths = [max(len(str(item)) for item in col) for col in zip(*data)]
-    header_widths = [len(header) for header in headers]
-    max_widths = [
-        max(header_width, col_width)
-        for header_width, col_width in zip(header_widths, data_widths)
-    ]
-
-    # Compute total width of the table
-    # There's 3 seperator characters between each column
-    seperator_lengths = 3 * (len(headers) - 1)
-    total_width = sum(max_widths) + seperator_lengths
-    # If table is shorter than name, expand last column
-    if total_width < len(name):
-        shortfall = len(name) - total_width
-        max_widths[-1] += shortfall
-        total_width = len(name)
-
-    # Center title in the table
-    title_indent_count = (total_width - len(name)) // 2
-    title_indent = " " * title_indent_count
-
-    header_row = " │ ".join(
-        f"{header:<{width}}" for header, width in zip(headers, max_widths)
-    )
-
-    # Print the table
-    print()
-    print(f"{title_indent}{name}")
-    print("─" * total_width)
-    print(header_row)
-    print("─┼─".join("─" * width for width in max_widths))
-    for row in data:
-        print(" │ ".join(f"{item!s:<{width}}" for item, width in zip(row, max_widths)))
-    print()
 
 
 if __name__ == "__main__":
