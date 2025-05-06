@@ -170,7 +170,7 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
     bg_black = "\033[48;5;0m"
     fg_white = "\033[38;5;252m"
     # Print the table
-    print(f"{bg_black}{fg_white}")
+    print(f"{bg_black}{fg_white}", end="")
     print("┌" + "─" * border_width + "┐")
     print("│ " + title + " │")
     print("├─" + underline_row + "─┤")
@@ -181,4 +181,4 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
         row_bg = bg_grey if i % 2 else bg_black
         print(f"{bg_black}{fg_white}│{row_bg} {row} {bg_black}│{reset}")
     print("└" + "─" * border_width + "┘")
-    print(reset)
+    print(reset, end="")
