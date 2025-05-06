@@ -142,18 +142,31 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
 
     # Center title in the table
     title_indent_count = (total_width - len(name)) // 2
-    title_indent = " " * title_indent_count
+    title_lead = " " * title_indent_count
+    title_follow = " " * (total_width - title_indent_count - len(name))
+    title = f"{title_lead}{name}{title_follow}"
 
+    underline_row = "─" * total_width
     header_row = " │ ".join(
         f"{header:<{width}}" for header, width in zip(headers, max_widths)
     )
-
-    # Print the table
-    print()
-    print(f"{title_indent}{name}")
-    print("─" * total_width)
-    print(header_row)
-    print("─┼─".join("─" * width for width in max_widths))
+    sep_row = "─┼─".join("─" * width for width in max_widths)
+    rows = []
     for row in data:
-        print(" │ ".join(f"{item!s:<{width}}" for item, width in zip(row, max_widths)))
-    print()
+        row_str = " │ ".join(
+            f"{item!s:>{width}}"
+            if isinstance(item, (int, float))
+            else f"{item!s:<{width}}"
+            for item, width in zip(row, max_widths)
+        )
+        rows.append(row_str)
+
+    border_width = total_width + 2  # Extend 2 extra spaces
+    # Print the table
+    print("┌" + "─" * border_width + "┐")
+    print("│ " + title + " │")
+    print("├─" + underline_row + "─┤")
+    inner_rows = [header_row, sep_row, *rows]
+    for row in inner_rows:
+        print("│ " + row + " │")
+    print("└" + "─" * border_width + "┘")
