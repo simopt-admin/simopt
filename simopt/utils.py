@@ -161,12 +161,24 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
         )
         rows.append(row_str)
 
+    # Colors for the table
+
     border_width = total_width + 2  # Extend 2 extra spaces
+    # Colors
+    reset = "\033[0m"
+    bg_grey = "\033[48;5;235m"
+    bg_black = "\033[48;5;0m"
+    fg_white = "\033[38;5;252m"
     # Print the table
+    print(f"{bg_black}{fg_white}")
     print("┌" + "─" * border_width + "┐")
     print("│ " + title + " │")
     print("├─" + underline_row + "─┤")
-    inner_rows = [header_row, sep_row, *rows]
-    for row in inner_rows:
-        print("│ " + row + " │")
+    print("│ " + header_row + " │")
+    print("│ " + sep_row + " │")
+    # Print the rows with alternating colors
+    for i, row in enumerate(rows):
+        row_bg = bg_grey if i % 2 else bg_black
+        print(f"{bg_black}{fg_white}│{row_bg} {row} {bg_black}│{reset}")
     print("└" + "─" * border_width + "┘")
+    print(reset)
