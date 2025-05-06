@@ -16,6 +16,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import simopt.directory as directory
 from simopt.experiment_base import ProblemSolver, post_normalize
+from simopt.utils import print_table
 
 # Workaround for AutoAPI
 problem_directory = directory.problem_directory
@@ -213,7 +214,9 @@ def run_partials(
     for problem_name, solver_name, part_func in partial_funcs:
         logging.info(f"Experimenting with {solver_name} on {problem_name}.")
 
-        elapsed = time_function(part_func)
+        elapsed = round(time_function(part_func), 5)
+        if elapsed == 0:
+            elapsed = 1e-5  # Avoid zero runtime for logging
         logging.info(
             f"Elapsed time for {solver_name} on {problem_name}: {elapsed:.2f}s"
         )
@@ -226,39 +229,6 @@ def run_partials(
         )
         runtimes.append(runtime_tuple)
     return runtimes
-
-
-def print_runtimes(runtimes: list[tuple[str, str, str, float]]) -> None:
-    """Print the runtimes of the experiments.
-
-    Args:
-        runtimes (list[tuple[str, str, str, float]]): List of tuples containing
-                                                            the problem name,
-                                                            solver name, function
-                                                            name, and elapsed time.
-    """
-    # Extra blank line to make it clear where the results start
-    print()
-    # Print header row
-    header_fields = [
-        f"{'Problem Name':<20}",
-        f"{'Solver Name':<20}",
-        f"{'Function Name':<20}",
-        f"{'Elapsed Time (s)':<20}",
-    ]
-    print(" │ ".join(header_fields))
-    # Print the separator
-    bars = ["─" * 20] * len(header_fields)
-    print("─┼─".join(bars))
-    # Print each runtime
-    for problem_name, solver_name, func_name, elapsed in runtimes:
-        fields = [
-            f"{problem_name:<20}",
-            f"{solver_name:<20}",
-            f"{func_name:<20}",
-            f"{elapsed:.2f}",
-        ]
-        print(" │ ".join(fields))
 
 
 # Main loop to iterate through problem/solver pairs
@@ -286,8 +256,11 @@ def main() -> None:
         return
     partial_funcs = gen_partial_funcs(valid_pairs, method, num_macroreps, num_postreps)
     runtimes = run_partials(partial_funcs)
-    logging.info("Execution complete.")
-    print_runtimes(runtimes)
+    print_table(
+        "Experiment Runtimes",
+        ["Problem", "Solver", "Function", "Elapsed Time (s)"],
+        runtimes,
+    )
 
 
 if __name__ == "__main__":
