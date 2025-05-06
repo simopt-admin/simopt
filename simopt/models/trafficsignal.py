@@ -154,12 +154,9 @@ class Road:
     def update_light(self, schedule: list, t: float) -> None:
         """Updates the light from red to green and vice versa.
 
-        Arguments:
-        ---------
-        schedule: list
-            all times where a light changes status
-        t: float
-            current time in system
+        Args:
+            schedule (list): all times where a light changes status
+            t (float): current time in system
         """
         for time in schedule:
             if time == t:
@@ -219,41 +216,38 @@ class Intersection:
     def offset(self, value: int) -> None:
         self._offset = value
 
-    def __init__(self, name: str, _: list[Road]) -> None:
+    def __init__(self, name: str, _roads: list[Road]) -> None:
         """Initialize the Intersection object.
 
-        Arguments:
-        ---------
-        name: str
-            name of the intersection
-        roads: list[Road]
-            list of all roads in the system
+        Args:
+            name (str): Name of the intersection.
+            _roads: list[Road]: List of all roads in the system.
         """
         self._name = name
-        self.schedule = []
+        self._schedule = []
         self._horizontalroads = []
         self._verticalroads = []
         self._offset = 0
-        # self._roads = roads
+        # self._roads = _roads
 
-    def connect_roads(self, roads: list, offset: int) -> None:
+    def connect_roads(self, roads: list[Road], offset: int) -> None:
         """Sets specific roads as attributes of the intersection they belong to.
 
-        Arguments:
-        ---------
-        roads: list
-            list of all roads in the system
-        offset: int
-            offset of the intersection
+        Args:
+            roads (list[Road]): list of all roads in the system
+            offset (int): offset of the intersection
         """
         for road in roads:
-            if road.endpoint == self.name:
-                if road.direction in ["East", "West"]:
-                    self.horizontalroads.append(road)
-                    road.status = offset == 0
-                else:
-                    self.verticalroads.append(road)
-                    road.status = offset != 0
+            # Only add roads that are connected to the intersection
+            if road.endpoint != self.name:
+                continue
+            # Add the road to the appropriate list based on its direction
+            if road.direction in ["East", "West"]:
+                self.horizontalroads.append(road)
+                road.status = offset == 0
+            else:
+                self.verticalroads.append(road)
+                road.status = offset != 0
 
 
 class Car:
@@ -710,22 +704,17 @@ class TrafficLight(Model):
 
             NOTE: NO LEFT TURN
 
-            Arguments:
-            ---------
-            graph: dict[str, list[str]]
-                dictionary with all locations and their connections
-            start: string
-                name of starting location
-            end: string
-                name of ending location
-            path: list[str] | None, optional
-                list of locations that represent the car's path
+            Args:
+                graph (dict[str, list[str]]): dictionary with all locations and their
+                    connections
+                start (str): name of starting location
+                end (str): name of ending location
+                path (list[str] | None, optional): list of locations that represent the
+                    car's path
 
             Returns:
-            -------
-            list | None
-                list of locations that represent the shortest path from start to finish.
-                None if no path exists.
+                list[str] | None: list of locations that represent the shortest path
+                    from start to finish. None if no path exists.
             """
             if path is None:
                 path = []
@@ -757,10 +746,11 @@ class TrafficLight(Model):
         def generate_path(start: int) -> list[str]:
             """Generates shortest path through two random start and end locations.
 
+            Args:
+                start (int): starting point of the car
+
             Returns:
-            -------
-            list[str]
-                list of locations that car visits
+                list[str]: list of locations that car visits
             """
             path = None
             while path is None:
@@ -777,19 +767,13 @@ class TrafficLight(Model):
         def find_direction(start: str, end: str, roadmap: np.ndarray) -> str:
             """Takes in road and finds its direction based on the map.
 
-            Arguments:
-            ---------
-            start: string
-                name of starting location
-            end: string
-                name of ending location
-            roadmap: array
-                array of all points in system
+            Args:
+                start (str): starting point of the road
+                end (str): ending point of the road
+                roadmap (np.ndarray): map of all locations in the system
 
             Returns:
-            -------
-            string
-                direction that the road is facing
+                str: direction of the road
             """
             yloc1, xloc1 = np.where(roadmap == start)
             yloc2, xloc2 = np.where(roadmap == end)
@@ -806,15 +790,11 @@ class TrafficLight(Model):
         def find_turn(roadcombo: str) -> str:
             """Assigns the direction of a turn when given two roads.
 
-            Arguments:
-            ---------
-            roadcombo: string
-                combined directions of roads
+            Args:
+                roadcombo (str): combined directions of roads
 
             Returns:
-            -------
-            string
-                direction of turn
+                str: direction of turn
             """
             turnkey = {
                 "Straight": ["WestWest", "EastEast", "SouthSouth", "NorthNorth"],
@@ -879,15 +859,11 @@ class TrafficLight(Model):
         def find_roads(visits: list[str]) -> list[Road]:
             """Finds the roads that a car will take on its path.
 
-            Arguments:
-            ---------
-            visits: list[str]
-                all locations in a car's path
+            Args:
+                visits (list[str]): all locations in a car's path
 
             Returns:
-            -------
-            list[Road]
-                list of road objects that the car travels on
+                list[Road]: list of road objects that the car travels on
             """
             path: list[Road] = []
             for i in range(len(visits) - 1):
@@ -935,20 +911,15 @@ class TrafficLight(Model):
                     else:
                         road.schedule.append(road.schedule[-1] + interval[0])
 
-        def find_nextlightchange_road(roads: list, t: float) -> float:
+        def find_nextlightchange_road(roads: list[Road], t: float) -> float:
             """Finds the next time any intersection light will change signal.
 
-            Arguments:
-            ---------
-            roads: list
-                list of all intersection objects
-            t: float
-                current time in system
+            Args:
+                roads (list): list of all intersection objects
+                t (float): current time in system
 
             Returns:
-            -------
-            float
-                time that the next light changes
+                float: time that the next light changes
             """
             # TODO: figure out if this also needs returned:
             # list
@@ -962,20 +933,17 @@ class TrafficLight(Model):
                     mintimechange = nextchange
             return mintimechange
 
-        def update_road_lights(t: float, roads: list) -> None:
+        def update_road_lights(t: float, roads: list[Road]) -> None:
             """Updates the intersections with their new light status.
 
-            Arguments:
-            ---------
-            t: float
-                current time in system
-            roads: list
-                list of all intersection objects
+            Args:
+                t (float): current time in system
+                roads (list[Road]): list of all intersection objects
             """
             if t == 0:
                 nextlightlocation = roads[:12]
             else:
-                nextlightlocation = []
+                nextlightlocation: list[Road] = []
                 for road in roads[:12]:
                     if t in road.schedule:
                         nextlightlocation.append(road)
@@ -985,10 +953,8 @@ class TrafficLight(Model):
             status = []
             nextc = []
             for road in roads[:12]:
-                if road.status is True:
-                    status.append("Green")
-                else:
-                    status.append("Red")
+                light_status = "Green" if road.status else "Red"
+                status.append(light_status)
                 nextc.append(road.nextchange)
 
         cars = []
@@ -996,15 +962,11 @@ class TrafficLight(Model):
         def gen_car(t: float) -> float:
             """Generates list of all car objects as they are created.
 
-            Arguments:
-            ---------
-            t: float
-                time that a car is introduced to the system
+            Args:
+                t (float): current time in system
 
             Returns:
-            -------
-            float
-                time that the next car is introduced to the system
+                float: time that the next car is introduced to the system
             """
             # choose start point
             start = start_rng.choices(population=range(8), weights=start_prob)[0]
@@ -1022,14 +984,10 @@ class TrafficLight(Model):
         def find_place_in_queue(car: Car, road: Road, t: float) -> None:
             """Finds a car's place in queue and assigns it a new start time.
 
-            Arguments:
-            ---------
-            car: Car
-                car object
-            road: Road
-                road object
-            t: float
-                current time in system
+            Args:
+                car (Car): car object
+                road (Road): road object
+                t (float): current time in system
             """
             queueindex = len(road.queue) - 1
             while road.queue[queueindex] == 0 and queueindex > 0:

@@ -1,6 +1,8 @@
 Traffic Signal Configuration
 ============================
 
+See the :mod:`simopt.models.trafficsignal` module for API details.
+
 Model: Traffic Signal
 ---------------------
 
