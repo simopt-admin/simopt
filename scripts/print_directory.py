@@ -38,12 +38,14 @@ def main() -> None:
         dir_dict_full_inv = invert_dict(dir_dict_full)
         entries = []
         for class_module, name_abbr in dir_dict_inv.items():
-            full_module_str = class_module.__module__ + "." + class_module.__name__
-            entry_tuple = (name_abbr, dir_dict_full_inv[class_module], full_module_str)
+            # Remove the first two parts of the module name (simopt.directory)
+            shortened_module = ".".join(class_module.__module__.split(".")[2:])
+            module_str = shortened_module + "." + class_module.__name__
+            entry_tuple = (name_abbr, dir_dict_full_inv[class_module], module_str)
             entries.append(entry_tuple)
         print_table(
             f"{dir_type} Directory",
-            ["Class Name (Abbr)", "Class Name (Full)", "Class Module"],
+            ["Name (Abbr)", "Name (Full)", "Module.Class"],
             entries,
         )
 
