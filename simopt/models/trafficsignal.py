@@ -1015,7 +1015,7 @@ class TrafficLight(Model):
                 # Car still has a road to travel to
                 else:
                     # Light is green on the road that the car is on
-                    if road.status is True:
+                    if road.status:
                         car.nextstart = t
                     # Light is red on the road that the car is on
                     else:
@@ -1045,17 +1045,15 @@ class TrafficLight(Model):
                 logging.debug(f"Replication is {percent_done_int}% done")
             # Assigns the next time a light changes
             next_light_time = find_nextlightchange_road(roads, t)
+            next_event_time = min(
+                min_prim_arrival,
+                next_light_time,
+                next_start,
+                next_sec_arrival,
+                next_car_gen,
+            )
             # The next event is a car being introduced to the system
-            if (
-                min(
-                    min_prim_arrival,
-                    next_light_time,
-                    next_start,
-                    next_sec_arrival,
-                    next_car_gen,
-                )
-                == min_prim_arrival
-            ):
+            if next_event_time == min_prim_arrival:
                 t = min_prim_arrival
                 for i in range(12, 18):
                     roads[i].nextchange = t
@@ -1077,16 +1075,7 @@ class TrafficLight(Model):
                 find_place_in_queue(currentcar, initroad, t)
 
             # The next event is a light changing
-            elif (
-                min(
-                    min_prim_arrival,
-                    next_light_time,
-                    next_start,
-                    next_sec_arrival,
-                    next_car_gen,
-                )
-                == next_light_time
-            ):
+            elif next_event_time == next_light_time:
                 t = next_light_time
                 for i in range(12, 18):
                     roads[i].nextchange = t
@@ -1094,16 +1083,7 @@ class TrafficLight(Model):
                 update_road_lights(t, roads)
 
             # The next event is a car starting to move
-            elif (
-                min(
-                    min_prim_arrival,
-                    next_light_time,
-                    next_start,
-                    next_sec_arrival,
-                    next_car_gen,
-                )
-                == next_start
-            ):
+            elif next_event_time == next_start:
                 t = next_start
                 for i in range(12, 18):
                     roads[i].nextchange = t
@@ -1143,21 +1123,12 @@ class TrafficLight(Model):
                     movingcar.place_in_queue
                 ] = 0
                 movingcar.moving = True
-                movingcar.timewaiting = movingcar.timewaiting + (t - movingcar.prevstop)
+                movingcar.timewaiting += t - movingcar.prevstop
                 movingcar.nextstart = outbounds
                 next_start = outbounds
 
             # The next event is a car arriving within the system
-            elif (
-                min(
-                    min_prim_arrival,
-                    next_light_time,
-                    next_start,
-                    next_sec_arrival,
-                    next_car_gen,
-                )
-                == next_sec_arrival
-            ):
+            elif next_event_time == next_sec_arrival:
                 t = next_sec_arrival
                 for i in range(12, 18):
                     roads[i].nextchange = t
@@ -1177,7 +1148,7 @@ class TrafficLight(Model):
                     currentroad.queue[arrivingcar.place_in_queue - 1] = arrivingcar
                     arrivingcar.place_in_queue -= 1
                     # Current road has a green light
-                    if currentroad.status is True:
+                    if currentroad.status:
                         arrivingcar.nextstart = t
                     # Current road has a red light
                     else:
@@ -1199,6 +1170,12 @@ class TrafficLight(Model):
                 arrivingcar.next_sec_arrival = outbounds
                 next_sec_arrival = outbounds
                 arrivingcar.prevstop = t
+            elif next_event_time == next_car_gen:
+                logging.warning("Unexpected car generation")
+            else:
+                error_msg = "Unexpected event time"
+                logging.error(error_msg)
+                raise Exception(error_msg)
 
             # Index to the next car (skip finished cars)
             carindex = min_car_index
@@ -1298,8 +1275,9 @@ class TrafficLight(Model):
                     for r in roads[roadid].incoming_roads:
                         # if there are cars in queue
                         for car_q in r.queue:
-                            last_start = last_start + self.factors["reaction"]
+                            last_start += self.factors["reaction"]
                             if car_q != 0:
+                                # TODO: figure out if these are supposed to be different
                                 # first car in queue in the incoming road
                                 if car_q.place_in_queue == 0:
                                     car_q.nextstart = max(car_q.nextstart, last_start)
