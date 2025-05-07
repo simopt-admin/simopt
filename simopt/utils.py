@@ -1,5 +1,6 @@
 """Utility functions for simopt."""
 
+import sys
 from pathlib import Path
 from typing import Callable, Generic, Optional, TypeVar
 
@@ -146,14 +147,47 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
     title_follow = " " * (total_width - title_indent_count - len(name))
     title = f"{title_lead}{name}{title_follow}"
 
-    underline_row = "─" * total_width
-    header_row = " │ ".join(
+    if sys.stdout.isatty():
+        # Unicode box-drawing characters
+        corner_tl = "┌"
+        corner_tr = "┐"
+        corner_bl = "└"
+        corner_br = "┘"
+        tee_left = "├"
+        tee_right = "┤"
+        dash = "─"
+        plus = f"{dash}┼{dash}"
+        pipe = "│"
+
+        reset = "\033[0m"
+        bg_grey = "\033[48;5;235m"
+        bg_black = "\033[48;5;0m"
+        fg_white = "\033[38;5;252m"
+    else:
+        # ASCII fallback
+        corner_tl = "+"
+        corner_tr = "+"
+        corner_bl = "+"
+        corner_br = "+"
+        tee_left = "+"
+        tee_right = "+"
+        dash = "-"
+        plus = "-+-"
+        pipe = "|"
+
+        reset = ""
+        bg_grey = ""
+        bg_black = ""
+        fg_white = ""
+
+    underline_row = dash * (total_width + 2)  # Extend to the tees
+    header_row = f" {pipe} ".join(
         f"{header:<{width}}" for header, width in zip(headers, max_widths)
     )
-    sep_row = "─┼─".join("─" * width for width in max_widths)
+    sep_row = plus.join(dash * width for width in max_widths)
     rows = []
     for row in data:
-        row_str = " │ ".join(
+        row_str = f" {pipe} ".join(
             f"{item!s:>{width}}"
             if isinstance(item, (int, float))
             else f"{item!s:<{width}}"
@@ -161,24 +195,17 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
         )
         rows.append(row_str)
 
-    # Colors for the table
-
     border_width = total_width + 2  # Extend 2 extra spaces
-    # Colors
-    reset = "\033[0m"
-    bg_grey = "\033[48;5;235m"
-    bg_black = "\033[48;5;0m"
-    fg_white = "\033[38;5;252m"
+
     # Print the table
-    print(f"{bg_black}{fg_white}", end="")
-    print("┌" + "─" * border_width + "┐")
-    print("│ " + title + " │")
-    print("├─" + underline_row + "─┤")
-    print("│ " + header_row + " │")
-    print("│ " + sep_row + " │")
-    # Print the rows with alternating colors
+    print(f"{bg_black}{fg_white}", end="")  # Override background and foreground colors
+    print(f"{corner_tl}{dash * border_width}{corner_tr}")
+    print(f"{pipe} {title} {pipe}")
+    print(f"{tee_left}{underline_row}{tee_right}")
+    print(f"{pipe} {header_row} {pipe}")
+    print(f"{pipe} {sep_row} {pipe}")
     for i, row in enumerate(rows):
         row_bg = bg_grey if i % 2 else bg_black
-        print(f"{bg_black}{fg_white}│{row_bg} {row} {bg_black}│{reset}")
-    print("└" + "─" * border_width + "┘")
-    print(reset, end="")
+        print(f"{bg_black}{fg_white}{pipe}{row_bg} {row} {bg_black}{pipe}{reset}")
+    print(f"{corner_bl}{dash * border_width}{corner_br}")
+    print(reset, end="")  # Reset colors
