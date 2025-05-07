@@ -64,7 +64,26 @@ def main() -> None:
     print("> Running a single replication of the model...")
     responses, gradients = mymodel.replicate(rng_list)
     print("> For a single replication:")
-    print_table("Responses", ["Response", "Value"], responses)
+    non_dict_responses = []
+    dict_responses = []
+    for key, value in responses.items():
+        if not isinstance(value, (dict)):
+            non_dict_responses.append((key, value))
+        else:
+            dict_responses.append((key, value))
+    # Only specify "non-dict" if there are dict responses, otherwise just refer to
+    # them as "responses" for clarity.
+    non_dict_title = "Non-Dict Responses" if len(dict_responses) else "Responses"
+    print_table(non_dict_title, ["Response", "Value"], non_dict_responses)
+    # Print dict responses.
+    for outerkey, innerdict in dict_responses:
+        # Split each dict into its own table.
+        print_table(
+            f"Dict Responses for {outerkey}",
+            ["Key", "Value"],
+            [(innerkey, innervalue) for innerkey, innervalue in innerdict.items()],
+        )
+    # Print gradients.
     for outerkey in gradients:
         print_table(
             f"Gradients for {outerkey}",
