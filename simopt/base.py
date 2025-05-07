@@ -6,7 +6,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from enum import Enum
-from typing import Callable
+from typing import Any, Callable
 
 import numpy as np
 
@@ -89,10 +89,6 @@ class Solver(ABC):
     This class defines the core structure for simulation-optimization
     solvers in SimOpt. Subclasses must implement the required methods
     for running simulations and updating solutions.
-
-    Args:
-        name (str): Name of the solver.
-        fixed_factors (dict): Dictionary of user-specified solver factors.
     """
 
     @classproperty
@@ -160,21 +156,19 @@ class Solver(ABC):
         raise NotImplementedError
 
     @property
-    def factors(self) -> dict:
+    def factors(self) -> dict[str, Any]:
         """Changeable factors (i.e., parameters) of the solver."""
         return self.__factors
 
     @factors.setter
-    def factors(self, value: dict | None) -> None:
+    def factors(self, value: dict[str, Any] | None) -> None:
         if value is None:
             value = {}
         self.__factors = value
 
     @classproperty
     @abstractmethod
-    def specifications(
-        cls,
-    ) -> dict[str, dict]:
+    def specifications(cls) -> dict[str, dict[str, Any]]:
         """Details of each factor (for GUI, data validation, and defaults)."""
         raise NotImplementedError
 
@@ -202,13 +196,15 @@ class Solver(ABC):
         """Dictionary of functions to check if a factor is permissible."""
         raise NotImplementedError
 
-    def __init__(self, name: str = "", fixed_factors: dict | None = None) -> None:
+    def __init__(
+        self, name: str = "", fixed_factors: dict[str, Any] | None = None
+    ) -> None:
         """Initialize a solver object.
 
         Args:
             name (str, optional): Name of the solver. Defaults to an empty string.
-            fixed_factors (dict | None, optional): Dictionary of user-specified solver
-                factors. Defaults to None.
+            fixed_factors (dict[str, Any] | None, optional): Dictionary of
+                user-specified solver factors. Defaults to None.
         """
         self.name = name
         # Add all the fixed factors to the solver
@@ -382,14 +378,7 @@ class Solver(ABC):
 
 
 class Problem(ABC):
-    """Base class for simulation-optimization problems.
-
-    Args:
-        name (str): Problem name.
-        fixed_factors (dict): User-defined factors that affect the problem setup.
-        model_fixed_factors (dict): Subset of non-decision factors passed to the model.
-        model (Callable[..., Model]): Simulation model that generates replications.
-    """
+    """Base class for simulation-optimization problems."""
 
     @classproperty
     def class_name_abbr(cls) -> str:
@@ -536,19 +525,19 @@ class Problem(ABC):
         self.__rng_list = value
 
     @property
-    def factors(self) -> dict:
+    def factors(self) -> dict[str, Any]:
         """Changeable factors of the problem."""
         return self.__factors
 
     @factors.setter
-    def factors(self, value: dict | None) -> None:
+    def factors(self, value: dict[str, Any] | None) -> None:
         if value is None:
             value = {}
         self.__factors = value
 
     @classproperty
     @abstractmethod
-    def specifications(cls) -> dict:
+    def specifications(cls) -> dict[str, dict[str, Any]]:
         """Details of each factor (for GUI, data validation, and defaults)."""
         raise NotImplementedError
 
@@ -561,19 +550,20 @@ class Problem(ABC):
     def __init__(
         self,
         name: str = "",
-        fixed_factors: dict | None = None,
+        fixed_factors: dict[str, Any] | None = None,
         model_fixed_factors: dict | None = None,
         model: Callable[..., Model] | None = None,
     ) -> None:
         """Initialize a problem object.
 
         Args:
-            name (str): Name of the problem.
-            fixed_factors (dict | None): Dictionary of user-specified problem factors.
+            name (str): Name of the problem. Defaults to an empty string.
+            fixed_factors (dict[str, Any] | None, optional): Dictionary of
+                user-specified solver factors. Defaults to None.
             model_fixed_factors (dict | None): Subset of user-specified non-decision
-                factors passed to the model.
+                factors passed to the model. Defaults to None.
             model (Callable[..., Model] | None): Simulation model that generates
-                replications.
+                replications. Defaults to None.
         """
         if model is None:
             raise ValueError("Model must be specified.")
@@ -1050,7 +1040,7 @@ class Model(ABC):
 
     @classproperty
     @abstractmethod
-    def specifications(cls) -> dict[str, dict]:
+    def specifications(cls) -> dict[str, dict[str, Any]]:
         """Details of each factor (for GUI, data validation, and defaults)."""
         raise NotImplementedError
 
@@ -1061,22 +1051,22 @@ class Model(ABC):
         raise NotImplementedError
 
     @property
-    def factors(self) -> dict:
+    def factors(self) -> dict[str, Any]:
         """Changeable factors of the simulation model."""
         return self.__factors
 
     @factors.setter
-    def factors(self, value: dict | None) -> None:
+    def factors(self, value: dict[str, Any] | None) -> None:
         if value is None:
             value = {}
         self.__factors = value
 
-    def __init__(self, fixed_factors: dict | None = None) -> None:
+    def __init__(self, fixed_factors: dict[str, Any] | None = None) -> None:
         """Initialize a model object.
 
         Args:
-            fixed_factors (dict | None, optional): Dictionary of user-specified model
-                factors.
+            fixed_factors (dict[str, Any] | None, optional): Dictionary of
+                user-specified solver factors. Defaults to None.
         """
         # Add all the fixed factors to the model
         self.factors = fixed_factors
