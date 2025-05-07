@@ -1032,7 +1032,6 @@ class TrafficLight(Model):
         # Loops through time until runtime is reached
         sumwait = 0
         finishedcars = 0
-        cars_total = {}
         overflow_total = {}
         overflow_len_total = {}
         with Path("./Cars_detail.csv").open(mode="w", newline="") as output_file:
@@ -1046,9 +1045,10 @@ class TrafficLight(Model):
             avg_wait = math.nan
             last_avg_wait = math.nan
             avg_wait_over_time: dict[float, float] = {}
-            avg_total = 0
             percent_done = 0
+            min_car_index = 0
             while t < self.factors["runtime"]:
+                # Log the percentage done every time it changes
                 if t / self.factors["runtime"] > percent_done + 0.01:
                     percent_done = round(t / self.factors["runtime"], 2)
                     percent_done_int = int(percent_done * 100)
@@ -1229,7 +1229,11 @@ class TrafficLight(Model):
                     next_sec_arrival = outbounds
                     arrivingcar.prevstop = t
 
-                carindex = 0
+                # Index to the next car (skip finished cars)
+                carindex = min_car_index
+                while carindex < len(cars) - 1 and cars[carindex].finished:
+                    carindex += 1
+                    min_car_index += 1
                 min_sec_arrival = outbounds
                 min_start = outbounds
                 # Finds the next car to start moving and the next car to arrive
@@ -1257,7 +1261,9 @@ class TrafficLight(Model):
 
                 # sumwait = 0
                 # finishedcars = 0
-                for car in cars:
+                carindex = min_car_index
+                while carindex < len(cars):
+                    car = cars[carindex]
                     # If car has finished, record its stats
                     if not car.finished and (car.locationindex == len(car.path) - 1):
                         action = "Finish"
@@ -1273,6 +1279,7 @@ class TrafficLight(Model):
                         car.finished = True
                         finishedcars += 1
                         sumwait += car.timewaiting
+                    carindex += 1
                 # Only update waiting stats if there are cars that have finished
                 # Otherwise, we'll divide by zero
                 if finishedcars > 0:
@@ -1282,8 +1289,6 @@ class TrafficLight(Model):
                     if avg_wait != last_avg_wait:
                         avg_wait_over_time[t] = avg_wait
                         last_avg_wait = avg_wait
-                    # when all finished compute average total time
-                    avg_total = sum(cars_total.values()) / len(cars_total)
 
                 # record queue length of each road and update overflow status
                 overflow_total[t] = 0
@@ -1403,6 +1408,10 @@ class TrafficLight(Model):
 
         # average queue
         avg_queue_length = avg_queue_length / 12
+
+        finished_cars = [cars[i] for i in range(len(cars)) if cars[i].finished]
+        total_waiting = sum([car.timewaiting for car in finished_cars])
+        avg_total = total_waiting / len(finished_cars) if finished_cars else 0
 
         # Compose responses and gradients.
         responses = {
