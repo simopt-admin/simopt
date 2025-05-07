@@ -1,6 +1,7 @@
 """Simulate a single day of traffic for queuing problem."""
 
 import csv
+import logging
 import math
 from pathlib import Path
 from typing import Callable
@@ -326,12 +327,12 @@ class Car:
         self._place_in_queue = value
 
     @property
-    def nextstart(self) -> float | None:
+    def nextstart(self) -> float:
         """Next start time of the car."""
         return self._nextstart
 
     @nextstart.setter
-    def nextstart(self, value: float | None) -> None:
+    def nextstart(self, value: float) -> None:
         self._nextstart = value
 
     @property
@@ -344,13 +345,13 @@ class Car:
         self._moving = value
 
     @property
-    def next_sec_arrival(self) -> float | None:
+    def next_sec_arrival(self) -> float:
         """Next second arrival time of the car."""
-        return self._nextSecArrival
+        return self._next_sec_arrival
 
     @next_sec_arrival.setter
-    def next_sec_arrival(self, value: float | None) -> None:
-        self._nextSecArrival = value
+    def next_sec_arrival(self, value: float) -> None:
+        self._next_sec_arrival = value
 
     @property
     def prevstop(self) -> float:
@@ -358,7 +359,7 @@ class Car:
         return self._prevstop
 
     @prevstop.setter
-    def prevstop(self, value: int) -> None:
+    def prevstop(self, value: float) -> None:
         self._prevstop = value
 
     @property
@@ -391,9 +392,9 @@ class Car:
         self._timewaiting = 0
         self._primarrival = arrival
         self._place_in_queue = None
-        self._nextstart = None
+        self._nextstart = 0
         self._moving = False
-        self._nextSecArrival = None
+        self._next_sec_arrival = 0
         self._prevstop = 0
         self._visits = visits
         self._finished = False
@@ -435,13 +436,14 @@ class TrafficLight(Model):
             },
             "runtime": {
                 "description": "The number of seconds that the traffic model runs",
-                "datatype": float,
+                "datatype": int,
                 "default": 7200,
             },
             "numintersections": {
                 "description": "The number of intersections in the traffic model",
                 "datatype": int,
                 "default": 4,
+                "isDatafarmable": False,
             },
             "decision_vector": {
                 "description": (
@@ -628,7 +630,7 @@ class TrafficLight(Model):
         # Initializes variables to start the simulation
         t = 0
         next_car_gen = 0
-        outbounds = self.factors["runtime"] + 1
+        outbounds: int = self.factors["runtime"] + 1
         car_sim_index = 0
         next_start = outbounds
         next_sec_arrival = outbounds
@@ -957,7 +959,7 @@ class TrafficLight(Model):
                 status.append(light_status)
                 nextc.append(road.nextchange)
 
-        cars = []
+        cars: list[Car] = []
 
         def gen_car(t: float) -> float:
             """Generates list of all car objects as they are created.
@@ -978,7 +980,7 @@ class TrafficLight(Model):
             path = find_roads(visits)
             cars.append(Car(identify, initialarrival, path, visits))
             cars[identify].nextstart = outbounds
-            cars[identify].nextSecArrival = outbounds
+            cars[identify].next_sec_arrival = outbounds
             return initialarrival
 
         def find_place_in_queue(car: Car, road: Road, t: float) -> None:
@@ -1040,9 +1042,18 @@ class TrafficLight(Model):
             )
             # Print headers.
             output_file.write("Cars,Action,Position,Road,Time\n")
-            avgwait = 0
-            avgtotal = 0
+            # Initialize wait to NaN since there will be wait times immediately, but
+            # with nobody finished, we can't calculate average wait yet
+            avg_wait = math.nan
+            last_avg_wait = math.nan
+            avg_wait_over_time: dict[float, float] = {}
+            avg_total = 0
+            percent_done = 0
             while t < self.factors["runtime"]:
+                if t / self.factors["runtime"] > percent_done + 0.01:
+                    percent_done = round(t / self.factors["runtime"], 2)
+                    percent_done_int = int(percent_done * 100)
+                    logging.debug(f"Replication is {percent_done_int}% done")
                 # Assigns the next time a light changes
                 next_light_time = find_nextlightchange_road(roads, t)
                 # The next event is a car being introduced to the system
@@ -1129,11 +1140,11 @@ class TrafficLight(Model):
                     # Car is the first in its queue
                     if movingcar.place_in_queue == 0:
                         # Car's next arrival is set
-                        # movingcar.nextSecArrival = t + (
+                        # movingcar.next_sec_arrival = t + (
                         #     self.factors["distance"] / self.factors["speed"]
                         # )
                         # change the distance to by road
-                        movingcar.nextSecArrival = (
+                        movingcar.next_sec_arrival = (
                             t
                             + self.factors["pause"]
                             + (
@@ -1145,7 +1156,7 @@ class TrafficLight(Model):
                     # Car is not the first in its queue
                     else:
                         # Car's next arrival time is set
-                        movingcar.nextSecArrival = t + (
+                        movingcar.next_sec_arrival = t + (
                             self.factors["car_distance"]
                             + self.factors["carlength"] / self.factors["speed"]
                         )
@@ -1184,7 +1195,7 @@ class TrafficLight(Model):
                         # Car is assigned its location and given a new start time
                         find_place_in_queue(arrivingcar, currentroad, t)
                     # Car is not the first in its queue
-                    else:
+                    elif arrivingcar.place_in_queue is not None:
                         # Car moves up in its queue
                         currentroad = arrivingcar.path[arrivingcar.locationindex]
                         currentroad.queue[arrivingcar.place_in_queue] = 0
@@ -1196,6 +1207,12 @@ class TrafficLight(Model):
                         # Current road has a red light
                         else:
                             arrivingcar.nextstart = currentroad.nextchange
+                    # Car is supposed to move up the queue, but it is not in the queue
+                    else:
+                        error_msg = "Car is not in queue"
+                        logging.error(error_msg)
+                        raise Exception(error_msg)
+
                     action = "Arrival"
                     csv_writer.writerow(
                         [
@@ -1209,7 +1226,7 @@ class TrafficLight(Model):
 
                     # Car is no longer 'moving'
                     movingcar.moving = False
-                    arrivingcar.nextSecArrival = outbounds
+                    arrivingcar.next_sec_arrival = outbounds
                     next_sec_arrival = outbounds
                     arrivingcar.prevstop = t
 
@@ -1228,11 +1245,11 @@ class TrafficLight(Model):
                         movingcar = testcar
                     # Car is elligible to be the next arriving car
                     if (
-                        min(min_sec_arrival, testcar.nextSecArrival)
-                        == testcar.nextSecArrival
-                        and testcar.nextSecArrival != outbounds
+                        min(min_sec_arrival, testcar.next_sec_arrival)
+                        == testcar.next_sec_arrival
+                        and testcar.next_sec_arrival != outbounds
                     ):
-                        min_sec_arrival = testcar.nextSecArrival
+                        min_sec_arrival = testcar.next_sec_arrival
                         arrivingcar = testcar
                     # Next car is tested and the next events are set
                     carindex += 1
@@ -1242,9 +1259,8 @@ class TrafficLight(Model):
                 # sumwait = 0
                 # finishedcars = 0
                 for car in cars:
-                    if (car.locationindex == len(car.path) - 1) and (
-                        car.finished is False
-                    ):  # car arrived
+                    # If car has finished, record its stats
+                    if not car.finished and (car.locationindex == len(car.path) - 1):
                         action = "Finish"
                         csv_writer.writerow(
                             [
@@ -1274,14 +1290,17 @@ class TrafficLight(Model):
                         #     return None
                         sumwait += car.timewaiting
                         finishedcars += 1
-                # in the first several interations, there is no finishedcars
+                # Only update waiting stats if there are cars that have finished
+                # Otherwise, we'll divide by zero
                 if finishedcars > 0:
-                    avgwait = sumwait / finishedcars
+                    avg_wait = sumwait / finishedcars
+                    # Only add to the list if the value is different from the last
+                    # Prevents adding a ton of duplicate values
+                    if avg_wait != last_avg_wait:
+                        avg_wait_over_time[t] = avg_wait
+                        last_avg_wait = avg_wait
                     # when all finished compute average total time
-                    avgtotal = sum(cars_total.values()) / len(cars_total)
-                else:
-                    avgwait = 0
-                    avgtotal = 0
+                    avg_total = sum(cars_total.values()) / len(cars_total)
 
                 # record queue length of each road and update overflow status
                 overflow_total[t] = 0
@@ -1414,8 +1433,9 @@ class TrafficLight(Model):
                 csvfile.write(f"{key},{cars_wait[key]},{cars_total[key]}\n")
         # Compose responses and gradients.
         responses = {
-            "WaitingTime": avgwait,
-            "SystemTime": avgtotal,
+            "WaitingTime": avg_wait,
+            "WaitingTimeOverTime": avg_wait_over_time,
+            "SystemTime": avg_total,
             "AvgQueueLen": avg_queue_length,
             "OverflowPercentage": overflow_system_perc,
             "OverflowPercentageOver51": overflow_system_perc_over_51,
