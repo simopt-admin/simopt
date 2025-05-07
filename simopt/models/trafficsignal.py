@@ -1040,10 +1040,8 @@ class TrafficLight(Model):
             )
             # Print headers.
             output_file.write("Cars,Action,Position,Road,Time\n")
-            # Initialize wait to NaN since there will be wait times immediately, but
-            # with nobody finished, we can't calculate average wait yet
-            avg_wait = math.nan
-            last_avg_wait = math.nan
+            avg_wait = 0
+            last_avg_wait = 0
             avg_wait_over_time: dict[float, float] = {}
             percent_done = 0
             min_car_index = 0
