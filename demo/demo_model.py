@@ -35,6 +35,8 @@ def main() -> None:
 
     fixed_factors = {"lambda": 3.0, "mu": 8.0}
     mymodel = MM1Queue(fixed_factors=fixed_factors)
+
+    num_macroreps = 1
     # -----------------------------------------------
 
     # The rest of this script requires no changes.
@@ -61,35 +63,36 @@ def main() -> None:
     rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
 
     # Run a single replication of the model.
-    print("> Running a single replication of the model...")
-    responses, gradients = mymodel.replicate(rng_list)
-    print("> For a single replication:")
-    non_dict_responses = []
-    dict_responses = []
-    for key, value in responses.items():
-        if not isinstance(value, (dict)):
-            non_dict_responses.append((key, value))
-        else:
-            dict_responses.append((key, value))
-    # Only specify "non-dict" if there are dict responses, otherwise just refer to
-    # them as "responses" for clarity.
-    non_dict_title = "Non-Dict Responses" if len(dict_responses) else "Responses"
-    print_table(non_dict_title, ["Response", "Value"], non_dict_responses)
-    # Print dict responses.
-    for outerkey, innerdict in dict_responses:
-        # Split each dict into its own table.
-        print_table(
-            f"Dict Responses for {outerkey}",
-            ["Key", "Value"],
-            [(innerkey, innervalue) for innerkey, innervalue in innerdict.items()],
-        )
-    # Print gradients.
-    for outerkey in gradients:
-        print_table(
-            f"Gradients for {outerkey}",
-            ["w.r.t Factor", "Gradient"],
-            gradients[outerkey],
-        )
+    for mrep in range(num_macroreps):
+        print(f"> Running macroreplication {mrep + 1}/{num_macroreps}...")
+        responses, gradients = mymodel.replicate(rng_list)
+        non_dict_responses = []
+        dict_responses = []
+        for key, value in responses.items():
+            if not isinstance(value, (dict)):
+                non_dict_responses.append((key, value))
+            else:
+                dict_responses.append((key, value))
+        # Only specify "non-dict" if there are dict responses, otherwise just refer to
+        # them as "responses" for clarity.
+        non_dict_title = "Non-Dict Responses" if len(dict_responses) else "Responses"
+        print_table(non_dict_title, ["Response", "Value"], non_dict_responses)
+        # Print dict responses.
+        for factor, dictionary in dict_responses:
+            # Split each dict into its own table.
+            responses = list(dictionary.items())
+            print_table(f"Dict Responses for {factor}", ["Key", "Value"], responses)
+        # Print gradients.
+        for factor in gradients:
+            print_table(
+                f"Gradients for {factor}",
+                ["w.r.t Factor", "Gradient"],
+                gradients[factor],
+            )
+        # Advance RNG
+        for rng in rng_list:
+            rng.advance_subsubstream()
+    print("> Finished macroreplications.")
 
 
 if __name__ == "__main__":
