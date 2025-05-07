@@ -1032,7 +1032,6 @@ class TrafficLight(Model):
         # Loops through time until runtime is reached
         sumwait = 0
         finishedcars = 0
-        cars_wait = {}
         cars_total = {}
         overflow_total = {}
         overflow_len_total = {}
@@ -1272,24 +1271,8 @@ class TrafficLight(Model):
                             ]
                         )
                         car.finished = True
-                        cars_wait[car.identify] = car.timewaiting
-                        cars_total[car.identify] = t - car.initialarrival
-                        # created a list to store which car has arrived and compare
-                        # current car identify with the list
-                        # if current car.identity < identities in the list, then print
-                        # A WARNING MESSAGE AND STOP.
-                        # if car.identify >= current_finished:
-                        #     current_finished = car.identify
-                        # else:
-                        #     print(
-                        #         " WARN!! Car ",
-                        #         car.identify,
-                        #         " finished later than Car",
-                        #         current_finished,
-                        #     )
-                        #     return None
-                        sumwait += car.timewaiting
                         finishedcars += 1
+                        sumwait += car.timewaiting
                 # Only update waiting stats if there are cars that have finished
                 # Otherwise, we'll divide by zero
                 if finishedcars > 0:
@@ -1421,16 +1404,6 @@ class TrafficLight(Model):
         # average queue
         avg_queue_length = avg_queue_length / 12
 
-        # how to calculate system overflow len
-
-        with Path("SummaryTime.csv").open("w") as csvfile:
-            writer = csv.DictWriter(
-                csvfile, fieldnames=["Cars_id", "WaitingTime", "TotalTime"]
-            )
-            writer.writeheader()
-            # writer.writerows(cars_wait)
-            for key in cars_wait:
-                csvfile.write(f"{key},{cars_wait[key]},{cars_total[key]}\n")
         # Compose responses and gradients.
         responses = {
             "WaitingTime": avg_wait,
