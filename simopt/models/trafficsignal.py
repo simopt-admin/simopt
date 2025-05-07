@@ -1,9 +1,7 @@
 """Simulate a single day of traffic for queuing problem."""
 
-import csv
 import logging
 import math
-from pathlib import Path
 from typing import Callable
 
 import numpy as np
@@ -1034,319 +1032,286 @@ class TrafficLight(Model):
         finishedcars = 0
         overflow_total = {}
         overflow_len_total = {}
-        with Path("./Cars_detail.csv").open(mode="w", newline="") as output_file:
-            csv_writer = csv.writer(
-                output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
-            )
-            # Print headers.
-            output_file.write("Cars,Action,Position,Road,Time\n")
-            avg_wait = 0
-            last_avg_wait = 0
-            avg_wait_over_time: dict[float, float] = {}
-            percent_done = 0
-            min_car_index = 0
-            while t < self.factors["runtime"]:
-                # Log the percentage done every time it changes
-                if t / self.factors["runtime"] > percent_done + 0.01:
-                    percent_done = round(t / self.factors["runtime"], 2)
-                    percent_done_int = int(percent_done * 100)
-                    logging.debug(f"Replication is {percent_done_int}% done")
-                # Assigns the next time a light changes
-                next_light_time = find_nextlightchange_road(roads, t)
-                # The next event is a car being introduced to the system
-                if (
-                    min(
-                        min_prim_arrival,
-                        next_light_time,
-                        next_start,
-                        next_sec_arrival,
-                        next_car_gen,
-                    )
-                    == min_prim_arrival
-                ):
-                    t = min_prim_arrival
-                    for i in range(12, 18):
-                        roads[i].nextchange = t
-                    cars[car_sim_index].prevstop = t
-                    action = "Start"
-                    csv_writer.writerow(
-                        [
-                            cars[car_sim_index].identify,
-                            action,
-                            cars[car_sim_index].visits[
-                                cars[car_sim_index].locationindex
-                            ],
-                            cars[car_sim_index]
-                            .path[cars[car_sim_index].locationindex]
-                            .roadid,
-                            t,
-                        ]
-                    )
-                    # A new car is generated
-                    next_car_gen = gen_car(t)
-                    min_prim_arrival = next_car_gen
-                    car_sim_index += 1
+        avg_wait = 0
+        last_avg_wait = 0
+        avg_wait_over_time: dict[float, float] = {}
+        percent_done = 0
+        min_car_index = 0
+        while t < self.factors["runtime"]:
+            # Log the percentage done every time it changes
+            if t / self.factors["runtime"] > percent_done + 0.01:
+                percent_done = round(t / self.factors["runtime"], 2)
+                percent_done_int = int(percent_done * 100)
+                logging.debug(f"Replication is {percent_done_int}% done")
+            # Assigns the next time a light changes
+            next_light_time = find_nextlightchange_road(roads, t)
+            # The next event is a car being introduced to the system
+            if (
+                min(
+                    min_prim_arrival,
+                    next_light_time,
+                    next_start,
+                    next_sec_arrival,
+                    next_car_gen,
+                )
+                == min_prim_arrival
+            ):
+                t = min_prim_arrival
+                for i in range(12, 18):
+                    roads[i].nextchange = t
 
-                    # The arriving car arrives into the system based on its path
-                    currentcar = cars[car_sim_index - 1]
-                    initroad = currentcar.path[currentcar.locationindex]
-                    find_place_in_queue(currentcar, initroad, t)
+                car = cars[car_sim_index]
+                car.prevstop = t
+                car_idx = car.identify
+                position = car.visits[car.locationindex]
+                road = car.path[car.locationindex].roadid
+                logging.debug(f"{t}, Car {car_idx}, Start, Pos {position}, Road {road}")
+                # A new car is generated
+                next_car_gen = gen_car(t)
+                min_prim_arrival = next_car_gen
+                car_sim_index += 1
 
-                # The next event is a light changing
-                elif (
-                    min(
-                        min_prim_arrival,
-                        next_light_time,
-                        next_start,
-                        next_sec_arrival,
-                        next_car_gen,
-                    )
-                    == next_light_time
-                ):
-                    t = next_light_time
-                    for i in range(12, 18):
-                        roads[i].nextchange = t
-                    # Roads that change lights at this time are updated
-                    update_road_lights(t, roads)
+                # The arriving car arrives into the system based on its path
+                currentcar = cars[car_sim_index - 1]
+                initroad = currentcar.path[currentcar.locationindex]
+                find_place_in_queue(currentcar, initroad, t)
 
-                # The next event is a car starting to move
-                elif (
-                    min(
-                        min_prim_arrival,
-                        next_light_time,
-                        next_start,
-                        next_sec_arrival,
-                        next_car_gen,
-                    )
-                    == next_start
-                ):
-                    t = next_start
-                    for i in range(12, 18):
-                        roads[i].nextchange = t
+            # The next event is a light changing
+            elif (
+                min(
+                    min_prim_arrival,
+                    next_light_time,
+                    next_start,
+                    next_sec_arrival,
+                    next_car_gen,
+                )
+                == next_light_time
+            ):
+                t = next_light_time
+                for i in range(12, 18):
+                    roads[i].nextchange = t
+                # Roads that change lights at this time are updated
+                update_road_lights(t, roads)
 
-                    action = "Leave"
-                    csv_writer.writerow(
-                        [
-                            movingcar.identify,
-                            action,
-                            movingcar.visits[movingcar.locationindex],
-                            movingcar.path[movingcar.locationindex].roadid,
-                            t,
-                        ]
-                    )
-                    # Car is the first in its queue
-                    if movingcar.place_in_queue == 0:
-                        # Car's next arrival is set
-                        # movingcar.next_sec_arrival = t + (
-                        #     self.factors["distance"] / self.factors["speed"]
-                        # )
-                        # change the distance to by road
-                        movingcar.next_sec_arrival = (
-                            t
-                            + self.factors["pause"]
-                            + (
-                                movingcar.path[movingcar.locationindex].road_length
-                                / self.factors["speed"]
-                            )
+            # The next event is a car starting to move
+            elif (
+                min(
+                    min_prim_arrival,
+                    next_light_time,
+                    next_start,
+                    next_sec_arrival,
+                    next_car_gen,
+                )
+                == next_start
+            ):
+                t = next_start
+                for i in range(12, 18):
+                    roads[i].nextchange = t
+
+                logging.debug(
+                    f"{t}, Car {movingcar.identify}, Leave, "
+                    f"Pos {movingcar.visits[movingcar.locationindex]}, "
+                    f"Road {movingcar.path[movingcar.locationindex].roadid}"
+                )
+
+                # Car is the first in its queue
+                if movingcar.place_in_queue == 0:
+                    # Car's next arrival is set
+                    # movingcar.next_sec_arrival = t + (
+                    #     self.factors["distance"] / self.factors["speed"]
+                    # )
+                    # change the distance to by road
+                    movingcar.next_sec_arrival = (
+                        t
+                        + self.factors["pause"]
+                        + (
+                            movingcar.path[movingcar.locationindex].road_length
+                            / self.factors["speed"]
                         )
-
-                    # Car is not the first in its queue
-                    else:
-                        # Car's next arrival time is set
-                        movingcar.next_sec_arrival = t + (
-                            self.factors["car_distance"]
-                            + self.factors["carlength"] / self.factors["speed"]
-                        )
-
-                    # Car leaves its current queue and is 'moving'
-                    movingcar.path[movingcar.locationindex].queue[
-                        movingcar.place_in_queue
-                    ] = 0
-                    movingcar.moving = True
-                    movingcar.timewaiting = movingcar.timewaiting + (
-                        t - movingcar.prevstop
-                    )
-                    movingcar.nextstart = outbounds
-                    next_start = outbounds
-
-                # The next event is a car arriving within the system
-                elif (
-                    min(
-                        min_prim_arrival,
-                        next_light_time,
-                        next_start,
-                        next_sec_arrival,
-                        next_car_gen,
-                    )
-                    == next_sec_arrival
-                ):
-                    t = next_sec_arrival
-                    for i in range(12, 18):
-                        roads[i].nextchange = t
-
-                    # Car is first in its queue
-                    if arrivingcar.place_in_queue == 0:
-                        # Car changes the road it is traveling on
-                        arrivingcar.update_location()
-                        currentroad = arrivingcar.path[arrivingcar.locationindex]
-                        # Car is assigned its location and given a new start time
-                        find_place_in_queue(arrivingcar, currentroad, t)
-                    # Car is not the first in its queue
-                    elif arrivingcar.place_in_queue is not None:
-                        # Car moves up in its queue
-                        currentroad = arrivingcar.path[arrivingcar.locationindex]
-                        currentroad.queue[arrivingcar.place_in_queue] = 0
-                        currentroad.queue[arrivingcar.place_in_queue - 1] = arrivingcar
-                        arrivingcar.place_in_queue -= 1
-                        # Current road has a green light
-                        if currentroad.status is True:
-                            arrivingcar.nextstart = t
-                        # Current road has a red light
-                        else:
-                            arrivingcar.nextstart = currentroad.nextchange
-                    # Car is supposed to move up the queue, but it is not in the queue
-                    else:
-                        error_msg = "Car is not in queue"
-                        logging.error(error_msg)
-                        raise Exception(error_msg)
-
-                    action = "Arrival"
-                    csv_writer.writerow(
-                        [
-                            arrivingcar.identify,
-                            action,
-                            arrivingcar.visits[arrivingcar.locationindex],
-                            arrivingcar.path[arrivingcar.locationindex].roadid,
-                            t,
-                        ]
                     )
 
-                    # Car is no longer 'moving'
-                    movingcar.moving = False
-                    arrivingcar.next_sec_arrival = outbounds
-                    next_sec_arrival = outbounds
-                    arrivingcar.prevstop = t
-
-                # Index to the next car (skip finished cars)
-                carindex = min_car_index
-                while carindex < len(cars) - 1 and cars[carindex].finished:
-                    carindex += 1
-                    min_car_index += 1
-                min_sec_arrival = outbounds
-                min_start = outbounds
-                # Finds the next car to start moving and the next car to arrive
-                while carindex < len(cars) - 1:
-                    testcar = cars[carindex]
-                    # Car is elligible to be the next starting car
-                    if (
-                        min(next_start, testcar.nextstart) == testcar.nextstart
-                        and testcar.nextstart != outbounds
-                    ):
-                        min_start = testcar.nextstart
-                        movingcar = testcar
-                    # Car is elligible to be the next arriving car
-                    if (
-                        min(min_sec_arrival, testcar.next_sec_arrival)
-                        == testcar.next_sec_arrival
-                        and testcar.next_sec_arrival != outbounds
-                    ):
-                        min_sec_arrival = testcar.next_sec_arrival
-                        arrivingcar = testcar
-                    # Next car is tested and the next events are set
-                    carindex += 1
-                    next_sec_arrival = min_sec_arrival
-                    next_start = min_start
-
-                # sumwait = 0
-                # finishedcars = 0
-                carindex = min_car_index
-                while carindex < len(cars):
-                    car = cars[carindex]
-                    # If car has finished, record its stats
-                    if not car.finished and (car.locationindex == len(car.path) - 1):
-                        action = "Finish"
-                        csv_writer.writerow(
-                            [
-                                car.identify,
-                                action,
-                                car.visits[car.locationindex],
-                                car.path[car.locationindex].roadid,
-                                t,
-                            ]
-                        )
-                        car.finished = True
-                        finishedcars += 1
-                        sumwait += car.timewaiting
-                    carindex += 1
-                # Only update waiting stats if there are cars that have finished
-                # Otherwise, we'll divide by zero
-                if finishedcars > 0:
-                    avg_wait = sumwait / finishedcars
-                    # Only add to the list if the value is different from the last
-                    # Prevents adding a ton of duplicate values
-                    if avg_wait != last_avg_wait:
-                        avg_wait_over_time[t] = avg_wait
-                        last_avg_wait = avg_wait
-
-                # record queue length of each road and update overflow status
-                overflow_total[t] = 0
-                for roadid in range(12):
-                    # num of cars in queue
-                    cars_in_queue = sum([x != 0 for x in roads[roadid].queue])
-                    # queue length =
-                    #   (car_length+ car_distance) * num(cars in queue) - car_distance
-                    roads[roadid].queue_hist[t] = max(
-                        0,
-                        cars_in_queue
-                        * (self.factors["car_distance"] + self.factors["carlength"])
-                        - self.factors["car_distance"],
-                    )
-                    # if there is overflow status
-                    if roads[roadid].road_length <= roads[roadid].queue_hist[t]:
-                        roads[roadid].overflow = True
-                        overflow_total[t] = 1
-                    else:
-                        roads[roadid].overflow = False
-
-                # after queue len is calculated, deal with overflow when a road
-                # is overflowed:
-                #   1. cars in incoming roads cannot get in
-                #   2. calculated oveflow len
-                current_overflow_len = []
-                for roadid in range(12):
-                    if roads[roadid].overflow and len(roads[roadid].incoming_roads) > 0:
-                        # calculate oeverflow queue lenth
-                        overflow_queue = [
-                            r.queue_hist[t] for r in roads[roadid].incoming_roads
-                        ]
-                        roads[roadid].overflow_queue[t] = sum(overflow_queue)
-                        current_overflow_len.append(sum(overflow_queue))
-                        # update start time of cars in queue of incoming roads
-                        # start time of the last car in overflowed road
-                        last_start = max(
-                            [x.nextstart for x in roads[roadid].queue if x != 0]
-                        )
-                        for r in roads[roadid].incoming_roads:
-                            # if there are cars in queue
-                            for car_q in r.queue:
-                                last_start = last_start + self.factors["reaction"]
-                                if car_q != 0:
-                                    # first car in queue in the incoming road
-                                    if car_q.place_in_queue == 0:
-                                        car_q.nextstart = max(
-                                            car_q.nextstart, last_start
-                                        )
-                                    # second and later car in queue in the incoming road
-                                    else:
-                                        car_q.nextstart = max(
-                                            car_q.nextstart, last_start
-                                        )
-                if len(current_overflow_len) > 0:
-                    overflow_len_total[t] = sum(current_overflow_len) / len(
-                        current_overflow_len
-                    )
+                # Car is not the first in its queue
                 else:
-                    overflow_len_total[t] = 0
+                    # Car's next arrival time is set
+                    movingcar.next_sec_arrival = t + (
+                        self.factors["car_distance"]
+                        + self.factors["carlength"] / self.factors["speed"]
+                    )
+
+                # Car leaves its current queue and is 'moving'
+                movingcar.path[movingcar.locationindex].queue[
+                    movingcar.place_in_queue
+                ] = 0
+                movingcar.moving = True
+                movingcar.timewaiting = movingcar.timewaiting + (t - movingcar.prevstop)
+                movingcar.nextstart = outbounds
+                next_start = outbounds
+
+            # The next event is a car arriving within the system
+            elif (
+                min(
+                    min_prim_arrival,
+                    next_light_time,
+                    next_start,
+                    next_sec_arrival,
+                    next_car_gen,
+                )
+                == next_sec_arrival
+            ):
+                t = next_sec_arrival
+                for i in range(12, 18):
+                    roads[i].nextchange = t
+
+                # Car is first in its queue
+                if arrivingcar.place_in_queue == 0:
+                    # Car changes the road it is traveling on
+                    arrivingcar.update_location()
+                    currentroad = arrivingcar.path[arrivingcar.locationindex]
+                    # Car is assigned its location and given a new start time
+                    find_place_in_queue(arrivingcar, currentroad, t)
+                # Car is not the first in its queue
+                elif arrivingcar.place_in_queue is not None:
+                    # Car moves up in its queue
+                    currentroad = arrivingcar.path[arrivingcar.locationindex]
+                    currentroad.queue[arrivingcar.place_in_queue] = 0
+                    currentroad.queue[arrivingcar.place_in_queue - 1] = arrivingcar
+                    arrivingcar.place_in_queue -= 1
+                    # Current road has a green light
+                    if currentroad.status is True:
+                        arrivingcar.nextstart = t
+                    # Current road has a red light
+                    else:
+                        arrivingcar.nextstart = currentroad.nextchange
+                # Car is supposed to move up the queue, but it is not in the queue
+                else:
+                    error_msg = "Car is not in queue"
+                    logging.error(error_msg)
+                    raise Exception(error_msg)
+
+                logging.debug(
+                    f"{t}, Car {arrivingcar.identify}, Arrival, "
+                    f"Pos {arrivingcar.visits[arrivingcar.locationindex]}, "
+                    f"Road {arrivingcar.path[arrivingcar.locationindex].roadid}"
+                )
+
+                # Car is no longer 'moving'
+                movingcar.moving = False
+                arrivingcar.next_sec_arrival = outbounds
+                next_sec_arrival = outbounds
+                arrivingcar.prevstop = t
+
+            # Index to the next car (skip finished cars)
+            carindex = min_car_index
+            while carindex < len(cars) - 1 and cars[carindex].finished:
+                carindex += 1
+                min_car_index += 1
+            min_sec_arrival = outbounds
+            min_start = outbounds
+            # Finds the next car to start moving and the next car to arrive
+            while carindex < len(cars) - 1:
+                testcar = cars[carindex]
+                # Car is elligible to be the next starting car
+                if (
+                    min(next_start, testcar.nextstart) == testcar.nextstart
+                    and testcar.nextstart != outbounds
+                ):
+                    min_start = testcar.nextstart
+                    movingcar = testcar
+                # Car is elligible to be the next arriving car
+                if (
+                    min(min_sec_arrival, testcar.next_sec_arrival)
+                    == testcar.next_sec_arrival
+                    and testcar.next_sec_arrival != outbounds
+                ):
+                    min_sec_arrival = testcar.next_sec_arrival
+                    arrivingcar = testcar
+                # Next car is tested and the next events are set
+                carindex += 1
+                next_sec_arrival = min_sec_arrival
+                next_start = min_start
+
+            # sumwait = 0
+            # finishedcars = 0
+            carindex = min_car_index
+            while carindex < len(cars):
+                car = cars[carindex]
+                # If car has finished, record its stats
+                if not car.finished and (car.locationindex == len(car.path) - 1):
+                    logging.debug(
+                        f"{t}, Car {car.identify}, Finish, "
+                        f"Pos {car.visits[car.locationindex]}, "
+                        f"Road {car.path[car.locationindex].roadid}"
+                    )
+
+                    car.finished = True
+                    finishedcars += 1
+                    sumwait += car.timewaiting
+                carindex += 1
+            # Only update waiting stats if there are cars that have finished
+            # Otherwise, we'll divide by zero
+            if finishedcars > 0:
+                avg_wait = sumwait / finishedcars
+                # Only add to the list if the value is different from the last
+                # Prevents adding a ton of duplicate values
+                if avg_wait != last_avg_wait:
+                    avg_wait_over_time[t] = avg_wait
+                    last_avg_wait = avg_wait
+
+            # record queue length of each road and update overflow status
+            overflow_total[t] = 0
+            for roadid in range(12):
+                # num of cars in queue
+                cars_in_queue = sum([x != 0 for x in roads[roadid].queue])
+                # queue length =
+                #   (car_length+ car_distance) * num(cars in queue) - car_distance
+                roads[roadid].queue_hist[t] = max(
+                    0,
+                    cars_in_queue
+                    * (self.factors["car_distance"] + self.factors["carlength"])
+                    - self.factors["car_distance"],
+                )
+                # if there is overflow status
+                if roads[roadid].road_length <= roads[roadid].queue_hist[t]:
+                    roads[roadid].overflow = True
+                    overflow_total[t] = 1
+                else:
+                    roads[roadid].overflow = False
+
+            # after queue len is calculated, deal with overflow when a road
+            # is overflowed:
+            #   1. cars in incoming roads cannot get in
+            #   2. calculated oveflow len
+            current_overflow_len = []
+            for roadid in range(12):
+                if roads[roadid].overflow and len(roads[roadid].incoming_roads) > 0:
+                    # calculate oeverflow queue lenth
+                    overflow_queue = [
+                        r.queue_hist[t] for r in roads[roadid].incoming_roads
+                    ]
+                    roads[roadid].overflow_queue[t] = sum(overflow_queue)
+                    current_overflow_len.append(sum(overflow_queue))
+                    # update start time of cars in queue of incoming roads
+                    # start time of the last car in overflowed road
+                    last_start = max(
+                        [x.nextstart for x in roads[roadid].queue if x != 0]
+                    )
+                    for r in roads[roadid].incoming_roads:
+                        # if there are cars in queue
+                        for car_q in r.queue:
+                            last_start = last_start + self.factors["reaction"]
+                            if car_q != 0:
+                                # first car in queue in the incoming road
+                                if car_q.place_in_queue == 0:
+                                    car_q.nextstart = max(car_q.nextstart, last_start)
+                                # second and later car in queue in the incoming road
+                                else:
+                                    car_q.nextstart = max(car_q.nextstart, last_start)
+            if len(current_overflow_len) > 0:
+                overflow_len_total[t] = sum(current_overflow_len) / len(
+                    current_overflow_len
+                )
+            else:
+                overflow_len_total[t] = 0
 
         # compute ave queue length for each road
         avg_queue_length = 0
