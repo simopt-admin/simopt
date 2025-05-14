@@ -19,27 +19,34 @@ from simopt.utils import print_table
 
 def main() -> None:
     """Main function to run the data farming experiment."""
-    # Import model.
-    # from models.<filename> import <model_class_name>
-    # Replace <filename> with name of .py file containing model class.
-    # Replace <model_class_name> with name of model class.
-    # Fix factors of model. Specify a dictionary of factors.
-    # fixed_factors = {}  # Resort to all default values.
-    # Look at Model class definition to get names of factors.
-    # Initialize an instance of the specified model class.
-    # mymodel = <model_class_name>(fixed_factors)
-    # Replace <model_class_name> with name of model class.
-    # Working example for MM1 model.
-    # -----------------------------------------------
+    ###################################################################################
+    # Demo Setup
+    ###################################################################################
+
+    # Import the model class to be demo'd, using the following format:
+    # from simopt.models.<filename> import <model_class_name>
+    # Since this is a module import, you do not need to include the .py extension.
     from simopt.models.mm1queue import MM1Queue
 
-    fixed_factors = {"lambda": 3.0, "mu": 8.0}
-    mymodel = MM1Queue(fixed_factors=fixed_factors)
+    # Set the model class (must be imported above).
+    model_class = MM1Queue
 
+    # Set the fixed factors for the model.
+    # Setting the fixed factors to {} or None will use the default values.
+    # For more details on which factors are available, check the definition for the
+    # model class you are using.
+    fixed_factors = {"lambda": 3.0, "mu": 8.0}
+
+    # Set the number of macroreplications to run.
+    # This is the number of times the model will be run with the same factors.
+    # Each macroreplication will use a different random number generator.
     num_macroreps = 1
-    # -----------------------------------------------
 
     # The rest of this script requires no changes.
+
+    ###################################################################################
+
+    mymodel = model_class(fixed_factors)
 
     # Check that all factors describe a simulatable model.
     # Check fixed factors individually.
@@ -56,7 +63,7 @@ def main() -> None:
     # Check all factors collectively.
     is_model_simulatable = mymodel.check_simulatable_factors()
     model_sim_str = "IS" if is_model_simulatable else "IS NOT"
-    print(f"> The model {model_sim_str} simulatable with the specified factors.")
+    print(f"> {mymodel.name} {model_sim_str} simulatable with the specified factors.")
 
     # Create a list of RNG objects for the simulation model to use when
     # running replications.
@@ -64,8 +71,10 @@ def main() -> None:
 
     # Run a single replication of the model.
     for mrep in range(num_macroreps):
-        print(f"> Running macroreplication {mrep + 1}/{num_macroreps}...")
+        print(f"> Running macroreplication {mrep + 1} of {num_macroreps}...", end="")
         responses, gradients = mymodel.replicate(rng_list)
+        print(" done.")
+        # Separate the responses into dict and non-dict responses.
         non_dict_responses = []
         dict_responses = []
         for key, value in responses.items():
@@ -76,6 +85,7 @@ def main() -> None:
         # Only specify "non-dict" if there are dict responses, otherwise just refer to
         # them as "responses" for clarity.
         non_dict_title = "Non-Dict Responses" if len(dict_responses) else "Responses"
+        # Print non-dict responses.
         print_table(non_dict_title, ["Response", "Value"], non_dict_responses)
         # Print dict responses.
         for factor, dictionary in dict_responses:
