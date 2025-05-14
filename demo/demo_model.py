@@ -6,7 +6,9 @@ sets up pseudorandom number generators, and runs one or more replications.
 """
 
 # Import standard libraries
+import math
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 # Append the parent directory (simopt package) to the system path
@@ -40,6 +42,7 @@ def main() -> None:
     # Set the number of macroreplications to run.
     # This is the number of times the model will be run with the same factors.
     # Each macroreplication will use a different random number generator.
+    # Must be a positive integer.
     num_macroreps = 1
 
     # The rest of this script requires no changes.
@@ -47,6 +50,10 @@ def main() -> None:
     ###################################################################################
 
     mymodel = model_class(fixed_factors)
+
+    if num_macroreps <= 0:
+        print(f"> {mymodel.name} has no macroreplications to run. Exiting script.")
+        return
 
     # Check that all factors describe a simulatable model.
     # Check fixed factors individually.
@@ -69,9 +76,15 @@ def main() -> None:
     # running replications.
     rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
 
+    # Keep track of responses and gradients between macroreplications so they can be
+    # compared/graphed at the end.
+    non_dict_resp_between_mreps = {}
+    dict_resp_between_mreps = {}
+    gradients_between_mreps = {}
+
     # Run a single replication of the model.
-    for mrep in range(num_macroreps):
-        print(f"> Running macroreplication {mrep + 1} of {num_macroreps}...", end="")
+    for mrep in range(1, num_macroreps + 1):
+        print(f"> Running macroreplication {mrep} of {num_macroreps}...", end="")
         responses, gradients = mymodel.replicate(rng_list)
         print(" done.")
         # Separate the responses into dict and non-dict responses.
@@ -82,27 +95,70 @@ def main() -> None:
                 non_dict_responses.append((key, value))
             else:
                 dict_responses.append((key, value))
-        # Only specify "non-dict" if there are dict responses, otherwise just refer to
-        # them as "responses" for clarity.
-        non_dict_title = "Non-Dict Responses" if len(dict_responses) else "Responses"
-        # Print non-dict responses.
-        print_table(non_dict_title, ["Response", "Value"], non_dict_responses)
-        # Print dict responses.
-        for factor, dictionary in dict_responses:
-            # Split each dict into its own table.
-            responses = list(dictionary.items())
-            print_table(f"Dict Responses for {factor}", ["Key", "Value"], responses)
-        # Print gradients.
-        for factor in gradients:
-            print_table(
-                f"Gradients for {factor}",
-                ["w.r.t Factor", "Gradient"],
-                gradients[factor],
-            )
+        non_dict_resp_between_mreps[mrep] = non_dict_responses
+        dict_resp_between_mreps[mrep] = dict_responses
+        gradients_between_mreps[mrep] = gradients
         # Advance RNG
         for rng in rng_list:
             rng.advance_subsubstream()
     print("> Finished macroreplications.")
+
+    # Combine the responses and gradients from all macroreplications
+    combined_non_dict_responses = defaultdict(list)
+    combined_gradients = defaultdict(list)
+
+    # Combine non-dict responses
+    for mrep in range(1, num_macroreps + 1):
+        for key, value in non_dict_resp_between_mreps[mrep]:
+            combined_non_dict_responses[key].append(value)
+        for factor, gradient in gradients_between_mreps[mrep].items():
+            combined_gradients[factor].append(gradient)
+
+    # Format and print combined non-dict responses
+    combined_non_dict_list = [
+        (response, *_round_list(values))
+        for response, values in combined_non_dict_responses.items()
+    ]
+    mrep_column_labels = [f"mrep {i}" for i in range(1, num_macroreps + 1)]
+    non_dict_headers = ["Response", *mrep_column_labels]
+    print_table("Responses by mrep", non_dict_headers, combined_non_dict_list)
+
+    # Format and print combined gradients
+    for factor, g_dicts in combined_gradients.items():
+        factor_gradient_matrix = defaultdict(list)
+        for g_dict in g_dicts:
+            for inner_factor, value in g_dict.items():
+                factor_gradient_matrix[inner_factor].append(value)
+
+        combined_gradients_list = [
+            (inner_factor, *_round_list(values))
+            for inner_factor, values in factor_gradient_matrix.items()
+        ]
+        gradients_headers = ["w.r.t Factor", *mrep_column_labels]
+        print_table(
+            f"Gradients for {factor}", gradients_headers, combined_gradients_list
+        )
+
+
+def _round_list(to_round: list) -> list:
+    """Round a list of numbers to the same number of decimal places.
+
+    Args:
+        to_round (list): A list of numbers to round.
+
+    Returns:
+        list: A list of rounded numbers.
+    """
+    try:
+        # Figure out how many decimal places to round to.
+        min_val = abs(min(to_round))
+        math.log10(min_val)
+        min_exp = math.floor(math.log10(min_val))
+        # Round the values to the calculated number of decimal places.
+        return [round(r, 3 - min_exp) if r != 0 else 0 for r in to_round]
+    except Exception:
+        # If there is an error, return the original list.
+        return to_round
 
 
 if __name__ == "__main__":
