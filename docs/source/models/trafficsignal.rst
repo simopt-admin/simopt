@@ -23,31 +23,110 @@ The layout of the traffic network is shown below:
    :alt: TrafficLight Roadmap
    :align: center
 
-Each car enters the system through one of six designated arrival nodes. The probability of selecting a given arrival node is proportional to its lambda value:
+Each car enters the system through one of six designated arrival nodes.
+The probability of selecting a given arrival node is proportional to its lambda value:
 
-:math:`\frac{\lambda_i}{\sum_{j=1}^{6} \lambda_j}`
+.. math::
+    :label: eq_lambda_selection
 
-For the selected arrival node, the lambda value is used to generate the distribution of the next car's arrival time. Each car is also randomly assigned a destination node, based on a transition matrix specified by the `"transition_probs"` factor. The default matrix is:
+    \frac{\lambda_i}{\sum_{j=0}^{7} \lambda_j}
+    \text{ where } \lambda_i \text{ is the arrival rate for node i.}
 
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-|   |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |
-+===+=====+=====+=====+=====+=====+=====+=====+=====+
-| 1 | 0   | 0   | 0   | 0   | 0   | 0.7 | 0.3 | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 2 | 0.3 | 0   | 0.2 | 0   | 0.3 | 0   | 0.2 | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 3 | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 4 | 0.25| 0.25| 0.1 | 0   | 0.25| 0   | 0.15| 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 5 | 0   | 0.7 | 0.3 | 0   | 0   | 0   | 0   | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 6 | 0.3 | 0   | 0.2 | 0   | 0.3 | 0   | 0.2 | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 7 | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 8 | 0.25| 0   | 0.15| 0   | 0.25| 0.25| 0.1 | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
+The ``lambdas`` parameter defines these arrival rates.
+It is a list of 8 values specifying the Poisson rate parameters (`\lambda`) for car arrivals at each peripheral node, listed in the following order:
+
+.. table:: Lambda Index Mappings
+    :align: center
+
+    +-------+------+----------+-------------------------+
+    | Index | Node | Entrance | Default :math:`\lambda` |
+    +=======+======+==========+=========================+
+    | 0     | N1   | ✓        | 2                       |
+    +-------+------+----------+-------------------------+
+    | 1     | N2   | ✓        | 2                       |
+    +-------+------+----------+-------------------------+
+    | 2     | E1   |          | 0                       |
+    +-------+------+----------+-------------------------+
+    | 3     | E2   | ✓        | 1                       |
+    +-------+------+----------+-------------------------+
+    | 4     | S2   | ✓        | 2                       |
+    +-------+------+----------+-------------------------+
+    | 5     | S1   | ✓        | 2                       |
+    +-------+------+----------+-------------------------+
+    | 6     | W2   |          | 0                       |
+    +-------+------+----------+-------------------------+
+    | 7     | W1   | ✓        | 1                       |
+    +-------+------+----------+-------------------------+
+
+Cars are not allowed to spawn at exit-only nodes (E1 and W2), so ``lambdas[2]`` and ``lambdas[6]`` must be set to ``0``.
+
+Additionally, the car generation rates at side-entry nodes (E2 and W1) must not exceed the rates at any of the main entry points (N1, N2, S1, S2).
+This constraint helps prevent side traffic from overwhelming the system.
+
+For each arriving car, the lambda value associated with the selected entry node determines the distribution of interarrival times.
+Once a car enters the system, it is randomly assigned a destination node based on a weighted transition matrix derived from the ``transition_probs`` factor.
+
+Each entry in this matrix represents a *relative weight* indicating how likely a car is to travel from one node to another.
+Larger weights increase the chances of selecting that path, but the values do not need to sum to 1.
+These weights are normalized internally during destination selection.
+
+The symbolic node weight matrix is shown below:
+
+.. table:: Node Transition Weight Matrix (Unnormalized)
+   :align: center
+
+   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
+   | From \\ To  | N1          | N2          | E1          | E2          | S2          | S1          | W2          | W1          |
+   +=============+=============+=============+=============+=============+=============+=============+=============+=============+
+   | N1          | X           | X           | X           | X           | X           | :math:`P_0` | :math:`P_1` | X           |
+   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
+   | N2          | :math:`P_2` | X           | :math:`P_3` | X           | :math:`P_2` | X           | :math:`P_3` | X           |
+   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
+   | E1          | X           | X           | X           | X           | X           | X           | X           | X           |
+   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
+   | E2          | :math:`P_4` | :math:`P_4` | :math:`P_5` | X           | :math:`P_4` | X           | :math:`P_6` | X           |
+   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
+   | S2          | X           | :math:`P_0` | :math:`P_1` | X           | X           | X           | X           | X           |
+   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
+   | S1          | :math:`P_2` | X           | :math:`P_3` | X           | :math:`P_2` | X           | :math:`P_3` | X           |
+   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
+   | W2          | X           | X           | X           | X           | X           | X           | X           | X           |
+   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
+   | W1          | :math:`P_4` | X           | :math:`P_6` | X           | :math:`P_4` | :math:`P_4` | :math:`P_5` | X           |
+   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
+
+.. note:: 
+    Cells marked with ``X`` represent disallowed transitions that cannot occur in the simulation.
+    Each row is internally normalized to sum to 1 during routing.
+
+The symbolic parameters :math:`P_0` through :math:`P_6` correspond to entries in the ``transition_probs`` list.
+These values act as **weights** rather than strict probabilities, and are normalized during destination selection to ensure proper routing behavior.
+Specifically, :math:`P_i` refers to ``transition_probs[i]``.
+
+For example, given the default values of ``transition_probs = [7, 3, 3, 2, 5, 2, 3]``, the resulting transition matrix is:
+
+.. table:: Default Transition Matrix (Populated from ``transition_probs``)
+   :align: center
+
+   +------------+------+-----+-----+-----+-----+-----+-----+-----+
+   | From \\ To | N1   | N2  | E1  | E2  | S2  | S1  | W2  | W1  |
+   +============+======+=====+=====+=====+=====+=====+=====+=====+
+   | N1         | X    | X   | X   | X   | X   | 70% | 30% | X   |
+   +------------+------+-----+-----+-----+-----+-----+-----+-----+
+   | N2         | 30%  | X   | 20% | X   | 30% | X   | 20% | X   |
+   +------------+------+-----+-----+-----+-----+-----+-----+-----+
+   | E1         | X    | X   | X   | X   | X   | X   | X   | X   |
+   +------------+------+-----+-----+-----+-----+-----+-----+-----+
+   | E2         | 25%  | 25% | 10% | X   | 25% | X   | 15% | X   |
+   +------------+------+-----+-----+-----+-----+-----+-----+-----+
+   | S2         | X    | 70% | 30% | X   | X   | X   | X   | X   |
+   +------------+------+-----+-----+-----+-----+-----+-----+-----+
+   | S1         | 30%  | X   | 20% | X   | 30% | X   | 20% | X   |
+   +------------+------+-----+-----+-----+-----+-----+-----+-----+
+   | W2         | X    | X   | X   | X   | X   | X   | X   | X   |
+   +------------+------+-----+-----+-----+-----+-----+-----+-----+
+   | W1         | 25%  | X   | 15% | X   | 25% | 25% | 10% | X   |
+   +------------+------+-----+-----+-----+-----+-----+-----+-----+
 
 Each vehicle finds the shortest available path to its destination using the current road network. The traffic system opens at 8:00 AM and closes at 10:00 AM. Time is measured in seconds. When the system closes, any remaining cars in the queue exit immediately.
 
@@ -56,33 +135,9 @@ Sources of Randomness
 
 There are 3 sources of randomness in this model:
 
-1. The probability of selecting a given arrival node is:
-
-   :math:`\frac{\lambda_i}{\sum_{j=1}^{6} \lambda_j}`
-
-   where :math:`\lambda_i` is the arrival rate for node *i*.
+1. Randomized selection of the **arrival node** for each car (see Equation :eq:`eq_lambda_selection`).
 2. The arrival time of the **first car** is fixed at 1 second. The arrival times of subsequent cars follow an exponential distribution with rate parameter :math:`\lambda_i`, where *i* is the index of the arrival node selected for the **previous** car.
-3. The probability for each node to selected as the destination for cars from different arrival nodes.
-
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-|   |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |
-+===+=====+=====+=====+=====+=====+=====+=====+=====+
-| 1 | 0   | 0   | 0   | 0   | 0   | 0.7 | 0.3 | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 2 | 0.3 | 0   | 0.2 | 0   | 0.3 | 0   | 0.2 | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 3 | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 4 | 0.25| 0.25| 0.1 | 0   | 0.25| 0   | 0.15| 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 5 | 0   | 0.7 | 0.3 | 0   | 0   | 0   | 0   | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 6 | 0.3 | 0   | 0.2 | 0   | 0.3 | 0   | 0.2 | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 7 | 0   | 0   | 0   | 0   | 0   | 0   | 0   | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
-| 8 | 0.25| 0   | 0.15| 0   | 0.25| 0.25| 0.1 | 0   |
-+---+-----+-----+-----+-----+-----+-----+-----+-----+
+3. The probability for each node to selected as the destination for cars from different arrival nodes (see above).
 
 Model Factors
 ^^^^^^^^^^^^^
@@ -102,7 +157,7 @@ Model Factors
 * reaction: Reaction time in seconds of cars in queue.
     * Default: 0.1
 * transition_probs: The transition probability of a car end at each point from their current starting point.
-    * Default: [0.7, 0.3, 0.3, 0.2, 0.25, 0.1, 0.15]
+    * Default: [7, 3, 3, 2, 5, 2, 3]
 * pause: The pause in seconds before move on a green light.
     * Default: 0.1
 * car_distance: The distance between cars.

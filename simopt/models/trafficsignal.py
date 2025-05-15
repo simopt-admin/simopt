@@ -472,7 +472,7 @@ class TrafficLight(Model):
                     "current starting point."
                 ),
                 "datatype": list,
-                "default": [0.7, 0.3, 0.3, 0.2, 0.25, 0.1, 0.15],
+                "default": [7, 3, 3, 2, 5, 2, 3],
             },
             "pause": {
                 "description": "The pause in seconds before move on a green light",
@@ -567,9 +567,7 @@ class TrafficLight(Model):
         return self.factors["reaction"] > 0
 
     def _check_transition_probs(self) -> bool:
-        if any(
-            transition_prob < 0 for transition_prob in self.factors["transition_probs"]
-        ):
+        if any(prob < 0 for prob in self.factors["transition_probs"]):
             return False
         p16, p17, p21, p23, p41, p43, p47 = self.factors["transition_probs"]
         transition_matrix = np.array(
@@ -585,9 +583,13 @@ class TrafficLight(Model):
             ]
         )
         prob_sum = np.sum(transition_matrix[:, :], axis=1).tolist()
-        del prob_sum[2]
-        del prob_sum[5]
-        return all(x == 1 for x in prob_sum)
+        # Remove exits as nothing can start there
+        exit_indices = [2, 6]
+        # Remove in REVERSE order so indices don't change
+        for i in sorted(exit_indices, reverse=True):
+            del prob_sum[i]
+        # Ensure all transition probabilities are positive
+        return all(x > 0 for x in prob_sum)
 
     def _check_pause(self) -> bool:
         return self.factors["pause"] > 0
