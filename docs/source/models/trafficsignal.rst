@@ -9,19 +9,32 @@ Model: Traffic Signal
 Description
 ^^^^^^^^^^^
 
-This model simulates a traffic system composed of four intersections (nodes A, B, C, D) connected by directional roads, with eight external arrival nodes.
-
-There are three types of roads in the system:
-
-- **Artery roads** connect intersections to one another and are assigned longer travel lengths.
-- **Vein roads** bring vehicles from external arrival points into the system and are assigned shorter travel lengths.
-- **Exit roads** lead from intersections to exit nodes and allow vehicles to leave the system.
+This model simulates a traffic system composed of arrival and departure nodes, direction and bidirectional roads, and a series of intersections.
+A visual representation of this simplified traffic light roadmap, illustrating the flow of traffic within this structured network, is provided in this document.
 
 The layout of the traffic network is shown below:
 
 .. image:: _static/trafficlight_roadmap.png
    :alt: TrafficLight Roadmap
    :align: center
+
+The graph depicts a system with:
+
+* **6 Allowable Starting Nodes:** These nodes represent entry points into the road network: **N1, N2, E2, S2, S1, and W1**.
+* **6 Allowable Ending Nodes:** These nodes represent exit points from the road network: **N1, N2, E1, S2, S1, and W2**.
+* **4 Intersections:** These central nodes serve as critical junctions where traffic flow can change direction: **A, B, C, and D**.
+
+The road network consists of two distinct types of roads:
+
+* **Artery Roads (Vertical):** Represented by **red lines**, these **bidirectional** roads handle the majority of traffic flow and are primarily oriented vertically.
+* **Vein Roads (Horizontal):** Represented by **blue lines**, these **unidirectional** roads are smaller in capacity and primarily oriented horizontally.
+
+The arrows on the roads indicate the permitted direction of traffic flow.
+This roadmap is designed to help understand the fundamental structure and
+traffic patterns within a simplified urban environment.
+
+.. note:: 
+    Cars are not allowed to turn left at intersections due to technical constraints of the model.
 
 Each car enters the system through one of six designated arrival nodes.
 The probability of selecting a given arrival node is proportional to its lambda value:
@@ -59,9 +72,7 @@ It is a list of 8 values specifying the Poisson rate parameters (`\lambda`) for 
     +-------+------+----------+-------------------------+
 
 Cars are not allowed to spawn at exit-only nodes (E1 and W2), so ``lambdas[2]`` and ``lambdas[6]`` must be set to ``0``.
-
-Additionally, the car generation rates at side-entry nodes (E2 and W1) must not exceed the rates at any of the main entry points (N1, N2, S1, S2).
-This constraint helps prevent side traffic from overwhelming the system.
+Additionally, the car generation rates at vein nodes (E2 and W1) must not exceed the arrival rates at any of the artery entry points (N1, N2, S1, S2).
 
 For each arriving car, the lambda value associated with the selected entry node determines the distribution of interarrival times.
 Once a car enters the system, it is randomly assigned a destination node based on a weighted transition matrix derived from the ``transition_probs`` factor.
