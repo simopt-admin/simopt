@@ -446,7 +446,7 @@ class TrafficLight(Model):
             "decision_vector": {
                 "description": (
                     "Delay, in seconds, in light schedule based on distance from "
-                    "first intersection"
+                    "first intersection"  # Top left
                 ),
                 "datatype": list,
                 "default": [1, 2, 3],
@@ -541,34 +541,54 @@ class TrafficLight(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def _check_lambdas(self) -> bool:
+    def _check_lambdas(self) -> None:
         if (self.factors["lambdas"][2] != 0) or (self.factors["lambdas"][6] != 0):
-            return False
-        return max(self.factors["lambdas"][3], self.factors["lambdas"][7]) <= min(
+            raise ValueError(
+                "lambdas[2] and lambdas[6] must both be 0. "
+                "They are exit points and cannot not be used as entry points."
+            )
+        if max(self.factors["lambdas"][3], self.factors["lambdas"][7]) > min(
             [self.factors["lambdas"][i] for i in [0, 1, 4, 5]]
-        )
+        ):
+            raise ValueError(
+                "lambdas[3] and lambdas[7] must be less than "
+                "the minimum of lambdas[0], lambdas[1], lambdas[4], and lambdas[5]. "
+                "They are vein entry points and their arrival rates must be less than "
+                "all artery entry points."
+            )
 
-    def _check_runtime(self) -> bool:
-        return self.factors["runtime"] > 0
+    def _check_runtime(self) -> None:
+        if self.factors["runtime"] <= 0:
+            raise ValueError("Runtime must be greater than 0.")
 
-    def _check_numintersections(self) -> bool:
-        return self.factors["numintersections"] > 0
+    def _check_numintersections(self) -> None:
+        if self.factors["numintersections"] <= 0:
+            raise ValueError("Number of intersections must be greater than 0.")
 
-    def _check_decision_vector(self) -> bool:
-        return all(value >= 0 for value in self.factors["decision_vector"])
+    def _check_decision_vector(self) -> None:
+        all_positive = all(value >= 0 for value in self.factors["decision_vector"])
+        if not all_positive:
+            raise ValueError(
+                "Decision vector values must be greater than or equal to 0."
+            )
 
-    def _check_speed(self) -> bool:
-        return self.factors["speed"] > 0
+    def _check_speed(self) -> None:
+        if self.factors["speed"] <= 0:
+            raise ValueError("Speed must be greater than 0.")
 
-    def _check_carlength(self) -> bool:
-        return self.factors["carlength"] > 0
+    def _check_carlength(self) -> None:
+        if self.factors["carlength"] <= 0:
+            raise ValueError("Car length must be greater than 0.")
 
-    def _check_reaction(self) -> bool:
-        return self.factors["reaction"] > 0
+    def _check_reaction(self) -> None:
+        if self.factors["reaction"] <= 0:
+            raise ValueError("Reaction time must be greater than 0.")
 
-    def _check_transition_probs(self) -> bool:
+    def _check_transition_probs(self) -> None:
         if any(prob < 0 for prob in self.factors["transition_probs"]):
-            return False
+            raise ValueError(
+                "Transition probabilities must be greater than or equal to 0."
+            )
         p16, p17, p21, p23, p41, p43, p47 = self.factors["transition_probs"]
         transition_matrix = np.array(
             [
@@ -589,25 +609,46 @@ class TrafficLight(Model):
         for i in sorted(exit_indices, reverse=True):
             del prob_sum[i]
         # Ensure all transition probabilities are positive
-        return all(x > 0 for x in prob_sum)
+        if any(prob < 0 for prob in prob_sum):
+            raise ValueError(
+                "Sum of transition probabilities must be greater than or equal to 0."
+            )
 
-    def _check_pause(self) -> bool:
-        return self.factors["pause"] > 0
+    def _check_pause(self) -> None:
+        if self.factors["pause"] <= 0:
+            raise ValueError("Pause time must be greater than 0.")
 
-    def _check_car_distance(self) -> bool:
-        return self.factors["car_distance"] > 0
+    def _check_car_distance(self) -> None:
+        if self.factors["car_distance"] <= 0:
+            raise ValueError("Car distance must be greater than 0.")
 
-    def _check_length_arteries(self) -> bool:
-        return self.factors["length_arteries"] > 0
+    def _check_length_arteries(self) -> None:
+        if self.factors["length_arteries"] <= 0:
+            raise ValueError("Length of arteries must be greater than 0.")
 
-    def _check_length_veins(self) -> bool:
-        return self.factors["length_veins"] > 0
+    def _check_length_veins(self) -> None:
+        if self.factors["length_veins"] <= 0:
+            raise ValueError("Length of veins must be greater than 0.")
 
-    def _check_redlight_arteries(self) -> bool:
-        return all(redlight > 0 for redlight in self.factors["redlight_arteries"])
+    def _check_redlight_arteries(self) -> None:
+        all_positive = all(
+            redlight > 0 for redlight in self.factors["redlight_arteries"]
+        )
+        if not all_positive:
+            raise ValueError("Redlight duration of arteries must be greater than 0.")
 
-    def _check_redlight_veins(self) -> bool:
-        return all(redlight > 0 for redlight in self.factors["redlight_veins"])
+    def _check_redlight_veins(self) -> None:
+        all_positive = all(redlight > 0 for redlight in self.factors["redlight_veins"])
+        if not all_positive:
+            raise ValueError("Redlight duration of veins must be greater than 0.")
+
+    @override
+    def check_simulatable_factors(self) -> bool:
+        if len(self.factors["decision_vector"]) != self.factors["numintersections"] - 1:
+            raise ValueError(
+                "Decision vectors must be equal to the number of intersections - 1."
+            )
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
@@ -960,6 +1001,7 @@ class TrafficLight(Model):
                 nextc.append(road.nextchange)
 
         cars: list[Car] = []
+        lambda_sum = sum(self.factors["lambdas"])
 
         def gen_car(t: float) -> float:
             """Generates list of all car objects as they are created.
@@ -970,9 +1012,10 @@ class TrafficLight(Model):
             Returns:
                 float: time that the next car is introduced to the system
             """
-            # choose start point
+            # Set arrival time of next car
+            initialarrival = t + arrival_rng.expovariate(lambda_sum)
+            # Determine arrival location of next car
             start = start_rng.choices(population=range(8), weights=start_prob)[0]
-            initialarrival = t + arrival_rng.expovariate(self.factors["lambdas"][start])
             visits = generate_path(start)
             while visits is None or len(visits) == 1:
                 visits = generate_path(start)
@@ -1189,14 +1232,14 @@ class TrafficLight(Model):
             # Finds the next car to start moving and the next car to arrive
             while carindex < len(cars) - 1:
                 testcar = cars[carindex]
-                # Car is elligible to be the next starting car
+                # Car is eligible to be the next starting car
                 if (
                     min(next_start, testcar.nextstart) == testcar.nextstart
                     and testcar.nextstart != outbounds
                 ):
                     min_start = testcar.nextstart
                     movingcar = testcar
-                # Car is elligible to be the next arriving car
+                # Car is eligible to be the next arriving car
                 if (
                     min(min_sec_arrival, testcar.next_sec_arrival)
                     == testcar.next_sec_arrival
@@ -1358,8 +1401,8 @@ class TrafficLight(Model):
 
         # Compose responses and gradients.
         responses = {
-            "WaitingTime": avg_wait,
-            "WaitingTimeOverTime": avg_wait_over_time,
+            "AvgWaitTime": avg_wait,
+            "AvgWaitTimeOverTime": avg_wait_over_time,
             "SystemTime": avg_total,
             "AvgQueueLen": avg_queue_length,
             "OverflowPercentage": overflow_system_perc,
@@ -1513,7 +1556,7 @@ class MinWaitingTime(Problem):
 
     @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["WaitingTime"],)
+        return (response_dict["AvgWaitTime"],)
 
     @override
     def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:

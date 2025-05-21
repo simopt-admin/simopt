@@ -185,7 +185,8 @@ Model Factors
 Responses
 ^^^^^^^^^
 
-* WaitingTime: The average queuing time of the number of cars in the model
+* AvgWaitTime: The average time each finished car spends in the system.
+* AvgWaitTimeOverTime: The average time spent in the system, mapped to the time (t) after the system starts.
 * SystemTime: The average time of the number of cars arriving the destination in the model
 * AvgQueueLen: The average queue length of the number of cars in the model 
 * OverflowPercentage: The ratio of overflow time to total system time.
