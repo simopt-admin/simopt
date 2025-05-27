@@ -368,7 +368,7 @@ class Solver(ABC):
         new_solution = Solution(x, problem)
         new_solution.attach_rngs(
             rng_list=self.solution_progenitor_rngs, copy=True
-        )
+        ) 
         # Manipulate progenitor rngs to prepare for next new solution.
         if not self.factors["crn_across_solns"]:  # If CRN are not used ...
             # ...advance each rng to start of the substream = current substream + # of model RNGs.
@@ -930,7 +930,7 @@ class Problem(ABC):
         Parameters
         ----------
         factor_dict : dict
-            Dictionary with factor keys and associated values.
+            Dictionary with response keys and associated values.
 
         Returns
         -------
@@ -939,6 +939,29 @@ class Problem(ABC):
 
         """
         return self.factor_dict_to_vector(factor_dict)
+    
+    def gradient_dict_to_stoch_constraints_gradients(self, gradient_dict: dict, response_dict: dict) -> list():
+        """Convert a dictionary of gradients associated with model responses into
+            a list of gradient vectors for each stochastic constraint.
+
+        Notes
+        -----
+        A subclass of ``base.Problem`` can have its own custom ``response_dict_to_stoch_constraints_gradients`` method if stochastic constraints require specific mapping.
+
+        Parameters
+        ----------
+        gradient_dict : dict
+            Dictionary with gradient keys and associated values.
+        response_dict: dict 
+            Optional. Include if response needed to determine gradient key. 
+
+        Returns
+        -------
+        tuple
+            Vector of partial derivatives associated with each stochastic constraint.
+
+        """
+        return self.response_dict_to_stoch_constraints_gradients(gradient_dict)
 
     @abstractmethod
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
@@ -1162,12 +1185,19 @@ class Problem(ABC):
                 # to those of deterministic components of stochastic constraints.
                 solution.stoch_constraints[solution.n_reps] = [
                     sum(pairs)
-                    for pairs in zip(
+                    for pairs in zip( 
                         self.response_dict_to_stoch_constraints(responses),
                         solution.det_stoch_constraints,
                     )
                 ]
-                solution.stoch_constraints_gradients[solution.n_reps] = [[sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] for stoch_stoch_cons, det_stoch_cons in zip(self.response_dict_to_stoch_constraints(vector_gradients), solution.det_stoch_constraints_gradients)]
+                # solution.stoch_constraints_gradients[solution.n_reps] = [
+                #     [sum(pairs) for pairs in zip(stoch_stoch_cons, det_stoch_cons)] 
+                #     for stoch_stoch_cons, det_stoch_cons in 
+                #     zip(self.gradient_dict_to_stoch_constraints_gradients(gradients,responses), solution.det_stoch_constraints_gradients)]
+                # temp ignore deterministic portiion
+                solution.stoch_constraints_gradients[solution.n_reps] = self.gradient_dict_to_stoch_constraints_gradients(gradients,responses)
+                
+                #print(f'ind gradient for mrep {solution.n_reps}', solution.stoch_constraints_gradients[solution.n_reps])
             # Increment counter.
             solution.n_reps += 1
             # Advance rngs to start of next subsubstream.
@@ -1175,6 +1205,7 @@ class Problem(ABC):
                 rng.advance_subsubstream()
         # Update summary statistics.
         solution.recompute_summary_statistics()
+        #print("Mean gradient after", solution.n_reps + 1, "reps =", solution.stoch_constraints_gradients_mean)
 
     def simulate_up_to(self, solutions: list[Solution], n_reps: int) -> None:
         """Simulate a list of solutions up to a given number of replications.
@@ -1641,6 +1672,7 @@ class Solution:
             self.stoch_constraints_gradients = np.zeros(
                 (init_size, problem.n_stochastic_constraints, problem.dim)
             )
+            self.stoch_constraints_gradients_mean = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
         else:
             self.stoch_constraints = None
             self.stoch_constraints_gradients = None
@@ -1657,7 +1689,7 @@ class Solution:
         # self.stoch_constraints_var = np.full((problem.n_stochastic_constraints), np.nan)
         # self.stoch_constraints_stderr = np.full((problem.n_stochastic_constraints), np.nan)
         # self.stoch_constraints_cov = np.full((problem.n_stochastic_constraints, problem.n_stochastic_constraints), np.nan)
-        self.stoch_constraints_gradients_mean = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
+        #self.stoch_constraints_gradients_mean = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
         # self.stoch_constraints_gradients_var = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
         # self.stoch_constraints_gradients_stderr = np.full((problem.n_stochastic_constraints, problem.dim), np.nan)
         # self.stoch_constraints_gradients_cov = np.full((problem.n_stochastic_constraints, problem.dim, problem.dim), np.nan)
@@ -1778,6 +1810,7 @@ class Solution:
                 self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1
             )
             self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
+            #print('recomputed mean',self.stoch_constraints_gradients_mean )
             # self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
             # self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)
             # self.stoch_constraints_gradients_cov = np.array([np.cov(self.stoch_constraints_gradients[:self.n_reps, stcon], rowvar=False, ddof=1) for stcon in range(len(self.det_stoch_constraints))])

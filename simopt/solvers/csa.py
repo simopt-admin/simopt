@@ -68,7 +68,7 @@ class CSA(Solver):
             "tolerance": {
                 "description": "tolerence function",
                 "datatype": float,  # TODO: change to Callable
-                "default": 0.01,
+                "default": 0.1,
             },
             "max_iters": {
                 "description": "maximum iterations",
@@ -107,7 +107,14 @@ class CSA(Solver):
         """
         take in the current iteration k
         """
-        return 1 / (k + 1)
+        if k <= 10:
+            d = k+1
+        elif k <= 60:
+            d = 50
+        else:
+            d = 70
+        
+        return 1/(k+1)
 
     def check_r(self) -> bool:
         return self.factors["r"] > 0
@@ -308,11 +315,16 @@ class CSA(Solver):
             # if the constraints are violated, then improve the feasibility
             if is_violated:
                 # find the gradient of the constraints
+                #print(f"all constraint means: {constraint_results}")
                 violated_index = np.argmax(constraint_results)
+                #print(f"constraint {violated_index} most violated with value of {constraint_results[violated_index]}")
                 grad = new_solution.stoch_constraints_gradients_mean[
                     violated_index
                 ]
+                #print(grad)
                 numviolated += 1
+                #temp
+                t = self.factors["step_f"](self, k=k)
             else:
                 # if constraints are not violated, then conpute gradients
                 # computeing the gradients
@@ -323,6 +335,8 @@ class CSA(Solver):
                         * problem.minmax[0]
                         * new_solution.objectives_gradients_mean[0]
                     )
+                    #print(f"not violated, obj grad:{grad} ")
+                    t = min(.05, self.factors["step_f"](self, k=k))
                 else:
                     # Use finite difference to estimate gradient if IPA gradient is not available.
                     # grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
@@ -335,6 +349,7 @@ class CSA(Solver):
             t = self.factors["step_f"](self, k=k)
 
             # new_x = cur_x + t * direction
+            #print('grad', grad)
             new_x = self.prox_fn(t * grad, cur_x, Ci, di, Ce, de, lower, upper)
 
             candidate_solution = self.create_new_solution(tuple(new_x), problem)
@@ -344,7 +359,7 @@ class CSA(Solver):
 
             new_solution = candidate_solution
 
-            # Append new solution.
+            #Append new solution.
             if (
                 problem.minmax[0] * new_solution.objectives_mean
                 > problem.minmax[0] * best_solution.objectives_mean
@@ -353,6 +368,34 @@ class CSA(Solver):
                 # recommended_solns.append(candidate_solution)
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
+            #print("****New Accepted Solution****")
+            #print('Solution:', new_solution.x)
+            #print("objective val:" ,new_solution.objectives_mean)
+            #print("k:" ,k)
+            #print("budget:", expended_budget)
+                
+                
+            # # new criteria for feasiblity and objective
+            # if (
+            #     best_solution is not None
+            #     and problem.minmax * new_solution.objectives_mean
+            #     >= problem.minmax * best_solution.objectives_mean
+            #     and all(
+            #         new_solution.stoch_constraints_mean[idx] <= max(best_solution.stoch_constraints_mean[idx],0)
+            #         for idx in range(problem.n_stochastic_constraints)
+            #     )
+            # ):
+            #     best_solution = new_solution
+            #     # recommended_solns.append(candidate_solution)
+            #     recommended_solns.append(new_solution)
+            #     intermediate_budgets.append(expended_budget)
+                
+            #best_solution = new_solution
+            # print("New best solution", best_solution.x)
+            # print("New objective", best_solution.objectives_mean)
+            # # recommended_solns.append(candidate_solution)
+            # recommended_solns.append(new_solution)
+            # intermediate_budgets.append(expended_budget)
 
             k += 1
 

@@ -35,8 +35,9 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.models.san import SAN
 from simopt.models.contam import Contamination
 
-fixed_factors = {"lambda": 3.0, "mu": 8.0}
-mymodel = SAN()
+arcs_3 = (3,3,3,3,3,3,3,3,3,3,3,3,3)
+fixed_factors = {"arc_means": arcs_3}
+mymodel = SAN(fixed_factors=fixed_factors)
 # -----------------------------------------------
 
 # The rest of this script requires no changes.
@@ -47,16 +48,17 @@ for key, value in mymodel.factors.items():
     print(
         f"The factor {key} is set as {value}. Is this simulatable? {bool(mymodel.check_simulatable_factor(key))}."
     )
-# Check all factors collectively.
-print(
-    f"Is the specified model simulatable? {bool(mymodel.check_simulatable_factors())}."
-)
+# # Check all factors collectively.
+# print(
+#     f"Is the specified model simulatable? {bool(mymodel.check_simulatable_factors())}."
+# )
 
 # Create a list of RNG objects for the simulation model to use when
 # running replications.
 rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
 
 # Run a single replication of the model.
+responses, gradients = mymodel.replicate(rng_list)
 responses, gradients = mymodel.replicate(rng_list)
 print("\nFor a single replication:")
 print("\nResponses:")
@@ -66,4 +68,6 @@ print("\n Gradients:")
 for outerkey in gradients:
     print(f"\tFor the response {outerkey}:")
     for innerkey, value in gradients[outerkey].items():
-        print(f"\t\tThe gradient w.r.t. {innerkey} is {value}.")
+        if innerkey == 'arc_means' and outerkey=='longest_path_to_all_nodes':
+            print(f"\t\tThe gradient w.r.t. {innerkey} is {value[4]}.")
+

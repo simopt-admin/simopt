@@ -355,8 +355,9 @@ def quantile_of_curves(curves: list[Curve], beta: float) -> Curve:
         raise TypeError(error_msg)
 
     unique_x_vals = np.unique(
-        [x_val for curve in curves for x_val in curve.x_vals]
+        [float(x_val) for curve in curves for x_val in curve.x_vals]
     )
+
     quantile_y_vals = [
         float(np.quantile([curve.lookup(x_val) for curve in curves], q=beta))
         for x_val in unique_x_vals
@@ -2016,6 +2017,7 @@ def post_normalize(
     proxy_opt_val: float | None = None,
     proxy_opt_x: tuple | None = None,
     create_pair_pickles: bool = False,
+    ignore_feasibility: bool = False,
 ) -> None:
     """Construct objective curves and (normalized) progress curves for a collection of experiments on a given problem.
 
@@ -2184,12 +2186,12 @@ def post_normalize(
             exp_best_est_objectives = np.zeros(experiment.n_macroreps)
             for mrep in range(experiment.n_macroreps):
                 #check for feasibility here (all could be infeasible)
-                if experiment.problem.n_stochastic_constraints >= 1:
+                if experiment.problem.n_stochastic_constraints >= 1 and not ignore_feasibility:
                     all_feasible_est_objectives = np.array([experiment.all_est_objectives[mrep][budget] 
                                                            for budget in range(len(experiment.all_intermediate_budgets[mrep]))
                                                            if np.all(experiment.all_est_lhs[mrep][budget] <= 0)])
                         
-                else: # no stochastic constraints, proceeed normally   
+                else: # no stochastic constraints or chosen to ignore, proceeed normally   
                     all_feasible_est_objectives = np.array(experiment.all_est_objectives[mrep])
                     
                 if all_feasible_est_objectives.size != 0:
@@ -6960,7 +6962,7 @@ class ProblemsSolvers:
         self.record_group_experiment_results()
 
     def post_normalize(
-        self, n_postreps_init_opt: int, crn_across_init_opt: bool = True
+        self, n_postreps_init_opt: int, crn_across_init_opt: bool = True, ignore_feasibility: bool = False
     ) -> None:
         """Construct objective curves and (normalized) progress curves for all collections of experiments on all given problem.
 
@@ -7001,6 +7003,7 @@ class ProblemsSolvers:
                 experiments=experiments_same_problem,
                 n_postreps_init_opt=n_postreps_init_opt,
                 crn_across_init_opt=crn_across_init_opt,
+                ignore_feasibility=ignore_feasibility
             )
         # Save ProblemsSolvers object to .pickle file.
         self.record_group_experiment_results()

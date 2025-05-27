@@ -108,7 +108,7 @@ class CSA_LP(Solver):  # noqa: N801
         """
         take in the current iteration k
         """
-        return 1.0 / (k + 1.0)
+        return 1/10.0
 
     def check_r(self) -> bool:
         return self.factors["r"] > 0
@@ -236,7 +236,7 @@ class CSA_LP(Solver):  # noqa: N801
 
         return np.array(violated_cons_grads)
 
-    def get_constraints_dir(self, grads):
+    def get_constraints_dir(self, grads, obj_grad):
         """
         compute search direction by LP to improve
         multiple constraints at the same time
@@ -251,30 +251,64 @@ class CSA_LP(Solver):  # noqa: N801
         # normalization ?
         # print("grads: ", grads)
 
+    
+        # normalization
+        # add objective gradient
+        # test to see if any constraints from obtuse angle with obj gradient
+        # dot_products = grads @ obj_grad
+        # print("dot products", dot_products)
+        # viable_index = dot_products >=0 
+        # grads = grads[viable_index]
+        
+        #print("viable grads", viable_index)
         n_violated_cons, n = grads.shape
+              
+        grads = np.vstack([grads,obj_grad])
+        n_constraints = n_violated_cons + 1
+        grads = grads / np.linalg.norm(grads, axis=1).reshape(
+            n_constraints, 1
+        )
+        direction = cp.Variable(n)
+        theta = cp.Variable()
 
-        if n_violated_cons == 1:
-            d = grads[0]
-        else:
-            # normalization
-            grads = grads / np.linalg.norm(grads, axis=1).reshape(
-                n_violated_cons, 1
-            )
+        objective = cp.Maximize(theta)
+        constraints = [theta >= 0, theta <= 1]
 
-            direction = cp.Variable(n)
-            theta = cp.Variable()
+        for i in range(n_constraints):
+            constraints += [grads[i] @ direction >= theta]
 
-            objective = cp.Maximize(theta)
-            constraints = [theta >= 0, theta <= 1]
+        prob = cp.Problem(objective, constraints)
+        prob.solve()
 
-            for i in range(n_violated_cons):
-                constraints += [grads[i] @ direction >= theta]
+        d = direction.value
+        # print("theta:", theta.value)
+        # d = d/np.linalg.norm(d)
+        
+        # old code
+        # n_violated_cons, n = grads.shape
 
-            prob = cp.Problem(objective, constraints)
-            prob.solve()
+        # if n_violated_cons == 1:
+        #     d = grads[0]
+        # else:
+        #     # normalization
+        #     grads = grads / np.linalg.norm(grads, axis=1).reshape(
+        #         n_violated_cons, 1
+        #     )
 
-            d = direction.value
-            # d = d/np.linalg.norm(d)
+        #     direction = cp.Variable(n)
+        #     theta = cp.Variable()
+
+        #     objective = cp.Maximize(theta)
+        #     constraints = [theta >= 0, theta <= 1]
+
+        #     for i in range(n_violated_cons):
+        #         constraints += [grads[i] @ direction >= theta]
+
+        #     prob = cp.Problem(objective, constraints)
+        #     prob.solve()
+
+        #     d = direction.value
+        #     # d = d/np.linalg.norm(d)
 
         return d
 
@@ -314,6 +348,8 @@ class CSA_LP(Solver):  # noqa: N801
     def solve(self, problem):
         max_iters = self.factors["max_iters"]
         r = self.factors["r"]
+        #temp hard code
+        objective_tolerance = 5 #how much direction is allowed to increase objective before removing a constraint from lp
         # max_gamma = self.factors["max_gamma"]
 
         # t = 1 #first max step size
@@ -350,14 +386,18 @@ class CSA_LP(Solver):  # noqa: N801
         numviolated = 0
         last_is_feasible = 1
         infeasible_step = 1
+        n_feasible = 0 # number of feasible solutions found
+        feasible_found = False
 
         while expended_budget < problem.factors["budget"]:
             cur_x = new_solution.x
+            #cur_x = best_solution.x
 
             # check if the constraints are violated
             if problem.n_stochastic_constraints > 0:
                 # constraint_results = problem.stoch_constraint(cur_x) #multiple dim of constraints in the form E[Y] <= 0
                 constraint_results = new_solution.stoch_constraints_mean
+                # print("Constraint Results:", constraint_results)
                 # print(constraint_results)
                 is_violated = (
                     max(constraint_results) > self.factors["tolerance"]
@@ -369,21 +409,32 @@ class CSA_LP(Solver):  # noqa: N801
 
             # if the constraints are violated, then improve the feasibility
             if is_violated:
-                # print("violated!")
+                #print("violated!")
                 # find the gradient of the constraints
                 # violated_index = np.argmax(constraint_results)
                 grads = np.array(new_solution.stoch_constraints_gradients_mean)
                 violated_grads = self.get_violated_constraints_grads(
                     constraint_results, grads
                 )
+                # get objective gradient
+                obj_grad = (
+                    -1
+                    * problem.minmax[0]
+                    * new_solution.objectives_gradients_mean[0]
+                )
                 # print("num violated cons: ", len(violated_grads))
                 # print("violated grads: ", violated_grads)
                 # direction for improving multiple constraints, but call it 'grad' for convenience
-                grad = self.get_constraints_dir(violated_grads)
+                grad = self.get_constraints_dir(violated_grads, obj_grad)
+                
+                # set max t depending on constraint violation
+                max_t = max(constraint_results)*.005
 
                 numviolated += 1
             else:
-                # print("cons pass!")
+                
+                # print("Feasible Solution Found at")
+                # print(new_solution.x)
                 # if constraints are not violated, then conpute gradients
                 # computeing the gradients
                 if problem.gradient_available:
@@ -419,6 +470,13 @@ class CSA_LP(Solver):  # noqa: N801
             # print("step: ", t)
             # print("grad: ", grad)
             # new_x = cur_x + t * direction
+            t = min(t, max_t) # place cap on t
+            # # replace t with decreasing step size
+            # if not feasible_found: # no feasible solutions have been found, decaying step size 
+            #     t = 1/(2*k+1)
+            #     t = max(t,.005)
+            # else:
+            #     t=t
             new_x = self.prox_fn(t * grad, cur_x, Ci, di, Ce, de, lower, upper)
             candidate_solution = self.create_new_solution(tuple(new_x), problem)
             # Use r simulated observations to estimate the objective value.
@@ -426,16 +484,86 @@ class CSA_LP(Solver):  # noqa: N801
             expended_budget += r
 
             new_solution = candidate_solution
+ 
+            # check feasibility of new solution
+            constraint_results = new_solution.stoch_constraints_mean
+            # print(constraint_results)
+            is_violated = (
+                max(constraint_results) > self.factors["tolerance"]
+            )
+            # print("Objective", new_solution.objectives_mean, "vs best", best_solution.objectives_mean)
+            # print( "step scalar", t)
+            # print("step", t*grad)
+            if not is_violated:
+                n_feasible += 1
 
             # Append new solution.
-            if (
-                problem.minmax[0] * new_solution.objectives_mean
-                > problem.minmax[0] * best_solution.objectives_mean
-            ):
+            if not feasible_found: # no feasible solutions have been found            
+                # if (
+                #     problem.minmax[0] * new_solution.objectives_mean
+                #     > problem.minmax[0] * best_solution.objectives_mean
+                # ):
+                # apend all solutions for now, assume that we are improving feasibility
+                
                 best_solution = new_solution
                 # recommended_solns.append(candidate_solution)
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
+                # print("Accepted solution:", new_solution.x)
+                # print("budget", expended_budget)
+                if n_feasible == 1:
+                    feasible_found = True
+            # else:
+            #     print("Rejected solution:", new_solution.x)
+            #     print("budget", expended_budget)
+            # elif n_feasible == 1 and not feasible_found: #always accept first feasible solution
+            
+            #     best_solution = new_solution
+            #     # recommended_solns.append(candidate_solution)
+            #     recommended_solns.append(new_solution)
+            #     intermediate_budgets.append(expended_budget)
+            #     print("Accepted solution:", new_solution.x)
+            #     print("budget", expended_budget)
+            #     feasible_found = True
+            
+            else: #once a feasible solution has been found, only accept solutions that are feasible and reduce objective
+                if (
+                    problem.minmax[0] * new_solution.objectives_mean
+                    > problem.minmax[0] * best_solution.objectives_mean
+                ) and not is_violated:
+                    best_solution = new_solution
+                    # recommended_solns.append(candidate_solution)
+                    recommended_solns.append(new_solution)
+                    intermediate_budgets.append(expended_budget)
+                    # print("Accepted solution:", new_solution.x)
+                    # print("budget", expended_budget)
+
+                    # print("Rejected solution:", new_solution.x)
+                    # print("budget", expended_budget)
+                
+            # else:
+            #     # once feasible solution has been found, only accept feasbile solutions
+            #     if (
+            #         problem.minmax[0] * new_solution.objectives_mean
+            #         > problem.minmax[0] * best_solution.objectives_mean
+            #         and all(
+            #             new_solution.stoch_constraints_mean[idx] <= self.factors["tolerance"]
+            #             for idx in range(problem.n_stochastic_constraints)
+            #         )
+            #     ):
+            #         best_solution = new_solution
+            #         # recommended_solns.append(candidate_solution)
+            #         recommended_solns.append(new_solution)
+            #         intermediate_budgets.append(expended_budget)
+            #         print("New candidate solution:", new_solution.x)
+            #         print("Solution accepted at budget", expended_budget)
+            #     else:
+            #         print("New candidate solution:", new_solution.x)
+            #         print("Solution not accepted", expended_budget)
+            # best_solution = new_solution
+            # # recommended_solns.append(candidate_solution)
+            # recommended_solns.append(new_solution)
+            # intermediate_budgets.append(expended_budget)
 
             k += 1
             # print("----------------------")

@@ -237,6 +237,7 @@ class SAN(Model):
                 )
                 current = backtrack
                 backtrack = int(prev[backtrack - 1])
+
             all_gradients.append(gradient)
         
         
@@ -879,7 +880,7 @@ class SANLongestPathStochastic(Problem):
         longest_path_to_const_node = []
         longest_path = response_dict["longest_path_to_all_nodes"]
         topo_order = response_dict["topo_order"]
-        # get longest path only to nodes with constraints
+        # get longest path only to nodes with constraints      
         for const_node in self.factors["constraint_nodes"]:
             for idx, node in enumerate(topo_order):
                 if const_node == node:
@@ -917,7 +918,37 @@ class SANLongestPathStochastic(Problem):
         # )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
         return det_stoch_constraints, det_stoch_constraints_gradients
     
-        
+    def gradient_dict_to_stoch_constraints_gradients(self, gradient_dict: dict, response_dict: dict) -> list:
+        """Convert a dictionary of gradients associated with model responses into
+            a list of gradient vectors for each stochastic constraint.
+
+        Notes
+        -----
+        A subclass of ``base.Problem`` can have its own custom ``response_dict_to_stoch_constraints_gradients`` method if stochastic constraints require specific mapping.
+
+        Parameters
+        ----------
+        gradient_dict : dict
+            Dictionary with gradient keys and associated values.
+        response_dict: dict 
+            Optional. Include if response needed to determine gradient key.
+
+        Returns
+        -------
+        tuple
+            Vector of partial derivatives associated with each stochastic constraint.
+
+        """
+        # get all gradients for longest path to every node
+        arc_gradients = gradient_dict["longest_path_to_all_nodes"]["arc_means"]
+        topo_order = response_dict["topo_order"]
+        grads = [] # arc gradients for each stochastic constraint node
+        for const_node in self.factors["constraint_nodes"]:
+            for idx, node in enumerate(topo_order):
+                if const_node == node:
+                    node_idx = idx
+                    grads.append(arc_gradients[node_idx])
+        return grads
 
     def deterministic_objectives_and_gradients(
         self, x: tuple
