@@ -426,7 +426,7 @@ class TrafficLight(Model):
         return {
             "lambdas": {
                 "description": (
-                    "Rate parameter of the time interval distribution (in seconds) "
+                    "Rate parameter of the time interval distribution (seconds) "
                     "for generating each car."
                 ),
                 "datatype": list,
@@ -445,11 +445,11 @@ class TrafficLight(Model):
             },
             "decision_vector": {
                 "description": (
-                    "Delay, in seconds, in light schedule based on distance from "
-                    "first intersection"  # Top left
+                    "Delay (seconds) in light schedule based on distance from "
+                    "first intersection (intersection A in docs)."
                 ),
                 "datatype": list,
-                "default": [1, 2, 3],
+                "default": [1.0, 2.0, 3.0],
             },
             "speed": {
                 "description": "Constant speed in meter/second for the cars",
@@ -457,12 +457,12 @@ class TrafficLight(Model):
                 "default": 5,
             },
             "carlength": {
-                "description": "Length in meters of each car",
+                "description": "Length (meters) of each car",
                 "datatype": float,
                 "default": 4.5,
             },
             "reaction": {
-                "description": "Reaction time in seconds of cars in queue",
+                "description": "Reaction time (seconds) of cars in queue",
                 "datatype": float,
                 "default": 0.1,
             },
@@ -475,22 +475,22 @@ class TrafficLight(Model):
                 "default": [7, 3, 3, 2, 5, 2, 3],
             },
             "pause": {
-                "description": "The pause in seconds before move on a green light",
+                "description": "The pause (seconds) before move on a green light",
                 "datatype": float,
                 "default": 0.1,
             },
             "car_distance": {
-                "description": "The distance between cars",
+                "description": "The distance (meters) between cars",
                 "datatype": float,
                 "default": 0.5,
             },
             "length_arteries": {
-                "description": "The length in meters of artery roads",
+                "description": "The length (meters) of artery roads",
                 "datatype": float,
                 "default": 100,
             },
             "length_veins": {
-                "description": "The length in meters of vein road",
+                "description": "The length (meters) of vein road",
                 "datatype": float,
                 "default": 100,
             },
@@ -917,7 +917,7 @@ class TrafficLight(Model):
 
         # Generates list of all intersection objects
         intersections = []
-        decision_vectors: list[int] = self.factors["decision_vector"]
+        decision_vectors: list[float] = self.factors["decision_vector"]
         for i in range(self.factors["numintersections"]):
             location = points[i]
             intersections.append(Intersection(location, roads))
