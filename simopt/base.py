@@ -208,7 +208,7 @@ class Solver(ABC):
         """
         self.name = name
         # Add all the fixed factors to the solver
-        self.factors = fixed_factors
+        self.factors = fixed_factors.copy() if fixed_factors else {}
         all_factors = set(self.specifications.keys())
         present_factors = set(self.factors.keys())
         missing_factors = all_factors - present_factors
@@ -571,7 +571,7 @@ class Problem(ABC):
         self.name = name
 
         # Add all the fixed factors to the problem
-        self.factors = fixed_factors
+        self.factors = fixed_factors.copy() if fixed_factors else {}
         all_factors = set(self.specifications.keys())
         present_factors = set(self.factors.keys())
         missing_factors = all_factors - present_factors
@@ -579,7 +579,9 @@ class Problem(ABC):
             self.factors[factor] = self.specifications[factor]["default"]
 
         # Add all the fixed factors to the model
-        self.model_fixed_factors = model_fixed_factors
+        self.model_fixed_factors = (
+            model_fixed_factors.copy() if model_fixed_factors else {}
+        )
         all_model_factors = set(self.model_default_factors.keys())
         present_model_factors = set(self.model_fixed_factors.keys())
         missing_model_factors = all_model_factors - present_model_factors
@@ -1069,7 +1071,7 @@ class Model(ABC):
                 user-specified solver factors. Defaults to None.
         """
         # Add all the fixed factors to the model
-        self.factors = fixed_factors
+        self.factors = fixed_factors.copy() if fixed_factors else {}
         all_factors = set(self.specifications.keys())
         present_factors = set(self.factors.keys())
         missing_factors = all_factors - present_factors
