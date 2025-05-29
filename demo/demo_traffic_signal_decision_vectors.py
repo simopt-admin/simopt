@@ -93,48 +93,44 @@ def main() -> None:
     # NOTE: decision_vector_mult will be overridden by the loop below.
     fixed_factors: dict[str, Any] = {"runtime": 1200}
 
-    avg_wait_by_exp: list[float] = []
+    exp_avg_wait_list: list[list[float]] = []
 
     # Run each experiment with a different decision vector multiplier.
     import numpy as np
 
-    for exp_idx, mult in enumerate(
-        np.arange(
-            decision_vector_min,
-            decision_vector_max + decision_vector_step,
-            decision_vector_step,
-        ),
-        start=1,
-    ):
+    step_range = np.arange(
+        decision_vector_min,
+        decision_vector_max + decision_vector_step,
+        decision_vector_step,
+    )
+    for exp_idx, mult in enumerate(step_range, start=1):
         print(f"\n> Running experiment {exp_idx} with vector multiplier {mult}...")
 
         fixed_factors["decision_vector"] = [float(mult)] * 3
 
-        # Initialize the model with the specified fixed factors.
-        # If the fixed factors are invalid, the model will raise an error.
+        # Initialize the model with the specified fixed factors and check if it
+        # is simulatable. If there is an error or the model is not simulatable,
+        # exit the script gracefully.
         try:
-            print("> Initializing model with fixed factors:")
+            print("> Fixed Factors:")
+            # Print each fixed factor in a readable format.
             for key, value in fixed_factors.items():
-                print(f"\t{key}: {value}")
-            mymodel = TrafficLight(fixed_factors)
-        except Exception as e:
-            print(f"> Error initializing model: {e}")
-            print("> Exiting script.")
-            return
+                print(f"  > {key}: {value}")
 
-        # Check all factors collectively.
-        try:
+            # Initialize the model with the fixed factors.
+            print("> Initializing TrafficLight model...", end=" ", flush=True)
+            mymodel = TrafficLight(fixed_factors)
+            print("success!")
+
+            print("> Checking if model is simulatable...", end=" ", flush=True)
             is_model_simulatable = mymodel.check_simulatable_factors()
-            model_sim_str = "IS" if is_model_simulatable else "IS NOT"
-            print(
-                f"> {mymodel.name} {model_sim_str} simulatable with specified factors."
-            )
             # Exit if not simulatable.
             if not is_model_simulatable:
-                print("> Exiting script.")
-                return
+                raise ValueError("Model is not simulatable with the specified factors.")
+            print("success!")
+
         except Exception as e:
-            print(f"> Error checking model simulation: {e}")
+            print(f"> Error: {e}")
             print("> Exiting script.")
             return
 
@@ -145,21 +141,21 @@ def main() -> None:
 
         # Keep track of responses and gradients between macroreplications so they can be
         # compared/graphed at the end.
-        avg_wait_by_mrep: list = []
+        avg_wait_by_mrep: list[float] = []
 
         # Run a single replication of the model.
         for mrep in range(1, num_macroreps + 1):
             print(
                 f"> Running macroreplication {mrep} of {num_macroreps}...",
-                end="",
+                end=" ",
                 flush=True,
             )
             responses, _ = mymodel.replicate(rng_list)
-            print(" done.")
             # Record the average wait for this index.
-            wait_time = responses.get("AvgWaitTime", None)
+            wait_time: float = responses["AvgWaitTime"]
             avg_wait_by_mrep.append(wait_time)
-            print(f"> Average wait time for mrep {mrep}: {wait_time:.2f} seconds")
+            # Update the user on the wait time.
+            print(f"done - AvgWaitTime of {wait_time:.2f} seconds")
 
             # Advance RNG
             for rng in rng_list:
@@ -167,31 +163,40 @@ def main() -> None:
         print(f"> Finished macroreplications for experiment {exp_idx}.")
 
         # Store the average wait times for this experiment.
-        avg_wait = sum(avg_wait_by_mrep) / len(avg_wait_by_mrep)
-        avg_wait_by_exp.append(avg_wait)
-        print(f"> Average wait time for experiment {exp_idx}: {avg_wait:.2f} seconds")
+        exp_avg_wait_list.append(avg_wait_by_mrep)
 
     # Switch back to normal logging level.
     logging.getLogger().setLevel(logging.INFO)
 
+    # Calculate avg waits once here to use for both printing and plotting.
+    avg_waits = [
+        sum(exp_wait_list) / len(exp_wait_list) for exp_wait_list in exp_avg_wait_list
+    ]
+
     # Print out the average wait times for each experiment.
     print("\n> Average Wait Times by Experiment:")
-
-    for idx, avg_wait in enumerate(avg_wait_by_exp, start=1):
-        print(f"  Experiment {idx}: {avg_wait:.2f} seconds")
+    for idx, exp_wait_list in enumerate(exp_avg_wait_list, start=1):
+        avg_wait = avg_waits[idx - 1]
+        print(f"  Experiment {idx}: {avg_wait:.2f} seconds ", end="")
+        # Round the wait times to 2 decimal places for readability.
+        waits = ", ".join(f"{wait:.2f}" for wait in exp_wait_list)
+        print(f"[{waits}]")
     # Plot the average wait times.
     plt.figure(figsize=(10, 6))
     plt.plot(
-        range(1, len(avg_wait_by_exp) + 1),
-        avg_wait_by_exp,
+        step_range,
+        avg_waits,
         marker="o",
         linestyle="-",
         color="b",
     )
-    plt.title("Average Wait Times by Experiment")
-    plt.xlabel("Experiment Index")
+    plt.title("Average Wait Time by Decision Vector Multiplier")
+    plt.xlabel("Decision Vector Multiplier")
     plt.ylabel("Average Wait Time (seconds)")
-    plt.xticks(range(1, len(avg_wait_by_exp) + 1))
+    plt.xticks(
+        step_range,
+        rotation=45,
+    )
     plt.grid()
     plt.tight_layout()
     plt.show()
