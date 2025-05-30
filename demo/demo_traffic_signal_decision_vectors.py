@@ -46,9 +46,11 @@ def get_config() -> dict[str, Any]:
         # Minimum scale factor for the decision vector.
         "decision_vector_min": 1.0,
         # Maximum scale factor for the decision vector.
-        "decision_vector_max": 3.0,
+        "decision_vector_max": 30.0,
         # Step size for the decision vector multiplier.
-        "decision_vector_step": 1,
+        "decision_vector_step": 0.25,
+        # Runtime for the traffic signal model in seconds.
+        "runtime": 1200,
         # Number of simulation runs (macroreplications) for the same factors.
         # Each macroreplication uses a different random number stream.
         # Must be a positive integer.
@@ -75,6 +77,7 @@ def main() -> None:
     decision_vector_min = config["decision_vector_min"]
     decision_vector_max = config["decision_vector_max"]
     decision_vector_step = config["decision_vector_step"]
+    runtime = config["runtime"]
 
     # Print the configuration settings as a table.
     config_header = ["Parameter", "Value"]
@@ -96,7 +99,7 @@ def main() -> None:
 
     # Set fixed factors for the traffic signal.
     # NOTE: decision_vector_mult will be overridden by the loop below.
-    fixed_factors: dict[str, Any] = {"runtime": 1200}
+    fixed_factors: dict[str, Any] = {"runtime": runtime}
 
     exp_avg_wait_list: list[list[float]] = []
 
