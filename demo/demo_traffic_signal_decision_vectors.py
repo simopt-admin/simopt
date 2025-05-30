@@ -6,11 +6,16 @@ varying the decision vector multiplier to observe its impact on average wait tim
 
 # Import standard libraries
 import logging
+import os
 import sys
+from functools import partial
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
+
+from simopt.base import Model
 
 # Append the parent directory (simopt package) to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -41,9 +46,9 @@ def get_config() -> dict[str, Any]:
         # Minimum scale factor for the decision vector.
         "decision_vector_min": 1.0,
         # Maximum scale factor for the decision vector.
-        "decision_vector_max": 30.0,
+        "decision_vector_max": 3.0,
         # Step size for the decision vector multiplier.
-        "decision_vector_step": 0.25,
+        "decision_vector_step": 1,
         # Number of simulation runs (macroreplications) for the same factors.
         # Each macroreplication uses a different random number stream.
         # Must be a positive integer.
@@ -137,33 +142,31 @@ def main() -> None:
         # Create a list of RNG objects for the simulation model to use when
         # running replications.
         # Start with the same RNG for each experiment to keep things consistent.
-        rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
 
         # Keep track of responses and gradients between macroreplications so they can be
         # compared/graphed at the end.
-        avg_wait_by_mrep: list[float] = []
+        avg_wait_by_mrep: dict[int, float] = {}
 
-        # Run a single replication of the model.
-        for mrep in range(1, num_macroreps + 1):
+        run_mrep_partial = partial(run_macroreplication, mymodel=mymodel)
+
+        num_processes = min(num_macroreps, os.cpu_count() or 1)
+        with Pool(num_processes) as process_pool:
             print(
-                f"> Running macroreplication {mrep} of {num_macroreps}...",
-                end=" ",
-                flush=True,
+                f"> Running {num_macroreps} macroreplications in parallel "
+                f"using {num_processes} processes..."
             )
-            responses, _ = mymodel.replicate(rng_list)
-            # Record the average wait for this index.
-            wait_time: float = responses["AvgWaitTime"]
-            avg_wait_by_mrep.append(wait_time)
-            # Update the user on the wait time.
-            print(f"done - AvgWaitTime of {wait_time:.2f} seconds")
+            # Use a pool of processes to run macroreplications in parallel.
+            for mrep, wait_time in process_pool.imap_unordered(
+                run_mrep_partial, range(1, num_macroreps + 1)
+            ):
+                print(f"> mrep {mrep} - AvgWaitTime: {wait_time:.2f} seconds")
+                avg_wait_by_mrep[mrep] = wait_time
 
-            # Advance RNG
-            for rng in rng_list:
-                rng.advance_subsubstream()
         print(f"> Finished macroreplications for experiment {exp_idx}.")
 
         # Store the average wait times for this experiment.
-        exp_avg_wait_list.append(avg_wait_by_mrep)
+        exp_wait_list = [avg_wait_by_mrep[mrep] for mrep in range(1, num_macroreps + 1)]
+        exp_avg_wait_list.append(exp_wait_list)
 
     # Switch back to normal logging level.
     logging.getLogger().setLevel(logging.INFO)
@@ -200,6 +203,19 @@ def main() -> None:
     plt.grid()
     plt.tight_layout()
     plt.show()
+
+
+def run_macroreplication(mrep: int, mymodel: Model) -> tuple[int, float]:
+    """Function to run a single macroreplication."""
+    rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
+    for _ in range(mrep - 1):
+        for rng in rng_list:
+            rng.advance_subsubstream()
+
+    responses, _ = mymodel.replicate(rng_list)
+    # Record the average wait for this index.
+    wait_time: float = responses["AvgWaitTime"]
+    return mrep, wait_time
 
 
 if __name__ == "__main__":
