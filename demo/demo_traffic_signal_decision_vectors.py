@@ -5,7 +5,6 @@ varying the decision vector multiplier to observe its impact on average wait tim
 """
 
 # Import standard libraries
-import logging
 import os
 import sys
 from multiprocessing import Pool
@@ -59,10 +58,7 @@ def get_config() -> dict[str, Any]:
         # set num_macroreps to 5 and extra_rng_advancements to 5.
         # Each mrep is independent, so not running the first macroreps will not
         # impact the results of the later ones.
-        "extra_rng_advancements": 5,
-        # Enable debug-level logging for detailed model information.
-        # Set to True for debugging, False for normal operation.
-        "debug_logging": False,
+        "extra_rng_advancements": 0,
     }
 
 
@@ -146,7 +142,6 @@ def main() -> None:
     # Fetch the configuration settings.
     config = get_config()
     num_macroreps = config["num_macroreps"]
-    debug_logging = config["debug_logging"]
     decision_vector_min = config["decision_vector_min"]
     decision_vector_max = config["decision_vector_max"]
     decision_vector_step = config["decision_vector_step"]
@@ -156,13 +151,6 @@ def main() -> None:
     # Print the configuration settings as a table.
     config_header = ["Parameter", "Value"]
     print_table("Configuration Settings", config_header, config)
-
-    # Set the logging level for the model.
-    log_level = logging.DEBUG if debug_logging else logging.INFO
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-    )
 
     # Set fixed factors for the traffic signal.
     # NOTE: decision_vector_mult will be overridden by the loop below.
