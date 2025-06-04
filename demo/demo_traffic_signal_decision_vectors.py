@@ -8,14 +8,11 @@ varying the decision vector multiplier to observe its impact on average wait tim
 import logging
 import os
 import sys
-from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
-
-from simopt.base import Model
 
 # Append the parent directory (simopt package) to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -55,6 +52,14 @@ def get_config() -> dict[str, Any]:
         # Each macroreplication uses a different random number stream.
         # Must be a positive integer.
         "num_macroreps": 5,
+        # Number of extra RNG advancements before starting the macroreplications.
+        # This can be useful to simulate later macroreplications without having to run
+        # the earlier ones since each mrep advances the RNG by 1.
+        # EG: If previously running 10 mreps and you want to rerun just 6-10, you can
+        # set num_macroreps to 5 and extra_rng_advancements to 5.
+        # Each mrep is independent, so not running the first macroreps will not
+        # impact the results of the later ones.
+        "extra_rng_advancements": 5,
         # Enable debug-level logging for detailed model information.
         # Set to True for debugging, False for normal operation.
         "debug_logging": False,
@@ -68,6 +73,74 @@ def get_config() -> dict[str, Any]:
 # #####################################################################################
 
 
+class DecisionVectorExperiment:
+    """Class to encapsulate the decision vector experiment."""
+
+    @property
+    def avg_wait(self) -> float:
+        """Calculate the average wait time across all experiments."""
+        return (
+            sum(self._avg_waits.values()) / len(self._avg_waits)
+            if self._avg_waits
+            else 0.0
+        )
+
+    @property
+    def avg_waits(self) -> dict[int, float]:
+        """Calculate the average wait times across all experiments."""
+        return self._avg_waits
+
+    @avg_waits.setter
+    def avg_waits(self, value: dict[int, float]) -> None:
+        """Set the average wait times for the experiment."""
+        self._avg_waits = value
+
+    @property
+    def avg_waits_list(self) -> list[float]:
+        """Return the average wait times as a list."""
+        return [self._avg_waits[mrep] for mrep in sorted(self._avg_waits.keys())]
+
+    def __init__(
+        self,
+        exp_idx: int,
+        decision_val: float,
+        fixed_factors: dict[str, Any],
+        num_macroreps: int,
+        extra_rng_advancements: int,
+    ) -> None:
+        """Initialize the experiment with configuration settings."""
+        # Setup fixed factors
+        self.fixed_factors = fixed_factors.copy()
+        self.fixed_factors["decision_vector"] = [decision_val] * 3
+        # Create the model instance with the fixed factors.
+        self.mymodel = TrafficLight(self.fixed_factors)
+        if not self.mymodel.check_simulatable_factors():
+            raise ValueError(
+                "Model is not simulatable with the specified fixed factors."
+            )
+
+        # Set additional attributes for the experiment.
+        self.exp_idx = exp_idx
+        self.num_macroreps = num_macroreps
+        self.extra_rng_advancements = extra_rng_advancements
+
+        # Create empty variables for wait times.
+        self._avg_wait = 0.0  # Average wait time across all macroreplications.
+        self._avg_waits: dict[int, float] = {}  # List of average wait times
+
+    def _run_macroreplication(self, mrep: int) -> tuple[int, float]:
+        """Function to run a single macroreplication."""
+        rng_list = [
+            MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(self.mymodel.n_rngs)
+        ]
+        for _ in range(mrep + self.extra_rng_advancements):
+            for rng in rng_list:
+                rng.advance_subsubstream()
+
+        responses, _ = self.mymodel.replicate(rng_list)
+        return mrep, responses["AvgWaitTime"]
+
+
 def main() -> None:
     """Main function to run the data farming experiment."""
     # Fetch the configuration settings.
@@ -78,17 +151,11 @@ def main() -> None:
     decision_vector_max = config["decision_vector_max"]
     decision_vector_step = config["decision_vector_step"]
     runtime = config["runtime"]
+    extra_rng_advancements = config["extra_rng_advancements"]
 
     # Print the configuration settings as a table.
     config_header = ["Parameter", "Value"]
-    config_tuples = [
-        ("Number of Macroreplications", num_macroreps),
-        ("Debug Logging Enabled", debug_logging),
-        ("Decision Vector Min", decision_vector_min),
-        ("Decision Vector Max", decision_vector_max),
-        ("Decision Vector Step", decision_vector_step),
-    ]
-    print_table("Configuration Settings", config_header, config_tuples)
+    print_table("Configuration Settings", config_header, config)
 
     # Set the logging level for the model.
     log_level = logging.DEBUG if debug_logging else logging.INFO
@@ -100,8 +167,7 @@ def main() -> None:
     # Set fixed factors for the traffic signal.
     # NOTE: decision_vector_mult will be overridden by the loop below.
     fixed_factors: dict[str, Any] = {"runtime": runtime}
-
-    exp_avg_wait_list: list[list[float]] = []
+    experiments: list[DecisionVectorExperiment] = []
 
     # Run each experiment with a different decision vector multiplier.
     import numpy as np
@@ -111,46 +177,28 @@ def main() -> None:
         decision_vector_max + decision_vector_step,
         decision_vector_step,
     )
-    for exp_idx, mult in enumerate(step_range, start=1):
-        print(f"\n> Running experiment {exp_idx} with vector multiplier {mult}...")
 
-        fixed_factors["decision_vector"] = [float(mult)] * 3
-
-        # Initialize the model with the specified fixed factors and check if it
-        # is simulatable. If there is an error or the model is not simulatable,
-        # exit the script gracefully.
+    # Create the list of experiments with different decision vector multipliers.
+    for idx, mult in enumerate(step_range, start=1):
         try:
-            print("> Fixed Factors:")
-            # Print each fixed factor in a readable format.
-            for key, value in fixed_factors.items():
-                print(f"  > {key}: {value}")
-
-            # Initialize the model with the fixed factors.
-            print("> Initializing TrafficLight model...", end=" ", flush=True)
-            mymodel = TrafficLight(fixed_factors)
-            print("success!")
-
-            print("> Checking if model is simulatable...", end=" ", flush=True)
-            is_model_simulatable = mymodel.check_simulatable_factors()
-            # Exit if not simulatable.
-            if not is_model_simulatable:
-                raise ValueError("Model is not simulatable with the specified factors.")
-            print("success!")
-
+            # Create a new experiment instance with the current multiplier.
+            experiment = DecisionVectorExperiment(
+                exp_idx=idx,
+                decision_val=mult,
+                fixed_factors=fixed_factors,
+                num_macroreps=num_macroreps,
+                extra_rng_advancements=extra_rng_advancements,
+            )
+            experiments.append(experiment)
         except Exception as e:
-            print(f"> Error: {e}")
+            print(f"> Error creating experiment {idx} with multiplier {mult}: {e}")
             print("> Exiting script.")
             return
 
-        # Create a list of RNG objects for the simulation model to use when
-        # running replications.
-        # Start with the same RNG for each experiment to keep things consistent.
-
-        # Keep track of responses and gradients between macroreplications so they can be
-        # compared/graphed at the end.
-        avg_wait_by_mrep: dict[int, float] = {}
-
-        run_mrep_partial = partial(run_macroreplication, mymodel=mymodel)
+    # Loop through each experiment and run the macroreplications.
+    for exp in experiments:
+        mult = exp.fixed_factors["decision_vector"][0]
+        print(f"\n> Running experiment {exp.exp_idx} with multiplier {mult:.2f} ")
 
         num_processes = min(num_macroreps, os.cpu_count() or 1)
         with Pool(num_processes) as process_pool:
@@ -160,38 +208,30 @@ def main() -> None:
             )
             # Use a pool of processes to run macroreplications in parallel.
             for mrep, wait_time in process_pool.imap_unordered(
-                run_mrep_partial, range(1, num_macroreps + 1)
+                exp._run_macroreplication, range(num_macroreps)
             ):
-                print(f"> mrep {mrep} - AvgWaitTime: {wait_time:.2f} seconds")
-                avg_wait_by_mrep[mrep] = wait_time
-
-        print(f"> Finished macroreplications for experiment {exp_idx}.")
-
-        # Store the average wait times for this experiment.
-        exp_wait_list = [avg_wait_by_mrep[mrep] for mrep in range(1, num_macroreps + 1)]
-        exp_avg_wait_list.append(exp_wait_list)
-
-    # Switch back to normal logging level.
-    logging.getLogger().setLevel(logging.INFO)
-
-    # Calculate avg waits once here to use for both printing and plotting.
-    avg_waits = [
-        sum(exp_wait_list) / len(exp_wait_list) for exp_wait_list in exp_avg_wait_list
-    ]
+                # Store the average wait time for each macroreplication.
+                exp.avg_waits[mrep] = wait_time
+                print(f"> mrep {mrep + 1} - AvgWaitTime: {wait_time:.2f} seconds")
 
     # Print out the average wait times for each experiment.
-    print("\n> Average Wait Times by Experiment:")
-    for idx, exp_wait_list in enumerate(exp_avg_wait_list, start=1):
-        avg_wait = avg_waits[idx - 1]
-        print(f"  Experiment {idx}: {avg_wait:.2f} seconds ", end="")
-        # Round the wait times to 2 decimal places for readability.
-        waits = ", ".join(f"{wait:.2f}" for wait in exp_wait_list)
-        print(f"[{waits}]")
+    print("\n> Average Wait Time Summary:")
+    for exp in experiments:
+        exp_idx = exp.exp_idx
+        avg_wait = exp.avg_wait
+        avg_waits = exp.avg_waits_list
+        print(
+            f"Experiment {exp_idx}: AvgWaitTime = {avg_wait:.2f} seconds "
+            f"[{', '.join(f'{wait:.2f}' for wait in avg_waits)}]"
+        )
+
+    avg_waits_graph = [exp.avg_wait for exp in experiments]
+
     # Plot the average wait times.
     plt.figure(figsize=(10, 6))
     plt.plot(
         step_range,
-        avg_waits,
+        avg_waits_graph,
         marker="o",
         linestyle="-",
         color="b",
@@ -206,19 +246,6 @@ def main() -> None:
     plt.grid()
     plt.tight_layout()
     plt.show()
-
-
-def run_macroreplication(mrep: int, mymodel: Model) -> tuple[int, float]:
-    """Function to run a single macroreplication."""
-    rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
-    for _ in range(mrep - 1):
-        for rng in rng_list:
-            rng.advance_subsubstream()
-
-    responses, _ = mymodel.replicate(rng_list)
-    # Record the average wait for this index.
-    wait_time: float = responses["AvgWaitTime"]
-    return mrep, wait_time
 
 
 if __name__ == "__main__":
