@@ -108,7 +108,7 @@ class CSA_LP(Solver):  # noqa: N801
         """
         take in the current iteration k
         """
-        return 1/10.0
+        return .1
 
     def check_r(self) -> bool:
         return self.factors["r"] > 0
@@ -281,10 +281,11 @@ class CSA_LP(Solver):  # noqa: N801
         prob.solve()
 
         d = direction.value
+        #norm_d = d/np.linalg.norm(d)
         # print("theta:", theta.value)
         # d = d/np.linalg.norm(d)
         
-        # old code
+        # #old code
         # n_violated_cons, n = grads.shape
 
         # if n_violated_cons == 1:
@@ -308,7 +309,7 @@ class CSA_LP(Solver):  # noqa: N801
         #     prob.solve()
 
         #     d = direction.value
-        #     # d = d/np.linalg.norm(d)
+        # norm_d = d/np.linalg.norm(d)
 
         return d
 
@@ -428,7 +429,7 @@ class CSA_LP(Solver):  # noqa: N801
                 grad = self.get_constraints_dir(violated_grads, obj_grad)
                 
                 # set max t depending on constraint violation
-                max_t = max(constraint_results)*.005
+                #max_t = max(constraint_results)*.5
 
                 numviolated += 1
             else:
@@ -452,25 +453,25 @@ class CSA_LP(Solver):  # noqa: N801
                     )
                     expended_budget += budget_spent
 
-            if is_violated:
-                # if this iteration is infeasible again, increase step size
-                if last_is_feasible == 0:
-                    t = infeasible_step / self.factors["ratio"]
-                    # infeasible_step = t
-                else:
-                    t = infeasible_step * self.factors["ratio"]
-                    # infeasible_step = t
-                infeasible_step = t
-                last_is_feasible = 0
-            else:
-                t = self.factors["step_f"](self,k=k)
+            # if is_violated:
+            #     # if this iteration is infeasible again, increase step size
+            #     if last_is_feasible == 0:
+            #         t = infeasible_step / self.factors["ratio"]
+            #         # infeasible_step = t
+            #     else:
+            #         t = infeasible_step * self.factors["ratio"]
+            #         # infeasible_step = t 
+            #     infeasible_step = t
+            #     last_is_feasible = 0
+            # else:
+            t = self.factors["step_f"](self,k=k)
 
             # step-size
             # t = self.factors["step_f"](k)
             # print("step: ", t)
             # print("grad: ", grad)
             # new_x = cur_x + t * direction
-            t = min(t, max_t) # place cap on t
+            t = min(t, .9) # place cap on t
             # # replace t with decreasing step size
             # if not feasible_found: # no feasible solutions have been found, decaying step size 
             #     t = 1/(2*k+1)
