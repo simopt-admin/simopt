@@ -8,12 +8,17 @@ NUM_ARTERIES = 2
 NUM_VEINS = 2
 # General plotting settings
 TITLE_SIZE = 20
+TITLE_PADDING = 20
 LEGEND_SIZE = 14
+LEGEND_LOC = "upper left"
+BACKGROUND_COLOR = None  # Set to None for transparent background
 X_SCALE = 1.25
 Y_SCALE = 1
 # Node plotting settings
 NODE_COLOR = "skyblue"
+NODE_LABEL_COLOR = "black"
 NODE_SIZE = 1200
+NODE_LABEL_SIZE = 14
 # Arrow plotting settings
 ARROW_VERT_COLOR = "red"
 ARROW_HORIZ_COLOR = "blue"
@@ -41,22 +46,30 @@ def plot_network(
     ax.set_aspect("equal")
 
     # --- Plot Adjustments ---
-    # Transparent background
-    fig.patch.set_alpha(0.0)  # For the figure itself
-    ax.patch.set_alpha(0.0)  # For the axes background
+    if BACKGROUND_COLOR is not None:
+        fig.patch.set_facecolor(BACKGROUND_COLOR)
+    else:
+        # Set a transparent background
+        fig.patch.set_facecolor("none")
+        fig.patch.set_alpha(0.0)  # For the figure itself
+        ax.patch.set_alpha(0.0)  # For the axes background
 
     ax.grid(False)  # No grid lines
     ax.axis("off")  # No axis lines or ticks
 
     # Larger title
-    ax.set_title("TrafficLight Roadmap", fontsize=TITLE_SIZE, pad=20)
+    ax.set_title("TrafficLight Roadmap", fontsize=TITLE_SIZE, pad=TITLE_PADDING)
 
     # Draw nodes
     nx.draw_networkx_nodes(
         graph, node_positions, node_size=NODE_SIZE, node_color=NODE_COLOR, ax=ax
     )
     nx.draw_networkx_labels(
-        graph, node_positions, font_color="black", ax=ax, font_size=14
+        graph,
+        node_positions,
+        font_color=NODE_LABEL_COLOR,
+        ax=ax,
+        font_size=NODE_LABEL_SIZE,
     )
 
     # Draw edges as arrows
@@ -107,7 +120,7 @@ def plot_network(
     ax.plot([], [], color=ARROW_HORIZ_COLOR, lw=2, label="Vein Roads")
     # Add the legend
     ax.legend(
-        loc="upper left",
+        loc=LEGEND_LOC,
         fontsize=LEGEND_SIZE,
         frameon=True,
         facecolor="none",
