@@ -34,8 +34,8 @@ def plot_network(
                                        If networkx.Graph, it will be converted.
         node_positions (dict): A dictionary mapping node names to (x, y) coordinates.
     """
-    x_size = NUM_ARTERIES * 2 + 6
-    y_size = NUM_VEINS * 2 + 4
+    x_size = NUM_ARTERIES * 2.25 + 5
+    y_size = NUM_VEINS * 2.25 + 5
     fig, ax = plt.subplots(figsize=(x_size, y_size))
     ax.set_aspect("equal")
 
@@ -121,7 +121,6 @@ def plot_network(
 if __name__ == "__main__":
     G_nx = nx.DiGraph()
 
-    edges = []
     # Map coordinates to node names
     positions: dict[tuple[int, int], str] = {}
 
@@ -133,51 +132,61 @@ if __name__ == "__main__":
         node_name = f"N{x}"
         positions[(x, vein_ub)] = node_name
         G_nx.add_node(node_name)
-    for y in range(1, vein_ub):
-        node_name = f"W{y}"
-        positions[(0, vein_ub - y)] = node_name
-        G_nx.add_node(node_name)
-    for x in range(1, artery_ub):
         node_name = f"S{x}"
         positions[(x, 0)] = node_name
         G_nx.add_node(node_name)
     for y in range(1, vein_ub):
+        # The y-coordinate is inverted because the top of the plot is y=0
+        corr_y = vein_ub - y
+        node_name = f"W{y}"
+        positions[(0, corr_y)] = node_name
+        G_nx.add_node(node_name)
         node_name = f"E{y}"
-        positions[(artery_ub, vein_ub - y)] = node_name
+        positions[(artery_ub, corr_y)] = node_name
         G_nx.add_node(node_name)
 
-    # Create the intersection nodes and edges
+    # Create the intersection nodes
+    num_intersect_nodes = 0
+    # If there are more than 26 intersections, use a suffix to differentiate nodes
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    use_suffix = len(alphabet) < artery_ub * vein_ub - 4
-    intersection_idx = 0
+    use_suffix = len(alphabet) < NUM_ARTERIES * NUM_VEINS
     for y in range(1, vein_ub):
         for x in range(1, artery_ub):
-            node_name = alphabet[intersection_idx % len(alphabet)]
+            alphabet_idx = num_intersect_nodes % len(alphabet)
+            node_name = alphabet[alphabet_idx]
             if use_suffix:
-                node_name += f"_{intersection_idx // len(alphabet)}"
+                suffix_id = num_intersect_nodes // len(alphabet)
+                node_name += f"_{suffix_id}"
             positions[(x, vein_ub - y)] = node_name
             G_nx.add_node(node_name)
-            intersection_idx += 1
+            num_intersect_nodes += 1
+
+    # Create the edges for arteries and veins
+    # This is easier to do after all nodes are created so we don't have to check if
+    # nodes exist
+    edges = []
     for y in range(1, vein_ub):
         dir_offset = 1 if y % 2 == 0 else -1
+        corr_y = vein_ub - y
         for x in range(1, artery_ub):
-            current_node = positions[(x, vein_ub - y)]
+            current_node = positions[(x, corr_y)]
             # Add artery edges
-            above_node = positions[(x, vein_ub - y + 1)]
+            above_node = positions[(x, corr_y + 1)]
             edges.append((current_node, above_node))
             edges.append((above_node, current_node))
-            below_node = positions[(x, vein_ub - y - 1)]
+            below_node = positions[(x, corr_y - 1)]
             edges.append((current_node, below_node))
             edges.append((below_node, current_node))
             # Add vein edges
-            src_node = positions[(x + dir_offset, vein_ub - y)]
-            dest_node = positions[(x - dir_offset, vein_ub - y)]
+            # NOTE: since the direction alternates, we use "src" and "dest" to
+            # indicate the direction of the edge rather than the absolute direction
+            src_node = positions[(x + dir_offset, corr_y)]
+            dest_node = positions[(x - dir_offset, corr_y)]
             edges.append((src_node, current_node))
             edges.append((current_node, dest_node))
-
     G_nx.add_edges_from(edges)
 
-    # Scale the node positions
+    # Scale the node positions and swap to a node -> position mapping
     node_positions_nx = {
         node: (pos[0] * X_SCALE, pos[1] * Y_SCALE) for pos, node in positions.items()
     }
