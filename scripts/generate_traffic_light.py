@@ -18,6 +18,7 @@ NODE_SIZE = 1200
 ARROW_VERT_COLOR = "red"
 ARROW_HORIZ_COLOR = "blue"
 ARROW_WIDTH = 0.01
+ARROW_LENGTH_SHRINK = 0.15  # Shrink the arrow length to avoid overlap with nodes
 HEAD_WIDTH = 0.075
 HEAD_LENGTH = 0.1
 
@@ -59,7 +60,6 @@ def plot_network(
     )
 
     # Draw edges as arrows
-    node_adjust = 0.15
     for u, v in graph.edges():
         start_x, start_y = node_positions[u]
         end_x, end_y = node_positions[v]
@@ -68,20 +68,20 @@ def plot_network(
         if start_x == end_x:
             # Vertical arrow
             if start_y < end_y:
-                start_y += node_adjust
-                end_y -= node_adjust
+                start_y += ARROW_LENGTH_SHRINK
+                end_y -= ARROW_LENGTH_SHRINK
             else:
-                start_y -= node_adjust
-                end_y += node_adjust
+                start_y -= ARROW_LENGTH_SHRINK
+                end_y += ARROW_LENGTH_SHRINK
             line_color = ARROW_VERT_COLOR
         else:
             # Horizontal arrow
             if start_x < end_x:
-                start_x += node_adjust
-                end_x -= node_adjust
+                start_x += ARROW_LENGTH_SHRINK
+                end_x -= ARROW_LENGTH_SHRINK
             else:
-                start_x -= node_adjust
-                end_x += node_adjust
+                start_x -= ARROW_LENGTH_SHRINK
+                end_x += ARROW_LENGTH_SHRINK
             line_color = ARROW_HORIZ_COLOR
         x_diff = end_x - start_x
         y_diff = end_y - start_y
