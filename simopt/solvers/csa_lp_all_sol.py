@@ -281,9 +281,9 @@ class CSA_LP(Solver):  # noqa: N801
         prob.solve()
 
         d = direction.value
-        #norm_d = d/np.linalg.norm(d)
+        norm_d = d/np.linalg.norm(d)
         # print("theta:", theta.value)
-        d = d/np.linalg.norm(d)
+        # d = d/np.linalg.norm(d)
         
         # #old code
         # n_violated_cons, n = grads.shape
@@ -311,7 +311,7 @@ class CSA_LP(Solver):  # noqa: N801
         #     d = direction.value
         # norm_d = d/np.linalg.norm(d)
 
-        return d
+        return norm_d
 
     def prox_fn(self, a, cur_x, Ci, di, Ce, de, lower, upper):
         """
@@ -471,7 +471,7 @@ class CSA_LP(Solver):  # noqa: N801
             # print("step: ", t)
             # print("grad: ", grad)
             # new_x = cur_x + t * direction
-            t = min(t, 10) # place cap on t
+            t = min(t, .9) # place cap on t
             # # replace t with decreasing step size
             # if not feasible_found: # no feasible solutions have been found, decaying step size 
             #     t = 1/(2*k+1)
@@ -499,6 +499,9 @@ class CSA_LP(Solver):  # noqa: N801
                 n_feasible += 1
 
             # Append new solution.
+            #append all solutions
+            recommended_solns.append(new_solution)
+            intermediate_budgets.append(expended_budget)
             if not feasible_found: # no feasible solutions have been found            
                 # if (
                 #     problem.minmax[0] * new_solution.objectives_mean
@@ -507,9 +510,7 @@ class CSA_LP(Solver):  # noqa: N801
                 # apend all solutions for now, assume that we are improving feasibility
                 
                 best_solution = new_solution
-                # recommended_solns.append(candidate_solution)
-                recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)
+
                 # print("Accepted solution:", new_solution.x)
                 # print("budget", expended_budget)
                 if n_feasible == 1:
@@ -534,8 +535,6 @@ class CSA_LP(Solver):  # noqa: N801
                 ) and not is_violated:
                     best_solution = new_solution
                     # recommended_solns.append(candidate_solution)
-                    recommended_solns.append(new_solution)
-                    intermediate_budgets.append(expended_budget)
                     # print("Accepted solution:", new_solution.x)
                     # print("budget", expended_budget)
 

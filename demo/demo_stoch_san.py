@@ -27,9 +27,23 @@ from simopt.experiment_base import (
 
 from simopt.models.san import SANLongestPathStochastic, SAN, SANLongestPath
 from simopt.solvers.randomsearch import RandomSearch
-from simopt.solvers.csa_lp import CSA_LP
+from simopt.solvers.csa_lp import CSA_LP as csa_v2
 from simopt.solvers.csa import CSA
-from simopt.solvers.csa_lp_old import CSA_LP as old_lp
+from simopt.solvers.csa_lp_old import CSA_LP as csa_v1
+from simopt.solvers.csa_lp_v0 import CSA_LP as csa_v0
+from simopt.solvers.csa_lp_v0_all_sol import CSA_LP as csa_v0_all
+from simopt.solvers.csa_lp_v1_all_sol import CSA_LP as csa_v1_all
+from simopt.solvers.csa_lp_all_sol import CSA_LP as csa_v2_all
+from simopt.solvers.csa_lp_v1a_all_sol import CSA_LP as csa_v1a_all
+from simopt.solvers.csa_lp_v1b_all_sol import CSA_LP as csa_v1b_all
+
+
+"""
+csa_v0: original version of csa_lp
+csa_v1 : Added gradient to lp, no adjustments to step-size, d, or recomnendation criteria
+csa_v2 : Most updated version of csa. d is normalized and all solutions until feasible are recommended. 
+        After only feasilible solutions that improve objective are recommended
+"""
 
 def main() -> None:
 
@@ -42,16 +56,21 @@ def main() -> None:
     initial = (5,)*13
     
     fixed_factors = {"constraint_nodes": constraint_nodes, "length_to_node_constraint": max_length_to_node, "initial_solution": initial, "budget": 15000}
+    v0 = csa_v0(name="csa_lp_v0")
+    v1 = csa_v1(name="csa_lp_v1") 
+    v2 = csa_v2(name="csa_lp_v2")
+    v0_all = csa_v0_all(name="v0")
+    v1_all = csa_v1_all(name="csa_lp_v1")
+    v2_all = csa_v2_all(name="csa_lp_v2")
+    v1a = csa_v1a_all(name="v1a")
+    v1b = csa_v1b_all(name="v1b")
     
-    csa = CSA(fixed_factors={"crn_across_solns":False})
-    csa_lp = CSA_LP( fixed_factors={"ratio":.8, "tolerance": .05})
-    csa_lp_1 = CSA_LP(name = "tol_.1", fixed_factors={"ratio":.8, "tolerance": .1})
-    solvers = [ old_lp(), RandomSearch()]
+    solvers = [v1a,v1b, v0_all]
     
     problem =  SANLongestPathStochastic(fixed_factors=fixed_factors)   
     #problem.upper_bounds = 13*(100,)
     #problem.lower_bounds = 13*(0.1,)
-    #problem = SANLongestPath()
+    #problem = SANLongestPath() 
     
     
     # -----------------------------------------------
@@ -106,8 +125,8 @@ def main() -> None:
     plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=True, two_sided=True, plot_optimal=True,save_as_pickle=True) 
     plot_feasibility(myexperiment.experiments, "violin",  all_in_one=True, two_sided=True,save_as_pickle=True)
     #plot_feasibility(myexperiment.experiments, "violin",score_type= "inf_norm", norm_degree=2,  all_in_one=False)
-    plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True, two_sided=True, save_as_pickle=True)
-    plot_feasibility_progress(myexperiment.experiments,plot_type =  "mean", score_type = "inf_norm", all_in_one=True, two_sided=True, save_as_pickle=True)
+    plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True, two_sided=False, save_as_pickle=True)
+    plot_feasibility_progress(myexperiment.experiments,plot_type =  "mean", score_type = "inf_norm", all_in_one=True, two_sided=False, save_as_pickle=True)
     #plot_feasibility_progress(myexperiment.experiments,plot_type =  "quantile", score_type = "inf_norm", all_in_one=True, two_sided=True, save_as_pickle=True)
     plot_terminal_progress(exp_plot_list, plot_type = 'violin',  normalize=False, plot_optimal=True, save_as_pickle=True)
     #plot_feasibility_progress(myexperiment.experiments, plot_type = "mean",all_in_one=True)
