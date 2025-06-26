@@ -23,49 +23,35 @@ from simopt.utils import print_table
 
 # #####################################################################################
 # USER CONFIGURATION:
-# To modify model parameters and experiment settings,
-# please edit the `get_config()` function located below.
 # #####################################################################################
 
-
-def get_config() -> dict[str, Any]:
-    """User-configurable parameters for the data farming experiment.
-
-    Modify these values to change the model's behavior.
-    """
-    # Import the model class to be demo'd, using the following format:
-    # from simopt.models.<filename> import <model_class_name>
-    # Since this is a module import, you do not need to include the .py extension.
-
-    return {
-        # --- Experiment Settings ---
-        # Minimum scale factor for the decision vector.
-        "decision_vector_min": 1.0,
-        # Maximum scale factor for the decision vector.
-        "decision_vector_max": 30.0,
-        # Step size for the decision vector multiplier.
-        "decision_vector_step": 0.25,
-        # Runtime for the traffic signal model in seconds.
-        "runtime": 1200,
-        # Number of simulation runs (macroreplications) for the same factors.
-        # Each macroreplication uses a different random number stream.
-        # Must be a positive integer.
-        "num_macroreps": 5,
-        # Number of extra RNG advancements before starting the macroreplications.
-        # This can be useful to simulate later macroreplications without having to run
-        # the earlier ones since each mrep advances the RNG by 1.
-        # EG: If previously running 10 mreps and you want to rerun just 6-10, you can
-        # set num_macroreps to 5 and extra_rng_advancements to 5.
-        # Each mrep is independent, so not running the first macroreps will not
-        # impact the results of the later ones.
-        "extra_rng_advancements": 0,
-    }
-
+# Minimum scale factor for the decision vector.
+DECISION_VECTOR_MIN = 21
+# Maximum scale factor for the decision vector.
+DECISION_VECTOR_MAX = 21
+# Step size for the decision vector multiplier.
+DECISION_VECTOR_STEP = 0.25
+# Runtime for the traffic signal model in seconds.
+RUNTIME = 1200
+# Number of simulation runs (macroreplications) for the same factors.
+# Each macroreplication uses a different random number stream.
+# Must be a positive integer.
+NUM_MACROREPS = 5
+# Number of extra RNG advancements before starting the macroreplications.
+# This can be useful to simulate later macroreplications without having to run
+# the earlier ones since each mrep advances the RNG by 1.
+# EG: If previously running 10 mreps and you want to rerun just 6-10, you can
+# set num_macroreps to 5 and extra_rng_advancements to 5.
+# Each mrep is independent, so not running the first macroreps will not
+# impact the results of the later ones.
+EXTRA_RNG_ADVANCEMENTS = 5
+# Whether to print the responses from each macroreplication.
+PRINT_RESPONSES = True
 
 # #####################################################################################
 # Main Script Execution:
 # This section contains the core logic and should typically NOT be modified by users.
-# All user-specific settings are handled in the `get_config()` function above.
+# All user-specific settings are handled in the configuration section above.
 # #####################################################################################
 
 
@@ -134,36 +120,47 @@ class DecisionVectorExperiment:
                 rng.advance_subsubstream()
 
         responses, _ = self.mymodel.replicate(rng_list)
+        if PRINT_RESPONSES:
+            non_dict_responses = {
+                key: value
+                for key, value in responses.items()
+                if not isinstance(value, dict)
+            }
+            print_table(
+                f"Responses - mrep {mrep + 1}",
+                ["Response", "Value"],
+                non_dict_responses,
+            )
         return mrep, responses["AvgWaitTime"]
 
 
 def main() -> None:
     """Main function to run the data farming experiment."""
-    # Fetch the configuration settings.
-    config = get_config()
-    num_macroreps = config["num_macroreps"]
-    decision_vector_min = config["decision_vector_min"]
-    decision_vector_max = config["decision_vector_max"]
-    decision_vector_step = config["decision_vector_step"]
-    runtime = config["runtime"]
-    extra_rng_advancements = config["extra_rng_advancements"]
-
-    # Print the configuration settings as a table.
+    # Print the configuration settings.
     config_header = ["Parameter", "Value"]
+    # NOTE: Make sure all the configurable parameters are included in the config.
+    config = {
+        "decision_vector_min": DECISION_VECTOR_MIN,
+        "decision_vector_max": DECISION_VECTOR_MAX,
+        "decision_vector_step": DECISION_VECTOR_STEP,
+        "runtime": RUNTIME,
+        "num_macroreps": NUM_MACROREPS,
+        "extra_rng_advancements": EXTRA_RNG_ADVANCEMENTS,
+    }
     print_table("Configuration Settings", config_header, config)
 
     # Set fixed factors for the traffic signal.
     # NOTE: decision_vector_mult will be overridden by the loop below.
-    fixed_factors: dict[str, Any] = {"runtime": runtime}
+    fixed_factors: dict[str, Any] = {"runtime": RUNTIME}
     experiments: list[DecisionVectorExperiment] = []
 
     # Run each experiment with a different decision vector multiplier.
     import numpy as np
 
     step_range = np.arange(
-        decision_vector_min,
-        decision_vector_max + decision_vector_step,
-        decision_vector_step,
+        DECISION_VECTOR_MIN,
+        DECISION_VECTOR_MAX + DECISION_VECTOR_STEP,
+        DECISION_VECTOR_STEP,
     )
 
     # Create the list of experiments with different decision vector multipliers.
@@ -174,8 +171,8 @@ def main() -> None:
                 exp_idx=idx,
                 decision_val=mult,
                 fixed_factors=fixed_factors,
-                num_macroreps=num_macroreps,
-                extra_rng_advancements=extra_rng_advancements,
+                num_macroreps=NUM_MACROREPS,
+                extra_rng_advancements=EXTRA_RNG_ADVANCEMENTS,
             )
             experiments.append(experiment)
         except Exception as e:
@@ -188,15 +185,15 @@ def main() -> None:
         mult = exp.fixed_factors["decision_vector"][0]
         print(f"\n> Running experiment {exp.exp_idx} with multiplier {mult:.2f} ")
 
-        num_processes = min(num_macroreps, os.cpu_count() or 1)
+        num_processes = min(NUM_MACROREPS, os.cpu_count() or 1)
         with Pool(num_processes) as process_pool:
             print(
-                f"> Running {num_macroreps} macroreplications in parallel "
+                f"> Running {NUM_MACROREPS} macroreplications in parallel "
                 f"using {num_processes} processes..."
             )
             # Use a pool of processes to run macroreplications in parallel.
             for mrep, wait_time in process_pool.imap_unordered(
-                exp._run_macroreplication, range(num_macroreps)
+                exp._run_macroreplication, range(NUM_MACROREPS)
             ):
                 # Store the average wait time for each macroreplication.
                 exp.avg_waits[mrep] = wait_time
