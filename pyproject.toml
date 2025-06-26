@@ -7,7 +7,7 @@ packages = ["simopt", "simopt.gui", "simopt.models", "simopt.solvers"]
 
 [project]
 name = "simoptlib"
-version = "1.1.1"
+version = "1.2.0"
 authors = [
   { name = "David Eckman", email = "eckman@tamu.edu" },
   { name = "Shane Henderson", email = "sgh9@cornell.edu" },

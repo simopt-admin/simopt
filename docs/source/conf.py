@@ -27,7 +27,7 @@ sys.path.insert(0, str(project_path))
 project = "SimOpt"
 copyright = "2025, simopt-admin"  # noqa: A001
 author = "simopt-admin"
-release = "1.1.1"
+release = "1.2.0"
 
 # -- General configuration ---------------------------------------------------
 
