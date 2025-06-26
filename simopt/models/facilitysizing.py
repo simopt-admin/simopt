@@ -1,71 +1,53 @@
-"""
-Summary
--------
-Simulate demand at facilities.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/facilitysizing.html>`__.
-"""
+"""Simulate demand at facilities."""
 
 from __future__ import annotations
 
 from typing import Callable, Final
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty, override
 
 NUM_FACILITIES: Final[int] = 3
 
 
 class FacilitySize(Model):
-    """
-    A model that simulates a facilitysize problem with a
-    multi-variate normal distribution.
-    Returns the probability of violating demand in each scenario.
+    """Facility Sizing Model.
 
-    Attributes
-    ----------
-    name : string
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI and data validation)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Arguments
-    ---------
-    fixed_factors : nested dict
-        fixed factors of the simulation model
-
-    See also
-    --------
-    base.Model
+    A model that simulates a facilitysize problem with a multi-variate normal
+    distribution. Returns the probability of violating demand in each scenario.
     """
 
-    @property
-    def name(self) -> str:
+    @classproperty
+    @override
+    def class_name_abbr(cls) -> str:
         return "FACSIZE"
 
-    @property
-    def n_rngs(self) -> int:
+    @classproperty
+    @override
+    def class_name(cls) -> str:
+        return "Facility Sizing"
+
+    @classproperty
+    @override
+    def n_rngs(cls) -> int:
         return 1
 
-    @property
-    def n_responses(self) -> int:
+    @classproperty
+    @override
+    def n_responses(cls) -> int:
         return 3
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    @override
+    def specifications(cls) -> dict[str, dict]:
         return {
             "mean_vec": {
-                "description": "location parameters of the multivariate normal distribution",
+                "description": (
+                    "location parameters of the multivariate normal distribution"
+                ),
                 "datatype": list,
                 "default": [100] * NUM_FACILITIES,
             },
@@ -92,222 +74,170 @@ class FacilitySize(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "mean_vec": self.check_mean_vec,
-            "cov": self.check_cov,
-            "capacity": self.check_capacity,
-            "n_fac": self.check_n_fac,
+            "mean_vec": self._check_mean_vec,
+            "cov": self._check_cov,
+            "capacity": self._check_capacity,
+            "n_fac": self._check_n_fac,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the FacilitySize model.
+
+        Args:
+            fixed_factors (dict | None): Fixed factors for the model.
+                If None, default values are used.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def check_mean_vec(self) -> None:
+    def _check_mean_vec(self) -> None:
         if any(mean <= 0 for mean in self.factors["mean_vec"]):
             raise ValueError("All elements in mean_vec must be greater than 0.")
 
-    def check_cov(self) -> bool:
+    def _check_cov(self) -> bool:
         try:
-            np.linalg.cholesky(np.matrix(self.factors["cov"]))
+            np.linalg.cholesky(np.array(self.factors["cov"]))
             return True
-        except np.linalg.linalg.LinAlgError as err:
-            if "Matrix is not positive definite" in err.message:
+        except np.linalg.LinAlgError as err:
+            if "Matrix is not positive definite" in str(err):
                 return False
-            else:
-                raise
+            raise
 
-    def check_capacity(self) -> None:
+    def _check_capacity(self) -> None:
         if len(self.factors["capacity"]) != self.factors["n_fac"]:
             raise ValueError("The length of capacity must equal n_fac.")
 
-    def check_n_fac(self) -> None:
+    def _check_n_fac(self) -> None:
         if self.factors["n_fac"] <= 0:
             raise ValueError("n_fac must be greater than 0.")
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if len(self.factors["capacity"]) != self.factors["n_fac"]:
             raise ValueError("The length of capacity must be equal to n_fac.")
-        elif len(self.factors["mean_vec"]) != self.factors["n_fac"]:
+        if len(self.factors["mean_vec"]) != self.factors["n_fac"]:
             raise ValueError("The length of mean_vec must be equal to n_fac.")
-        elif len(self.factors["cov"]) != self.factors["n_fac"]:
+        if len(self.factors["cov"]) != self.factors["n_fac"]:
             raise ValueError("The length of cov must be equal to n_fac.")
-        elif len(self.factors["cov"][0]) != self.factors["n_fac"]:
+        if len(self.factors["cov"][0]) != self.factors["n_fac"]:
             raise ValueError("The length of cov[0] must be equal to n_fac.")
-        else:
-            return True
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication using the current model factors.
 
         Args:
-            rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-                rngs for model to use when simulating a replication
+            rng_list (list[MRG32k3a]): Random number generators for the model to use
+                when simulating a replication.
 
         Returns:
-            A tuple containing both a dictionary of responses and a dictionary
-            of gradient estimates for each response.
-            The responses dictionary contains the following keys:
-            stockout_flag : boolean
-            false - all facilities satisfy the demand, true - at least one of the facilities did not satisfy the demand
-            n_fac_stockout : integer
-            the number of facilities which cannot satisfy the demand
-            n_cut : integer
-            the number of toal demand which cannot be satisfied
-        """
+            tuple: A tuple containing:
+                - dict: The responses dictionary, with keys:
+                    - "stockout_flag" (bool): True if at least one facility failed to satisfy demand;
+                        False otherwise.
+                    - "n_fac_stockout" (int): Number of facilities that could not satisfy demand.
+                    - "n_cut" (int): Total number of demand units that could not be satisfied.
+                - dict: Gradient estimates for each response.
+        """  # noqa: E501
+        mean_vec: list[float | int] = self.factors["mean_vec"]
+        cov = np.array(self.factors["cov"])
+        capacity = np.array(self.factors["capacity"])
         # Designate RNG for demands.
         demand_rng = rng_list[0]
-        stockout_flag = 0
-        n_fac_stockout = 0
-        n_cut = 0
-        # Generate random demands at facilities from truncated multivariate normal distribution.
-        demand = demand_rng.mvnormalvariate(
-            self.factors["mean_vec"], self.factors["cov"], factorized=False
-        )
-        while np.any(demand < 0):
-            demand = demand_rng.mvnormalvariate(
-                self.factors["mean_vec"], self.factors["cov"], factorized=False
-            )
+        # Generate random demands at facilities from truncated mv normal distribution.
+        while True:
+            demand = np.array(demand_rng.mvnormalvariate(mean_vec, cov))
+            # Only leave if all demands are non-negative.
+            if np.all(demand >= 0):
+                break
         # Check for stockouts.
-        for i in range(self.factors["n_fac"]):
-            if demand[i] > self.factors["capacity"][i]:
-                n_fac_stockout = n_fac_stockout + 1
-                stockout_flag = 1
-                n_cut += demand[i] - self.factors["capacity"][i]
+        extra_demand = demand - capacity
+        pos_excess_mask = extra_demand > 0
+        n_fac_stockout = np.sum(pos_excess_mask).astype(int)
+        n_cut = np.sum(extra_demand[pos_excess_mask]).astype(int)
         # Compose responses and gradients.
         responses = {
-            "stockout_flag": stockout_flag,
+            "stockout_flag": int(n_fac_stockout > 0),
             "n_fac_stockout": n_fac_stockout,
             "n_cut": n_cut,
         }
         gradients = {
-            response_key: {
-                factor_key: np.nan for factor_key in self.specifications
-            }
+            response_key: dict.fromkeys(self.specifications, np.nan)
             for response_key in responses
         }
         return responses, gradients
 
 
-"""
-Summary
--------
-Minimize the (deterministic) total cost of installing capacity at
-facilities subject to a chance constraint on stockout probability.
-"""
-
-
 class FacilitySizingTotalCost(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems."""
 
-    Attributes
-    ----------
-    name : string
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    lower_bounds : tuple
-        lower bound for each decision variable
-    upper_bounds : tuple
-        upper bound for each decision variable
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : float
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : Model object
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
+    @classproperty
+    @override
+    def class_name_abbr(cls) -> str:
+        return "FACSIZE-1"
 
-    Arguments
-    ---------
-    name : str
-        user-specified name for problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
+    @classproperty
+    @override
+    def class_name(cls) -> str:
+        return "Min Total Cost for Facility Sizing"
 
-    See also
-    --------
-    base.Problem
-    """
-
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    @override
+    def n_objectives(cls) -> int:
         return 1
 
-    @property
-    def n_stochastic_constraints(self) -> int:
+    @classproperty
+    @override
+    def n_stochastic_constraints(cls) -> int:
         return 1
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    @override
+    def minmax(cls) -> tuple[int]:
         return (-1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    @override
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.STOCHASTIC
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    @override
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    @override
+    def gradient_available(cls) -> bool:
         return True
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    @override
+    def optimal_value(cls) -> None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    @override
+    def optimal_solution(cls) -> None:
         # return (185, 185, 185)
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    @override
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    @override
+    def model_decision_factors(cls) -> set[str]:
         return {"capacity"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    @override
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
@@ -333,23 +263,27 @@ class FacilitySizingTotalCost(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "installation_costs": self.check_installation_costs,
-            "epsilon": self.check_epsilon,
+            "installation_costs": self._check_installation_costs,
+            "epsilon": self._check_epsilon,
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["n_fac"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
@@ -359,6 +293,15 @@ class FacilitySizingTotalCost(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the FacilitySizingTotalCost problem.
+
+        Args:
+            name (str): User-specified name for the problem.
+            fixed_factors (dict | None): User-specified problem factors.
+                If None, default values are used.
+            model_fixed_factors (dict | None): Subset of user-specified
+                non-decision factors to pass through to the model.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -367,346 +310,155 @@ class FacilitySizingTotalCost(Problem):
             model=FacilitySize,
         )
 
-    def check_installation_costs(self) -> None:
-        if (
-            len(self.factors["installation_costs"])
-            != self.model.factors["n_fac"]
-        ):
-            raise ValueError(
-                "The length of installation_costs must equal n_fac."
-            )
-        elif any([elem < 0 for elem in self.factors["installation_costs"]]):
+    def _check_installation_costs(self) -> None:
+        if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
+            raise ValueError("The length of installation_costs must equal n_fac.")
+        if any(elem < 0 for elem in self.factors["installation_costs"]):
             raise ValueError(
                 "All elements in installation_costs must be greater than or equal to 0."
             )
 
-    def check_epsilon(self) -> None:
-        if 0 > self.factors["epsilon"] or self.factors["epsilon"] > 1:
+    def _check_epsilon(self) -> None:
+        if self.factors["epsilon"] < 0 or self.factors["epsilon"] > 1:
             raise ValueError(
-                "epsilon must be greater than or equal to 0 and less than or equal to 1."
+                "epsilon must be greater than or equal to 0 and less than or equal "
+                "to 1."
             )
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        return {"capacity": vector[:]}
 
-        Arguments
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns
-        -------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-        """
-        factor_dict = {"capacity": vector[:]}
-        return factor_dict
-
+    @override
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        return tuple(factor_dict["capacity"])
 
-        Arguments
-        ---------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
+    @override
+    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
+        return (np.nan * len(self.model.factors["capacity"]),)
 
-        Returns
-        -------
-        vector : tuple
-            vector of values associated with decision variables
-        """
-        vector = tuple(factor_dict["capacity"])
-        return vector
+    @override
+    def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
+        return (0,)
 
-    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:
-        """Convert a dictionary with factor keys to a gradient vector.
-
-        Notes
-        -----
-        A subclass of ``base.Problem`` can have its own custom
-        ``factor_dict_to_vector_gradients`` method if the
-        objective is deterministic.
-
-        Parameters
-        ----------
-        factor_dict : dict
-            Dictionary with factor keys and associated values.
-
-        Returns
-        -------
-        vector : tuple
-            Vector of partial derivatives associated with decision variables.
-        """
-        vector = (np.nan * len(self.model.factors["capacity"]),)
-        return vector
-
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
-
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        objectives : tuple
-            vector of objectives
-        """
-        objectives = (0,)
-        return objectives
-
-    def response_dict_to_objectives_gradients(
-        self, response_dict: dict
-    ) -> tuple:
-        """Convert a dictionary with response keys to a vector
-        of gradients.
-
-        Notes
-        -----
-        A subclass of ``base.Problem`` can have its own custom
-        ``response_dict_to_objectives_gradients`` method if the
-        objective is deterministic.
-
-        Parameters
-        ----------
-        response_dict : dict
-            Dictionary with response keys and associated values.
-
-        Returns
-        -------
-        tuple
-            Vector of gradients.
-        """
+    @override
+    def response_dict_to_objectives_gradients(self, _response_dict: dict) -> tuple:
         return ((0,) * len(self.model.factors["capacity"]),)
 
     def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
+        """Convert a response dictionary to a vector of stochastic constraint values.
+
+        Each returned value represents the left-hand side of a constraint of the form
+        E[Y] ≤ 0.
+
+        Args:
+            response_dict (dict): A dictionary containing response keys and their
+                associated values.
+
+        Returns:
+            tuple: A tuple representing the left-hand sides of the stochastic
+                constraints.
         """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
+        return (response_dict["stockout_flag"],)
 
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
+    def deterministic_stochastic_constraints_and_gradients(self) -> tuple[tuple, tuple]:
+        """Compute deterministic components of stochastic constraints.
 
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = (response_dict["stockout_flag"],)
-        return stoch_constraints
-
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of stochastic constraints
+        Returns:
+            tuple:
+                - tuple: The deterministic components of the stochastic constraints.
+                - tuple: The gradients of those deterministic components.
         """
         det_stoch_constraints = (-self.factors["epsilon"],)
         det_stoch_constraints_gradients = ((0,),)
         return det_stoch_constraints, det_stoch_constraints_gradients
 
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
+    @override
+    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
         det_objectives = (np.dot(self.factors["installation_costs"], x),)
         det_objectives_gradients = (tuple(self.factors["installation_costs"]),)
         return det_objectives, det_objectives_gradients
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
-        # Check box constraints.
-        box_feasible = super().check_deterministic_constraints(x)
-        return box_feasible
-
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
-
-        Arguments
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample a new random solution
-
-        Returns
-        -------
-        x : tuple
-            vector of decision variables
-        """
         cov_matrix = np.diag([x**2 for x in self.factors["initial_solution"]])
         x = rand_sol_rng.mvnormalvariate(
             self.factors["initial_solution"], cov_matrix, factorized=False
         )
-        while np.any(x < 0):
+        while any(elem < 0 for elem in x):
             x = rand_sol_rng.mvnormalvariate(
                 self.factors["initial_solution"], cov_matrix, factorized=False
             )
         return tuple(x)
 
 
-"""
-Summary
--------
-Maximize the probability of not stocking out subject to a budget
-constraint on the total cost of installing capacity.
-"""
-
-
 class FacilitySizingMaxService(Problem):
-    """
-    Base class to implement simulation-optimization problems.
+    """Base class to implement simulation-optimization problems."""
 
-    Attributes
-    ----------
-    name : string
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    lower_bounds : tuple
-        lower bound for each decision variable
-    upper_bounds : tuple
-        upper bound for each decision variable
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : tuple
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : Model object
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
+    @classproperty
+    @override
+    def class_name_abbr(cls) -> str:
+        return "FACSIZE-2"
 
-    Arguments
-    ---------
-    name : str
-        user-specified name for problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
+    @classproperty
+    @override
+    def class_name(cls) -> str:
+        return "Max Service for Facility Sizing"
 
-    See also
-    --------
-    base.Problem
-    """
-
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    @override
+    def n_objectives(cls) -> int:
         return 1
 
-    @property
-    def n_stochastic_constraints(self) -> int:
+    @classproperty
+    @override
+    def n_stochastic_constraints(cls) -> int:
         return 0
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    @override
+    def minmax(cls) -> tuple[int]:
         return (1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    @override
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.DETERMINISTIC
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    @override
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    @override
+    def gradient_available(cls) -> bool:
         return False
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    @override
+    def optimal_value(cls) -> float | None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    @override
+    def optimal_solution(cls) -> None:
         # return (175, 179, 143)
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    @override
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    @override
+    def model_decision_factors(cls) -> set[str]:
         return {"capacity"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    @override
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "Initial solution from which solvers start.",
@@ -731,23 +483,27 @@ class FacilitySizingMaxService(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
-            "installation_costs": self.check_installation_costs,
-            "installation_budget": self.check_installation_budget,
+            "installation_costs": self._check_installation_costs,
+            "installation_budget": self._check_installation_budget,
         }
 
     @property
+    @override
     def dim(self) -> int:
         return self.model.factors["n_fac"]
 
     @property
+    @override
     def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
+    @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
@@ -757,6 +513,15 @@ class FacilitySizingMaxService(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the FacilitySizingMaxService problem.
+
+        Args:
+            name (str): User-specified name for the problem.
+            fixed_factors (dict | None): User-specified problem factors.
+                If None, default values are used.
+            model_fixed_factors (dict | None): Subset of user-specified
+                non-decision factors to pass through to the model.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -765,172 +530,48 @@ class FacilitySizingMaxService(Problem):
             model=FacilitySize,
         )
 
-    def check_installation_costs(self) -> bool:
-        if (
-            len(self.factors["installation_costs"])
-            != self.model.factors["n_fac"]
-        ):
-            return False
-        elif any([elem < 0 for elem in self.factors["installation_costs"]]):
-            return False
-        else:
-            return True
+    def _check_installation_costs(self) -> bool:
+        return not (
+            len(self.factors["installation_costs"]) != self.model.factors["n_fac"]
+            or any(elem < 0 for elem in self.factors["installation_costs"])
+        )
 
-    def check_installation_budget(self) -> bool:
+    def _check_installation_budget(self) -> bool:
         return self.factors["installation_budget"] > 0
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
+        return {"capacity": vector[:]}
 
-        Arguments
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns
-        -------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-        """
-        factor_dict = {"capacity": vector[:]}
-        return factor_dict
-
+    @override
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
+        return tuple(factor_dict["capacity"])
 
-        Arguments
-        ---------
-        factor_dict : dictionary
-            dictionary with factor keys and associated values
-
-        Returns
-        -------
-        vector : tuple
-            vector of values associated with decision variables
-        """
-        vector = tuple(factor_dict["capacity"])
-        return vector
-
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        return (1 - response_dict["stockout_flag"],)
 
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        objectives : tuple
-            vector of objectives
-        """
-        objectives = (1 - response_dict["stockout_flag"],)
-        return objectives
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
-
-        Arguments
-        ---------
-        response_dict : dictionary
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        tuple
-            vector of deterministic components of objectives
-        tuple
-            vector of gradients of deterministic components of objectives
-        """
+    @override
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         det_objectives = (0,)
         det_objectives_gradients = ((0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
+    @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic constraints.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
-        # Check budget constraint.
+        # Check budget constraint
         budget_feasible = (
             np.dot(self.factors["installation_costs"], x)
             <= self.factors["installation_budget"]
         )
-        # Check box constraints.
-        box_feasible = super().check_deterministic_constraints(x)
-        return budget_feasible * box_feasible
+        if not budget_feasible:
+            return False
 
+        # Check box constraints from the base class
+        return super().check_deterministic_constraints(x)
+
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
-
-        Arguments
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a object
-            random-number generator used to sample a new random solution
-
-        Returns
-        -------
-        tuple
-            vector of decision variables
-        """
         # Generate random vector of length # of facilities of continuous values
         # summing to less than or equal to installation budget.
         x = rand_sol_rng.continuous_random_vector_from_simplex(

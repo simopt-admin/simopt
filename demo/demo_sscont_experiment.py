@@ -4,25 +4,26 @@ Produces plots appearing in the INFORMS Journal on Computing submission.
 """
 
 import sys
-import os.path as o
+from pathlib import Path
 
-sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
-)  # type:ignore
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from simopt.experiment_base import (
+    PlotType,
     ProblemSolver,
     plot_area_scatterplots,
-    post_normalize,
     plot_progress_curves,
-    read_experiment_results,
     plot_solvability_profiles,
-    plot_terminal_scatterplots,
     plot_terminal_progress,
+    plot_terminal_scatterplots,
+    post_normalize,
+    read_experiment_results,
 )
 
 
 def main() -> None:
+    """Main function to run the demo script."""
     # Default values of the (s, S) model:
     # "demand_mean": 100.0
     # "lead_mean": 6.0
@@ -150,7 +151,9 @@ def main() -> None:
                 )
                 # Rename problem and solver to produce nicer plot labels.
                 new_experiment.solver.name = f"RS{rs_ss}"
-                new_experiment.problem.name = rf"SSCONT-1 with $\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
+                new_experiment.problem.name = (
+                    rf"SSCONT-1 with $\mu_D={round(dm)}$ and $\mu_L={round(lm)}$"
+                )
                 experiments_same_solver.append(new_experiment)
         experiments.append(experiments_same_solver)
     # Load ASTRO-DF results.
@@ -217,7 +220,7 @@ def main() -> None:
     )
     plot_solvability_profiles(
         experiments,
-        plot_type="cdf_solvability",
+        plot_type=PlotType.CDF_SOLVABILITY,
         solve_tol=0.1,
         all_in_one=True,
         plot_conf_ints=True,
@@ -225,7 +228,7 @@ def main() -> None:
     )
     plot_solvability_profiles(
         experiments,
-        plot_type="quantile_solvability",
+        plot_type=PlotType.QUANTILE_SOLVABILITY,
         solve_tol=0.1,
         beta=0.5,
         all_in_one=True,
@@ -234,7 +237,7 @@ def main() -> None:
     )
     plot_solvability_profiles(
         experiments=experiments,
-        plot_type="diff_cdf_solvability",
+        plot_type=PlotType.DIFF_CDF_SOLVABILITY,
         solve_tol=0.1,
         ref_solver="ASTRO-DF",
         all_in_one=True,
@@ -243,7 +246,7 @@ def main() -> None:
     )
     plot_solvability_profiles(
         experiments=experiments,
-        plot_type="diff_quantile_solvability",
+        plot_type=PlotType.DIFF_QUANTILE_SOLVABILITY,
         solve_tol=0.1,
         beta=0.5,
         ref_solver="ASTRO-DF",
@@ -256,7 +259,7 @@ def main() -> None:
     for i in range(n_problems):
         plot_progress_curves(
             [experiments[solver_idx][i] for solver_idx in range(n_solvers)],
-            plot_type="mean",
+            plot_type=PlotType.MEAN,
             all_in_one=True,
             plot_conf_ints=True,
             print_max_hw=True,
@@ -264,127 +267,154 @@ def main() -> None:
         )
         plot_terminal_progress(
             [experiments[solver_idx][i] for solver_idx in range(n_solvers)],
-            plot_type="violin",
+            plot_type=PlotType.VIOLIN,
             normalize=True,
             all_in_one=True,
         )
 
-    # from math import exp, log, sqrt
-    # import numpy as np
+    # from math import log, sqrt
     # import matplotlib.pyplot as plt
+    # import numpy as np
     # for mu_d in demand_means:
     #     for mu_l in lead_means:
-    #         lq = mu_d*mu_l/3
-    #         uq = mu_d*mu_l+2*sqrt(2*mu_d**2*mu_l)
-    #         mu = (log(lq)+log(uq))/2
-    #         sigma = (log(uq)-mu)/1.96
-    #         print(round(mu_d,0), round(mu_l,0), round(lq,2), round(uq,2), round(mu,2), round(sigma,2))
+    #         lq = mu_d * mu_l / 3
+    #         uq = mu_d * mu_l + 2 * sqrt(2 * mu_d**2 * mu_l)
+    #         mu = (log(lq) + log(uq)) / 2
+    #         sigma = (log(uq) - mu) / 1.96
+    #         print(
+    #             round(mu_d, 0),
+    #             round(mu_l, 0),
+    #             round(lq, 2),
+    #             round(uq, 2),
+    #             round(mu, 2),
+    #             round(sigma, 2),
+    #         )
     #         s = np.random.lognormal(mu, sigma, 1000)
-    #         plt.hist(s, density=True, alpha=0.5, label=str(round(mu_d,0))+','+str(round(mu_l,0)), bins=50, color='blue')
-    #         plt.axvline(lq,color='red')
-    #         plt.axvline(uq,color='red')
-    #         plt.axis('tight')
+    #         plt.hist(
+    #             s,
+    #             density=True,
+    #             alpha=0.5,
+    #             label=str(round(mu_d, 0)) + "," + str(round(mu_l, 0)),
+    #             bins=50,
+    #             color="blue",
+    #         )
+    #         plt.axvline(lq, color="red")
+    #         plt.axvline(uq, color="red")
+    #         plt.axis("tight")
     #         plt.legend()
     #         plt.show()
 
     # # Mean progress curves from all solvers on one problem. Problem instance 0.
-    # plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-    #                      plot_type="mean",
-    #                      all_in_one=True,
-    #                      plot_CIs=True,
-    #                      print_max_hw=False
-    #                      )
+    # plot_progress_curves(
+    #     experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
+    #     plot_type="mean",
+    #     all_in_one=True,
+    #     plot_CIs=True,
+    #     print_max_hw=False,
+    # )
 
     # # Mean progress curves from all solvers on one problem. Problem instance 22.
-    # plot_progress_curves(experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
-    #                      plot_type="mean",
-    #                      all_in_one=True,
-    #                      plot_CIs=True,
-    #                      print_max_hw=False
-    #                      )
+    # plot_progress_curves(
+    #     experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
+    #     plot_type="mean",
+    #     all_in_one=True,
+    #     plot_CIs=True,
+    #     print_max_hw=False,
+    # )
 
-    # # Plot 0.9-quantile progress curves from all solvers on one problem. Problem instance 0.
-    # plot_progress_curves(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-    #                      plot_type="quantile",
-    #                      beta=0.9,
-    #                      all_in_one=True,
-    #                      plot_CIs=True,
-    #                      print_max_hw=False
-    #                      )
+    # # Plot 0.9-quantile progress curves from all solvers on one problem.
+    # # Problem instance 0.
+    # plot_progress_curves(
+    #     experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
+    #     plot_type="quantile",
+    #     beta=0.9,
+    #     all_in_one=True,
+    #     plot_CIs=True,
+    #     print_max_hw=False,
+    # )
 
-    # # Plot 0.9-quantile progress curves from all solvers on one problem. Problem instance 22.
-    # plot_progress_curves(experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
-    #                      plot_type="quantile",
-    #                      beta=0.9,
-    #                      all_in_one=True,
-    #                      plot_CIs=True,
-    #                      print_max_hw=False
-    #                      )
+    # # Plot 0.9-quantile progress curves from all solvers on one problem.
+    # # Problem instance 22.
+    # plot_progress_curves(
+    #     experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
+    #     plot_type="quantile",
+    #     beta=0.9,
+    #     all_in_one=True,
+    #     plot_CIs=True,
+    #     print_max_hw=False,
+    # )
 
-    # # Plot cdf of 0.2-solve times for all solvers on one problem. Problem instance 0.
-    # plot_solvability_cdfs(experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-    #                       solve_tol=0.2,
-    #                       all_in_one=True,
-    #                       plot_CIs=True,
-    #                       print_max_hw=False
-    #                       )
+    # # Plot cdf of 0.2-solve times for all solvers on one problem.
+    # # Problem instance 0.
+    # plot_solvability_cdfs(
+    #     experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
+    #     solve_tol=0.2,
+    #     all_in_one=True,
+    #     plot_CIs=True,
+    #     print_max_hw=False,
+    # )
 
-    # # Plot cdf of 0.2-solve times for all solvers on one problem. Problem instance 22.
-    # plot_solvability_cdfs(experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
-    #                       solve_tol=0.2,
-    #                       all_in_one=True,
-    #                       plot_CIs=True,
-    #                       print_max_hw=False
-    #                       )
+    # # Plot cdf of 0.2-solve times for all solvers on one problem.
+    # # Problem instance 22.
+    # plot_solvability_cdfs(
+    #     experiments=[experiments[solver_idx][22] for solver_idx in range(n_solvers)],
+    #     solve_tol=0.2,
+    #     all_in_one=True,
+    #     plot_CIs=True,
+    #     print_max_hw=False,
+    # )
 
     # # Plot area scatterplots of all solvers on all problems.
-    # plot_area_scatterplots(experiments=experiments,
-    #                        all_in_one=True,
-    #                        plot_CIs=False,
-    #                        print_max_hw=False
-    #                        )
+    # plot_area_scatterplots(
+    #     experiments=experiments, all_in_one=True, plot_CIs=False, print_max_hw=False
+    # )
 
     # # Plot cdf 0.1-solvability profiles of all solvers on all problems.
-    # plot_solvability_profiles(experiments=experiments,
-    #                           plot_type="cdf_solvability",
-    #                           all_in_one=True,
-    #                           plot_CIs=True,
-    #                           print_max_hw=False,
-    #                           solve_tol=0.1
-    #                           )
+    # plot_solvability_profiles(
+    #     experiments=experiments,
+    #     plot_type="cdf_solvability",
+    #     all_in_one=True,
+    #     plot_CIs=True,
+    #     print_max_hw=False,
+    #     solve_tol=0.1,
+    # )
 
     # # Plot 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
-    # plot_solvability_profiles(experiments=experiments,
-    #                           plot_type="quantile_solvability",
-    #                           all_in_one=True,
-    #                           plot_CIs=True,
-    #                           print_max_hw=False,
-    #                           solve_tol=0.1,
-    #                           beta=0.5
-    #                           )
+    # plot_solvability_profiles(
+    #     experiments=experiments,
+    #     plot_type="quantile_solvability",
+    #     all_in_one=True,
+    #     plot_CIs=True,
+    #     print_max_hw=False,
+    #     solve_tol=0.1,
+    #     beta=0.5,
+    # )
 
     # # Plot difference of cdf 0.1-solvability profiles of all solvers on all problems.
     # # Reference solver = ASTRO-DF.
-    # plot_solvability_profiles(experiments=experiments,
-    #                           plot_type="diff_cdf_solvability",
-    #                           all_in_one=True,
-    #                           plot_CIs=True,
-    #                           print_max_hw=False,
-    #                           solve_tol=0.1,
-    #                           ref_solver="ASTRO-DF"
-    #                           )
+    # plot_solvability_profiles(
+    #     experiments=experiments,
+    #     plot_type="diff_cdf_solvability",
+    #     all_in_one=True,
+    #     plot_CIs=True,
+    #     print_max_hw=False,
+    #     solve_tol=0.1,
+    #     ref_solver="ASTRO-DF",
+    # )
 
-    # # Plot difference of 0.5-quantile 0.1-solvability profiles of all solvers on all problems.
+    # # Plot difference of 0.5-quantile 0.1-solvability profiles of all solvers on
+    # # all problems.
     # # Reference solver = ASTRO-DF.
-    # plot_solvability_profiles(experiments=experiments,
-    #                           plot_type="diff_quantile_solvability",
-    #                           all_in_one=True,
-    #                           plot_CIs=True,
-    #                           print_max_hw=False,
-    #                           solve_tol=0.1,
-    #                           beta=0.5,
-    #                           ref_solver="ASTRO-DF"
-    #                           )
+    # plot_solvability_profiles(
+    #     experiments=experiments,
+    #     plot_type="diff_quantile_solvability",
+    #     all_in_one=True,
+    #     plot_CIs=True,
+    #     print_max_hw=False,
+    #     solve_tol=0.1,
+    #     beta=0.5,
+    #     ref_solver="ASTRO-DF",
+    # )
 
 
 if __name__ == "__main__":

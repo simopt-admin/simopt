@@ -1,0 +1,9 @@
+from pathlib import Path
+from typing import Any, TypeVar
+
+T = TypeVar("T")
+
+def classproperty(func: Any) -> Any: ...  # noqa: ANN401
+def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> float: ...
+def override(func: T) -> T: ...
+def resolve_file_path(target: str | Path, directory: str | Path) -> Path: ...

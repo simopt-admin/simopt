@@ -1,14 +1,8 @@
-"""
-Summary
--------
-Simulate multiple periods of production and sales for an iron ore inventory problem.
-A detailed description of the model/problem can be found
-`here <https://simopt.readthedocs.io/en/latest/ironore.html>`__.
+"""Simulate production and sales over multiple periods for an iron ore inventory."""
 
-Changed get_random_solution quantiles
-    from 10 and 200 => mean=59.887, sd=53.338, p(X>100)=0.146
-    to 10 and 1000 => mean=199.384, sd=343.925, p(X>100)=0.5
-"""
+# Changed get_random_solution quantiles
+#     from 10 and 200 => mean=59.887, sd=53.338, p(X>100)=0.146
+#     to 10 and 1000 => mean=199.384, sd=343.925, p(X>100)=0.5
 
 from __future__ import annotations
 
@@ -16,57 +10,34 @@ from math import copysign, sqrt
 from typing import Callable
 
 import numpy as np
-from mrg32k3a.mrg32k3a import MRG32k3a
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.utils import classproperty, override
 
 
 class IronOre(Model):
-    """
+    """Iron Ore Inventory Model.
+
     A model that simulates multiple periods of production and sales for an
     inventory problem with stochastic price determined by a mean-reverting
     random walk. Returns total profit, fraction of days producing iron, and
     mean stock.
-
-    Attributes
-    ----------
-    name : str
-        name of model
-    n_rngs : int
-        number of random-number generators used to run a simulation replication
-    n_responses : int
-        number of responses (performance measures)
-    factors : dict
-        changeable factors of the simulation model
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    check_factor_list : dict
-        switch case for checking factor simulatability
-
-    Arguments
-    ----------
-    fixed_factors : dict
-        fixed_factors of the simulation model
-
-    See also
-    --------
-    base.Model
     """
 
-    @property
-    def name(self) -> str:
-        return "IRONORE"
-
-    @property
-    def n_rngs(self) -> int:
+    @classproperty
+    @override
+    def n_rngs(cls) -> int:
         return 1
 
-    @property
-    def n_responses(self) -> int:
+    @classproperty
+    @override
+    def n_responses(cls) -> int:
         return 3
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    @override
+    def specifications(cls) -> dict[str, dict]:
         return {
             "mean_price": {
                 "description": "mean iron ore price per unit",
@@ -121,12 +92,12 @@ class IronOre(Model):
             "price_stop": {
                 "description": "price level to stop production",
                 "datatype": float,
-                "default": 40,
+                "default": 40.0,
             },
             "price_sell": {
                 "description": "price level to sell all stock",
                 "datatype": float,
-                "default": 100,
+                "default": 100.0,
             },
             "n_days": {
                 "description": "number of days to simulate",
@@ -137,109 +108,128 @@ class IronOre(Model):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
-            "mean_price": self.check_mean_price,
-            "max_price": self.check_max_price,
-            "min_price": self.check_min_price,
-            "capacity": self.check_capacity,
-            "st_dev": self.check_st_dev,
-            "holding_cost": self.check_holding_cost,
-            "prod_cost": self.check_prod_cost,
-            "max_prod_perday": self.check_max_prod_perday,
-            "price_prod": self.check_price_prod,
-            "inven_stop": self.check_inven_stop,
-            "price_stop": self.check_price_stop,
-            "price_sell": self.check_price_sell,
-            "n_days": self.check_n_days,
+            "mean_price": self._check_mean_price,
+            "max_price": self._check_max_price,
+            "min_price": self._check_min_price,
+            "capacity": self._check_capacity,
+            "st_dev": self._check_st_dev,
+            "holding_cost": self._check_holding_cost,
+            "prod_cost": self._check_prod_cost,
+            "max_prod_perday": self._check_max_prod_perday,
+            "price_prod": self._check_price_prod,
+            "inven_stop": self._check_inven_stop,
+            "price_stop": self._check_price_stop,
+            "price_sell": self._check_price_sell,
+            "n_days": self._check_n_days,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the Iron Ore Inventory Model.
+
+        Args:
+            fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
     # Check for simulatable factors
-    def check_mean_price(self) -> bool:
+    def _check_mean_price(self) -> bool:
         if self.factors["mean_price"] <= 0:
-            raise ValueError(
-                "Mean iron ore price per unit must be greater than 0."
-            )
+            raise ValueError("Mean iron ore price per unit must be greater than 0.")
         return True
 
-    def check_max_price(self) -> None:
+    def _check_max_price(self) -> None:
         if self.factors["max_price"] <= 0:
             raise ValueError("max_price must be greater than 0.")
 
-    def check_min_price(self) -> None:
+    def _check_min_price(self) -> None:
         if self.factors["min_price"] < 0:
             raise ValueError("min_price must be greater than or equal to 0.")
 
-    def check_capacity(self) -> None:
+    def _check_capacity(self) -> None:
         if self.factors["capacity"] < 0:
             raise ValueError("capacity must be greater than or equal to 0.")
 
-    def check_st_dev(self) -> None:
+    def _check_st_dev(self) -> None:
         if self.factors["st_dev"] <= 0:
             raise ValueError("st_dev must be greater than 0.")
 
-    def check_holding_cost(self) -> None:
+    def _check_holding_cost(self) -> None:
         if self.factors["holding_cost"] <= 0:
             raise ValueError("holding_cost must be greater than 0.")
 
-    def check_prod_cost(self) -> None:
+    def _check_prod_cost(self) -> None:
         if self.factors["prod_cost"] <= 0:
             raise ValueError("prod_cost must be greater than 0.")
 
-    def check_max_prod_perday(self) -> None:
+    def _check_max_prod_perday(self) -> None:
         if self.factors["max_prod_perday"] <= 0:
             raise ValueError("max_prod_perday must be greater than 0.")
 
-    def check_price_prod(self) -> None:
+    def _check_price_prod(self) -> None:
         if self.factors["price_prod"] <= 0:
             raise ValueError("price_prod must be greater than 0.")
 
-    def check_inven_stop(self) -> None:
+    def _check_inven_stop(self) -> None:
         if self.factors["inven_stop"] <= 0:
             raise ValueError("inven_stop must be greater than 0.")
 
-    def check_price_stop(self) -> None:
+    def _check_price_stop(self) -> None:
         if self.factors["price_stop"] <= 0:
             raise ValueError("price_stop must be greater than 0.")
 
-    def check_price_sell(self) -> None:
+    def _check_price_sell(self) -> None:
         if self.factors["price_sell"] <= 0:
             raise ValueError("price_sell must be greater than 0.")
 
-    def check_n_days(self) -> None:
+    def _check_n_days(self) -> None:
         if self.factors["n_days"] < 1:
             raise ValueError("n_days must be greater than or equal to 1.")
 
+    @override
     def check_simulatable_factors(self) -> bool:
         if (self.factors["min_price"] > self.factors["mean_price"]) or (
             self.factors["mean_price"] > self.factors["max_price"]
         ):
             raise ValueError(
-                "mean_price must be greater than or equal to min_price and less than or equal to max_price."
+                "mean_price must be greater than or equal to min_price and less than "
+                "or equal to max_price."
             )
         return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """
-        Simulate a single replication for the current model factors.
+        """Simulate a single replication for the current model factors.
 
-        Arguments
-        ---------
-        rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
-            rngs for model to use when simulating a replication
+        Args:
+            rng_list (list[MRG32k3a]): Random number generators used to simulate
+                the replication.
 
-        Returns
-        -------
-        responses : dict
-            performance measures of interest
-            "total_profit" = The total profit over the time period
-            "frac_producing" = The fraction of days spent producing iron ore
-            "mean_stock" = The average stocks over the time period
+        Returns:
+            tuple[dict, dict]: A tuple containing:
+                - responses (dict): Performance measures of interest, including:
+                    - "total_profit": The total profit over the time period.
+                    - "frac_producing": The fraction of days spent producing iron ore.
+                    - "mean_stock": The average stock over the time period.
+                - gradients (dict): A dictionary of gradient estimates for each
+                    response.
         """
+        n_days: int = self.factors["n_days"]
+        min_price: float = self.factors["min_price"]
+        mean_price: float = self.factors["mean_price"]
+        max_price: float = self.factors["max_price"]
+        st_dev: float = self.factors["st_dev"]
+        price_stop: float = self.factors["price_stop"]
+        inven_stop: int = self.factors["inven_stop"]
+        max_prod_perday: int = self.factors["max_prod_perday"]
+        capacity: int = self.factors["capacity"]
+        prod_cost: float = self.factors["prod_cost"]
+        price_prod: float = self.factors["price_prod"]
+        price_sell: float = self.factors["price_sell"]
+        holding_cost: float = self.factors["holding_cost"]
         # Designate random number generators.
         price_rng = rng_list[0]
         # Initialize quantities to track:
@@ -249,197 +239,145 @@ class IronOre(Model):
         #   - Profit in each period.
         #   - Whether producing or not in each period.
         #   - Production in each period.
-        mkt_price = np.zeros(self.factors["n_days"])
-        mkt_price[0] = self.factors["mean_price"]
-        stock = np.zeros(self.factors["n_days"])
-        profit = np.zeros(self.factors["n_days"])
-        producing = np.zeros(self.factors["n_days"])
-        prod = np.zeros(self.factors["n_days"])
+        mkt_price = np.zeros(n_days)
+        mkt_price[0] = mean_price
+        stock = np.zeros(n_days)
+        prod_costs = np.zeros(n_days)
+        hold_costs = np.zeros(n_days)
+        sell_profit = np.zeros(n_days)
 
         # Run simulation over time horizon.
-        for day in range(1, self.factors["n_days"]):
-            # Determine new price, mean-reverting random walk, Pt = trunc(Pt-1 + Nt(μt,sigma)).
-            # Run μt, mean at period t, where μt = sgn(μ0 - Pt-1) * |μ0 - Pt-1|^(1/4).
-            mean_val = sqrt(
-                sqrt(abs(self.factors["mean_price"] - mkt_price[day]))
-            )
-            mean_dir = copysign(1, self.factors["mean_price"] - mkt_price[day])
-            mean_move = mean_val * mean_dir
-            move = price_rng.normalvariate(mean_move, self.factors["st_dev"])
-            mkt_price[day] = max(
-                min(mkt_price[day - 1] + move, self.factors["max_price"]),
-                self.factors["min_price"],
-            )
-            # If production is underway...
-            if producing[day] == 1:
-                # ... cease production if price goes too low or inventory is too high.
-                if (mkt_price[day] <= self.factors["price_stop"]) | (
-                    stock[day] >= self.factors["inven_stop"]
-                ):
-                    producing[day] = 0
-                else:
-                    prod[day] = min(
-                        self.factors["max_prod_perday"],
-                        self.factors["capacity"] - stock[day],
-                    )
-                    stock[day] = stock[day] + prod[day]
-                    profit[day] = (
-                        profit[day] - prod[day] * self.factors["prod_cost"]
-                    )
-            # If production is not currently underway...
-            else:
-                if (mkt_price[day] >= self.factors["price_prod"]) and (
-                    stock[day] < self.factors["inven_stop"]
-                ):
-                    producing[day] = 1
-                    prod[day] = min(
-                        self.factors["max_prod_perday"],
-                        self.factors["capacity"] - stock[day],
-                    )
-                    stock[day] = stock[day] + prod[day]
-                    profit[day] = (
-                        profit[day] - prod[day] * self.factors["prod_cost"]
-                    )
-            # Sell if price is high enough.
-            if mkt_price[day] >= self.factors["price_sell"]:
-                profit[day] = profit[day] + stock[day] * mkt_price[day]
+        for day in range(1, n_days):
+            # === Initializatize values ===
+            # Initialize today with values from yesterday
+            prior_day = day - 1
+            # Stock doesn't reset between days
+            prev_stock = stock[prior_day]
+            stock[day] = prev_stock
+            # The market price is a random walk, but it's based off of the
+            # previous day's price.
+            prev_price = mkt_price[prior_day]
+            mkt_price[day] = prev_price
+            # We just need yesterday's producing status to help determine
+            # if we should produce today.
+            prev_producing = prod_costs[prior_day] != 0
+
+            # === Price Update: mean-reverting random walk ===
+            price_delta = mean_price - prev_price
+            mean_move = copysign(sqrt(sqrt(abs(price_delta))), price_delta)
+            move = price_rng.normalvariate(mean_move, st_dev)
+            price_today = max(min(prev_price + move, max_price), min_price)
+            mkt_price[day] = price_today
+
+            # === Production Logic ===
+            # If stock is below the inventory stop and either:
+            # - if producing, price is above the price stop
+            # - if not producing, price is above the price prod
+            # then produce the maximum amount possible.
+            if prev_stock < inven_stop and (
+                (prev_producing and price_today >= price_stop)
+                or (not prev_producing and price_today >= price_prod)
+            ):
+                missing_stock = capacity - prev_stock
+                production_amount = min(max_prod_perday, missing_stock)
+                stock[day] += production_amount
+                prod_costs[day] = production_amount * prod_cost
+
+            # === Selling Logic ===
+            if price_today >= price_sell:
+                sell_profit[day] = stock[day] * price_today
                 stock[day] = 0
-            # Charge holding cost.
-            profit[day] = (
-                profit[day] - stock[day] * self.factors["holding_cost"]
-            )
-            # Calculate starting quantities for next period.
-            if day < self.factors["n_days"] - 1:
-                profit[day + 1] = profit[day]
-                stock[day + 1] = stock[day]
-                mkt_price[day + 1] = mkt_price[day]
-                producing[day + 1] = producing[day]
+
+            # === Holding Cost ===
+            hold_costs[day] = stock[day] * holding_cost
+
+        # Calculate total profit
+        profits = sell_profit - prod_costs - hold_costs
+        net_profit = np.sum(profits)
+
+        # Calculate fraction of days producing
+        is_producing_mask = prod_costs != 0
+        frac_producing = np.mean(is_producing_mask)
+
         # Calculate responses from simulation data.
         responses = {
-            "total_profit": profit[self.factors["n_days"] - 1],
-            "frac_producing": np.mean(producing),
+            "total_profit": net_profit,
+            "frac_producing": frac_producing,
             "mean_stock": np.mean(stock),
         }
         gradients = {
-            response_key: {
-                factor_key: np.nan for factor_key in self.specifications
-            }
+            response_key: dict.fromkeys(self.specifications, np.nan)
             for response_key in responses
         }
         return responses, gradients
 
 
-"""
-Summary
--------
-Maximize the expected total profit for iron ore inventory system.
-"""
-
-
 class IronOreMaxRev(Problem):
-    """
-    Class to make iron ore inventory simulation-optimization problems.
+    """Class to make iron ore inventory simulation-optimization problems."""
 
-    Attributes
-    ----------
-    name : str
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : str
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : str
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : float
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : base.Model
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
+    @classproperty
+    @override
+    def class_name_abbr(cls) -> str:
+        return "IRONORE-1"
 
-    Arguments
-    ---------
-    name : str
-        user-specified name of problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
+    @classproperty
+    @override
+    def class_name(cls) -> str:
+        return "Max Revenue for Iron Ore"
 
-    See also
-    --------
-    base.Problem
-    """
-
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    @override
+    def n_objectives(cls) -> int:
         return 1
 
-    @property
-    def n_stochastic_constraints(self) -> int:
+    @classproperty
+    @override
+    def n_stochastic_constraints(cls) -> int:
         return 0
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    @override
+    def minmax(cls) -> tuple[int]:
         return (1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    @override
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    @override
+    def variable_type(cls) -> VariableType:
         return VariableType.MIXED
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    @override
+    def gradient_available(cls) -> bool:
         return False
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    @override
+    def optimal_value(cls) -> float | None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    @override
+    def optimal_solution(cls) -> tuple | None:
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    @override
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    @override
+    def model_decision_factors(cls) -> set[str]:
         return {"price_prod", "inven_stop", "price_stop", "price_sell"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    @override
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "initial solution",
@@ -455,23 +393,27 @@ class IronOreMaxRev(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
         }
 
-    @property
-    def dim(self) -> int:
+    @classproperty
+    @override
+    def dim(cls) -> int:
         return 4
 
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
+    @classproperty
+    @override
+    def lower_bounds(cls) -> tuple:
+        return (0,) * cls.dim
 
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @classproperty
+    @override
+    def upper_bounds(cls) -> tuple:
+        return (np.inf,) * cls.dim
 
     def __init__(
         self,
@@ -479,6 +421,15 @@ class IronOreMaxRev(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the Iron Ore Inventory Problem.
+
+        Args:
+            name (str, optional): Name of the problem. Defaults to "IRONORE-1".
+            fixed_factors (dict, optional): Fixed factors for the problem.
+                Defaults to None.
+            model_fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -487,287 +438,116 @@ class IronOreMaxRev(Problem):
             model=IronOre,
         )
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
-
-        Arguments
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns
-        -------
-        factor_dict : dict
-            dictionary with factor keys and associated values
-        """
-        factor_dict = {
+        return {
             "price_prod": vector[0],
             "inven_stop": vector[1],
             "price_stop": vector[2],
             "price_sell": vector[3],
         }
-        return factor_dict
 
+    @override
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
-
-        Arguments
-        ---------
-        factor_dict : dict
-            dictionary with factor keys and associated values
-
-        Returns
-        -------
-        vector : tuple
-            vector of values associated with decision variables
-        """
-        vector = (
+        return (
             factor_dict["price_prod"],
             factor_dict["inven_stop"],
             factor_dict["price_stop"],
             factor_dict["price_sell"],
         )
-        return vector
 
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        return (response_dict["total_profit"],)
 
-        Arguments
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        objectives : tuple
-            vector of objectives
-        """
-        objectives = (response_dict["total_profit"],)
-        return objectives
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
-
-        Arguments
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
+    @override
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         det_objectives = (0,)
         det_objectives_gradients = ((0, 0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
-    def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
-        # Check box constraints.
-        box_feasible = super().check_deterministic_constraints(x)
-        return box_feasible
-
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
-
-        Arguments
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
-            random-number generator used to sample a new random solution
-
-        Returns
-        -------
-        x : tuple
-            vector of decision variables
-        """
-        # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(2000, 8000), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
-        x = (
+        # return (
+        #     rand_sol_rng.randint(70, 90),
+        #     rand_sol_rng.randint(2000, 8000),
+        #     rand_sol_rng.randint(30, 50),
+        #     rand_sol_rng.randint(90, 110),
+        # )
+        return (
             rand_sol_rng.lognormalvariate(10, 200),
             rand_sol_rng.lognormalvariate(1000, 10000),
             rand_sol_rng.lognormalvariate(10, 200),
             rand_sol_rng.lognormalvariate(10, 200),
         )
-        return x
-
-
-"""
-Summary
--------
-Continuous version of the Maximization of the expected total profit for iron ore inventory system (removing the inven_stop from decision variables).
-"""
 
 
 class IronOreMaxRevCnt(Problem):
-    """
-    Class to make iron ore inventory simulation-optimization problems.
+    """Class to make iron ore inventory simulation-optimization problems."""
 
-    Attributes
-    ----------
-    name : str
-        name of problem
-    dim : int
-        number of decision variables
-    n_objectives : int
-        number of objectives
-    n_stochastic_constraints : int
-        number of stochastic constraints
-    minmax : tuple of int (+/- 1)
-        indicator of maximization (+1) or minimization (-1) for each objective
-    constraint_type : str
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : str
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_available : bool
-        indicates if gradient of objective function is available
-    optimal_value : tuple
-        optimal objective function value
-    optimal_solution : tuple
-        optimal solution
-    model : base.Model
-        associated simulation model that generates replications
-    model_default_factors : dict
-        default values for overriding model-level default factors
-    model_fixed_factors : dict
-        combination of overriden model-level factors and defaults
-    model_decision_factors : set of str
-        set of keys for factors that are decision variables
-    rng_list : [list]  [mrg32k3a.mrg32k3a.MRG32k3a]
-        list of RNGs used to generate a random initial solution
-        or a random problem instance
-    factors : dict
-        changeable factors of the problem
-            initial_solution : tuple
-                default initial solution from which solvers start
-            budget : int > 0
-                max number of replications (fn evals) for a solver to take
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
+    @classproperty
+    @override
+    def class_name_abbr(cls) -> str:
+        return "IRONORECONT-1"
 
-    Arguments
-    ---------
-    name : str
-        user-specified name of problem
-    fixed_factors : dict
-        dictionary of user-specified problem factors
-    model_fixed factors : dict
-        subset of user-specified non-decision factors to pass through to the model
+    @classproperty
+    @override
+    def class_name(cls) -> str:
+        return "Max Revenue for Continuous Iron Ore"
 
-    See also
-    --------
-    base.Problem
-    """
-
-    @property
-    def n_objectives(self) -> int:
+    @classproperty
+    @override
+    def n_objectives(cls) -> int:
         return 1
 
-    @property
-    def n_stochastic_constraints(self) -> int:
+    @classproperty
+    @override
+    def n_stochastic_constraints(cls) -> int:
         return 0
 
-    @property
-    def minmax(self) -> tuple[int]:
+    @classproperty
+    @override
+    def minmax(cls) -> tuple[int]:
         return (1,)
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    @override
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    @override
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_available(self) -> bool:
+    @classproperty
+    @override
+    def gradient_available(cls) -> bool:
         return False
 
-    @property
-    def optimal_value(self) -> float | None:
+    @classproperty
+    @override
+    def optimal_value(cls) -> float | None:
         return None
 
-    @property
-    def optimal_solution(self) -> tuple | None:
+    @classproperty
+    @override
+    def optimal_solution(cls) -> tuple | None:
         return None
 
-    @property
-    def model_default_factors(self) -> dict:
+    @classproperty
+    @override
+    def model_default_factors(cls) -> dict:
         return {}
 
-    @property
-    def model_decision_factors(self) -> set[str]:
+    @classproperty
+    @override
+    def model_decision_factors(cls) -> set[str]:
         return {"price_prod", "price_stop", "price_sell"}
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    @override
+    def specifications(cls) -> dict[str, dict]:
         return {
             "initial_solution": {
                 "description": "initial solution",
@@ -782,23 +562,27 @@ class IronOreMaxRevCnt(Problem):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "initial_solution": self.check_initial_solution,
             "budget": self.check_budget,
         }
 
-    @property
-    def dim(self) -> int:
+    @classproperty
+    @override
+    def dim(cls) -> int:
         return 3
 
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0.0,) * self.dim
+    @classproperty
+    @override
+    def lower_bounds(cls) -> tuple:
+        return (0.0,) * cls.dim
 
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @classproperty
+    @override
+    def upper_bounds(cls) -> tuple:
+        return (np.inf,) * cls.dim
 
     def __init__(
         self,
@@ -806,6 +590,15 @@ class IronOreMaxRevCnt(Problem):
         fixed_factors: dict | None = None,
         model_fixed_factors: dict | None = None,
     ) -> None:
+        """Initialize the Iron Ore Inventory Problem.
+
+        Args:
+            name (str, optional): Name of the problem. Defaults to "IRONORECONT-1".
+            fixed_factors (dict, optional): Fixed factors for the problem.
+                Defaults to None.
+            model_fixed_factors (dict, optional): Fixed factors for the model.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(
             name=name,
@@ -814,167 +607,45 @@ class IronOreMaxRevCnt(Problem):
             model=IronOre,
         )
 
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        """
-        Convert a vector of variables to a dictionary with factor keys
-
-        Arguments
-        ---------
-        vector : tuple
-            vector of values associated with decision variables
-
-        Returns
-        -------
-        factor_dict : dict
-            dictionary with factor keys and associated values
-        """
-        factor_dict = {
+        return {
             "price_prod": vector[0],
             "price_stop": vector[1],
             "price_sell": vector[2],
         }
-        return factor_dict
 
+    @override
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """
-        Convert a dictionary with factor keys to a vector
-        of variables.
-
-        Arguments
-        ---------
-        factor_dict : dict
-            dictionary with factor keys and associated values
-
-        Returns
-        -------
-        vector : tuple
-            vector of values associated with decision variables
-        """
-        vector = (
+        return (
             factor_dict["price_prod"],
             factor_dict["price_stop"],
             factor_dict["price_sell"],
         )
-        return vector
 
+    @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of objectives.
+        return (response_dict["total_profit"],)
 
-        Arguments
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        objectives : tuple
-            vector of objectives
-        """
-        objectives = (response_dict["total_profit"],)
-        return objectives
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """
-        Convert a dictionary with response keys to a vector
-        of left-hand sides of stochastic constraints: E[Y] <= 0
-
-        Arguments
-        ---------
-        response_dict : dict
-            dictionary with response keys and associated values
-
-        Returns
-        -------
-        stoch_constraints : tuple
-            vector of LHSs of stochastic constraint
-        """
-        stoch_constraints = ()
-        return stoch_constraints
-
-    def deterministic_objectives_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of objectives for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_objectives : tuple
-            vector of deterministic components of objectives
-        det_objectives_gradients : tuple
-            vector of gradients of deterministic components of objectives
-        """
+    @override
+    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
         det_objectives = (0,)
         det_objectives_gradients = ((0, 0, 0),)
         return det_objectives, det_objectives_gradients
 
-    def deterministic_stochastic_constraints_and_gradients(
-        self, x: tuple
-    ) -> tuple[tuple, tuple]:
-        """
-        Compute deterministic components of stochastic constraints
-        for a solution `x`.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        det_stoch_constraints : tuple
-            vector of deterministic components of stochastic constraints
-        det_stoch_constraints_gradients : tuple
-            vector of gradients of deterministic components of
-            stochastic constraints
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = ()
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
+    @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        """
-        Check if a solution `x` satisfies the problem's deterministic
-        constraints.
-
-        Arguments
-        ---------
-        x : tuple
-            vector of decision variables
-
-        Returns
-        -------
-        satisfies : bool
-            indicates if solution `x` satisfies the deterministic constraints.
-        """
         return x[0] >= 0 and x[1] >= 0 and x[2] >= 0
 
+    @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        """
-        Generate a random solution for starting or restarting solvers.
-
-        Arguments
-        ---------
-        rand_sol_rng : mrg32k3a.mrg32k3a.MRG32k3a
-            random-number generator used to sample a new random solution
-
-        Returns
-        -------
-        x : tuple
-            vector of decision variables
-        """
-        # x = (rand_sol_rng.randint(70, 90), rand_sol_rng.randint(30, 50), rand_sol_rng.randint(90, 110))
-
-        x = (
+        # return (
+        #     rand_sol_rng.randint(70, 90),
+        #     rand_sol_rng.randint(30, 50),
+        #     rand_sol_rng.randint(90, 110),
+        # )
+        return (
             rand_sol_rng.lognormalvariate(10, 1000),
             rand_sol_rng.lognormalvariate(10, 1000),
             rand_sol_rng.lognormalvariate(10, 1000),
         )
-        return x

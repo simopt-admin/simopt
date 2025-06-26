@@ -1,8 +1,7 @@
 version: 2
 
-# Build from the docs/ directory with Sphinx
 sphinx:
-  configuration: docs/conf.py
+  configuration: docs/source/conf.py
 
 build:
   os: ubuntu-lts-latest
@@ -10,4 +9,4 @@ build:
     python: miniconda-latest
 
 conda:
-  environment: environment.yml
+  environment: docs/environment.yml

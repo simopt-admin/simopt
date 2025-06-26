@@ -1,73 +1,79 @@
-"""
+"""Demo for Data Farming Models.
+
 This script is intended to help with running a data-farming experiment on
 a simulation model. It creates a design of model factors and runs multiple
 replications at each configuration of the model. Outputs are printed to a file.
 """
 
 import sys
-import os.path as o
+from pathlib import Path
 
-sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
-)  # type:ignore
-
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from simopt.data_farming_base import DataFarmingExperiment
 
-# Specify the name of the model as it appears in directory.py
-model_name = "CNTNEWS"
 
-# Specify the names of the model factors (in order) that will be varied.
-factor_headers = [
-    "purchase_price",
-    "sales_price",
-    "salvage_price",
-    "order_quantity",
-]
+def main() -> None:
+    """Main function to run the data farming experiment."""
+    # Specify the name of the model as it appears in directory.py
+    model_name = "CNTNEWS"
 
-# If creating the design, provide the name of a .txt file containing
-# the following:
-#    - one row corresponding to each model factor being varied
-#    - three columns:
-#         - first column: lower bound for factor value
-#         - second column: upper bound for factor value
-#         - third column: (integer) number of digits for discretizing values
-#                         (e.g., 0 corresponds to integral values for the factor)
-# factor_settings_filename = "model_factor_settings"
-factor_settings_filename = None
+    # Specify the names of the model factors (in order) that will be varied.
+    factor_headers = [
+        "purchase_price",
+        "sales_price",
+        "salvage_price",
+        "order_quantity",
+    ]
 
-# OR, if the design has been created, provide the name of a .text file
-# containing the following:
-#    - one row corresponding to each design point
-#    - the number of columns equal to the number of factors being varied
-#    - each value in the table gives the value of the factor (col index)
-#      for the design point (row index)
-# E.g., design_filename = "model_factor_settings_design"
-# design_filename = None
-design_filename = "model_factor_settings_design"
+    # If creating the design, provide the name of a .txt file containing
+    # the following:
+    #    - one row corresponding to each model factor being varied
+    #    - three columns:
+    #         - first column: lower bound for factor value
+    #         - second column: upper bound for factor value
+    #         - third column: (integer) number of digits for discretizing values
+    #                         (e.g., 0 corresponds to integral values for the factor)
+    # factor_settings_filename = "model_factor_settings"
+    factor_settings_filename = None
 
-# Specify a common number of replications to run of the model at each
-# design point.
-n_reps = 10
+    # OR, if the design has been created, provide the name of a .text file
+    # containing the following:
+    #    - one row corresponding to each design point
+    #    - the number of columns equal to the number of factors being varied
+    #    - each value in the table gives the value of the factor (col index)
+    #      for the design point (row index)
+    # E.g., design_filename = "model_factor_settings_design"
+    # design_filename = None
+    design_filename = "model_factor_settings_design"
 
-# Specify whether to use common random numbers across different versions
-# of the model.
-crn_across_design_pts = True
+    # Specify a common number of replications to run of the model at each
+    # design point.
+    n_reps = 10
 
-# Specify filename for outputs.
-output_filename = "cntnews_data_farming_output"
+    # Specify whether to use common random numbers across different versions
+    # of the model.
+    crn_across_design_pts = True
 
-# No code beyond this point needs to be edited.
+    # Specify filename for outputs.
+    output_filename = "cntnews_data_farming_output"
 
-# Create DataFarmingExperiment object.
-myexperiment = DataFarmingExperiment(
-    model_name=model_name,
-    factor_settings_filename=factor_settings_filename,
-    factor_headers=factor_headers,
-    design_filepath=design_filename,
-    model_fixed_factors={},
-)
+    # No code beyond this point needs to be edited.
 
-# Run replications and print results to file.
-myexperiment.run(n_reps=n_reps, crn_across_design_pts=crn_across_design_pts)
-myexperiment.print_to_csv(csv_filename=output_filename)
+    # Create DataFarmingExperiment object.
+    myexperiment = DataFarmingExperiment(
+        model_name=model_name,
+        factor_settings_file_name=factor_settings_filename,
+        factor_headers=factor_headers,
+        design_path=design_filename,
+        model_fixed_factors={},
+    )
+
+    # Run replications and print results to file.
+    myexperiment.run(n_reps=n_reps, crn_across_design_pts=crn_across_design_pts)
+    myexperiment.print_to_csv(csv_file_name=output_filename)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,20 +1,21 @@
-"""
+"""Demo for Data Farming over Solvers and Problems.
+
 This script is intended to help with running a data-farming experiment on
 a solver. It creates a design of solver factors and runs multiple
 macroreplications at each version of the solver. Outputs are printed to a file.
 """
 
 import sys
-import os.path as o
+from pathlib import Path
 
-sys.path.append(
-    o.abspath(o.join(o.dirname(sys.modules[__name__].__file__), ".."))
-)  # type:ignore
+# Append the parent directory (simopt package) to the system path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from simopt.experiment_base import create_design, ProblemsSolvers
+from simopt.experiment_base import ProblemsSolvers, create_design
 
 
 def main() -> None:
+    """Main function to run the data farming experiment."""
     # Specify the name of the solver as it appears in directory.py
     solver_name = "ASTRODF"
     # Specify the name of the problem as it appears in directory.py
@@ -37,8 +38,8 @@ def main() -> None:
     solver_fixed_factors = {}
     model_fixed_factors = {"salvage_price": 5, "Burr_c": 1}
 
-    # Provide the name of a file  .txt locatated in the datafarming_experiments folder containing
-    # the following:
+    # Provide the name of a file  .txt locatated in the datafarming_experiments folder
+    # containing the following:
     #    - one row corresponding to each solver factor being varied
     #    - three columns:
     #         - first column: lower bound for factor value
@@ -52,8 +53,8 @@ def main() -> None:
     solver_n_stacks = 1
     problem_n_stacks = 1
 
-    # Specify a common number of macroreplications of each unique solver/problem combination
-    # i.e., the number of runs at each design point.
+    # Specify a common number of macroreplications of each unique solver/problem
+    # combination (i.e., the number of runs at each design point.)
     n_macroreps = 3
 
     # Specify the number of postreplications to take at each recommended solution

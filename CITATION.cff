@@ -1,0 +1,36 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: SimOpt
+version: 1.2.0
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file
+type: software
+authors:
+  - given-names: David
+    family-names: Eckman
+    affiliation: Texas A&M University
+    email: eckman@tamu.edu
+  - email: sgh9@cornell.edu
+    given-names: Shane
+    family-names: Henderson
+    affiliation: Cornell University
+  - given-names: Sara
+    family-names: Shashaani
+    orcid: 'https://orcid.org/0000-0001-8515-5877'
+    affiliation: North Carolina State University
+    email: sshasha2@ncsu.edu
+  - given-names: Raghu
+    family-names: Pasupathy
+    email: pasupath@purdue.edu
+    affiliation: Purdue University
+repository-code: 'https://github.com/simopt-admin/simopt'
+url: 'https://simopt.org'
+abstract: >-
+  SimOpt is a testbed of simulation-optimization problems
+  and solvers. Its purpose is to encourage the development
+  and constructive comparison of simulation-optimization
+  (SO) solvers (algorithms)
+license: MIT

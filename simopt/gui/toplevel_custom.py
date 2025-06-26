@@ -13,15 +13,13 @@ class Toplevel(tk.Toplevel):
         title: str = "SimOpt GUI",
         exit_on_close: bool = False,
     ) -> None:
-        """Initialize the ToplevelCustom class.
+        """Initialize the Toplevel class.
 
-        Parameters
-        ----------
-        root : tk.Tk
-            The main window of the GUI
-        exit_on_close : bool, optional
-            If True, the program will exit when the window is closed.
-
+        Args:
+            root (tk.Tk): The main window of the GUI.
+            title (str, optional): The title of the window. Defaults to "SimOpt GUI".
+            exit_on_close (bool, optional): If True, the program will exit when the
+                window is closed.
         """
         super().__init__(root)
         self.root = root
@@ -85,27 +83,24 @@ class Toplevel(tk.Toplevel):
         )
 
     def center_window(self, scale: float) -> None:
-        """Centers the window to the main display/monitor.
+        """Center the window on the main display/monitor.
 
-        Example Usage
-        -------------
-        position = center_window(self.root, 0.8)
+        Args:
+            scale (float): The scale factor to apply to the window size
+                (e.g., 0.8 for 80% of screen size).
 
-        self.root.geometry(position)
-
-        Parameters
-        ----------
-        scale : float
-            The scale of the window
-
+        Example:
+            ```python
+            position = center_window(self.root, 0.8)
+            self.root.geometry(position)
+            ```
         """
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         width = int(screen_width * scale)
         height = int(screen_height * scale)
         x = int((screen_width / 2) - (width / 2))
-        y = int(
-            (screen_height / 2) - (height / 1.9)
-        )  # Slight adjustment for taskbar
+        # Slight adjustment for taskbar
+        y = int((screen_height / 2) - (height / 1.9))
         position = f"{width}x{height}+{x}+{y}"
         self.geometry(position)

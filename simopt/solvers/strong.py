@@ -1,8 +1,7 @@
-"""
-Summary
--------
-STRONG: A trust-region-based algorithm that fits first- or second-order models through function evaluations taken within
-a neighborhood of the incumbent solution.
+"""STRONG Solver.
+
+STRONG: A trust-region-based algorithm that fits first- or second-order models through
+function evaluations taken within a neighborhood of the incumbent solution.
 A detailed description of the solver can be found
 `here <https://simopt.readthedocs.io/en/latest/strong.html>`__.
 """
@@ -10,7 +9,7 @@ A detailed description of the solver can be found
 from __future__ import annotations
 
 import math
-import sys
+from collections.abc import Iterable
 from typing import Callable, Literal
 
 import numpy as np
@@ -24,64 +23,39 @@ from simopt.base import (
     Solver,
     VariableType,
 )
+from simopt.utils import classproperty, make_nonzero, override
 
 
 class STRONG(Solver):
-    """
-    A trust-region-based algorithm that fits first- or second-order models through function evaluations taken within a neighborhood of the incumbent solution.
+    """STRONG Solver.
 
-    Attributes
-    ----------
-    name : string
-        name of solver
-    objective_type : string
-        description of objective types:
-            "single" or "multi"
-    constraint_type : string
-        description of constraints types:
-            "unconstrained", "box", "deterministic", "stochastic"
-    variable_type : string
-        description of variable types:
-            "discrete", "continuous", "mixed"
-    gradient_needed : bool
-        indicates if gradient of objective function is needed
-    factors : dict
-        changeable factors (i.e., parameters) of the solver
-    specifications : dict
-        details of each factor (for GUI, data validation, and defaults)
-    rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a objects
-        list of RNGs used for the solver's internal purposes
-
-    Arguments
-    ---------
-    name : str
-        user-specified name for solver
-    fixed_factors : dict
-        fixed_factors of the solver
-
-    See also
-    --------
-    base.Solver
+    A trust-region-based algorithm that fits first- or second-order models through
+    function evaluations taken within a neighborhood of the incumbent solution.
     """
 
-    @property
-    def objective_type(self) -> ObjectiveType:
+    @classproperty
+    @override
+    def objective_type(cls) -> ObjectiveType:
         return ObjectiveType.SINGLE
 
-    @property
-    def constraint_type(self) -> ConstraintType:
+    @classproperty
+    @override
+    def constraint_type(cls) -> ConstraintType:
         return ConstraintType.BOX
 
-    @property
-    def variable_type(self) -> VariableType:
+    @classproperty
+    @override
+    def variable_type(cls) -> VariableType:
         return VariableType.CONTINUOUS
 
-    @property
-    def gradient_needed(self) -> bool:
+    @classproperty
+    @override
+    def gradient_needed(cls) -> bool:
         return False
 
-    @property
-    def specifications(self) -> dict[str, dict]:
+    @classproperty
+    @override
+    def specifications(cls) -> dict[str, dict]:
         return {
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
@@ -134,7 +108,9 @@ class STRONG(Solver):
                 "default": 1.11,
             },
             "lambda": {
-                "description": "magnifying factor for n_r inside the finite difference function",
+                "description": (
+                    "magnifying factor for n_r inside the finite difference function"
+                ),
                 "datatype": int,
                 "default": 2,
             },
@@ -146,96 +122,84 @@ class STRONG(Solver):
         }
 
     @property
+    @override
     def check_factor_list(self) -> dict[str, Callable]:
         return {
             "crn_across_solns": self.check_crn_across_solns,
-            "n0": self.check_n0,
-            "n_r": self.check_n_r,
-            "sensitivity": self.check_sensitivity,
-            "delta_threshold": self.check_delta_threshold,
-            "delta_T": self.check_delta_t,
-            "eta_0": self.check_eta_0,
-            "eta_1": self.check_eta_1,
-            "gamma_1": self.check_gamma_1,
-            "gamma_2": self.check_gamma_2,
-            "lambda": self.check_lambda,
-            "lambda_2": self.check_lambda_2,
+            "n0": self._check_n0,
+            "n_r": self._check_n_r,
+            "sensitivity": self._check_sensitivity,
+            "delta_threshold": self._check_delta_threshold,
+            "delta_T": self._check_delta_t,
+            "eta_0": self._check_eta_0,
+            "eta_1": self._check_eta_1,
+            "gamma_1": self._check_gamma_1,
+            "gamma_2": self._check_gamma_2,
+            "lambda": self._check_lambda,
+            "lambda_2": self._check_lambda_2,
         }
 
-    def __init__(
-        self, name: str = "STRONG", fixed_factors: dict | None = None
-    ) -> None:
+    def __init__(self, name: str = "STRONG", fixed_factors: dict | None = None) -> None:
+        """Initialize STRONG solver.
+
+        Args:
+            name (str): name of the solver.
+            fixed_factors (dict, optional): fixed factors of the solver.
+                Defaults to None.
+        """
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-    def check_n0(self) -> None:
+    def _check_n0(self) -> None:
         if self.factors["n0"] <= 0:
             raise ValueError("n0 must be greater than 0.")
 
-    def check_n_r(self) -> None:
+    def _check_n_r(self) -> None:
         if self.factors["n_r"] <= 0:
             raise ValueError(
-                "The number of replications taken at each solution must be greater than 0."
+                "The number of replications taken at each solution must be greater "
+                "than 0."
             )
 
-    def check_sensitivity(self) -> None:
+    def _check_sensitivity(self) -> None:
         if self.factors["sensitivity"] <= 0:
             raise ValueError("sensitivity must be greater than 0.")
 
-    def check_delta_threshold(self) -> None:
+    def _check_delta_threshold(self) -> None:
         if self.factors["delta_threshold"] <= 0:
             raise ValueError("delta_threshold must be greater than 0.")
 
-    def check_delta_t(self) -> None:
+    def _check_delta_t(self) -> None:
         if self.factors["delta_T"] <= self.factors["delta_threshold"]:
             raise ValueError("delta_T must be greater than delta_threshold")
 
-    def check_eta_0(self) -> None:
+    def _check_eta_0(self) -> None:
         if self.factors["eta_0"] <= 0 or self.factors["eta_0"] >= 1:
             raise ValueError("eta_0 must be between 0 and 1.")
 
-    def check_eta_1(self) -> None:
-        if (
-            self.factors["eta_1"] >= 1
-            or self.factors["eta_1"] <= self.factors["eta_0"]
-        ):
+    def _check_eta_1(self) -> None:
+        if self.factors["eta_1"] >= 1 or self.factors["eta_1"] <= self.factors["eta_0"]:
             raise ValueError("eta_1 must be between eta_0 and 1.")
 
-    def check_gamma_1(self) -> None:
+    def _check_gamma_1(self) -> None:
         if self.factors["gamma_1"] <= 0 or self.factors["gamma_1"] >= 1:
             raise ValueError("gamma_1 must be between 0 and 1.")
 
-    def check_gamma_2(self) -> None:
+    def _check_gamma_2(self) -> None:
         if self.factors["gamma_2"] <= 1:
             raise ValueError("gamma_2 must be greater than 1.")
 
-    def check_lambda(self) -> None:
+    def _check_lambda(self) -> None:
         if self.factors["lambda"] <= 1:
             raise ValueError("lambda must be greater than 1.")
 
-    def check_lambda_2(self) -> None:
+    def _check_lambda_2(self) -> None:
         # TODO: Check if this is the correct condition.
         if self.factors["lambda_2"] <= 1:
             raise ValueError("lambda_2 must be greater than 1.")
 
+    @override
     def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        """
-        Run a single macroreplication of a solver on a problem.
-
-        Arguments
-        ---------
-        problem : Problem object
-            simulation-optimization problem to solve
-        crn_across_solns : bool
-            indicates if CRN are used when simulating different solutions
-
-        Returns
-        -------
-        recommended_solns : list of Solution objects
-            list of solutions recommended throughout the budget
-        intermediate_budgets : list of ints
-            list of intermediate budgets when recommended solutions changes
-        """
         recommended_solns = []
         intermediate_budgets = []
         expended_budget = 0
@@ -265,8 +229,14 @@ class STRONG(Solver):
         recommended_solns.append(new_solution)
         intermediate_budgets.append(expended_budget)
 
+        # Precompute factorials
+        factorials = np.array([math.factorial(i) for i in range(1, problem.dim + 1)])
+        # Precompute other variables
+        neg_minmax = -problem.minmax[0]
+        dim_sq = problem.dim**2
+
         while expended_budget < problem.factors["budget"]:
-            new_x = new_solution.x
+            new_x = np.array(new_solution.x)
             # Check variable bounds.
             forward = np.isclose(
                 new_x, lower_bound, atol=self.factors["sensitivity"]
@@ -274,27 +244,28 @@ class STRONG(Solver):
             backward = np.isclose(
                 new_x, upper_bound, atol=self.factors["sensitivity"]
             ).astype(int)
-            # bounds_check: 1 stands for forward, -1 stands for backward, 0 means central diff.
-            bounds_check = np.subtract(forward, backward)
+            # bounds_check:
+            #   1 stands for forward, -1 stands for backward, 0 means central diff.
+            bounds_check = forward - backward
 
             # Stage I.
             if delta_t > delta_threshold:
                 # Step 1: Build the linear model.
                 num_evals = 2 * problem.dim - np.sum(bounds_check != 0)
-                grad, hessian = self.finite_diff(
-                    new_solution, bounds_check, 1, problem, n_r
-                )
-                expended_budget += num_evals * n_r
-                # A while loop to prevent zero gradient
-                while norm(grad) == 0:
-                    if expended_budget > problem.factors["budget"]:
-                        break
+                # Generate a new gradient and Hessian matrix.
+                num_generated_grads = 0
+                while True:
                     grad, hessian = self.finite_diff(
                         new_solution, bounds_check, 1, problem, n_r
                     )
                     expended_budget += num_evals * n_r
-                    # Update n_r and counter after each loop.
-                    n_r = int(lam * n_r)
+                    num_generated_grads += 1
+                    if num_generated_grads > 2:
+                        # Update n_r and counter after each loop.
+                        n_r *= lam
+                    # Accept any non-zero gradient, or exit if the budget is exceeded.
+                    if norm(grad) != 0 or expended_budget > problem.factors["budget"]:
+                        break
 
                 # Step 2: Solve the subproblem.
                 # Cauchy reduction.
@@ -308,44 +279,27 @@ class STRONG(Solver):
                 problem.simulate(candidate_solution, n_r)
                 expended_budget += n_r
                 # Find the old objective value and the new objective value.
-                g_old = -1 * problem.minmax[0] * new_solution.objectives_mean
-                g_new = (
-                    -1 * problem.minmax[0] * candidate_solution.objectives_mean
-                )
+                g_old = neg_minmax * new_solution.objectives_mean
+                g_new = neg_minmax * candidate_solution.objectives_mean
                 g_diff = g_old - g_new
                 # Construct the polynomial.
+                x_diff = candidate_x - new_x
                 r_old = g_old
-                r_new = (
-                    g_old
-                    + np.matmul(np.subtract(candidate_x, new_x), grad)
-                    + 0.5
-                    * np.matmul(
-                        np.matmul(np.subtract(candidate_x, new_x), hessian),
-                        np.subtract(candidate_x, new_x),
-                    )
-                )
-                r_diff = r_old - r_new
-                if r_diff == 0:
-                    print(
-                        "Warning: Division by zero in STRONG solver (r_diff == 0 (Step I_3))",
-                        file=sys.stderr,
-                    )
-                    # Follow IEEE 754 standard.
-                    if g_diff < 0:
-                        rho = -np.inf
-                    elif g_diff > 0:
-                        rho = np.inf
-                    else:
-                        rho = np.nan
-                else:
-                    rho = g_diff / r_diff
+                r_new = g_old + (x_diff @ grad) + 0.5 * ((x_diff @ hessian) @ x_diff)
 
-                # Step 4: Update the trust region size and determine to accept or reject the solution.
-                if (rho < eta_0) | (g_diff <= 0) | (r_diff <= 0):
-                    # The solution fails either the RC or SR test, the center point reamins and the trust region shrinks.
+                r_diff = (r_old - r_new)[0]
+                r_diff = make_nonzero(r_diff, "r_diff (stage I)")
+                rho = g_diff / r_diff
+
+                # Step 4: Update the trust region size and determine to accept or
+                # reject the solution.
+                if (rho < eta_0) or (g_diff <= 0) or (r_diff <= 0):
+                    # The solution fails either the RC or SR test, the center point
+                    # remains and the trust region shrinks.
                     delta_t = gamma_1 * delta_t
-                elif (eta_0 <= rho) & (rho < eta_1):
-                    # The center point moves to the new solution and the trust region remains.
+                elif (eta_0 <= rho) and (rho < eta_1):
+                    # The center point moves to the new solution and the trust
+                    # region remains.
                     new_solution = candidate_solution
                     # Update incumbent best solution.
                     if (
@@ -356,7 +310,8 @@ class STRONG(Solver):
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
                 else:
-                    # The center point moves to the new solution and the trust region enlarges.
+                    # The center point moves to the new solution and the trust
+                    # region enlarges.
                     delta_t = gamma_2 * delta_t
                     new_solution = candidate_solution
                     # Update incumbent best solution.
@@ -374,31 +329,30 @@ class STRONG(Solver):
             else:
                 n_onbound = np.sum(bounds_check != 0)
                 if n_onbound <= 1:
-                    num_evals = problem.dim**2
+                    num_evals = dim_sq
                 else:
                     # TODO: Check the formula, it seems to be dividing an
                     # integer by a tuple.
                     num_evals = (
-                        problem.dim**2
+                        dim_sq
                         + problem.dim
-                        - math.factorial(n_onbound)
-                        / (math.factorial(2), math.factorial(n_onbound - 2))
+                        - factorials[n_onbound] / (2, factorials[n_onbound - 2])
                     )
                 # Step 1: Build the quadratic model.
-                grad, hessian = self.finite_diff(
-                    new_solution, bounds_check, 2, problem, n_r
-                )
-                expended_budget += num_evals * n_r
-                # A while loop to prevent zero gradient
-                while norm(grad) == 0:
-                    if expended_budget > problem.factors["budget"]:
-                        break
+                num_generated_grads = 0
+                while True:
                     grad, hessian = self.finite_diff(
                         new_solution, bounds_check, 2, problem, n_r
                     )
                     expended_budget += num_evals * n_r
-                    # Update n_r and counter after each loop.
-                    n_r = int(lam * n_r)
+                    num_generated_grads += 1
+                    if num_generated_grads > 2:
+                        # Update n_r and counter after each loop.
+                        n_r *= lam
+                    # Accept any non-zero gradient, or exit if the budget is exceeded.
+                    if norm(grad) != 0 or expended_budget > problem.factors["budget"]:
+                        break
+
                 # Step 2: Solve the subproblem.
                 # Cauchy reduction.
                 candidate_x = self.cauchy_point(
@@ -415,33 +369,20 @@ class STRONG(Solver):
                 problem.simulate(candidate_solution, n_r)
                 expended_budget += n_r
                 # Find the old objective value and the new objective value.
-                g_old = -1 * problem.minmax[0] * new_solution.objectives_mean
-                g_new = (
-                    -1 * problem.minmax[0] * candidate_solution.objectives_mean
-                )
+                g_old = neg_minmax * new_solution.objectives_mean
+                g_new = neg_minmax * candidate_solution.objectives_mean
                 g_diff = g_old - g_new
                 # Construct the polynomial.
+                x_diff = candidate_x - new_x
                 r_old = g_old
-                r_new = (
-                    g_old
-                    + np.matmul(np.subtract(candidate_x, new_x), grad)
-                    + 0.5
-                    * np.matmul(
-                        np.matmul(np.subtract(candidate_x, new_x), hessian),
-                        np.subtract(candidate_x, new_x),
-                    )
-                )
-                r_diff = r_old - r_new
-                if r_diff == 0:
-                    print(
-                        "Warning: Division by zero in STRONG solver (r_diff == 0 (Step II_3))",
-                        file=sys.stderr,
-                    )
-                    rho = 0
-                else:
-                    rho = g_diff / r_diff
-                # Step 4: Update the trust region size and determine to accept or reject the solution.
-                if (rho < eta_0) | (g_diff <= 0) | (r_diff <= 0):
+                r_new = g_old + (x_diff @ grad) + 0.5 * ((x_diff @ hessian) @ x_diff)
+
+                r_diff = (r_old - r_new)[0]
+                r_diff = make_nonzero(r_diff, "rdiff (stage II)")
+                rho = g_diff / r_diff
+                # Step 4: Update the trust region size and determine to accept or
+                # reject the solution.
+                if (rho < eta_0) or (g_diff <= 0) or (r_diff <= 0):
                     # Inner Loop.
                     rr_old = r_old
                     g_b_old = rr_old
@@ -452,132 +393,77 @@ class STRONG(Solver):
                     while np.sum(result_x != new_x) == 0:
                         if expended_budget > problem.factors["budget"]:
                             break
-                        # Step1: Build the quadratic model.
-                        g_var, h_var = self.finite_diff(
-                            new_solution,
-                            bounds_check,
-                            2,
-                            problem,
-                            (sub_counter + 1) * n_r,
-                        )
-                        expended_budget += num_evals * (sub_counter + 1) * n_r
                         # A while loop to prevent zero gradient
-                        while norm(g_var) == 0:
-                            if expended_budget > problem.factors["budget"]:
-                                break
+                        while True:
+                            n_r_loop = (sub_counter + 1) * n_r
                             g_var, h_var = self.finite_diff(
                                 new_solution,
                                 bounds_check,
                                 2,
                                 problem,
-                                (sub_counter + 1) * n_r,
+                                n_r_loop,
                             )
-                            expended_budget += (
-                                num_evals * (sub_counter + 1) * n_r
-                            )
-                            # Update n_r and counter after each loop.
-                            n_r = int(lam * n_r)
+                            expended_budget += num_evals * n_r_loop
+                            num_generated_grads += 1
+                            if num_generated_grads > 2:
+                                # Update n_r and counter after each loop.
+                                n_r *= lam
+                            # Accept any non-zero gradient, or exit if the budget
+                            # is exceeded.
+                            if (
+                                norm(grad) != 0
+                                or expended_budget > problem.factors["budget"]
+                            ):
+                                break
 
-                        # Step 2: determine the new inner solution based on the accumulated design matrix X.
+                        # Step 2: determine the new inner solution based on the
+                        # accumulated design matrix X.
                         try_x = self.cauchy_point(g_var, h_var, new_x, problem)
-                        try_solution = self.create_new_solution(
-                            tuple(try_x), problem
-                        )
+                        try_solution = self.create_new_solution(tuple(try_x), problem)
 
                         # Step 3.
-                        problem.simulate(
-                            try_solution,
-                            int(
-                                n_r
-                                + np.ceil(
-                                    sub_counter ** self.factors["lambda_2"]
-                                )
-                            ),
+                        counter_ceiling = np.ceil(
+                            sub_counter ** self.factors["lambda_2"]
                         )
-                        expended_budget += int(
-                            n_r
-                            + np.ceil(sub_counter ** self.factors["lambda_2"])
+                        counter_lower_ceiling = np.ceil(
+                            (sub_counter - 1) ** self.factors["lambda_2"]
                         )
-                        g_b_new = (
-                            -1
-                            * problem.minmax[0]
-                            * try_solution.objectives_mean
-                        )
+                        # Theoretically these are already integers
+                        ceiling_diff = int(counter_ceiling - counter_lower_ceiling)
+                        mreps = int(n_r + counter_ceiling)
+
+                        problem.simulate(try_solution, mreps)
+                        expended_budget += mreps
+                        g_b_new = neg_minmax * try_solution.objectives_mean
                         dummy_solution = new_solution
-                        problem.simulate(
-                            dummy_solution,
-                            int(
-                                np.ceil(sub_counter ** self.factors["lambda_2"])
-                                - np.ceil(
-                                    (sub_counter - 1)
-                                    ** self.factors["lambda_2"]
-                                )
-                            ),
-                        )
-                        expended_budget += int(
-                            np.ceil(sub_counter ** self.factors["lambda_2"])
-                            - np.ceil(
-                                (sub_counter - 1) ** self.factors["lambda_2"]
-                            )
-                        )
-                        dummy = (
-                            -1
-                            * problem.minmax[0]
-                            * dummy_solution.objectives_mean
-                        )
+                        problem.simulate(dummy_solution, ceiling_diff)
+                        expended_budget += ceiling_diff
+
+                        dummy = neg_minmax * dummy_solution.objectives_mean
                         # Update g_old.
                         g_b_old = (
-                            g_b_old
-                            * (
-                                n_r
-                                + np.ceil(
-                                    (sub_counter - 1)
-                                    ** self.factors["lambda_2"]
-                                )
-                            )
-                            + (
-                                np.ceil(sub_counter ** self.factors["lambda_2"])
-                                - np.ceil(
-                                    (sub_counter - 1)
-                                    ** self.factors["lambda_2"]
-                                )
-                            )
-                            * dummy
-                        ) / (
-                            n_r
-                            + np.ceil(sub_counter ** self.factors["lambda_2"])
-                        )
+                            g_b_old * (n_r + counter_lower_ceiling)
+                            + ceiling_diff * dummy
+                        ) / mreps
+
+                        x_diff = try_x - new_x
                         rr_new = (
                             g_b_old
-                            + np.matmul(np.subtract(try_x, new_x), g_var)
-                            + 0.5
-                            * np.matmul(
-                                np.matmul(np.subtract(try_x, new_x), h_var),
-                                np.subtract(try_x, new_x),
-                            )
+                            + (x_diff @ g_var)
+                            + 0.5 * ((x_diff @ h_var) @ x_diff)
                         )
+
                         rr_old = g_b_old
                         # Set rho to the ratio.
                         g_b_diff = g_b_old - g_b_new
-                        rr_diff = rr_old - rr_new
-                        if rr_diff == 0:
-                            print(
-                                "Warning: Division by zero in STRONG solver (rr_diff == 0)",
-                                file=sys.stderr,
-                            )
-                            rrho = 0
-                        else:
-                            rrho = (g_b_diff) / (rr_diff)
+                        rr_diff = (rr_old - rr_new)[0]
+                        rr_diff = make_nonzero(rr_diff, "rr_diff")
+                        rrho = g_b_diff / rr_diff
 
-                        if (
-                            (rrho < eta_0)
-                            | ((g_b_diff) <= 0)
-                            | ((rr_diff) <= 0)
-                        ):
+                        if (rrho < eta_0) or (g_b_diff <= 0) or (rr_diff <= 0):
                             delta_t = gamma_1 * delta_t
                             result_solution = new_solution
                             result_x = new_x
-
                         elif (eta_0 <= rrho) and (rrho < eta_1):
                             # Accept the solution and remains the size of trust region.
                             result_solution = try_solution
@@ -589,7 +475,7 @@ class STRONG(Solver):
                             result_solution = try_solution
                             result_x = try_x
                             rr_old = g_b_new
-                        sub_counter = sub_counter + 1
+                        sub_counter += 1
                     new_solution = result_solution
                     # Update incumbent best solution.
                     if (
@@ -599,20 +485,11 @@ class STRONG(Solver):
                         best_solution = new_solution
                         recommended_solns.append(new_solution)
                         intermediate_budgets.append(expended_budget)
-                elif (eta_0 <= rho) and (rho < eta_1):
-                    # The center point moves to the new solution and the trust region remains.
-                    new_solution = candidate_solution
-                    # Update incumbent best solution.
-                    if (
-                        problem.minmax * new_solution.objectives_mean
-                        > problem.minmax * best_solution.objectives_mean
-                    ):
-                        best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
                 else:
-                    # The center point moves to the new solution and the trust region enlarges.
-                    delta_t = gamma_2 * delta_t
+                    # The center point moves to the new solution and the trust
+                    # region enlarges.
+                    if not ((eta_0 <= rho) and (rho < eta_1)):
+                        delta_t = gamma_2 * delta_t
                     new_solution = candidate_solution
                     # Update incumbent best solution.
                     if (
@@ -624,62 +501,75 @@ class STRONG(Solver):
                         intermediate_budgets.append(expended_budget)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
         # Loop through each budget and convert any numpy int32s to Python ints.
-        for i in range(len(intermediate_budgets)):
-            intermediate_budgets[i] = int(intermediate_budgets[i])
+        intermediate_budgets = [int(i) for i in intermediate_budgets]
         return recommended_solns, intermediate_budgets
 
     def cauchy_point(
         self,
         grad: np.ndarray,
         hessian: np.ndarray,
-        new_x: tuple,
+        new_x: np.ndarray,
         problem: Problem,
     ) -> np.ndarray:
-        """
-        Find the Cauchy point based on the gradient and Hessian matrix.
-        """
+        """Find the Cauchy point based on the gradient and Hessian matrix."""
         delta_t = self.factors["delta_T"]
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
-        if np.dot(np.matmul(grad, hessian), grad) <= 0:
-            tau = 1
-        else:
-            tau = min(
-                1,
-                norm(grad) ** 3
-                / (delta_t * np.dot(np.matmul(grad, hessian), grad)),
-            )
-        grad = np.reshape(grad, (1, problem.dim))[0]
-        candidate_x = new_x - tau * delta_t * grad / norm(grad)
-        cauchy_x = self.check_cons(candidate_x, new_x, lower_bound, upper_bound)
-        return cauchy_x
+
+        val = float(np.dot(grad, hessian @ grad))
+        val_dt = delta_t * val
+        grad_norm = float(norm(grad))
+        grad_norm = make_nonzero(grad_norm, "grad_norm")
+        tau = 1 if val <= 0 else min(1, grad_norm**3 / val_dt)
+        candidate_x = new_x - tau * delta_t * grad / grad_norm
+        return self.check_cons(candidate_x, new_x, lower_bound, upper_bound)
 
     def check_cons(
         self,
         candidate_x: tuple,
-        new_x: tuple,
+        new_x: tuple | np.ndarray,
         lower_bound: tuple,
         upper_bound: tuple,
     ) -> np.ndarray:
+        """Check feasibility of a new point and apply Cauchy point correction if needed.
+
+        This method compares a candidate point to its updated version and enforces
+        box constraints defined by lower and upper bounds.
+
+        Args:
+            candidate_x (tuple): Current decision variable vector (the Cauchy point).
+            new_x (tuple | np.ndarray): Proposed new solution to check and correct.
+            lower_bound (tuple): Lower bounds for each decision variable.
+            upper_bound (tuple): Upper bounds for each decision variable.
+
+        Returns:
+            np.ndarray: The corrected feasible solution, clipped to respect the bounds.
         """
-        Check the feasibility of the Cauchy point and update the point accordingly.
-        """
+        # Convert the inputs to numpy arrays
+        candidate_x_arr = np.array(candidate_x)
+        # If new_x is a tuple, convert it to a numpy array
+        if isinstance(new_x, tuple):
+            new_x = np.array(new_x)
+        current_step: np.ndarray = candidate_x_arr - new_x
+        lower_bound_arr = np.array(lower_bound)
+        upper_bound_arr = np.array(upper_bound)
         # The current step.
-        current_step = np.subtract(candidate_x, new_x)
         # Form a matrix to determine the possible stepsize.
-        max_step_matrix = np.ones((2, len(candidate_x)))
-        for i in range(0, len(candidate_x)):
-            if current_step[i] > 0:
-                step_diff = upper_bound[i] - new_x[i]
-                max_step_matrix[0, i] = step_diff / current_step[i]
-            elif current_step[i] < 0:
-                step_diff = lower_bound[i] - new_x[i]
-                max_step_matrix[1, i] = step_diff / current_step[i]
-        # Find the minimum stepsize.
-        t2 = max_step_matrix.min()
+        min_step = 1
+        pos_mask = current_step > 0
+        if np.any(pos_mask):
+            step_diff = (upper_bound_arr[pos_mask] - new_x[pos_mask]) / current_step[
+                pos_mask
+            ]
+            min_step = min(min_step, float(np.min(step_diff)))
+        neg_mask = current_step < 0
+        if np.any(neg_mask):
+            step_diff = (lower_bound_arr[neg_mask] - new_x[neg_mask]) / current_step[
+                neg_mask
+            ]
+            min_step = min(min_step, float(np.min(step_diff)))
         # Calculate the modified x.
-        modified_x = new_x + t2 * current_step
-        return modified_x
+        return new_x + min_step * current_step
 
     def finite_diff(
         self,
@@ -689,347 +579,190 @@ class STRONG(Solver):
         problem: Problem,
         n_r: int,
     ) -> tuple[np.ndarray, np.ndarray]:
+        """Estimate gradients and approximate Hessian using finite differences and BFGS.
+
+        This method uses finite differencing to compute gradients of the objective,
+        and applies BFGS updates to build or refine a Hessian approximation.
+
+        Args:
+            new_solution (Solution): The solution at which derivatives are computed.
+            bounds_check (np.ndarray): Boolean mask indicating which variables are
+                within bounds and eligible for perturbation.
+            stage (Literal[1, 2]): Indicates the optimization stage
+                (e.g., 1 for initial approximation, 2 for refinement).
+            problem (Problem): The simulation-optimization problem being solved.
+            n_r (int): Number of replications used when estimating gradients.
+
+        Returns:
+            tuple[np.ndarray, np.ndarray]: A tuple containing:
+                - Gradient estimate as a NumPy array.
+                - Hessian approximation (updated via BFGS) as a NumPy array.
         """
-        Finite difference for calculating gradients and BFGS for calculating Hessian matrix
-        """
-        delta_t = self.factors["delta_T"]
-        lower_bound = problem.lower_bounds
-        upper_bound = problem.upper_bounds
-        fn = -1 * problem.minmax[0] * new_solution.objectives_mean
-        new_x = new_solution.x
+        neg_minmax = -np.array(problem.minmax)
+        fn = (neg_minmax * new_solution.objectives_mean)[0]
+        new_x = np.array(new_solution.x, dtype=float)
         # Store values for each dimension.
-        func_diff = np.zeros((problem.dim, 3))
+        f_x_minus_h = np.zeros(problem.dim)  # f(x - h)
+        f_x_plus_h = np.zeros(problem.dim)  # f(x + h)
+
+        def get_fn_x(x: Iterable) -> float:
+            """Helper to simulate the function at a given x."""
+            x_solution = self.create_new_solution(tuple(x), problem)
+            problem.simulate_up_to([x_solution], n_r)
+            return (neg_minmax * x_solution.objectives_mean)[0]
+
+        # Initialize step sizes.
+        delta_t: float = self.factors["delta_T"]
+        ub_steps = np.minimum(delta_t, np.array(problem.upper_bounds) - new_x)
+        lb_steps = np.minimum(delta_t, new_x - np.array(problem.lower_bounds))
+
+        # Create independent fresh copies for each dimension
+        # Tiling creates a 2D array, each row is a copy of new_x
+        x1 = np.tile(new_x, (problem.dim, 1))
+        x2 = np.tile(new_x, (problem.dim, 1))
+
+        # Compute masks for numpy vectorization
+        bounds_neg = bounds_check == -1
+        bounds_zero = bounds_check == 0
+        bounds_pos = bounds_check == 1
+        bounds_non_neg = bounds_zero | bounds_pos
+        bounds_non_zero = bounds_neg | bounds_pos
+        bounds_non_pos = bounds_zero | bounds_neg
+
+        steps = np.minimum(ub_steps, lb_steps)
+        # Apply step modifications per bounds_check conditions
+        steps = np.where(bounds_neg, lb_steps, steps)
+        steps = np.where(bounds_pos, ub_steps, steps)
+
+        # Modify x1 and x2 based on step sizes
+        x1[np.arange(problem.dim), bounds_non_neg] += steps[bounds_non_neg]
+        x2[np.arange(problem.dim), bounds_non_pos] -= steps[bounds_non_pos]
+
+        # Compute function values
+        non_neg_indices = np.where(bounds_non_neg)[0]
+        non_pos_indices = np.where(bounds_non_pos)[0]
+        f_x_minus_h[non_neg_indices] = np.array(
+            list(map(get_fn_x, x1[non_neg_indices]))
+        )
+        f_x_plus_h[non_pos_indices] = np.array(list(map(get_fn_x, x2[non_pos_indices])))
+
+        # Compute gradients
         grad = np.zeros(problem.dim)
+        grad[bounds_neg] = (fn - f_x_plus_h[bounds_neg]) / steps[bounds_neg]
+        grad[bounds_zero] = (f_x_minus_h[bounds_zero] - f_x_plus_h[bounds_zero]) / (
+            2 * steps[bounds_zero]
+        )
+        grad[bounds_pos] = (f_x_minus_h[bounds_pos] - fn) / steps[bounds_pos]
+
         hessian = np.zeros((problem.dim, problem.dim))
+        # If stage 1, exit without calculating the Hessian.
+        if stage == 1:
+            return grad, hessian
 
-        for i in range(problem.dim):
-            # Initialization.
-            x1 = list(new_x)
-            x2 = list(new_x)
-            # Forward stepsize.
-            steph1 = delta_t
-            # Backward stepsize.
-            steph2 = delta_t
+        # Initialize the diagonal of the Hessian matrix.
+        hessian_diag = np.zeros(problem.dim)
 
-            # Check variable bounds.
-            if x1[i] + steph1 > upper_bound[i]:
-                steph1 = np.abs(upper_bound[i] - x1[i])
-            if x2[i] - steph2 < lower_bound[i]:
-                steph2 = np.abs(x2[i] - lower_bound[i])
+        # Case where bounds_check[i] == 0 (Central Difference)
+        if np.any(bounds_zero):
+            hessian_diag[bounds_zero] = (
+                f_x_minus_h[bounds_zero] - 2 * fn + f_x_plus_h[bounds_zero]
+            ) / (steps[bounds_zero] ** 2)
 
-            # Decide stepsize.
-            # Central diff.
-            if bounds_check[i] == 0:
-                func_diff[i, 2] = min(steph1, steph2)
-                x1[i] = x1[i] + func_diff[i, 2]
-                x2[i] = x2[i] - func_diff[i, 2]
-            # Forward diff.
-            elif bounds_check[i] == 1:
-                func_diff[i, 2] = steph1
-                x1[i] = x1[i] + func_diff[i, 2]
-            # Backward diff
-            else:
-                func_diff[i, 2] = steph2
-                x2[i] = x2[i] - func_diff[i, 2]
-            x1_solution = self.create_new_solution(tuple(x1), problem)
-
-            # Run bounds checks.
-            if bounds_check[i] != -1:
-                problem.simulate_up_to([x1_solution], n_r)
-                fn1 = -1 * problem.minmax[0] * x1_solution.objectives_mean
-                # First column is f(x+h,y).
-                func_diff[i, 0] = fn1[0] if isinstance(fn1, np.ndarray) else fn1
-            x2_solution = self.create_new_solution(tuple(x2), problem)
-            if bounds_check[i] != 1:
-                problem.simulate_up_to([x2_solution], n_r)
-                fn2 = -1 * problem.minmax[0] * x2_solution.objectives_mean
-                # Second column is f(x-h,y).
-                func_diff[i, 1] = fn2[0] if isinstance(fn2, np.ndarray) else fn2
-
-            # Calculate gradient.
-            fn_divisor = (
-                func_diff[i, 2][0]
-                if isinstance(func_diff[i, 2], np.ndarray)
-                else func_diff[i, 2]
+        # Case where bounds_check[i] != 0 (One-Sided Difference)
+        if np.any(bounds_non_zero):
+            x = new_x.copy()
+            x[bounds_non_zero] += (steps[bounds_non_zero] / 2) * bounds_check[
+                bounds_non_zero
+            ]  # Apply h shift
+            fn_x = np.array(
+                [get_fn_x(x) for _ in range(np.sum(bounds_non_zero))]
+            )  # Simulate function evaluations
+            hessian_diag[bounds_non_zero] = (
+                4
+                * (fn - 2 * fn_x + f_x_plus_h[bounds_non_zero])
+                / (steps[bounds_non_zero] ** 2)
             )
-            if bounds_check[i] == 0:
-                fn_diff = fn1 - fn2  # type: ignore
-                fn_divisor = 2 * fn_divisor
-                if isinstance(fn_diff, np.ndarray):
-                    grad[i] = fn_diff[0] / fn_divisor
-                else:
-                    grad[i] = fn_diff / fn_divisor
-            elif bounds_check[i] == 1:
-                fn_diff = fn1 - fn  # type: ignore
-                if isinstance(fn_diff, np.ndarray):
-                    grad[i] = fn_diff[0] / fn_divisor
-                else:
-                    grad[i] = fn_diff / fn_divisor
-            elif bounds_check[i] == -1:
-                fn_diff = fn - fn2  # type: ignore
-                if isinstance(fn_diff, np.ndarray):
-                    grad[i] = fn_diff[0] / fn_divisor
-                else:
-                    grad[i] = fn_diff / fn_divisor
 
-        if stage == 2:
-            # Diagonal in Hessian.
-            for i in range(problem.dim):
-                fn_1 = (
-                    func_diff[i, 1][0]
-                    if isinstance(func_diff[i, 1], np.ndarray)
-                    else func_diff[i, 1]
-                )
-                fn_2 = (
-                    func_diff[i, 2][0]
-                    if isinstance(func_diff[i, 2], np.ndarray)
-                    else func_diff[i, 2]
-                )
-                if bounds_check[i] == 0:
-                    fn_0 = (
-                        func_diff[i, 0][0]
-                        if isinstance(func_diff[i, 0], np.ndarray)
-                        else func_diff[i, 0]
+        # Fill the diagonal of the Hessian matrix.
+        np.fill_diagonal(hessian, hessian_diag)
+
+        # Fill the upper triangle of the Hessian matrix.
+        for i in range(problem.dim):
+            f_i_minus_h = f_x_minus_h[i]
+            f_i_plus_h = f_x_plus_h[i]
+            h = steps[i]  # h step size
+            # Upper triangle in Hessian
+            for j in range(i + 1, problem.dim):
+                f_j_minus_k = f_x_minus_h[j]
+                f_j_plus_k = f_x_plus_h[j]
+                k = steps[j]  # k step size
+
+                x5 = new_x.copy()
+                # Neither x nor y on boundary.
+                if bounds_check[i] == 0 and bounds_check[j] == 0:
+                    # Represent f(x+h,y+k).
+                    x5[i] += h
+                    x5[j] += k
+                    fn5 = get_fn_x(x5)
+                    # Represent f(x-h,y-k).
+                    x6 = new_x.copy()
+                    x6[i] -= h
+                    x6[j] -= k
+                    fn6 = get_fn_x(x6)
+                    # Compute second order gradient.
+                    hessian[i, j] = (
+                        2 * fn
+                        + (fn5 - f_i_minus_h - f_j_minus_k)
+                        + (fn6 - f_i_plus_h - f_j_plus_k)
+                    ) / (2 * h * k)
+                # When x on boundary, y not.
+                elif bounds_check[j] == 0:
+                    i_plus_minus = bounds_check[i] * h
+                    # Represent f(x+/-h,y+k).
+                    x5[i] += i_plus_minus
+                    x5[j] += k
+                    fn5 = get_fn_x(x5)
+                    # Represent f(x+/-h,y-k).
+                    x6 = new_x.copy()
+                    x6[i] += i_plus_minus
+                    x6[j] -= k
+                    fn6 = get_fn_x(x6)
+                    # Compute second order gradient.
+                    hessian[i, j] = (
+                        (fn5 - f_j_minus_k - fn6 + f_j_plus_k)
+                        / (2 * h * k)
+                        * bounds_check[i]
                     )
-                    hessian[i, i] = (fn_0 - 2 * fn[0] + fn_1) / (fn_2**2)
-                elif bounds_check[i] == 1:
-                    x3 = list(new_x)
-                    x3[i] = x3[i] + func_diff[i, 2] / 2
-                    x3_solution = self.create_new_solution(tuple(x3), problem)
-                    # Check budget.
-                    problem.simulate_up_to([x3_solution], n_r)
-                    fn3 = -1 * problem.minmax[0] * x3_solution.objectives_mean
-                    hessian[i, i] = 4 * (fn_1 - 2 * fn3[0] + fn[0]) / (fn_2**2)
-                elif bounds_check[i] == -1:
-                    x4 = list(new_x)
-                    x4[i] = x4[i] - func_diff[i, 2] / 2
-                    x4_solution = self.create_new_solution(tuple(x4), problem)
-                    # Check budget.
-                    problem.simulate_up_to([x4_solution], n_r)
-                    fn4 = -1 * problem.minmax[0] * x4_solution.objectives_mean
-                    hessian[i, i] = 4 * (fn[0] - 2 * fn4[0] + fn_1) / (fn_2**2)
-
-                # Upper triangle in Hessian
-                for j in range(i + 1, problem.dim):
-                    # Neither x nor y on boundary.
-                    if bounds_check[i] ** 2 + bounds_check[j] ** 2 == 0:
-                        # Represent f(x+h,y+k).
-                        x5 = list(new_x)
-                        x5[i] = x5[i] + func_diff[i, 2]
-                        x5[j] = x5[j] + func_diff[j, 2]
-                        x5_solution = self.create_new_solution(
-                            tuple(x5), problem
-                        )
-                        # Check budget.
-                        problem.simulate_up_to([x5_solution], n_r)
-                        fn5 = (
-                            -1 * problem.minmax[0] * x5_solution.objectives_mean
-                        )
-                        # Represent f(x-h,y-k).
-                        x6 = list(new_x)
-                        x6[i] = x6[i] - func_diff[i, 2]
-                        x6[j] = x6[j] - func_diff[j, 2]
-                        x6_solution = self.create_new_solution(
-                            tuple(x5), problem
-                        )
-                        # Check budget.
-                        problem.simulate_up_to([x6_solution], n_r)
-                        fn6 = (
-                            -1 * problem.minmax[0] * x6_solution.objectives_mean
-                        )
-                        # Compute second order gradient.
-                        fn_i0 = (
-                            func_diff[i, 0][0]
-                            if isinstance(func_diff[i, 0], np.ndarray)
-                            else func_diff[i, 0]
-                        )
-                        fn_j0 = (
-                            func_diff[j, 0][0]
-                            if isinstance(func_diff[j, 0], np.ndarray)
-                            else func_diff[j, 0]
-                        )
-                        fn_i1 = (
-                            func_diff[i, 1][0]
-                            if isinstance(func_diff[i, 1], np.ndarray)
-                            else func_diff[i, 1]
-                        )
-                        fn_j1 = (
-                            func_diff[j, 1][0]
-                            if isinstance(func_diff[j, 1], np.ndarray)
-                            else func_diff[j, 1]
-                        )
-                        fn_i2 = (
-                            func_diff[i, 2][0]
-                            if isinstance(func_diff[i, 2], np.ndarray)
-                            else func_diff[i, 2]
-                        )
-                        fn_j2 = (
-                            func_diff[j, 2][0]
-                            if isinstance(func_diff[j, 2], np.ndarray)
-                            else func_diff[j, 2]
-                        )
-                        hessian[i, j] = (
-                            fn5[0]
-                            - fn_i0
-                            - fn_j0
-                            + 2 * fn[0]
-                            - fn_i1
-                            - fn_j1
-                            + fn6[0]
-                        ) / (2 * fn_i2 * fn_j2)
-                        hessian[j, i] = hessian[i, j]
-                    # When x on boundary, y not.
-                    elif bounds_check[j] == 0:
-                        # Represent f(x+/-h,y+k).
-                        x5 = list(new_x)
-                        x5[i] = x5[i] + bounds_check[i] * func_diff[i, 2]
-                        x5[j] = x5[j] + func_diff[j, 2]
-                        x5_solution = self.create_new_solution(
-                            tuple(x5), problem
-                        )
-                        # Check budget.
-                        problem.simulate_up_to([x5_solution], n_r)
-                        fn5 = (
-                            -1 * problem.minmax[0] * x5_solution.objectives_mean
-                        )
-                        # Represent f(x+/-h,y-k).
-                        x6 = list(new_x)
-                        x6[i] = x6[i] + bounds_check[i] * func_diff[i, 2]
-                        x6[j] = x6[j] - func_diff[j, 2]
-                        x6_solution = self.create_new_solution(
-                            tuple(x6), problem
-                        )
-                        # Check budget.
-                        problem.simulate_up_to([x6_solution], n_r)
-                        fn6 = (
-                            -1 * problem.minmax[0] * x6_solution.objectives_mean
-                        )
-                        # Compute second order gradient.
-                        hessian[i, j] = (
-                            fn5 - func_diff[j, 0] - fn6 + func_diff[j, 1]
-                        ) / (
-                            2
-                            * func_diff[i, 2]
-                            * func_diff[j, 2]
-                            * bounds_check[i]
-                        )
-                        hessian[j, i] = hessian[i, j]
-                    # When y on boundary, x not.
-                    elif bounds_check[i] == 0:
-                        # Represent f(x+h,y+/-k).
-                        x5 = list(new_x)
-                        x5[i] = x5[i] + func_diff[i, 2]
-                        x5[j] = x5[j] + bounds_check[j] * func_diff[j, 2]
-                        x5_solution = self.create_new_solution(
-                            tuple(x5), problem
-                        )
-                        # Check budget.
-                        problem.simulate_up_to([x5_solution], n_r)
-                        fn5 = (
-                            -1 * problem.minmax[0] * x5_solution.objectives_mean
-                        )
-                        # Represent f(x-h,y+/-k).
-                        x6 = list(new_x)
-                        x6[i] = x6[i] + func_diff[i, 2]
-                        x6[j] = x6[j] + bounds_check[j] * func_diff[j, 2]
-                        x6_solution = self.create_new_solution(
-                            tuple(x6), problem
-                        )
-                        # Check budget.
-                        problem.simulate_up_to([x6_solution], n_r)
-                        fn6 = (
-                            -1 * problem.minmax[0] * x6_solution.objectives_mean
-                        )
-                        # Compute second order gradient.
-                        hessian[i, j] = (
-                            fn5 - func_diff[i, 0] - fn6 + func_diff[i, 1]
-                        ) / (
-                            2
-                            * func_diff[i, 2]
-                            * func_diff[j, 2]
-                            * bounds_check[j]
-                        )
-                        hessian[j, i] = hessian[i, j]
-                    elif bounds_check[i] == 1:
-                        if bounds_check[j] == 1:
-                            # Represent f(x+h,y+k).
-                            x5 = list(new_x)
-                            x5[i] = x5[i] + func_diff[i, 2]
-                            x5[j] = x5[j] + func_diff[j, 2]
-                            x5_solution = self.create_new_solution(
-                                tuple(x5), problem
-                            )
-                            # Check budget.
-                            problem.simulate_up_to([x5_solution], n_r)
-                            fn5 = (
-                                -1
-                                * problem.minmax[0]
-                                * x5_solution.objectives_mean
-                            )
-                            # Compute second order gradient.
-                            hessian[i, j] = (
-                                fn5 - func_diff[i, 0] - func_diff[j, 0] + fn
-                            ) / (func_diff[i, 2] * func_diff[j, 2])
-                            hessian[j, i] = hessian[i, j]
-                        else:
-                            # Represent f(x+h,y-k).
-                            x5 = list(new_x)
-                            x5[i] = x5[i] + func_diff[i, 2]
-                            x5[j] = x5[j] - func_diff[j, 2]
-                            x5_solution = self.create_new_solution(
-                                tuple(x5), problem
-                            )
-                            # Check budget.
-                            problem.simulate_up_to([x5_solution], n_r)
-                            fn5 = (
-                                -1
-                                * problem.minmax[0]
-                                * x5_solution.objectives_mean
-                            )
-                            # Compute second order gradient.
-                            hessian[i, j] = (
-                                func_diff[i, 0] - fn5 - fn + func_diff[j, 1]
-                            ) / (func_diff[i, 2] * func_diff[j, 2])
-                            hessian[j, i] = hessian[i, j]
-                    elif bounds_check[i] == -1:
-                        if bounds_check[j] == 1:
-                            # Represent f(x-h,y+k).
-                            x5 = list(new_x)
-                            x5[i] = x5[i] - func_diff[i, 2]
-                            x5[j] = x5[j] + func_diff[j, 2]
-                            x5_solution = self.create_new_solution(
-                                tuple(x5), problem
-                            )
-                            # Check budget
-                            problem.simulate_up_to([x5_solution], n_r)
-                            fn5 = (
-                                -1
-                                * problem.minmax[0]
-                                * x5_solution.objectives_mean
-                            )
-                            # Compute second order gradient.
-                            hessian[i, j] = (
-                                func_diff[j, 0] - fn - fn5 + func_diff[i, 1]
-                            ) / (func_diff[i, 2] * func_diff[j, 2])
-                            hessian[j, i] = hessian[i, j]
-                        else:
-                            # Represent f(x-h,y-k).
-                            x5 = list(new_x)
-                            x5[i] = x5[i] - func_diff[i, 2]
-                            x5[j] = x5[j] - func_diff[j, 2]
-                            x5_solution = self.create_new_solution(
-                                tuple(x5), problem
-                            )
-                            # Check budget.
-                            problem.simulate_up_to([x5_solution], n_r)
-                            fn5 = (
-                                -1
-                                * problem.minmax[0]
-                                * x5_solution.objectives_mean
-                            )
-                            # Compute second order gradient.
-                            hessian[i, j] = (
-                                fn - func_diff[j, 1] - func_diff[i, 1] + fn5
-                            ) / (func_diff[i, 2] * func_diff[j, 2])
-                            hessian[j, i] = hessian[i, j]
+                # When y on boundary, x not.
+                elif bounds_check[i] == 0:
+                    k_plus_minus = bounds_check[j] * k
+                    # Represent f(x+h,y+/-k).
+                    x5[i] += h
+                    x5[j] += k_plus_minus
+                    fn5 = get_fn_x(x5)
+                    # Represent f(x-h,y+/-k).
+                    x6 = new_x.copy()
+                    x6[i] -= h
+                    x6[j] += k_plus_minus
+                    fn6 = get_fn_x(x6)
+                    # Compute second order gradient.
+                    hessian[i, j] = (
+                        (fn5 - f_i_minus_h - fn6 + f_i_plus_h)
+                        / (2 * h * k)
+                        * bounds_check[j]
+                    )
+                # If only using one side
+                else:
+                    x5[i] += h * bounds_check[i]
+                    x5[j] += k * bounds_check[j]
+                    # TODO: verify the i and j mappings are inverted
+                    fd_ix = f_i_minus_h if bounds_check[i] == -1 else f_i_plus_h
+                    fd_jx = f_j_minus_k if bounds_check[j] == -1 else f_j_plus_k
+                    fn5 = get_fn_x(x5)
+                    hessian[i, j] = (
+                        ((fn + fn5) - (fd_jx + fd_ix)) / (h * k) * bounds_check[j]
+                    )
+                # Since we're only computing the upper half the matrix, we
+                # need to copy the value to the lower triangle.
+                hessian[j, i] = hessian[i, j]
         return grad, hessian

@@ -65,7 +65,7 @@ print(msg)
 11. In your browser, navigate to [https://github.com/simopt-admin/simopt](https://github.com/simopt-admin/simopt). Click on "Download ZIP" as shown.
 
 ![zip-1](./figs/instruction-2.png)
-    
+
 Unzip the folder **simopt-master** and open it in VS Code using `File > Open Folder`.
 
 Open the file `workshop/workshop.ipynb` in the VS Code editor and follow along.

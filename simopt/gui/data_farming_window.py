@@ -1,20 +1,24 @@
+"""GUI for data farming experiments."""
+
 import ast
-import os
+import logging
 import tkinter as tk
-from tkinter import filedialog, ttk
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 from tkinter.font import nametofont
 
 import pandas as pd
 
+import simopt.directory as directory
 from simopt.data_farming_base import DATA_FARMING_DIR, DataFarmingExperiment
-from simopt.directory import (
-    model_directory,
-    model_unabbreviated_directory,
-)
 from simopt.experiment_base import (
     create_design,
 )
 from simopt.gui.toplevel_custom import Toplevel
+
+# Workaround for AutoAPI
+model_directory = directory.model_directory
+model_unabbreviated_directory = directory.model_unabbreviated_directory
 
 
 class DataFarmingWindow(Toplevel):
@@ -23,13 +27,10 @@ class DataFarmingWindow(Toplevel):
     def __init__(self, root: tk.Tk, forced_creation: bool = False) -> None:
         """Initialize the data farming window.
 
-        Parameters
-        ----------
-        root : tk.Tk
-            The root window of the application.
-        forced_creation : bool, optional
-            If True, the window will be created even if it already exists, by default False.
-
+        Args:
+            root (tk.Tk): The root window of the application.
+            forced_creation (bool, optional): Whether to create the window even if it
+                already exists. Defaults to False.
         """
         if not forced_creation:
             super().__init__(
@@ -130,16 +131,14 @@ class DataFarmingWindow(Toplevel):
     def clear_frame(self, frame: tk.Frame) -> None:
         """Clear all widgets from a frame.
 
-        Parameters
-        ----------
-        frame : tk.Frame
-            Name of frame that you wish to delete all widgets from.
-
+        Args:
+            frame (tk.Frame): The frame to clear.
         """
         for widget in frame.winfo_children():
             widget.destroy()
 
     def load_design(self) -> None:
+        """Load design from a CSV file."""
         # Clear previous selections
         self.clear_frame(frame=self.factors_frame)
         self.clear_frame(frame=self.create_design_frame)
@@ -206,11 +205,12 @@ class DataFarmingWindow(Toplevel):
         self.headerdefault_label.grid(row=0, column=2, sticky=tk.N + tk.W)
 
         # Name of design csv file
-        self.csv_filename = filedialog.askopenfilename()
+        selected_file = filedialog.askopenfilename()
+        self.csv_filename = Path(selected_file).resolve()
 
         # get experiment name
-        filename = os.path.basename(self.csv_filename)
-        name, ext = os.path.splitext(filename)
+        filename = self.csv_filename.name
+        name = filename.split(".")[0]
         # remove design from name if present
         self.experiment_name = name.replace("_design", "")
 
@@ -223,24 +223,20 @@ class DataFarmingWindow(Toplevel):
         self.n_stacks = self.design_table.at[1, "Number Stacks"]
         self.model_var.set(self.model_name)
 
-        all_factor_names = [col for col in self.design_table.columns[1:-3]]
-        self.factor_names = []  # names of factors included in design
-        # determine what factors are included in design
-        self.factor_status = {}  # dictionary that contains true/false for wheither factor is in design
-        for col in self.design_table.columns[
-            1:-3
-        ]:  # col correspond to factor names, exclude index and information cols
+        all_factor_names = list(self.design_table.columns[1:-3])
+        # names of factors included in design
+        self.factor_names = []
+        # dictionary that contains true/false for whether factor is in design
+        self.factor_status = {}
+        # col correspond to factor names, exclude index and information cols
+        for col in self.design_table.columns[1:-3]:
             factor_set = set(self.design_table[col])
-
-            if len(factor_set) > 1:
-                design_factor = True
-            else:
-                design_factor = False
-
+            design_factor = len(factor_set) > 1
             self.factor_status[col] = design_factor
 
         # get default values for fixed factors
-        self.default_factors = {}  # contains only factors not in design, factor default vals input as str
+        # contains only factors not in design, factor default vals input as str
+        self.default_factors = {}
         for factor in self.factor_status:
             if not self.factor_status[factor]:
                 self.default_factors[factor] = self.design_table.at[1, factor]
@@ -254,9 +250,9 @@ class DataFarmingWindow(Toplevel):
             self.factor_datatype = self.model_object.specifications[factor].get(
                 "datatype"
             )
-            self.factor_description = self.model_object.specifications[
-                factor
-            ].get("description")
+            self.factor_description = self.model_object.specifications[factor].get(
+                "description"
+            )
 
             if not self.factor_status[factor]:
                 self.factor_default = self.default_factors[factor]
@@ -264,9 +260,7 @@ class DataFarmingWindow(Toplevel):
             else:
                 self.factor_default = "Cannot Edit Design Factor"
 
-            self.factors_frame.grid_rowconfigure(
-                self.factor_que_length, weight=1
-            )
+            self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
             if self.factor_datatype is int:
                 self.str_type = "int"
@@ -340,6 +334,7 @@ class DataFarmingWindow(Toplevel):
         self.run_button.configure(state="disabled")
 
     def enable_run_button(self) -> None:
+        """Enable the run button."""
         self.run_button.configure(state="normal")
 
     def show_design_options(self) -> None:
@@ -445,33 +440,34 @@ class DataFarmingWindow(Toplevel):
 
     def mod_design(self) -> None:
         self.default_values = [
-            self.default_value.get()
-            for self.default_value in self.default_values_list
+            self.default_value.get() for self.default_value in self.default_values_list
         ]  # default value of each factor
-        factor_index = 0
-        for factor in self.default_factors:
-            # self.default_values = [self.default_value.get() for self.default_value in self.default_values_list] # default value of each factor
+        for factor_index, factor in enumerate(self.default_factors):
+            # self.default_values = [
+            #     self.default_value.get()
+            #     for self.default_value in self.default_values_list
+            # ]  # default value of each factor
             new_val = self.default_values[factor_index]
             self.design_table[factor] = new_val
             self.default_factors[factor] = new_val
-            factor_index += 1
 
         self.experiment_name = (
             self.design_filename_var.get()
         )  # name of design file specified by user
 
-        self.csv_filename = os.path.join(
-            DATA_FARMING_DIR, f"{self.experiment_name}_design.csv"
-        )
+        design_csv_name = f"{self.experiment_name}_design.csv"
+
+        self.csv_filename = DATA_FARMING_DIR / design_csv_name
 
         self.design_table.to_csv(self.csv_filename, index=False)
 
         # read new design csv and convert to df
         self.design_table = pd.read_csv(self.csv_filename, index_col=False)
 
-        tk.messagebox.showinfo(
+        messagebox.showinfo(
             "Information",
-            f"Design has been modified. {self.experiment_name}_design.csv has been created in {DATA_FARMING_DIR}. ",
+            f"Design has been modified. "
+            f"{design_csv_name} has been created in {DATA_FARMING_DIR}. ",
         )
 
         self.display_design_tree()
@@ -479,19 +475,16 @@ class DataFarmingWindow(Toplevel):
 
     def con_design(self) -> None:
         # Create design txt file
-        self.experiment_name = (
-            self.design_filename_var.get()
-        )  # name of design file specified by user
+        # Load name specified by user
+        self.experiment_name = self.design_filename_var.get()
+        self.design_filename = f"{self.experiment_name}_design.csv"
+        file_path = DATA_FARMING_DIR / self.design_filename
         self.design_table[self.factor_names].to_csv(
-            os.path.join(
-                DATA_FARMING_DIR,
-                f"{self.experiment_name}_design.txt",
-            ),
+            file_path,
             sep="\t",
             index=False,
             header=False,
         )
-        self.design_filename = f"{self.experiment_name}_design"
 
         # get fixed factors in proper data type
         self.fixed_factors = self.convert_proper_datatype(self.default_factors)
@@ -499,18 +492,15 @@ class DataFarmingWindow(Toplevel):
         self.enable_run_button()
 
     def convert_proper_datatype(self, fixed_factors: dict) -> dict:
-        """Convert fixed factors to proper data type.
+        """Convert fixed factor values from strings to their proper data types.
 
-        Parameters
-        ----------
-        fixed_factors : dict
-            Dictionary containing fixed factor names not included in design and corresponding user selected value as str.
+        Args:
+            fixed_factors (dict): Dictionary containing fixed factor names and
+                user-selected values as strings.
 
-        Returns
-        -------
-        converted_fixed_factors : dict
-            Dictrionary containing fixed factor names and corresponding values converted to proper data type.
-
+        Returns:
+            dict: Dictionary with fixed factor names and values converted to their
+                appropriate data types.
         """
         converted_fixed_factors = {}
 
@@ -527,9 +517,7 @@ class DataFarmingWindow(Toplevel):
                 tuple_str = fixed_val[1:-1].split(",")
                 # determine if last tuple value is empty
                 if last_val != ",":
-                    converted_fixed_factors[factor] = tuple(
-                        float(s) for s in tuple_str
-                    )
+                    converted_fixed_factors[factor] = tuple(float(s) for s in tuple_str)
                 else:
                     tuple_exclude_last = tuple_str[:-1]
                     float_tuple = [float(s) for s in tuple_exclude_last]
@@ -543,14 +531,11 @@ class DataFarmingWindow(Toplevel):
         return converted_fixed_factors
 
     # Display Model Factors
-    def show_model_factors(self, *args: tuple) -> None:
-        """Show model factors in GUI.
+    def show_model_factors(self, _: tk.StringVar) -> object:
+        """Show model factors in the GUI.
 
-        Parameters
-        ----------
-        args : tuple
-            Tuple containing model name selected by user.
-
+        Args:
+            _ (tk.StringVar): The selected model from the drop-down menu.
         """
         self.factor_canvas.destroy()
 
@@ -560,13 +545,9 @@ class DataFarmingWindow(Toplevel):
         self.factor_canvas.grid_columnconfigure(0, weight=1)
         self.factor_canvas.grid(row=4, column=0, sticky="nsew")
         self.factors_frame = tk.Frame(master=self.factor_canvas)
-        self.factor_canvas.create_window(
-            (0, 0), window=self.factors_frame, anchor="nw"
-        )
+        self.factor_canvas.create_window((0, 0), window=self.factors_frame, anchor="nw")
 
-        self.factors_frame.grid_rowconfigure(
-            self.factor_que_length + 1, weight=1
-        )
+        self.factors_frame.grid_rowconfigure(self.factor_que_length + 1, weight=1)
 
         self.factors_title_frame = tk.Frame(master=self)
         self.factors_title_frame.grid(row=3, column=0, sticky="nsew")
@@ -679,22 +660,20 @@ class DataFarmingWindow(Toplevel):
             self.factor_datatype = self.model_object.specifications[factor].get(
                 "datatype"
             )
-            self.factor_description = self.model_object.specifications[
-                factor
-            ].get("description")
+            self.factor_description = self.model_object.specifications[factor].get(
+                "description"
+            )
             self.factor_default = self.model_object.specifications[factor].get(
                 "default"
             )
-            self.factor_isDatafarmable = self.model_object.specifications[
-                factor
-            ].get("isDatafarmable")
+            self.factor_isDatafarmable = self.model_object.specifications[factor].get(
+                "isDatafarmable"
+            )
 
             # Values to help with formatting
             entry_width = 10
 
-            self.factors_frame.grid_rowconfigure(
-                self.factor_que_length, weight=1
-            )
+            self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
             # Add label for factor names
             self.factorname_label = tk.Label(
@@ -714,9 +693,7 @@ class DataFarmingWindow(Toplevel):
                 self.factor_datatype is float
                 and self.factor_isDatafarmable is not False
             ):
-                self.factors_frame.grid_rowconfigure(
-                    self.factor_que_length, weight=1
-                )
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
                 self.str_type = "float"
 
@@ -756,9 +733,7 @@ class DataFarmingWindow(Toplevel):
                     command=self.include_factor,
                     width=5,
                 )
-                self.checkbox.grid(
-                    row=self.factor_que_length, column=3, sticky="nsew"
-                )
+                self.checkbox.grid(row=self.factor_que_length, column=3, sticky="nsew")
                 self.checkstate_list.append(self.checkstate)
 
                 self.check_widgets[factor] = self.checkbox
@@ -849,12 +824,9 @@ class DataFarmingWindow(Toplevel):
                 self.factor_que_length += 1
 
             elif (
-                self.factor_datatype is int
-                and self.factor_isDatafarmable is not False
+                self.factor_datatype is int and self.factor_isDatafarmable is not False
             ):
-                self.factors_frame.grid_rowconfigure(
-                    self.factor_que_length, weight=1
-                )
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
                 self.str_type = "int"
 
@@ -892,9 +864,7 @@ class DataFarmingWindow(Toplevel):
                     variable=self.checkstate,
                     command=self.include_factor,
                 )
-                self.checkbox.grid(
-                    row=self.factor_que_length, column=3, sticky="nsew"
-                )
+                self.checkbox.grid(row=self.factor_que_length, column=3, sticky="nsew")
                 self.checkstate_list.append(self.checkstate)
 
                 self.check_widgets[factor] = self.checkbox
@@ -956,13 +926,8 @@ class DataFarmingWindow(Toplevel):
 
                 self.factor_que_length += 1
 
-            elif (
-                self.factor_datatype is list
-                or self.factor_isDatafarmable is False
-            ):
-                self.factors_frame.grid_rowconfigure(
-                    self.factor_que_length, weight=1
-                )
+            elif self.factor_datatype is list or self.factor_isDatafarmable is False:
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
                 if self.factor_datatype is list:
                     self.str_type = "list"
@@ -1020,9 +985,7 @@ class DataFarmingWindow(Toplevel):
                 self.factor_que_length += 1
 
             elif self.factor_datatype is tuple:
-                self.factors_frame.grid_rowconfigure(
-                    self.factor_que_length, weight=1
-                )
+                self.factors_frame.grid_rowconfigure(self.factor_que_length, weight=1)
 
                 self.str_type = "tuple"
 
@@ -1118,10 +1081,8 @@ class DataFarmingWindow(Toplevel):
             self.design_tree.heading(column, text=column)
             self.design_tree.column(column, width=100)
 
-        for index, row in design_table.iterrows():
-            self.design_tree.insert(
-                "", index, text=index, values=tuple(row)[:-3]
-            )
+        for index, row in enumerate(design_table.itertuples(index=False)):
+            self.design_tree.insert("", index, text=str(index), values=row[:-3])
 
         # Create a horizontal scrollbar
         xscrollbar = ttk.Scrollbar(
@@ -1175,14 +1136,12 @@ class DataFarmingWindow(Toplevel):
         )
         self.run_button.grid(row=0, column=2, sticky=tk.E, padx=30)
 
-    def create_design(self, *args: tuple) -> None:
-        """Create a design txt file and design csv file based on user specified design options.
+    def create_design(self, *_: tuple) -> None:
+        """Create a design `.txt` and `.csv` file based on user-specified options.
 
-        Parameters
-        ----------
-        args : tuple
-            Tuple containing the number of stacks and design type.
-
+        Args:
+            _ (tuple): Tuple containing the number of stacks and the design type
+                (unused positional arguments).
         """
         self.create_design_frame = tk.Frame(master=self)
         self.create_design_frame.grid(row=6, column=0)
@@ -1194,8 +1153,13 @@ class DataFarmingWindow(Toplevel):
         self.fixed_str = {}
 
         # user specified design options
-        n_stacks = self.stack_var.get()
+        n_stacks = int(self.stack_var.get())
         design_type = self.design_var.get()
+        if design_type != "nolhs":
+            error_msg = "Design type not supported."
+            logging.error(error_msg)
+            messagebox.showerror("Error", error_msg)
+            return
         # List to hold names of all factors part of model to be displayed in csv
         self.factor_names = []  # names of model factors included in experiment
         self.fixed_factors = {}  # fixed factor names and corresponding value
@@ -1210,9 +1174,10 @@ class DataFarmingWindow(Toplevel):
         max_values = [max_val.get() for max_val in self.max_list]
         dec_values = [dec_val.get() for dec_val in self.dec_list]
 
-        with open(
-            os.path.join(DATA_FARMING_DIR, f"{self.experiment_name}.txt"),
-        ) as self.model_design_factors:
+        # Create an empty file to append to later
+        file_name = f"{self.experiment_name}.txt"
+        file_path = DATA_FARMING_DIR / file_name
+        with file_path.open() as self.model_design_factors:
             self.model_design_factors.write("")
 
         # values to index through factors
@@ -1225,12 +1190,10 @@ class DataFarmingWindow(Toplevel):
 
         # Get experiment information
         for factor_index, factor in enumerate(self.model_object.specifications):
-            factor_datatype = self.model_object.specifications[factor].get(
-                "datatype"
+            factor_datatype = self.model_object.specifications[factor].get("datatype")
+            is_datafarmable_factor = self.model_object.specifications[factor].get(
+                "isDatafarmable"
             )
-            is_datafarmable_factor = self.model_object.specifications[
-                factor
-            ].get("isDatafarmable")
             factor_include = check_values[factor_index]
 
             # get user inputs for design factors
@@ -1238,28 +1201,26 @@ class DataFarmingWindow(Toplevel):
             if factor_include:
                 self.factor_names.append(factor)
 
-                if (
-                    factor_datatype in (float, int)
-                    and is_datafarmable_factor is not False
-                ):
-                    factor_min = str(min_values[maxmin_index])
-                    factor_max = str(max_values[maxmin_index])
-                    maxmin_index += 1
+                if not (factor_datatype in (float, int) and is_datafarmable_factor):
+                    error_msg = "Factor datatype not supported."
+                    logging.error(error_msg)
 
-                    if factor_datatype is float:
-                        factor_dec = str(dec_values[dec_index])
-                        dec_index += 1
+                factor_min = str(min_values[maxmin_index])
+                factor_max = str(max_values[maxmin_index])
+                maxmin_index += 1
 
-                    elif factor_datatype is int:
-                        factor_dec = "0"
+                if factor_datatype is float:
+                    # NOTE: this doesn't work with 1e-XX values
+                    factor_dec = str(dec_values[dec_index])
+                    dec_index += 1
+                else:  # factor is int
+                    factor_dec = "0"
 
                 data_insert = f"{factor_min} {factor_max} {factor_dec}\n"
+                file_name = f"{self.experiment_name}.txt"
+                file_path = DATA_FARMING_DIR / file_name
 
-                with open(
-                    os.path.join(
-                        DATA_FARMING_DIR,
-                        f"{self.experiment_name}.txt",
-                    ),
+                with file_path.open(
                     mode="a",
                 ) as self.model_design_factors:
                     self.model_design_factors.write(data_insert)
@@ -1276,9 +1237,8 @@ class DataFarmingWindow(Toplevel):
         # convert fixed factors to proper data type
         self.fixed_factors = self.convert_proper_datatype(def_factor_str)
         self.design_filename = f"{self.experiment_name}_design"
-        self.csv_filename = os.path.join(
-            DATA_FARMING_DIR, f"{self.experiment_name}_design.csv"
-        )
+        design_csv = f"{self.experiment_name}_design.csv"
+        self.csv_filename = DATA_FARMING_DIR / design_csv
 
         """ Use create_design to create a design txt file & design csv"""
         self.design_list = create_design(
@@ -1289,25 +1249,22 @@ class DataFarmingWindow(Toplevel):
             n_stacks=n_stacks,
             design_type=design_type,
             class_type="model",
-            csv_filename=self.csv_filename,
         )
         # Pop up message that csv design file has been created
-        tk.messagebox.showinfo(
+        messagebox.showinfo(
             "Information",
-            f"Design file {self.experiment_name}_design.csv has been created in {DATA_FARMING_DIR}. ",
+            f"Design file {design_csv} has been created in {DATA_FARMING_DIR}.",
         )
 
         # Display Design Values
         self.display_design_tree()
 
-    def run_experiment(self, *args: tuple) -> None:
-        """Run experiment with specified design and experiment options.
+    def run_experiment(self, *_: tuple) -> None:
+        """Run an experiment using the specified design and experiment options.
 
-        Parameters
-        ----------
-        args : tuple
-            Tuple containing the number of replications and whether to use common random numbers.
-
+        Args:
+            _ (tuple): Tuple containing the number of replications and whether to use
+                common random numbers (CRN).
         """
         # Specify a common number of replications to run of the model at each
         # design point.
@@ -1315,45 +1272,35 @@ class DataFarmingWindow(Toplevel):
 
         # Specify whether to use common random numbers across different versions
         # of the model.
-        if self.crn_var.get() == "Yes":
-            crn_across_design_pts = True
-        else:
-            crn_across_design_pts = False
+        crn_across_design_pts = self.crn_var.get() == "Yes"
 
-        output_filename = os.path.join(
-            DATA_FARMING_DIR,
-            f"{self.experiment_name}_raw_results",
-        )
+        raw_results = f"{self.experiment_name}_raw_results"
+        output_filename = DATA_FARMING_DIR / raw_results
 
         # Create DataFarmingExperiment object.
         myexperiment = DataFarmingExperiment(
             model_name=self.model_object.name,
-            factor_settings_filename=None,
+            factor_settings_file_name=None,
             factor_headers=self.factor_names,
-            design_filepath=self.design_filename,
+            design_path=self.design_filename,
             model_fixed_factors=self.fixed_factors,
         )
 
         # Run replications and print results to file.
-        myexperiment.run(
-            n_reps=n_reps, crn_across_design_pts=crn_across_design_pts
-        )
-        myexperiment.print_to_csv(csv_filename=output_filename)
+        myexperiment.run(n_reps=n_reps, crn_across_design_pts=crn_across_design_pts)
+        myexperiment.print_to_csv(csv_file_name=output_filename)
 
         # run confirmation message
-        tk.messagebox.showinfo(
+        messagebox.showinfo(
             "Run Completed",
             f"Experiment Completed. Output file can be found at {output_filename}",
         )
 
-    def include_factor(self, *args: tuple) -> None:
-        """Include factor in experiment and enable experiment options.
+    def include_factor(self, *_: tuple) -> None:
+        """Include a factor in the experiment and enable related experiment options.
 
-        Parameters
-        ----------
-        args : tuple
-            Tuple containing the factor name and checkstate value.
-
+        Args:
+            _ (tuple): Tuple containing the factor name and its checkstate value.
         """
         self.check_values = [
             self.checkstate.get() for self.checkstate in self.checkstate_list
@@ -1369,15 +1316,15 @@ class DataFarmingWindow(Toplevel):
             self.factor_datatype = self.model_object.specifications[factor].get(
                 "datatype"
             )
-            self.factor_description = self.model_object.specifications[
-                factor
-            ].get("description")
+            self.factor_description = self.model_object.specifications[factor].get(
+                "description"
+            )
             self.factor_default = self.model_object.specifications[factor].get(
                 "default"
             )
-            self.factor_isDatafarmable = self.model_object.specifications[
-                factor
-            ].get("isDatafarmable")
+            self.factor_isDatafarmable = self.model_object.specifications[factor].get(
+                "isDatafarmable"
+            )
 
             # Disable / enable experiment option widgets depending on factor type
             if (

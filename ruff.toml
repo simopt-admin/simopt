@@ -1,0 +1,49 @@
+# ruff.toml
+line-length = 88
+exclude = ["simopt/gui/*"]
+
+[lint]
+select = [
+    # Base style and correctness
+    "E",  # pycodestyle formatting rules
+    "F",  # pyflakes (undefined names, unused imports, etc.)
+    "B",  # flake8-bugbear
+    "N",  # pep8-naming
+    "UP", # pyupgrade (modern Python syntax)
+    "A",  # flake8-builtins
+    "I",  # isort
+
+    # Type hints and async code
+    "ANN",   # flake8-annotations (required type hints)
+    "ASYNC", # flake8-async
+
+    # SimOpt-specific tech
+    "NPY201", # NumPy 2.0 compatibility
+
+    # Code Quality
+    "SIM", # flake8-simplify
+    "RET", # flake8-return
+    "PTH", # flake8-use-pathlib
+    "ARG", # flake8-unused-arguments
+    "C4",  # flake8-comprehensions
+    # "C90", # mccabe complexity
+
+    # Ruff-specific
+    "RUF", # Ruff-exclusive rules
+
+    # Docs and structure
+    "D", # pydocstyle (docstring conventions)
+]
+
+[lint.mccabe]
+max-complexity = 8
+
+[lint.pydocstyle]
+convention = "google"
+ignore-decorators = ["simopt.utils.override"]
+
+[lint.isort]
+known-first-party = ["simopt", "mrg32k3a"]
+
+[lint.pep8-naming]
+classmethod-decorators = ["simopt.utils.classproperty"]
