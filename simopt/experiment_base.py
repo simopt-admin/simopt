@@ -310,6 +310,9 @@ class ProblemSolver:
         self.has_postreplicated = False
         self.has_postnormalized = False
         self.xstar = ()
+        self.x0 = ()
+        self.objective_curves = []
+        self.progress_curves = []
 
         # Initialize solver.
         if isinstance(solver, Solver):  # Method 2
@@ -3139,6 +3142,8 @@ def plot_terminal_progress(
         )
         # solver_curve_handles = []
         if normalize:
+            for exp in experiments:
+                print(exp.progress_curves)
             terminal_data = [
                 [
                     experiment.progress_curves[mrep].y_vals[-1]
@@ -3147,6 +3152,8 @@ def plot_terminal_progress(
                 for experiment in experiments
             ]
         else:
+            for exp in experiments:
+                print(exp.objective_curves)
             terminal_data = [
                 [
                     experiment.objective_curves[mrep].y_vals[-1]
