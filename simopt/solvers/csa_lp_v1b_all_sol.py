@@ -271,6 +271,7 @@ class CSA_LP(Solver):  # noqa: N801
             prob.solve()
 
             d = direction.value
+            #print(np.linalg.norm(d))
             d = d/np.linalg.norm(d)
 
         return d

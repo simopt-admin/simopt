@@ -108,7 +108,7 @@ class CSA_LP(Solver):  # noqa: N801
         """
         take in the current iteration k
         """
-        return 1/(k+1)
+        return .1
 
     def check_r(self) -> bool:
         return self.factors["r"] > 0

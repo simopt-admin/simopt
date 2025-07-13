@@ -66,7 +66,7 @@ class CSA_LP(Solver):  # noqa: N801
             "tolerance": {
                 "description": "tolerence function",
                 "datatype": float,  # TODO: change to Callable
-                "default": 0.1,
+                "default": 0.01,
             },
             "max_iters": {
                 "description": "maximum iterations",
@@ -108,7 +108,7 @@ class CSA_LP(Solver):  # noqa: N801
         """
         take in the current iteration k
         """
-        return .2
+        return .4
 
     def check_r(self) -> bool:
         return self.factors["r"] > 0
@@ -251,7 +251,7 @@ class CSA_LP(Solver):  # noqa: N801
         n_violated_cons, n = grads.shape
 
         if n_violated_cons == 1:
-            d = grads[0]
+            d = -1*grads[0]
         else:
             # normalization
             grads = grads / np.linalg.norm(grads, axis=1).reshape(
@@ -268,12 +268,13 @@ class CSA_LP(Solver):  # noqa: N801
                 theta <= 1]
 
             for i in range(n_violated_cons):
-                constraints += [grads[i] @ direction >= theta]
+                constraints += [-1*grads[i] @ direction >= theta]
 
             prob = cp.Problem(objective, constraints)
             prob.solve()
 
             d = direction.value
+
             # d = d/np.linalg.norm(d)
 
         return d
@@ -387,7 +388,7 @@ class CSA_LP(Solver):  # noqa: N801
                     * new_solution.objectives_gradients_mean[0]
                 )
                 # direction for improving multiple constraints, but call it 'grad' for convenience
-                grad = self.get_constraints_dir(violated_grads, obj_grad)
+                grad = -1* self.get_constraints_dir(violated_grads, obj_grad) #make negative to move in direction not away from direction
                 
 
                 numviolated += 1
@@ -410,19 +411,19 @@ class CSA_LP(Solver):  # noqa: N801
                     )
                     expended_budget += budget_spent
 
-            if is_violated:
-                # if this iteration is infeasible again, increase step size
-                if last_is_feasible == 0:
-                    t = infeasible_step / self.factors["ratio"]
-                    # infeasible_step = t
-                else:
-                    t = infeasible_step * self.factors["ratio"]
-                    # infeasible_step = t
-                infeasible_step = t
-                last_is_feasible = 0
-            else:
-                t = self.factors["step_f"](self, k)
-            t = min(t, .9) # place cap on t
+            # if is_violated:
+            #     # if this iteration is infeasible again, increase step size
+            #     if last_is_feasible == 0:
+            #         t = infeasible_step / self.factors["ratio"]
+            #         # infeasible_step = t
+            #     else:
+            #         t = infeasible_step * self.factors["ratio"]
+            #         # infeasible_step = t
+            #     infeasible_step = t
+            #     last_is_feasible = 0
+            # else:
+            t = self.factors["step_f"](self, k)
+            #t = min(t, .9) # place cap on t
             # step-size
             # t = self.factors["step_f"](k)
             # print("step: ", t)

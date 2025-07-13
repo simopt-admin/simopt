@@ -4308,7 +4308,7 @@ def plot_feasibility(
                 all_data_df = pd.concat(all_data, ignore_index=True)
                 fig = px.density_contour(all_data_df, x = "Objective Value", y=y_title, color = "Solver")
                 #fig.update_traces(contours_coloring="fill", contours_showlabels=True)
-                fig.update_layout(title=f"{solver_set_name} on {experiment.problem.name} Density of Objective value vs Feasiblity")    
+                fig.update_layout(title=f"{solver_set_name} on {experiment.problem.name} Density of Terminal Objective vs Feasibility")
                 fig.show()
                 file_list.append(
                     save_plot(
@@ -5905,7 +5905,7 @@ def setup_plot(
             
     # changes start here
     elif plot_type in ("feasibility_scatter", 
-                       "feasibiliy_violin", 
+                       "feasibility_violin",
                        "all_feasibility_progress", 
                        "mean_feasibility_progress", 
                        "quantile_feasibility_progress"):
@@ -5994,10 +5994,10 @@ def setup_plot(
         plt.xlabel("Solvers")
         if normalize:
             plt.ylabel("Terminal Progress")
-            title = f"{solver_name} on {problem_name}"
+            title = f"{solver_name} on {problem_name} Terminal Progress"
         else:
             plt.ylabel("Terminal Objective")
-            title = f"{solver_name} on {problem_name}"
+            title = f"{solver_name} on {problem_name} Terminal Objective"
     elif plot_type == "terminal_scatter":
         plt.xlabel("Mean Terminal Progress", size=14)
         plt.ylabel("Std Dev of Terminal Progress")
@@ -6008,7 +6008,7 @@ def setup_plot(
     elif plot_type == "feasibility_scatter":
         plt.xlabel("Terminal Objective Value", size=14)
         plt.tick_params(axis="both", which="major", labelsize=12)
-        title = f"{solver_name} on {problem_name} \n Terminal Feasibility vs Optimality Gap"
+        title = f"{solver_name} on {problem_name} \n Terminal Objective vs Feasibility"
     elif plot_type == "feasibility_violin":
         plt.xlabel("Solvers")
         title = f"{solver_name} on {problem_name} \n Terminal Feasibility"

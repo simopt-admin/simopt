@@ -114,7 +114,7 @@ class CSA(Solver):
         else:
             d = 70
         
-        return .2
+        return .1
 
     def check_r(self) -> bool:
         return self.factors["r"] > 0

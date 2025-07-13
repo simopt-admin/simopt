@@ -108,7 +108,7 @@ class CSA_LP(Solver):  # noqa: N801
         """
         take in the current iteration k
         """
-        return 1/(k+1)
+        return .1
 
     def check_r(self) -> bool:
         return self.factors["r"] > 0
@@ -272,16 +272,18 @@ class CSA_LP(Solver):  # noqa: N801
         theta = cp.Variable()
 
         objective = cp.Maximize(theta)
-        constraints = [theta >= 0, theta <= 1]
+        constraints = [
+                       cp.norm(direction,2) <=1  #add constraint that direction must be a unit vector
+                       ]
 
         for i in range(n_constraints):
-            constraints += [grads[i] @ direction >= theta]
+            constraints += [-1*grads[i] @ direction >= theta]
 
         prob = cp.Problem(objective, constraints)
         prob.solve()
 
         d = direction.value
-        norm_d = d/np.linalg.norm(d)
+        #norm_d = d/np.linalg.norm(d)
         # print("theta:", theta.value)
         # d = d/np.linalg.norm(d)
         
@@ -311,7 +313,7 @@ class CSA_LP(Solver):  # noqa: N801
         #     d = direction.value
         # norm_d = d/np.linalg.norm(d)
 
-        return norm_d
+        return d
 
     def prox_fn(self, a, cur_x, Ci, di, Ce, de, lower, upper):
         """
@@ -350,7 +352,6 @@ class CSA_LP(Solver):  # noqa: N801
         max_iters = self.factors["max_iters"]
         r = self.factors["r"]
         #temp hard code
-        objective_tolerance = 5 #how much direction is allowed to increase objective before removing a constraint from lp
         # max_gamma = self.factors["max_gamma"]
 
         # t = 1 #first max step size
@@ -426,7 +427,7 @@ class CSA_LP(Solver):  # noqa: N801
                 # print("num violated cons: ", len(violated_grads))
                 # print("violated grads: ", violated_grads)
                 # direction for improving multiple constraints, but call it 'grad' for convenience
-                grad = self.get_constraints_dir(violated_grads, obj_grad)
+                grad = -1* self.get_constraints_dir(violated_grads, obj_grad)
                 
                 # set max t depending on constraint violation
                 #max_t = max(constraint_results)*.5
