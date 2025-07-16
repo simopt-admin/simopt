@@ -28,18 +28,21 @@ from simopt.experiment_base import (
 from simopt.models.san import SANLongestPathStochastic, SAN, SANLongestPath
 from simopt.solvers.randomsearch import RandomSearch
 from simopt.solvers.csa_lp import CSA_LP as csa_v2
-from simopt.solvers.csa import CSA
+from simopt.solvers.csa import CSA as CSA_recommended
 from simopt.solvers.csa_lp_old import CSA_LP as csa_v1
 from simopt.solvers.csa_lp_v0 import CSA_LP as csa_v0
 from simopt.solvers.csa_lp_v0_all_sol import CSA_LP as csa_v0_all
 from simopt.solvers.csa_lp_v1_all_sol import CSA_LP as csa_v1_all
 from simopt.solvers.csa_lp_all_sol import CSA_LP as csa_v2_all
 from simopt.solvers.csa_lp_v1a_all_sol import CSA_LP as csa_v1a_all
+from simopt.solvers.csa_lp_v1a import CSA_LP as csa_v1a_recommended
 from simopt.solvers.csa_lp_v1b_all_sol import CSA_LP as csa_v1b_all
 from simopt.solvers.csa_lp_v2a_all_sol import CSA_LP as csa_v2a_all
 from simopt.solvers.csa_lp__v2b_all_sol import CSA_LP as csa_v2b_all
 from simopt.solvers.csa_lp_v3a_all_sol import CSA_LP as csa_v3a_all
+from simopt.solvers.csa_lp_v4_all_sol import CSA_LP as csa_v4a_all
 from simopt.solvers.csa_all_solns import CSA
+from simopt.solvers.csa_all_solns_unnormalized import CSA as CSA_unnormalized
 from simopt.solvers.csa_lp_v2a import CSA_LP as csa_v2a_recommended
 
 
@@ -68,8 +71,10 @@ def main() -> None:
     max_length_to_node = [5, 5]
 
     fixed_factors = {"constraint_nodes": constraint_nodes, "length_to_node_constraint": max_length_to_node,
-                     "initial_solution": initial, "budget": 15000}
+                     "initial_solution": initial, "budget": 10000}
     prob_2_const = SANLongestPathStochastic(fixed_factors=fixed_factors, name="SAN")
+
+    no_CRN = {"crn_across_solns": False}
 
     v0 = csa_v0(name="csa_lp_v0")
     v1 = csa_v1(name="csa_lp_v1") 
@@ -77,18 +82,22 @@ def main() -> None:
     v0_all = csa_v0_all(name="v0")
     v1_all = csa_v1_all(name="csa_lp_v1")
     v2_all = csa_v2_all(name="csa_lp_v2")
-    v1a = csa_v1a_all(name="csa_v1")
-    v1b = csa_v1b_all(name="csa_v1a")
-    v2a = csa_v2a_all(name="csa_v2")
+    v1a = csa_v1a_all(name="CSA-MC")
+    v1a_recommended = csa_v1a_recommended(name="CSA-MC")
+    v1b = csa_v1b_all(name="c")
+    v2a = csa_v2a_all(name="FCSA-0.0")
     v2b = csa_v2b_all(name="v2b")
     v3a = csa_v3a_all(name="csa_v3")
-    csa = CSA(name="csa_v0") #csa with no maximization problem, only follows most violated constraint
+    v4 = csa_v4a_all(name="FCSA-0.1")
+    csa_normal = CSA(name="CSA") #csa with no maximization problem, only follows most violated constraint
+    csa = CSA_unnormalized(name="CSA")
+    csa_recommended = CSA_recommended(name="CSA")
     v2a_recommended = csa_v2a_recommended(name="csa_v2")
 
     #adjust step sizes
 
     
-    solvers = [ v1a]
+    solvers = [ csa_normal, v2a, v4]
     
     problems = [prob_2_const]
     #problem.upper_bounds = 13*(100,)
@@ -136,8 +145,9 @@ def main() -> None:
 
     #plot_terminal_progress(experiments=myexperiment.experiments)
     #print(myexperiment.experiments[1][0].feasibility_curves)
-    plot_feasibility(myexperiment.experiments, plot_type= "scatter")
+    plot_feasibility(myexperiment.experiments, plot_type= "scatter", plot_conf_ints=True)
     plt.show()
+    plot_feasibility(myexperiment.experiments, plot_type="contour")
     plot_progress_curves(exp_plot_list , "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=True, save_as_pickle=True)
     plt.show()
     # plot_progress_curves([myexperiment.experiments[0][0]], "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=False,
@@ -151,14 +161,14 @@ def main() -> None:
     #plt.show()
     #plot_progress_curves(exp_plot_list , "quantile", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=False, save_as_pickle=True)
     #plot_feasibility(myexperiment.experiments,  all_in_one=True, two_sided=True, plot_optimal=False, solver_set_name="RNDSRCH")
-    plot_feasibility(myexperiment.experiments, "contour",  all_in_one=True, color_fill = True, two_sided=True, plot_conf_ints=False, save_as_pickle=True)
+    #plot_feasibility(myexperiment.experiments, "contour",  all_in_one=True, color_fill = True, two_sided=True, plot_conf_ints=False, save_as_pickle=True)
     #plot_feasibility(myexperiment.experiments, "contour",  all_in_one=False, color_fill = False, two_sided=True, plot_conf_ints=False)
     #plot_feasibility(myexperiment.experiments, "contour",  all_in_one=False, color_fill = True, two_sided=True, plot_conf_ints=False)
     #plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=True, two_sided=True, plot_optimal=True,save_as_pickle=True)
     plot_feasibility(myexperiment.experiments, "violin",  all_in_one=True, two_sided=True,save_as_pickle=True)
     plt.show()
     #plot_feasibility(myexperiment.experiments, "violin",score_type= "inf_norm", norm_degree=2,  all_in_one=False)
-    plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True, two_sided=False, save_as_pickle=True)
+    plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True, two_sided=True, save_as_pickle=True)
     plt.show()
     #plot_feasibility_progress(myexperiment.experiments,plot_type =  "mean", score_type = "inf_norm", all_in_one=True, two_sided=False, save_as_pickle=True)
     #plt.show()

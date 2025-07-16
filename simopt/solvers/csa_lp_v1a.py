@@ -263,8 +263,8 @@ class CSA_LP(Solver):  # noqa: N801
         #print("viable grads", viable_index)
         n_violated_cons, n = grads.shape
               
-        grads = np.vstack([grads,obj_grad])
-        n_constraints = n_violated_cons + 1
+        #grads = np.vstack([grads,obj_grad])
+        n_constraints = n_violated_cons
         grads = grads / np.linalg.norm(grads, axis=1).reshape(
             n_constraints, 1
         )
@@ -272,12 +272,11 @@ class CSA_LP(Solver):  # noqa: N801
         theta = cp.Variable()
 
         objective = cp.Maximize(theta)
-        constraints = [
-                       cp.norm(direction,2) <=1  #add constraint that direction must be a unit vector
-                       ]
+        constraints =[cp.norm(direction,2) <=1] #add constraint that direction must be a unit vector
+
 
         for i in range(n_constraints):
-            constraints += [-1*grads[i] @ direction >= theta]
+            constraints += [grads[i] @ direction >= theta]
 
         prob = cp.Problem(objective, constraints)
         prob.solve()
@@ -352,6 +351,7 @@ class CSA_LP(Solver):  # noqa: N801
         max_iters = self.factors["max_iters"]
         r = self.factors["r"]
         #temp hard code
+        objective_tolerance = 5 #how much direction is allowed to increase objective before removing a constraint from lp
         # max_gamma = self.factors["max_gamma"]
 
         # t = 1 #first max step size
@@ -427,7 +427,7 @@ class CSA_LP(Solver):  # noqa: N801
                 # print("num violated cons: ", len(violated_grads))
                 # print("violated grads: ", violated_grads)
                 # direction for improving multiple constraints, but call it 'grad' for convenience
-                grad = -1* self.get_constraints_dir(violated_grads, obj_grad)
+                grad = self.get_constraints_dir(violated_grads, obj_grad)
                 
                 # set max t depending on constraint violation
                 #max_t = max(constraint_results)*.5
@@ -447,7 +447,8 @@ class CSA_LP(Solver):  # noqa: N801
                         * new_solution.objectives_gradients_mean[0]
                     )
                     # normalize gradient
-                    grad = grad/np.linalg.norm(grad)
+                    grad = grad / np.linalg.norm(grad)
+
                 else:
                     # Use finite difference to estimate gradient if IPA gradient is not available.
                     # grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
@@ -503,14 +504,14 @@ class CSA_LP(Solver):  # noqa: N801
 
             # Append new solution.
             #append all solutions
-            recommended_solns.append(new_solution)
-            intermediate_budgets.append(expended_budget)
-            if not feasible_found: # no feasible solutions have been found            
+            # recommended_solns.append(new_solution)
+            # intermediate_budgets.append(expended_budget)
+            if not feasible_found: # no feasible solutions have been found
                 # if (
                 #     problem.minmax[0] * new_solution.objectives_mean
                 #     > problem.minmax[0] * best_solution.objectives_mean
                 # ):
-                # apend all solutions for now, assume that we are improving feasibility
+                #apend all solutions for now, assume that we are improving feasibility
                 
                 best_solution = new_solution
 
@@ -521,15 +522,15 @@ class CSA_LP(Solver):  # noqa: N801
             # else:
             #     print("Rejected solution:", new_solution.x)
             #     print("budget", expended_budget)
-            # elif n_feasible == 1 and not feasible_found: #always accept first feasible solution
+            elif n_feasible == 1 and not feasible_found: #always accept first feasible solution
             
-            #     best_solution = new_solution
-            #     # recommended_solns.append(candidate_solution)
-            #     recommended_solns.append(new_solution)
-            #     intermediate_budgets.append(expended_budget)
-            #     print("Accepted solution:", new_solution.x)
-            #     print("budget", expended_budget)
-            #     feasible_found = True
+                best_solution = new_solution
+                # recommended_solns.append(candidate_solution)
+                recommended_solns.append(new_solution)
+                intermediate_budgets.append(expended_budget)
+                # print("Accepted solution:", new_solution.x)
+                # print("budget", expended_budget)
+                feasible_found = True
             
             else: #once a feasible solution has been found, only accept solutions that are feasible and reduce objective
                 if (
@@ -537,7 +538,8 @@ class CSA_LP(Solver):  # noqa: N801
                     > problem.minmax[0] * best_solution.objectives_mean
                 ) and not is_violated:
                     best_solution = new_solution
-                    # recommended_solns.append(candidate_solution)
+                    recommended_solns.append(new_solution)
+                    intermediate_budgets.append(expended_budget)
                     # print("Accepted solution:", new_solution.x)
                     # print("budget", expended_budget)
 

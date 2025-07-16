@@ -41,7 +41,7 @@ class CSA_LP(Solver):  # noqa: N801
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": True,
+                "default": False,
             },
             "r": {
                 "description": "number of replications taken at each solution",
@@ -108,7 +108,7 @@ class CSA_LP(Solver):  # noqa: N801
         """
         take in the current iteration k
         """
-        return .4
+        return .1
 
     def check_r(self) -> bool:
         return self.factors["r"] > 0
@@ -403,6 +403,8 @@ class CSA_LP(Solver):  # noqa: N801
                         * problem.minmax[0]
                         * new_solution.objectives_gradients_mean[0]
                     )
+                    # normalize gradient
+                    grad = grad/np.linalg.norm(grad)
                 else:
                     # Use finite difference to estimate gradient if IPA gradient is not available.
                     # grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)

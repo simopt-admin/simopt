@@ -335,8 +335,9 @@ class CSA(Solver):
                         * problem.minmax[0]
                         * new_solution.objectives_gradients_mean[0]
                     )
+
                     #print(f"not violated, obj grad:{grad} ")
-                    t = min(.05, self.factors["step_f"](self, k=k))
+
                 else:
                     # Use finite difference to estimate gradient if IPA gradient is not available.
                     # grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
@@ -350,7 +351,10 @@ class CSA(Solver):
 
             # new_x = cur_x + t * direction
             #print('grad', grad)
+            # normalize gradient
+            grad = grad/np.linalg.norm(grad)
             new_x = self.prox_fn(t * grad, cur_x, Ci, di, Ce, de, lower, upper)
+
 
             candidate_solution = self.create_new_solution(tuple(new_x), problem)
             # Use r simulated observations to estimate the objective value.

@@ -43,7 +43,7 @@ class CSA(Solver):
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": True,
+                "default": False,
             },
             "LSmethod": {
                 "description": "method",
@@ -114,7 +114,7 @@ class CSA(Solver):
         else:
             d = 70
         
-        return .4
+        return .1
 
     def check_r(self) -> bool:
         return self.factors["r"] > 0
@@ -335,8 +335,8 @@ class CSA(Solver):
                         * problem.minmax[0]
                         * new_solution.objectives_gradients_mean[0]
                     )
+                    # normalize gradient
                     #print(f"not violated, obj grad:{grad} ")
-                    t = min(.05, self.factors["step_f"](self, k=k))
                 else:
                     # Use finite difference to estimate gradient if IPA gradient is not available.
                     # grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
@@ -349,6 +349,8 @@ class CSA(Solver):
             t = self.factors["step_f"](self, k=k)
 
             # new_x = cur_x + t * direction
+            # normalize gradient
+            grad = grad/np.linalg.norm(grad)
             #print('grad', grad)
             new_x = self.prox_fn(t * grad, cur_x, Ci, di, Ce, de, lower, upper)
 

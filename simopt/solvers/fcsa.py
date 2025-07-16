@@ -41,7 +41,7 @@ class CSA_LP(Solver):  # noqa: N801
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": True,
+                "default": False,
             },
             "r": {
                 "description": "number of replications taken at each solution",
@@ -229,14 +229,16 @@ class CSA_LP(Solver):  # noqa: N801
         """
         n_cons, n = grads.shape
         violated_cons_grads = []
+        violated_cons = [] #lhs of violated constraints
 
         for i in range(n_cons):
             if constraints_results[i] > self.factors["tolerance"]:
                 violated_cons_grads.append(grads[i])
+                violated_cons.append(constraints_results[i])
 
-        return np.array(violated_cons_grads)
+        return np.array(violated_cons_grads), np.array(violated_cons)
 
-    def get_constraints_dir(self, grads, obj_grad):
+    def get_constraints_dir(self, grads, obj_grad, violated_cons,k):
         """
         compute search direction by LP to improve
         multiple constraints at the same time
@@ -262,22 +264,24 @@ class CSA_LP(Solver):  # noqa: N801
         
         #print("viable grads", viable_index)
         n_violated_cons, n = grads.shape
-              
-        grads = np.vstack([grads,obj_grad])
-        n_constraints = n_violated_cons + 1
-        grads = grads / np.linalg.norm(grads, axis=1).reshape(
-            n_constraints, 1
+        feas_constant = 0
+        #grads = np.vstack([grads,obj_grad])
+        #n_constraints = n_violated_cons + 1
+        con_grads = grads / np.linalg.norm(grads, axis=1).reshape(
+            n_violated_cons, 1
         )
         direction = cp.Variable(n)
         theta = cp.Variable()
-
+        feas_measure =np.linalg.norm(violated_cons)
         objective = cp.Maximize(theta)
         constraints = [
+                       -1*obj_grad @ direction >= theta - feas_constant*feas_measure,
                        cp.norm(direction,2) <=1  #add constraint that direction must be a unit vector
                        ]
 
-        for i in range(n_constraints):
-            constraints += [-1*grads[i] @ direction >= theta]
+        # stochastic constraint constraints
+        for i in range(n_violated_cons):
+            constraints += [-1*con_grads[i] @ direction >= theta]
 
         prob = cp.Problem(objective, constraints)
         prob.solve()
@@ -351,6 +355,7 @@ class CSA_LP(Solver):  # noqa: N801
     def solve(self, problem):
         max_iters = self.factors["max_iters"]
         r = self.factors["r"]
+        report_all_incumbent = False
         #temp hard code
         # max_gamma = self.factors["max_gamma"]
 
@@ -415,7 +420,7 @@ class CSA_LP(Solver):  # noqa: N801
                 # find the gradient of the constraints
                 # violated_index = np.argmax(constraint_results)
                 grads = np.array(new_solution.stoch_constraints_gradients_mean)
-                violated_grads = self.get_violated_constraints_grads(
+                violated_grads, violated_cons = self.get_violated_constraints_grads(
                     constraint_results, grads
                 )
                 # get objective gradient
@@ -424,10 +429,12 @@ class CSA_LP(Solver):  # noqa: N801
                     * problem.minmax[0]
                     * new_solution.objectives_gradients_mean[0]
                 )
+                # normalize obj grad
+                obj_grad = obj_grad / np.linalg.norm(obj_grad)
                 # print("num violated cons: ", len(violated_grads))
                 # print("violated grads: ", violated_grads)
                 # direction for improving multiple constraints, but call it 'grad' for convenience
-                grad = -1* self.get_constraints_dir(violated_grads, obj_grad)
+                grad = -1* self.get_constraints_dir(violated_grads, obj_grad, violated_cons,k)
                 
                 # set max t depending on constraint violation
                 #max_t = max(constraint_results)*.5
@@ -501,7 +508,6 @@ class CSA_LP(Solver):  # noqa: N801
             if not is_violated:
                 n_feasible += 1
 
-            # Append new solution.
             #append all solutions
             recommended_solns.append(new_solution)
             intermediate_budgets.append(expended_budget)
@@ -571,4 +577,6 @@ class CSA_LP(Solver):  # noqa: N801
             k += 1
             # print("----------------------")
         # print("==========================")
+
+
         return recommended_solns, intermediate_budgets
