@@ -11,6 +11,20 @@ from simopt.base import ConstraintType, Model, Problem, VariableType
 from simopt.utils import classproperty, override
 
 
+class DemandInputModel:
+    def set_rng(self, rng) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, mu: float, sigma: float) -> float:
+        def round_and_clamp_non_neg(x: float | int) -> int:
+            return round(max(0, x))
+
+        return round_and_clamp_non_neg(self.rng.normalvariate(mu, sigma))
+
+
 class DualSourcing(Model):
     """Dual Sourcing Inventory Model.
 
@@ -124,6 +138,8 @@ class DualSourcing(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.demand_model = DemandInputModel()
+
     # Check for simulatable factors
     def _check_n_days(self) -> None:
         if self.factors["n_days"] < 1:
@@ -184,7 +200,11 @@ class DualSourcing(Model):
             )
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+        """Set the random number generator for the demand input model."""
+        self.demand_model.set_rng(rng_list[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -220,18 +240,13 @@ class DualSourcing(Model):
         def round_and_clamp_non_neg(x: float | int) -> int:
             return round(max(0, x))
 
-        # Designate random number generators.
-        demand_rng = rng_list[0]
         # Vectors of regular orders to be received in periods n through n + lr - 1.
         orders_reg = [0] * lead_reg
         # Vectors of expedited orders to be received in periods n through n + le - 1.
         orders_exp = [0] * lead_exp
 
         # Generate demand.
-        demand = []
-        for _ in n_days_range:
-            draw = demand_rng.normalvariate(mu=mu, sigma=st_dev)
-            demand.append(round_and_clamp_non_neg(draw))
+        demand = [self.demand_model.random(mu, st_dev) for _ in n_days_range]
 
         # Track total expenses.
         total_holding_cost = np.zeros(n_days)

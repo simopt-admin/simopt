@@ -8,7 +8,28 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import InputModel
 from simopt.utils import classproperty, override
+
+
+class DemandInputModel(InputModel):
+    def set_rng(self, rng: MRG32k3a) -> None:
+        self.x_rng = rng[0]
+        self.y_rng = rng[1]
+
+    def unset_rng(self) -> None:
+        self.x_rng = None
+        self.y_rng = None
+
+    def random(self, demand_means, gamma_shape, gamma_scale) -> float:
+        x_demand = self.x_rng.gammavariate(
+            alpha=gamma_shape,
+            beta=1.0 / gamma_scale,
+        )
+        y_demand = np.array(
+            [self.y_rng.expovariate(1) for _ in range(len(demand_means))]
+        )
+        return demand_means * x_demand * y_demand
 
 
 class RMITD(Model):
@@ -103,6 +124,8 @@ class RMITD(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.demand_model = DemandInputModel()
+
     def _check_time_horizon(self) -> None:
         if self.factors["time_horizon"] <= 0:
             raise ValueError("time_horizon must be greater than 0.")
@@ -175,7 +198,10 @@ class RMITD(Model):
             raise ValueError("gamma_shape times gamma_scale should be close to 1.")
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list):
+        self.demand_model.set_rng(rng_list)
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -197,21 +223,12 @@ class RMITD(Model):
         demand_means = np.array(self.factors["demand_means"])
         prices = self.factors["prices"]
         cost = self.factors["cost"]
-        # Designate separate random number generators.
-        # Outputs will be coupled when generating demand.
-        x_rng = rng_list[0]
-        y_rng = rng_list[1]
         # Generate X and Y (to use for computing demand).
         # random.gammavariate takes two inputs: alpha and beta.
         #     alpha = k = gamma_shape
         #     beta = 1/theta = 1/gamma_scale
-        x_demand = x_rng.gammavariate(
-            alpha=gamma_shape,
-            beta=1.0 / gamma_scale,
-        )
-        y_demand = np.array([y_rng.expovariate(1) for _ in range(time_horizon)])
         reservations = [*reservation_qtys, 0]
-        demand_vec = demand_means * x_demand * y_demand
+        demand_vec = self.demand_model.random(demand_means, gamma_shape, gamma_scale)
 
         # Set initial inventory and revenue
         remaining_inventory = initial_inventory

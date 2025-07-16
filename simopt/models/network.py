@@ -9,9 +9,21 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Exp, InputModel, Triangular
 from simopt.utils import classproperty, override
 
 NUM_NETWORKS: Final = 10
+
+
+class RouteInputModel(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, choices, weights, k):
+        return self.rng.choices(choices, weights, k=k)
 
 
 class Network(Model):
@@ -119,6 +131,10 @@ class Network(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.arrival_model = Exp()
+        self.route_model = RouteInputModel()
+        self.service_model = Triangular()
+
     # Check for simulatable factors
     def _check_process_prob(self) -> None:
         # Make sure probabilities are between 0 and 1.
@@ -210,7 +226,12 @@ class Network(Model):
             )
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list) -> None:
+        self.arrival_model.set_rng(rng_list[0])
+        self.route_model.set_rng(rng_list[1])
+        self.service_model.set_rng(rng_list[2])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -235,23 +256,18 @@ class Network(Model):
         cost_process = self.factors["cost_process"]
         cost_time = self.factors["cost_time"]
 
-        # Designate separate random number generators.
-        arrival_rng = rng_list[0]
-        network_rng = rng_list[1]
-        transit_rng = rng_list[2]
-
         # Generate all interarrival, network routes, and service times before the
         # simulation run.
         arrival_times = [
-            arrival_rng.expovariate(arrival_rate) for _ in range(total_arrivals)
+            self.arrival_model.random(arrival_rate) for _ in range(total_arrivals)
         ]
-        network_routes = network_rng.choices(
+        network_routes = self.route_model.random(
             range(n_networks),
             weights=process_prob,
             k=total_arrivals,
         )
         service_times = [
-            transit_rng.triangular(
+            self.service_model.random(
                 low=lower_limits_transit_time[route],
                 high=upper_limits_transit_time[route],
                 mode=mode_transit_time[route],
