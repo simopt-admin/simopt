@@ -9,6 +9,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Exp
 from simopt.utils import classproperty, override
 
 
@@ -99,6 +100,8 @@ class MM1Queue(Model):
         """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
+        self.arrival_model = Exp()
+        self.service_model = Exp()
 
     def _check_lambda(self) -> None:
         if self.factors["lambda"] <= 0:
@@ -119,7 +122,11 @@ class MM1Queue(Model):
     def _check_epsilon(self) -> bool:
         return self.factors["epsilon"] > 0
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+        self.arrival_model.set_rng(rng_list[0])
+        self.service_model.set_rng(rng_list[1])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -141,15 +148,13 @@ class MM1Queue(Model):
         people: int = self.factors["people"]
         f_lambda: float = self.factors["lambda"]
         # Designate separate RNGs for interarrival and serivce times.
-        arrival_rng = rng_list[0]
-        service_rng = rng_list[1]
         # Set mu to be at least epsilon.
         mu_floor = max(mu, epsilon)
         # Calculate total number of arrivals to simulate.
         total = warmup + people
         # Generate all interarrival and service times up front.
-        arrival_times = [arrival_rng.expovariate(f_lambda) for _ in range(total)]
-        service_times = [service_rng.expovariate(mu_floor) for _ in range(total)]
+        arrival_times = [self.arrival_model.random(f_lambda) for _ in range(total)]
+        service_times = [self.service_model.random(mu_floor) for _ in range(total)]
 
         # Create matrix storing times and metrics for each customer:
         #     column 0 : arrival time to queue;
