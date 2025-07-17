@@ -79,7 +79,7 @@ def main() -> None:
                 experiments_same_problem.append(new_experiment)
 
             # Setup and run ASTRO-DF.
-            solver_fixed_factors = {"delta_max": 200.0}
+            solver_fixed_factors = {}
             new_experiment = ProblemSolver(
                 solver_name="ASTRODF",
                 problem_name="SSCONT-1",
