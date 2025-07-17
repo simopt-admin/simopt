@@ -75,7 +75,6 @@ def main() -> None:
     # Two versions of random search with varying sample sizes.
     # rs_sample_sizes = [10, 50]
     # ASTRODF factors
-    delta_max = 200.0
 
     # First problem: SAN
     # Loop over problem instances.
@@ -99,8 +98,6 @@ def main() -> None:
             elif solver == "RNDSRCH_ss=50":
                 solver_name = "RNDSRCH"
                 solver_fixed_factors = {"sample_size": 50}
-            elif solver == "ASTRODF":
-                solver_fixed_factors = {"delta_max": delta_max}
 
             # Loop over solvers:
             new_experiment = ProblemSolver(
@@ -145,8 +142,6 @@ def main() -> None:
                 elif solver == "RNDSRCH_ss=50":
                     solver_name = "RNDSRCH"
                     solver_fixed_factors = {"sample_size": 50}
-                elif solver == "ASTRODF":
-                    solver_fixed_factors = {"delta_max": delta_max}
 
                 # Loop over solvers:
                 new_experiment = ProblemSolver(
@@ -195,8 +190,6 @@ def main() -> None:
                     elif solver == "RNDSRCH_ss=50":
                         solver_name = "RNDSRCH"
                         solver_fixed_factors = {"sample_size": 50}
-                    elif solver == "ASTRODF":
-                        solver_fixed_factors = {"delta_max": delta_max}
 
                     # Loop over solvers:
                     new_experiment = ProblemSolver(
