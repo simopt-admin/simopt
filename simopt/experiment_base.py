@@ -3315,7 +3315,7 @@ def plot_progress_curves(
                         [bs_conf_int_lb_curve, bs_conf_int_ub_curve]
                     )
                 if plot_optimal and not normalize:
-                    plt.axhline(y=experiment.fstar, color='red', linestyle = '--', linewidth=.75)
+                    plt.axhline(y=np.mean(experiment.xstar_postreps), color='red', linestyle = '--', linewidth=.75)
         plt.legend(
             handles=solver_curve_handles,
             labels=[experiment.solver.name for experiment in experiments],
@@ -4096,6 +4096,7 @@ def plot_feasibility(
                     terminals = [
                         curve.y_vals[-1] for curve in experiment.objective_curves
                     ]
+                    print("plotted values", terminals)
                     if plot_conf_ints:
                         bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
                         all_obj_reps = []
@@ -4161,7 +4162,9 @@ def plot_feasibility(
                 if plot_zero:
                     plt.axhline(y=0, color='red', linestyle = '--', linewidth=.75)   
                 if plot_optimal:
-                    plt.axvline(x=ref_experiment.fstar, color='red', linestyle = '--', linewidth=.75)
+                    plt.axvline(x=np.mean(experiment.xstar_postreps), color='red', linestyle = '--', linewidth=.75)
+                    print("mean x_star postreps",np.mean(experiment.xstar_postreps) )
+                    print("fstar", experiment.fstar)
                 file_list.append(
                     save_plot(
                         solver_name=solver_set_name,
@@ -5480,6 +5483,7 @@ def plot_terminal_progress(
                 labels=[experiment.solver.name for experiment in experiments],
             )
         elif plot_type == "violin":
+            ref_experiment = experiments[0]
             solver_names = [
                 experiments[exp_idx].solver.name
                 for exp_idx in range(n_experiments)
@@ -5510,7 +5514,7 @@ def plot_terminal_progress(
             else:
                 plt.ylabel("Terminal Objective")
             if plot_optimal and not normalize:
-                plt.axhline(y=ref_experiment.fstar, color='red', linestyle = '--', linewidth=.75)
+                plt.axhline(y=np.mean(ref_experiment.xstar_postreps), color='red', linestyle = '--', linewidth=.75)
         file_list.append(
             save_plot(
                 solver_name=solver_set_name,
@@ -5564,7 +5568,7 @@ def plot_terminal_progress(
             else:
                 plt.ylabel("Terminal Objective")
             if plot_optimal and not normalize:
-                plt.axhline(y=experiment.fstar, color='red', linestyle = '--', linewidth=.75)
+                plt.axhline(y=np.mean(experiment.xstar_postreps), color='red', linestyle = '--', linewidth=.75)
             file_list.append(
                 save_plot(
                     solver_name=experiment.solver.name,
