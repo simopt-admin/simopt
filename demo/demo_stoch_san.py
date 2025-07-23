@@ -44,6 +44,9 @@ from simopt.solvers.csa_lp_v4_all_sol import CSA_LP as csa_v4a_all
 from simopt.solvers.csa_all_solns import CSA
 from simopt.solvers.csa_all_solns_unnormalized import CSA as CSA_unnormalized
 from simopt.solvers.csa_lp_v2a import CSA_LP as csa_v2a_recommended
+from simopt.solvers.csa_normal import CSA as csa_normal_reccomended
+from simopt.solvers.fcsa import CSA_LP as fcsa_recommended
+
 
 
 """
@@ -75,7 +78,7 @@ def main() -> None:
     prob_2_const = SANLongestPathStochastic(fixed_factors=fixed_factors, name="SAN")
 
     no_CRN = {"crn_across_solns": False}
-
+    rand = RandomSearch(fixed_factors={"sample_size":int(5)}, name="RandomSearch")
     v0 = csa_v0(name="csa_lp_v0")
     v1 = csa_v1(name="csa_lp_v1") 
     v2 = csa_v2(name="csa_lp_v2")
@@ -85,19 +88,24 @@ def main() -> None:
     v1a = csa_v1a_all(name="CSA-MC")
     v1a_recommended = csa_v1a_recommended(name="CSA-MC")
     v1b = csa_v1b_all(name="c")
-    v2a = csa_v2a_all(name="FCSA-0.0")
+    v2a = csa_v2a_all(name="FCSA")
     v2b = csa_v2b_all(name="v2b")
     v3a = csa_v3a_all(name="csa_v3")
     v4 = csa_v4a_all(name="FCSA-0.1")
-    csa_normal = CSA(name="CSA") #csa with no maximization problem, only follows most violated constraint
+    csa_normal = CSA(name="CSA-N") #csa with no maximization problem, only follows most violated constraint
     csa = CSA_unnormalized(name="CSA")
     csa_recommended = CSA_recommended(name="CSA")
     v2a_recommended = csa_v2a_recommended(name="csa_v2")
+    fcsa = fcsa_recommended(name="FCSA")
+    csa_n_reccomended = csa_normal_reccomended(name="CSA-N")
+    fcsa_1 = fcsa_recommended(name="FCSA-1", fixed_factors={"feas_const": 1.0})
+    fcsa_10 = fcsa_recommended(name="FCSA-10", fixed_factors={"feas_const": 10.0})
 
     #adjust step sizes
 
+
     
-    solvers = [ csa_normal, v2a, v4]
+    solvers = [ csa_n_reccomended, fcsa]
     
     problems = [prob_2_const]
     #problem.upper_bounds = 13*(100,)
@@ -138,15 +146,15 @@ def main() -> None:
     #print(myexperiment.all_intermediate_budgets)
     #print(myexperiment.all_stoch_constraints[0])
 
-
     # plot feasibility scores
     #myexperiment.experiments[1][0].compute_feasibility_score()
     #print(len(myexperiment.experiments[1][0].all_intermediate_budgets[0]) == len(myexperiment.experiments[1][0].compute_feasibility_score()[0]))
 
     #plot_terminal_progress(experiments=myexperiment.experiments)
     #print(myexperiment.experiments[1][0].feasibility_curves)
-    plot_feasibility(myexperiment.experiments, plot_type= "scatter", plot_conf_ints=True)
+    plot_feasibility(myexperiment.experiments, plot_type= "scatter", plot_conf_ints=True, save_as_pickle=True, plot_optimal=False)
     plt.show()
+    plot_feasibility(myexperiment.experiments, plot_type= "scatter", plot_conf_ints=False, save_as_pickle=True,plot_optimal=False)
     plot_feasibility(myexperiment.experiments, plot_type="contour")
     plot_progress_curves(exp_plot_list , "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=True, save_as_pickle=True)
     plt.show()
