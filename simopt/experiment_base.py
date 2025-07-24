@@ -1358,12 +1358,26 @@ class PlotType(Enum):
     SOLVE_TIME_CDF = "solve_time_cdf"
     CDF_SOLVABILITY = "cdf_solvability"
     QUANTILE_SOLVABILITY = "quantile_solvability"
-    DIFF_CDF_SOLVABILITY = "diff_cdf_solvability"
-    DIFF_QUANTILE_SOLVABILITY = "diff_quantile_solvability"
+    DIFF_CDF_SOLVABILITY = "difference_of_cdf_solvability"
+    DIFF_QUANTILE_SOLVABILITY = "difference_of_quantile_solvability"
     AREA = "area"
     BOX = "box"
     VIOLIN = "violin"
     TERMINAL_SCATTER = "terminal_scatter"
+
+    @staticmethod
+    def from_str(label: str) -> PlotType:
+        """Converts a string label to a PlotType enum."""
+        # Reverse mapping from string to PlotType enum.
+        name = label.lower().replace(" ", "_")
+        inv_plot_type = {pt.value: pt for pt in PlotType}
+        if name in inv_plot_type:
+            return inv_plot_type[name]
+        error_msg = (
+            f"Unknown plot type: {label} ({name}). "
+            f"Must be one of {[pt.value for pt in PlotType]}."
+        )
+        raise ValueError(error_msg)
 
 
 def bootstrap_procedure(
@@ -3628,35 +3642,29 @@ def save_plot(
         plot_name = plot_name + "_unnorm"
 
     # Reformat plot_name to be suitable as a string literal.
-    plot_name = plot_name.replace("\\", "")
-    plot_name = plot_name.replace("$", "")
-    plot_name = plot_name.replace(" ", "_")
+    plot_name = plot_name.replace("\\", "").replace("$", "").replace(" ", "_")
 
     # If the plot title is not provided, use the default title.
     if plot_title is None:
         plot_title = f"{solver_name}_{problem_name}_{plot_name}"
-    path_name = plot_dir / plot_title
 
-    # Check to make sure file does not override previous images
+    # Read in the contents of the plot directory
+    existing_plots = [path.name for path in list(plot_dir.glob("*"))]
+    print(f"Existing plots: {existing_plots}")
+
     counter = 0
-    while True:
-        # add extension to path name
-        extended_path_name = path_name.with_suffix(ext)
-
-        # If file doesn't exist, break out of loop
-        if not extended_path_name.exists():
-            break
-
-        # If file exists, increment counter and try again
+    while (plot_title + ext) in existing_plots:
+        # If the plot title already exists, append a counter to the filename
         counter += 1
-        path_name = plot_dir / f"{plot_title} ({counter})"
+        plot_title = f"{plot_title} ({counter})"
+    extended_path_name = plot_dir / (plot_title + ext)
 
     plt.savefig(extended_path_name, bbox_inches="tight")
 
     # save plot as pickle
     if save_as_pickle:
         fig = plt.gcf()
-        pickle_path = path_name.with_suffix(".pkl")
+        pickle_path = extended_path_name.with_suffix(".pkl")
         with pickle_path.open("wb") as pickle_file:
             pickle.dump(fig, pickle_file)
     # Return path_name for use in GUI.
