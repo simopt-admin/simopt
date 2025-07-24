@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
-import math
 from enum import Enum
 from typing import TYPE_CHECKING
+
+import numpy as np
 
 # Imports exclusively used when type checking
 # Prevents imports from being executed at runtime
@@ -94,19 +95,15 @@ class Curve:
         Raises:
             TypeError: If x_val is not numeric.
         """
-        from bisect import bisect_right
+        # Type checking
+        if not isinstance(x_val, (int, float)):
+            error_msg = "x_val must be a float."
+            raise TypeError(error_msg)
 
-        try:
-            # Return NaN if x_val is out of range (before first or after last x-value)
-            if x_val < self.x_vals[0] or x_val > self.x_vals[-1]:
-                return math.nan
-
-            # Use binary search (O(log n)) instead of linear search (O(n))
-            idx = bisect_right(self.x_vals, x_val) - 1
-            return self.y_vals[idx]
-
-        except TypeError as e:
-            raise TypeError(f"x_val must be a numeric value: {e}") from e
+        if x_val < self.x_vals[0]:
+            return np.nan
+        idx = np.max(np.where(np.array(self.x_vals) <= x_val))
+        return self.y_vals[idx]
 
     def compute_crossing_time(self, threshold: float) -> float:
         """Compute the first time at which a curve drops below a given threshold.
@@ -120,21 +117,24 @@ class Curve:
         Raises:
             TypeError: If threshold is not numeric.
         """
-        from bisect import bisect_right
+        # Type checking
+        if not isinstance(threshold, (int, float)):
+            error_msg = "Threshold must be a float."
+            raise TypeError(error_msg)
 
-        try:
-            # Find the first index where y_vals < threshold using binary search
-            index = bisect_right(self.y_vals, threshold)
+        # Use binary search to find the first x-value below threshold.
+        # TODO: Test this
+        # index = bisect.bisect_left(self.y_vals, threshold)
+        # if index == self.n_points:
+        #     return np.inf
+        # else:
+        #     return self.x_vals[index]
 
-            # If all y-values are above the threshold, return infinity
-            if index == self.n_points:
-                return math.inf
-
-            # Return corresponding x-value
-            return self.x_vals[index]
-
-        except TypeError as e:
-            raise TypeError(f"Threshold must be a numeric value: {e}") from e
+        for i in range(self.n_points):
+            if self.y_vals[i] < threshold:
+                return self.x_vals[i]
+        # If threshold is never crossed, return infinity.
+        return np.inf
 
     def compute_area_under_curve(self) -> float:
         """Compute the area under a curve.
@@ -142,10 +142,8 @@ class Curve:
         Returns:
             float: Area under the curve.
         """
-        x_diffs = (x_next - x for x, x_next in zip(self.x_vals[:-1], self.x_vals[1:]))
-        area_contributions = (y * dx for y, dx in zip(self.y_vals[:-1], x_diffs))
-
-        return sum(area_contributions)
+        area = np.dot(self.y_vals[:-1], np.diff(self.x_vals))
+        return area
 
     def curve_to_mesh(self, mesh: Iterable[float]) -> Curve:
         """Create a curve defined at equally spaced x values.
@@ -159,19 +157,15 @@ class Curve:
         Raises:
             TypeError: If mesh is not an iterable of numeric values.
         """
-        try:
-            # Ensure mesh contains valid numeric values
-            mesh_x_vals = tuple(float(x) for x in mesh)
+        # Type checking
+        if not isinstance(mesh, list) or not all(
+            [isinstance(x, (int, float)) for x in mesh]
+        ):
+            error_msg = "Mesh must be a list of floats."
+            raise TypeError(error_msg)
 
-            # Generate corresponding y-values using lookup
-            mesh_y_vals = tuple(self.lookup(x) for x in mesh_x_vals)
-
-            return Curve(x_vals=mesh_x_vals, y_vals=mesh_y_vals)
-
-        except (TypeError, ValueError) as e:
-            error_msg = "Mesh must be an iterable of numeric values."
-            logging.error(error_msg)
-            raise TypeError(error_msg) from e
+        mesh_curve = Curve(x_vals=mesh, y_vals=[self.lookup(x) for x in mesh])
+        return mesh_curve
 
     def curve_to_full_curve(self) -> Curve:
         """Create a curve with duplicate x- and y-values to indicate steps.
@@ -179,16 +173,10 @@ class Curve:
         Returns:
             Curve: A curve with duplicate x- and y-values.
         """
-        from itertools import chain, repeat
-
-        full_curve = Curve(
-            x_vals=list(chain.from_iterable(repeat(x, 2) for x in self.x_vals)),
-            y_vals=list(chain.from_iterable(repeat(y, 2) for y in self.y_vals)),
-        )
-        return Curve(
-            x_vals=list(full_curve.x_vals)[1:],
-            y_vals=list(full_curve.y_vals)[:-1],
-        )
+        duplicate_x_vals = [x for x in self.x_vals for _ in (0, 1)]
+        duplicate_y_vals = [y for y in self.y_vals for _ in (0, 1)]
+        full_curve = Curve(x_vals=duplicate_x_vals[1:], y_vals=duplicate_y_vals[:-1])
+        return full_curve
 
     def plot(
         self,
