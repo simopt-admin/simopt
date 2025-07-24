@@ -20,6 +20,7 @@ import simopt.directory as directory
 from simopt.base import Problem, Solver
 from simopt.data_farming_base import DATA_FARMING_DIR
 from simopt.experiment_base import (
+    PlotType,
     ProblemSolver,
     ProblemsSolvers,
     create_design,
@@ -4027,7 +4028,7 @@ class NewExperimentWindow(Toplevel):
             subplot_type_options = [
                 "CDF Solvability",
                 "Quantile Solvability",
-                "Difference of CDF Solvablility",
+                "Difference of CDF Solvability",
                 "Difference of Quantile Solvability",
             ]
             self.subplot_type_var = tk.StringVar()
@@ -4317,7 +4318,7 @@ class NewExperimentWindow(Toplevel):
         if plot_type in ["CDF Solvability", "Quantile Solvability"]:
             self.ref_solver_menu.configure(state="disabled")
         elif plot_type in [
-            "Difference of CDF Solvablility",
+            "Difference of CDF Solvability",
             "Difference of Quantile Solvability",
         ]:
             self.ref_solver_menu.configure(state="normal")
@@ -4456,6 +4457,10 @@ class NewExperimentWindow(Toplevel):
             parameters["Quantile Probability"] = beta
         parameters["Number Bootstrap Samples"] = n_boot
         parameters["Confidence Level"] = con_level
+        # Lookup plot type enum for passing to plotting function
+        subplot_type_enum: PlotType = PlotType.from_str(
+            subplot_type.lower()
+        )
         # create new plot for each problem
         for i in range(n_problems):
             prob_list = []
@@ -4463,7 +4468,7 @@ class NewExperimentWindow(Toplevel):
                 prob_list.append(solver_group[i])
             returned_path = plot_progress_curves(
                 experiments=prob_list,
-                plot_type=subplot_type,  # type: ignore
+                plot_type=subplot_type_enum,
                 beta=beta,
                 normalize=norm,
                 all_in_one=all_in,
@@ -4642,6 +4647,10 @@ class NewExperimentWindow(Toplevel):
         parameters["Plot Type"] = subplot_type
         assert subplot_type in ["box", "violin"]
         parameters["Normalize Optimality Gaps"] = normalize_str
+        # Lookup plot type enum for passing to plotting function
+        subplot_type_enum: PlotType = PlotType.from_str(
+            subplot_type.lower()
+        )
         # create a new plot for each problem
         for i in range(n_problems):
             prob_list = []
@@ -4649,7 +4658,7 @@ class NewExperimentWindow(Toplevel):
                 prob_list.append(solver_group[i])
             returned_path = plot_terminal_progress(
                 experiments=prob_list,
-                plot_type=subplot_type,  # type: ignore
+                plot_type=subplot_type_enum,
                 all_in_one=all_in,
                 normalize=norm,
                 save_as_pickle=True,
@@ -4736,7 +4745,7 @@ class NewExperimentWindow(Toplevel):
         subplot_types = {
             "CDF Solvability": "cdf_solvability",
             "Quantile Solvability": "quantile_solvability",
-            "Difference of CDF Solvablility": "diff_cdf_solvability",
+            "Difference of CDF Solvability": "diff_cdf_solvability",
             "Difference of Quantile Solvability": "diff_quantile_solvability",
         }
         subplot_type = self.subplot_type_var.get()
@@ -4768,11 +4777,12 @@ class NewExperimentWindow(Toplevel):
             "Difference of Quantile Solvability",
         ]:
             parameters["Quantile Probability"] = beta
-
+        # Lookup plot type enum for passing to plotting function
+        subplot_type_enum = PlotType.from_str(subplot_type)
         if subplot_type in ["CDF Solvability", "Quantile Solvability"]:
             returned_path = plot_solvability_profiles(
                 experiments=exp_sublist,
-                plot_type=plot_input,  # type: ignore
+                plot_type=subplot_type_enum,
                 all_in_one=all_in,
                 n_bootstraps=n_boot,
                 conf_level=con_level,
@@ -4792,7 +4802,7 @@ class NewExperimentWindow(Toplevel):
             parameters["Reference Solver"] = ref_solver
             returned_path = plot_solvability_profiles(
                 experiments=exp_sublist,
-                plot_type=plot_input,  # type: ignore
+                plot_type=subplot_type_enum,
                 all_in_one=all_in,
                 n_bootstraps=n_boot,
                 conf_level=con_level,

@@ -1355,12 +1355,26 @@ class PlotType(Enum):
     SOLVE_TIME_CDF = "solve_time_cdf"
     CDF_SOLVABILITY = "cdf_solvability"
     QUANTILE_SOLVABILITY = "quantile_solvability"
-    DIFF_CDF_SOLVABILITY = "diff_cdf_solvability"
-    DIFF_QUANTILE_SOLVABILITY = "diff_quantile_solvability"
+    DIFF_CDF_SOLVABILITY = "difference_of_cdf_solvability"
+    DIFF_QUANTILE_SOLVABILITY = "difference_of_quantile_solvability"
     AREA = "area"
     BOX = "box"
     VIOLIN = "violin"
     TERMINAL_SCATTER = "terminal_scatter"
+
+    @staticmethod
+    def from_str(label: str) -> PlotType:
+        """Converts a string label to a PlotType enum."""
+        # Reverse mapping from string to PlotType enum.
+        name = label.lower().replace(" ", "_")
+        inv_plot_type = {pt.value: pt for pt in PlotType}
+        if name in inv_plot_type:
+            return inv_plot_type[name]
+        error_msg = (
+            f"Unknown plot type: {label} ({name}). "
+            f"Must be one of {[pt.value for pt in PlotType]}."
+        )
+        raise ValueError(error_msg)
 
 
 def bootstrap_procedure(
