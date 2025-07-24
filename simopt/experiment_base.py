@@ -3643,7 +3643,6 @@ def save_plot(
 
     # Read in the contents of the plot directory
     existing_plots = [path.name for path in list(plot_dir.glob("*"))]
-    print(f"Existing plots: {existing_plots}")
 
     counter = 0
     while (plot_title + ext) in existing_plots:
