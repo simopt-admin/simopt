@@ -94,6 +94,7 @@ class Curve:
         Raises:
             TypeError: If x_val is not numeric.
         """
+        # We can use binary search here since the x-values are sorted.
         from bisect import bisect_right
 
         try:
@@ -116,25 +117,15 @@ class Curve:
 
         Returns:
             float: First time at which the curve drops below the threshold.
-
-        Raises:
-            TypeError: If threshold is not numeric.
         """
-        from bisect import bisect_right
-
-        try:
-            # Find the first index where y_vals < threshold using binary search
-            index = bisect_right(self.y_vals, threshold)
-
-            # If all y-values are above the threshold, return infinity
-            if index == self.n_points:
-                return math.inf
-
-            # Return corresponding x-value
-            return self.x_vals[index]
-
-        except TypeError as e:
-            raise TypeError(f"Threshold must be a numeric value: {e}") from e
+        # Linear search for the first crossing time
+        # NOTE: We can't use binary search because the curve's y-values aren't
+        # guaranteed to be strictly decreasing.
+        for i in range(self.n_points):
+            if self.y_vals[i] < threshold:
+                return self.x_vals[i]
+        # If threshold is never crossed, return infinity.
+        return math.inf
 
     def compute_area_under_curve(self) -> float:
         """Compute the area under a curve.
