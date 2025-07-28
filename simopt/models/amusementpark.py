@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-import bisect
-import itertools
 import math as math
-from collections.abc import Sequence
 from typing import Callable, Final
 
 import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Exp, Gamma, WeightedChoice
 from simopt.utils import classproperty, override
 
 INF = float("inf")
@@ -144,6 +142,13 @@ class AmusementPark(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.arrival_model = Exp()
+        self.attraction_model = WeightedChoice()
+        self.destination_model = WeightedChoice()
+        self.service_models = []
+        for _ in range(self.factors["number_attractions"]):
+            self.service_models.append(Gamma())
+
     # Check for simulatable factors.
     def _check_park_capacity(self) -> None:
         if self.factors["park_capacity"] < 0:
@@ -251,9 +256,14 @@ class AmusementPark(Model):
             )
         return True
 
-    def replicate(
-        self, rng_list: list[MRG32k3a]
-    ) -> tuple[dict[str, float | list[float]], dict]:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+        self.arrival_model.set_rng(rng_list[0])
+        self.attraction_model.set_rng(rng_list[0])
+        self.destination_model.set_rng(rng_list[1])
+        for service in self.service_models:
+            service.set_rng(rng_list[2])
+
+    def replicate(self) -> tuple[dict[str, float | list[float]], dict]:
         """Simulate a single replication using current model factors.
 
         Args:
@@ -269,31 +279,6 @@ class AmusementPark(Model):
                     - "attraction_utilization_percentages": Utilization percentage of each attraction.
                 - dict: Gradients of the performance measures with respect to model factors.
         """  # noqa: E501
-
-        def fast_weighted_choice(
-            population: Sequence[int], weights: Sequence[float], rng: MRG32k3a
-        ) -> int:
-            """Select a single element from a population based on weights.
-
-            Designed to be faster than `random.choices()` when only one element
-            is needed.
-
-            Args:
-                population (Sequence[int]): The population to select from.
-                weights (Sequence[float]): The weights for each element in the
-                    population.
-                rng (MRG32k3a): The random number generator to use for selection.
-
-            Returns:
-                int: The selected element from the population.
-            """
-            # Calculate cumulative weights
-            cum_weights = list(itertools.accumulate(weights))
-            # Generate a value somewhere between 0 and the sum of weights
-            x = rng.random() * cum_weights[-1]
-            # Find the index of the first cumulative weight that is >= x
-            # Return the corresponding element from the population
-            return population[bisect.bisect(cum_weights, x)]
 
         def set_completion(i: int, new_time: float) -> None:
             """Set the completion time for an attraction.
@@ -329,11 +314,6 @@ class AmusementPark(Model):
         ]
         depart_probabilities: list[float] = self.factors["depart_probabilities"]
 
-        # Designate random number generators.
-        arrival_rng = rng_list[0]
-        transition_rng = rng_list[1]
-        time_rng = rng_list[2]
-
         # initialize list of attractions to be selected upon arrival.
         attraction_range = range(num_attactions)
         destination_range = range(num_attactions + 1)
@@ -354,7 +334,7 @@ class AmusementPark(Model):
         # Initiate clock variables for statistics tracking and event handling.
         clock = 0
         previous_clock = 0
-        next_arrival = arrival_rng.expovariate(arrival_prob_sum)
+        next_arrival = self.arrival_model.random(arrival_prob_sum)
 
         # Initialize quantities to track:
         total_visitors = 0
@@ -381,16 +361,17 @@ class AmusementPark(Model):
                 # Next event is external tourist arrival.
                 total_visitors += 1
                 # Select attraction.
-                attraction_selection = fast_weighted_choice(
-                    population=attraction_range,
-                    weights=arrival_probabalities,
-                    rng=arrival_rng,
+                attraction_selection = self.attraction_model.random(
+                    attraction_range,
+                    arrival_probabalities,
                 )
                 # Check if attraction is currently available.
                 # If available, arrive at that attraction. Otherwise check queue.
                 if math.isinf(completion_times[attraction_selection]):
                     # Generate completion time if attraction available.
-                    completion_time = next_arrival + time_rng.gammavariate(
+                    completion_time = next_arrival + self.service_models[
+                        attraction_selection
+                    ].random(
                         alpha=erlang_shape[attraction_selection],
                         beta=erlang_scale[attraction_selection],
                     )
@@ -406,7 +387,7 @@ class AmusementPark(Model):
                 else:
                     total_departed += 1
                 # Use superposition of Poisson processes to generate next arrival time.
-                next_arrival += arrival_rng.expovariate(arrival_prob_sum)
+                next_arrival += self.arrival_model.random(arrival_prob_sum)
             else:
                 # Next event is the completion of an attraction.
                 # Identify finished attraction.
@@ -416,7 +397,9 @@ class AmusementPark(Model):
                 alpha = erlang_shape[finished_attraction]
                 beta = erlang_scale[finished_attraction]
                 if queues[finished_attraction] > 0:
-                    completion_time = min_completion_time + time_rng.gammavariate(
+                    completion_time = min_completion_time + self.service_models[
+                        finished_attraction
+                    ].random(
                         alpha=alpha,
                         beta=beta,
                     )
@@ -425,11 +408,10 @@ class AmusementPark(Model):
                 else:  # If attraction queue is empty, set next completion to infinity.
                     set_completion(finished_attraction, INF)
                 # Check if that person will leave the park.
-                next_destination = fast_weighted_choice(
-                    population=destination_range,
-                    weights=transition_probabilities[finished_attraction]
+                next_destination = self.destination_model.random(
+                    destination_range,
+                    transition_probabilities[finished_attraction]
                     + [depart_probabilities[finished_attraction]],
-                    rng=transition_rng,
                 )
 
                 # Check if tourist leaves park.
@@ -438,10 +420,9 @@ class AmusementPark(Model):
                     # If available, arrive at that attraction. Otherwise check queue.
                     if math.isinf(completion_times[next_destination]):
                         # Generate completion time if attraction available.
-                        completion_time = min_completion_time + time_rng.gammavariate(
-                            alpha=alpha,
-                            beta=beta,
-                        )
+                        completion_time = min_completion_time + self.service_models[
+                            next_destination
+                        ].random(alpha, beta)
                         set_completion(next_destination, completion_time)
                     # If unavailable, check if current queue is less than capacity.
                     # If queue is not full, join queue.
