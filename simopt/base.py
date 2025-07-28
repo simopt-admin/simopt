@@ -974,6 +974,9 @@ class Problem(ABC):
         """
         raise NotImplementedError
 
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+        pass
+
     def simulate(self, solution: Solution, num_macroreps: int = 1) -> None:
         """Simulate `m` i.i.d. replications at solution `x`.
 
@@ -997,7 +1000,10 @@ class Problem(ABC):
         self.model.factors.update(solution.decision_factors)
         for _ in range(num_macroreps):
             # Generate one replication at x.
-            responses, gradients = self.model.replicate(solution.rng_list)
+            self.model.before_replicate(solution.rng_list)
+            self.before_replicate(self.model, solution.rng_list)
+
+            responses, gradients = self.model.replicate()
             # Convert gradient subdictionaries to vectors mapping to decision variables.
             vector_gradients = {}
             if self.gradient_available:
@@ -1265,8 +1271,15 @@ class Model(ABC):
 
         return True
 
+    def model_created(self) -> None:
+        pass
+
     @abstractmethod
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
