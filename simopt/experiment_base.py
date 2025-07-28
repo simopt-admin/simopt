@@ -352,12 +352,15 @@ class ProblemSolver:
                 fixed_factors=problem_fixed_factors,
                 model_fixed_factors=model_fixed_factors,
             )
+        self.problem.model.model_created()
+        self.model_created(self.problem.model)
         # Rename problem if necessary.
         if problem_rename is not None:
             if problem_rename == "":
                 error_msg = "Problem rename cannot be an empty string."
                 raise ValueError(error_msg)
             self.problem.name = problem_rename
+        self.problem.before_replicate = self.before_replicate
 
         # Initialize file path.
         if not isinstance(file_name_path, Path):
@@ -369,6 +372,12 @@ class ProblemSolver:
 
         # Make sure the experiment directory exists
         EXPERIMENT_DIR.mkdir(parents=True, exist_ok=True)
+
+    def model_created(self, model):
+        pass
+
+    def before_replicate(self, model, rng_list):
+        pass
 
     # TODO: Convert this to throwing exceptions?
     # TODO: Convert this functionality to run automatically
