@@ -25,3 +25,14 @@ class Exp(InputModel):
 
     def random(self, lambda_: float) -> float:
         return self.rng.expovariate(lambda_)
+
+
+class Gamma(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, alpha: float, beta: float) -> float:
+        return self.rng.gammavariate(alpha, beta)
