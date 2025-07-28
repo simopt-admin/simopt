@@ -1,3 +1,5 @@
+import bisect
+import itertools
 import random
 from abc import ABC, abstractmethod
 
@@ -36,3 +38,20 @@ class Gamma(InputModel):
 
     def random(self, alpha: float, beta: float) -> float:
         return self.rng.gammavariate(alpha, beta)
+
+
+class WeightedChoice(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, population, weights) -> float:
+        # Calculate cumulative weights
+        cum_weights = list(itertools.accumulate(weights))
+        # Generate a value somewhere between 0 and the sum of weights
+        x = self.rng.random() * cum_weights[-1]
+        # Find the index of the first cumulative weight that is >= x
+        # Return the corresponding element from the population
+        return population[bisect.bisect(cum_weights, x)]
