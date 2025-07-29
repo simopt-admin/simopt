@@ -11,6 +11,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Exp, Poisson, Uniform, WeightedChoice
 from simopt.utils import classproperty, override
 
 
@@ -101,6 +102,11 @@ class TableAllocation(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.arrival_time_model = Uniform()
+        self.arrival_number_model = Poisson()
+        self.group_size_model = WeightedChoice()
+        self.service_time_model = Exp()
+
     # Check for simulatable factors
     def _check_n_hours(self) -> None:
         if self.factors["n_hours"] <= 0:
@@ -153,7 +159,13 @@ class TableAllocation(Model):
             )
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list):
+        self.arrival_time_model.set_rng(rng_list[0])
+        self.arrival_number_model.set_rng(rng_list[0])
+        self.group_size_model.set_rng(rng_list[1])
+        self.service_time_model.set_rng(rng_list[2])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -203,20 +215,16 @@ class TableAllocation(Model):
         max_table_cap = max(table_cap)
         service_time_means = self.factors["service_time_means"]
         table_revenue = self.factors["table_revenue"]
-        # Designate separate random number generators.
-        arrival_rng = rng_list[0]
-        group_size_rng = rng_list[1]
-        service_rng = rng_list[2]
         # Track total revenue.
         total_rev = 0
         # Track table availability.
         # (i,j) is the time that jth table of size i becomes available.
         table_avail = np.zeros((4, max(num_tables)))
         # Generate total number of arrivals in the period
-        n_arrivals = arrival_rng.poissonvariate(round(n_hours * sum(f_lambda)))
+        n_arrivals = self.arrival_number_model.random(round(n_hours * sum(f_lambda)))
         # Generate arrival times in minutes
         arrival_times = 60 * np.sort(
-            [arrival_rng.uniform(0, n_hours) for _ in range(n_arrivals)]
+            [self.arrival_time_model.random(0, n_hours) for _ in range(n_arrivals)]
         )
         # Track seating rate
         found = np.zeros(n_arrivals)
@@ -225,10 +233,9 @@ class TableAllocation(Model):
         # Pass through all arrivals of groups to the restaurants.
         for n in range(n_arrivals):
             # Determine group size.
-            group_size = fast_weighted_choice(
+            group_size = self.group_size_model.random(
                 population=group_size_options,
                 weights=f_lambda,
-                rng=group_size_rng,
             )
 
             # Find smallest table size to start search.
@@ -254,8 +261,8 @@ class TableAllocation(Model):
             # Mark group as seated.
             found[n] = 1
             # Sample service time.
-            service_time = service_rng.expovariate(
-                lambd=1 / service_time_means[group_size - 1]
+            service_time = self.service_time_model.random(
+                1 / service_time_means[group_size - 1]
             )
             # Update table availability.
             table_avail[k, j] += service_time
