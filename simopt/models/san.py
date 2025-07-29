@@ -9,6 +9,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Exp
 from simopt.utils import classproperty, override
 
 NUM_ARCS: Final[int] = 13
@@ -92,6 +93,8 @@ class SAN(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.time_model = Exp()
+
     def _check_num_nodes(self) -> None:
         if self.factors["num_nodes"] <= 0:
             raise ValueError("num_nodes must be greater than 0.")
@@ -131,7 +134,10 @@ class SAN(Model):
             )
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list):
+        self.time_model.set_rng(rng_list[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -148,8 +154,6 @@ class SAN(Model):
         num_nodes: int = self.factors["num_nodes"]
         arcs: list[tuple[int, int]] = self.factors["arcs"]
         arc_means: tuple[int, ...] = self.factors["arc_means"]
-        # Designate separate random number generators.
-        exp_rng = rng_list[0]
 
         # Topological sort.
         node_range = range(1, num_nodes + 1)
@@ -173,7 +177,7 @@ class SAN(Model):
 
         # Arc lengths
         arc_length = {
-            arc: exp_rng.expovariate(1 / arc_means[i]) for i, arc in enumerate(arcs)
+            arc: self.time_model.random(1 / arc_means[i]) for i, arc in enumerate(arcs)
         }
 
         # Longest path
