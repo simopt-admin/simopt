@@ -8,9 +8,36 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import InputModel
 from simopt.utils import classproperty, override
 
 NUM_PRODUCTS: Final[int] = 10
+
+
+class Utility(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(
+        self, mu: float, num_customer: int, num_prod: int, c_utility: list
+    ) -> np.ndarray:
+        # Compute Gumbel rvs for the utility of the products.
+        gumbel_mu = -mu * np.euler_gamma
+        gumbel_beta = mu
+        gumbel_flat = [
+            self.rng.gumbelvariate(gumbel_mu, gumbel_beta)
+            for _ in range(num_customer * num_prod)
+        ]
+        gumbel = np.reshape(gumbel_flat, (num_customer, num_prod))
+
+        # Compute utility for each product and each customer.
+        utility = np.zeros((num_customer, num_prod + 1))
+        # Keep the first column of utility as 0, which indicates no purchase.
+        utility[:, 1:] = np.array(c_utility) + gumbel
+        return utility
 
 
 class DynamNews(Model):
@@ -100,6 +127,8 @@ class DynamNews(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.utility_model = Utility()
+
     def _check_num_prod(self) -> None:
         if self.factors["num_prod"] <= 0:
             raise ValueError("num_prod must be greater than 0.")
@@ -148,7 +177,10 @@ class DynamNews(Model):
             )
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list):
+        self.utility_model.set_rng(rng_list[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -173,21 +205,12 @@ class DynamNews(Model):
         price: list = self.factors["price"]
         cost: list = self.factors["cost"]
 
-        # Designate random number generator for generating a Gumbel random variable.
-        gumbel_rng = rng_list[0]
-        # Compute Gumbel rvs for the utility of the products.
-        gumbel_mu = -mu * np.euler_gamma
-        gumbel_beta = mu
-        gumbel_flat = [
-            gumbel_rng.gumbelvariate(gumbel_mu, gumbel_beta)
-            for _ in range(num_customer * num_prod)
-        ]
-        gumbel = np.reshape(gumbel_flat, (num_customer, num_prod))
-
-        # Compute utility for each product and each customer.
-        utility = np.zeros((num_customer, num_prod + 1))
-        # Keep the first column of utility as 0, which indicates no purchase.
-        utility[:, 1:] = np.array(c_utility) + gumbel
+        utility = self.utility_model.random(
+            mu,
+            num_customer,
+            num_prod,
+            c_utility,
+        )
 
         # Initialize inventory.
         inventory = np.copy(init_level)
