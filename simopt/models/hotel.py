@@ -9,6 +9,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Exp
 from simopt.utils import classproperty, override
 
 
@@ -190,6 +191,8 @@ class Hotel(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.arrival_model = Exp()
+
     def _check_num_products(self) -> None:
         if self.factors["num_products"] <= 0:
             raise ValueError("num_products must be greater than 0.")
@@ -260,7 +263,10 @@ class Hotel(Model):
             )
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list):
+        self.arrival_model.set_rng(rng_list[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -285,14 +291,13 @@ class Hotel(Model):
         discount_rate: int = self.factors["discount_rate"]
 
         # Designate separate random number generators.
-        arr_rng = rng_list[0]
         total_revenue = 0
 
         # Generate interarrival times
         arr_bound = 10 * round(168 * np.sum(f_lambda))
         arr_time = np.array(
             [
-                [arr_rng.expovariate(f_lambda[i]) for _ in range(arr_bound)]
+                [self.arrival_model.random(f_lambda[i]) for _ in range(arr_bound)]
                 for i in range(num_products)
             ]
         )
