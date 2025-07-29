@@ -8,7 +8,29 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import InputModel
 from simopt.utils import classproperty, override
+
+
+class DemandInputModel(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, burr_c: float, burr_k: float) -> float:
+        # Generate random demand according to Burr Type XII distribution.
+        # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
+        #   X = ((1-U)**(-1/k) - 1)**(1/c) has the desired distribution.
+        # https://en.wikipedia.org/wiki/Burr_distribution
+        def nth_root(x: float, n: float) -> float:
+            """Return the nth root of x."""
+            return x ** (1 / n)
+
+        u = self.rng.random()
+        demand = nth_root(nth_root(1 - u, -burr_k) - 1, burr_c)
+        return demand
 
 
 class CntNV(Model):
@@ -97,6 +119,8 @@ class CntNV(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.demand_model = DemandInputModel()
+
     def _check_purchase_price(self) -> None:
         if self.factors["purchase_price"] <= 0:
             raise ValueError("Purchasing cost per unit must be greater than 0.")
@@ -138,7 +162,10 @@ class CntNV(Model):
             "unit, which must be greater than the sales price per unit."
         )
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list):
+        self.demand_model.set_rng(rng_list[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -160,18 +187,7 @@ class CntNV(Model):
         burr_k: float = self.factors["Burr_k"]
         burr_c: float = self.factors["Burr_c"]
         # Designate random number generator for demand variability.
-        demand_rng = rng_list[0]
-
-        # Generate random demand according to Burr Type XII distribution.
-        # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
-        #   X = ((1-U)**(-1/k) - 1)**(1/c) has the desired distribution.
-        # https://en.wikipedia.org/wiki/Burr_distribution
-        def nth_root(x: float, n: float) -> float:
-            """Return the nth root of x."""
-            return x ** (1 / n)
-
-        u = demand_rng.random()
-        demand = nth_root(nth_root(1 - u, -burr_k) - 1, burr_c)
+        demand = self.demand_model.random(burr_c, burr_k)
 
         # Calculate units sold, as well as unsold/stockout
         units_sold = min(demand, ord_quant)
