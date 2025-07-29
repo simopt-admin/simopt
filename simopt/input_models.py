@@ -88,3 +88,14 @@ class Triangular(InputModel):
 
     def random(self, low: float, high: float, mode: float) -> float:
         return self.rng.triangular(low, high, mode)
+
+
+class Uniform(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, low: float, high: float) -> float:
+        return self.rng.uniform(low, high)
