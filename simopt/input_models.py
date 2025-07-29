@@ -66,3 +66,14 @@ class Poisson(InputModel):
 
     def random(self, lam: float) -> int:
         return self.rng.poissonvariate(lam)
+
+
+class Beta(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, alpha: float, beta: float) -> float:
+        return self.rng.betavariate(alpha, beta)
