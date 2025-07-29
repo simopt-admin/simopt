@@ -8,6 +8,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Beta
 from simopt.utils import classproperty, override
 
 NUM_STAGES: Final[int] = 5
@@ -123,6 +124,8 @@ class Contamination(Model):
         """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
+        self.contam_model = Beta()
+        self.restore_model = Beta()
 
     def _check_contam_rate_alpha(self) -> None:
         if self.factors["contam_rate_alpha"] <= 0:
@@ -172,7 +175,11 @@ class Contamination(Model):
             )
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list):
+        self.contam_model.set_rng(rng_list[0])
+        self.restore_model.set_rng(rng_list[1])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -195,22 +202,17 @@ class Contamination(Model):
         restore_beta: float = self.factors["restore_rate_beta"]
         u: tuple = self.factors["prev_decision"]
 
-        # Designate separate random number generators.
-        # Outputs will be coupled when generating demand.
-        contam_rng = rng_list[0]
-        restore_rng = rng_list[1]
-
         # Initialize levels with beta distribution.
         levels = np.zeros(stages)
-        levels[0] = restore_rng.betavariate(alpha=init_alpha, beta=init_beta)
+        levels[0] = self.restore_model.random(init_alpha, init_beta)
 
         # Generate contamination and restoration values with beta distribution.
         rand_range = range(stages - 1)
         contamination_rates = [
-            contam_rng.betavariate(contam_alpha, contam_beta) for _ in rand_range
+            self.contam_model.random(contam_alpha, contam_beta) for _ in rand_range
         ]
         restoration_rates = [
-            restore_rng.betavariate(restore_alpha, restore_beta) for _ in rand_range
+            self.restore_model.random(restore_alpha, restore_beta) for _ in rand_range
         ]
 
         # Calculate contamination and restoration levels.
