@@ -55,3 +55,14 @@ class WeightedChoice(InputModel):
         # Find the index of the first cumulative weight that is >= x
         # Return the corresponding element from the population
         return population[bisect.bisect(cum_weights, x)]
+
+
+class Poisson(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, lam: float) -> int:
+        return self.rng.poissonvariate(lam)
