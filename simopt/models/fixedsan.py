@@ -8,6 +8,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Exp
 from simopt.utils import classproperty, override
 
 # TODO: figure out if this should ever be anything other than 13
@@ -77,6 +78,8 @@ class FixedSAN(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.time_model = Exp()
+
     def _check_num_arcs(self) -> None:
         if self.factors["num_arcs"] <= 0:
             raise ValueError("num_arcs must be greater than 0.")
@@ -88,7 +91,10 @@ class FixedSAN(Model):
     def _check_arc_means(self) -> bool:
         return all(x > 0 for x in list(self.factors["arc_means"]))
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list):
+        self.time_model.set_rng(rng_list[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -106,9 +112,6 @@ class FixedSAN(Model):
         num_arcs: int = self.factors["num_arcs"]
         thetas = list(self.factors["arc_means"])
 
-        # Designate separate random number generators.
-        exp_rng = rng_list[0]
-
         # Make sure we're not going to index out of bounds.
         if num_nodes < 9 or num_arcs < 13:
             raise ValueError(
@@ -118,7 +121,7 @@ class FixedSAN(Model):
         # Generate arc lengths.
         nodes = np.zeros(num_nodes)
         time_deriv = np.zeros((num_nodes, num_arcs))
-        arcs = [exp_rng.expovariate(1 / x) for x in thetas]
+        arcs = [self.time_model.random(1 / x) for x in thetas]
 
         def get_time(prev_node_idx: int, arc_idx: int) -> float:
             return nodes[prev_node_idx] + arcs[arc_idx]
