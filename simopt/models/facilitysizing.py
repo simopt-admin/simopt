@@ -8,9 +8,24 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import InputModel
 from simopt.utils import classproperty, override
 
 NUM_FACILITIES: Final[int] = 3
+
+
+class DemandInputModel(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, mean, cov) -> float:
+        while True:
+            demand = np.array(self.rng.mvnormalvariate(mean, cov))
+            if np.all(demand >= 0):
+                return demand
 
 
 class FacilitySize(Model):
@@ -93,6 +108,8 @@ class FacilitySize(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.demand_model = DemandInputModel()
+
     def _check_mean_vec(self) -> None:
         if any(mean <= 0 for mean in self.factors["mean_vec"]):
             raise ValueError("All elements in mean_vec must be greater than 0.")
@@ -126,7 +143,10 @@ class FacilitySize(Model):
             raise ValueError("The length of cov[0] must be equal to n_fac.")
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rngs):
+        self.demand_model.set_rng(rngs[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication using the current model factors.
 
         Args:
@@ -145,15 +165,7 @@ class FacilitySize(Model):
         mean_vec: list[float | int] = self.factors["mean_vec"]
         cov = np.array(self.factors["cov"])
         capacity = np.array(self.factors["capacity"])
-        # Designate RNG for demands.
-        demand_rng = rng_list[0]
-        # Generate random demands at facilities from truncated mv normal distribution.
-        while True:
-            demand = np.array(demand_rng.mvnormalvariate(mean_vec, cov))
-            # Only leave if all demands are non-negative.
-            if np.all(demand >= 0):
-                break
-        # Check for stockouts.
+        demand = self.demand_model.random(mean_vec, cov)
         extra_demand = demand - capacity
         pos_excess_mask = extra_demand > 0
         n_fac_stockout = np.sum(pos_excess_mask).astype(int)
