@@ -13,7 +13,19 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import InputModel
 from simopt.utils import classproperty, override
+
+
+class MovementInputModel(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, mean: float, std: float) -> float:
+        return self.rng.normalvariate(mean, std)
 
 
 class IronOre(Model):
@@ -136,6 +148,8 @@ class IronOre(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.movement_model = MovementInputModel()
+
     # Check for simulatable factors
     def _check_mean_price(self) -> bool:
         if self.factors["mean_price"] <= 0:
@@ -201,7 +215,10 @@ class IronOre(Model):
             )
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list):
+        self.movement_model.set_rng(rng_list[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -230,8 +247,6 @@ class IronOre(Model):
         price_prod: float = self.factors["price_prod"]
         price_sell: float = self.factors["price_sell"]
         holding_cost: float = self.factors["holding_cost"]
-        # Designate random number generators.
-        price_rng = rng_list[0]
         # Initialize quantities to track:
         #   - Market price in each period (Pt).
         #   - Starting stock in each period.
@@ -265,7 +280,7 @@ class IronOre(Model):
             # === Price Update: mean-reverting random walk ===
             price_delta = mean_price - prev_price
             mean_move = copysign(sqrt(sqrt(abs(price_delta))), price_delta)
-            move = price_rng.normalvariate(mean_move, st_dev)
+            move = self.movement_model.random(mean_move, st_dev)
             price_today = max(min(prev_price + move, max_price), min_price)
             mkt_price[day] = price_today
 
