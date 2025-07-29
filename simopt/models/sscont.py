@@ -9,6 +9,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Exp, Poisson
 from simopt.utils import classproperty, override
 
 
@@ -128,6 +129,9 @@ class SSCont(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.demand_model = Exp()
+        self.lead_model = Poisson()
+
     # Check for simulatable factors
     def _check_demand_mean(self) -> None:
         if self.factors["demand_mean"] <= 0:
@@ -175,7 +179,11 @@ class SSCont(Model):
             raise ValueError("s must be less than S.")
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list):
+        self.demand_model.set_rng(rng_list[0])
+        self.lead_model.set_rng(rng_list[1])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -210,15 +218,11 @@ class SSCont(Model):
         holding_cost = self.factors["holding_cost"]
         backorder_cost = self.factors["backorder_cost"]
 
-        # Designate random number generators.
-        demand_rng = rng_list[0]
-        lead_rng = rng_list[1]
-
         periods = n_days + warmup
         # Generate exponential random demands.
         inv_demand_mean = 1 / demand_mean
         demands = np.array(
-            [demand_rng.expovariate(inv_demand_mean) for _ in range(periods)]
+            [self.demand_model.random(inv_demand_mean) for _ in range(periods)]
         )
         # Initialize starting and ending inventories for each period.
         start_inv = np.zeros(periods)
@@ -245,7 +249,7 @@ class SSCont(Model):
                 order_qty = fac_S - inv_pos[day]
                 orders_placed[day] = order_qty
 
-                lead = lead_rng.poissonvariate(lead_mean)
+                lead = self.lead_model.random(lead_mean)
                 delivery_day = next_day + lead
 
                 if delivery_day < periods:
