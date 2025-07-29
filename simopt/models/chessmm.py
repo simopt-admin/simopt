@@ -9,10 +9,25 @@ from scipy import special
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import InputModel, Poisson
 from simopt.utils import classproperty, override
 
 MEAN_ELO: Final[int] = 1200
 MAX_ALLOWABLE_DIFF: Final[int] = 150
+
+
+class EloInputModel(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, mean: float, std: float, min: float, max: float) -> float:
+        while True:
+            rating = self.rng.normalvariate(mean, std)
+            if min <= rating <= max:
+                return rating
 
 
 class ChessMatchmaking(Model):
@@ -97,6 +112,9 @@ class ChessMatchmaking(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
+        self.elo_model = EloInputModel()
+        self.arrival_model = Poisson()
+
     def _check_elo_mean(self) -> None:
         if self.factors["elo_mean"] <= 0:
             raise ValueError(
@@ -132,7 +150,11 @@ class ChessMatchmaking(Model):
         # No factors need cross-checked
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict[str, dict]]:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+        self.elo_model.set_rng(rng_list[0])
+        self.arrival_model.set_rng(rng_list[1])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -155,22 +177,15 @@ class ChessMatchmaking(Model):
         allowable_diff = self.factors["allowable_diff"]
         poisson_rate = self.factors["poisson_rate"]
 
-        # Designate separate RNGs for Elo and arrival times.
-        elo_rng = rng_list[0]
-        arrival_rng = rng_list[1]
-
-        def generate_elo() -> float:
-            while True:
-                rating = elo_rng.normalvariate(elo_mean, elo_sd)
-                if elo_min <= rating <= elo_max:
-                    return rating
-
         # Generate Elo ratings (normal distribution).
-        player_ratings = [generate_elo() for _ in num_players_range]
+        player_ratings = [
+            self.elo_model.random(elo_mean, elo_sd, elo_min, elo_max)
+            for _ in num_players_range
+        ]
 
         # Generate interarrival times (Poisson distribution).
         interarrival_times = [
-            arrival_rng.poissonvariate(poisson_rate) for _ in num_players_range
+            self.arrival_model.random(poisson_rate) for _ in num_players_range
         ]
 
         # Initialize statistics.
