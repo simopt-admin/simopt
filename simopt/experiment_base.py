@@ -2407,10 +2407,21 @@ def plot_area_scatterplots(
                         [mean_estimator - mean_bs_conf_int_lb],
                         [mean_bs_conf_int_ub - mean_estimator],
                     ]
-                    y_err = [
-                        [std_dev_estimator - std_dev_bs_conf_int_lb],
-                        [std_dev_bs_conf_int_ub - std_dev_estimator],
-                    ]
+                    y_err_x = std_dev_estimator - std_dev_bs_conf_int_lb
+                    y_err_y = std_dev_bs_conf_int_ub - std_dev_estimator
+                    # If y_err_x or y_err_y is negative, set it to zero and warn.
+                    if y_err_x < 0 or y_err_y < 0:
+                        old_coords = (y_err_x, y_err_y)
+                        y_err_x = max(0, y_err_x)
+                        y_err_y = max(0, y_err_y)
+                        new_coords = (y_err_x, y_err_y)
+                        logging.warning(
+                            "Warning: Negative error values detected in "
+                            "area scatterplot. "
+                            f"Old coordinates: {old_coords}, "
+                            f"new coordinates: {new_coords}. "
+                        )
+                    y_err = [[y_err_x], [y_err_y]]
                     handle = plt.errorbar(
                         x=mean_estimator,
                         y=std_dev_estimator,
@@ -3156,8 +3167,6 @@ def plot_terminal_progress(
         )
         # solver_curve_handles = []
         if normalize:
-            for exp in experiments:
-                print(exp.progress_curves)
             terminal_data = [
                 [
                     experiment.progress_curves[mrep].y_vals[-1]
@@ -3166,8 +3175,6 @@ def plot_terminal_progress(
                 for experiment in experiments
             ]
         else:
-            for exp in experiments:
-                print(exp.objective_curves)
             terminal_data = [
                 [
                     experiment.objective_curves[mrep].y_vals[-1]
