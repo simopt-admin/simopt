@@ -1,0 +1,81 @@
+<div class="row">
+  <div class="col-md-6">
+    <h6 class="fw-bold mb-3">Problems</h6>
+    {% if problems %}
+    <div class="list-group">
+      {% for problem in problems %}
+      <div
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        <div>
+          <strong>{{ problem.key }}</strong><br />
+          <small class="text-muted">{{ problem.name }}</small>
+        </div>
+        <button
+          class="btn btn-outline-danger btn-sm"
+          hx-post="/api/remove-problem"
+          hx-target="#workspace"
+          hx-vals='{"problem_key": "{{ problem.key }}"}'
+        >
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-3">
+      <i class="fas fa-inbox fa-2x mb-2"></i>
+      <p class="mb-0">No problems added yet</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-md-6">
+    <h6 class="fw-bold mb-3">Solvers</h6>
+    {% if solvers %}
+    <div class="list-group">
+      {% for solver in solvers %}
+      <div
+        class="list-group-item d-flex justify-content-between align-items-center"
+      >
+        <div>
+          <strong>{{ solver.key }}</strong><br />
+          <small class="text-muted">{{ solver.name }}</small>
+        </div>
+        <button
+          class="btn btn-outline-danger btn-sm"
+          hx-post="/api/remove-solver"
+          hx-target="#workspace"
+          hx-vals='{"solver_key": "{{ solver.key }}"}'
+        >
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-3">
+      <i class="fas fa-inbox fa-2x mb-2"></i>
+      <p class="mb-0">No solvers added yet</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col-12">
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary btn-sm" disabled>
+        <i class="fas fa-file-csv me-2"></i>Load Design from CSV
+      </button>
+      <button
+        class="btn btn-outline-warning btn-sm"
+        hx-post="/api/clear-workspace"
+        hx-target="#workspace"
+        hx-confirm="Are you sure you want to clear the workspace?"
+      >
+        <i class="fas fa-broom me-2"></i>Clear Problem/Solver Lists
+      </button>
+    </div>
+  </div>
+</div>

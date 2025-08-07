@@ -1,0 +1,72 @@
+{% extends "base.html" %} {% block title %}SimOpt Library - Main Menu{% endblock
+%} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10 col-xl-8">
+    <div class="hero-section">
+      <h1 class="display-4">
+        <i class="fas fa-cogs text-primary me-3"></i>
+        SimOpt Library
+      </h1>
+      <p class="lead-text">
+        A powerful graphical interface for simulation optimization and data
+        farming
+      </p>
+    </div>
+
+    <div class="row feature-grid">
+      <div class="col-md-6">
+        <div class="feature-card h-100 fade-in">
+          <div class="feature-icon info">
+            <i class="fas fa-database"></i>
+          </div>
+          <h5 class="mb-3">Data Farm Models</h5>
+          <p class="text-muted mb-4">
+            Generate and analyze data from simulation models using various
+            experimental designs and statistical methods.
+          </p>
+          <a href="/data-farming" class="btn btn-info btn-hero">
+            <i class="fas fa-seedling"></i>
+            Start Data Farming
+          </a>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="feature-card h-100 fade-in">
+          <div class="feature-icon success">
+            <i class="fas fa-flask"></i>
+          </div>
+          <h5 class="mb-3">Optimization Experiments</h5>
+          <p class="text-muted mb-4">
+            Design and run comprehensive optimization experiments comparing
+            different solvers across various problem domains.
+          </p>
+          <a href="/experiments" class="btn btn-success btn-hero">
+            <i class="fas fa-play"></i>
+            Create Experiment
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="alert alert-info">
+          <h6 class="alert-heading">
+            <i class="fas fa-lightbulb me-2"></i>
+            Getting Started
+          </h6>
+          <p class="mb-0">
+            Choose <strong>Optimization Experiments</strong> to compare solver
+            performance on optimization problems, or select
+            <strong>Data Farm Models</strong> to generate experimental data from
+            simulation models.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

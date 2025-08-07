@@ -1,0 +1,23 @@
+{% if experiments %} {% for experiment in experiments %}
+<div class="card mb-2">
+  <div class="card-body p-3">
+    <h6 class="card-title mb-1">{{ experiment.name }}</h6>
+    <small class="text-muted">
+      {{ experiment.problems|length }} problem(s), {{ experiment.solvers|length
+      }} solver(s)
+    </small>
+    <div class="mt-2">
+      <span class="badge bg-info">{{ experiment.design_type }}</span>
+      <span class="badge bg-secondary"
+        >{{ experiment.num_stacks }} stack(s)</span
+      >
+    </div>
+  </div>
+</div>
+{% endfor %} {% else %}
+<div class="text-center text-muted py-4">
+  <i class="fas fa-flask fa-2x mb-2"></i>
+  <p class="mb-0">No experiments created yet</p>
+  <small>Add problems and solvers to create your first experiment</small>
+</div>
+{% endif %}

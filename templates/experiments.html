@@ -1,0 +1,264 @@
+{% extends "base.html" %} {% block title %}Simulation Optimization Experiments{%
+endblock %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-12">
+    <div class="text-center mb-5">
+      <h1 class="h3 mb-3">
+        <i class="fas fa-flask text-success me-3"></i>
+        Optimization Experiments
+      </h1>
+      <p class="lead-text" style="font-size: 1rem; margin-bottom: 2rem">
+        Design and execute comprehensive experiments to compare solver
+        performance
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="experiment-grid">
+  <!-- Left Panel - Created Experiments -->
+  <div>
+    <div class="card sidebar-card">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+          <i class="fas fa-list me-2"></i>
+          Created Experiments
+        </h5>
+      </div>
+      <div class="card-body">
+        <div
+          id="experiments-list"
+          hx-get="/components/experiments-list"
+          hx-trigger="load"
+        >
+          <!-- Experiments will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0">
+          <i class="fas fa-cog me-2"></i>
+          Experiment Options
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <button class="btn btn-outline-secondary btn-sm" disabled>
+            <i class="fas fa-edit me-2"></i>
+            Change Default Options
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" disabled>
+            <i class="fas fa-chart-area me-2"></i>
+            Open Plotting Window
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" disabled>
+            <i class="fas fa-upload me-2"></i>
+            Load Experiment
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel - Problem/Solver Configuration -->
+  <div>
+    <!-- Problem Selection -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-puzzle-piece me-2"></i>
+          Problem Selection
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Add Problem:</label>
+              <select class="form-select" id="problem-select">
+                <option value="">Select a problem...</option>
+                {% for problem in problems %}
+                <option value="{{ problem }}">{{ problem }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button
+              class="btn btn-primary btn-sm"
+              hx-post="/api/add-problem"
+              hx-include="#problem-select"
+              hx-target="#workspace"
+              hx-vals='js:{"problem_key": document.getElementById("problem-select").value}'
+            >
+              <i class="fas fa-plus me-2"></i>Add Problem
+            </button>
+          </div>
+          <div class="col-md-6">
+            <div class="small text-muted">
+              <strong>Objective:</strong> Single [S] | Multiple [M]<br />
+              <strong>Constraint:</strong> Unconstrained [U] | Box [B] |
+              Deterministic [D] | Stochastic [S]<br />
+              <strong>Variable:</strong> Discrete [D] | Continuous [C] | Mixed
+              [M]<br />
+              <strong>Gradient Available:</strong> True [G] | False [N]
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solver Selection -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-wrench me-2"></i>
+          Solver Selection
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Add Solver:</label>
+              <select class="form-select" id="solver-select">
+                <option value="">Select a solver...</option>
+                {% for solver in solvers %}
+                <option value="{{ solver }}">{{ solver }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button
+              class="btn btn-success btn-sm"
+              hx-post="/api/add-solver"
+              hx-include="#solver-select"
+              hx-target="#workspace"
+              hx-vals='js:{"solver_key": document.getElementById("solver-select").value}'
+            >
+              <i class="fas fa-plus me-2"></i>Add Solver
+            </button>
+            <button class="btn btn-outline-primary btn-sm ms-2" disabled>
+              <i class="fas fa-magic me-2"></i>Quick-Add
+            </button>
+          </div>
+          <div class="col-md-6">
+            <div class="alert alert-info small">
+              <i class="fas fa-info-circle me-2"></i>
+              Incompatible problems/solvers will be unselectable
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Workspace -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-desktop me-2"></i>
+          Current Experiment Workspace
+        </h6>
+      </div>
+      <div class="card-body">
+        <div id="workspace" hx-get="/components/workspace" hx-trigger="load">
+          <!-- Workspace will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Design Options -->
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="fas fa-drafting-compass me-2"></i>
+          Design Options
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="design-type" class="form-label fw-bold"
+                >Design Type:</label
+              >
+              <select class="form-select" id="design-type">
+                <option value="nolhs">No Latin Hypercube</option>
+                <option value="lhs">Latin Hypercube</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="num-stacks" class="form-label fw-bold"
+                ># of Stacks:</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="num-stacks"
+                value="1"
+                min="1"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="experiment-name" class="form-label fw-bold"
+                >Experiment Name:</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="experiment-name"
+                value="Experiment"
+              />
+            </div>
+            <div class="form-check mb-3">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="create-pickles"
+              />
+              <label class="form-check-label" for="create-pickles">
+                Create Pickles for each pair?
+              </label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-primary" disabled>
+              <i class="fas fa-magic me-2"></i>Generate Problem Design
+            </button>
+            <div class="mt-3">
+              <button
+                class="btn btn-success"
+                hx-post="/api/create-experiment"
+                hx-target="#experiments-list"
+                hx-vals='js:{
+                                        "experiment_name": document.getElementById("experiment-name").value,
+                                        "design_type": document.getElementById("design-type").value,
+                                        "num_stacks": document.getElementById("num-stacks").value
+                                    }'
+              >
+                <i class="fas fa-flask me-2"></i>Create Experiment
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  // Clear form after successful additions
+  document.body.addEventListener("htmx:afterRequest", function (evt) {
+    if (
+      evt.detail.successful &&
+      (evt.detail.pathInfo.requestPath.includes("/add-problem") ||
+        evt.detail.pathInfo.requestPath.includes("/add-solver"))
+    ) {
+      if (evt.detail.pathInfo.requestPath.includes("/add-problem")) {
+        document.getElementById("problem-select").value = "";
+      } else {
+        document.getElementById("solver-select").value = "";
+      }
+    }
+  });
+</script>
+{% endblock %}

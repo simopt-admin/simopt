@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base */
+@layer base {
+  html, body { @apply h-full; }
+  body { @apply antialiased; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; }
+  ::selection { @apply bg-blue-200 text-blue-900; }
+}
+
+/* App shell */
+.container-page { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
+
+/* Soft card */
+.card { @apply bg-white/70 backdrop-blur border border-slate-200/60 shadow-sm rounded-2xl; }
+
+/* Buttons */
+.btn { @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition-colors; }
+.btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
+.btn-ghost { @apply border border-slate-300 hover:bg-slate-100 text-slate-800; }
+
+/* Inputs */
+.field { @apply rounded-xl border-slate-300 focus:border-slate-400 focus:ring-slate-400; }
+
+/* Simple fade */
+.fade-in { animation: fade 320ms ease-out; }
+@keyframes fade { from { opacity: 0; transform: translateY(2px);} to { opacity: 1; transform: none; } }
