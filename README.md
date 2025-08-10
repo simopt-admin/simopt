@@ -221,8 +221,8 @@ python -m simopt
 ## Traffic signal model
 
 Adapt the Traffic signal model so that number of system can be controlled by user. 
- -> Number of veins and arteries is an input by the user. 
- -> Probability is not an input, is calculated based on the lambda values provided by the user
+1. Number of veins and arteries is an input by the user. 
+2. Probability is not an input, is calculated based on the lambda values provided by the user
 
 Fixed average wait time problem, where the average wait would converge to zero. System only computed time of the cars that enter and exit the system. When the runtime is done the time of the cars still in the system was set to zero. Solved the problem by calculating average time separetly.
 
