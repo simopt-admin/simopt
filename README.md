@@ -220,13 +220,13 @@ python -m simopt
 
 ## Traffic signal model
 
-Adapt the Traffic signal model so that number of system can be controlled by user. 
-1. Number of veins and arteries is an input by the user. 
-2. Probability is not an input, is calculated based on the lambda values provided by the user
+1. Adapt the Traffic signal model so that the size of system can be controlled by user. 
+* Number of veins and arteries is an input by the user. 
+* Probability is not an input, is calculated in the code based on the lambda values provided by the user
 
-Fixed average wait time problem, where the average wait would converge to zero. System only computed time of the cars that enter and exit the system. When the runtime is done the time of the cars still in the system was set to zero. Solved the problem by calculating average time separetly.
+2. Fixed the average wait time problem, where the average wait would converge to zero. The system only computed the time of the cars that enter and exit the system. When the runtime is done the time of the cars still in the system was set to zero. Solved the problem by calculating average time separately.
 
-Fixed the calculation of the system time by creating a new object to indicate the time in which each car leaves the system. 
+3. Fixed the calculation of the system time by creating a new object to indicate the time in which each car leaves the system. 
 
 ## Contributing
 You can contribute problems and solvers to SimOpt (or fix other coding bugs) by [forking](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the repository and initiating [pull requests](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) in GitHub to request that your changes be integrated.
