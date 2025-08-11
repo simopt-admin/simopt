@@ -974,7 +974,15 @@ class Problem(ABC):
         """
         raise NotImplementedError
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: B027
+        """Hook executed before each simulation replication.
+
+        Subclasses can override this to perform per-replication setup such as
+        using the same RNG for different input models.
+
+        Args:
+            rng_list (list[MRG32k3a]): RNGs used for this replication.
+        """
         pass
 
     def simulate(self, solution: Solution, num_macroreps: int = 1) -> None:
@@ -1271,11 +1279,23 @@ class Model(ABC):
 
         return True
 
-    def model_created(self) -> None:
+    def model_created(self) -> None:  # noqa: B027
+        """Hook called after the model is constructed.
+
+        Subclasses can override this to use custom input models.
+        """
         pass
 
     @abstractmethod
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+        """Prepare the model just before generating a replication.
+
+        Args:
+            rng_list (list[MRG32k3a]): RNGs used to drive the simulation.
+
+        Raises:
+            NotImplementedError: If the subclass does not implement this hook.
+        """
         raise NotImplementedError
 
     @abstractmethod

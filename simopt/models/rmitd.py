@@ -13,15 +13,20 @@ from simopt.utils import classproperty, override
 
 
 class DemandInputModel(InputModel):
-    def set_rng(self, rng: MRG32k3a) -> None:
+    """Input model for temporally dependent demand components."""
+
+    def set_rng(self, rng: MRG32k3a) -> None:  # noqa: D102
         self.x_rng = rng[0]
         self.y_rng = rng[1]
 
-    def unset_rng(self) -> None:
+    def unset_rng(self) -> None:  # noqa: D102
         self.x_rng = None
         self.y_rng = None
 
-    def random(self, demand_means, gamma_shape, gamma_scale) -> float:
+    def random(
+        self, demand_means: np.ndarray, gamma_shape: float, gamma_scale: float
+    ) -> float:
+        """Sample period demand vector given means and gamma parameters."""
         x_demand = self.x_rng.gammavariate(
             alpha=gamma_shape,
             beta=1.0 / gamma_scale,
@@ -198,7 +203,7 @@ class RMITD(Model):
             raise ValueError("gamma_shape times gamma_scale should be close to 1.")
         return True
 
-    def before_replicate(self, rng_list):
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.demand_model.set_rng(rng_list)
 
     def replicate(self) -> tuple[dict, dict]:
@@ -217,7 +222,6 @@ class RMITD(Model):
         """
         gamma_shape = self.factors["gamma_shape"]
         gamma_scale = self.factors["gamma_scale"]
-        time_horizon = self.factors["time_horizon"]
         initial_inventory = self.factors["initial_inventory"]
         reservation_qtys: list = self.factors["reservation_qtys"]
         demand_means = np.array(self.factors["demand_means"])

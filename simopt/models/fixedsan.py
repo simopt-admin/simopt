@@ -91,7 +91,7 @@ class FixedSAN(Model):
     def _check_arc_means(self) -> bool:
         return all(x > 0 for x in list(self.factors["arc_means"]))
 
-    def before_replicate(self, rng_list):
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.time_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:

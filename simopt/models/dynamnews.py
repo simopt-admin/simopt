@@ -15,13 +15,15 @@ NUM_PRODUCTS: Final[int] = 10
 
 
 class Utility(InputModel):
-    def set_rng(self, rng: random.Random) -> None:
+    """Input model for customer utility sampling."""
+
+    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
         self.rng = rng
 
-    def unset_rng(self) -> None:
+    def unset_rng(self) -> None:  # noqa: D102
         self.rng = None
 
-    def random(
+    def random(  # noqa: D102
         self, mu: float, num_customer: int, num_prod: int, c_utility: list
     ) -> np.ndarray:
         # Compute Gumbel rvs for the utility of the products.
@@ -177,7 +179,7 @@ class DynamNews(Model):
             )
         return True
 
-    def before_replicate(self, rng_list):
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.utility_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:

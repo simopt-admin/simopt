@@ -15,13 +15,15 @@ NUM_FACILITIES: Final[int] = 3
 
 
 class DemandInputModel(InputModel):
-    def set_rng(self, rng: random.Random) -> None:
+    """Input model for multivariate normal demand at facilities."""
+
+    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
         self.rng = rng
 
-    def unset_rng(self) -> None:
+    def unset_rng(self) -> None:  # noqa: D102
         self.rng = None
 
-    def random(self, mean, cov) -> float:
+    def random(self, mean: list, cov: list) -> float:  # noqa: D102
         while True:
             demand = np.array(self.rng.mvnormalvariate(mean, cov))
             if np.all(demand >= 0):
@@ -143,7 +145,7 @@ class FacilitySize(Model):
             raise ValueError("The length of cov[0] must be equal to n_fac.")
         return True
 
-    def before_replicate(self, rngs):
+    def before_replicate(self, rngs: list[MRG32k3a]) -> None:  # noqa: D102
         self.demand_model.set_rng(rngs[0])
 
     def replicate(self) -> tuple[dict, dict]:

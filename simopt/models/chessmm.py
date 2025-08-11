@@ -17,16 +17,21 @@ MAX_ALLOWABLE_DIFF: Final[int] = 150
 
 
 class EloInputModel(InputModel):
-    def set_rng(self, rng: random.Random) -> None:
+    """Input model for player Elo ratings."""
+
+    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
         self.rng = rng
 
-    def unset_rng(self) -> None:
+    def unset_rng(self) -> None:  # noqa: D102
         self.rng = None
 
-    def random(self, mean: float, std: float, min: float, max: float) -> float:
+    def random(
+        self, mean: float, std: float, min_rating: float, max_rating: float
+    ) -> float:
+        """Draw a truncated normal rating within [min_rating, max_rating]."""
         while True:
             rating = self.rng.normalvariate(mean, std)
-            if min <= rating <= max:
+            if min_rating <= rating <= max_rating:
                 return rating
 
 
@@ -150,7 +155,7 @@ class ChessMatchmaking(Model):
         # No factors need cross-checked
         return True
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.elo_model.set_rng(rng_list[0])
         self.arrival_model.set_rng(rng_list[1])
 

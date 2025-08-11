@@ -159,7 +159,7 @@ class TableAllocation(Model):
             )
         return True
 
-    def before_replicate(self, rng_list):
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.arrival_time_model.set_rng(rng_list[0])
         self.arrival_number_model.set_rng(rng_list[0])
         self.group_size_model.set_rng(rng_list[1])

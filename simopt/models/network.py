@@ -16,13 +16,15 @@ NUM_NETWORKS: Final = 10
 
 
 class RouteInputModel(InputModel):
-    def set_rng(self, rng: random.Random) -> None:
+    """Input model for routing choices in the network."""
+
+    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
         self.rng = rng
 
-    def unset_rng(self) -> None:
+    def unset_rng(self) -> None:  # noqa: D102
         self.rng = None
 
-    def random(self, choices, weights, k):
+    def random(self, choices: list, weights: list, k: int) -> list:  # noqa: D102
         return self.rng.choices(choices, weights, k=k)
 
 
@@ -226,7 +228,7 @@ class Network(Model):
             )
         return True
 
-    def before_replicate(self, rng_list) -> None:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.arrival_model.set_rng(rng_list[0])
         self.route_model.set_rng(rng_list[1])
         self.service_model.set_rng(rng_list[2])
