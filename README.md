@@ -218,7 +218,7 @@ One can also use the SimOpt graphical user interface by running the following fr
 python -m simopt
 ```
 
-## Traffic signal model
+## Changes to Traffic_signal model
 
 1. Adapt the Traffic signal model so that the size of system can be controlled by user. 
 * Number of veins and arteries is an input by the user. 
