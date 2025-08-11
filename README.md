@@ -224,7 +224,7 @@ python -m simopt
 * Number of veins and arteries is an input by the user. 
 * Probability is not an input, is calculated inside the code and based on the lambda values provided by the user
 
-2. Fixed the average waiting time problem, where the average wait would eventually converge to zero. This happened because when the runtime was done the waiting time of the cars still in the system would be set to zero. This was solved by making the calculation of the average waiting time counting all cars in the system.
+2. Fixed the average waiting time problem, where the average wait would eventually converge to zero. This happened because when the runtime was done the waiting time of the cars still in the system would be set to zero. This was solved by making the calculation of the average waiting time now counting the cars that were still in the system.
 
 3. Fixed the calculation of the system time by creating a new car object to indicate the time in which each car leaves the system. 
 
