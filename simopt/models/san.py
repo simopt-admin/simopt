@@ -134,7 +134,7 @@ class SAN(Model):
             )
         return True
 
-    def before_replicate(self, rng_list):
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.time_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:

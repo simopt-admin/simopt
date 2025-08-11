@@ -12,13 +12,15 @@ from simopt.utils import classproperty, override
 
 
 class DemandInputModel:
-    def set_rng(self, rng) -> None:
+    """Input model for daily demand."""
+
+    def set_rng(self, rng: MRG32k3a) -> None:  # noqa: D102
         self.rng = rng
 
-    def unset_rng(self) -> None:
+    def unset_rng(self) -> None:  # noqa: D102
         self.rng = None
 
-    def random(self, mu: float, sigma: float) -> float:
+    def random(self, mu: float, sigma: float) -> float:  # noqa: D102
         def round_and_clamp_non_neg(x: float | int) -> int:
             return round(max(0, x))
 

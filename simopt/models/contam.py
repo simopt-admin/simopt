@@ -175,7 +175,7 @@ class Contamination(Model):
             )
         return True
 
-    def before_replicate(self, rng_list):
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.contam_model.set_rng(rng_list[0])
         self.restore_model.set_rng(rng_list[1])
 

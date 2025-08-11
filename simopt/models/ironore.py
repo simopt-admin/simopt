@@ -18,13 +18,15 @@ from simopt.utils import classproperty, override
 
 
 class MovementInputModel(InputModel):
-    def set_rng(self, rng: random.Random) -> None:
+    """Input model for mining movement and price shocks."""
+
+    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
         self.rng = rng
 
-    def unset_rng(self) -> None:
+    def unset_rng(self) -> None:  # noqa: D102
         self.rng = None
 
-    def random(self, mean: float, std: float) -> float:
+    def random(self, mean: float, std: float) -> float:  # noqa: D102
         return self.rng.normalvariate(mean, std)
 
 
@@ -215,7 +217,7 @@ class IronOre(Model):
             )
         return True
 
-    def before_replicate(self, rng_list):
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.movement_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:

@@ -13,13 +13,15 @@ from simopt.utils import classproperty, override
 
 
 class DemandInputModel(InputModel):
-    def set_rng(self, rng: random.Random) -> None:
+    """Input model for Burr Type XII demand."""
+
+    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
         self.rng = rng
 
-    def unset_rng(self) -> None:
+    def unset_rng(self) -> None:  # noqa: D102
         self.rng = None
 
-    def random(self, burr_c: float, burr_k: float) -> float:
+    def random(self, burr_c: float, burr_k: float) -> float:  # noqa: D102
         # Generate random demand according to Burr Type XII distribution.
         # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
         #   X = ((1-U)**(-1/k) - 1)**(1/c) has the desired distribution.
@@ -29,8 +31,7 @@ class DemandInputModel(InputModel):
             return x ** (1 / n)
 
         u = self.rng.random()
-        demand = nth_root(nth_root(1 - u, -burr_k) - 1, burr_c)
-        return demand
+        return nth_root(nth_root(1 - u, -burr_k) - 1, burr_c)
 
 
 class CntNV(Model):
@@ -162,7 +163,7 @@ class CntNV(Model):
             "unit, which must be greater than the sales price per unit."
         )
 
-    def before_replicate(self, rng_list):
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.demand_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:

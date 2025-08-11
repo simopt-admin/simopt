@@ -122,7 +122,7 @@ class MM1Queue(Model):
     def _check_epsilon(self) -> bool:
         return self.factors["epsilon"] > 0
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.arrival_model.set_rng(rng_list[0])
         self.service_model.set_rng(rng_list[1])
 

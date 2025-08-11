@@ -20,7 +20,7 @@ from joblib import Parallel, delayed
 import simopt.curve_utils as curve_utils
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
+from simopt.base import Model, ObjectiveType, Problem, Solution, Solver, VariableType
 from simopt.curve import (
     Curve,
     CurveType,
@@ -373,10 +373,25 @@ class ProblemSolver:
         # Make sure the experiment directory exists
         EXPERIMENT_DIR.mkdir(parents=True, exist_ok=True)
 
-    def model_created(self, model):
+    def model_created(self, model: Model) -> None:
+        """Hook called after the problem's model is instantiated.
+
+        Args:
+            model: The initialized model associated with the experiment's problem.
+
+        This is a helper function to customize the experiment's input model.
+        """
         pass
 
-    def before_replicate(self, model, rng_list):
+    def before_replicate(self, model: Model, rng_list: list[MRG32k3a]) -> None:
+        """Hook executed immediately before each replication during an experiment.
+
+        Args:
+            model: The model about to be simulated.
+            rng_list: The list of RNGs used for the replication.
+
+        This is a helper function to customize behavior before each replication.
+        """
         pass
 
     # TODO: Convert this to throwing exceptions?

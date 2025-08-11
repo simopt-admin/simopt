@@ -179,7 +179,7 @@ class SSCont(Model):
             raise ValueError("s must be less than S.")
         return True
 
-    def before_replicate(self, rng_list):
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.demand_model.set_rng(rng_list[0])
         self.lead_model.set_rng(rng_list[1])
 
