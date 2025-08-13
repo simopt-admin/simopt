@@ -14,6 +14,8 @@ from simopt.base import (
     Solver,
     VariableType,
 )
+import os
+import uuid
 
 
 class CSA(Solver):
@@ -298,6 +300,17 @@ class CSA(Solver):
         # numiter = 0
         numviolated = 0
 
+        def get_unique_filename(base_name="output", extension=".txt"):
+            counter = 1
+            filename = f"{base_name}{extension}"
+            while os.path.exists(filename):
+                filename = f"{base_name}_{counter}{extension}"
+                counter += 1
+            return filename
+
+        # Generate a unique filename
+        filename = f"solver_output_{os.getpid()}_{uuid.uuid4().hex[:6]}.txt"
+
         while expended_budget < problem.factors["budget"]:
             cur_x = new_solution.x
 
@@ -362,6 +375,22 @@ class CSA(Solver):
             expended_budget += r
 
             new_solution = candidate_solution
+
+            # #print statistics
+            # print("Iteration:", k)
+            # print("Is previous violated?:", is_violated )
+            # print(" New Solution:", new_solution.x)
+            # print("New Objective:", new_solution.objectives_mean)
+            # print("New Avg LHS:", new_solution.stoch_constraints_mean)
+
+            # Write output to file
+            with open(filename, "a") as f:
+                f.write(f"Iteration: {k}\n")
+                f.write(f"Is previous violated?: {is_violated}\n")
+                f.write(f"New Solution: {new_solution.x}\n")
+                f.write(f"New Objective: {new_solution.objectives_mean}\n")
+                f.write(f"New Avg LHS: {new_solution.stoch_constraints_mean}\n")
+
 
             #Append new solution.
             if (

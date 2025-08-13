@@ -46,6 +46,7 @@ from simopt.solvers.csa_all_solns_unnormalized import CSA as CSA_unnormalized
 from simopt.solvers.csa_lp_v2a import CSA_LP as csa_v2a_recommended
 from simopt.solvers.csa_normal import CSA as csa_normal_reccomended
 from simopt.solvers.fcsa import CSA_LP as fcsa_recommended
+from simopt.solvers.csa_unnormalized import CSA as csa_unnormalized
 
 
 
@@ -74,7 +75,7 @@ def main() -> None:
     max_length_to_node = [5, 5]
 
     fixed_factors = {"constraint_nodes": constraint_nodes, "length_to_node_constraint": max_length_to_node,
-                     "initial_solution": initial, "budget": 10000}
+                     "initial_solution": initial, "budget": 5000}
     prob_2_const = SANLongestPathStochastic(fixed_factors=fixed_factors, name="SAN")
 
     no_CRN = {"crn_across_solns": False}
@@ -105,7 +106,7 @@ def main() -> None:
 
 
     
-    solvers = [ csa_n_reccomended, fcsa]
+    solvers = [ csa_unnormalized()]
     
     problems = [prob_2_const]
     #problem.upper_bounds = 13*(100,)
@@ -155,7 +156,7 @@ def main() -> None:
     plot_feasibility(myexperiment.experiments, plot_type= "scatter", plot_conf_ints=True, save_as_pickle=True, plot_optimal=False)
     plt.show()
     plot_feasibility(myexperiment.experiments, plot_type= "scatter", plot_conf_ints=False, save_as_pickle=True,plot_optimal=False)
-    plot_feasibility(myexperiment.experiments, plot_type="contour")
+    #plot_feasibility(myexperiment.experiments, plot_type="contour")
     plot_progress_curves(exp_plot_list , "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=True, save_as_pickle=True)
     plt.show()
     # plot_progress_curves([myexperiment.experiments[0][0]], "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=False,

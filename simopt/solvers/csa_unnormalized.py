@@ -14,7 +14,8 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-
+import os
+import uuid
 
 class CSA(Solver):
     """
@@ -293,6 +294,8 @@ class CSA(Solver):
         # numiter = 0
         numviolated = 0
         feasible_found = False
+        # Generate a unique filename
+        filename = f"solver_output_{os.getpid()}_{uuid.uuid4().hex[:6]}.txt"
 
         while expended_budget < problem.factors["budget"]:
             cur_x = new_solution.x
@@ -359,6 +362,13 @@ class CSA(Solver):
             is_new_violated = (
                     max(constraint_results) > self.factors["tolerance"]
             )
+            # Write output to file
+            with open(filename, "a") as f:
+                f.write(f"Iteration: {k}\n")
+                f.write(f"Is previous violated?: {is_violated}\n")
+                f.write(f"New Solution: {new_solution.x}\n")
+                f.write(f"New Objective: {new_solution.objectives_mean}\n")
+                f.write(f"New Avg LHS: {new_solution.stoch_constraints_mean}\n")
             if not is_new_violated:
                 feasible_found = True  # feasible solution has been found
             # print("Objective", new_solution.objectives_mean, "vs best", best_solution.objectives_mean)

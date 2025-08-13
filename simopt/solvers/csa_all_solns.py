@@ -297,6 +297,8 @@ class CSA(Solver):
 
         # numiter = 0
         numviolated = 0
+        # Generate a unique filename
+        filename = f"solver_output_{os.getpid()}_{uuid.uuid4().hex[:6]}.txt"
 
         while expended_budget < problem.factors["budget"]:
             cur_x = new_solution.x
@@ -358,6 +360,13 @@ class CSA(Solver):
             # Use r simulated observations to estimate the objective value.
             problem.simulate(candidate_solution, r)
             expended_budget += r
+            # Write output to file
+            with open(filename, "a") as f:
+                f.write(f"Iteration: {k}\n")
+                f.write(f"Is previous violated?: {is_violated}\n")
+                f.write(f"New Solution: {new_solution.x}\n")
+                f.write(f"New Objective: {new_solution.objectives_mean}\n")
+                f.write(f"New Avg LHS: {new_solution.stoch_constraints_mean}\n")
 
             new_solution = candidate_solution
             recommended_solns.append(new_solution)
