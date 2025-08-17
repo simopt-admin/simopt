@@ -25,6 +25,7 @@ from simopt.experiment_base import (
 
 )
 
+from simopt.experiment_base import post_normalize as post_normalize_problem
 from simopt.models.san import SANLongestPathStochastic, SAN, SANLongestPath
 from simopt.solvers.randomsearch import RandomSearch
 from simopt.solvers.csa_lp import CSA_LP as csa_v2
@@ -47,6 +48,7 @@ from simopt.solvers.csa_lp_v2a import CSA_LP as csa_v2a_recommended
 from simopt.solvers.csa_normal import CSA as csa_normal_reccomended
 from simopt.solvers.fcsa import CSA_LP as fcsa_recommended
 from simopt.solvers.csa_unnormalized import CSA as csa_unnormalized
+from simopt.solvers.fcsa_merge import FCSA as fcsa_merge
 
 
 
@@ -75,8 +77,8 @@ def main() -> None:
     max_length_to_node = [5, 5]
 
     fixed_factors = {"constraint_nodes": constraint_nodes, "length_to_node_constraint": max_length_to_node,
-                     "initial_solution": initial, "budget": 5000}
-    prob_2_const = SANLongestPathStochastic(fixed_factors=fixed_factors, name="SAN")
+                     "initial_solution": initial, "budget": 10000}
+    prob_2_const = SANLongestPathStochastic(fixed_factors=fixed_factors)
 
     no_CRN = {"crn_across_solns": False}
     rand = RandomSearch(fixed_factors={"sample_size":int(5)}, name="RandomSearch")
@@ -101,12 +103,22 @@ def main() -> None:
     csa_n_reccomended = csa_normal_reccomended(name="CSA-N")
     fcsa_1 = fcsa_recommended(name="FCSA-1", fixed_factors={"feas_const": 1.0})
     fcsa_10 = fcsa_recommended(name="FCSA-10", fixed_factors={"feas_const": 10.0})
+    
+    def step_f( k: int) -> float:
+        """
+        take in the current iteration k
+        """
+        return .2
+    csa_test = fcsa_merge(fixed_factors={"search_direction": "CSA"}, name="CSA")
+    csa_lp_test = fcsa_merge(fixed_factors={"search_direction": "CSA-LP"}, name="CSA-LP")
+    fcsa_test = fcsa_merge(fixed_factors={"search_direction": "FCSA", "feas_const": float(1), "feas_score": 2}, name="FCSA")
+    #test = fcsa_merge(fixed_factors=fixed_factors)
 
     #adjust step sizes
 
 
     
-    solvers = [ csa_unnormalized()]
+    solvers = [ csa_test, fcsa_test]
     
     problems = [prob_2_const]
     #problem.upper_bounds = 13*(100,)
@@ -136,12 +148,13 @@ def main() -> None:
     # Run a fixed number of postreplications at all recommended solutions.
     myexperiment.post_replicate(n_postreps=100)
     # Find an optimal solution x* for normalization.
-    myexperiment.post_normalize(100, ignore_feasibility=False)
+    myexperiment.post_normalize(100)
     
     exp_plot_list = []
     #concat experiment lists
     for exp in myexperiment.experiments:
         exp_plot_list = exp_plot_list + exp
+    #post_normalize_problem(exp_plot_list, 100, proxy_opt_x=(20,)*13)
     #myexperiment.log_group_experiment_results()
     #myexperiment.report_group_statistics()
     #print(myexperiment.all_intermediate_budgets)
@@ -153,12 +166,12 @@ def main() -> None:
 
     #plot_terminal_progress(experiments=myexperiment.experiments)
     #print(myexperiment.experiments[1][0].feasibility_curves)
-    plot_feasibility(myexperiment.experiments, plot_type= "scatter", plot_conf_ints=True, save_as_pickle=True, plot_optimal=False)
-    plt.show()
-    plot_feasibility(myexperiment.experiments, plot_type= "scatter", plot_conf_ints=False, save_as_pickle=True,plot_optimal=False)
+    #plot_feasibility(myexperiment.experiments, plot_type= "scatter", plot_conf_ints=True, save_as_pickle=True, plot_optimal=False)
+    #plt.show()
+    #plot_feasibility(myexperiment.experiments, plot_type= "scatter", plot_conf_ints=False, save_as_pickle=True,plot_optimal=False)
     #plot_feasibility(myexperiment.experiments, plot_type="contour")
-    plot_progress_curves(exp_plot_list , "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=True, save_as_pickle=True)
-    plt.show()
+    #plot_progress_curves(exp_plot_list , "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=True, save_as_pickle=True)
+    #plt.show()
     # plot_progress_curves([myexperiment.experiments[0][0]], "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=False,
     #                      save_as_pickle=True)
     # plt.show()
@@ -174,16 +187,24 @@ def main() -> None:
     #plot_feasibility(myexperiment.experiments, "contour",  all_in_one=False, color_fill = False, two_sided=True, plot_conf_ints=False)
     #plot_feasibility(myexperiment.experiments, "contour",  all_in_one=False, color_fill = True, two_sided=True, plot_conf_ints=False)
     #plot_feasibility(myexperiment.experiments, "scatter",  all_in_one=True, two_sided=True, plot_optimal=True,save_as_pickle=True)
-    plot_feasibility(myexperiment.experiments, "violin",  all_in_one=True, two_sided=True,save_as_pickle=True)
-    plt.show()
+    #plot_feasibility(myexperiment.experiments, "violin",  all_in_one=True, two_sided=True,save_as_pickle=True)
+    #plt.show()
     #plot_feasibility(myexperiment.experiments, "violin",score_type= "inf_norm", norm_degree=2,  all_in_one=False)
-    plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True, two_sided=True, save_as_pickle=True)
+    # plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True, two_sided=True, print_max_hw = False, save_as_pickle=True)
+    # plt.show()
+    # plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=False, two_sided=True, print_max_hw = False, save_as_pickle=True)
+    # plt.show()
+    #plot_feasibility_progress(myexperiment.experiments,plot_type =  "mean", score_type = "norm", norm_degree=2, all_in_one=True, two_sided=False, print_max_hw = False, save_as_pickle=True)
+    #plt.show()
+    # plot_feasibility_progress(myexperiment.experiments,plot_type =  "quantile", beta = .9, score_type = "inf_norm", all_in_one=True, two_sided=False, print_max_hw = False, save_as_pickle=True)
+    # plt.show()
+    plot_feasibility_progress(myexperiment.experiments,plot_type =  "quantile", beta = .9, score_type = "norm", all_in_one=False, two_sided=False, print_max_hw = False, save_as_pickle=True)
     plt.show()
     #plot_feasibility_progress(myexperiment.experiments,plot_type =  "mean", score_type = "inf_norm", all_in_one=True, two_sided=False, save_as_pickle=True)
     #plt.show()
     #plot_feasibility_progress(myexperiment.experiments,plot_type =  "quantile", score_type = "inf_norm", all_in_one=True, two_sided=True, save_as_pickle=True)
-    plot_terminal_progress(exp_plot_list, plot_type = 'violin',  normalize=False, plot_optimal=True, save_as_pickle=True, )
-    plt.show()
+    #plot_terminal_progress(exp_plot_list, plot_type = 'violin',  normalize=False, plot_optimal=True, save_as_pickle=True, )
+    #.show()
     # plot_terminal_progress([myexperiment.experiments[0][0]], plot_type='violin', normalize=False, plot_optimal=True, save_as_pickle=True)
     # plt.show()
     # plot_terminal_progress([myexperiment.experiments[0][1]], plot_type='violin', normalize=False, plot_optimal=True,

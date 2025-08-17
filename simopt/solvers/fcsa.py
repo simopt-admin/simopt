@@ -41,7 +41,7 @@ class CSA_LP(Solver):  # noqa: N801
             "crn_across_solns": {
                 "description": "use CRN across solutions?",
                 "datatype": bool,
-                "default": False,
+                "default": True,
             },
             "r": {
                 "description": "number of replications taken at each solution",
