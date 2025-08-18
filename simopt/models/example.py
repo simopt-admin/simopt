@@ -12,6 +12,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Normal
 from simopt.utils import classproperty, override
 
 
@@ -63,13 +64,13 @@ class ExampleModel(Model):
         """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
+        self.noise_model = Normal()
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+        self.noise_model.set_rng(rng_list[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Evaluate a deterministic function f(x) with stochastic noise.
-
-        Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
-                the replication.
 
         Returns:
             tuple[dict, dict]: A tuple containing:
@@ -78,10 +79,8 @@ class ExampleModel(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        # Designate random number generator for stochastic noise.
-        noise_rng = rng_list[0]
         x = np.array(self.factors["x"])
-        fn_eval_at_x = np.linalg.norm(x) ** 2 + noise_rng.normalvariate()
+        fn_eval_at_x = np.linalg.norm(x) ** 2 + self.noise_model.random()
 
         # Compose responses and gradients.
         responses = {"est_f(x)": fn_eval_at_x}
