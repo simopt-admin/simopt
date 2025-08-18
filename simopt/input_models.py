@@ -99,3 +99,14 @@ class Uniform(InputModel):
 
     def random(self, low: float, high: float) -> float:
         return self.rng.uniform(low, high)
+
+
+class Normal(InputModel):
+    def set_rng(self, rng: random.Random) -> None:
+        self.rng = rng
+
+    def unset_rng(self) -> None:
+        self.rng = None
+
+    def random(self, mu: float = 0.0, sigma: float = 1.0) -> float:
+        return self.rng.normalvariate(mu, sigma)
