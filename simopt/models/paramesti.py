@@ -9,6 +9,7 @@ import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.input_models import Gamma
 from simopt.utils import classproperty, override
 
 
@@ -65,6 +66,8 @@ class ParameterEstimation(Model):
         """
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
+        self.y1_model = Gamma()
+        self.y2_model = Gamma()
 
     def _check_xstar(self) -> None:
         if any(xstar_i <= 0 for xstar_i in self.factors["xstar"]):
@@ -85,12 +88,12 @@ class ParameterEstimation(Model):
             raise ValueError("The length of xstar must equal 2.")
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
-        """Simulate a single replication for the current model factors.
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+        self.y2_model.set_rng(rng_list[0])
+        self.y1_model.set_rng(rng_list[1])
 
-        Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
-                the replication.
+    def replicate(self) -> tuple[dict, dict]:
+        """Simulate a single replication for the current model factors.
 
         Returns:
             tuple[dict, dict]: A tuple containing:
@@ -101,13 +104,10 @@ class ParameterEstimation(Model):
         """
         xstar = self.factors["xstar"]
         x = self.factors["x"]
-        # Designate separate random number generators.
+        # Generate y1 and y2 from specified gamma distributions using input models.
         # Outputs will be coupled when generating Y_j's.
-        y2_rng = rng_list[0]
-        y1_rng = rng_list[1]
-        # Generate y1 and y2 from specified gamma distributions.
-        y2 = y2_rng.gammavariate(xstar[1], 1)
-        y1 = y1_rng.gammavariate(xstar[0] * y2, 1)
+        y2 = self.y2_model.random(xstar[1], 1)
+        y1 = self.y1_model.random(xstar[0] * y2, 1)
         # Compute Log Likelihood
         loglik = (
             -y1
