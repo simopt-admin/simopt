@@ -4413,94 +4413,95 @@ def plot_feasibility(
                     )
 
         if plot_type == "contour":
-            if score_type == "inf_norm":
-                y_title = "Feasibility Score: Infinite Norm"
-            elif score_type == "norm":
-                y_title = f"Feasibility Score: {norm_degree} Degree Norm"
+            raise NotImplementedError("Contour plot currently not implemented")
+            # if score_type == "inf_norm":
+            #     y_title = "Feasibility Score: Infinite Norm"
+            # elif score_type == "norm":
+            #     y_title = f"Feasibility Score: {norm_degree} Degree Norm"
     
-            if all_in_one: # plot all solvers together
-                ref_experiment = experiments[0][problem_idx]
-                all_data = []
-                for solver_idx in range(n_solvers):
-                    experiment = experiments[solver_idx][problem_idx]
-                    # Compute terminal feasibility scores
-                    experiment.compute_feasibility_score(score=score_type, 
-                                                         norm_degree=norm_degree, 
-                                                         two_sided = two_sided) # gives list of feasibility scores for each macrorep
-                    term_feas_score = [
-                        curve.y_vals[-1] for curve in experiment.feasibility_curves
-                    ]
-                    # Plot mean of terminal progress.
-                    terminals = [
-                        curve.y_vals[-1] for curve in experiment.objective_curves
-                    ]
-                    feas_data_dict = {
-                        "Objective Value": terminals,
-                        y_title: term_feas_score,
-                        "Solver": experiment.solver.name
-                    }
-                    all_data.append(pd.DataFrame(feas_data_dict))
-                all_data_df = pd.concat(all_data, ignore_index=True)
-                fig = px.density_contour(all_data_df, x = "Objective Value", y=y_title, color = "Solver")
-                #fig.update_traces(contours_coloring="fill", contours_showlabels=True)
-                fig.update_layout(title=f"{solver_set_name} on {experiment.problem.name} Density of Terminal Objective vs Feasibility")
-                fig.show()
-                file_list.append(
-                    save_plot(
-                        solver_name=solver_set_name,
-                        problem_name=experiment.problem.name,
-                        plot_type="feasibility_contour",
-                        normalize=False,
-                        plot_title=plot_title,
-                        extra=extra,
-                        ext=ext,
-                        save_as_pickle=save_as_pickle,
-                        plotly_fig=fig
-                    )
-                )
+            # if all_in_one: # plot all solvers together
+            #     ref_experiment = experiments[0][problem_idx]
+            #     all_data = []
+            #     for solver_idx in range(n_solvers):
+            #         experiment = experiments[solver_idx][problem_idx]
+            #         # Compute terminal feasibility scores
+            #         experiment.compute_feasibility_score(score=score_type, 
+            #                                              norm_degree=norm_degree, 
+            #                                              two_sided = two_sided) # gives list of feasibility scores for each macrorep
+            #         term_feas_score = [
+            #             curve.y_vals[-1] for curve in experiment.feasibility_curves
+            #         ]
+            #         # Plot mean of terminal progress.
+            #         terminals = [
+            #             curve.y_vals[-1] for curve in experiment.objective_curves
+            #         ]
+            #         feas_data_dict = {
+            #             "Objective Value": terminals,
+            #             y_title: term_feas_score,
+            #             "Solver": experiment.solver.name
+            #         }
+            #         all_data.append(pd.DataFrame(feas_data_dict))
+            #     all_data_df = pd.concat(all_data, ignore_index=True)
+            #     fig = px.density_contour(all_data_df, x = "Objective Value", y=y_title, color = "Solver")
+            #     #fig.update_traces(contours_coloring="fill", contours_showlabels=True)
+            #     fig.update_layout(title=f"{solver_set_name} on {experiment.problem.name} Density of Terminal Objective vs Feasibility")
+            #     fig.show()
+            #     file_list.append(
+            #         save_plot(
+            #             solver_name=solver_set_name,
+            #             problem_name=experiment.problem.name,
+            #             plot_type="feasibility_contour",
+            #             normalize=False,
+            #             plot_title=plot_title,
+            #             extra=extra,
+            #             ext=ext,
+            #             save_as_pickle=save_as_pickle,
+            #             plotly_fig=fig
+            #         )
+            #     )
                 
                 
                 
-            else:
-                for solver_idx in range(n_solvers):
-                    experiment = experiments[solver_idx][problem_idx]
+            # else:
+            #     for solver_idx in range(n_solvers):
+            #         experiment = experiments[solver_idx][problem_idx]
 
-                    # Compute terminal feasibility scores
-                    experiment.compute_feasibility_score(score=score_type,
-                                                         norm_degree=norm_degree,
-                                                         two_sided=two_sided) # gives list of feasibility scores for each macrorep
-                    term_feas_score = [
-                        curve.y_vals[-1] for curve in experiment.feasibility_curves
-                    ]
-                    # Plot mean and of terminal progress.
-                    terminals = [
-                        curve.y_vals[-1] for curve in experiment.objective_curves
-                    ]
-                    feas_data_dict = {
-                        "Objective Value": terminals,
-                        y_title: term_feas_score,
-                    }
-                    feas_data_df = pd.DataFrame(feas_data_dict)
-                    print('ind data', feas_data_dict)
-                    fig = px.density_contour(feas_data_dict, x="Objective Value", y=y_title)
-                    if color_fill:
-                        fig.update_traces(contours_coloring="fill", contours_showlabels = True)
-                    fig.update_layout(title=f"{experiment.solver.name} on {experiment.problem.name} Density of Objective value vs Feasiblity")
-                    fig.show()
+            #         # Compute terminal feasibility scores
+            #         experiment.compute_feasibility_score(score=score_type,
+            #                                              norm_degree=norm_degree,
+            #                                              two_sided=two_sided) # gives list of feasibility scores for each macrorep
+            #         term_feas_score = [
+            #             curve.y_vals[-1] for curve in experiment.feasibility_curves
+            #         ]
+            #         # Plot mean and of terminal progress.
+            #         terminals = [
+            #             curve.y_vals[-1] for curve in experiment.objective_curves
+            #         ]
+            #         feas_data_dict = {
+            #             "Objective Value": terminals,
+            #             y_title: term_feas_score,
+            #         }
+            #         feas_data_df = pd.DataFrame(feas_data_dict)
+            #         print('ind data', feas_data_dict)
+            #         fig = px.density_contour(feas_data_dict, x="Objective Value", y=y_title)
+            #         if color_fill:
+            #             fig.update_traces(contours_coloring="fill", contours_showlabels = True)
+            #         fig.update_layout(title=f"{experiment.solver.name} on {experiment.problem.name} Density of Objective value vs Feasiblity")
+            #         fig.show()
 
-                    file_list.append(
-                        save_plot(
-                            solver_name=solver_set_name,
-                            problem_name=experiment.problem.name,
-                            plot_type="feasibility_contour",
-                            normalize=False,
-                            plot_title=plot_title,
-                            extra=extra,
-                            ext=ext,
-                            save_as_pickle=False,
-                            plotly_fig = fig
-                        )
-                    )
+            #         file_list.append(
+            #             save_plot(
+            #                 solver_name=solver_set_name,
+            #                 problem_name=experiment.problem.name,
+            #                 plot_type="feasibility_contour",
+            #                 normalize=False,
+            #                 plot_title=plot_title,
+            #                 extra=extra,
+            #                 ext=ext,
+            #                 save_as_pickle=False,
+            #                 plotly_fig = fig
+            #             )
+            #         )
 
         
                             
@@ -6088,9 +6089,16 @@ def setup_plot(
                        "mean_feasibility_progress", 
                        "quantile_feasibility_progress"):
         if feas_score == 'inf_norm':
-            plt.ylabel("Feasibility Score: Infinite Norm", size=14)
+            plt.ylabel("$L^\infty$ Feasibility Score", size=14)
         elif feas_score == 'norm':
-            plt.ylabel(f"Feasibility Score: {norm_degree} Degree Norm", size=14)
+            plt.ylabel(f"$L^{norm_degree}$ Feasibility Score", size=14)
+    elif plot_type in ("feasibility_scatter", 
+                       "feasibility_violin"):
+        if feas_score == 'inf_norm':
+            plt.ylabel("Terminal $L^\infty$ Feasibility Score", size=14)
+        elif feas_score == 'norm':
+            plt.ylabel(f"Terminal $L^{norm_degree}$ Feasibility Score", size=14)
+        
     # end of changes
         
     else:

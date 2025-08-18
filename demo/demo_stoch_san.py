@@ -110,7 +110,7 @@ def main() -> None:
         """
         return .2
     csa_test = fcsa_merge(fixed_factors={"search_direction": "CSA"}, name="CSA")
-    csa_lp_test = fcsa_merge(fixed_factors={"search_direction": "CSA-LP"}, name="CSA-LP")
+    #csa_lp_test = fcsa_merge(fixed_factors={"search_direction": "CSA-LP"}, name="CSA-LP")
     fcsa_test = fcsa_merge(fixed_factors={"search_direction": "FCSA", "feas_const": float(1), "feas_score": 2}, name="FCSA")
     #test = fcsa_merge(fixed_factors=fixed_factors)
 
@@ -120,7 +120,7 @@ def main() -> None:
     
     solvers = [ csa_test, fcsa_test]
     
-    problems = [prob_2_const]
+    problems = [SANLongestPath()]
     #problem.upper_bounds = 13*(100,)
     #problem.lower_bounds = 13*(0.1,)
     #problem = SANLongestPath() 
@@ -172,9 +172,9 @@ def main() -> None:
     #plot_feasibility(myexperiment.experiments, plot_type="contour")
     #plot_progress_curves(exp_plot_list , "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=True, save_as_pickle=True)
     #plt.show()
-    # plot_progress_curves([myexperiment.experiments[0][0]], "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=False,
+    #plot_progress_curves([myexperiment.experiments[0][0]], "all", normalize=False, all_in_one=True, print_max_hw=False, plot_optimal=False,
     #                      save_as_pickle=True)
-    # plt.show()
+    #plt.show()
     # plot_progress_curves([myexperiment.experiments[0][1]], "all", normalize=False, all_in_one=True, print_max_hw=False,
     #                      plot_optimal=False,
     #                      save_as_pickle=True)
@@ -192,14 +192,14 @@ def main() -> None:
     #plot_feasibility(myexperiment.experiments, "violin",score_type= "inf_norm", norm_degree=2,  all_in_one=False)
     # plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True, two_sided=True, print_max_hw = False, save_as_pickle=True)
     # plt.show()
-    # plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=False, two_sided=True, print_max_hw = False, save_as_pickle=True)
-    # plt.show()
+    plot_feasibility_progress(myexperiment.experiments,plot_type =  "all", score_type = "inf_norm", all_in_one=True, two_sided=True, print_max_hw = False, save_as_pickle=True)
+    plt.show()
     #plot_feasibility_progress(myexperiment.experiments,plot_type =  "mean", score_type = "norm", norm_degree=2, all_in_one=True, two_sided=False, print_max_hw = False, save_as_pickle=True)
     #plt.show()
     # plot_feasibility_progress(myexperiment.experiments,plot_type =  "quantile", beta = .9, score_type = "inf_norm", all_in_one=True, two_sided=False, print_max_hw = False, save_as_pickle=True)
     # plt.show()
-    plot_feasibility_progress(myexperiment.experiments,plot_type =  "quantile", beta = .9, score_type = "norm", all_in_one=False, two_sided=False, print_max_hw = False, save_as_pickle=True)
-    plt.show()
+    #plot_feasibility_progress(myexperiment.experiments,plot_type =  "mean", beta = .9, score_type = "norm", all_in_one=False, two_sided=False, print_max_hw = True, save_as_pickle=True)
+    #plt.show()
     #plot_feasibility_progress(myexperiment.experiments,plot_type =  "mean", score_type = "inf_norm", all_in_one=True, two_sided=False, save_as_pickle=True)
     #plt.show()
     #plot_feasibility_progress(myexperiment.experiments,plot_type =  "quantile", score_type = "inf_norm", all_in_one=True, two_sided=True, save_as_pickle=True)

@@ -16,7 +16,7 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
 
 NUM_ARCS: Final[int] = 13
-CONST_NODES : Final[list] = [3,8]
+CONST_NODES : Final[list] = [6,8]
 
 
 class SAN(Model):
@@ -240,19 +240,6 @@ class SAN(Model):
 
             all_gradients.append(gradient)
         
-        
-        
-        # gradient = np.zeros(len(self.factors["arcs"]))
-        # current = topo_order[-1]
-        # backtrack = int(prev[self.factors["num_nodes"] - 1])
-        # while current != topo_order[0]:
-        #     idx = self.factors["arcs"].index((backtrack, current))
-        #     gradient[idx] = (
-        #         arc_length[str((backtrack, current))]
-        #         / (self.factors["arc_means"][idx])
-        #     )
-        #     current = backtrack
-        #     backtrack = int(prev[backtrack - 1])
 
         # Compose responses and gradients.
         responses = {"longest_path_length": longest_path,
@@ -612,7 +599,7 @@ class SANLongestPath(Problem):
 
 class SANLongestPathStochastic(Problem):
     """
-    Base class to implement simulation-optimization problems.
+    Minimize total cost s.t. reaching certain nodes within an expected length.
 
     Attributes
     ----------
@@ -749,7 +736,7 @@ class SANLongestPathStochastic(Problem):
             "length_to_node_constraint": {
                 "description": "Max length to corresponding constraint nodes",
                 "datatype": list,
-                "default":  [100]*len(CONST_NODES) 
+                "default":  [5]*len(CONST_NODES) 
             }
         }
 

@@ -689,6 +689,12 @@ class Problem(ABC):
 
         keys = list(self.factors.keys())
         self.run_all_checks(factor_names=keys)
+        
+        #set constraints to none for fcsa
+        self.Ci = None
+        self.di = None
+        self.Ce = None
+        self.de = None
 
     def __eq__(self, other: object) -> bool:
         """Check if two problems are equivalent.
@@ -1810,6 +1816,8 @@ class Solution:
                 self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1
             )
             self.stoch_constraints_gradients_mean = np.mean(self.stoch_constraints_gradients[:self.n_reps], axis=0)
+        else:
+            self.stoch_constraints_mean = None
             #print('recomputed mean',self.stoch_constraints_gradients_mean )
             # self.stoch_constraints_gradients_var = np.var(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1)
             # self.stoch_constraints_gradients_stderr = np.std(self.stoch_constraints_gradients[:self.n_reps], axis=0, ddof=1) / np.sqrt(self.n_reps)

@@ -65,7 +65,7 @@ class FCSA(Solver):  # noqa: N801
             },
             
             "search_direction":{
-                "description": "determines how solver finds the search direction for the next itterate. Can be FCSA, CSA-LP, or CSA",
+                "description": "determines how solver finds the search direction for the next itterate. Can be FCSA, CSA-M, or CSA",
                 "datatype": str,
                 "default": "FCSA",
             },
@@ -84,6 +84,12 @@ class FCSA(Solver):  # noqa: N801
                 "datatype": int,
                 "default": 2,
             },
+            "report_all_solns":{
+                "description": "report all incumbent solutions instead of only reccomended?",
+                "datatype": bool,
+                "default": False,
+            },
+            
 
         }
 
@@ -103,7 +109,8 @@ class FCSA(Solver):  # noqa: N801
             "feas_const": self.check_feas_const,
             "search_direction": self.check_search_direction,
             "normalize_grads": self.return_true,
-            "feas_score": self.check_feas_score
+            "feas_score": self.check_feas_score,
+            "report_all_solns": self.return_true
         }
 
     """
@@ -134,8 +141,8 @@ class FCSA(Solver):  # noqa: N801
             raise ValueError("Feasibility constant cannot be negative.")
     
     def check_search_direction(self) -> None:
-        if self.factors["search_direction"] not in ("FCSA", "CSA-LP", "CSA"):
-            raise ValueError("Invalid search direction factor. Must be 'FCSA', 'CSA-LP', or 'CSA'.")
+        if self.factors["search_direction"] not in ("FCSA", "CSA-M", "CSA"):
+            raise ValueError("Invalid search direction factor. Must be 'FCSA', 'CSA-M', or 'CSA'.")
     def check_feas_score(self)-> None:
         if self.factors["feas_score"] <= 0:
             raise ValueError("Feasibility score must be a positive integer.")
@@ -240,8 +247,8 @@ class FCSA(Solver):  # noqa: N801
 
         max theta s.t. gi^Td >= theta
         """
-        #Option 1 (CSA-LP)
-        if self.factors["search_direction"] == "CSA-LP":
+        #Option 1 (CSA-M)
+        if self.factors["search_direction"] == "CSA-M":
             n_violated_cons, n = grads.shape
             if self.factors["normalize_grads"]:
                 con_grads = grads / np.linalg.norm(grads, axis=1).reshape(
@@ -254,7 +261,7 @@ class FCSA(Solver):  # noqa: N801
             direction = cp.Variable(n)
             theta = cp.Variable()
             objective = cp.Maximize(theta)
-            constraints = [theta >= 0, theta <= 1]
+            constraints = [cp.norm(direction,2) <=1]  #add constraint that direction must be a unit vector
             for grad in con_grads:
                 constraints += [-1*grad @ direction >= theta]
             prob = cp.Problem(objective, constraints)
@@ -326,7 +333,8 @@ class FCSA(Solver):  # noqa: N801
 
     def solve(self, problem):
         r = self.factors["r"]
-
+        
+        
         Ci = problem.Ci
         di = problem.di
         Ce = problem.Ce
@@ -385,7 +393,7 @@ class FCSA(Solver):  # noqa: N801
                         d = grad/np.linalg.norm(grad)
                     else:
                         d = grad
-                elif self.factors["search_direction"] == "CSA-LP": # solve search direction LP with all violated constraints
+                elif self.factors["search_direction"] == "CSA-M": # solve search direction LP with all violated constraints
                     grads = np.array(new_solution.stoch_constraints_gradients_mean)
                     violated_grads, violated_cons = self.get_violated_constraints_grads(
                         constraint_results, grads
@@ -449,27 +457,36 @@ class FCSA(Solver):  # noqa: N801
  
             # check feasibility of new solution
             constraint_results = new_solution.stoch_constraints_mean
-            is_new_violated = (
-                max(constraint_results) > self.factors["tolerance"]
-            )
-            
-            # reccomend all solutions until a feasible solution has been found. Then only reccomend feasible solutions that improve the objective.
-            if not is_new_violated:
-                feasible_found = True # feasible solution has been found
-
-            if not feasible_found: # reccomend all solutions until a feasible solution has been found
+            # check if the constraints are violated
+            if problem.n_stochastic_constraints > 0:
+                is_new_violated = (
+                    max(constraint_results) > self.factors["tolerance"]
+                )
+            else:
+                is_new_violated = False
+            if self.factors["report_all_solns"]:
                 best_solution = new_solution
                 recommended_solns.append(new_solution)
                 intermediate_budgets.append(expended_budget)
+            
             else:
-                if not is_new_violated: # reccomended solutions must be feasible
-                    if ( problem.minmax[0] * new_solution.objectives_mean
-                                > problem.minmax[0] * best_solution.objectives_mean
-                            ):
-                        # reccomended solution of objective has improved
-                        best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
+                # reccomend all solutions until a feasible solution has been found. Then only reccomend feasible solutions that improve the objective.
+                if not is_new_violated:
+                    feasible_found = True # feasible solution has been found
+    
+                if not feasible_found: # reccomend all solutions until a feasible solution has been found
+                    best_solution = new_solution
+                    recommended_solns.append(new_solution)
+                    intermediate_budgets.append(expended_budget)
+                else:
+                    if not is_new_violated: # reccomended solutions must be feasible
+                        if ( problem.minmax[0] * new_solution.objectives_mean
+                                    > problem.minmax[0] * best_solution.objectives_mean
+                                ):
+                            # reccomended solution of objective has improved
+                            best_solution = new_solution
+                            recommended_solns.append(new_solution)
+                            intermediate_budgets.append(expended_budget)
             k += 1
 
 
