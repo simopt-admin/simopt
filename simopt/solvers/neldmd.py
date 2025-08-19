@@ -168,13 +168,13 @@ class NelderMead(Solver):
             raise ValueError("Initial spread must be greater than 0.")
 
     @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+    def solve(self, problem: Problem) -> None:
         # Designate random number generator for random sampling.
         get_rand_soln_rng = self.rng_list[1]
         n_pts = problem.dim + 1
 
         # Check for sufficiently large budget.
-        if problem.factors["budget"] < self.factors["r"] * n_pts:
+        if self.budget.total < self.factors["r"] * n_pts:
             err_msg = "Budget is too small for a good quality run of Nelder-Mead."
             raise ValueError(err_msg)
 
@@ -235,26 +235,23 @@ class NelderMead(Solver):
 
             sol.extend(self.create_new_solution(pt, problem) for pt in new_pts)
 
-        # Initialize lists to track budget and best solutions.
-        intermediate_budgets = []
-        recommended_solns = []
-        # Track overall budget spent.
-        budget_spent = 0
         r = self.factors["r"]  # For increasing replications.
 
         # Start Solving.
         # Evaluate solutions in initial structure.
         for solution in sol:
+            self.budget.request(r)
             problem.simulate(solution, r)
-            budget_spent += r
+
         # Record initial solution data.
-        intermediate_budgets.append(0)
-        recommended_solns.append(sol[0])
+        # FIXME: I think this might be wrong
+        self.intermediate_budgets.append(0)
+        self.recommended_solns.append(sol[0])
         # Sort solutions by obj function estimate.
         sort_sol = self._sort_and_end_update(problem, sol)
 
         # Maximization problem is converted to minimization by using minmax.
-        while budget_spent <= problem.factors["budget"]:
+        while True:
             # Shrink towards best if out of bounds.
             while True:
                 # Reflect worst and update sort_sol.
@@ -279,8 +276,8 @@ class NelderMead(Solver):
                     p_new = self._check_const(p_new, sol_0_x)
                     p_new = Solution(p_new, problem)
                     p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+                    self.budget.request(r)
                     problem.simulate(p_new, r)
-                    budget_spent += r
 
                     # Update sort_sol.
                     sort_sol[i] = p_new  # p_new replaces pi.
@@ -292,8 +289,8 @@ class NelderMead(Solver):
             p_refl = tuple(p_refl.tolist())
             p_refl = Solution(p_refl, problem)
             p_refl.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+            self.budget.request(r)
             problem.simulate(p_refl, r)
-            budget_spent += r
             np_minmax = np.array(problem.minmax)
             refl_fn_val = np_minmax * -p_refl.objectives_mean
 
@@ -322,8 +319,8 @@ class NelderMead(Solver):
                 # Evaluate expansion point.
                 p_exp = Solution(p_exp, problem)
                 p_exp.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+                self.budget.request(r)
                 problem.simulate(p_exp, r)
-                budget_spent += r
                 exp_fn_val = inv_minmax * p_exp.objectives_mean
 
                 # Check if expansion point is an improvement relative to simplex.
@@ -333,9 +330,8 @@ class NelderMead(Solver):
                 sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                 # Record data if within budget.
-                if budget_spent <= problem.factors["budget"]:
-                    intermediate_budgets.append(budget_spent)
-                    recommended_solns.append(p_exp if exp_fn_val < fn_low else p_refl)
+                self.intermediate_budgets.append(self.budget.used)
+                self.recommended_solns.append(p_exp if exp_fn_val < fn_low else p_refl)
 
             # Check if accept contraction or shrink.
             elif refl_fn_val > fn_sec:
@@ -353,8 +349,8 @@ class NelderMead(Solver):
                 # Evaluate contraction point.
                 p_cont = Solution(p_cont, problem)
                 p_cont.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+                self.budget.request(r)
                 problem.simulate(p_cont, r)
-                budget_spent += r
                 cont_fn_val = inv_minmax * p_cont.objectives_mean
 
                 # Accept contraction.
@@ -365,13 +361,10 @@ class NelderMead(Solver):
                     sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                     # Check if contraction point is new best.
-                    if (
-                        cont_fn_val < fn_low
-                        and budget_spent <= problem.factors["budget"]
-                    ):
+                    if cont_fn_val < fn_low:
                         # Record data from contraction point (new best).
-                        intermediate_budgets.append(budget_spent)
-                        recommended_solns.append(p_cont)
+                        self.intermediate_budgets.append(self.budget.used)
+                        self.recommended_solns.append(p_cont)
                 # Contraction fails -> simplex shrinks by delta with p_low fixed.
                 else:
                     # Set pre-loop variables
@@ -389,8 +382,8 @@ class NelderMead(Solver):
                         p_new.attach_rngs(
                             rng_list=self.solution_progenitor_rngs, copy=True
                         )
+                        self.budget.request(r)
                         problem.simulate(p_new, r)
-                        budget_spent += r
                         new_fn_val = inv_minmax * p_new.objectives_mean
 
                         # Check for new best.
@@ -404,11 +397,9 @@ class NelderMead(Solver):
                     sort_sol = self._sort_and_end_update(problem, sort_sol)
 
                     # Record data if there is a new best solution in the contraction.
-                    if is_new_best and budget_spent <= problem.factors["budget"]:
-                        intermediate_budgets.append(budget_spent)
-                        recommended_solns.append(sort_sol[0])
-
-        return recommended_solns, intermediate_budgets
+                    if is_new_best:
+                        self.intermediate_budgets.append(self.budget.used)
+                        self.recommended_solns.append(sort_sol[0])
 
     def _sort_and_end_update(
         self, problem: Problem, sol: Iterable[Solution]

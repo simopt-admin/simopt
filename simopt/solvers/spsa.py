@@ -15,7 +15,6 @@ from simopt.base import (
     ConstraintType,
     ObjectiveType,
     Problem,
-    Solution,
     Solver,
     VariableType,
 )
@@ -196,10 +195,7 @@ class SPSA(Solver):
         return np.array(self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim))
 
     @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
+    def solve(self, problem: Problem) -> None:
         # -minmax is needed to cast this as a minimization problem
         neg_minmax = -np.array(problem.minmax)
         lower_bound = np.array(problem.lower_bounds)
@@ -208,11 +204,12 @@ class SPSA(Solver):
         # Start at initial solution and record as best.
         theta = problem.factors["initial_solution"]
         theta_sol = self.create_new_solution(tuple(theta), problem)
-        recommended_solns.append(theta_sol)
-        intermediate_budgets.append(expended_budget)
+        self.recommended_solns.append(theta_sol)
+        self.intermediate_budgets.append(self.budget.used)
+
         # Simulate initial solution.
+        self.budget.request(self.factors["n_reps"])
         problem.simulate(theta_sol, self.factors["n_reps"])
-        expended_budget += self.factors["n_reps"]
 
         # Determine initial value for the parameters c, a, and A (Aalg)
         # (according to Section III.B of Spall (1998)).
@@ -221,8 +218,7 @@ class SPSA(Solver):
 
         # Calculating the maximum expected number of loss evaluations per run.
         num_evals = round(
-            (problem.factors["budget"] / self.factors["n_reps"])
-            * self.factors["eval_pct"]
+            (self.budget.total / self.factors["n_reps"]) * self.factors["eval_pct"]
         )
         aalg = self.factors["iter_pct"] * num_evals / (2 * self.factors["gavg"])
         gbar = np.zeros((1, problem.dim))
@@ -250,9 +246,9 @@ class SPSA(Solver):
                     tuple(theta_backward), problem
                 )
                 # Evaluate two points and update budget spent.
+                self.budget.request(2 * self.factors["n_reps"])
                 problem.simulate(thetaplus_sol, self.factors["n_reps"])
                 problem.simulate(thetaminus_sol, self.factors["n_reps"])
-                expended_budget += 2 * self.factors["n_reps"]
                 # Estimate gradient.
                 # (-minmax is needed to cast this as a minimization problem,
                 # but is not essential here because of the absolute value taken.)
@@ -272,7 +268,7 @@ class SPSA(Solver):
         # Initiate iteration counter.
         k = 0
         best_solution_value = None
-        while expended_budget < problem.factors["budget"]:
+        while True:
             k += 1
             # Calculate the gain sequences ak and ck.
             ak = a / (k + aalg) ** self.factors["alpha"]
@@ -292,9 +288,9 @@ class SPSA(Solver):
             thetaplus_sol = self.create_new_solution(tuple(theta_forward), problem)
             thetaminus_sol = self.create_new_solution(tuple(theta_backward), problem)
             # Evaluate two points and update budget spent.
+            self.budget.request(2 * self.factors["n_reps"])
             problem.simulate(thetaplus_sol, self.factors["n_reps"])
             problem.simulate(thetaminus_sol, self.factors["n_reps"])
-            expended_budget += 2 * self.factors["n_reps"]
             # Estimate current solution's objective funtion value by weighted average.
             mean_minus = thetaplus_sol.objectives_mean * step_weight_minus
             mean_plus = thetaminus_sol.objectives_mean * step_weight_plus
@@ -310,8 +306,8 @@ class SPSA(Solver):
             if solution_value < best_solution_value:
                 best_solution_value = solution_value
                 # Record data from the new best solution.
-                recommended_solns.append(theta_sol)
-                intermediate_budgets.append(expended_budget)
+                self.recommended_solns.append(theta_sol)
+                self.intermediate_budgets.append(self.budget.used)
             # Estimate gradient.
             theta_mean_diff = (
                 thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
@@ -321,7 +317,6 @@ class SPSA(Solver):
             theta_next = theta - (ak * ghat)
             theta, _ = _check_cons(theta_next, theta, lower_bound, upper_bound)
             theta_sol = self.create_new_solution(tuple(theta), problem)
-        return recommended_solns, intermediate_budgets
 
 
 def _check_cons(

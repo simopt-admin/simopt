@@ -195,16 +195,6 @@ class ASTRODF(Solver):
         self._delta_max = value
 
     @property
-    def expended_budget(self) -> int:
-        """Get the current expended budget."""
-        return self._expended_budget
-
-    @expended_budget.setter
-    def expended_budget(self, value: int) -> None:
-        """Set the current expended budget."""
-        self._expended_budget = value
-
-    @property
     def incumbent_x(self) -> tuple[float, ...]:
         """Get the incumbent solution."""
         return self._incumbent_x
@@ -437,12 +427,12 @@ class ASTRODF(Solver):
                 the first iteration).
         """
         sample_size = solution.n_reps if solution.n_reps > 0 else pilot_run
-        lambda_max = self.budget - self.expended_budget
+        lambda_max = self.budget.remaining
 
         # Initial Simulation (only if needed)
         if solution.n_reps == 0:
+            self.budget.request(pilot_run)
             self.problem.simulate(solution, pilot_run)
-            self.expended_budget += pilot_run
             sample_size = pilot_run
 
         while True:
@@ -477,17 +467,14 @@ class ASTRODF(Solver):
             stopping = self.get_stopping_time(pilot_run, sig2, delta_k, k)
 
             # Stop if conditions are met
-            if (
-                sample_size >= min(stopping, lambda_max)
-                or self.expended_budget >= self.budget
-            ):
+            if sample_size >= min(stopping, lambda_max) or self.budget.remaining <= 0:
                 if compute_kappa:
                     self.kappa = kappa  # Update kappa only if needed
                 break
 
             # Perform additional simulation
+            self.budget.request(1)
             self.problem.simulate(solution, 1)
-            self.expended_budget += 1
             sample_size += 1
 
     def construct_model(
@@ -525,7 +512,7 @@ class ASTRODF(Solver):
         # skip_criticality = True  # self.factors["skip_criticality"]
         # Problem and solver factors
 
-        lambda_max = self.budget - self.expended_budget
+        lambda_max = self.budget.remaining
         # lambda_max = budget / (15 * sqrt(problem.dim))
         pilot_run = ceil(
             max(
@@ -582,8 +569,8 @@ class ASTRODF(Solver):
                     decision_vars = tuple(var_y[i][0])
                     new_solution = self.create_new_solution(decision_vars, self.problem)
                     self.visited_pts_list.append(new_solution)
+                    self.budget.request(pilot_run)
                     self.problem.simulate(new_solution, pilot_run)
-                    self.expended_budget += pilot_run
                     adapt_soln = new_solution
 
                 # Don't perform adaptive sampling on x_0
@@ -813,7 +800,7 @@ class ASTRODF(Solver):
         pilot_run = ceil(
             max(
                 self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
-                min(0.5 * self.problem.dim, self.lambda_max),
+                min(0.5 * self.problem.dim, self.budget.total),
             )
             - 1
         )
@@ -830,7 +817,7 @@ class ASTRODF(Solver):
                 compute_kappa=True,
             )
             self.recommended_solns.append(self.incumbent_solution)
-            self.intermediate_budgets.append(self.expended_budget)
+            self.intermediate_budgets.append(self.budget.used)
         # Since incument was only evaluated with the sample size of previous incumbent,
         # here we compute its adaptive sample size
         elif self.factors["crn_across_solns"]:
@@ -937,8 +924,8 @@ class ASTRODF(Solver):
         # incumbent solution
         if self.factors["crn_across_solns"]:
             num_sims = self.incumbent_solution.n_reps
+            self.budget.request(num_sims)
             self.problem.simulate(candidate_solution, num_sims)
-            self.expended_budget += num_sims
         else:
             self.perform_adaptive_sampling(candidate_solution, pilot_run, self.delta_k)
 
@@ -1014,7 +1001,7 @@ class ASTRODF(Solver):
             self.incumbent_x = candidate_x
             self.incumbent_solution = candidate_solution
             self.recommended_solns.append(candidate_solution)
-            self.intermediate_budgets.append(self.expended_budget)
+            self.intermediate_budgets.append(self.budget.used)
             self.delta_k = min(self.delta_k, self.delta_max)
 
             # very successful: expand
@@ -1033,7 +1020,6 @@ class ASTRODF(Solver):
 
     def _initialize_solving(self) -> None:
         """Setup the solver for the first iteration."""
-        self.budget: int = self.problem.factors["budget"]
         self.eta_1: float = self.factors["eta_1"]
         self.eta_2: float = self.factors["eta_2"]
         self.gamma_1: float = self.factors["gamma_1"]
@@ -1041,7 +1027,7 @@ class ASTRODF(Solver):
         self.easy_solve: bool = self.factors["easy_solve"]
         self.reuse_points: bool = self.factors["reuse_points"]
         self.lambda_min: int = self.factors["lambda_min"]
-        self.lambda_max = self.budget
+        # self.lambda_max = self.budget
 
         # Designate random number generator for random sampling
         rng = self.rng_list[1]
@@ -1096,21 +1082,18 @@ class ASTRODF(Solver):
 
         # Reset iteration count and data storage
         self.iteration_count = 0
-        self.expended_budget = 0
         self.recommended_solns = []
         self.intermediate_budgets = []
         self.visited_pts_list = []
         self.kappa = None
 
     @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+    def solve(self, problem: Problem) -> None:
         self.problem = problem
         self._initialize_solving()
 
-        while self.expended_budget < self.budget:
+        while self.budget.remaining > 0:
             self.iterate()
-
-        return self.recommended_solns, self.intermediate_budgets
 
 
 def clamp_with_epsilon(

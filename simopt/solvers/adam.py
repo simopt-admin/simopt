@@ -143,11 +143,7 @@ class ADAM(Solver):
             raise ValueError("Sensitivity must be greater than 0.")
 
     @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
-
+    def solve(self, problem: Problem) -> None:
         # Default values.
         r: int = self.factors["r"]
         beta_1: float = self.factors["beta_1"]
@@ -163,10 +159,12 @@ class ADAM(Solver):
         new_solution = self.create_new_solution(
             problem.factors["initial_solution"], problem
         )
-        recommended_solns.append(new_solution)
-        intermediate_budgets.append(expended_budget)
+        self.recommended_solns.append(new_solution)
+        self.intermediate_budgets.append(self.budget.used)
+
+        self.budget.request(r)
         problem.simulate(new_solution, r)
-        expended_budget += r
+
         best_solution = new_solution
 
         # Initialize the first moment vector, the second moment vector,
@@ -175,7 +173,7 @@ class ADAM(Solver):
         v = np.zeros(problem.dim)
         t = 0
 
-        while expended_budget < problem.factors["budget"]:
+        while True:
             # Update timestep.
             t += 1
             # Check variable bounds.
@@ -193,10 +191,11 @@ class ADAM(Solver):
             else:
                 # Use finite difference to estimate gradient if IPA gradient is
                 # not available.
-                grad = self._finite_diff(new_solution, bounds_check, problem)
-                expended_budget += (
+                finite_diff_budget = (
                     2 * problem.dim - np.count_nonzero(bounds_check)
                 ) * r
+                self.budget.request(finite_diff_budget)
+                grad = self._finite_diff(new_solution, bounds_check, problem)
 
             # Update biased first moment estimate.
             m = beta_1 * m + (1 - beta_1) * grad
@@ -213,16 +212,15 @@ class ADAM(Solver):
             # Create new solution based on new x
             new_solution = self.create_new_solution(tuple(new_x), problem)
             # Use r simulated observations to estimate the objective value.
+            self.budget.request(r)
             problem.simulate(new_solution, r)
-            expended_budget += r
+
             if (new_solution.objectives_mean > best_solution.objectives_mean) ^ (
                 problem.minmax[0] < 0
             ):
                 best_solution = new_solution
-                recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)
-
-        return recommended_solns, intermediate_budgets
+                self.recommended_solns.append(new_solution)
+                self.intermediate_budgets.append(self.budget.used)
 
     def _finite_diff(
         self,
