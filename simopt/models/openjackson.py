@@ -37,11 +37,12 @@ class OpenJackson(Model):
     --------
     base.Model
     """
-    def __init__(self, fixed_factors=None):
+    def __init__(self, fixed_factors=None,random = False):
         if fixed_factors is None:
             fixed_factors = {}
         self.name = "OPENJACKSON"
         self.n_responses = 2
+        self.n_instance_rngs = 1
         self.factors = fixed_factors
         self.specifications = {
             "number_queues": {
@@ -71,12 +72,12 @@ class OpenJackson(Model):
             "t_end": {
                 "description": "A number of replications to run",
                 "datatype": int,
-                "default": 500
+                "default": 50 #500
             },
             "warm_up": {
                 "description": "A number of replications to use as a warm up period",
                 "datatype": int,
-                "default": 200
+                "default": 20 #200
             },
             "steady_state_initialization":{
                 "description": "Whether the model will be initialized with steady state values",
@@ -132,7 +133,23 @@ class OpenJackson(Model):
         lambdas = self.calc_lambdas()
         return all(self.factors['service_mus'][i] > lambdas[i] for i in range(self.factors['number_queues']))
     
-   
+    def attach_rng(self, random_rng):
+        """
+        Attach rng to random model class and generate random factors and update corresponding problem dimension.
+
+        Arguments
+        ---------
+        random_rng : list of mrg32k3a.mrg32k3a.MRG32k3a
+            rngs for model to use when generating random factors
+
+        Returns
+        -------
+        arcs : list
+            Generated random arcs to be used in the following simulation
+        """
+        self.random_rng = random_rng
+        alphas = np.array(random_rng[0].sample(range(1,11),5))/2
+        self.factors["arrival_alphas"] = list(alphas)
 
     def replicate(self, rng_list):
         """
@@ -167,9 +184,13 @@ class OpenJackson(Model):
         rho = lambdas/self.factors["service_mus"]
         if((rho > 1).any()):
             print("Unstable System: arrival > service rate")
+            #rho = np.array([np.nan for i in range(self.factors['number_queues'])])
             sys.exit(1)
         #calculate expected value of queue length as rho/(1-rho)
         expected_queue_length = (rho)/(1-rho)
+        #if((rho < 0).any()):
+        #print("rho: ", rho)
+        #    print("service mu: ",self.factors["service_mus"])
         if self.factors["steady_state_initialization"]:
         # sample initialized queue lengths
             
@@ -354,12 +375,13 @@ class OpenJacksonMinQueue(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="OPENJACKSON-1", fixed_factors=None, model_fixed_factors=None):
+    def __init__(self, name="OPENJACKSON-1", fixed_factors=None, model_fixed_factors=None,random=False, random_rng=None):
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
             model_fixed_factors = {}
         self.name = name
+        self.random = random
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (-1,)
@@ -369,13 +391,11 @@ class OpenJacksonMinQueue(Problem):
         self.model_default_factors = {}
         self.model_decision_factors = {"service_mus"}
         self.factors = fixed_factors
-        
-
         self.specifications = {
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (9,9,9,9,9)
+                "default": 5*(10,)#(9,9,9,9,9)
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -395,16 +415,26 @@ class OpenJacksonMinQueue(Problem):
         }
         super().__init__(fixed_factors, model_fixed_factors)
         self.model = OpenJackson(self.model_fixed_factors)
-        self.Ci = np.array([1 for _ in range(self.model.factors["number_queues"])])
-        self.di = np.array([self.factors['service_rates_budget']])
+        if random==True and random_rng != None:
+            self.model.attach_rng(random_rng)
+        #self.Ci = np.array([1 for _ in range(self.model.factors["number_queues"])])
+        #self.di = np.array([self.factors['service_rates_budget']])
+        Ci = -np.random.randint(1,5,5).reshape(1,5)
+        di = Ci@np.ones(5)*np.array([10])
+        self.Ci = Ci
+        self.di = di
         self.Ce = None
         self.de = None
         self.dim = self.model.factors["number_queues"]
-        self.lower_bounds = tuple(0 for _ in range(self.model.factors["number_queues"]))
-        self.upper_bounds = tuple(self.factors['service_rates_budget'] for _ in range(self.model.factors["number_queues"]))
+        #self.lower_bounds = tuple(0 for _ in range(self.model.factors["number_queues"]))
+        #self.upper_bounds = tuple(self.factors['service_rates_budget'] for _ in range(self.model.factors["number_queues"]))
+        self.lower_bounds = 5*(10,)
+        self.upper_bounds = 5*(np.inf,)
         # Instantiate model with fixed factors and overwritten defaults.
         self.optimal_value = None  # Change if f is changed.
         self.optimal_solution = None  # Change if f is changed.
+        
+        self.n_instance_rngs = 2 #number of rngs for random problem instances (excluding model)
 
     def check_service_rates_budget(self):
         routing_matrix = np.asarray(self.model.factors["routing_matrix"])
@@ -412,6 +442,35 @@ class OpenJacksonMinQueue(Problem):
         if sum(self.factors["service_rates_budget"]) < sum(lambdas) :
             return False
         return True
+    
+    
+    def attach_rngs(self, random_rng):
+        """
+        Attach random-number generators to the problem.
+
+        Arguments
+        ---------
+        random_rng : list of mrg32k3a.mrg32k3a.MRG32k3a objects
+            list of rngs for problem to use when generating random instances
+        """
+        # Attach rng for problem class and generate random problem factors for random instances
+        self.random_rng = random_rng
+        num_bounded = 3
+        
+        if self.random == True:
+            #gnerate random upper bounds
+            upper = np.inf*np.ones(self.dim)
+            upper_values = 20*np.array(random_rng[0].choices(range(3,8),k=num_bounded)) #randomly generate upper bounds
+            upper_ind = random_rng[1].sample(range(0,5),num_bounded) #randomly select entries/positions for setting upperbounds (5 products)
+            for ind in range(num_bounded):
+                upper[upper_ind[ind]] = upper_values[ind]
+            self.upper_bounds = tuple(upper)
+            
+            #randomly gnerate constraints (hyperplane)
+            #self.factors["Ci"] = -1*np.array(random_rng[1].choices(range(1,5),k=self.dim)).reshape(1,5)
+            #self.factors["di"] = self.factors["Ci"]@np.ones(self.dim)*np.array([self.lower_bounds[0]])
+            self.Ci = -1*np.array(random_rng[1].choices(range(1,5),k=self.dim)).reshape(1,5)
+            self.di = self.Ci@np.ones(self.dim)*np.array([self.lower_bounds[0]])
             
 
     def vector_to_factor_dict(self, vector):
@@ -470,8 +529,8 @@ class OpenJacksonMinQueue(Problem):
             objectives = (response_dict['total_jobs'][0],)
         else:
             objectives = (response_dict['total_jobs'],)
-            print("service mu: ", self.model.factors["service_mus"])
-            print("obj: ", objectives)
+            #print("service mu: ", self.model.factors["service_mus"])
+            #print("obj: ", objectives)
             
         return objectives
 

@@ -47,11 +47,13 @@ class conSAN_model(Model):
     base.Model
     """
     
-    def __init__(self, fixed_factors=None):
+    def __init__(self, fixed_factors=None, random = False):
         if fixed_factors is None:
             fixed_factors = {}
         self.name = "SAN"
+        self.random = random
         self.n_rngs = 1
+        self.n_instance_rngs = 1
         self.n_responses = 1
         self.specifications = {
             "num_nodes": {
@@ -91,6 +93,7 @@ class conSAN_model(Model):
         # Set factors of the simulation model.
         super().__init__(fixed_factors)
         self.num_arcs = len(self.factors['arcs'])
+        #self.factors["num_arcs"] = len(self.factors['arcs'])
         self.cost_f = self.factors['arc_costs']
         self.grad_cost_f = self.factors['cost_grad']
 
@@ -149,6 +152,117 @@ class conSAN_model(Model):
     def get_grad_cost(self,x):
         
         return self.grad_cost_f(x)
+    
+    def get_arcs(self, num_nodes, num_arcs, uni_rng):
+        """
+        Getting a random set of valid arcs.
+
+        Arguments
+        ---------
+        num_nodes: int
+            number of nodes for the random graph
+        num_arcs: int
+            number of arcs for the random graph
+        rng_list : list of mrg32k3a.mrg32k3a.MRG32k3a
+            rngs for model to use when simulating a replication
+
+        Returns
+        -------
+        arcs : list
+            Generated random arcs to be used in the following simulation
+        """
+        # Calculate the total set of possible arcs in the graph
+        set_arcs = []
+        for n1 in range(1, num_nodes):
+            for n2 in range(n1 + 1, num_nodes + 1):
+                set_arcs.append((n1, n2))
+        
+        # Assign the arcs set with the necessary arcs    
+        arcs = [(1, 2), (num_nodes - 1, num_nodes)]
+        remove = []
+        def get_in(arcs, num_nodes, ind, in_ind=True):
+            global remove
+            if len(arcs) <= 0:
+                return False            
+            graph = {node: set() for node in range(1, num_nodes + 1)}
+            for a in arcs:
+                if in_ind == True:
+                    graph[a[0]].add(a[1])
+                else:
+                    graph[a[1]].add(a[0])
+            set0 = graph[ind]
+            for i in graph[ind]:
+                set0 = {*set0, *graph[i]}
+                for j in graph[i]:
+                    set0 = {*set0, *graph[j]}
+            
+            if in_ind == True:      
+                for j in set0 - graph[ind]:
+                    if j in graph[ind]:
+                        remove.append((ind, j))
+            
+            set0 = {*set0, ind}
+            return set0
+        
+        # Check whether the first node can reach all other nodes
+        set0 = get_in(arcs, num_nodes, 1)
+        for i in range(2, num_nodes+1):
+            set0 = get_in(arcs, num_nodes, 1)  # Get the set of nodes that starter node can reach
+            if i not in set0:
+                set1 = list(get_in(arcs, num_nodes, i, False))  # Get the set of nodes that can reach node i
+                n2 = set1[uni_rng.randint(0, len(set1)-1)]  # Randomly choose one
+                set2 = [i for i in set0 if i < n2]
+                n1 = list(set2)[uni_rng.randint(0, len(set2)-1)]
+                arc = (n1, n2)  # Connect the two nodes so that starter node can reach node i
+                arcs = {*arcs, arc}
+        
+        # Check whether each node can reach the end node
+        for i in range(2, num_nodes):
+            set9 = get_in(arcs, num_nodes, i)
+            if num_nodes not in set9:
+                set_out = list(get_in(arcs, num_nodes, num_nodes, False))
+                n1 = list(set9)[uni_rng.randint(0, len(set9)-1)]
+                set2 = [i for i in set_out if i > n1]
+                n2 = set2[uni_rng.randint(0, len(set2)-1)]
+                arc = (n1, n2)
+                arcs = {*arcs, arc}
+        
+        if len(arcs) < num_arcs:  # If the current arc set has less arcs than the input lower bound
+            remain_num = num_arcs - len(arcs)
+            remain = list(set(set_arcs) - set(arcs))
+            idx = uni_rng.sample(range(0, len(remain)), remain_num)
+            aa = set([remain[i] for i in idx])
+            arcs = {*arcs, *aa}
+
+        else:
+            return list(arcs)
+        
+        return list(arcs)
+    
+    
+    def attach_rng(self, random_rng):
+        """
+        Attach rng to random model class and generate random factors and update corresponding problem dimension.
+
+        Arguments
+        ---------
+        random_rng : list of mrg32k3a.mrg32k3a.MRG32k3a
+            rngs for model to use when generating random factors
+
+        Returns
+        -------
+        arcs : list
+            Generated random arcs to be used in the following simulation
+        """
+        self.random_rng = random_rng
+        arcs_set = self.get_arcs(self.factors["num_nodes"], self.num_arcs, random_rng[0])
+        
+        arcs_set.sort(key=lambda a: a[1])
+        arcs_set.sort(key=lambda a: a[0])  
+        self.factors["arcs"] = arcs_set
+        #print('arcs: ', arcs_set)
+        self.factors["num_arcs"] = len(self.factors["arcs"])
+        self.factors["arc_means"] = (1,) * len(self.factors["arcs"])
 
     def replicate(self, rng_list):
         """
@@ -169,6 +283,7 @@ class conSAN_model(Model):
         """
         # Designate separate random number generators.
         exp_rng = rng_list[0]
+        #print("sss: ", exp_rng.s_ss_sss_index)
         
         #print(self.check_factor_list["arc_means"]())
         #if(not self.check_factor_list["arc_means"]()):
@@ -206,7 +321,8 @@ class conSAN_model(Model):
         for i in range(len(self.factors["arcs"])):
             arc_length[str(self.factors["arcs"][i])] = exp_rng.expovariate(1 / self.factors["arc_means"][i])
         
-        #print(self.factors["arc_means"])
+        #print("arc means: ", self.factors["arc_means"])
+        #print("topo order: ", topo_order)
         #print(arc_length)
         # Calculate the length of the longest path.
         T = np.zeros(self.factors["num_nodes"])
@@ -316,12 +432,13 @@ class conSAN_problem(Problem):
     --------
     base.Problem
     """
-    def __init__(self, name="conSAN", fixed_factors=None, model_fixed_factors=None):
+    def __init__(self, name="conSAN", fixed_factors=None, model_fixed_factors=None, random=False, random_rng=None):
         if fixed_factors is None:
             fixed_factors = {}
         if model_fixed_factors is None:
             model_fixed_factors = {}
         self.name = name
+        self.random = random
         self.n_objectives = 1
         self.n_stochastic_constraints = 0
         self.minmax = (-1,)
@@ -337,7 +454,7 @@ class conSAN_problem(Problem):
             "initial_solution": {
                 "description": "initial solution",
                 "datatype": tuple,
-                "default": (8,) * 13
+                "default": (0.1,) * 13
             },
             "budget": {
                 "description": "max # of replications for a solver to take",
@@ -356,31 +473,12 @@ class conSAN_problem(Problem):
                 "datatype": "function",
                 "default": self.default_grad_cost_f
             },
-            #"sum_lb": {
-            #    "description": "Lower bound for the sum of arc means",
-            #    "datatype": float,
-            #    "default": 100.0
-            #},
-            "Ci":{
-                "description": "Coefficients for inequality constraints Ci@x <= di",
-                "datatype": "matrix",
-                "default": -1 * np.eye(13)
-            },
-            "di":{
-                "description": "RHS for inequality constraints Ci@x <= di",
-                "datatype": "vector",
-                "default": 0
-            },
-            "Ce":{
-                "description": "Coefficients for equality constraints Ce@x == de",
-                "datatype": "matrix",
-                "default": None
-            },
-            "de":{
-                "description": "RHS for equality constraints Ce@x == de",
-                "datatype": "vector",
-                "default": None
-            } 
+            "sum_lb": {
+                "description": "Lower bound for the sum of arc means",
+                "datatype": float,
+                "default": 100.0
+            }
+            
         }
         self.check_factor_list = {
             "initial_solution": self.check_initial_solution,
@@ -390,17 +488,25 @@ class conSAN_problem(Problem):
         super().__init__(fixed_factors, model_fixed_factors)
         # Instantiate model with fixed factors and over-riden defaults.
         self.model = conSAN_model(self.model_fixed_factors)
+        if random==True and random_rng != None:
+            self.model.attach_rng(random_rng)
         self.dim = len(self.model.factors["arcs"])
-        self.lower_bounds = (1e-2,) * self.dim
-        #self.upper_bounds = (np.inf,) * self.dim
-        self.upper_bounds = (1e4,) * self.dim
+        self.lower_bounds = (1e-1,) * self.dim
+        self.upper_bounds = (np.inf,) * self.dim
+        #self.upper_bounds = (1e3,) * self.dim
         #self.Ci = -1 * np.ones(13)
-        self.Ci = self.factors["Ci"]
-        self.Ce = self.factors["Ce"]
+        self.Ci = None #self.factors["Ci"]
+        self.Ce = None
         #self.di = -1 * np.array([self.factors["sum_lb"]])
-        self.di = self.factors["di"]
-        self.de = self.factors["de"]
+        self.di = None #self.factors["di"]
+        self.de = None
         
+        if(('Ci' in self.factors.keys()) and ('di' in self.factors.keys())):
+            self.Ci = self.factors["Ci"]
+            self.di = self.factors["di"]
+        
+        self.factors["coeff"] = np.ones(self.dim) #coefficients for cost function
+        self.n_instance_rngs = 4 #number of rngs for random problem instances (excluding model)
         self.num_arcs = len(self.model.factors['arcs'])
         self.cost_f = self.model.factors['arc_costs']
         self.grad_cost_f = self.model.factors['cost_grad']
@@ -412,7 +518,7 @@ class conSAN_problem(Problem):
         x: a vector of arc means
         """
         
-        return sum(1/x)
+        return sum(self.factors["coeff"]/x)
     
     def default_grad_cost_f(self,x):
         """
@@ -421,13 +527,46 @@ class conSAN_problem(Problem):
         x: a vector of arc means
         """
         
-        return -sum(1/x**2)
+        return -sum(self.factors["coeff"]/x**2)
     
     def check_arc_costs(self):
         positive = True
         for x in list(self.factors["arc_costs"]):
             positive = positive & x > 0
         return (len(self.factors["arc_costs"]) != self.model.factors["num_arcs"]) & positive
+    
+    def attach_rngs(self, random_rng):
+        """
+        Attach random-number generators to the problem.
+
+        Arguments
+        ---------
+        random_rng : list of mrg32k3a.mrg32k3a.MRG32k3a objects
+            list of rngs for problem to use when generating random instances
+        """
+        # Attach rng for problem class and generate random problem factors for random instances
+        self.random_rng = random_rng
+        
+        if self.random == True:
+            #randomly gnerate constraints (hyperplane)
+            self.factors["Ci"] = -1*np.array(random_rng[0].choices(range(1,20),k=self.dim))
+            self.factors["di"] = self.factors["Ci"]@np.ones(self.dim)*np.array([self.lower_bounds[0]])
+            self.Ci = self.factors["Ci"]
+            self.di = self.factors["di"]
+            
+            #randomly generate cost function coefficient
+            self.factors["coeff"] = np.array(random_rng[1].choices(range(1,20),k=self.dim))
+            #self.factors["coeff"] = np.ones(self.dim)
+            
+            #randomly generate upper bounds
+            #upper = np.inf*np.ones(self.dim)
+            upper = 100*np.ones(self.dim)
+            pos = random_rng[2].sample(range(0,self.dim),5) #position/entry of bounded values
+            val = 5*np.array(random_rng[3].choices(range(3,15),k=5)) #value of upper bounds for some entries
+            upper[pos] = val
+            self.upper_bounds = tuple(upper)
+
+        #return random_rng
 
     def vector_to_factor_dict(self, vector):
         """
