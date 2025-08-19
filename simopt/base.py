@@ -83,6 +83,62 @@ class VariableType(Enum):
         return symbol_mapping.get(self, "?")
 
 
+class BudgetExhaustedError(Exception):
+    """Raised when a solver exceeds its allotted simulation budget.
+
+    This exception is thrown by :class:`Budget` when a call to
+    :meth:`Budget.request` asks for more replications than remain in the
+    available budget. It is caught in :meth:`Solver.run` to stop the
+    macroreplication cleanly once the budget is exhausted.
+    """
+
+
+class Budget:
+    """Tracks and enforces a solver's replication budget.
+
+    A ``Budget`` instance is attached to each solver run and measures the number of
+    simulation replications consumed. Solvers should call :meth:`request` before
+    taking replications. If the request would exceed ``total``, a
+    :class:`BudgetExhaustedException` is raised. This provides a consistent way for
+    solvers to terminate exactly at the specified budget.
+
+    Args:
+        total (int): Total number of replications available for the run.
+    """
+
+    def __init__(self, total: int) -> None:
+        """Initialize object with the total number of replications available."""
+        self.total = total
+        self._used = 0
+
+    def request(self, amount: int) -> None:
+        """Consume ``amount`` replications from the budget.
+
+        Typical usage is to call ``request(r)`` immediately before taking ``r``
+        replications at the current solution.
+
+        Args:
+            amount (int): Number of replications to consume.
+
+        Raises:
+            BudgetExhaustedException: If ``amount`` would cause usage to exceed
+                :attr:`total`.
+        """
+        if self._used + amount > self.total:
+            raise BudgetExhaustedError()
+        self._used += amount
+
+    @property
+    def used(self) -> int:
+        """Number of replications consumed so far."""
+        return self._used
+
+    @property
+    def remaining(self) -> int:
+        """Number of replications still available (``total - used``)."""
+        return self.total - self._used
+
+
 class Solver(ABC):
     """Base class to implement simulation-optimization solvers.
 
@@ -222,6 +278,9 @@ class Solver(ABC):
         factor_names = list(self.factors.keys())
         self.run_all_checks(factor_names=factor_names)
 
+        self.recommended_solns = []
+        self.intermediate_budgets = []
+
     def __eq__(self, other: object) -> bool:
         """Check if two solvers are equivalent.
 
@@ -253,7 +312,7 @@ class Solver(ABC):
         self.rng_list = rng_list
 
     @abstractmethod
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+    def solve(self, problem: Problem) -> None:
         """Run a single macroreplication of a solver on a problem.
 
         Args:
@@ -266,6 +325,20 @@ class Solver(ABC):
                     change.
         """
         raise NotImplementedError
+
+    def run(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+        self.budget = Budget(problem.factors["budget"])
+        try:
+            self.solve(problem)
+        except BudgetExhaustedError:
+            pass
+
+        recommended_solns = self.recommended_solns
+        intermediate_budgets = self.intermediate_budgets
+        self.recommended_solns = []
+        self.intermediate_budgets = []
+
+        return recommended_solns, intermediate_budgets
 
     def check_crn_across_solns(self) -> bool:
         """Check solver factor crn_across_solns.

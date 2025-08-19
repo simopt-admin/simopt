@@ -199,11 +199,7 @@ class STRONG(Solver):
             raise ValueError("lambda_2 must be greater than 1.")
 
     @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
-
+    def solve(self, problem: Problem) -> None:
         # Default values.
         n0: int = self.factors["n0"]
         n_r: int = self.factors["n_r"]
@@ -223,11 +219,13 @@ class STRONG(Solver):
         new_solution = self.create_new_solution(
             problem.factors["initial_solution"], problem
         )
+
+        self.budget.request(n0)
         problem.simulate(new_solution, n0)
-        expended_budget += n0
+
         best_solution = new_solution
-        recommended_solns.append(new_solution)
-        intermediate_budgets.append(expended_budget)
+        self.recommended_solns.append(new_solution)
+        self.intermediate_budgets.append(self.budget.used)
 
         # Precompute factorials
         factorials = np.array([math.factorial(i) for i in range(1, problem.dim + 1)])
@@ -235,7 +233,7 @@ class STRONG(Solver):
         neg_minmax = -problem.minmax[0]
         dim_sq = problem.dim**2
 
-        while expended_budget < problem.factors["budget"]:
+        while True:
             new_x = np.array(new_solution.x)
             # Check variable bounds.
             forward = np.isclose(
@@ -258,13 +256,13 @@ class STRONG(Solver):
                     grad, hessian = self.finite_diff(
                         new_solution, bounds_check, 1, problem, n_r
                     )
-                    expended_budget += num_evals * n_r
+                    self.budget.request(num_evals * n_r)
                     num_generated_grads += 1
                     if num_generated_grads > 2:
                         # Update n_r and counter after each loop.
                         n_r *= lam
                     # Accept any non-zero gradient, or exit if the budget is exceeded.
-                    if norm(grad) != 0 or expended_budget > problem.factors["budget"]:
+                    if norm(grad) != 0:
                         break
 
                 # Step 2: Solve the subproblem.
@@ -276,8 +274,8 @@ class STRONG(Solver):
 
                 # Step 3: Compute the ratio.
                 # Use n_r simulated observations to estimate g_new.
+                self.budget.request(n_r)
                 problem.simulate(candidate_solution, n_r)
-                expended_budget += n_r
                 # Find the old objective value and the new objective value.
                 g_old = neg_minmax * new_solution.objectives_mean
                 g_new = neg_minmax * candidate_solution.objectives_mean
@@ -307,8 +305,8 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
+                        self.recommended_solns.append(new_solution)
+                        self.intermediate_budgets.append(self.budget.used)
                 else:
                     # The center point moves to the new solution and the trust
                     # region enlarges.
@@ -320,8 +318,8 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
+                        self.recommended_solns.append(new_solution)
+                        self.intermediate_budgets.append(self.budget.used)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
 
             # Stage II.
@@ -344,13 +342,13 @@ class STRONG(Solver):
                     grad, hessian = self.finite_diff(
                         new_solution, bounds_check, 2, problem, n_r
                     )
-                    expended_budget += num_evals * n_r
+                    self.budget.request(num_evals * n_r)
                     num_generated_grads += 1
                     if num_generated_grads > 2:
                         # Update n_r and counter after each loop.
                         n_r *= lam
                     # Accept any non-zero gradient, or exit if the budget is exceeded.
-                    if norm(grad) != 0 or expended_budget > problem.factors["budget"]:
+                    if norm(grad) != 0 or self.budget.remaining <= 0:
                         break
 
                 # Step 2: Solve the subproblem.
@@ -367,7 +365,7 @@ class STRONG(Solver):
                 # Step 3: Compute the ratio.
                 # Use r simulated observations to estimate g(x_start\).
                 problem.simulate(candidate_solution, n_r)
-                expended_budget += n_r
+                self.budget.request(n_r)
                 # Find the old objective value and the new objective value.
                 g_old = neg_minmax * new_solution.objectives_mean
                 g_new = neg_minmax * candidate_solution.objectives_mean
@@ -391,7 +389,7 @@ class STRONG(Solver):
                     result_x = new_x
 
                     while np.sum(result_x != new_x) == 0:
-                        if expended_budget > problem.factors["budget"]:
+                        if self.budget.remaining <= 0:
                             break
                         # A while loop to prevent zero gradient
                         while True:
@@ -403,17 +401,14 @@ class STRONG(Solver):
                                 problem,
                                 n_r_loop,
                             )
-                            expended_budget += num_evals * n_r_loop
+                            self.budget.request(num_evals * n_r_loop)
                             num_generated_grads += 1
                             if num_generated_grads > 2:
                                 # Update n_r and counter after each loop.
                                 n_r *= lam
                             # Accept any non-zero gradient, or exit if the budget
                             # is exceeded.
-                            if (
-                                norm(grad) != 0
-                                or expended_budget > problem.factors["budget"]
-                            ):
+                            if norm(grad) != 0 or self.budget.remaining <= 0:
                                 break
 
                         # Step 2: determine the new inner solution based on the
@@ -433,11 +428,11 @@ class STRONG(Solver):
                         mreps = int(n_r + counter_ceiling)
 
                         problem.simulate(try_solution, mreps)
-                        expended_budget += mreps
+                        self.budget.request(mreps)
                         g_b_new = neg_minmax * try_solution.objectives_mean
                         dummy_solution = new_solution
                         problem.simulate(dummy_solution, ceiling_diff)
-                        expended_budget += ceiling_diff
+                        self.budget.request(ceiling_diff)
 
                         dummy = neg_minmax * dummy_solution.objectives_mean
                         # Update g_old.
@@ -483,8 +478,8 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
+                        self.recommended_solns.append(new_solution)
+                        self.intermediate_budgets.append(self.budget.used)
                 else:
                     # The center point moves to the new solution and the trust
                     # region enlarges.
@@ -497,12 +492,11 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
+                        self.recommended_solns.append(new_solution)
+                        self.intermediate_budgets.append(self.budget.used)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
         # Loop through each budget and convert any numpy int32s to Python ints.
-        intermediate_budgets = [int(i) for i in intermediate_budgets]
-        return recommended_solns, intermediate_budgets
+        self.intermediate_budgets = [int(i) for i in self.intermediate_budgets]
 
     def cauchy_point(
         self,

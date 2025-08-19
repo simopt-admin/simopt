@@ -559,7 +559,7 @@ class ProblemSolver:
         # logging.debug([rng.s_ss_sss_index for rng in progenitor_rngs])
         # Run the solver on the problem.
         tic = time.perf_counter()
-        recommended_solns, intermediate_budgets = solver.solve(problem=problem)
+        recommended_solns, intermediate_budgets = solver.run(problem=problem)
         toc = time.perf_counter()
         runtime = toc - tic
         logging.debug(

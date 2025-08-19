@@ -163,11 +163,7 @@ class ALOE(Solver):
             raise ValueError("Lambda must be greater than 0.")
 
     @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
-
+    def solve(self, problem: Problem) -> None:
         # Default values.
         r = self.factors["r"]
         theta = self.factors["theta"]
@@ -184,13 +180,15 @@ class ALOE(Solver):
         new_solution = self.create_new_solution(
             problem.factors["initial_solution"], problem
         )
-        recommended_solns.append(new_solution)
-        intermediate_budgets.append(expended_budget)
+        self.recommended_solns.append(new_solution)
+        self.intermediate_budgets.append(self.budget.used)
+
+        self.budget.request(r)
         problem.simulate(new_solution, r)
-        expended_budget += r
+
         best_solution = new_solution
 
-        while expended_budget < problem.factors["budget"]:
+        while True:
             new_x = np.array(new_solution.x, dtype=float)
 
             # Check variable bounds
@@ -205,27 +203,28 @@ class ALOE(Solver):
             if problem.gradient_available:
                 grad = -problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
-                grad = self._finite_diff(new_solution, bounds_check, problem, alpha, r)
-                expended_budget += (
+                finite_diff_budget = (
                     2 * problem.dim - np.count_nonzero(bounds_check)
                 ) * r
-                while (
-                    np.all(grad == 0) and expended_budget <= problem.factors["budget"]
-                ):
+                self.budget.request(finite_diff_budget)
+                grad = self._finite_diff(new_solution, bounds_check, problem, alpha, r)
+
+                while np.all(grad == 0):
+                    finite_diff_budget = (
+                        2 * problem.dim - np.count_nonzero(bounds_check)
+                    ) * r
+                    self.budget.request(finite_diff_budget)
                     grad = self._finite_diff(
                         new_solution, bounds_check, problem, alpha, r
                     )
-                    expended_budget += (
-                        2 * problem.dim - np.count_nonzero(bounds_check)
-                    ) * r
                     r = int(self.factors["lambda"] * r)  # Update sample size
 
             # Compute candidate solution and apply box constraints (vectorized).
             candidate_x = np.clip(new_x - alpha * grad, lower_bound, upper_bound)
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
+            self.budget.request(r)
             problem.simulate(candidate_solution, r)
-            expended_budget += r
 
             # Check modified Armijo condition
             if (-problem.minmax[0] * candidate_solution.objectives_mean) <= (
@@ -243,10 +242,8 @@ class ALOE(Solver):
                 > problem.minmax[0] * best_solution.objectives_mean
             ):
                 best_solution = new_solution
-                recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)
-
-        return recommended_solns, intermediate_budgets
+                self.recommended_solns.append(new_solution)
+                self.intermediate_budgets.append(self.budget.used)
 
     def _finite_diff(
         self,
