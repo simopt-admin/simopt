@@ -31,6 +31,7 @@ dependencies = [
     "seaborn",
     "mrg32k3a",
     "joblib>=1.5.1",
+    "pydantic>=2.11.7",
 ]
 
 [project.optional-dependencies]
