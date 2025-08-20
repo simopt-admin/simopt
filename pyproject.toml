@@ -23,7 +23,15 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
 ]
-dependencies = ["numpy", "scipy", "matplotlib", "pandas", "seaborn", "mrg32k3a"]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "pandas",
+    "seaborn",
+    "mrg32k3a",
+    "joblib>=1.5.1",
+]
 
 [project.optional-dependencies]
 dev = ["sphinx"]

@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib
 import itertools
 import logging
-import os
 import pickle
 import subprocess
 import time
@@ -16,6 +15,7 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 
 import simopt.curve_utils as curve_utils
 import simopt.directory as directory
@@ -444,7 +444,6 @@ class ProblemSolver:
         """
         # Local Imports
         from functools import partial
-        from multiprocessing import Pool
 
         # Value checking
         if n_macroreps <= 0:
@@ -480,27 +479,20 @@ class ProblemSolver:
 
         logging.debug("Starting macroreplications")
 
-        num_processes = min(n_macroreps, os.cpu_count() or 1)
-        with Pool(num_processes) as process_pool:
-            # Start the macroreplications in parallel (async)
-            run_multithread_partial = partial(
-                self.run_multithread, solver=self.solver, problem=self.problem
-            )
-            for num_completed, (
-                mrep,
-                recommended_xs,
-                intermediate_budgets,
-                timing,
-            ) in enumerate(
-                process_pool.imap_unordered(run_multithread_partial, range(n_macroreps))
-            ):
-                self.all_recommended_xs[mrep] = recommended_xs
-                self.all_intermediate_budgets[mrep] = intermediate_budgets
-                self.timings[mrep] = timing
-                self.num_completed = num_completed + 1
+        # Start the macroreplications in parallel (async)
+        run_multithread_partial = partial(
+            self.run_multithread, solver=self.solver, problem=self.problem
+        )
+        results = Parallel()(
+            delayed(run_multithread_partial)(i) for i in range(n_macroreps)
+        )
+        for mrep, recommended_xs, intermediate_budgets, timing in results:
+            self.all_recommended_xs[mrep] = recommended_xs
+            self.all_intermediate_budgets[mrep] = intermediate_budgets
+            self.timings[mrep] = timing
 
-            runtime = round(time.time() - function_start, 3)
-            logging.info(f"Finished running {n_macroreps} mreps in {runtime} seconds.")
+        runtime = round(time.time() - function_start, 3)
+        logging.info(f"Finished running {n_macroreps} mreps in {runtime} seconds.")
 
         self.has_run = True
         self.has_postreplicated = False
@@ -611,9 +603,6 @@ class ProblemSolver:
         Raises:
             ValueError: If `n_postreps` is not positive.
         """
-        # Local Imports
-        from multiprocessing import Pool
-
         # Value checking
         if n_postreps <= 0:
             error_msg = "Number of postreplications must be positive."
@@ -638,25 +627,22 @@ class ProblemSolver:
         function_start = time.time()
 
         logging.info("Starting postreplications")
-        num_processes = min(self.n_macroreps, os.cpu_count() or 1)
-        with Pool(num_processes) as process_pool:
-            for num_completed, (mrep, post_rep, timing) in enumerate(
-                process_pool.imap_unordered(
-                    self.post_replicate_multithread, range(self.n_macroreps)
-                )
-            ):
-                self.all_post_replicates[mrep] = post_rep
-                self.timings[mrep] = timing
-                self.num_completed = num_completed + 1
+        results = Parallel()(
+            delayed(self.post_replicate_multithread)(mrep)
+            for mrep in range(self.n_macroreps)
+        )
+        for mrep, post_rep, timing in results:
+            self.all_post_replicates[mrep] = post_rep
+            self.timings[mrep] = timing
 
-            # Store estimated objective for each macrorep for each budget.
-            self.all_est_objectives = [
-                [
-                    float(np.mean(self.all_post_replicates[mrep][budget_index]))
-                    for budget_index in range(len(self.all_intermediate_budgets[mrep]))
-                ]
-                for mrep in range(self.n_macroreps)
+        # Store estimated objective for each macrorep for each budget.
+        self.all_est_objectives = [
+            [
+                float(np.mean(self.all_post_replicates[mrep][budget_index]))
+                for budget_index in range(len(self.all_intermediate_budgets[mrep]))
             ]
+            for mrep in range(self.n_macroreps)
+        ]
 
         runtime = round(time.time() - function_start, 3)
         logging.info(
