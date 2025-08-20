@@ -20,16 +20,18 @@ removed from this version as well.
 - It seems for SAN we always use pattern search - why? because the problem is convex and model may be misleading at the beginning
 - Added sufficient reduction for the pattern search
 """  # noqa: E501
+
 # TODO: check if bullet points can be indented and ignore tag removed
 
 from __future__ import annotations
 
 import logging
 from math import ceil, log
-from typing import Callable
+from typing import Annotated, Self
 
 import numpy as np
 from numpy.linalg import LinAlgError, inv, norm, pinv
+from pydantic import BaseModel, Field, model_validator
 from scipy.optimize import NonlinearConstraint, OptimizeResult, minimize
 
 from simopt.base import (
@@ -40,129 +42,89 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty, override
+from simopt.utils import override
+
+
+class ASTRODFConfig(BaseModel):
+    """Configuration for ASTRO-DF solver."""
+
+    crn_across_solns: Annotated[
+        bool, Field(default=True, description="use CRN across solutions")
+    ]
+    eta_1: Annotated[
+        float,
+        Field(default=0.1, gt=0, description="threshold for a successful iteration"),
+    ]
+    eta_2: Annotated[
+        float,
+        Field(
+            default=0.8,
+            description="threshold for a very successful iteration",
+        ),
+    ]
+    gamma_1: Annotated[
+        float,
+        Field(
+            default=2.5,
+            gt=1,
+            description="trust-region radius increase rate after a very successful iteration",
+        ),
+    ]
+    gamma_2: Annotated[
+        float,
+        Field(
+            default=0.5,
+            gt=0,
+            lt=1,
+            description="trust-region radius decrease rate after an unsuccessful iteration",
+        ),
+    ]
+    lambda_min: Annotated[
+        int, Field(default=5, gt=2, description="minimum sample size")
+    ]
+    easy_solve: Annotated[
+        bool,
+        Field(
+            default=True,
+            description="solve the subproblem approximately with Cauchy point",
+        ),
+    ]
+    reuse_points: Annotated[
+        bool, Field(default=True, description="reuse the previously visited points")
+    ]
+    ps_sufficient_reduction: Annotated[
+        float,
+        Field(
+            default=0.1,
+            ge=0,
+            description="use pattern search if with sufficient reduction, 0 always allows it, large value never does",
+        ),
+    ]
+    use_gradients: Annotated[
+        bool,
+        Field(
+            default=True,
+            description="if direct gradient observations are available, use them",
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def _validate_eta_2_greater_than_eta_1(self) -> Self:
+        if self.eta_2 <= self.eta_1:
+            raise ValueError("Eta 2 must be greater than Eta 1.")
+        return self
 
 
 class ASTRODF(Solver):
     """The ASTRO-DF solver."""
 
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "ASTRO-DF"
-
-    @classproperty
-    @override
-    def objective_type(cls) -> ObjectiveType:
-        return ObjectiveType.SINGLE
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_needed(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "crn_across_solns": {
-                "description": "use CRN across solutions",
-                "datatype": bool,
-                "default": True,
-            },
-            "eta_1": {
-                "description": "threshhold for a successful iteration",
-                "datatype": float,
-                "default": 0.1,
-            },
-            "eta_2": {
-                "description": "threshhold for a very successful iteration",
-                "datatype": float,
-                "default": 0.8,
-            },
-            "gamma_1": {
-                "description": (
-                    "trust-region radius increase rate after a very successful "
-                    "iteration"
-                ),
-                "datatype": float,
-                "default": 2.5,
-            },
-            "gamma_2": {
-                "description": (
-                    "trust-region radius decrease rate after an unsuccessful iteration"
-                ),
-                "datatype": float,
-                "default": 0.5,
-            },
-            "lambda_min": {
-                "description": "minimum sample size",
-                "datatype": int,
-                "default": 5,
-            },
-            "easy_solve": {
-                "description": "solve the subproblem approximately with Cauchy point",
-                "datatype": bool,
-                "default": True,
-            },
-            "reuse_points": {
-                "description": "reuse the previously visited points",
-                "datatype": bool,
-                "default": True,
-            },
-            "ps_sufficient_reduction": {
-                "description": (
-                    "use pattern search if with sufficient reduction, "
-                    "0 always allows it, large value never does"
-                ),
-                "datatype": float,
-                "default": 0.1,
-            },
-            "use_gradients": {
-                "description": (
-                    "if direct gradient observations are available, use them"
-                ),
-                "datatype": bool,
-                "default": True,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "crn_across_solns": self.check_crn_across_solns,
-            "eta_1": self._check_eta_1,
-            "eta_2": self._check_eta_2,
-            "gamma_1": self._check_gamma_1,
-            "gamma_2": self._check_gamma_2,
-            "lambda_min": self._check_lambda_min,
-            "ps_sufficient_reduction": self._check_ps_sufficient_reduction,
-        }
-
-    def __init__(
-        self, name: str = "ASTRODF", fixed_factors: dict | None = None
-    ) -> None:
-        """Initialize the ASTRO-DF solver.
-
-        Args:
-            name (str, optional): User-specified name for the solver.
-                Defaults to "ASTRODF".
-            fixed_factors (dict, optional): Fixed factors of the solver.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(name, fixed_factors)
+    name: str = "ASTRODF"
+    config_class: type[BaseModel] = ASTRODFConfig
+    class_name: str = "ASTRO-DF"
+    objective_type: ObjectiveType = ObjectiveType.SINGLE
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_needed: bool = False
 
     @property
     def iteration_count(self) -> int:
@@ -223,32 +185,6 @@ class ASTRODF(Solver):
     def h_k(self, value: np.ndarray) -> None:
         """Set the Hessian approximation."""
         self._h_k = value
-
-    def _check_eta_1(self) -> None:
-        if self.factors["eta_1"] <= 0:
-            raise ValueError("Eta 1 must be greater than 0.")
-
-    def _check_eta_2(self) -> None:
-        if self.factors["eta_2"] <= self.factors["eta_1"]:
-            raise ValueError("Eta 2 must be greater than Eta 1.")
-
-    def _check_gamma_1(self) -> None:
-        if self.factors["gamma_1"] <= 1:
-            raise ValueError("Gamma 1 must be greater than 1.")
-
-    def _check_gamma_2(self) -> None:
-        if self.factors["gamma_2"] >= 1 or self.factors["gamma_2"] <= 0:
-            raise ValueError("Gamma 2 must be between 0 and 1.")
-
-    def _check_lambda_min(self) -> None:
-        if self.factors["lambda_min"] <= 2:
-            raise ValueError("The minimum sample size must be greater than 2.")
-
-    def _check_ps_sufficient_reduction(self) -> None:
-        if self.factors["ps_sufficient_reduction"] < 0:
-            raise ValueError(
-                "ps_sufficient reduction must be greater than or equal to 0."
-            )
 
     def get_coordinate_vector(self, size: int, v_no: int) -> np.ndarray:
         """Generate the coordinate vector corresponding to the variable number v_no."""

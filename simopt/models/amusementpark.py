@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import math as math
-from typing import Callable, Final
+from typing import Annotated, ClassVar, Final, Self
 
 import numpy as np
+from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
 from simopt.input_models import Exp, Gamma, WeightedChoice
-from simopt.utils import classproperty, override
+from simopt.utils import override
 
 INF = float("inf")
 
@@ -19,171 +20,129 @@ PARK_CAPACITY: Final[int] = 350
 NUM_ATTRACTIONS: Final[int] = 7
 
 
-class AmusementPark(Model):
-    """Amusement Park Model.
+class AmusementParkConfig(BaseModel):
+    park_capacity: Annotated[
+        int,
+        Field(
+            default=PARK_CAPACITY,
+            description=(
+                "The total number of tourists waiting for attractions that can be "
+                "maintained through park facilities, distributed across the "
+                "attractions."
+            ),
+            ge=0,
+        ),
+    ]
+    number_attractions: Annotated[
+        int,
+        Field(
+            default=NUM_ATTRACTIONS,
+            description="The number of attractions in the park.",
+            # FIXME: strictly copying the original specification
+            ge=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+    time_open: Annotated[
+        float,
+        Field(
+            default=480.0,
+            description="The number of minutes per day the park is open.",
+            ge=0,
+        ),
+    ]
+    erlang_shape: Annotated[
+        list[int],
+        Field(
+            default_factory=lambda: [2] * NUM_ATTRACTIONS,
+            description=(
+                "The shape parameter of the Erlang distribution for each "
+                "attraction duration."
+            ),
+        ),
+    ]
+    erlang_scale: Annotated[
+        list[float],
+        Field(
+            default_factory=lambda: [1 / 9] * NUM_ATTRACTIONS,
+            description=(
+                "The rate parameter of the Erlang distribution for each attraction "
+                "duration."
+            ),
+        ),
+    ]
+    queue_capacities: Annotated[
+        list[int],
+        Field(
+            default_factory=lambda: [50] * NUM_ATTRACTIONS,
+            description=(
+                "The capacity of the queue for each attraction based on the "
+                "portion of facilities allocated."
+            ),
+        ),
+    ]
+    depart_probabilities: Annotated[
+        list[float],
+        Field(
+            default_factory=lambda: [0.2] * NUM_ATTRACTIONS,
+            description=(
+                "The probability that a tourist will depart the park after "
+                "visiting an attraction."
+            ),
+        ),
+    ]
+    arrival_gammas: Annotated[
+        list[int],
+        Field(
+            default_factory=lambda: [1] * NUM_ATTRACTIONS,
+            description=(
+                "The gamma values for the poisson distributions dictating the "
+                "rates at which tourists entering the park arrive at each "
+                "attraction"
+            ),
+        ),
+    ]
+    transition_probabilities: Annotated[
+        list[list[float]],
+        Field(
+            default_factory=lambda: [
+                [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
+                [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
+                [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
+                [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
+                [0.1, 0.1, 0.1, 0.1, 0, 0.1, 0.3],
+                [0.1, 0.1, 0.1, 0.1, 0.1, 0, 0.3],
+                [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2],
+            ],
+            description=(
+                "The transition matrix that describes the probability of a tourist "
+                "visiting each attraction after their current attraction."
+            ),
+        ),
+    ]
 
-    A model that simulates a single day of operation for an
-    amusement park queuing problem based on a poisson distributed tourist
-    arrival rate, a next attraction transition matrix, and attraction
-    durations based on an Erlang distribution. Returns the total number
-    and percent of tourists to leave the park due to full queues.
-    """
+    def _check_queue_capacities(self) -> None:
+        if not all(cap >= 0 for cap in self.queue_capacities):
+            raise ValueError("All queue capacities must be non-negative.")
 
-    @classproperty
-    @override
-    def n_rngs(cls) -> int:
-        return 3
-
-    @classproperty
-    @override
-    def n_responses(cls) -> int:
-        return 4
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "park_capacity": {
-                "description": (
-                    "The total number of tourists waiting for attractions that can be "
-                    "maintained through park facilities, distributed across the "
-                    "attractions."
-                ),
-                "datatype": int,
-                "default": PARK_CAPACITY,
-            },
-            "number_attractions": {
-                "description": "The number of attractions in the park.",
-                "datatype": int,
-                "default": NUM_ATTRACTIONS,
-                "isDatafarmable": False,
-            },
-            "time_open": {
-                "description": "The number of minutes per day the park is open.",
-                "datatype": float,
-                "default": 480.0,
-            },
-            "erlang_shape": {
-                "description": (
-                    "The shape parameter of the Erlang distribution for each "
-                    "attraction duration."
-                ),
-                "datatype": list,
-                "default": [2] * NUM_ATTRACTIONS,
-            },
-            "erlang_scale": {
-                "description": (
-                    "The rate parameter of the Erlang distribution for each attraction "
-                    "duration."
-                ),
-                "datatype": list,
-                "default": [1 / 9] * NUM_ATTRACTIONS,
-            },
-            "queue_capacities": {
-                "description": (
-                    "The capacity of the queue for each attraction based on the "
-                    "portion of facilities allocated."
-                ),
-                "datatype": list,
-                "default": [50] * NUM_ATTRACTIONS,
-            },
-            "depart_probabilities": {
-                "description": (
-                    "The probability that a tourist will depart the park after "
-                    "visiting an attraction."
-                ),
-                "datatype": list,
-                "default": [0.2] * NUM_ATTRACTIONS,
-            },
-            "arrival_gammas": {
-                "description": (
-                    "The gamma values for the poisson distributions dictating the "
-                    "rates at which tourists entering the park arrive at each "
-                    "attraction"
-                ),
-                "datatype": list,
-                "default": [1] * NUM_ATTRACTIONS,
-            },
-            "transition_probabilities": {
-                "description": (
-                    "The transition matrix that describes the probability of a tourist "
-                    "visiting each attraction after their current attraction."
-                ),
-                "datatype": list,
-                "default": [
-                    [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
-                    [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
-                    [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
-                    [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0],
-                    [0.1, 0.1, 0.1, 0.1, 0, 0.1, 0.3],
-                    [0.1, 0.1, 0.1, 0.1, 0.1, 0, 0.3],
-                    [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2],
-                ],
-            },
-        }
-
-    @property
-    def check_factor_list(self) -> dict[str, Callable]:
-        """Switch case for checking factor simulatability."""
-        return {
-            "park_capacity": self._check_park_capacity,
-            "number_attractions": self._check_number_attractions,
-            "time_open": self._check_time_open,
-            "queue_capacities": self._check_queue_capacities,
-            "depart_probabilities": self._check_depart_probabilities,
-            "arrival_gammas": self._check_arrival_gammas,
-            "transition_probabilities": self._check_transition_probabilities,
-            "erlang_shape": self._check_erlang_shape,
-            "erlang_scale": self._check_erlang_scale,
-        }
-
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        """Initialize the Amusement Park Model."""
-        # Let the base class handle default arguments.
-        super().__init__(fixed_factors)
-
-        self.arrival_model = Exp()
-        self.attraction_model = WeightedChoice()
-        self.destination_model = WeightedChoice()
-        self.service_models = []
-        for _ in range(self.factors["number_attractions"]):
-            self.service_models.append(Gamma())
-
-    # Check for simulatable factors.
-    def _check_park_capacity(self) -> None:
-        if self.factors["park_capacity"] < 0:
-            raise ValueError("Park capacity must be greater than or equal to 0.")
-
-    def _check_number_attractions(self) -> None:
-        if self.factors["number_attractions"] < 0:
-            raise ValueError("Number of attractions must be greater than 0.")
-
-    def _check_time_open(self) -> None:
-        if self.factors["time_open"] < 0:
-            raise ValueError("Time open must be greater than or equal to 0.")
-
-    def _check_queue_capacities(self) -> bool:
-        return all(cap >= 0 for cap in self.factors["queue_capacities"])
-
-    def _check_depart_probabilities(self) -> bool:
-        if (
-            len(self.factors["depart_probabilities"])
-            != self.factors["number_attractions"]
-        ):
+    def _check_depart_probabilities(self) -> None:
+        if len(self.depart_probabilities) != self.number_attractions:
             raise ValueError(
                 "The number of departure probabilities must match the number of "
                 "attractions."
             )
-        return all(0 <= prob <= 1 for prob in self.factors["depart_probabilities"])
+        if not all(0 <= prob <= 1 for prob in self.depart_probabilities):
+            raise ValueError("All departure probabilities must be between 0 and 1.")
 
-    def _check_arrival_gammas(self) -> bool:
-        if len(self.factors["arrival_gammas"]) != self.factors["number_attractions"]:
+    def _check_arrival_gammas(self) -> None:
+        if len(self.arrival_gammas) != self.number_attractions:
             raise ValueError(
                 "The number of arrivals must match the number of attractions."
             )
-        return all(gamma >= 0 for gamma in self.factors["arrival_gammas"])
+        if not all(gamma >= 0 for gamma in self.arrival_gammas):
+            raise ValueError("All arrival gammas must be non-negative.")
 
-    def _check_transition_probabilities(self) -> bool:
+    def _check_transition_probabilities(self) -> None:
         """Validate the structure and consistency of the transition matrix.
 
         Checks that the transition matrix is square (same number of rows and columns),
@@ -196,21 +155,23 @@ class AmusementPark(Model):
         Raises:
             ValueError: If any row has the wrong shape or an invalid total probability.
         """
-        transition_sums = list(map(sum, self.factors["transition_probabilities"]))
-        if all(
-            len(row) == len(self.factors["transition_probabilities"])
-            for row in self.factors["transition_probabilities"]
-        ) and all(
-            transition_sums[i] + self.factors["depart_probabilities"][i] == 1
-            for i in range(self.factors["number_attractions"])
+        transition_sums = list(map(sum, self.transition_probabilities))
+        if not (
+            all(
+                len(row) == len(self.transition_probabilities)
+                for row in self.transition_probabilities
+            )
+            and all(
+                transition_sums[i] + self.depart_probabilities[i] == 1
+                for i in range(self.number_attractions)
+            )
         ):
-            return True
-        raise ValueError(
-            "The values you entered are invalid. "
-            "Check that each row and depart probability sums to 1."
-        )
+            raise ValueError(
+                "The values you entered are invalid. "
+                "Check that each row and depart probability sums to 1."
+            )
 
-    def _check_erlang_shape(self) -> bool:
+    def _check_erlang_shape(self) -> None:
         """Validate the Erlang shape parameters for each attraction.
 
         Checks that the number of shape parameters matches the number of attractions,
@@ -222,14 +183,15 @@ class AmusementPark(Model):
         Raises:
             ValueError: If the number of shape parameters is incorrect.
         """
-        if len(self.factors["erlang_shape"]) != self.factors["number_attractions"]:
+        if len(self.erlang_shape) != self.number_attractions:
             raise ValueError(
                 "The number of attractions must equal the number of Erlang shape "
                 "parameters."
             )
-        return all(gamma >= 0 for gamma in self.factors["erlang_shape"])
+        if not all(gamma >= 0 for gamma in self.erlang_shape):
+            raise ValueError("All Erlang shape parameters must be non-negative.")
 
-    def _check_erlang_scale(self) -> bool:
+    def _check_erlang_scale(self) -> None:
         """Validate the Erlang scale parameters for each attraction.
 
         Checks that the number of scale parameters matches the number of attractions,
@@ -241,11 +203,81 @@ class AmusementPark(Model):
         Raises:
             ValueError: If the number of scale parameters is incorrect.
         """
-        if len(self.factors["erlang_scale"]) != self.factors["number_attractions"]:
+        if len(self.erlang_scale) != self.number_attractions:
             raise ValueError(
                 "The number of attractions must equal the number of Erlang scales."
             )
-        return all(gamma >= 0 for gamma in self.factors["erlang_scale"])
+        if not all(gamma >= 0 for gamma in self.erlang_scale):
+            raise ValueError("All Erlang scale parameters must be non-negative.")
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        self._check_queue_capacities()
+        self._check_depart_probabilities()
+        self._check_arrival_gammas()
+        self._check_transition_probabilities()
+        self._check_erlang_shape()
+        self._check_erlang_scale()
+
+        if sum(self.queue_capacities) > self.park_capacity:
+            raise ValueError(
+                "The sum of the queue capacities must be less than or equal to the "
+                "park capacity"
+            )
+        return self
+
+
+class AmusementParkMinDepartConfig(BaseModel):
+    """Configuration model for Amusement Park Min Depart Problem.
+
+    A problem configuration that minimizes the total number of departed
+    visitors from an amusement park by optimizing queue capacities.
+    """
+
+    initial_solution: Annotated[
+        tuple[int, ...],
+        Field(
+            default_factory=lambda: (PARK_CAPACITY - NUM_ATTRACTIONS + 1,)
+            + (1,) * (NUM_ATTRACTIONS - 1),
+            description="Initial solution from which solvers start.",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=100,
+            description="Max # of replications for a solver to take.",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+
+
+class AmusementPark(Model):
+    """Amusement Park Model.
+
+    A model that simulates a single day of operation for an
+    amusement park queuing problem based on a poisson distributed tourist
+    arrival rate, a next attraction transition matrix, and attraction
+    durations based on an Erlang distribution. Returns the total number
+    and percent of tourists to leave the park due to full queues.
+    """
+
+    config_class: ClassVar[type[BaseModel]] = AmusementParkConfig
+    n_rngs: int = 3
+    n_responses: int = 4
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the Amusement Park Model."""
+        # Let the base class handle default arguments.
+        super().__init__(fixed_factors)
+
+        self.arrival_model = Exp()
+        self.attraction_model = WeightedChoice()
+        self.destination_model = WeightedChoice()
+        self.service_models = []
+        for _ in range(self.factors["number_attractions"]):
+            self.service_models.append(Gamma())
 
     @override
     def check_simulatable_factors(self) -> bool:
@@ -456,91 +488,20 @@ class AmusementPark(Model):
 class AmusementParkMinDepart(Problem):
     """Class to make amusement park simulation-optimization problems."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "AMUSEMENTPARK-1"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Min Total Departed Visitors for Amusement Park"
-
-    @classproperty
-    @override
-    def n_objectives(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_stochastic_constraints(cls) -> int:
-        return 0
-
-    @classproperty
-    @override
-    def minmax(cls) -> tuple[int]:
-        return (-1,)
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.DETERMINISTIC
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.DISCRETE
-
-    @classproperty
-    @override
-    def gradient_available(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def optimal_value(cls) -> float | None:
-        return None
-
-    @classproperty
-    @override
-    def optimal_solution(cls) -> tuple | None:
-        return None
-
-    @classproperty
-    @override
-    def model_default_factors(cls) -> dict:
-        return {}
-
-    @classproperty
-    @override
-    def model_decision_factors(cls) -> set[str]:
-        return {"queue_capacities"}
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "initial_solution": {
-                "description": "Initial solution from which solvers start.",
-                "datatype": tuple,
-                "default": (PARK_CAPACITY - NUM_ATTRACTIONS + 1,)
-                + (1,) * (NUM_ATTRACTIONS - 1),
-            },
-            "budget": {
-                "description": "Max # of replications for a solver to take.",
-                "datatype": int,
-                "default": 100,
-                "isDatafarmable": False,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-        }
+    config_class: ClassVar[type[BaseModel]] = AmusementParkMinDepartConfig
+    model_class: ClassVar[type[Model]] = AmusementPark
+    class_name_abbr: str = "AMUSEMENTPARK-1"
+    class_name: str = "Min Total Departed Visitors for Amusement Park"
+    n_objectives: int = 1
+    n_stochastic_constraints: int = 0
+    minmax: tuple[int] = (-1,)
+    constraint_type: ConstraintType = ConstraintType.DETERMINISTIC
+    variable_type: VariableType = VariableType.DISCRETE
+    gradient_available: bool = False
+    optimal_value: float | None = None
+    optimal_solution: tuple | None = None
+    model_default_factors: dict = {}
+    model_decision_factors: set[str] = {"queue_capacities"}
 
     @property
     @override
@@ -556,28 +517,6 @@ class AmusementParkMinDepart(Problem):
     @override
     def upper_bounds(self) -> tuple:
         return (self.model.factors["park_capacity"],) * self.dim
-
-    def __init__(
-        self,
-        name: str = "AMUSEMENTPARK-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the Amusement Park Minimize Departures Problem.
-
-        Args:
-            name (str): User-specified name of the problem.
-            fixed_factors (dict | None): Dictionary of user-specified problem factors.
-            model_fixed_factors (dict | None): Subset of user-specified non-decision
-                factors to pass through to the model.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(
-            name=name,
-            fixed_factors=fixed_factors,
-            model_fixed_factors=model_fixed_factors,
-            model=AmusementPark,
-        )
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict[str, tuple]:

@@ -2,16 +2,195 @@
 
 from __future__ import annotations
 
-from typing import Callable, Final
+from typing import Annotated, ClassVar, Final, Self
 
 import numpy as np
+from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
 from simopt.input_models import InputModel
-from simopt.utils import classproperty, override
+from simopt.utils import override
 
 NUM_FACILITIES: Final[int] = 3
+
+
+class FacilitySizeConfig(BaseModel):
+    """Configuration model for Facility Sizing simulation.
+
+    A model that simulates a facility size problem with a multi-variate normal
+    distribution. Returns the probability of violating demand in each scenario.
+    """
+
+    mean_vec: Annotated[
+        list[float],
+        Field(
+            default_factory=lambda: [100] * NUM_FACILITIES,
+            description=("location parameters of the multivariate normal distribution"),
+        ),
+    ]
+    cov: Annotated[
+        list[list[float]],
+        Field(
+            default_factory=lambda: [
+                [2000, 1500, 500],
+                [1500, 2000, 750],
+                [500, 750, 2000],
+            ],
+            description="covariance of multivariate normal distribution",
+        ),
+    ]
+    capacity: Annotated[
+        list[float],
+        Field(
+            default=[150, 300, 400],
+            description="capacity",
+        ),
+    ]
+    n_fac: Annotated[
+        int,
+        Field(
+            default=NUM_FACILITIES,
+            description="number of facilities",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+
+    def _check_mean_vec(self) -> None:
+        if any(mean <= 0 for mean in self.mean_vec):
+            raise ValueError("All elements in mean_vec must be greater than 0.")
+
+    def _check_cov(self) -> None:
+        try:
+            np.linalg.cholesky(np.array(self.cov))
+        except np.linalg.LinAlgError as err:
+            if "Matrix is not positive definite" in str(err):
+                raise ValueError("Covariance matrix is not positive definite.") from err
+
+    def _check_capacity(self) -> None:
+        if len(self.capacity) != self.n_fac:
+            raise ValueError("The length of capacity must equal n_fac.")
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        self._check_mean_vec()
+        self._check_cov()
+        self._check_capacity()
+
+        # Cross-validation: check dimensions match n_fac
+        if len(self.capacity) != self.n_fac:
+            raise ValueError("The length of capacity must be equal to n_fac.")
+        if len(self.mean_vec) != self.n_fac:
+            raise ValueError("The length of mean_vec must be equal to n_fac.")
+        if len(self.cov) != self.n_fac:
+            raise ValueError("The length of cov must be equal to n_fac.")
+        if len(self.cov[0]) != self.n_fac:
+            raise ValueError("The length of cov[0] must be equal to n_fac.")
+
+        return self
+
+
+class FacilitySizingMaxServiceConfig(BaseModel):
+    """Configuration model for Facility Sizing Max Service Problem.
+
+    Max Service for Facility Sizing simulation-optimization problem.
+    """
+
+    initial_solution: Annotated[
+        tuple[float, ...],
+        Field(
+            default_factory=lambda: (100,) * NUM_FACILITIES,
+            description="Initial solution from which solvers start.",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=10000,
+            description="Max # of replications for a solver to take.",
+            gt=0,
+        ),
+    ]
+    installation_costs: Annotated[
+        tuple[float, ...],
+        Field(
+            default_factory=lambda: (1,) * NUM_FACILITIES,
+            description="Cost to install a unit of capacity at each facility.",
+        ),
+    ]
+    installation_budget: Annotated[
+        float,
+        Field(
+            default=500.0,
+            description="Total budget for installation costs.",
+            gt=0,
+        ),
+    ]
+
+    def _check_installation_costs(self) -> None:
+        if len(self.installation_costs) != NUM_FACILITIES:
+            raise ValueError("The length of installation_costs must equal n_fac.")
+        if any(elem < 0 for elem in self.installation_costs):
+            raise ValueError("All elements in installation_costs must be non-negative.")
+
+    @model_validator(mode="after")
+    def _validate_problem(self) -> Self:
+        self._check_installation_costs()
+        return self
+
+
+class FacilitySizingTotalCostConfig(BaseModel):
+    """Configuration model for Facility Sizing Total Cost Problem.
+
+    Min Total Cost for Facility Sizing simulation-optimization problem.
+    """
+
+    initial_solution: Annotated[
+        tuple[float, ...],
+        Field(
+            default_factory=lambda: (300,) * NUM_FACILITIES,
+            description="Initial solution from which solvers start.",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=10000,
+            description="Max # of replications for a solver to take.",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+    installation_costs: Annotated[
+        tuple[float, ...],
+        Field(
+            default_factory=lambda: (1,) * NUM_FACILITIES,
+            description="Cost to install a unit of capacity at each facility.",
+        ),
+    ]
+    epsilon: Annotated[
+        float,
+        Field(
+            default=0.05,
+            description="Maximum allowed probability of stocking out.",
+            ge=0,
+            le=1,
+        ),
+    ]
+
+    def _check_installation_costs(self) -> None:
+        if len(self.installation_costs) != NUM_FACILITIES:
+            raise ValueError("The length of installation_costs must equal n_fac.")
+        if any(elem < 0 for elem in self.installation_costs):
+            raise ValueError(
+                "All elements in installation_costs must be greater than or equal to 0."
+            )
+
+    @model_validator(mode="after")
+    def _validate_problem(self) -> Self:
+        self._check_installation_costs()
+        return self
 
 
 class DemandInputModel(InputModel):
@@ -37,68 +216,11 @@ class FacilitySize(Model):
     distribution. Returns the probability of violating demand in each scenario.
     """
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "FACSIZE"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Facility Sizing"
-
-    @classproperty
-    @override
-    def n_rngs(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_responses(cls) -> int:
-        return 3
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "mean_vec": {
-                "description": (
-                    "location parameters of the multivariate normal distribution"
-                ),
-                "datatype": list,
-                "default": [100] * NUM_FACILITIES,
-            },
-            "cov": {
-                "description": "covariance of multivariate normal distribution",
-                "datatype": list,
-                "default": [
-                    [2000, 1500, 500],
-                    [1500, 2000, 750],
-                    [500, 750, 2000],
-                ],
-            },
-            "capacity": {
-                "description": "capacity",
-                "datatype": list,
-                "default": [150, 300, 400],
-            },
-            "n_fac": {
-                "description": "number of facilities",
-                "datatype": int,
-                "default": NUM_FACILITIES,
-                "isDatafarmable": False,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "mean_vec": self._check_mean_vec,
-            "cov": self._check_cov,
-            "capacity": self._check_capacity,
-            "n_fac": self._check_n_fac,
-        }
+    config_class: ClassVar[type[BaseModel]] = FacilitySizeConfig
+    class_name_abbr: str = "FACSIZE"
+    class_name: str = "Facility Sizing"
+    n_rngs: int = 1
+    n_responses: int = 3
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the FacilitySize model.
@@ -111,27 +233,6 @@ class FacilitySize(Model):
         super().__init__(fixed_factors)
 
         self.demand_model = DemandInputModel()
-
-    def _check_mean_vec(self) -> None:
-        if any(mean <= 0 for mean in self.factors["mean_vec"]):
-            raise ValueError("All elements in mean_vec must be greater than 0.")
-
-    def _check_cov(self) -> bool:
-        try:
-            np.linalg.cholesky(np.array(self.factors["cov"]))
-            return True
-        except np.linalg.LinAlgError as err:
-            if "Matrix is not positive definite" in str(err):
-                return False
-            raise
-
-    def _check_capacity(self) -> None:
-        if len(self.factors["capacity"]) != self.factors["n_fac"]:
-            raise ValueError("The length of capacity must equal n_fac.")
-
-    def _check_n_fac(self) -> None:
-        if self.factors["n_fac"] <= 0:
-            raise ValueError("n_fac must be greater than 0.")
 
     @override
     def check_simulatable_factors(self) -> bool:
@@ -188,103 +289,20 @@ class FacilitySize(Model):
 class FacilitySizingTotalCost(Problem):
     """Base class to implement simulation-optimization problems."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "FACSIZE-1"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Min Total Cost for Facility Sizing"
-
-    @classproperty
-    @override
-    def n_objectives(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_stochastic_constraints(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def minmax(cls) -> tuple[int]:
-        return (-1,)
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.STOCHASTIC
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_available(cls) -> bool:
-        return True
-
-    @classproperty
-    @override
-    def optimal_value(cls) -> None:
-        return None
-
-    @classproperty
-    @override
-    def optimal_solution(cls) -> None:
-        # return (185, 185, 185)
-        return None
-
-    @classproperty
-    @override
-    def model_default_factors(cls) -> dict:
-        return {}
-
-    @classproperty
-    @override
-    def model_decision_factors(cls) -> set[str]:
-        return {"capacity"}
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "initial_solution": {
-                "description": "Initial solution from which solvers start.",
-                "datatype": tuple,
-                "default": (300,) * NUM_FACILITIES,
-            },
-            "budget": {
-                "description": "Max # of replications for a solver to take.",
-                "datatype": int,
-                "default": 10000,
-                "isDatafarmable": False,
-            },
-            "installation_costs": {
-                "description": "Cost to install a unit of capacity at each facility.",
-                "datatype": tuple,
-                "default": (1,) * NUM_FACILITIES,
-            },
-            "epsilon": {
-                "description": "Maximum allowed probability of stocking out.",
-                "datatype": float,
-                "default": 0.05,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-            "installation_costs": self._check_installation_costs,
-            "epsilon": self._check_epsilon,
-        }
+    config_class: ClassVar[type[BaseModel]] = FacilitySizingTotalCostConfig
+    model_class: ClassVar[type[Model]] = FacilitySize
+    class_name_abbr: str = "FACSIZE-1"
+    class_name: str = "Min Total Cost for Facility Sizing"
+    n_objectives: int = 1
+    n_stochastic_constraints: int = 1
+    minmax: tuple[int] = (-1,)
+    constraint_type: ConstraintType = ConstraintType.STOCHASTIC
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_available: bool = True
+    optimal_value: float | None = None
+    optimal_solution: tuple | None = None
+    model_default_factors: dict = {}
+    model_decision_factors: set[str] = {"capacity"}
 
     @property
     @override
@@ -300,44 +318,6 @@ class FacilitySizingTotalCost(Problem):
     @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
-
-    def __init__(
-        self,
-        name: str = "FACSIZE-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the FacilitySizingTotalCost problem.
-
-        Args:
-            name (str): User-specified name for the problem.
-            fixed_factors (dict | None): User-specified problem factors.
-                If None, default values are used.
-            model_fixed_factors (dict | None): Subset of user-specified
-                non-decision factors to pass through to the model.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(
-            name=name,
-            fixed_factors=fixed_factors,
-            model_fixed_factors=model_fixed_factors,
-            model=FacilitySize,
-        )
-
-    def _check_installation_costs(self) -> None:
-        if len(self.factors["installation_costs"]) != self.model.factors["n_fac"]:
-            raise ValueError("The length of installation_costs must equal n_fac.")
-        if any(elem < 0 for elem in self.factors["installation_costs"]):
-            raise ValueError(
-                "All elements in installation_costs must be greater than or equal to 0."
-            )
-
-    def _check_epsilon(self) -> None:
-        if self.factors["epsilon"] < 0 or self.factors["epsilon"] > 1:
-            raise ValueError(
-                "epsilon must be greater than or equal to 0 and less than or equal "
-                "to 1."
-            )
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
@@ -409,102 +389,20 @@ class FacilitySizingTotalCost(Problem):
 class FacilitySizingMaxService(Problem):
     """Base class to implement simulation-optimization problems."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "FACSIZE-2"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Max Service for Facility Sizing"
-
-    @classproperty
-    @override
-    def n_objectives(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_stochastic_constraints(cls) -> int:
-        return 0
-
-    @classproperty
-    @override
-    def minmax(cls) -> tuple[int]:
-        return (1,)
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.DETERMINISTIC
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_available(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def optimal_value(cls) -> float | None:
-        return None
-
-    @classproperty
-    @override
-    def optimal_solution(cls) -> None:
-        # return (175, 179, 143)
-        return None
-
-    @classproperty
-    @override
-    def model_default_factors(cls) -> dict:
-        return {}
-
-    @classproperty
-    @override
-    def model_decision_factors(cls) -> set[str]:
-        return {"capacity"}
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "initial_solution": {
-                "description": "Initial solution from which solvers start.",
-                "datatype": tuple,
-                "default": (100,) * NUM_FACILITIES,
-            },
-            "budget": {
-                "description": "Max # of replications for a solver to take.",
-                "datatype": int,
-                "default": 10000,
-            },
-            "installation_costs": {
-                "description": "Cost to install a unit of capacity at each facility.",
-                "datatype": tuple,
-                "default": (1,) * NUM_FACILITIES,
-            },
-            "installation_budget": {
-                "description": "Total budget for installation costs.",
-                "datatype": float,
-                "default": 500.0,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-            "installation_costs": self._check_installation_costs,
-            "installation_budget": self._check_installation_budget,
-        }
+    config_class: ClassVar[type[BaseModel]] = FacilitySizingMaxServiceConfig
+    model_class: ClassVar[type[Model]] = FacilitySize
+    class_name_abbr: str = "FACSIZE-2"
+    class_name: str = "Max Service for Facility Sizing"
+    n_objectives: int = 1
+    n_stochastic_constraints: int = 0
+    minmax: tuple[int] = (1,)
+    constraint_type: ConstraintType = ConstraintType.DETERMINISTIC
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_available: bool = False
+    optimal_value: float | None = None
+    optimal_solution: tuple | None = None
+    model_default_factors: dict = {}
+    model_decision_factors: set[str] = {"capacity"}
 
     @property
     @override
@@ -520,38 +418,6 @@ class FacilitySizingMaxService(Problem):
     @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
-
-    def __init__(
-        self,
-        name: str = "FACSIZE-2",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the FacilitySizingMaxService problem.
-
-        Args:
-            name (str): User-specified name for the problem.
-            fixed_factors (dict | None): User-specified problem factors.
-                If None, default values are used.
-            model_fixed_factors (dict | None): Subset of user-specified
-                non-decision factors to pass through to the model.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(
-            name=name,
-            fixed_factors=fixed_factors,
-            model_fixed_factors=model_fixed_factors,
-            model=FacilitySize,
-        )
-
-    def _check_installation_costs(self) -> bool:
-        return not (
-            len(self.factors["installation_costs"]) != self.model.factors["n_fac"]
-            or any(elem < 0 for elem in self.factors["installation_costs"])
-        )
-
-    def _check_installation_budget(self) -> bool:
-        return self.factors["installation_budget"] > 0
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
