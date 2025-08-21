@@ -53,10 +53,15 @@ class FCSA(Solver):  # noqa: N801
                 "datatype": float,
                 "default": 0.1,
             },
-            "step_f": {
-                "description": "step size function",
-                "datatype": Callable,
-                "default": cls.default_step_f,
+            "step_type": {
+                "description": "constant or decaying step size?",
+                "datatype": str,
+                "default": "const",
+            },
+            "step_mult": {
+                "description": "value of const step size or multiplier of k for decaying",
+                "datatype": float,
+                "default": 0.1,
             },
             "tolerance": {
                 "description": "tolerence function",
@@ -104,7 +109,8 @@ class FCSA(Solver):  # noqa: N801
             "crn_across_solns": self.check_crn_across_solns,  # type: ignore
             "r": self.check_r,
             "h": self.return_true,
-            "step_f": self.return_true,
+            "step_const": self.check_step_const,
+            "step_mult": self.check_step_mult,
             "tolerance": self.return_true,
             "feas_const": self.check_feas_const,
             "search_direction": self.check_search_direction,
@@ -126,15 +132,18 @@ class FCSA(Solver):  # noqa: N801
 
         super().__init__(name, fixed_factors)
 
-    def default_step_f(self, k: int) -> float:
-        """
-        take in the current iteration k
-        """
-        return .1
 
     def check_r(self)-> None:
         if self.factors["r"] <= 0:
             raise ValueError("Number of replications must be greater than 0.")
+    
+    def check_step_const(self)-> None:
+        if self.factors["step_const"] not in ("const", "decay"):
+            raise ValueError("Step size type not supported. Choose 'const' or 'decay'.")
+            
+    def check_step_mult(self)-> None:
+        if self.factors["step_mult"] <= 0:
+            raise ValueError("Step size multiplier must be positive.")
 
     def check_feas_const(self )-> None:
         if self.factors["feas_const"] < 0:
@@ -180,6 +189,19 @@ class FCSA(Solver):  # noqa: N801
             return gradient, budget
         else:
             return Fval, gradient, budget
+
+    def step_f(self, k: int) -> float:
+        """
+        take in the current iteration k
+        """
+        mult = self.factors["step_mult"]
+        if self.factors["step_type"] == "const":
+            step = mult
+        else: #decaying step size
+            step = 1/(mult*k)
+        
+        
+        return step
 
     def get_FD_grad(self, x, problem, h, r):
         """
@@ -444,8 +466,8 @@ class FCSA(Solver):  # noqa: N801
                     d = grad/np.linalg.norm(grad)
                 else:
                     d = grad
-
-            t = self.factors["step_f"](self,k=k)
+            
+            t = self.step_f(k)
 
             new_x = self.prox_fn(t * d, cur_x, Ci, di, Ce, de, lower, upper)
             candidate_solution = self.create_new_solution(tuple(new_x), problem)

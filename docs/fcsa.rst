@@ -54,6 +54,14 @@ Solver Factors:
 
     * Default: 10^(-2)
 
+* step_type : type of step size used by prox to find next solution. Can be "const" or "decay".
+
+	* Default: "const"
+    
+* step_mult : value of step size for constant, multiplier of k (iterration index) for decaying.
+	
+    * Default : 0.1
+
 * search_direction : determines how solver finds the search direction. CSA: use gradient of most violated constraint, CSA-M: solve NLP with all violated constraints, FCSA: solve NLP with all violated constraints and objective gradient
 
     * Default: "FCSA"
