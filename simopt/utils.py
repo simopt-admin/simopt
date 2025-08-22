@@ -132,9 +132,9 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
     ]
 
     # Compute total width of the table
-    # There's 3 seperator characters between each column
-    seperator_lengths = 3 * (len(headers) - 1)
-    total_width = sum(max_widths) + seperator_lengths
+    # There's 3 separator characters between each column
+    separator_lengths = 3 * (len(headers) - 1)
+    total_width = sum(max_widths) + separator_lengths
     # If table is shorter than name, expand last column
     if total_width < len(name):
         shortfall = len(name) - total_width
