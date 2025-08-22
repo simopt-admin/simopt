@@ -1,5 +1,6 @@
 """Utility functions for simopt."""
 
+import sys
 from pathlib import Path
 from typing import Callable, Generic, Optional, TypeVar
 
@@ -109,3 +110,102 @@ def resolve_file_path(target: str | Path, directory: str | Path) -> Path:
         return Path(target).resolve()
     # If it's a relative path, resolve it against the directory
     return (Path(directory) / target).resolve()
+
+
+def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None:
+    """Print a table with headers and data.
+
+    Args:
+        name (str): Name of the table.
+        headers (list[str]): List of column headers.
+        data (list[tuple]): List of rows, each row is a tuple of values.
+    """
+    # Convert data out of dict (if necessary)
+    if isinstance(data, dict):
+        data = list(data.items())
+    # Calculate the maximum length of each column
+    data_widths = [max(len(str(item)) for item in col) for col in zip(*data)]
+    header_widths = [len(header) for header in headers]
+    max_widths = [
+        max(header_width, col_width)
+        for header_width, col_width in zip(header_widths, data_widths)
+    ]
+
+    # Compute total width of the table
+    # There's 3 separator characters between each column
+    separator_lengths = 3 * (len(headers) - 1)
+    total_width = sum(max_widths) + separator_lengths
+    # If table is shorter than name, expand last column
+    if total_width < len(name):
+        shortfall = len(name) - total_width
+        max_widths[-1] += shortfall
+        total_width = len(name)
+
+    # Center title in the table
+    title_indent_count = (total_width - len(name)) // 2
+    title_lead = " " * title_indent_count
+    title_follow = " " * (total_width - title_indent_count - len(name))
+    title = f"{title_lead}{name}{title_follow}"
+
+    if sys.stdout.isatty():
+        # Unicode box-drawing characters
+        corner_tl = "┌"
+        corner_tr = "┐"
+        corner_bl = "└"
+        corner_br = "┘"
+        tee_left = "├"
+        tee_right = "┤"
+        dash = "─"
+        plus = f"{dash}┼{dash}"
+        pipe = "│"
+
+        reset = "\033[0m"
+        bg_grey = "\033[48;5;235m"
+        bg_black = "\033[48;5;0m"
+        fg_white = "\033[38;5;252m"
+    else:
+        # ASCII fallback
+        corner_tl = "+"
+        corner_tr = "+"
+        corner_bl = "+"
+        corner_br = "+"
+        tee_left = "+"
+        tee_right = "+"
+        dash = "-"
+        plus = "-+-"
+        pipe = "|"
+
+        reset = ""
+        bg_grey = ""
+        bg_black = ""
+        fg_white = ""
+
+    underline_row = dash * (total_width + 2)  # Extend to the tees
+    header_row = f" {pipe} ".join(
+        f"{header:<{width}}" for header, width in zip(headers, max_widths)
+    )
+    sep_row = plus.join(dash * width for width in max_widths)
+    rows = []
+    for row in data:
+        row_str = f" {pipe} ".join(
+            f"{item!s:>{width}}"
+            if isinstance(item, (int, float))
+            else f"{item!s:<{width}}"
+            for item, width in zip(row, max_widths)
+        )
+        rows.append(row_str)
+
+    border_width = total_width + 2  # Extend 2 extra spaces
+
+    # Print the table
+    print(f"{bg_black}{fg_white}", end="")  # Override background and foreground colors
+    print(f"{corner_tl}{dash * border_width}{corner_tr}")
+    print(f"{pipe} {title} {pipe}")
+    print(f"{tee_left}{underline_row}{tee_right}")
+    print(f"{pipe} {header_row} {pipe}")
+    print(f"{pipe} {sep_row} {pipe}")
+    for i, row in enumerate(rows):
+        row_bg = bg_grey if i % 2 else bg_black
+        print(f"{bg_black}{fg_white}{pipe}{row_bg} {row} {bg_black}{pipe}{reset}")
+    print(f"{corner_bl}{dash * border_width}{corner_br}")
+    print(reset, end="")  # Reset colors

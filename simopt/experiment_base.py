@@ -310,6 +310,9 @@ class ProblemSolver:
         self.has_postreplicated = False
         self.has_postnormalized = False
         self.xstar = ()
+        self.x0 = ()
+        self.objective_curves = []
+        self.progress_curves = []
 
         # Initialize solver.
         if isinstance(solver, Solver):  # Method 2
@@ -1341,8 +1344,8 @@ class PlotType(Enum):
     SOLVE_TIME_CDF = "solve_time_cdf"
     CDF_SOLVABILITY = "cdf_solvability"
     QUANTILE_SOLVABILITY = "quantile_solvability"
-    DIFF_CDF_SOLVABILITY = "difference_of_cdf_solvability"
-    DIFF_QUANTILE_SOLVABILITY = "difference_of_quantile_solvability"
+    DIFFERENCE_OF_CDF_SOLVABILITY = "difference_of_cdf_solvability"
+    DIFFERENCE_OF_QUANTILE_SOLVABILITY = "difference_of_quantile_solvability"
     AREA = "area"
     BOX = "box"
     VIOLIN = "violin"
@@ -1414,8 +1417,8 @@ def bootstrap_procedure(
         PlotType.SOLVE_TIME_CDF,
         PlotType.CDF_SOLVABILITY,
         PlotType.QUANTILE_SOLVABILITY,
-        PlotType.DIFF_CDF_SOLVABILITY,
-        PlotType.DIFF_QUANTILE_SOLVABILITY,
+        PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
+        PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
     ]
     if plot_type not in acceptable_plot_types:
         error_msg = (
@@ -1537,8 +1540,8 @@ def functional_of_curves(
             - PlotType.SOLVE_TIME_CDF
             - PlotType.CDF_SOLVABILITY
             - PlotType.QUANTILE_SOLVABILITY
-            - PlotType.DIFF_CDF_SOLVABILITY
-            - PlotType.DIFF_QUANTILE_SOLVABILITY
+            - PlotType.DIFFERENCE_OF_CDF_SOLVABILITY
+            - PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY
         beta (float, optional): Quantile level (0 < beta < 1). Defaults to 0.5.
         solve_tol (float, optional): Optimality gap for defining a solved instance
             (0 < solve_tol ≤ 1). Defaults to 0.1.
@@ -1598,7 +1601,7 @@ def functional_of_curves(
                 for curves in solver_1_curves
             ]
         ),
-        PlotType.DIFF_CDF_SOLVABILITY: lambda: curve_utils.difference_of_curves(
+        PlotType.DIFFERENCE_OF_CDF_SOLVABILITY: lambda: curve_utils.difference_of_curves(  # noqa: E501
             curve_utils.mean_of_curves(
                 [
                     curve_utils.cdf_of_curves_crossing_times(
@@ -1616,7 +1619,7 @@ def functional_of_curves(
                 ]
             ),
         ),
-        PlotType.DIFF_QUANTILE_SOLVABILITY: lambda: curve_utils.difference_of_curves(
+        PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY: lambda: curve_utils.difference_of_curves(  # noqa: E501
             curve_utils.mean_of_curves(
                 [
                     curve_utils.quantile_cross_jump(
@@ -2390,10 +2393,31 @@ def plot_area_scatterplots(
                         [mean_estimator - mean_bs_conf_int_lb],
                         [mean_bs_conf_int_ub - mean_estimator],
                     ]
-                    y_err = [
-                        [std_dev_estimator - std_dev_bs_conf_int_lb],
-                        [std_dev_bs_conf_int_ub - std_dev_estimator],
-                    ]
+                    y_err_x = std_dev_estimator - std_dev_bs_conf_int_lb
+                    y_err_y = std_dev_bs_conf_int_ub - std_dev_estimator
+                    # If y_err_x or y_err_y is negative, set it to zero and warn.
+                    if y_err_x < 0 or y_err_y < 0:
+                        old_coords = (y_err_x, y_err_y)
+                        y_err_x = max(0, y_err_x)
+                        y_err_y = max(0, y_err_y)
+                        new_coords = (y_err_x, y_err_y)
+                        logging.warning(
+                            "Warning: Negative error values detected in "
+                            "area scatterplot. "
+                            f"Old coordinates: {old_coords}, "
+                            "Negative error values detected in area scatterplot "
+                            "error bars. "
+                            "This can occur due to statistical fluctuations in "
+                            "bootstrap confidence interval estimation, especially with "
+                            "small sample sizes or high variance. "
+                            "Negative error bars are set to zero, which may affect the "
+                            "visual interpretation of uncertainty. "
+                            f"Old coordinates: {old_coords}, "
+                            f"new coordinates: {new_coords}. "
+                            "If this occurs frequently, consider reviewing your data "
+                            "or increasing the number of replications."
+                        )
+                    y_err = [[y_err_x], [y_err_y]]
                     handle = plt.errorbar(
                         x=mean_estimator,
                         y=std_dev_estimator,
@@ -2540,8 +2564,8 @@ def plot_solvability_profiles(
         plot_type (PlotType): Type of solvability plot to produce:
             - PlotType.CDF_SOLVABILITY
             - PlotType.QUANTILE_SOLVABILITY
-            - PlotType.DIFF_CDF_SOLVABILITY
-            - PlotType.DIFF_QUANTILE_SOLVABILITY
+            - PlotType.DIFFERENCE_OF_CDF_SOLVABILITY
+            - PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY
         all_in_one (bool, optional): If True, plot all curves together.
             Defaults to True.
         n_bootstraps (int, optional): Number of bootstrap samples. Defaults to 100.
@@ -2614,7 +2638,7 @@ def plot_solvability_profiles(
                 solve_tol=solve_tol,
                 plot_title=plot_title,
             )
-        elif plot_type == PlotType.DIFF_CDF_SOLVABILITY:
+        elif plot_type == PlotType.DIFFERENCE_OF_CDF_SOLVABILITY:
             setup_plot(
                 plot_type=plot_type,
                 solver_name=solver_set_name,
@@ -2622,7 +2646,7 @@ def plot_solvability_profiles(
                 solve_tol=solve_tol,
                 plot_title=plot_title,
             )
-        elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
+        elif plot_type == PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY:
             setup_plot(
                 plot_type=plot_type,
                 solver_name=solver_set_name,
@@ -2649,14 +2673,14 @@ def plot_solvability_profiles(
                 sub_curve = None
                 if plot_type in [
                     PlotType.CDF_SOLVABILITY,
-                    PlotType.DIFF_CDF_SOLVABILITY,
+                    PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
                 ]:
                     sub_curve = curve_utils.cdf_of_curves_crossing_times(
                         curves=experiment.progress_curves, threshold=solve_tol
                     )
                 elif plot_type in [
                     PlotType.QUANTILE_SOLVABILITY,
-                    PlotType.DIFF_QUANTILE_SOLVABILITY,
+                    PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
                 ]:
                     sub_curve = curve_utils.quantile_cross_jump(
                         curves=experiment.progress_curves,
@@ -2754,8 +2778,8 @@ def plot_solvability_profiles(
                 )
             )
         elif plot_type in [
-            PlotType.DIFF_CDF_SOLVABILITY,
-            PlotType.DIFF_QUANTILE_SOLVABILITY,
+            PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
+            PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
         ]:
             if ref_solver is None:
                 error_msg = (
@@ -2823,7 +2847,7 @@ def plot_solvability_profiles(
                     conf_level=conf_level,
                     difference=True,
                 )
-            if plot_type == PlotType.DIFF_CDF_SOLVABILITY:
+            if plot_type == PlotType.DIFFERENCE_OF_CDF_SOLVABILITY:
                 file_list.append(
                     save_plot(
                         solver_name=solver_set_name,
@@ -2836,7 +2860,7 @@ def plot_solvability_profiles(
                         save_as_pickle=save_as_pickle,
                     )
                 )
-            elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
+            elif plot_type == PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY:
                 file_list.append(
                     save_plot(
                         solver_name=solver_set_name,
@@ -2865,14 +2889,14 @@ def plot_solvability_profiles(
                 sub_curve = None
                 if plot_type in [
                     PlotType.CDF_SOLVABILITY,
-                    PlotType.DIFF_CDF_SOLVABILITY,
+                    PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
                 ]:
                     sub_curve = curve_utils.cdf_of_curves_crossing_times(
                         curves=experiment.progress_curves, threshold=solve_tol
                     )
                 elif plot_type in [
                     PlotType.QUANTILE_SOLVABILITY,
-                    PlotType.DIFF_QUANTILE_SOLVABILITY,
+                    PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
                 ]:
                     sub_curve = curve_utils.quantile_cross_jump(
                         curves=experiment.progress_curves,
@@ -2972,8 +2996,8 @@ def plot_solvability_profiles(
                         )
                     )
         if plot_type in [
-            PlotType.DIFF_CDF_SOLVABILITY,
-            PlotType.DIFF_QUANTILE_SOLVABILITY,
+            PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
+            PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
         ]:
             if ref_solver is None:
                 error_msg = (
@@ -2986,7 +3010,7 @@ def plot_solvability_profiles(
             ref_solver_idx = solver_names.index(ref_solver)
             for solver_idx in range(n_solvers):
                 if solver_idx is not ref_solver_idx:
-                    if plot_type == PlotType.DIFF_CDF_SOLVABILITY:
+                    if plot_type == PlotType.DIFFERENCE_OF_CDF_SOLVABILITY:
                         file_list.append(
                             setup_plot(
                                 plot_type=plot_type,
@@ -2995,7 +3019,7 @@ def plot_solvability_profiles(
                                 solve_tol=solve_tol,
                             )
                         )
-                    elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
+                    elif plot_type == PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY:
                         file_list.append(
                             setup_plot(
                                 plot_type=plot_type,
@@ -3054,7 +3078,7 @@ def plot_solvability_profiles(
                                 conf_level=conf_level,
                                 difference=True,
                             )
-                    if plot_type == PlotType.DIFF_CDF_SOLVABILITY:
+                    if plot_type == PlotType.DIFFERENCE_OF_CDF_SOLVABILITY:
                         file_list.append(
                             save_plot(
                                 solver_name=experiments[solver_idx][0].solver.name,
@@ -3066,7 +3090,7 @@ def plot_solvability_profiles(
                                 save_as_pickle=save_as_pickle,
                             )
                         )
-                    elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
+                    elif plot_type == PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY:
                         file_list.append(
                             save_plot(
                                 solver_name=experiments[solver_idx][0].solver.name,
@@ -3386,8 +3410,9 @@ def setup_plot(
             - SOLVE_TIME_CDF: CDF of solve time.
             - CDF_SOLVABILITY: CDF solvability profile.
             - QUANTILE_SOLVABILITY: Quantile solvability profile.
-            - DIFF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
-            - DIFF_QUANTILE_SOLVABILITY: Difference of quantile solvability profiles.
+            - DIFFERENCE_OF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
+            - DIFFERENCE_OF_QUANTILE_SOLVABILITY: Difference of quantile solvability
+                profiles.
             - AREA: Area scatterplot.
             - BOX: Box plot of terminal progress.
             - VIOLIN: Violin plot of terminal progress.
@@ -3474,7 +3499,7 @@ def setup_plot(
             f"Profile of {round(beta, 2)}-Quantiles "
             f"of {round(solve_tol, 2)}-Solve Times"
         )
-    elif plot_type == PlotType.DIFF_CDF_SOLVABILITY:
+    elif plot_type == PlotType.DIFFERENCE_OF_CDF_SOLVABILITY:
         if solve_tol is None:
             error_msg = "Solve tolerance must be specified for cdf solvability plot."
             raise ValueError(error_msg)
@@ -3485,7 +3510,7 @@ def setup_plot(
         )
         plt.plot([0, 1], [0, 0], color="black", linestyle="--")
         plt.ylim((-1, 1))
-    elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
+    elif plot_type == PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY:
         if beta is None:
             error_msg = "Beta must be specified for quantile solvability plot."
             raise ValueError(error_msg)
@@ -3553,8 +3578,9 @@ def save_plot(
             - SOLVE_TIME_CDF: CDF of solve time.
             - CDF_SOLVABILITY: CDF solvability profile.
             - QUANTILE_SOLVABILITY: Quantile solvability profile.
-            - DIFF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
-            - DIFF_QUANTILE_SOLVABILITY: Difference of quantile solvability profiles.
+            - DIFFERENCE_OF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
+            - DIFFERENCE_OF_QUANTILE_SOLVABILITY: Difference of quantile solvability
+                profiles.
             - AREA: Area scatterplot.
             - TERMINAL_SCATTER: Scatterplot of mean and std dev of terminal progress.
         normalize (bool): Whether to normalize with respect to optimality gaps.
@@ -3590,9 +3616,9 @@ def save_plot(
         extra_0 = float(extra[0])
         extra_1 = float(extra[1])
         plot_name = f"profile_{extra_1}_quantile_{extra_0}_solve_times"
-    elif plot_type == PlotType.DIFF_CDF_SOLVABILITY:
+    elif plot_type == PlotType.DIFFERENCE_OF_CDF_SOLVABILITY:
         plot_name = f"diff_profile_cdf_{extra}_solve_times"
-    elif plot_type == PlotType.DIFF_QUANTILE_SOLVABILITY:
+    elif plot_type == PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY:
         if not (isinstance(extra, list) and len(extra) == 2):
             error_msg = (
                 "Extra must be a list of two floats for "
