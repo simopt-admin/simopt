@@ -496,7 +496,7 @@ class PlotWindow(Toplevel):
         elif self.plot_type_list[-1] == "CDF Difference Plot":
             path_name = plot_solvability_profiles(
                 list_exp_list,
-                plot_type=PlotType.DIFF_CDF_SOLVABILITY,
+                plot_type=PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
                 plot_conf_ints=bool(param_value_list[0]),
                 print_max_hw=bool(param_value_list[1]),
                 solve_tol=param_value_list[2],
@@ -515,7 +515,7 @@ class PlotWindow(Toplevel):
         elif self.plot_type_list[-1] == "Quantile Difference Plot":
             path_name = plot_solvability_profiles(
                 list_exp_list,
-                plot_type=PlotType.DIFF_QUANTILE_SOLVABILITY,
+                plot_type=PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
                 plot_conf_ints=bool(param_value_list[0]),
                 print_max_hw=bool(param_value_list[1]),
                 solve_tol=param_value_list[2],
