@@ -10,9 +10,11 @@ Description
 ^^^^^^^^^^^
 
 This model simulates a traffic system composed of arrival and departure nodes, direction and bidirectional roads, and a series of intersections.
-A visual representation of this simplified traffic light roadmap, illustrating the flow of traffic within this structured network, is provided in this document.
+A visual representation of this simplified traffic light roadmap, illustrating the flow of traffic within this structured network when the number of vein and artery road are both 2, is provided in this document.
+ 
 
-The layout of the traffic network is shown below:
+
+The layout of the simplified traffic network is shown below:
 
 .. image:: _static/trafficlight_roadmap.png
    :alt: TrafficLight Roadmap
@@ -36,48 +38,48 @@ traffic patterns within a simplified urban environment.
 .. note:: 
     Cars are not allowed to turn left at intersections due to technical constraints of the model.
 
-Each car enters the system through one of six designated arrival nodes.
-The probability of selecting a given arrival node is proportional to its lambda value:
+Each car enters the system through one of the designated arrival nodes. In the visual representation above, there are six arrival nodes.
+The probability of selecting a given arrival direction (North, South, East or West), is proportional to its lambda value:
 
 .. math::
     :label: eq_lambda_selection
 
-    \frac{\lambda_i}{\sum_{j=0}^{7} \lambda_j}
-    \text{ where } \lambda_i \text{ is the arrival rate for node i.}
+    \frac{\lambda_i}{for j in range(n_artery):
+                        start_prob.append(a[0]/sum(a))
+                    for j in range(n_artery, 2*n_artery):
+                        start_prob.append(a[1]/sum(a))
+                    for j in range(2*n_artery, (2*n_artery) + n_vein):
+                        start_prob.append(a[2]/sum(a))
+                    for j in range((2*n_artery) + n_vein, (2*n_artery) + (2*n_vein)):
+                        start_prob.append(a[3]/sum(a)) }
+    \text{ where } \lambda_i \text{ is the arrival rate for direction i.}
 
 The ``lambdas`` parameter defines these arrival rates.
-It is a list of 8 values specifying the Poisson rate parameters (`\lambda`) for car arrivals at each peripheral node, listed in the following order:
+It is a list of 4 values specifying the Poisson rate parameters (`\lambda`) for car arrivals at each direction, listed in the following order:
 
 .. table:: Lambda Index Mappings
     :align: center
 
     +-------+------+----------+-------------------------+
-    | Index | Node | Entrance | Default :math:`\lambda` |
+    | Index | Direction | Entrance | Default :math:`\lambda` |
     +=======+======+==========+=========================+
-    | 0     | N1   | ✓        | 2                       |
+    | 0     | N         | ✓        | 4                       |
     +-------+------+----------+-------------------------+
-    | 1     | N2   | ✓        | 2                       |
+    | 1     | S         | ✓        | 4                       |
     +-------+------+----------+-------------------------+
-    | 2     | E1   |          | 0                       |
+    | 2     | E         | ✓        | 1                       |
     +-------+------+----------+-------------------------+
-    | 3     | E2   | ✓        | 1                       |
+    | 3     | W         | ✓        | 1                       |
     +-------+------+----------+-------------------------+
-    | 4     | S2   | ✓        | 2                       |
-    +-------+------+----------+-------------------------+
-    | 5     | S1   | ✓        | 2                       |
-    +-------+------+----------+-------------------------+
-    | 6     | W2   |          | 0                       |
-    +-------+------+----------+-------------------------+
-    | 7     | W1   | ✓        | 1                       |
-    +-------+------+----------+-------------------------+
+ 
 
-Cars are not allowed to spawn at exit-only nodes (E1 and W2), so ``lambdas[2]`` and ``lambdas[6]`` must be set to ``0``.
-Additionally, the car generation rates at vein nodes (E2 and W1) must not exceed the arrival rates at any of the artery entry points (N1, N2, S1, S2).
+Cars are not allowed to spawn at exit-only nodes (E1 and W2), so ``lambdas[2]`` and ``lambdas[3]`` must be set to ``1``.
+Additionally, the car generation rates at vein nodes (E2 and W1) must not exceed the arrival rates at any of the artery entry points (N, S).
 
 For each arriving car, the lambda value associated with the selected entry node determines the distribution of interarrival times.
-Once a car enters the system, it is randomly assigned a destination node based on a weighted transition matrix derived from the ``transition_probs`` factor.
+Once a car enters the system, it is randomly assigned a destination node based on a weighted transition matrix inputed by the user.
 
-Each entry in this matrix represents a *relative weight* indicating how likely a car is to travel from one node to another.
+Each entry in this matrix represents a *relative weight* indicating how likely a car is to travel from one direction to another.
 Larger weights increase the chances of selecting that path, but the values do not need to sum to 1.
 These weights are normalized internally during destination selection.
 
@@ -86,57 +88,49 @@ The symbolic node weight matrix is shown below:
 .. table:: Node Transition Weight Matrix (Unnormalized)
    :align: center
 
-   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
-   | From \\ To  | N1          | N2          | E1          | E2          | S2          | S1          | W2          | W1          |
-   +=============+=============+=============+=============+=============+=============+=============+=============+=============+
-   | N1          | X           | X           | X           | X           | X           | :math:`P_0` | :math:`P_1` | X           |
-   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
-   | N2          | :math:`P_2` | X           | :math:`P_3` | X           | :math:`P_2` | X           | :math:`P_3` | X           |
-   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
-   | E1          | X           | X           | X           | X           | X           | X           | X           | X           |
-   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
-   | E2          | :math:`P_4` | :math:`P_4` | :math:`P_5` | X           | :math:`P_4` | X           | :math:`P_6` | X           |
-   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
-   | S2          | X           | :math:`P_0` | :math:`P_1` | X           | X           | X           | X           | X           |
-   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
-   | S1          | :math:`P_2` | X           | :math:`P_3` | X           | :math:`P_2` | X           | :math:`P_3` | X           |
-   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
-   | W2          | X           | X           | X           | X           | X           | X           | X           | X           |
-   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
-   | W1          | :math:`P_4` | X           | :math:`P_6` | X           | :math:`P_4` | :math:`P_4` | :math:`P_5` | X           |
-   +-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------+
+   +-------------+-------------+-------------+-------------+-------------+
+   | From \\ To  | N           | S           | E           | W           | 
+   +=============+=============+=============+=============+=============+
+   | N           | X           | 2           | 1           | 1           |
+   +-------------+-------------+-------------+-------------+-------------+
+   | S           | 2           | X           | 1           | 1           |
+   +-------------+-------------+-------------+-------------+-------------+
+   | E           | 2           | 2           | X           | 1           |
+   +-------------+-------------+-------------+-------------+-------------+
+   | W           | 2           | 2           | 1           | X           |
+   +-------------+-------------+-------------+-------------+-------------+
+
 
 .. note:: 
     Cells marked with ``X`` represent disallowed transitions that cannot occur in the simulation.
     Each row is internally normalized to sum to 1 during routing.
 
-The symbolic parameters :math:`P_0` through :math:`P_6` correspond to entries in the ``transition_probs`` list.
 These values act as **weights** rather than strict probabilities, and are normalized during destination selection to ensure proper routing behavior.
-Specifically, :math:`P_i` refers to ``transition_probs[i]``.
 
-For example, given the default values of ``transition_probs = [7, 3, 3, 2, 5, 2, 3]``, the resulting transition matrix is:
 
-.. table:: Default Transition Matrix (Populated from ``transition_probs``)
+For example, given the default values in the transition weight matrix, the resulting probability matrix is:
+
+.. table:: Probability Matrix (Populated from ``transition_probs``)
    :align: center
 
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
    | From \\ To | N1   | N2  | E1  | E2  | S2  | S1  | W2  | W1  |
    +============+======+=====+=====+=====+=====+=====+=====+=====+
-   | N1         | X    | X   | X   | X   | X   | 70% | 30% | X   |
+   | N1         | X    | X   | X   | X   | X   | 67% | 33% | X   |
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
-   | N2         | 30%  | X   | 20% | X   | 30% | X   | 20% | X   |
+   | N2         | X    | X   | 25% | X   | 50% | X   | 25% | X   |
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
    | E1         | X    | X   | X   | X   | X   | X   | X   | X   |
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
-   | E2         | 25%  | 25% | 10% | X   | 25% | X   | 15% | X   |
+   | E2         | 20%  | 20% | X   | X   | 40% | X   | 20% | X   |
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
-   | S2         | X    | 70% | 30% | X   | X   | X   | X   | X   |
+   | S2         | X    | 67% | 33% | X   | X   | X   | X   | X   |
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
-   | S1         | 30%  | X   | 20% | X   | 30% | X   | 20% | X   |
+   | S1         | 50%  | X   | 25% | X   | X   | X   | 25% | X   |
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
    | W2         | X    | X   | X   | X   | X   | X   | X   | X   |
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
-   | W1         | 25%  | X   | 15% | X   | 25% | 25% | 10% | X   |
+   | W1         | 40%  | X   | 20% | X   | 20% | 20% | X   | X   |
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
 
 Each vehicle finds the shortest available path to its destination using the current road network. The traffic system opens at 8:00 AM and closes at 10:00 AM. Time is measured in seconds. When the system closes, any remaining cars in the queue exit immediately.
@@ -153,8 +147,8 @@ There are 3 sources of randomness in this model:
 Model Factors
 ^^^^^^^^^^^^^
 
-* lambdas: Rate parameter of the time interval distribution, in seconds, for generating each car.  
-    * Default: [2, 2, 0, 1, 2, 2, 0, 1]
+* lambdas: Rate parameter of the time interval distribution, in seconds, for generating each car. Ordered by direction: [N, S, E, W] 
+    * Default: [4, 4, 1, 1]
 * runtime: The number of seconds that the traffic model runs.
     * Default: 7200
 * numintersections: The number of intersections in the traffic model.
@@ -167,8 +161,11 @@ Model Factors
     * Default: 4.5
 * reaction: Reaction time in seconds of cars in queue.
     * Default: 0.1
-* transition_probs: The transition probability of a car end at each point from their current starting point.
-    * Default: [7, 3, 3, 2, 5, 2, 3]
+* transition_probs: The transition probability of a car end at each point from their current starting point. Ordered as a direction-to-direction matrix: [N, S, E, W] x [N, S, E, W]
+    * Default: [[0, 2, 1, 1],
+                [2, 0, 1, 1],
+                [2, 2, 0, 1],
+                [2, 2, 1, 0]]
 * pause: The pause in seconds before move on a green light.
     * Default: 0.1
 * car_distance: The distance between cars.
@@ -181,7 +178,12 @@ Model Factors
     * Default: [10, 10, 10, 10]
 * redlight_veins : The length of redlight duration of vein roads in each intersection.
     * Default : [20, 20, 20, 20]
-
+* n_veins: The number of vein roads in the system.
+    * Default: 2
+* n_arteries: The number of artery roads in the system.
+    * Default: 2
+* nodes: The number of nodes in the system.
+    * Default: 8
 Responses
 ^^^^^^^^^
 
