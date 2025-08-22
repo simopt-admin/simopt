@@ -1615,7 +1615,7 @@ def functional_of_curves(
                 for curves in solver_1_curves
             ]
         ),
-        PlotType.DIFFERENCE_OF_CDF_SOLVABILITY: lambda: curve_utils.difference_of_curves(
+        PlotType.DIFFERENCE_OF_CDF_SOLVABILITY: lambda: curve_utils.difference_of_curves(  # noqa: E501
             curve_utils.mean_of_curves(
                 [
                     curve_utils.cdf_of_curves_crossing_times(
@@ -1633,7 +1633,7 @@ def functional_of_curves(
                 ]
             ),
         ),
-        PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY: lambda: curve_utils.difference_of_curves(
+        PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY: lambda: curve_utils.difference_of_curves(  # noqa: E501
             curve_utils.mean_of_curves(
                 [
                     curve_utils.quantile_cross_jump(
@@ -3415,7 +3415,8 @@ def setup_plot(
             - CDF_SOLVABILITY: CDF solvability profile.
             - QUANTILE_SOLVABILITY: Quantile solvability profile.
             - DIFFERENCE_OF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
-            - DIFFERENCE_OF_QUANTILE_SOLVABILITY: Difference of quantile solvability profiles.
+            - DIFFERENCE_OF_QUANTILE_SOLVABILITY: Difference of quantile solvability
+                profiles.
             - AREA: Area scatterplot.
             - BOX: Box plot of terminal progress.
             - VIOLIN: Violin plot of terminal progress.
@@ -3582,7 +3583,8 @@ def save_plot(
             - CDF_SOLVABILITY: CDF solvability profile.
             - QUANTILE_SOLVABILITY: Quantile solvability profile.
             - DIFFERENCE_OF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
-            - DIFFERENCE_OF_QUANTILE_SOLVABILITY: Difference of quantile solvability profiles.
+            - DIFFERENCE_OF_QUANTILE_SOLVABILITY: Difference of quantile solvability
+                profiles.
             - AREA: Area scatterplot.
             - TERMINAL_SCATTER: Scatterplot of mean and std dev of terminal progress.
         normalize (bool): Whether to normalize with respect to optimality gaps.
