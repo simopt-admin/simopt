@@ -1,0 +1,545 @@
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+/home/derekwang/data/data/Desktop/Important/Research/simopt-workspace/test0/simopt/experiment_base.py:3416: UserWarning: Starting a Matplotlib GUI outside of the main thread will likely fail.
+  plt.figure()
+solver ADAM, problem AMUSEMENTPARK-1 done
+solver ADAM, problem CHESS-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ADAM, problem CNTNEWS-1 done
+solver ADAM, problem CONTAM-2 done
+solver ADAM, problem CONTAM-1 done
+solver ADAM, problem DUALSOURCING-1 done
+solver ADAM, problem DYNAMNEWS-1 done
+solver ADAM, problem EXAMPLE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ADAM, problem FACSIZE-2 done
+solver ADAM, problem FACSIZE-1 done
+solver ADAM, problem FIXEDSAN-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ADAM, problem HOTEL-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ADAM, problem IRONORE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ADAM, problem IRONORECONT-1 done
+solver ADAM, problem MM1-1 done
+solver ADAM, problem NETWORK-1 failed due to NumPy boolean array indexing assignment cannot assign 10 input values to the 6 output values where the mask is true
+solver ADAM, problem NETWORK-1 done
+solver ADAM, problem PARAMESTI-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ADAM, problem RMITD-1 done
+solver ADAM, problem SAN-1 done
+solver ADAM, problem SSCONT-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ADAM, problem TABLEALLOCATION-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+/home/derekwang/data/data/Desktop/Important/Research/simopt-workspace/test0/simopt/experiment_base.py:3416: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  plt.figure()
+solver ALOE, problem AMUSEMENTPARK-1 done
+solver ALOE, problem CHESS-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ALOE, problem CNTNEWS-1 done
+solver ALOE, problem CONTAM-2 done
+solver ALOE, problem CONTAM-1 done
+solver ALOE, problem DUALSOURCING-1 done
+solver ALOE, problem DYNAMNEWS-1 done
+solver ALOE, problem EXAMPLE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ALOE, problem FACSIZE-2 done
+solver ALOE, problem FACSIZE-1 done
+solver ALOE, problem FIXEDSAN-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ALOE, problem HOTEL-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ALOE, problem IRONORE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ALOE, problem IRONORECONT-1 done
+solver ALOE, problem MM1-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ALOE, problem NETWORK-1 done
+solver ALOE, problem PARAMESTI-1 done
+solver ALOE, problem RMITD-1 failed due to NumPy boolean array indexing assignment cannot assign 3 input values to the 2 output values where the mask is true
+solver ALOE, problem RMITD-1 done
+solver ALOE, problem SAN-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ALOE, problem SSCONT-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ALOE, problem TABLEALLOCATION-1 done
+solver ASTRODF, problem AMUSEMENTPARK-1 done
+solver ASTRODF, problem CHESS-1 timed out
+solver ASTRODF, problem CHESS-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ASTRODF, problem CNTNEWS-1 done
+solver ASTRODF, problem CONTAM-2 done
+solver ASTRODF, problem CONTAM-1 done
+solver ASTRODF, problem DUALSOURCING-1 done
+solver ASTRODF, problem DYNAMNEWS-1 done
+solver ASTRODF, problem EXAMPLE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ASTRODF, problem FACSIZE-2 done
+solver ASTRODF, problem FACSIZE-1 done
+solver ASTRODF, problem FIXEDSAN-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ASTRODF, problem HOTEL-1 done
+solver ASTRODF, problem IRONORE-1 done
+solver ASTRODF, problem IRONORECONT-1 done
+solver ASTRODF, problem MM1-1 done
+solver ASTRODF, problem NETWORK-1 done
+solver ASTRODF, problem PARAMESTI-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ASTRODF, problem RMITD-1 done
+solver ASTRODF, problem SAN-1 done
+solver ASTRODF, problem SSCONT-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver ASTRODF, problem TABLEALLOCATION-1 done
+solver NELDMD, problem AMUSEMENTPARK-1 failed due to Budget is too small for a good quality run of Nelder-Mead.
+solver NELDMD, problem AMUSEMENTPARK-1 done
+solver NELDMD, problem CHESS-1 timed out
+solver NELDMD, problem CHESS-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver NELDMD, problem CNTNEWS-1 done
+solver NELDMD, problem CONTAM-2 failed due to operands could not be broadcast together with shapes (25,) (5,) (25,) 
+solver NELDMD, problem CONTAM-2 done
+solver NELDMD, problem CONTAM-1 failed due to operands could not be broadcast together with shapes (25,) (5,) (25,) 
+solver NELDMD, problem CONTAM-1 done
+solver NELDMD, problem DUALSOURCING-1 done
+solver NELDMD, problem DYNAMNEWS-1 done
+solver NELDMD, problem EXAMPLE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver NELDMD, problem FACSIZE-2 done
+solver NELDMD, problem FACSIZE-1 done
+solver NELDMD, problem FIXEDSAN-1 done
+solver NELDMD, problem HOTEL-1 failed due to Budget is too small for a good quality run of Nelder-Mead.
+solver NELDMD, problem HOTEL-1 done
+solver NELDMD, problem IRONORE-1 done
+solver NELDMD, problem IRONORECONT-1 done
+solver NELDMD, problem MM1-1 done
+solver NELDMD, problem NETWORK-1 done
+solver NELDMD, problem PARAMESTI-1 done
+solver NELDMD, problem RMITD-1 done
+solver NELDMD, problem SAN-1 done
+solver NELDMD, problem SSCONT-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver NELDMD, problem TABLEALLOCATION-1 done
+solver RNDSRCH, problem AMUSEMENTPARK-1 done
+solver RNDSRCH, problem CHESS-1 done
+solver RNDSRCH, problem CNTNEWS-1 done
+solver RNDSRCH, problem CONTAM-2 done
+solver RNDSRCH, problem CONTAM-1 done
+solver RNDSRCH, problem DUALSOURCING-1 done
+solver RNDSRCH, problem DYNAMNEWS-1 done
+solver RNDSRCH, problem EXAMPLE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver RNDSRCH, problem FACSIZE-2 done
+solver RNDSRCH, problem FACSIZE-1 done
+solver RNDSRCH, problem FIXEDSAN-1 done
+solver RNDSRCH, problem HOTEL-1 done
+solver RNDSRCH, problem IRONORE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver RNDSRCH, problem IRONORECONT-1 done
+solver RNDSRCH, problem MM1-1 done
+solver RNDSRCH, problem NETWORK-1 done
+solver RNDSRCH, problem PARAMESTI-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver RNDSRCH, problem RMITD-1 done
+solver RNDSRCH, problem SAN-1 done
+solver RNDSRCH, problem SSCONT-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver RNDSRCH, problem TABLEALLOCATION-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem AMUSEMENTPARK-1 done
+solver SPSA, problem CHESS-1 done
+solver SPSA, problem CNTNEWS-1 done
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:meangbar is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem CONTAM-2 done
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:meangbar is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem CONTAM-1 done
+solver SPSA, problem DUALSOURCING-1 done
+solver SPSA, problem DYNAMNEWS-1 done
+WARNING:root:meangbar is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem EXAMPLE-1 done
+WARNING:root:meangbar is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem FACSIZE-2 done
+solver SPSA, problem FACSIZE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem FIXEDSAN-1 done
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:meangbar is 0.0. Setting to 1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem HOTEL-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem IRONORE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem IRONORECONT-1 done
+solver SPSA, problem MM1-1 done
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:net_step_weight is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem NETWORK-1 done
+solver SPSA, problem PARAMESTI-1 done
+solver SPSA, problem RMITD-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem SAN-1 done
+solver SPSA, problem SSCONT-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver SPSA, problem TABLEALLOCATION-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver STRONG, problem AMUSEMENTPARK-1 done
+solver STRONG, problem CHESS-1 done
+WARNING:root:r_diff (stage I) is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:r_diff (stage I) is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:r_diff (stage I) is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:r_diff (stage I) is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:r_diff (stage I) is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:rdiff (stage II) is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:rr_diff is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:rr_diff is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:rr_diff is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:rr_diff is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:rr_diff is -0.0. Setting to -1e-15 to avoid division by zero.
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver STRONG, problem CNTNEWS-1 done
+solver STRONG, problem CONTAM-2 failed due to shape mismatch: indexing arrays could not be broadcast together with shapes (5,) (0,) 
+solver STRONG, problem CONTAM-2 done
+solver STRONG, problem CONTAM-1 failed due to shape mismatch: indexing arrays could not be broadcast together with shapes (5,) (0,) 
+solver STRONG, problem CONTAM-1 done
+solver STRONG, problem DUALSOURCING-1 done
+solver STRONG, problem DYNAMNEWS-1 done
+solver STRONG, problem EXAMPLE-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver STRONG, problem FACSIZE-2 done
+solver STRONG, problem FACSIZE-1 done
+solver STRONG, problem FIXEDSAN-1 done
+solver STRONG, problem HOTEL-1 failed due to shape mismatch: indexing arrays could not be broadcast together with shapes (56,) (0,) 
+solver STRONG, problem HOTEL-1 done
+solver STRONG, problem IRONORE-1 done
+solver STRONG, problem IRONORECONT-1 done
+solver STRONG, problem MM1-1 done
+solver STRONG, problem NETWORK-1 failed due to shape mismatch: indexing arrays could not be broadcast together with shapes (10,) (9,) 
+solver STRONG, problem NETWORK-1 done
+solver STRONG, problem PARAMESTI-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver STRONG, problem RMITD-1 done
+solver STRONG, problem SAN-1 done
+solver STRONG, problem SSCONT-1 done
+WARNING:root:initial_opt_gap is 0.0. Setting to 1e-15 to avoid division by zero.
+solver STRONG, problem TABLEALLOCATION-1 done
