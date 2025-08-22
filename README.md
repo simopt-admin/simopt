@@ -33,6 +33,8 @@ Full documentation for the source code can be found on our **[readthedocs page](
 ### Requirements
 - [Miniconda or Anaconda](https://www.anaconda.com/download)
     - If you already have a compatible IDE (such as VS Code), we've found that Miniconda will work fine at 1/10 of the size of Anaconda. Otherwise, you may need the Spyder IDE that comes with the full Anaconda distribution.
+    - It is ***highly recommended*** to check the box during installation to add Python/Miniconda/Anaconda to your system PATH.
+    - If you know you have Python installed but are getting a `Command not found` error when trying to use Python commands, then you may need to [add Python to your PATH](https://realpython.com/add-python-to-path/).
 - [VS Code](https://code.visualstudio.com/download) (optional)
     - This is a lightweight IDE that is compatible with Miniconda and is recommended for running the GUI
 - [Git](https://git-scm.com/downloads) (optional)
