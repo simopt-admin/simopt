@@ -1,7 +1,7 @@
 """Print the names and classes of all models, problems, and solvers.
 
 Since the directory is dynamically generated, this script can be used to quickly
-check its contents and lookup the abbreviat names of classes. This is especially
+check its contents and lookup the abbreviated names of classes. This is especially
 useful when it is unclear if the class's name has been overridden from the default.
 """
 
