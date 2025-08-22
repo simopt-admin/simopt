@@ -2419,7 +2419,12 @@ def plot_area_scatterplots(
                             "Warning: Negative error values detected in "
                             "area scatterplot. "
                             f"Old coordinates: {old_coords}, "
-                            f"new coordinates: {new_coords}. "
+                            "Negative error values detected in area scatterplot error bars. "
+                            "This can occur due to statistical fluctuations in bootstrap confidence interval estimation, "
+                            "especially with small sample sizes or high variance. Negative error bars are set to zero, "
+                            "which may affect the visual interpretation of uncertainty. "
+                            f"Old coordinates: {old_coords}, new coordinates: {new_coords}. "
+                            "If this occurs frequently, consider reviewing your data or increasing the number of replications."
                         )
                     y_err = [[y_err_x], [y_err_y]]
                     handle = plt.errorbar(
