@@ -245,7 +245,7 @@ class ADAM(Solver):
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -problem.minmax[0] * new_solution.objectives_mean
-        new_x = np.array(new_solution.x, dtype=float)
+        new_x = np.array(new_solution.x, dtype=np.float64)
 
         function_diff = np.zeros((problem.dim, 3))
 
