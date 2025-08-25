@@ -194,10 +194,10 @@ class ALOE(Solver):
             # Check variable bounds
             forward = np.isclose(
                 new_x, lower_bound, atol=self.factors["sensitivity"]
-            ).astype(int)
+            ).astype(np.int64)
             backward = np.isclose(
                 new_x, upper_bound, atol=self.factors["sensitivity"]
-            ).astype(int)
+            ).astype(np.int64)
             bounds_check = forward - backward
 
             if problem.gradient_available:
@@ -270,7 +270,7 @@ class ALOE(Solver):
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
-        new_x = np.array(new_solution.x, dtype=float)
+        new_x = np.array(new_solution.x, dtype=np.float64)
         # Store values for each dimension.
         function_diff = np.zeros((problem.dim, 3))
 

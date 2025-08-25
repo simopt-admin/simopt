@@ -167,6 +167,7 @@ class NelderMead(Solver):
         if self.factors["initial_spread"] <= 0:
             raise ValueError("Initial spread must be greater than 0.")
 
+    # FIXME: fix typing on `sort_sol`
     @override
     def solve(self, problem: Problem) -> None:
         # Designate random number generator for random sampling.
@@ -255,9 +256,12 @@ class NelderMead(Solver):
             # Shrink towards best if out of bounds.
             while True:
                 # Reflect worst and update sort_sol.
-                p_high = sort_sol[-1]  # Current worst point.
+                p_high = sort_sol[-1]  # Current worst point. # pyrefly: ignore
                 p_high_x = np.array(p_high.x)
-                p_cent = np.mean([s.x for s in sort_sol[:-1]], axis=0)
+                p_cent = np.mean(
+                    [s.x for s in sort_sol[:-1]],  # pyrefly: ignore
+                    axis=0,
+                )
                 p_refl = np.array(
                     (1 + self.factors["alpha"]) * p_cent
                     - self.factors["alpha"] * p_high_x
@@ -267,10 +271,11 @@ class NelderMead(Solver):
                 if np.equal(p_refl, self._check_const(p_refl, p_high_x)).all():
                     break
 
-                sol_0_x = np.array(sort_sol[0].x)
+                sol_0_x = np.array(sort_sol[0].x)  # pyrefly: ignore
                 for i in range(1, len(sort_sol)):
                     p_new = (
-                        self.factors["delta"] * np.array(sort_sol[i].x)
+                        self.factors["delta"]
+                        * np.array(sort_sol[i].x)  # pyrefly: ignore
                         + (1 - self.factors["delta"]) * sol_0_x
                     )
                     p_new = self._check_const(p_new, sol_0_x)
@@ -283,7 +288,10 @@ class NelderMead(Solver):
                     sort_sol[i] = p_new  # p_new replaces pi.
 
                 # Sort & end updating.
-                sort_sol = self._sort_and_end_update(problem, sort_sol)
+                sort_sol = self._sort_and_end_update(
+                    problem,
+                    sort_sol,  # pyrefly: ignore
+                )
 
             # Evaluate reflected point.
             p_refl = tuple(p_refl.tolist())
@@ -295,18 +303,21 @@ class NelderMead(Solver):
             refl_fn_val = np_minmax * -p_refl.objectives_mean
 
             # Track best, worst, and second worst points.
-            p_low = sort_sol[0]  # Current best pt.
+            p_low = sort_sol[0]  # Current best pt. # pyrefly: ignore
             inv_minmax = np_minmax * -1
-            fn_low = inv_minmax * sort_sol[0].objectives_mean
-            fn_sec = inv_minmax * sort_sol[-2].objectives_mean
-            fn_high = inv_minmax * sort_sol[-1].objectives_mean
+            fn_low = inv_minmax * sort_sol[0].objectives_mean  # pyrefly: ignore
+            fn_sec = inv_minmax * sort_sol[-2].objectives_mean  # pyrefly: ignore
+            fn_high = inv_minmax * sort_sol[-1].objectives_mean  # pyrefly: ignore
 
             # Check if accept reflection.
             if fn_low <= refl_fn_val and refl_fn_val <= fn_sec:
                 # The new point replaces the previous worst.
-                sort_sol[-1] = p_refl
+                sort_sol[-1] = p_refl  # pyrefly: ignore
                 # Sort & end updating.
-                sort_sol = self._sort_and_end_update(problem, sort_sol)
+                sort_sol = self._sort_and_end_update(
+                    problem,
+                    sort_sol,  # pyrefly: ignore
+                )
                 # Best solution remains the same, so no reporting.
 
             # Check if accept expansion (of reflection in the same direction).
@@ -324,10 +335,15 @@ class NelderMead(Solver):
                 exp_fn_val = inv_minmax * p_exp.objectives_mean
 
                 # Check if expansion point is an improvement relative to simplex.
-                sort_sol[-1] = p_exp if exp_fn_val < fn_low else p_refl
+                sort_sol[-1] = (  # pyrefly: ignore
+                    p_exp if exp_fn_val < fn_low else p_refl
+                )
 
                 # Sort & end updating.
-                sort_sol = self._sort_and_end_update(problem, sort_sol)
+                sort_sol = self._sort_and_end_update(
+                    problem,
+                    sort_sol,  # pyrefly: ignore
+                )
 
                 # Record data if within budget.
                 self.intermediate_budgets.append(self.budget.used)
@@ -355,10 +371,13 @@ class NelderMead(Solver):
 
                 # Accept contraction.
                 if cont_fn_val <= fn_high:
-                    sort_sol[-1] = p_cont  # p_cont replaces p_high.
+                    sort_sol[-1] = p_cont  # p_cont replaces p_high. # pyrefly: ignore
 
                     # Sort & end updating.
-                    sort_sol = self._sort_and_end_update(problem, sort_sol)
+                    sort_sol = self._sort_and_end_update(
+                        problem,
+                        sort_sol,  # pyrefly: ignore
+                    )
 
                     # Check if contraction point is new best.
                     if cont_fn_val < fn_low:
@@ -368,10 +387,10 @@ class NelderMead(Solver):
                 # Contraction fails -> simplex shrinks by delta with p_low fixed.
                 else:
                     # Set pre-loop variables
-                    sort_sol[-1] = p_high  # Replaced by p_refl.
+                    sort_sol[-1] = p_high  # Replaced by p_refl. # pyrefly: ignore
                     is_new_best = False
                     p_low_x = np.array(p_low.x)
-                    for i in range(1, len(sort_sol)):
+                    for i in range(1, len(sort_sol)):  # pyrefly: ignore
                         p_new = (
                             self.factors["delta"] * np.array(sort_sol[i].x)
                             + (1 - self.factors["delta"]) * p_low_x
@@ -394,7 +413,10 @@ class NelderMead(Solver):
                         sort_sol[i] = p_new  # p_new replaces pi.
 
                     # Sort & end updating.
-                    sort_sol = self._sort_and_end_update(problem, sort_sol)
+                    sort_sol = self._sort_and_end_update(
+                        problem,
+                        sort_sol,  # pyrefly: ignore
+                    )
 
                     # Record data if there is a new best solution in the contraction.
                     if is_new_best:

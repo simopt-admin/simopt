@@ -30,7 +30,7 @@ from typing import Callable
 
 import numpy as np
 from numpy.linalg import LinAlgError, inv, norm, pinv
-from scipy.optimize import NonlinearConstraint, minimize
+from scipy.optimize import NonlinearConstraint, OptimizeResult, minimize
 
 from simopt.base import (
     ConstraintType,
@@ -329,7 +329,7 @@ class ASTRODF(Solver):
 
         # compute sample size
         raw_sample_size = pilot_run * max(
-            1, sig2 / (kappa**2 * delta**self.delta_power)
+            1.0, sig2 / (kappa**2 * delta**self.delta_power)
         )
         return ceil(float(raw_sample_size))
 
@@ -397,14 +397,14 @@ class ASTRODF(Solver):
                 np.array(self.incumbent_x),
                 delta_k,
                 self.problem,
-                rotate_matrix,
+                np.array(rotate_matrix),
                 self.visited_pts_list[f_index].x,
             )
             var_z = self.get_rotated_basis_interpolation_points(
                 np.zeros(self.problem.dim),
                 delta_k,
                 self.problem,
-                rotate_matrix,
+                np.array(rotate_matrix),
                 np.array(self.visited_pts_list[f_index].x) - np.array(self.incumbent_x),
             )
 
@@ -529,14 +529,14 @@ class ASTRODF(Solver):
             model_iterations += 1
 
             # Calculate the distance between the center point and other design points
-            distance_array = []
+            distance_array: list[float] = []
             for point in self.visited_pts_list:
                 dist_diff = np.array(point.x) - np.array(self.incumbent_x)
                 distance = norm(dist_diff) - delta_k
                 # If the design point is outside the trust region, we will not reuse it
                 # (distance = -big M)
                 dist_to_append = -delta_k * 10000 if distance > 0 else distance
-                distance_array.append(dist_to_append)
+                distance_array.append(float(dist_to_append))
 
             # Find the index of visited design points list for reusing points
             # The reused point will be the farthest point from the center point among
@@ -878,7 +878,7 @@ class ASTRODF(Solver):
                 candidate_x = self.incumbent_x
             else:
                 product = tau * self.delta_k * grad
-                adjustment = product / grad_norm
+                adjustment = product / float(grad_norm)
                 candidate_x = self.incumbent_x - adjustment
             # if norm(incumbent_x - candidate_x) > 0:
             #     logging.debug("incumbent_x " + str(incumbent_x))
@@ -896,7 +896,7 @@ class ASTRODF(Solver):
                 return float(norm(s))
 
             nlc = NonlinearConstraint(con_f, 0, self.delta_k)
-            solve_subproblem = minimize(
+            solve_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
                 subproblem,
                 np.zeros(self.problem.dim),
                 method="trust-constr",
@@ -1078,7 +1078,8 @@ class ASTRODF(Solver):
         if self.factors["crn_across_solns"]:
             self.delta_power = 0 if self.enable_gradient else 2
         else:
-            self.delta_power = 4
+            # FIXME: fix type check error
+            self.delta_power = 4  # pyrefly: ignore
 
         # Reset iteration count and data storage
         self.iteration_count = 0

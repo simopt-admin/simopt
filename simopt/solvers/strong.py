@@ -238,10 +238,10 @@ class STRONG(Solver):
             # Check variable bounds.
             forward = np.isclose(
                 new_x, lower_bound, atol=self.factors["sensitivity"]
-            ).astype(int)
+            ).astype(np.int32)
             backward = np.isclose(
                 new_x, upper_bound, atol=self.factors["sensitivity"]
-            ).astype(int)
+            ).astype(np.int32)
             # bounds_check:
             #   1 stands for forward, -1 stands for backward, 0 means central diff.
             bounds_check = forward - backward
@@ -549,19 +549,19 @@ class STRONG(Solver):
         upper_bound_arr = np.array(upper_bound)
         # The current step.
         # Form a matrix to determine the possible stepsize.
-        min_step = 1
+        min_step = 1.0
         pos_mask = current_step > 0
         if np.any(pos_mask):
             step_diff = (upper_bound_arr[pos_mask] - new_x[pos_mask]) / current_step[
                 pos_mask
             ]
-            min_step = min(min_step, float(np.min(step_diff)))
+            min_step = min(min_step, float(np.min(step_diff).item()))
         neg_mask = current_step < 0
         if np.any(neg_mask):
             step_diff = (lower_bound_arr[neg_mask] - new_x[neg_mask]) / current_step[
                 neg_mask
             ]
-            min_step = min(min_step, float(np.min(step_diff)))
+            min_step = min(min_step, float(np.min(step_diff).item()))
         # Calculate the modified x.
         return new_x + min_step * current_step
 
