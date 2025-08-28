@@ -9,9 +9,10 @@ contraction, and shrinking. A detailed description of the solver can be found
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Callable
+from typing import Annotated
 
 import numpy as np
+from pydantic import BaseModel, Field
 
 from simopt.base import (
     ConstraintType,
@@ -21,7 +22,54 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty, override
+from simopt.utils import override
+
+
+class NelderMeadConfig(BaseModel):
+    """Configuration for Nelder-Mead solver."""
+
+    crn_across_solns: Annotated[
+        bool, Field(default=True, description="use CRN across solutions?")
+    ]
+    r: Annotated[
+        int,
+        Field(
+            default=30,
+            gt=0,
+            description="number of replications taken at each solution",
+        ),
+    ]
+    alpha: Annotated[
+        float, Field(default=1.0, gt=0, description="reflection coefficient > 0")
+    ]
+    gammap: Annotated[
+        float, Field(default=2.0, gt=1, description="expansion coefficient > 1")
+    ]
+    betap: Annotated[
+        float,
+        Field(
+            default=0.5,
+            gt=0,
+            lt=1,
+            description="contraction coefficient > 0, < 1",
+        ),
+    ]
+    delta: Annotated[
+        float,
+        Field(default=0.5, gt=0, lt=1, description="shrink factor > 0, < 1"),
+    ]
+    sensitivity: Annotated[
+        float,
+        Field(default=1e-7, gt=0, description="shrinking scale for bounds"),
+    ]
+    initial_spread: Annotated[
+        float,
+        Field(
+            default=0.1,
+            gt=0,
+            description="fraction of the distance between bounds used to select initial points",
+        ),
+    ]
 
 
 class NelderMead(Solver):
@@ -32,140 +80,14 @@ class NelderMead(Solver):
     expansion, contraction, and shrinking.
     """
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "NELDMD"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Nelder-Mead"
-
-    @classproperty
-    @override
-    def objective_type(cls) -> ObjectiveType:
-        return ObjectiveType.SINGLE
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_needed(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "crn_across_solns": {
-                "description": "use CRN across solutions?",
-                "datatype": bool,
-                "default": True,
-            },
-            "r": {
-                "description": "number of replications taken at each solution",
-                "datatype": int,
-                "default": 30,
-            },
-            "alpha": {
-                "description": "reflection coefficient > 0",
-                "datatype": float,
-                "default": 1.0,
-            },
-            "gammap": {
-                "description": "expansion coefficient > 1",
-                "datatype": float,
-                "default": 2.0,
-            },
-            "betap": {
-                "description": "contraction coefficient > 0, < 1",
-                "datatype": float,
-                "default": 0.5,
-            },
-            "delta": {
-                "description": "shrink factor > 0, < 1",
-                "datatype": float,
-                "default": 0.5,
-            },
-            "sensitivity": {
-                "description": "shrinking scale for bounds",
-                "datatype": float,
-                "default": 10 ** (-7),
-            },
-            "initial_spread": {
-                "description": (
-                    "fraction of the distance between bounds used to select initial "
-                    "points"
-                ),
-                "datatype": float,
-                "default": 1 / 10,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "crn_across_solns": self.check_crn_across_solns,
-            "r": self._check_r,
-            "alpha": self._check_alpha,
-            "gammap": self._check_gammap,
-            "betap": self._check_betap,
-            "delta": self._check_delta,
-            "sensitivity": self._check_sensitivity,
-            "initial_spread": self._check_initial_spread,
-        }
-
-    def __init__(self, name: str = "NELDMD", fixed_factors: dict | None = None) -> None:
-        """Initialize the Nelder-Mead solver.
-
-        Args:
-            name (str): Name of the solver.
-            fixed_factors (dict, optional): Fixed factors for the solver.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(name, fixed_factors)
-
-    def _check_r(self) -> None:
-        if self.factors["r"] <= 0:
-            raise ValueError(
-                "The number of replications taken at each solution must be greater "
-                "than 0."
-            )
-
-    def _check_alpha(self) -> None:
-        if self.factors["alpha"] <= 0:
-            raise ValueError("Alpha must be greater than 0.")
-
-    def _check_gammap(self) -> None:
-        if self.factors["gammap"] <= 1:
-            raise ValueError("Gammap must be greater than 1.")
-
-    def _check_betap(self) -> None:
-        if (self.factors["betap"] <= 0) or (self.factors["betap"] >= 1):
-            raise ValueError("betap must be between 0 and 1.")
-
-    def _check_delta(self) -> None:
-        if (self.factors["delta"] <= 0) or (self.factors["delta"] >= 1):
-            raise ValueError("Delta must be between 0 and 1.")
-
-    def _check_sensitivity(self) -> None:
-        if self.factors["sensitivity"] <= 0:
-            raise ValueError("Sensitivity must be greater than 0.")
-
-    def _check_initial_spread(self) -> None:
-        if self.factors["initial_spread"] <= 0:
-            raise ValueError("Initial spread must be greater than 0.")
+    name: str = "NELDMD"
+    config_class: type[BaseModel] = NelderMeadConfig
+    class_name_abbr: str = "NELDMD"
+    class_name: str = "Nelder-Mead"
+    objective_type: ObjectiveType = ObjectiveType.SINGLE
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_needed: bool = False
 
     # FIXME: fix typing on `sort_sol`
     @override

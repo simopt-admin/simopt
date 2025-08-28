@@ -6,10 +6,11 @@ optimizing systems with multiple unknown parameters.
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Annotated, Self
 
 import numpy as np
 from numpy.typing import NDArray
+from pydantic import BaseModel, Field, model_validator
 
 from simopt.base import (
     ConstraintType,
@@ -18,7 +19,83 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty, make_nonzero, override
+from simopt.utils import make_nonzero, override
+
+
+class SPSAConfig(BaseModel):
+    """Configuration for SPSA solver."""
+
+    crn_across_solns: Annotated[
+        bool, Field(default=True, description="use CRN across solutions?")
+    ]
+    alpha: Annotated[
+        float,
+        Field(
+            default=0.602,
+            gt=0,
+            description="non-negative coefficient in the SPSA gain sequence ak",
+        ),
+    ]
+    gamma: Annotated[
+        float,
+        Field(
+            default=0.101,
+            gt=0,
+            description="non-negative coefficient in the SPSA gain sequence ck",
+        ),
+    ]
+    step: Annotated[
+        float,
+        Field(
+            default=0.1,
+            gt=0,
+            description="initial desired magnitude of change in the theta elements",
+        ),
+    ]
+    gavg: Annotated[
+        int,
+        Field(default=1, gt=0, description="averaged SP gradients used per iteration"),
+    ]
+    n_reps: Annotated[
+        int,
+        Field(
+            default=30,
+            gt=0,
+            description="number of replications takes at each solution",
+        ),
+    ]
+    n_loss: Annotated[
+        int,
+        Field(
+            default=2,
+            gt=0,
+            description="number of loss function evaluations used in this gain calculation",
+        ),
+    ]
+    eval_pct: Annotated[
+        float,
+        Field(
+            default=2 / 3,
+            gt=0,
+            le=1,
+            description="percentage of the expected number of loss evaluations per run",
+        ),
+    ]
+    iter_pct: Annotated[
+        float,
+        Field(
+            default=0.1,
+            gt=0,
+            le=1,
+            description="percentage of the maximum expected number of iterations",
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def _validate_n_loss_and_gavg(self) -> Self:
+        if self.n_loss % (2 * self.gavg) != 0:
+            raise ValueError("n_loss must be a multiple of 2 * gavg.")
+        return self
 
 
 class SPSA(Solver):
@@ -28,147 +105,12 @@ class SPSA(Solver):
     optimizing systems with multiple unknown parameters.
     """
 
-    @classproperty
-    @override
-    def objective_type(cls) -> ObjectiveType:
-        return ObjectiveType.SINGLE
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_needed(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "crn_across_solns": {
-                "description": "use CRN across solutions?",
-                "datatype": bool,
-                "default": True,
-            },
-            "alpha": {
-                "description": (
-                    "non-negative coefficient in the SPSA gain sequecence ak"
-                ),
-                "datatype": float,
-                "default": 0.602,
-            },
-            "gamma": {
-                "description": "non-negative coefficient in the SPSA gain sequence ck",
-                "datatype": float,
-                "default": 0.101,
-            },
-            "step": {
-                "description": (
-                    "initial desired magnitude of change in the theta elements"
-                ),
-                "datatype": float,
-                "default": 0.1,
-            },
-            "gavg": {
-                "description": "averaged SP gradients used per iteration",
-                "datatype": int,
-                "default": 1,
-            },
-            "n_reps": {
-                "description": "number of replications takes at each solution",
-                "datatype": int,
-                "default": 30,
-            },
-            "n_loss": {
-                "description": (
-                    "number of loss function evaluations used in this gain calculation"
-                ),
-                "datatype": int,
-                "default": 2,
-            },
-            "eval_pct": {
-                "description": (
-                    "percentage of the expected number of loss evaluations per run"
-                ),
-                "datatype": float,
-                "default": 2 / 3,
-            },
-            "iter_pct": {
-                "description": (
-                    "percentage of the maximum expected number of iterations"
-                ),
-                "datatype": float,
-                "default": 0.1,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "crn_across_solns": self.check_crn_across_solns,
-            "alpha": self._check_alpha,
-            "gamma": self._check_gamma,
-            "step": self._check_step,
-            "gavg": self._check_gavg,
-            "n_reps": self._check_n_reps,
-            "n_loss": self._check_n_loss,
-            "eval_pct": self._check_eval_pct,
-            "iter_pct": self._check_iter_pct,
-        }
-
-    def __init__(self, name: str = "SPSA", fixed_factors: dict | None = None) -> None:
-        """Initialize the SPSA solver.
-
-        Args:
-            name (str): Name of the solver.
-            fixed_factors (dict, optional): Fixed factors for the solver.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(name, fixed_factors)
-
-    def _check_alpha(self) -> None:
-        if self.factors["alpha"] <= 0:
-            raise ValueError("Alpha must be greater than 0.")
-
-    def _check_gamma(self) -> None:
-        if self.factors["gamma"] <= 0:
-            raise ValueError("Gamma must be greater than 0.")
-
-    def _check_step(self) -> None:
-        if self.factors["step"] <= 0:
-            raise ValueError("Step must be greater than 0.")
-
-    def _check_gavg(self) -> None:
-        if self.factors["gavg"] <= 0:
-            raise ValueError("gavg must be greater than 0.")
-
-    def _check_n_reps(self) -> None:
-        if self.factors["n_reps"] <= 0:
-            raise ValueError(
-                "The number of replications taken at each solution must be greater "
-                "than 0."
-            )
-
-    def _check_n_loss(self) -> None:
-        if self.factors["n_loss"] <= 0:
-            raise ValueError("n_loss must be greater than 0.")
-
-    def _check_eval_pct(self) -> None:
-        if self.factors["eval_pct"] <= 0 or self.factors["eval_pct"] > 1:
-            raise ValueError("eval_pct must be between 0 and 1.")
-
-    def _check_iter_pct(self) -> None:
-        if self.factors["iter_pct"] <= 0 or self.factors["iter_pct"] > 1:
-            raise ValueError("iter_pct must be between 0 and 1.")
+    name: str = "SPSA"
+    config_class: type[BaseModel] = SPSAConfig
+    objective_type: ObjectiveType = ObjectiveType.SINGLE
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_needed: bool = False
 
     def check_problem_factors(self) -> bool:
         """Determine if the joint settings of problem factors are permissible.
