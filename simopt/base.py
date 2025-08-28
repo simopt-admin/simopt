@@ -10,6 +10,7 @@ from enum import Enum
 from typing import Callable
 
 import numpy as np
+from pydantic import BaseModel
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.utils import classproperty
@@ -152,6 +153,9 @@ class Solver(ABC):
         fixed_factors (dict): Dictionary of user-specified solver factors.
     """
 
+    name: str
+    config_class: type[BaseModel]
+
     @classproperty
     def class_name_abbr(cls) -> str:
         """Short name of the solver class."""
@@ -171,17 +175,6 @@ class Solver(ABC):
             f"{cls.variable_type.symbol()}"
             f"{'G' if cls.gradient_needed else 'N'}"
         )
-
-    @property
-    def name(self) -> str:
-        """Name of solver."""
-        return self.__name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        if len(value) == 0:
-            raise ValueError("Name must not be empty.")
-        self.__name = value
 
     @classproperty
     @abstractmethod
@@ -219,13 +212,7 @@ class Solver(ABC):
     @property
     def factors(self) -> dict:
         """Changeable factors (i.e., parameters) of the solver."""
-        return self.__factors
-
-    @factors.setter
-    def factors(self, value: dict | None) -> None:
-        if value is None:
-            value = {}
-        self.__factors = value
+        return self.config.model_dump(by_alias=True)
 
     @classproperty
     @abstractmethod
@@ -253,12 +240,6 @@ class Solver(ABC):
     def solution_progenitor_rngs(self, value: list[MRG32k3a]) -> None:
         self.__solution_progenitor_rngs = value
 
-    @property
-    @abstractmethod
-    def check_factor_list(self) -> dict[str, Callable]:
-        """Dictionary of functions to check if a factor is permissible."""
-        raise NotImplementedError
-
     def __init__(self, name: str = "", fixed_factors: dict | None = None) -> None:
         """Initialize a solver object.
 
@@ -267,17 +248,10 @@ class Solver(ABC):
             fixed_factors (dict | None, optional): Dictionary of user-specified solver
                 factors. Defaults to None.
         """
-        self.name = name
-        # Add all the fixed factors to the solver
-        self.factors = fixed_factors
-        all_factors = set(self.specifications.keys())
-        present_factors = set(self.factors.keys())
-        missing_factors = all_factors - present_factors
-        for factor in missing_factors:
-            self.factors[factor] = self.specifications[factor]["default"]
-        # Run checks
-        factor_names = list(self.factors.keys())
-        self.run_all_checks(factor_names=factor_names)
+        self.name = name or self.name
+
+        fixed_factors = fixed_factors or {}
+        self.config = self.config_class(**fixed_factors)
 
         self.recommended_solns = []
         self.intermediate_budgets = []

@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable
-from typing import Callable, Literal
+from typing import Annotated, Literal, Self
 
 import numpy as np
 from numpy.linalg import norm
+from pydantic import BaseModel, Field, model_validator
 
 from simopt.base import (
     ConstraintType,
@@ -23,7 +24,89 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty, make_nonzero, override
+from simopt.utils import make_nonzero, override
+
+
+class STRONGConfig(BaseModel):
+    """Configuration for STRONG solver."""
+
+    crn_across_solns: Annotated[
+        bool, Field(default=True, description="use CRN across solutions?")
+    ]
+    n0: Annotated[int, Field(default=10, gt=0, description="initial sample size")]
+    n_r: Annotated[
+        int,
+        Field(
+            default=10,
+            gt=0,
+            description="number of replications taken at each solution",
+        ),
+    ]
+    sensitivity: Annotated[
+        float, Field(default=1e-7, gt=0, description="shrinking scale for VarBds")
+    ]
+    delta_threshold: Annotated[
+        float,
+        Field(default=1.2, gt=0, description="maximum value of the radius"),
+    ]
+    delta_T: Annotated[
+        float,
+        Field(default=2.0, description="initial size of trust region"),
+    ]
+    eta_0: Annotated[
+        float,
+        Field(default=0.01, gt=0, lt=1, description="constant for accepting"),
+    ]
+    eta_1: Annotated[
+        float,
+        Field(
+            default=0.3,
+            lt=1,
+            description="constant for more confident accepting",
+        ),
+    ]
+    gamma_1: Annotated[
+        float,
+        Field(
+            default=0.9,
+            gt=0,
+            lt=1,
+            description="constant for shrinking the trust region",
+        ),
+    ]
+    gamma_2: Annotated[
+        float,
+        Field(
+            default=1.11,
+            gt=1,
+            description="constant for expanding the trust region",
+        ),
+    ]
+    lambda_: Annotated[
+        int,
+        Field(
+            default=2,
+            gt=1,
+            alias="lambda",
+            description="magnifying factor for n_r inside the finite difference function",
+        ),
+    ]
+    lambda_2: Annotated[
+        float,
+        Field(
+            default=1.01,
+            gt=1,
+            description="magnifying factor for n_r in stage I and stage II (>1)",
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def _validate_cross_field_constraints(self) -> Self:
+        if self.delta_T <= self.delta_threshold:
+            raise ValueError("delta_T must be greater than delta_threshold")
+        if self.eta_1 <= self.eta_0:
+            raise ValueError("eta_1 must be greater than eta_0")
+        return self
 
 
 class STRONG(Solver):
@@ -33,170 +116,12 @@ class STRONG(Solver):
     function evaluations taken within a neighborhood of the incumbent solution.
     """
 
-    @classproperty
-    @override
-    def objective_type(cls) -> ObjectiveType:
-        return ObjectiveType.SINGLE
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_needed(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "crn_across_solns": {
-                "description": "use CRN across solutions?",
-                "datatype": bool,
-                "default": True,
-            },
-            "n0": {
-                "description": "initial sample size",
-                "datatype": int,
-                "default": 10,
-            },
-            "n_r": {
-                "description": "number of replications taken at each solution",
-                "datatype": int,
-                "default": 10,
-            },
-            "sensitivity": {
-                "description": "shrinking scale for VarBds",
-                "datatype": float,
-                "default": 10 ** (-7),
-            },
-            "delta_threshold": {
-                "description": "maximum value of the radius",
-                "datatype": float,
-                "default": 1.2,
-            },
-            "delta_T": {
-                "description": "initial size of trust region",
-                "datatype": float,
-                "default": 2.0,
-            },
-            "eta_0": {
-                "description": "constant for accepting",
-                "datatype": float,
-                "default": 0.01,
-            },
-            "eta_1": {
-                "description": "constant for more confident accepting",
-                "datatype": float,
-                "default": 0.3,
-            },
-            "gamma_1": {
-                "description": "constant for shrinking the trust region",
-                "datatype": float,
-                "default": 0.9,
-            },
-            "gamma_2": {
-                "description": "constant for expanding the trust region",
-                "datatype": float,
-                "default": 1.11,
-            },
-            "lambda": {
-                "description": (
-                    "magnifying factor for n_r inside the finite difference function"
-                ),
-                "datatype": int,
-                "default": 2,
-            },
-            "lambda_2": {
-                "description": "magnifying factor for n_r in stage I and stage II (>1)",
-                "datatype": float,
-                "default": 1.01,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "crn_across_solns": self.check_crn_across_solns,
-            "n0": self._check_n0,
-            "n_r": self._check_n_r,
-            "sensitivity": self._check_sensitivity,
-            "delta_threshold": self._check_delta_threshold,
-            "delta_T": self._check_delta_t,
-            "eta_0": self._check_eta_0,
-            "eta_1": self._check_eta_1,
-            "gamma_1": self._check_gamma_1,
-            "gamma_2": self._check_gamma_2,
-            "lambda": self._check_lambda,
-            "lambda_2": self._check_lambda_2,
-        }
-
-    def __init__(self, name: str = "STRONG", fixed_factors: dict | None = None) -> None:
-        """Initialize STRONG solver.
-
-        Args:
-            name (str): name of the solver.
-            fixed_factors (dict, optional): fixed factors of the solver.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(name, fixed_factors)
-
-    def _check_n0(self) -> None:
-        if self.factors["n0"] <= 0:
-            raise ValueError("n0 must be greater than 0.")
-
-    def _check_n_r(self) -> None:
-        if self.factors["n_r"] <= 0:
-            raise ValueError(
-                "The number of replications taken at each solution must be greater "
-                "than 0."
-            )
-
-    def _check_sensitivity(self) -> None:
-        if self.factors["sensitivity"] <= 0:
-            raise ValueError("sensitivity must be greater than 0.")
-
-    def _check_delta_threshold(self) -> None:
-        if self.factors["delta_threshold"] <= 0:
-            raise ValueError("delta_threshold must be greater than 0.")
-
-    def _check_delta_t(self) -> None:
-        if self.factors["delta_T"] <= self.factors["delta_threshold"]:
-            raise ValueError("delta_T must be greater than delta_threshold")
-
-    def _check_eta_0(self) -> None:
-        if self.factors["eta_0"] <= 0 or self.factors["eta_0"] >= 1:
-            raise ValueError("eta_0 must be between 0 and 1.")
-
-    def _check_eta_1(self) -> None:
-        if self.factors["eta_1"] >= 1 or self.factors["eta_1"] <= self.factors["eta_0"]:
-            raise ValueError("eta_1 must be between eta_0 and 1.")
-
-    def _check_gamma_1(self) -> None:
-        if self.factors["gamma_1"] <= 0 or self.factors["gamma_1"] >= 1:
-            raise ValueError("gamma_1 must be between 0 and 1.")
-
-    def _check_gamma_2(self) -> None:
-        if self.factors["gamma_2"] <= 1:
-            raise ValueError("gamma_2 must be greater than 1.")
-
-    def _check_lambda(self) -> None:
-        if self.factors["lambda"] <= 1:
-            raise ValueError("lambda must be greater than 1.")
-
-    def _check_lambda_2(self) -> None:
-        # TODO: Check if this is the correct condition.
-        if self.factors["lambda_2"] <= 1:
-            raise ValueError("lambda_2 must be greater than 1.")
+    name: str = "STRONG"
+    config_class: type[BaseModel] = STRONGConfig
+    objective_type: ObjectiveType = ObjectiveType.SINGLE
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_needed: bool = False
 
     @override
     def solve(self, problem: Problem) -> None:
