@@ -2,16 +2,146 @@
 
 from __future__ import annotations
 
-from typing import Callable, Final
+from typing import Annotated, ClassVar, Final, Self
 
 import numpy as np
+from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
 from simopt.input_models import InputModel
-from simopt.utils import classproperty, override
+from simopt.utils import override
 
 NUM_PRODUCTS: Final[int] = 10
+
+
+class DynamNewsConfig(BaseModel):
+    """Configuration model for Dynamic Newsvendor simulation.
+
+    A model that simulates a day's worth of sales for a newsvendor
+    with dynamic consumer substitution. Returns the profit and the
+    number of products that stock out.
+    """
+
+    num_prod: Annotated[
+        int,
+        Field(
+            default=NUM_PRODUCTS,
+            description="number of products",
+            gt=0,
+        ),
+    ]
+    num_customer: Annotated[
+        int,
+        Field(
+            default=30,
+            description="number of customers",
+            gt=0,
+        ),
+    ]
+    c_utility: Annotated[
+        list[float],
+        Field(
+            default_factory=lambda: [6 + j for j in range(NUM_PRODUCTS)],
+            description="constant of each product's utility",
+        ),
+    ]
+    mu: Annotated[
+        float,
+        Field(
+            default=1.0,
+            description="mu for calculating Gumbel random variable",
+        ),
+    ]
+    init_level: Annotated[
+        list[int],
+        Field(
+            default_factory=lambda: [3] * NUM_PRODUCTS,
+            description="initial inventory level",
+        ),
+    ]
+    price: Annotated[
+        list[float],
+        Field(
+            default_factory=lambda: [9] * NUM_PRODUCTS,
+            description="sell price of products",
+        ),
+    ]
+    cost: Annotated[
+        list[float],
+        Field(
+            default_factory=lambda: [5] * NUM_PRODUCTS,
+            description="cost of products",
+        ),
+    ]
+
+    def _check_c_utility(self) -> None:
+        if len(self.c_utility) != self.num_prod:
+            raise ValueError("The length of c_utility must be equal to num_prod.")
+
+    def _check_init_level(self) -> None:
+        if any(np.array(self.init_level) < 0) or (
+            len(self.init_level) != self.num_prod
+        ):
+            raise ValueError(
+                "The length of init_level must be equal to num_prod and every element "
+                "in init_level must be greater than or equal to zero."
+            )
+
+    def _check_price(self) -> None:
+        if any(np.array(self.price) < 0) or (len(self.price) != self.num_prod):
+            raise ValueError(
+                "The length of price must be equal to num_prod and every element in "
+                "price must be greater than or equal to zero."
+            )
+
+    def _check_cost(self) -> None:
+        if any(np.array(self.cost) < 0) or (len(self.cost) != self.num_prod):
+            raise ValueError(
+                "The length of cost must be equal to num_prod and every element in "
+                "cost must be greater than or equal to 0."
+            )
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        self._check_c_utility()
+        self._check_init_level()
+        self._check_price()
+        self._check_cost()
+
+        # Cross-validation: check price > cost constraint
+        if any(np.subtract(self.price, self.cost) < 0):
+            raise ValueError(
+                "Each element in price must be greater than its corresponding element "
+                "in cost."
+            )
+
+        return self
+
+
+class DynamNewsMaxProfitConfig(BaseModel):
+    """Configuration model for Dynamic Newsvendor Max Profit Problem.
+
+    A problem configuration that maximizes profit for a dynamic newsvendor
+    with consumer substitution by optimizing initial inventory levels.
+    """
+
+    initial_solution: Annotated[
+        tuple[int, ...],
+        Field(
+            default_factory=lambda: (3,) * NUM_PRODUCTS,
+            description="initial solution",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=1000,
+            description="max # of replications for a solver to take",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
 
 
 class Utility(InputModel):
@@ -50,74 +180,10 @@ class DynamNews(Model):
     number of products that stock out.
     """
 
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Dynamic Newsvendor"
-
-    @classproperty
-    @override
-    def n_rngs(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_responses(cls) -> int:
-        return 4
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "num_prod": {
-                "description": "number of products",
-                "datatype": int,
-                "default": NUM_PRODUCTS,
-            },
-            "num_customer": {
-                "description": "number of customers",
-                "datatype": int,
-                "default": 30,
-            },
-            "c_utility": {
-                "description": "constant of each product's utility",
-                "datatype": list,
-                "default": [6 + j for j in range(NUM_PRODUCTS)],
-            },
-            "mu": {
-                "description": "mu for calculating Gumbel random variable",
-                "datatype": float,
-                "default": 1.0,
-            },
-            "init_level": {
-                "description": "initial inventory level",
-                "datatype": list,
-                "default": [3] * NUM_PRODUCTS,
-            },
-            "price": {
-                "description": "sell price of products",
-                "datatype": list,
-                "default": [9] * NUM_PRODUCTS,
-            },
-            "cost": {
-                "description": "cost of products",
-                "datatype": list,
-                "default": [5] * NUM_PRODUCTS,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "num_prod": self._check_num_prod,
-            "num_customer": self._check_num_customer,
-            "c_utility": self._check_c_utility,
-            "mu": lambda: None,
-            "init_level": self._check_init_level,
-            "price": self._check_price,
-            "cost": self._check_cost,
-        }
+    config_class: ClassVar[type[BaseModel]] = DynamNewsConfig
+    class_name: str = "Dynamic Newsvendor"
+    n_rngs: int = 1
+    n_responses: int = 4
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the model.
@@ -130,45 +196,6 @@ class DynamNews(Model):
         super().__init__(fixed_factors)
 
         self.utility_model = Utility()
-
-    def _check_num_prod(self) -> None:
-        if self.factors["num_prod"] <= 0:
-            raise ValueError("num_prod must be greater than 0.")
-
-    def _check_num_customer(self) -> None:
-        if self.factors["num_customer"] <= 0:
-            raise ValueError("num_customer must be greater than 0.")
-
-    def _check_c_utility(self) -> None:
-        if len(self.factors["c_utility"]) != self.factors["num_prod"]:
-            raise ValueError("The length of c_utility must be equal to num_prod.")
-
-    def _check_init_level(self) -> None:
-        if any(np.array(self.factors["init_level"]) < 0) or (
-            len(self.factors["init_level"]) != self.factors["num_prod"]
-        ):
-            raise ValueError(
-                "The length of init_level must be equal to num_prod and every element "
-                "in init_level must be greater than or equal to zero."
-            )
-
-    def _check_price(self) -> None:
-        if any(np.array(self.factors["price"]) < 0) or (
-            len(self.factors["price"]) != self.factors["num_prod"]
-        ):
-            raise ValueError(
-                "The length of price must be equal to num_prod and every element in "
-                "price must be greater than or equal to zero."
-            )
-
-    def _check_cost(self) -> None:
-        if any(np.array(self.factors["cost"]) < 0) or (
-            len(self.factors["cost"]) != self.factors["num_prod"]
-        ):
-            raise ValueError(
-                "The length of cost must be equal to num_prod and every element in "
-                "cost must be greater than or equal to 0."
-            )
 
     @override
     def check_simulatable_factors(self) -> bool:
@@ -265,90 +292,20 @@ class DynamNews(Model):
 class DynamNewsMaxProfit(Problem):
     """Base class to implement simulation-optimization problems."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "DYNAMNEWS-1"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Max Profit for Dynamic Newsvendor"
-
-    @classproperty
-    @override
-    def n_objectives(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_stochastic_constraints(cls) -> int:
-        return 0
-
-    @classproperty
-    @override
-    def minmax(cls) -> tuple[int]:
-        return (1,)
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_available(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def optimal_value(cls) -> float | None:
-        return None
-
-    @classproperty
-    @override
-    def optimal_solution(cls) -> tuple | None:
-        return None
-
-    @classproperty
-    @override
-    def model_default_factors(cls) -> dict:
-        return {}
-
-    @classproperty
-    @override
-    def model_decision_factors(cls) -> set[str]:
-        return {"init_level"}
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "initial_solution": {
-                "description": "initial solution",
-                "datatype": tuple,
-                "default": (3,) * NUM_PRODUCTS,
-            },
-            "budget": {
-                "description": "max # of replications for a solver to take",
-                "datatype": int,
-                "default": 1000,
-                "isDatafarmable": False,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-        }
+    config_class: ClassVar[type[BaseModel]] = DynamNewsMaxProfitConfig
+    model_class: ClassVar[type[Model]] = DynamNews
+    class_name_abbr: str = "DYNAMNEWS-1"
+    class_name: str = "Max Profit for Dynamic Newsvendor"
+    n_objectives: int = 1
+    n_stochastic_constraints: int = 0
+    minmax: tuple[int] = (1,)
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_available: bool = False
+    optimal_value: float | None = None
+    optimal_solution: tuple | None = None
+    model_default_factors: dict = {}
+    model_decision_factors: set[str] = {"init_level"}
 
     @property
     @override
@@ -364,29 +321,6 @@ class DynamNewsMaxProfit(Problem):
     @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
-
-    def __init__(
-        self,
-        name: str = "DYNAMNEWS-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the problem.
-
-        Args:
-            name (str, optional): Name of the problem. Defaults to "DYNAMNEWS-1".
-            fixed_factors (dict, optional): Fixed factors for the problem.
-                Defaults to None.
-            model_fixed_factors (dict, optional): Fixed factors for the model.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(
-            name=name,
-            fixed_factors=fixed_factors,
-            model_fixed_factors=model_fixed_factors,
-            model=DynamNews,
-        )
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:

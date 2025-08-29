@@ -7,7 +7,7 @@ import contextlib
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from enum import Enum
-from typing import Callable
+from typing import Callable, ClassVar
 
 import numpy as np
 from pydantic import BaseModel
@@ -35,6 +35,17 @@ def _factor_check(self: Solver | Problem | Model, factor_name: str) -> bool:
     self.check_factor_list[factor_name]()
     # Return true if we successfully checked the factor
     return True
+
+
+def _get_specifications(config_class: type[BaseModel]) -> dict[str, dict]:
+    spec = {}
+    for name, field in config_class.model_fields.items():
+        spec[name] = {
+            "description": field.description,
+            "datatype": field.annotation,
+            "default": field.default,
+        }
+    return spec
 
 
 class ObjectiveType(Enum):
@@ -446,6 +457,9 @@ class Problem(ABC):
         model (Callable[..., Model]): Simulation model that generates replications.
     """
 
+    config_class: ClassVar[type[BaseModel]]
+    model_class: ClassVar[type[Model]]
+
     @classproperty
     def class_name_abbr(cls) -> str:
         """Short name of the solver class."""
@@ -567,13 +581,11 @@ class Problem(ABC):
     @property
     def model_fixed_factors(self) -> dict:
         """Combination of overriden model-level factors and defaults."""
-        return self.__model_fixed_factors
+        raise RuntimeError("deprecated")
 
     @model_fixed_factors.setter
     def model_fixed_factors(self, value: dict | None) -> None:
-        if value is None:
-            value = {}
-        self.__model_fixed_factors = value
+        raise RuntimeError("deprecated")
 
     @classproperty
     @abstractmethod
@@ -593,24 +605,16 @@ class Problem(ABC):
     @property
     def factors(self) -> dict:
         """Changeable factors of the problem."""
-        return self.__factors
+        return self.config.model_dump(by_alias=True)
 
     @factors.setter
     def factors(self, value: dict | None) -> None:
-        if value is None:
-            value = {}
-        self.__factors = value
+        raise RuntimeError("factors are read-only")
 
     @classproperty
     @abstractmethod
     def specifications(cls) -> dict:
         """Details of each factor (for GUI, data validation, and defaults)."""
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def check_factor_list(self) -> dict:
-        """Dictionary of functions to check if a factor is permissible."""
         raise NotImplementedError
 
     def __init__(
@@ -630,32 +634,22 @@ class Problem(ABC):
             model (Callable[..., Model] | None): Simulation model that generates
                 replications.
         """
-        if model is None:
-            raise ValueError("Model must be specified.")
         # Assign the name of the problem
-        self.name = name
+        self.name = name or self.class_name_abbr
 
         # Add all the fixed factors to the problem
-        self.factors = fixed_factors
-        all_factors = set(self.specifications.keys())
-        present_factors = set(self.factors.keys())
-        missing_factors = all_factors - present_factors
-        for factor in missing_factors:
-            self.factors[factor] = self.specifications[factor]["default"]
+        fixed_factors = fixed_factors or {}
+        self.config = self.config_class(**fixed_factors)
 
-        # Add all the fixed factors to the model
-        self.model_fixed_factors = model_fixed_factors
-        all_model_factors = set(self.model_default_factors.keys())
-        present_model_factors = set(self.model_fixed_factors.keys())
-        missing_model_factors = all_model_factors - present_model_factors
-        for factor in missing_model_factors:
-            self.model_fixed_factors[factor] = self.model_default_factors[factor]
+        model_factors = {}
+        model_config = self.model_class.config_class()
+        model_factors.update(model_config.model_dump(by_alias=True))
+        model_factors.update(self.model_default_factors)
+        model_fixed_factors = model_fixed_factors or {}
+        model_factors.update(model_fixed_factors)
 
         # Set the model
-        self.model = model(self.model_fixed_factors)
-
-        keys = list(self.factors.keys())
-        self.run_all_checks(factor_names=keys)
+        self.model = self.model_class(model_factors)
 
     def __eq__(self, other: object) -> bool:
         """Check if two problems are equivalent.
@@ -1087,6 +1081,8 @@ class Model(ABC):
     Each model defines the simulation logic behind a given problem instance.
     """
 
+    config_class: ClassVar[type[BaseModel]]
+
     @classproperty
     def class_name_abbr(cls) -> str:
         """Short name of the model class."""
@@ -1118,21 +1114,15 @@ class Model(ABC):
         raise NotImplementedError
 
     @classproperty
-    @abstractmethod
     def specifications(cls) -> dict[str, dict]:
         """Details of each factor (for GUI, data validation, and defaults)."""
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def check_factor_list(self) -> dict[str, Callable]:
-        """Switch case for checking factor simulatability."""
-        raise NotImplementedError
+        return _get_specifications(cls.config_class)
 
     @property
     def factors(self) -> dict:
         """Changeable factors of the simulation model."""
-        return self.__factors
+        # TODO: this is currently needed because the solver may update the factors
+        return self._factors
 
     @factors.setter
     def factors(self, value: dict | None) -> None:
@@ -1148,15 +1138,9 @@ class Model(ABC):
                 factors.
         """
         # Add all the fixed factors to the model
-        self.factors = fixed_factors
-        all_factors = set(self.specifications.keys())
-        present_factors = set(self.factors.keys())
-        missing_factors = all_factors - present_factors
-        for key in missing_factors:
-            self.factors[key] = self.specifications[key]["default"]
-
-        factor_names = list(self.factors.keys())
-        self.run_all_checks(factor_names=factor_names)
+        fixed_factors = fixed_factors or {}
+        self.config = self.config_class(**fixed_factors)
+        self._factors = self.config.model_dump(by_alias=True)
 
     def __eq__(self, other: object) -> bool:
         """Check if two models are equivalent.

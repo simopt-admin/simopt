@@ -2,13 +2,157 @@
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Annotated, ClassVar, Self
 
 import numpy as np
+from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty, override
+from simopt.utils import override
+
+
+class DualSourcingConfig(BaseModel):
+    """Configuration model for Dual Sourcing Inventory simulation.
+
+    A model that simulates multiple periods of ordering and sales for a single-staged,
+    dual sourcing inventory problem with stochastic demand. Returns average holding
+    cost, average penalty cost, and average ordering cost per period.
+    """
+
+    n_days: Annotated[
+        int,
+        Field(
+            default=1000,
+            description="number of days to simulate",
+            ge=1,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+    initial_inv: Annotated[
+        int,
+        Field(
+            default=40,
+            description="initial inventory",
+            ge=0,
+        ),
+    ]
+    cost_reg: Annotated[
+        float,
+        Field(
+            default=100.00,
+            description="regular ordering cost per unit",
+            gt=0,
+        ),
+    ]
+    cost_exp: Annotated[
+        float,
+        Field(
+            default=110.00,
+            description="expedited ordering cost per unit",
+            gt=0,
+        ),
+    ]
+    lead_reg: Annotated[
+        int,
+        Field(
+            default=2,
+            description="lead time for regular orders in days",
+            ge=0,
+        ),
+    ]
+    lead_exp: Annotated[
+        int,
+        Field(
+            default=0,
+            description="lead time for expedited orders in days",
+            ge=0,
+        ),
+    ]
+    holding_cost: Annotated[
+        float,
+        Field(
+            default=5.00,
+            description="holding cost per unit per period",
+            gt=0,
+        ),
+    ]
+    penalty_cost: Annotated[
+        float,
+        Field(
+            default=495.00,
+            description="penalty cost per unit per period for backlogging",
+            gt=0,
+        ),
+    ]
+    st_dev: Annotated[
+        float,
+        Field(
+            default=10.0,
+            description="standard deviation of demand distribution",
+            gt=0,
+        ),
+    ]
+    mu: Annotated[
+        float,
+        Field(
+            default=30.0,
+            description="mean of demand distribution",
+            gt=0,
+        ),
+    ]
+    order_level_reg: Annotated[
+        int,
+        Field(
+            default=80,
+            description="order-up-to level for regular orders",
+            ge=0,
+        ),
+    ]
+    order_level_exp: Annotated[
+        int,
+        Field(
+            default=50,
+            description="order-up-to level for expedited orders",
+            ge=0,
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        # Cross-validation: check lead time and cost constraints
+        if (self.lead_exp > self.lead_reg) or (self.cost_exp < self.cost_reg):
+            raise ValueError(
+                "lead_exp must be less than lead_reg and cost_exp must be greater than "
+                "cost_reg"
+            )
+
+        return self
+
+
+class DualSourcingMinCostConfig(BaseModel):
+    """Configuration model for Dual Sourcing Min Cost Problem.
+
+    A problem configuration that minimizes total cost for dual sourcing inventory
+    by optimizing order levels for regular and expedited orders.
+    """
+
+    initial_solution: Annotated[
+        tuple[int, int],
+        Field(
+            default=(50, 80),
+            description="initial solution",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=1000,
+            description="max # of replications for a solver to take",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
 
 
 class DemandInputModel:
@@ -35,100 +179,9 @@ class DualSourcing(Model):
     cost, average penalty cost, and average ordering cost per period.
     """
 
-    @classproperty
-    @override
-    def n_rngs(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_responses(cls) -> int:
-        return 3
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "n_days": {
-                "description": "number of days to simulate",
-                "datatype": int,
-                "default": 1000,
-                "isDatafarmable": False,
-            },
-            "initial_inv": {
-                "description": "initial inventory",
-                "datatype": int,
-                "default": 40,
-            },
-            "cost_reg": {
-                "description": "regular ordering cost per unit",
-                "datatype": float,
-                "default": 100.00,
-            },
-            "cost_exp": {
-                "description": "expedited ordering cost per unit",
-                "datatype": float,
-                "default": 110.00,
-            },
-            "lead_reg": {
-                "description": "lead time for regular orders in days",
-                "datatype": int,
-                "default": 2,
-            },
-            "lead_exp": {
-                "description": "lead time for expedited orders in days",
-                "datatype": int,
-                "default": 0,
-            },
-            "holding_cost": {
-                "description": "holding cost per unit per period",
-                "datatype": float,
-                "default": 5.00,
-            },
-            "penalty_cost": {
-                "description": "penalty cost per unit per period for backlogging",
-                "datatype": float,
-                "default": 495.00,
-            },
-            "st_dev": {
-                "description": "standard deviation of demand distribution",
-                "datatype": float,
-                "default": 10.0,
-            },
-            "mu": {
-                "description": "mean of demand distribution",
-                "datatype": float,
-                "default": 30.0,
-            },
-            "order_level_reg": {
-                "description": "order-up-to level for regular orders",
-                "datatype": int,
-                "default": 80,
-            },
-            "order_level_exp": {
-                "description": "order-up-to level for expedited orders",
-                "datatype": int,
-                "default": 50,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "n_days": self._check_n_days,
-            "initial_inv": self._check_initial_inv,
-            "cost_reg": self._check_cost_reg,
-            "cost_exp": self._check_cost_exp,
-            "lead_reg": self._check_lead_reg,
-            "lead_exp": self._check_lead_exp,
-            "holding_cost": self._check_holding_cost,
-            "penalty_cost": self._check_penalty_cost,
-            "st_dev": self._check_st_dev,
-            "mu": self._check_mu,
-            "order_level_reg": self._check_order_level_reg,
-            "order_level_exp": self._check_order_level_exp,
-        }
+    config_class: ClassVar[type[BaseModel]] = DualSourcingConfig
+    n_rngs: int = 1
+    n_responses: int = 3
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the DualSourcing model.
@@ -141,55 +194,6 @@ class DualSourcing(Model):
         super().__init__(fixed_factors)
 
         self.demand_model = DemandInputModel()
-
-    # Check for simulatable factors
-    def _check_n_days(self) -> None:
-        if self.factors["n_days"] < 1:
-            raise ValueError("n_days must be greater than or equal to 1.")
-
-    def _check_initial_inv(self) -> None:
-        if self.factors["initial_inv"] < 0:
-            raise ValueError("initial_inv must be greater than or equal to 0.")
-
-    def _check_cost_reg(self) -> None:
-        if self.factors["cost_reg"] <= 0:
-            raise ValueError("cost_reg must be greater than 0.")
-
-    def _check_cost_exp(self) -> None:
-        if self.factors["cost_exp"] <= 0:
-            raise ValueError("cost_exp must be greater than 0.")
-
-    def _check_lead_reg(self) -> None:
-        if self.factors["lead_reg"] < 0:
-            raise ValueError("lead_reg must be greater than or equal to 0.")
-
-    def _check_lead_exp(self) -> None:
-        if self.factors["lead_exp"] < 0:
-            raise ValueError("lead_exp must be greater than or equal to 0.")
-
-    def _check_holding_cost(self) -> None:
-        if self.factors["holding_cost"] <= 0:
-            raise ValueError("holding_cost must be greater than 0.")
-
-    def _check_penalty_cost(self) -> None:
-        if self.factors["penalty_cost"] <= 0:
-            raise ValueError("penalty_cost must be greater than 0.")
-
-    def _check_st_dev(self) -> None:
-        if self.factors["st_dev"] <= 0:
-            raise ValueError("st-dev must be greater than 0.")
-
-    def _check_mu(self) -> None:
-        if self.factors["mu"] <= 0:
-            raise ValueError("mu must be greater than 0.")
-
-    def _check_order_level_reg(self) -> None:
-        if self.factors["order_level_reg"] < 0:
-            raise ValueError("order_level_reg must be greater than or equal to 0.")
-
-    def _check_order_level_exp(self) -> None:
-        if self.factors["order_level_exp"] < 0:
-            raise ValueError("order_level_exp must be greater than or equal to 0.")
 
     @override
     def check_simulatable_factors(self) -> bool:
@@ -301,127 +305,23 @@ class DualSourcing(Model):
 class DualSourcingMinCost(Problem):
     """Class to make dual-sourcing inventory simulation-optimization problems."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "DUALSOURCING-1"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Min Cost for Dual Sourcing"
-
-    @classproperty
-    @override
-    def n_objectives(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_stochastic_constraints(cls) -> int:
-        return 0
-
-    @classproperty
-    @override
-    def minmax(cls) -> tuple[int]:
-        return (-1,)
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.DISCRETE
-
-    @classproperty
-    @override
-    def gradient_available(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def optimal_value(cls) -> float | None:
-        return None
-
-    @classproperty
-    @override
-    def optimal_solution(cls) -> tuple | None:
-        return None
-
-    @classproperty
-    @override
-    def model_default_factors(cls) -> dict:
-        return {}
-
-    @classproperty
-    @override
-    def model_decision_factors(cls) -> set[str]:
-        return {"order_level_exp", "order_level_reg"}
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "initial_solution": {
-                "description": "initial solution",
-                "datatype": tuple,
-                "default": (50, 80),
-            },
-            "budget": {
-                "description": "max # of replications for a solver to take",
-                "datatype": int,
-                "default": 1000,
-                "isDatafarmable": False,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-        }
-
-    @classproperty
-    @override
-    def dim(cls) -> int:
-        return 2
-
-    @classproperty
-    @override
-    def lower_bounds(cls) -> tuple:
-        return (0, 0)
-
-    @classproperty
-    @override
-    def upper_bounds(cls) -> tuple:
-        return (np.inf, np.inf)
-
-    def __init__(
-        self,
-        name: str = "DUALSOURCING-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the DualSourcingMinCost problem.
-
-        Args:
-            name (str, optional): Name of the problem. Defaults to "DUALSOURCING-1".
-            fixed_factors (dict, optional): Fixed factors for the problem.
-                Defaults to None.
-            model_fixed_factors (dict, optional): Model fixed factors. Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(
-            name=name,
-            fixed_factors=fixed_factors,
-            model_fixed_factors=model_fixed_factors,
-            model=DualSourcing,
-        )
+    config_class: ClassVar[type[BaseModel]] = DualSourcingMinCostConfig
+    model_class: ClassVar[type[Model]] = DualSourcing
+    class_name_abbr: str = "DUALSOURCING-1"
+    class_name: str = "Min Cost for Dual Sourcing"
+    n_objectives: int = 1
+    n_stochastic_constraints: int = 0
+    minmax: tuple[int] = (-1,)
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.DISCRETE
+    gradient_available: bool = False
+    optimal_value: float | None = None
+    optimal_solution: tuple | None = None
+    model_default_factors: dict = {}
+    model_decision_factors: set[str] = {"order_level_exp", "order_level_reg"}
+    dim: int = 2
+    lower_bounds: tuple = (0, 0)
+    upper_bounds: tuple = (np.inf, np.inf)
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:

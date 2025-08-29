@@ -3,59 +3,88 @@
 from __future__ import annotations
 
 import math
-from typing import Callable
+from typing import Annotated, ClassVar, Self
 
 import numpy as np
+from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
 from simopt.input_models import Gamma
-from simopt.utils import classproperty, override
+from simopt.utils import override
+
+
+class ParameterEstimationConfig(BaseModel):
+    xstar: Annotated[
+        list[float],
+        Field(
+            default=[2, 5],
+            description="x^*, the unknown parameter that maximizes g(x)",
+        ),
+    ]
+    x: Annotated[
+        list[float],
+        Field(
+            default=[1, 1],
+            description="x, variable in pdf",
+        ),
+    ]
+
+    def _check_xstar(self) -> None:
+        if any(xstar_i <= 0 for xstar_i in self.xstar):
+            raise ValueError("All elements in xstar must be greater than 0.")
+
+    def _check_x(self) -> None:
+        if any(x_i <= 0 for x_i in self.x):
+            raise ValueError("All elements in x must be greater than 0.")
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        self._check_xstar()
+        self._check_x()
+
+        x_len = len(self.x)
+        xstar_len = len(self.xstar)
+        if x_len != 2:
+            raise ValueError("The length of x must equal 2.")
+        if xstar_len != 2:
+            raise ValueError("The length of xstar must equal 2.")
+
+        return self
+
+
+class ParamEstiMaxLogLikConfig(BaseModel):
+    """Configuration model for Parameter Estimation Max Log Likelihood Problem.
+
+    Max Log Likelihood for Gamma Parameter Estimation simulation-optimization problem.
+    """
+
+    initial_solution: Annotated[
+        tuple[float, ...],
+        Field(
+            default=(1, 1),
+            description="initial solution",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=1000,
+            description="max # of replications for a solver to take",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
 
 
 class ParameterEstimation(Model):
     """MLE estimation model for the parameters of a 2D gamma distribution."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "PARAMESTI"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Gamma Parameter Estimation"
-
-    @classproperty
-    @override
-    def n_rngs(cls) -> int:
-        return 2
-
-    @classproperty
-    @override
-    def n_responses(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "xstar": {
-                "description": "x^*, the unknown parameter that maximizes g(x)",
-                "datatype": list,
-                "default": [2, 5],
-            },
-            "x": {
-                "description": "x, variable in pdf",
-                "datatype": list,
-                "default": [1, 1],
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {"xstar": self._check_xstar, "x": self._check_x}
+    config_class: ClassVar[type[BaseModel]] = ParameterEstimationConfig
+    class_name_abbr: str = "PARAMESTI"
+    class_name: str = "Gamma Parameter Estimation"
+    n_rngs: int = 2
+    n_responses: int = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the model.
@@ -68,14 +97,6 @@ class ParameterEstimation(Model):
         super().__init__(fixed_factors)
         self.y1_model = Gamma()
         self.y2_model = Gamma()
-
-    def _check_xstar(self) -> None:
-        if any(xstar_i <= 0 for xstar_i in self.factors["xstar"]):
-            raise ValueError("All elements in xstar must be greater than 0.")
-
-    def _check_x(self) -> None:
-        if any(x_i <= 0 for x_i in self.factors["x"]):
-            raise ValueError("All elements in x must be greater than 0.")
 
     @override
     def check_simulatable_factors(self) -> bool:
@@ -129,50 +150,17 @@ class ParameterEstimation(Model):
 class ParamEstiMaxLogLik(Problem):
     """Base class to implement simulation-optimization problems."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "PARAMESTI-1"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Max Log Likelihood for Gamma Parameter Estimation"
-
-    @classproperty
-    @override
-    def n_objectives(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_stochastic_constraints(cls) -> int:
-        return 0
-
-    @classproperty
-    @override
-    def minmax(cls) -> tuple:
-        return (1,)
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_available(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def optimal_value(cls) -> float | None:
-        return None
+    config_class: ClassVar[type[BaseModel]] = ParamEstiMaxLogLikConfig
+    model_class: ClassVar[type[Model]] = ParameterEstimation
+    class_name_abbr: str = "PARAMESTI-1"
+    class_name: str = "Max Log Likelihood for Gamma Parameter Estimation"
+    n_objectives: int = 1
+    n_stochastic_constraints: int = 0
+    minmax: tuple[int] = (1,)
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_available: bool = False
+    optimal_value: float | None = None
 
     @property
     @override
@@ -182,79 +170,11 @@ class ParamEstiMaxLogLik(Problem):
             return tuple(solution)
         return solution
 
-    @classproperty
-    @override
-    def model_default_factors(cls) -> dict:
-        return {}
-
-    @classproperty
-    @override
-    def model_decision_factors(cls) -> set[str]:
-        return {"x"}
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "initial_solution": {
-                "description": "initial solution",
-                "datatype": tuple,
-                "default": (1, 1),
-            },
-            "budget": {
-                "description": "max # of replications for a solver to take",
-                "datatype": int,
-                "default": 1000,
-                "isDatafarmable": False,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-        }
-
-    @classproperty
-    @override
-    def dim(cls) -> int:
-        return 2
-
-    @classproperty
-    @override
-    def lower_bounds(cls) -> tuple:
-        return (0.1,) * cls.dim
-
-    @classproperty
-    @override
-    def upper_bounds(cls) -> tuple:
-        return (10,) * cls.dim
-
-    def __init__(
-        self,
-        name: str = "PARAMESTI-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the problem.
-
-        Args:
-            name (str, optional): User-specified name for problem.
-                Defaults to "PARAMESTI-1".
-            fixed_factors (dict, optional): Fixed factors of the simulation model.
-                Defaults to None.
-            model_fixed_factors (dict, optional): Fixed factors of the simulation
-                model. Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(
-            name=name,
-            fixed_factors=fixed_factors,
-            model_fixed_factors=model_fixed_factors,
-            model=ParameterEstimation,
-        )
+    model_default_factors: dict = {}
+    model_decision_factors: set[str] = {"x"}
+    dim: int = 2
+    lower_bounds: tuple = (0.1,) * dim
+    upper_bounds: tuple = (10,) * dim
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:

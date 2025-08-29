@@ -7,14 +7,189 @@
 from __future__ import annotations
 
 from math import copysign, sqrt
-from typing import Callable
+from typing import Annotated, ClassVar, Self
 
 import numpy as np
+from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
 from simopt.input_models import InputModel
-from simopt.utils import classproperty, override
+from simopt.utils import override
+
+
+class IronOreConfig(BaseModel):
+    """Configuration model for Iron Ore Inventory simulation.
+
+    A model that simulates multiple periods of production and sales for an
+    inventory problem with stochastic price determined by a mean-reverting
+    random walk. Returns total profit, fraction of days producing iron, and
+    mean stock.
+    """
+
+    mean_price: Annotated[
+        float,
+        Field(
+            default=100.0,
+            description="mean iron ore price per unit",
+            gt=0,
+        ),
+    ]
+    max_price: Annotated[
+        float,
+        Field(
+            default=200.0,
+            description="maximum iron ore price per unit",
+            gt=0,
+        ),
+    ]
+    min_price: Annotated[
+        float,
+        Field(
+            default=0.0,
+            description="minimum iron ore price per unit",
+            ge=0,
+        ),
+    ]
+    capacity: Annotated[
+        int,
+        Field(
+            default=10000,
+            description="maximum holding capacity",
+            ge=0,
+        ),
+    ]
+    st_dev: Annotated[
+        float,
+        Field(
+            default=7.5,
+            description="standard deviation of random walk steps for price",
+            gt=0,
+        ),
+    ]
+    holding_cost: Annotated[
+        float,
+        Field(
+            default=1.0,
+            description="holding cost per unit per period",
+            gt=0,
+        ),
+    ]
+    prod_cost: Annotated[
+        float,
+        Field(
+            default=100.0,
+            description="production cost per unit",
+            gt=0,
+        ),
+    ]
+    max_prod_perday: Annotated[
+        int,
+        Field(
+            default=100,
+            description="maximum units produced per day",
+            gt=0,
+        ),
+    ]
+    price_prod: Annotated[
+        float,
+        Field(
+            default=80.0,
+            description="price level to start production",
+            gt=0,
+        ),
+    ]
+    inven_stop: Annotated[
+        int,
+        Field(
+            default=7000,
+            description="inventory level to cease production",
+            gt=0,
+        ),
+    ]
+    price_stop: Annotated[
+        float,
+        Field(
+            default=40.0,
+            description="price level to stop production",
+            gt=0,
+        ),
+    ]
+    price_sell: Annotated[
+        float,
+        Field(
+            default=100.0,
+            description="price level to sell all stock",
+            gt=0,
+        ),
+    ]
+    n_days: Annotated[
+        int,
+        Field(
+            default=365,
+            description="number of days to simulate",
+            ge=1,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        # Cross-validation: check price ordering constraint
+        if (self.min_price > self.mean_price) or (self.mean_price > self.max_price):
+            raise ValueError(
+                "mean_price must be greater than or equal to min_price and less than "
+                "or equal to max_price."
+            )
+
+        return self
+
+
+class IronOreMaxRevCntConfig(BaseModel):
+    """Configuration model for Iron Ore Max Revenue Continuous Problem.
+
+    Max Revenue for Continuous Iron Ore simulation-optimization problem.
+    """
+
+    initial_solution: Annotated[
+        tuple[float, ...],
+        Field(
+            default=(80, 40, 100),
+            description="initial solution",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=1000,
+            description="max # of replications for a solver to take",
+            gt=0,
+        ),
+    ]
+
+
+class IronOreMaxRevConfig(BaseModel):
+    """Configuration model for Iron Ore Max Revenue Problem.
+
+    Max Revenue for Iron Ore simulation-optimization problem.
+    """
+
+    initial_solution: Annotated[
+        tuple[float, ...],
+        Field(
+            default=(80, 7000, 40, 100),
+            description="initial solution",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=1000,
+            description="max # of replications for a solver to take",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
 
 
 class MovementInputModel(InputModel):
@@ -39,106 +214,9 @@ class IronOre(Model):
     mean stock.
     """
 
-    @classproperty
-    @override
-    def n_rngs(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_responses(cls) -> int:
-        return 3
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "mean_price": {
-                "description": "mean iron ore price per unit",
-                "datatype": float,
-                "default": 100.0,
-            },
-            "max_price": {
-                "description": "maximum iron ore price per unit",
-                "datatype": float,
-                "default": 200.0,
-            },
-            "min_price": {
-                "description": "minimum iron ore price per unit",
-                "datatype": float,
-                "default": 0.0,
-            },
-            "capacity": {
-                "description": "maximum holding capacity",
-                "datatype": int,
-                "default": 10000,
-            },
-            "st_dev": {
-                "description": "standard deviation of random walk steps for price",
-                "datatype": float,
-                "default": 7.5,
-            },
-            "holding_cost": {
-                "description": "holding cost per unit per period",
-                "datatype": float,
-                "default": 1.0,
-            },
-            "prod_cost": {
-                "description": "production cost per unit",
-                "datatype": float,
-                "default": 100.0,
-            },
-            "max_prod_perday": {
-                "description": "maximum units produced per day",
-                "datatype": int,
-                "default": 100,
-            },
-            "price_prod": {
-                "description": "price level to start production",
-                "datatype": float,
-                "default": 80.0,
-            },
-            "inven_stop": {
-                "description": "inventory level to cease production",
-                "datatype": int,
-                "default": 7000,
-            },
-            "price_stop": {
-                "description": "price level to stop production",
-                "datatype": float,
-                "default": 40.0,
-            },
-            "price_sell": {
-                "description": "price level to sell all stock",
-                "datatype": float,
-                "default": 100.0,
-            },
-            "n_days": {
-                "description": "number of days to simulate",
-                "datatype": int,
-                "default": 365,
-                "isDatafarmable": False,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "mean_price": self._check_mean_price,
-            "max_price": self._check_max_price,
-            "min_price": self._check_min_price,
-            "capacity": self._check_capacity,
-            "st_dev": self._check_st_dev,
-            "holding_cost": self._check_holding_cost,
-            "prod_cost": self._check_prod_cost,
-            "max_prod_perday": self._check_max_prod_perday,
-            "price_prod": self._check_price_prod,
-            "inven_stop": self._check_inven_stop,
-            "price_stop": self._check_price_stop,
-            "price_sell": self._check_price_sell,
-            "n_days": self._check_n_days,
-        }
+    config_class: ClassVar[type[BaseModel]] = IronOreConfig
+    n_rngs: int = 1
+    n_responses: int = 3
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Iron Ore Inventory Model.
@@ -151,60 +229,6 @@ class IronOre(Model):
         super().__init__(fixed_factors)
 
         self.movement_model = MovementInputModel()
-
-    # Check for simulatable factors
-    def _check_mean_price(self) -> bool:
-        if self.factors["mean_price"] <= 0:
-            raise ValueError("Mean iron ore price per unit must be greater than 0.")
-        return True
-
-    def _check_max_price(self) -> None:
-        if self.factors["max_price"] <= 0:
-            raise ValueError("max_price must be greater than 0.")
-
-    def _check_min_price(self) -> None:
-        if self.factors["min_price"] < 0:
-            raise ValueError("min_price must be greater than or equal to 0.")
-
-    def _check_capacity(self) -> None:
-        if self.factors["capacity"] < 0:
-            raise ValueError("capacity must be greater than or equal to 0.")
-
-    def _check_st_dev(self) -> None:
-        if self.factors["st_dev"] <= 0:
-            raise ValueError("st_dev must be greater than 0.")
-
-    def _check_holding_cost(self) -> None:
-        if self.factors["holding_cost"] <= 0:
-            raise ValueError("holding_cost must be greater than 0.")
-
-    def _check_prod_cost(self) -> None:
-        if self.factors["prod_cost"] <= 0:
-            raise ValueError("prod_cost must be greater than 0.")
-
-    def _check_max_prod_perday(self) -> None:
-        if self.factors["max_prod_perday"] <= 0:
-            raise ValueError("max_prod_perday must be greater than 0.")
-
-    def _check_price_prod(self) -> None:
-        if self.factors["price_prod"] <= 0:
-            raise ValueError("price_prod must be greater than 0.")
-
-    def _check_inven_stop(self) -> None:
-        if self.factors["inven_stop"] <= 0:
-            raise ValueError("inven_stop must be greater than 0.")
-
-    def _check_price_stop(self) -> None:
-        if self.factors["price_stop"] <= 0:
-            raise ValueError("price_stop must be greater than 0.")
-
-    def _check_price_sell(self) -> None:
-        if self.factors["price_sell"] <= 0:
-            raise ValueError("price_sell must be greater than 0.")
-
-    def _check_n_days(self) -> None:
-        if self.factors["n_days"] < 1:
-            raise ValueError("n_days must be greater than or equal to 1.")
 
     @override
     def check_simulatable_factors(self) -> bool:
@@ -332,128 +356,28 @@ class IronOre(Model):
 class IronOreMaxRev(Problem):
     """Class to make iron ore inventory simulation-optimization problems."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "IRONORE-1"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Max Revenue for Iron Ore"
-
-    @classproperty
-    @override
-    def n_objectives(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_stochastic_constraints(cls) -> int:
-        return 0
-
-    @classproperty
-    @override
-    def minmax(cls) -> tuple[int]:
-        return (1,)
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.MIXED
-
-    @classproperty
-    @override
-    def gradient_available(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def optimal_value(cls) -> float | None:
-        return None
-
-    @classproperty
-    @override
-    def optimal_solution(cls) -> tuple | None:
-        return None
-
-    @classproperty
-    @override
-    def model_default_factors(cls) -> dict:
-        return {}
-
-    @classproperty
-    @override
-    def model_decision_factors(cls) -> set[str]:
-        return {"price_prod", "inven_stop", "price_stop", "price_sell"}
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "initial_solution": {
-                "description": "initial solution",
-                "datatype": tuple,
-                "default": (80, 7000, 40, 100),
-            },
-            "budget": {
-                "description": "max # of replications for a solver to take",
-                "datatype": int,
-                "default": 1000,
-                "isDatafarmable": False,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-        }
-
-    @classproperty
-    @override
-    def dim(cls) -> int:
-        return 4
-
-    @classproperty
-    @override
-    def lower_bounds(cls) -> tuple:
-        return (0,) * cls.dim
-
-    @classproperty
-    @override
-    def upper_bounds(cls) -> tuple:
-        return (np.inf,) * cls.dim
-
-    def __init__(
-        self,
-        name: str = "IRONORE-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the Iron Ore Inventory Problem.
-
-        Args:
-            name (str, optional): Name of the problem. Defaults to "IRONORE-1".
-            fixed_factors (dict, optional): Fixed factors for the problem.
-                Defaults to None.
-            model_fixed_factors (dict, optional): Fixed factors for the model.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(
-            name=name,
-            fixed_factors=fixed_factors,
-            model_fixed_factors=model_fixed_factors,
-            model=IronOre,
-        )
+    config_class: ClassVar[type[BaseModel]] = IronOreMaxRevConfig
+    model_class: ClassVar[type[Model]] = IronOre
+    class_name_abbr: str = "IRONORE-1"
+    class_name: str = "Max Revenue for Iron Ore"
+    n_objectives: int = 1
+    n_stochastic_constraints: int = 0
+    minmax: tuple[int] = (1,)
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.MIXED
+    gradient_available: bool = False
+    optimal_value: float | None = None
+    optimal_solution: tuple | None = None
+    model_default_factors: dict = {}
+    model_decision_factors: set[str] = {
+        "price_prod",
+        "inven_stop",
+        "price_stop",
+        "price_sell",
+    }
+    dim: int = 4
+    lower_bounds: tuple = (0,) * dim
+    upper_bounds: tuple = (np.inf,) * dim
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
@@ -502,127 +426,23 @@ class IronOreMaxRev(Problem):
 class IronOreMaxRevCnt(Problem):
     """Class to make iron ore inventory simulation-optimization problems."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "IRONORECONT-1"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Max Revenue for Continuous Iron Ore"
-
-    @classproperty
-    @override
-    def n_objectives(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_stochastic_constraints(cls) -> int:
-        return 0
-
-    @classproperty
-    @override
-    def minmax(cls) -> tuple[int]:
-        return (1,)
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_available(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def optimal_value(cls) -> float | None:
-        return None
-
-    @classproperty
-    @override
-    def optimal_solution(cls) -> tuple | None:
-        return None
-
-    @classproperty
-    @override
-    def model_default_factors(cls) -> dict:
-        return {}
-
-    @classproperty
-    @override
-    def model_decision_factors(cls) -> set[str]:
-        return {"price_prod", "price_stop", "price_sell"}
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "initial_solution": {
-                "description": "initial solution",
-                "datatype": tuple,
-                "default": (80, 40, 100),
-            },
-            "budget": {
-                "description": "max # of replications for a solver to take",
-                "datatype": int,
-                "default": 1000,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-        }
-
-    @classproperty
-    @override
-    def dim(cls) -> int:
-        return 3
-
-    @classproperty
-    @override
-    def lower_bounds(cls) -> tuple:
-        return (0.0,) * cls.dim
-
-    @classproperty
-    @override
-    def upper_bounds(cls) -> tuple:
-        return (np.inf,) * cls.dim
-
-    def __init__(
-        self,
-        name: str = "IRONORECONT-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the Iron Ore Inventory Problem.
-
-        Args:
-            name (str, optional): Name of the problem. Defaults to "IRONORECONT-1".
-            fixed_factors (dict, optional): Fixed factors for the problem.
-                Defaults to None.
-            model_fixed_factors (dict, optional): Fixed factors for the model.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(
-            name=name,
-            fixed_factors=fixed_factors,
-            model_fixed_factors=model_fixed_factors,
-            model=IronOre,
-        )
+    config_class: ClassVar[type[BaseModel]] = IronOreMaxRevCntConfig
+    model_class: ClassVar[type[Model]] = IronOre
+    class_name_abbr: str = "IRONORECONT-1"
+    class_name: str = "Max Revenue for Continuous Iron Ore"
+    n_objectives: int = 1
+    n_stochastic_constraints: int = 0
+    minmax: tuple[int] = (1,)
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_available: bool = False
+    optimal_value: float | None = None
+    optimal_solution: tuple | None = None
+    model_default_factors: dict = {}
+    model_decision_factors: set[str] = {"price_prod", "price_stop", "price_sell"}
+    dim: int = 3
+    lower_bounds: tuple = (0.0,) * dim
+    upper_bounds: tuple = (np.inf,) * dim
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
