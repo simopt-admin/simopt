@@ -89,6 +89,7 @@ It is a list of 4 values specifying the Poisson rate parameters (`\lambda`) for 
 Cars are not allowed to spawn at exit-only nodes (E1 and W2), so ``lambdas[2]`` and ``lambdas[3]`` must be set to ``1``.
 To translate these direction lambdas into specific entry nodes, we add all the lambda values and devide each one by the total. Then devide the result by the number of entering nodes in each direction and assign the result to its respective node.
 In this example the resulting lambda would be: 
+
 [0.2, 0.2, 0.2, 0.2, 0, 0.1, 0.1, 0], in this respective node order: [N1, N2, S2, S1, E1, E2, W2, W1].
 The car generation rates at vein (E2 and W1) must not exceed the arrival rates at any of the artery entry points (N1, N2, S1, S2).
 
