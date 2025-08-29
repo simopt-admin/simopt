@@ -91,6 +91,8 @@ To translate these direction lambdas into specific entry nodes, we add all the l
 In this example the resulting lambda would be: 
 
 [0.2, 0.2, 0.2, 0.2, 0, 0.1, 0.1, 0], in this respective node order: [N1, N2, S2, S1, E1, E2, W2, W1].
+
+
 The car generation rates at vein (E2 and W1) must not exceed the arrival rates at any of the artery entry points (N1, N2, S1, S2).
 
 For each arriving car, the lambda value associated with the selected entry node determines the distribution of interarrival times.
