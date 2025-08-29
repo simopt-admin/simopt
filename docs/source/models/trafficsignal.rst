@@ -44,14 +44,27 @@ The probability of selecting a given arrival direction (North, South, East or We
 .. math::
     :label: eq_lambda_selection
 
-    \frac{\lambda_i}{for j in range(n_artery):
-                        start_prob.append(a[0]/sum(a))
-                    for j in range(n_artery, 2*n_artery):
-                        start_prob.append(a[1]/sum(a))
-                    for j in range(2*n_artery, (2*n_artery) + n_vein):
-                        start_prob.append(a[2]/sum(a))
-                    for j in range((2*n_artery) + n_vein, (2*n_artery) + (2*n_vein)):
-                        start_prob.append(a[3]/sum(a)) }
+    \frac{\lambda_i}{i=0
+                    while i < n_artery:
+                        lambdas_nodes.append((lambdas[0]/sum(lambdas))/n_artery)
+                        i+=1
+                    while i < 2*n_artery:
+                        lambdas_nodes.append((lambdas[1]/sum(lambdas)/n_artery))
+                        i+=1
+                    j=0
+                    while j < n_vein:
+                        if j%2 == 0:
+                            lambdas_nodes.append(0)
+                        else:
+                            lambdas_nodes.append(lambdas[2]/sum(lambdas))
+                        j+=1
+                    k=0
+                    while k < n_vein:
+                        if k%2 == 0:
+                            lambdas_nodes.append(lambdas[3]/sum(lambdas))
+                        else:
+                            lambdas_nodes.append(0)
+                        k+=1 }
     \text{ where } \lambda_i \text{ is the arrival rate for direction i.}
 
 The ``lambdas`` parameter defines these arrival rates.
@@ -74,7 +87,9 @@ It is a list of 4 values specifying the Poisson rate parameters (`\lambda`) for 
  
 
 Cars are not allowed to spawn at exit-only nodes (E1 and W2), so ``lambdas[2]`` and ``lambdas[3]`` must be set to ``1``.
-Additionally, the car generation rates at vein nodes (E2 and W1) must not exceed the arrival rates at any of the artery entry points (N, S).
+To translate these direction lambdas into specific entry nodes, we add all the lambda values, devide each one by the total.Then devide the result by the number of entering nodes in each direction and assign the result to its respective node.
+In this example the resulting lambda would be: [0.2, 0.2, 0.2, 0.2, 0, 0.1, 0.1, 0], in this respective order: [N1, N2, S2, S1, E1, E2, W2, W1].
+The car generation rates at vein (E2 and W1) must not exceed the arrival rates at any of the artery entry points (N1, N2, S1, S2).
 
 For each arriving car, the lambda value associated with the selected entry node determines the distribution of interarrival times.
 Once a car enters the system, it is randomly assigned a destination node based on a weighted transition matrix inputed by the user.
