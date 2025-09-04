@@ -9,12 +9,20 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import Gamma
-from simopt.utils import override
 
 
 class ParameterEstimationConfig(BaseModel):
+    """Configuration for the parameter estimation model."""
+
     xstar: Annotated[
         list[float],
         Field(
@@ -80,11 +88,11 @@ class ParamEstiMaxLogLikConfig(BaseModel):
 class ParameterEstimation(Model):
     """MLE estimation model for the parameters of a 2D gamma distribution."""
 
+    class_name_abbr: ClassVar[str] = "PARAMESTI"
+    class_name: ClassVar[str] = "Gamma Parameter Estimation"
     config_class: ClassVar[type[BaseModel]] = ParameterEstimationConfig
-    class_name_abbr: str = "PARAMESTI"
-    class_name: str = "Gamma Parameter Estimation"
-    n_rngs: int = 2
-    n_responses: int = 1
+    n_rngs: ClassVar[int] = 2
+    n_responses: ClassVar[int] = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the model.
@@ -97,17 +105,6 @@ class ParameterEstimation(Model):
         super().__init__(fixed_factors)
         self.y1_model = Gamma()
         self.y2_model = Gamma()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        # Check for dimension of x and xstar.
-        x_len = len(self.factors["x"])
-        xstar_len = len(self.factors["xstar"])
-        if x_len != 2:
-            raise ValueError("The length of x must equal 2.")
-        if xstar_len != 2:
-            raise ValueError("The length of xstar must equal 2.")
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.y2_model.set_rng(rng_list[0])
@@ -140,66 +137,63 @@ class ParameterEstimation(Model):
         )
         # Compose responses and gradients.
         responses = {"loglik": loglik}
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, {}
 
 
 class ParamEstiMaxLogLik(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "PARAMESTI-1"
+    class_name: ClassVar[str] = "Max Log Likelihood for Gamma Parameter Estimation"
     config_class: ClassVar[type[BaseModel]] = ParamEstiMaxLogLikConfig
     model_class: ClassVar[type[Model]] = ParameterEstimation
-    class_name_abbr: str = "PARAMESTI-1"
-    class_name: str = "Max Log Likelihood for Gamma Parameter Estimation"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = False
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"x"}
 
     @property
-    @override
-    def optimal_solution(self) -> tuple | None:
+    def optimal_value(self) -> float | None:  # noqa: D102
+        return None
+
+    @property
+    def optimal_solution(self) -> tuple | None:  # noqa: D102
         solution = self.model.factors["xstar"]
         if isinstance(solution, list):
             return tuple(solution)
         return solution
 
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"x"}
-    dim: int = 2
-    lower_bounds: tuple = (0.1,) * dim
-    upper_bounds: tuple = (10,) * dim
+    @property
+    def dim(self) -> int:  # noqa: D102
+        return 2
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    @property
+    def lower_bounds(self) -> tuple:  # noqa: D102
+        return (0.1,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:  # noqa: D102
+        return (10,) * self.dim
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"x": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["x"])
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["loglik"],)
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+        responses, _ = self.model.replicate()
+        objectives = [Objective(stochastic=responses["loglik"])]
+        return RepResult(objectives=objectives)
 
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ((0, 0),)
-        return det_objectives, det_objectives_gradients
-
-    @override
-    def check_deterministic_constraints(self, _x: tuple) -> bool:
+    def check_deterministic_constraints(self, _x: tuple) -> bool:  # noqa: D102
         return True
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         return tuple(
             [
                 rand_sol_rng.uniform(self.lower_bounds[idx], self.upper_bounds[idx])

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from typing import Annotated, ClassVar, Final
 
 import numpy as np
@@ -9,9 +10,16 @@ from pydantic import BaseModel, Field
 from scipy import special
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    StochasticConstraint,
+    VariableType,
+)
 from simopt.input_models import InputModel, Poisson
-from simopt.utils import override
 
 MEAN_ELO: Final[int] = 1200
 MAX_ALLOWABLE_DIFF: Final[int] = 150
@@ -103,16 +111,13 @@ class ChessAvgDifferenceConfig(BaseModel):
 class EloInputModel(InputModel):
     """Input model for player Elo ratings."""
 
-    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
-        self.rng = rng
-
-    def unset_rng(self) -> None:  # noqa: D102
-        self.rng = None
+    rng: random.Random | None = None
 
     def random(
         self, mean: float, std: float, min_rating: float, max_rating: float
     ) -> float:
         """Draw a truncated normal rating within [min_rating, max_rating]."""
+        assert self.rng is not None
         while True:
             rating = self.rng.normalvariate(mean, std)
             if min_rating <= rating <= max_rating:
@@ -127,11 +132,11 @@ class ChessMatchmaking(Model):
     between matched players.
     """
 
+    class_name_abbr: ClassVar[str] = "CHESS"
+    class_name: ClassVar[str] = "Chess Matchmaking"
     config_class: ClassVar[type[BaseModel]] = ChessMatchmakingConfig
-    class_name_abbr: str = "CHESS"
-    class_name: str = "Chess Matchmaking"
-    n_rngs: int = 2
-    n_responses: int = 2
+    n_rngs: ClassVar[int] = 2
+    n_responses: ClassVar[int] = 2
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the ChessMatchmaking model.
@@ -145,11 +150,6 @@ class ChessMatchmaking(Model):
 
         self.elo_model = EloInputModel()
         self.arrival_model = Poisson()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        # No factors need cross-checked
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.elo_model.set_rng(rng_list[0])
@@ -218,84 +218,60 @@ class ChessMatchmaking(Model):
             "avg_diff": avg_diff,
             "avg_wait_time": np.mean(wait_times),
         }
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, {}
 
 
 class ChessAvgDifference(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "CHESS-1"
+    class_name: ClassVar[str] = "Min Avg Difference for Chess Matchmaking"
     config_class: ClassVar[type[BaseModel]] = ChessAvgDifferenceConfig
     model_class: ClassVar[type[Model]] = ChessMatchmaking
-    class_name_abbr: str = "CHESS-1"
-    class_name: str = "Min Avg Difference for Chess Matchmaking"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 1
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.STOCHASTIC
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 1
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.STOCHASTIC
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"allowable_diff"}
-    dim: int = 1
-    lower_bounds: tuple = (0,)
-    upper_bounds: tuple = (2400,)
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"allowable_diff"}
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    @property
+    def dim(self) -> int:  # noqa: D102
+        return 1
+
+    @property
+    def lower_bounds(self) -> tuple:  # noqa: D102
+        return (0,)
+
+    @property
+    def upper_bounds(self) -> tuple:  # noqa: D102
+        return (2400,)
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"allowable_diff": vector[0]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return (factor_dict["allowable_diff"],)
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["avg_diff"],)
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+        responses, _ = self.model.replicate()
+        return RepResult(
+            objectives=[Objective(stochastic=responses["avg_diff"])],
+            stochastic_constraints=[
+                StochasticConstraint(
+                    stochastic=responses["avg_wait_time"],
+                    deterministic=-1 * self.factors["upper_time"],
+                )
+            ],
+        )
 
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """Convert a response dictionary to a vector of stochastic constraint values.
-
-        Each returned value represents the left-hand side of a constraint of the form
-        E[Y] ≤ 0.
-
-        Args:
-            response_dict (dict): A dictionary containing response keys and their
-                associated values.
-
-        Returns:
-            tuple: A tuple representing the left-hand sides of the stochastic
-                constraints.
-        """
-        return (response_dict["avg_wait_time"],)
-
-    def deterministic_stochastic_constraints_and_gradients(self) -> tuple[tuple, tuple]:
-        """Compute deterministic components of stochastic constraints.
-
-        Returns:
-            tuple:
-                - tuple: The deterministic components of the stochastic constraints.
-                - tuple: The gradients of those deterministic components.
-        """
-        det_stoch_constraints = (-1 * self.factors["upper_time"],)
-        det_stoch_constraints_gradients = ((0,),)
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ()
-        return det_objectives, det_objectives_gradients
-
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return all(x_val > 0 for x_val in x)
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        return (min(max(0, rand_sol_rng.normalvariate(150, 50)), 2400),)
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+        val = rand_sol_rng.normalvariate(150, 50)
+        return (min(max(0.0, float(val)), 2400.0),)

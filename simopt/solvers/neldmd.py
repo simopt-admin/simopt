@@ -9,10 +9,10 @@ contraction, and shrinking. A detailed description of the solver can be found
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from simopt.base import (
     ConstraintType,
@@ -20,17 +20,14 @@ from simopt.base import (
     Problem,
     Solution,
     Solver,
+    SolverConfig,
     VariableType,
 )
-from simopt.utils import override
 
 
-class NelderMeadConfig(BaseModel):
+class NelderMeadConfig(SolverConfig):
     """Configuration for Nelder-Mead solver."""
 
-    crn_across_solns: Annotated[
-        bool, Field(default=True, description="use CRN across solutions?")
-    ]
     r: Annotated[
         int,
         Field(
@@ -67,7 +64,7 @@ class NelderMeadConfig(BaseModel):
         Field(
             default=0.1,
             gt=0,
-            description="fraction of the distance between bounds used to select initial points",
+            description="fraction of distance between bounds used for initial points",
         ),
     ]
 
@@ -81,17 +78,16 @@ class NelderMead(Solver):
     """
 
     name: str = "NELDMD"
-    config_class: type[BaseModel] = NelderMeadConfig
-    class_name_abbr: str = "NELDMD"
-    class_name: str = "Nelder-Mead"
-    objective_type: ObjectiveType = ObjectiveType.SINGLE
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_needed: bool = False
+    config_class: ClassVar[type[SolverConfig]] = NelderMeadConfig
+    class_name_abbr: ClassVar[str] = "NELDMD"
+    class_name: ClassVar[str] = "Nelder-Mead"
+    objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_needed: ClassVar[bool] = False
 
     # FIXME: fix typing on `sort_sol`
-    @override
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem) -> None:  # noqa: D102
         # Designate random number generator for random sampling.
         get_rand_soln_rng = self.rng_list[1]
         n_pts = problem.dim + 1
@@ -151,7 +147,7 @@ class NelderMead(Solver):
             )
             if np.any(out_of_bounds):
                 new_pts[out_of_bounds] = np.where(
-                    problem.minmax[np.newaxis, :] == -1,
+                    np.array(problem.minmax)[np.newaxis, :] == -1,
                     self.lower_bounds,
                     self.upper_bounds,
                 )

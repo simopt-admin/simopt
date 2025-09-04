@@ -9,12 +9,20 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import Exp, Poisson
-from simopt.utils import override
 
 
 class SSContConfig(BaseModel):
+    """Configuration for the (s, S) continuous inventory model."""
+
     demand_mean: Annotated[
         float,
         Field(
@@ -140,10 +148,11 @@ class SSCont(Model):
     occured, and average amount ordered given an order occured.
     """
 
+    class_name_abbr: ClassVar[str] = "SSCONT"
+    class_name: ClassVar[str] = "(s, S) Inventory"
     config_class: ClassVar[type[BaseModel]] = SSContConfig
-    class_name: str = "(s, S) Inventory"
-    n_rngs: int = 2
-    n_responses: int = 7
+    n_rngs: ClassVar[int] = 2
+    n_responses: ClassVar[int] = 7
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the (s,S) inventory simulation model.
@@ -157,12 +166,6 @@ class SSCont(Model):
 
         self.demand_model = Exp()
         self.lead_model = Poisson()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        if self.factors["s"] >= self.factors["S"]:
-            raise ValueError("s must be less than S.")
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.demand_model.set_rng(rng_list[0])
@@ -299,62 +302,62 @@ class SSCont(Model):
             "avg_stockout": avg_stockout,
             "avg_order": avg_order,
         }
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, {}
 
 
 class SSContMinCost(Problem):
     """Class to make (s,S) inventory simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "SSCONT-1"
+    class_name: ClassVar[str] = "Min Total Cost for (s, S) Inventory"
     config_class: ClassVar[type[BaseModel]] = SSContMinCostConfig
     model_class: ClassVar[type[Model]] = SSCont
-    class_name_abbr: str = "SSCONT-1"
-    class_name: str = "Min Total Cost for (s, S) Inventory"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {"demand_mean": 100.0, "lead_mean": 6.0}
-    model_decision_factors: set[str] = {"s", "S"}
-    dim: int = 2
-    lower_bounds: tuple = (0,) * dim
-    upper_bounds: tuple = (np.inf,) * dim
+    model_default_factors: ClassVar[dict] = {"demand_mean": 100.0, "lead_mean": 6.0}
+    model_decision_factors: ClassVar[set[str]] = {"s", "S"}
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    @property
+    def dim(self) -> int:  # noqa: D102
+        return 2
+
+    @property
+    def lower_bounds(self) -> tuple:  # noqa: D102
+        return (0,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:  # noqa: D102
+        return (np.inf,) * self.dim
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"s": vector[0], "S": vector[0] + vector[1]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (
-            response_dict["avg_backorder_costs"]
-            + response_dict["avg_order_costs"]
-            + response_dict["avg_holding_costs"],
-        )
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+        responses, _ = self.model.replicate()
+        objectives = [
+            Objective(
+                stochastic=(
+                    responses["avg_backorder_costs"]
+                    + responses["avg_order_costs"]
+                    + responses["avg_holding_costs"]
+                )
+            )
+        ]
+        return RepResult(objectives=objectives)
 
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ((0,),)
-        return det_objectives, det_objectives_gradients
-
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return x[0] >= 0 and x[1] >= 0
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         # x = (rand_sol_rng.expovariate(1 / 300), rand_sol_rng.expovariate(1 / 300))
         # x = tuple(
         #     sorted(

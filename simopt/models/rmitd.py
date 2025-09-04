@@ -8,12 +8,20 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import InputModel
-from simopt.utils import override
 
 
 class RMITDConfig(BaseModel):
+    """Configuration for the RMITD model."""
+
     time_horizon: Annotated[
         int,
         Field(
@@ -154,7 +162,10 @@ class RMITDMaxRevenueConfig(BaseModel):
 class DemandInputModel(InputModel):
     """Input model for temporally dependent demand components."""
 
-    def set_rng(self, rng: MRG32k3a) -> None:  # noqa: D102
+    x_rng: MRG32k3a | None = None
+    y_rng: MRG32k3a | None = None
+
+    def set_rng(self, rng: list[MRG32k3a] | tuple[MRG32k3a, MRG32k3a]) -> None:  # noqa: D102 # pyrefly: ignore
         self.x_rng = rng[0]
         self.y_rng = rng[1]
 
@@ -162,10 +173,10 @@ class DemandInputModel(InputModel):
         self.x_rng = None
         self.y_rng = None
 
-    def random(
+    def random(  # noqa: D102
         self, demand_means: np.ndarray, gamma_shape: float, gamma_scale: float
-    ) -> float:
-        """Sample period demand vector given means and gamma parameters."""
+    ) -> np.ndarray:
+        assert self.x_rng is not None and self.y_rng is not None
         x_demand = self.x_rng.gammavariate(
             alpha=gamma_shape,
             beta=1.0 / gamma_scale,
@@ -183,10 +194,11 @@ class RMITD(Model):
     inter-temporal dependence. Returns the total revenue.
     """
 
+    class_name_abbr: ClassVar[str] = "RMITD"
+    class_name: ClassVar[str] = "Revenue Management Temporal Demand"
     config_class: ClassVar[type[BaseModel]] = RMITDConfig
-    class_name: str = "Revenue Management Temporal Demand"
-    n_rngs: int = 2
-    n_responses: int = 1
+    n_rngs: ClassVar[int] = 2
+    n_responses: ClassVar[int] = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the RMITD model.
@@ -199,44 +211,6 @@ class RMITD(Model):
         super().__init__(fixed_factors)
 
         self.demand_model = DemandInputModel()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        # Check for matching number of periods.
-        if len(self.factors["prices"]) != self.factors["time_horizon"]:
-            raise ValueError("The length of prices must be equal to time_horizon.")
-        if len(self.factors["demand_means"]) != self.factors["time_horizon"]:
-            raise ValueError(
-                "The length of demand_means must be equal to time_horizon."
-            )
-        if len(self.factors["reservation_qtys"]) != self.factors["time_horizon"] - 1:
-            raise ValueError(
-                "The length of reservation_qtys must be equal to the time_horizon "
-                "minus 1."
-            )
-        # Check that first reservation level is less than initial inventory.
-        if self.factors["initial_inventory"] < self.factors["reservation_qtys"][0]:
-            raise ValueError(
-                "The initial_inventory must be greater than or equal to the first "
-                "element in reservation_qtys."
-            )
-        # Check for non-increasing reservation levels.
-        if any(
-            self.factors["reservation_qtys"][idx]
-            < self.factors["reservation_qtys"][idx + 1]
-            for idx in range(self.factors["time_horizon"] - 2)
-        ):
-            raise ValueError(
-                "Each value in reservation_qtys must be greater than the next value "
-                "in the list."
-            )
-        # Check that gamma_shape*gamma_scale = 1.
-        if (
-            np.isclose(self.factors["gamma_shape"] * self.factors["gamma_scale"], 1)
-            is False
-        ):
-            raise ValueError("gamma_shape times gamma_scale should be close to 1.")
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.demand_model.set_rng(rng_list)
@@ -274,7 +248,7 @@ class RMITD(Model):
         revenue = 0.0
 
         # Compute revenue for each period.
-        for reservation, demand, price in zip(reservations, demand_vec, prices):
+        for reservation, demand, price in zip(reservations, list(demand_vec), prices):
             available = max(remaining_inventory - reservation, 0)
             sell = min(available, demand)
             remaining_inventory -= sell
@@ -284,58 +258,63 @@ class RMITD(Model):
 
         # Compose responses and gradients.
         responses = {"revenue": revenue}
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, {}
 
 
 class RMITDMaxRevenue(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "RMITD-1"
+    class_name: ClassVar[str] = "Max Revenue for Revenue Management Temporal Demand"
     config_class: ClassVar[type[BaseModel]] = RMITDMaxRevenueConfig
     model_class: ClassVar[type[Model]] = RMITD
-    class_name_abbr: str = "RMITD-1"
-    class_name: str = "Max Revenue for Revenue Management Temporal Demand"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (1,)
-    constraint_type: ConstraintType = ConstraintType.DETERMINISTIC
-    variable_type: VariableType = VariableType.DISCRETE
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.DETERMINISTIC
+    variable_type: ClassVar[VariableType] = VariableType.DISCRETE
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"initial_inventory", "reservation_qtys"}
-    dim: int = 3
-    lower_bounds: tuple = (0,) * dim
-    upper_bounds: tuple = (np.inf,) * dim
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {
+        "initial_inventory",
+        "reservation_qtys",
+    }
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    @property
+    def dim(self) -> int:  # noqa: D102
+        return 3
+
+    @property
+    def lower_bounds(self) -> tuple:  # noqa: D102
+        return (0,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:  # noqa: D102
+        return (np.inf,) * self.dim
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {
             "initial_inventory": vector[0],
             "reservation_qtys": list(vector[0:]),
         }
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return (
             factor_dict["initial_inventory"],
             *tuple(factor_dict["reservation_qtys"]),
         )
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["revenue"],)
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+        responses, _ = self.model.replicate()
+        objectives = [Objective(stochastic=responses["revenue"])]
+        return RepResult(objectives=objectives)
 
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1))
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         # Generate random solution using acceptable/rejection.
         while True:
             x = tuple([200 * rand_sol_rng.random() for _ in range(self.dim)])

@@ -8,9 +8,15 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import Exp
-from simopt.utils import override
 
 # TODO: figure out if this should ever be anything other than 13
 NUM_ARCS: Final[int] = 13
@@ -110,10 +116,11 @@ class FixedSAN(Model):
     come with a cost.
     """
 
+    class_name_abbr: ClassVar[str] = "FIXEDSAN"
+    class_name: ClassVar[str] = "Fixed Stochastic Activity Network"
     config_class: ClassVar[type[BaseModel]] = FixedSANConfig
-    class_name: str = "Fixed Stochastic Activity Network"
-    n_rngs: int = 1
-    n_responses: int = 1
+    n_rngs: ClassVar[int] = 1
+    n_responses: ClassVar[int] = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Fixed Stochastic Activity Network model.
@@ -224,34 +231,33 @@ class FixedSAN(Model):
 class FixedSANLongestPath(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "FIXEDSAN-1"
+    class_name: ClassVar[str] = (
+        "Min Mean Longest Path for Fixed Stochastic Activity Network"
+    )
     config_class: ClassVar[type[BaseModel]] = FixedSANLongestPathConfig
     model_class: ClassVar[type[Model]] = FixedSAN
-    class_name_abbr: str = "FIXEDSAN-1"
-    class_name: str = "Min Mean Longest Path for Fixed Stochastic Activity Network"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = True
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = True
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"arc_means"}
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"arc_means"}
 
     @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return self.model.factors["num_arcs"]
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (1e-2,) * self.dim
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (np.inf,) * self.dim
 
     def check_arc_costs(self) -> bool:
@@ -260,46 +266,29 @@ class FixedSANLongestPath(Problem):
             x > 0 for x in self.factors["arc_costs"]
         )
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"arc_means": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["arc_means"])
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["longest_path_length"],)
+    def replicate(self, x: tuple) -> RepResult:  # noqa: D102
+        responses, gradients = self.model.replicate()
+        objectives = [
+            Objective(
+                stochastic=responses["longest_path_length"],
+                stochastic_gradients=gradients["longest_path_length"]["arc_means"],
+                deterministic=np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
+                deterministic_gradients=-np.array(self.factors["arc_costs"])
+                / (np.array(x) ** 2),
+            )
+        ]
+        return RepResult(objectives=objectives)
 
-    def deterministic_stochastic_constraints_and_gradients(self) -> tuple[tuple, tuple]:
-        """Compute deterministic components of stochastic constraints.
-
-        Returns:
-            tuple:
-                - tuple: The deterministic components of the stochastic constraints.
-                - tuple: The gradients of those deterministic components.
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = (
-            (0,) * self.dim,
-        )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
-    @override
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
-        det_objectives_gradients = (
-            -np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
-        )
-        return det_objectives, det_objectives_gradients
-
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return all(x_i >= 0 for x_i in x)
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         return tuple(
             [rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)]
         )

@@ -6,28 +6,26 @@ optimizing systems with multiple unknown parameters.
 
 from __future__ import annotations
 
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
 
 from simopt.base import (
     ConstraintType,
     ObjectiveType,
     Problem,
     Solver,
+    SolverConfig,
     VariableType,
 )
-from simopt.utils import make_nonzero, override
+from simopt.utils import make_nonzero
 
 
-class SPSAConfig(BaseModel):
+class SPSAConfig(SolverConfig):
     """Configuration for SPSA solver."""
 
-    crn_across_solns: Annotated[
-        bool, Field(default=True, description="use CRN across solutions?")
-    ]
     alpha: Annotated[
         float,
         Field(
@@ -69,7 +67,7 @@ class SPSAConfig(BaseModel):
         Field(
             default=2,
             gt=0,
-            description="number of loss function evaluations used in this gain calculation",
+            description="number of loss function evaluations used in gain calculation",
         ),
     ]
     eval_pct: Annotated[
@@ -106,11 +104,13 @@ class SPSA(Solver):
     """
 
     name: str = "SPSA"
-    config_class: type[BaseModel] = SPSAConfig
-    objective_type: ObjectiveType = ObjectiveType.SINGLE
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_needed: bool = False
+    config_class: ClassVar[type[SolverConfig]] = SPSAConfig
+    class_name_abbr: ClassVar[str] = "SPSA"
+    class_name: ClassVar[str] = "SPSA"
+    objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_needed: ClassVar[bool] = False
 
     def check_problem_factors(self) -> bool:
         """Determine if the joint settings of problem factors are permissible.
@@ -136,8 +136,7 @@ class SPSA(Solver):
         """
         return np.array(self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim))
 
-    @override
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem) -> None:  # noqa: D102
         # -minmax is needed to cast this as a minimization problem
         neg_minmax = -np.array(problem.minmax)
         lower_bound = np.array(problem.lower_bounds)

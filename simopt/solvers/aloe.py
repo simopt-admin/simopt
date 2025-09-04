@@ -8,10 +8,10 @@ the solver can be found `here <https://simopt.readthedocs.io/en/latest/aloe.html
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from simopt.base import (
     ConstraintType,
@@ -19,17 +19,14 @@ from simopt.base import (
     Problem,
     Solution,
     Solver,
+    SolverConfig,
     VariableType,
 )
-from simopt.utils import override
 
 
-class ALOEConfig(BaseModel):
+class ALOEConfig(SolverConfig):
     """Configuration for ALOE solver."""
 
-    crn_across_solns: Annotated[
-        bool, Field(default=True, description="use CRN across solutions?")
-    ]
     r: Annotated[
         int,
         Field(
@@ -71,7 +68,7 @@ class ALOEConfig(BaseModel):
         Field(
             default=2,
             gt=0,
-            description="magnifying factor for n_r inside the finite difference function",
+            description="magnifying factor for n_r in the finite difference function",
             alias="lambda",
         ),
     ]
@@ -81,14 +78,15 @@ class ALOE(Solver):
     """Adaptive Line-search with Oracle Estimations."""
 
     name: str = "ALOE"
-    config_class: type[BaseModel] = ALOEConfig
-    objective_type: ObjectiveType = ObjectiveType.SINGLE
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_needed: bool = False
+    config_class: ClassVar[type[SolverConfig]] = ALOEConfig
+    class_name_abbr: ClassVar[str] = "ALOE"
+    class_name: ClassVar[str] = "ALOE"
+    objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_needed: ClassVar[bool] = False
 
-    @override
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem) -> None:  # noqa: D102
         # Default values.
         r = self.factors["r"]
         theta = self.factors["theta"]
@@ -131,14 +129,14 @@ class ALOE(Solver):
                 finite_diff_budget = (
                     2 * problem.dim - np.count_nonzero(bounds_check)
                 ) * r
-                self.budget.request(finite_diff_budget)
+                self.budget.request(int(finite_diff_budget))
                 grad = self._finite_diff(new_solution, bounds_check, problem, alpha, r)
 
                 while np.all(grad == 0):
                     finite_diff_budget = (
                         2 * problem.dim - np.count_nonzero(bounds_check)
                     ) * r
-                    self.budget.request(finite_diff_budget)
+                    self.budget.request(int(finite_diff_budget))
                     grad = self._finite_diff(
                         new_solution, bounds_check, problem, alpha, r
                     )

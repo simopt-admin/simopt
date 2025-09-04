@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import random
 from math import copysign, sqrt
 from typing import Annotated, ClassVar, Self
 
@@ -13,9 +14,15 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import InputModel
-from simopt.utils import override
 
 
 class IronOreConfig(BaseModel):
@@ -195,13 +202,10 @@ class IronOreMaxRevConfig(BaseModel):
 class MovementInputModel(InputModel):
     """Input model for mining movement and price shocks."""
 
-    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
-        self.rng = rng
-
-    def unset_rng(self) -> None:  # noqa: D102
-        self.rng = None
+    rng: random.Random | None = None
 
     def random(self, mean: float, std: float) -> float:  # noqa: D102
+        assert self.rng is not None
         return self.rng.normalvariate(mean, std)
 
 
@@ -214,9 +218,11 @@ class IronOre(Model):
     mean stock.
     """
 
+    class_name_abbr: ClassVar[str] = "IRONORE"
+    class_name: ClassVar[str] = "Iron Ore"
     config_class: ClassVar[type[BaseModel]] = IronOreConfig
-    n_rngs: int = 1
-    n_responses: int = 3
+    n_rngs: ClassVar[int] = 1
+    n_responses: ClassVar[int] = 3
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Iron Ore Inventory Model.
@@ -229,17 +235,6 @@ class IronOre(Model):
         super().__init__(fixed_factors)
 
         self.movement_model = MovementInputModel()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        if (self.factors["min_price"] > self.factors["mean_price"]) or (
-            self.factors["mean_price"] > self.factors["max_price"]
-        ):
-            raise ValueError(
-                "mean_price must be greater than or equal to min_price and less than "
-                "or equal to max_price."
-            )
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.movement_model.set_rng(rng_list[0])
@@ -346,41 +341,45 @@ class IronOre(Model):
             "frac_producing": frac_producing,
             "mean_stock": np.mean(stock),
         }
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, {}
 
 
 class IronOreMaxRev(Problem):
     """Class to make iron ore inventory simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "IRONORE-1"
+    class_name: ClassVar[str] = "Max Revenue for Iron Ore"
     config_class: ClassVar[type[BaseModel]] = IronOreMaxRevConfig
     model_class: ClassVar[type[Model]] = IronOre
-    class_name_abbr: str = "IRONORE-1"
-    class_name: str = "Max Revenue for Iron Ore"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.MIXED
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.MIXED
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {
         "price_prod",
         "inven_stop",
         "price_stop",
         "price_sell",
     }
-    dim: int = 4
-    lower_bounds: tuple = (0,) * dim
-    upper_bounds: tuple = (np.inf,) * dim
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    @property
+    def dim(self) -> int:  # noqa: D102
+        return 4
+
+    @property
+    def lower_bounds(self) -> tuple:  # noqa: D102
+        return (0,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:  # noqa: D102
+        return (np.inf,) * self.dim
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {
             "price_prod": vector[0],
             "inven_stop": vector[1],
@@ -388,8 +387,7 @@ class IronOreMaxRev(Problem):
             "price_sell": vector[3],
         }
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return (
             factor_dict["price_prod"],
             factor_dict["inven_stop"],
@@ -397,18 +395,12 @@ class IronOreMaxRev(Problem):
             factor_dict["price_sell"],
         )
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["total_profit"],)
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+        responses, _ = self.model.replicate()
+        objectives = [Objective(stochastic=responses["total_profit"])]
+        return RepResult(objectives=objectives)
 
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ((0, 0, 0, 0),)
-        return det_objectives, det_objectives_gradients
-
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         # return (
         #     rand_sol_rng.randint(70, 90),
         #     rand_sol_rng.randint(2000, 8000),
@@ -426,56 +418,60 @@ class IronOreMaxRev(Problem):
 class IronOreMaxRevCnt(Problem):
     """Class to make iron ore inventory simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "IRONORECONT-1"
+    class_name: ClassVar[str] = "Max Revenue for Continuous Iron Ore"
     config_class: ClassVar[type[BaseModel]] = IronOreMaxRevCntConfig
     model_class: ClassVar[type[Model]] = IronOre
-    class_name_abbr: str = "IRONORECONT-1"
-    class_name: str = "Max Revenue for Continuous Iron Ore"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"price_prod", "price_stop", "price_sell"}
-    dim: int = 3
-    lower_bounds: tuple = (0.0,) * dim
-    upper_bounds: tuple = (np.inf,) * dim
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {
+        "price_prod",
+        "price_stop",
+        "price_sell",
+    }
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    @property
+    def dim(self) -> int:  # noqa: D102
+        return 3
+
+    @property
+    def lower_bounds(self) -> tuple:  # noqa: D102
+        return (0.0,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:  # noqa: D102
+        return (np.inf,) * self.dim
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {
             "price_prod": vector[0],
             "price_stop": vector[1],
             "price_sell": vector[2],
         }
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return (
             factor_dict["price_prod"],
             factor_dict["price_stop"],
             factor_dict["price_sell"],
         )
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["total_profit"],)
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+        responses, _ = self.model.replicate()
+        objectives = [Objective(stochastic=responses["total_profit"])]
+        return RepResult(objectives=objectives)
 
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ((0, 0, 0),)
-        return det_objectives, det_objectives_gradients
-
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return x[0] >= 0 and x[1] >= 0 and x[2] >= 0
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         # return (
         #     rand_sol_rng.randint(70, 90),
         #     rand_sol_rng.randint(30, 50),

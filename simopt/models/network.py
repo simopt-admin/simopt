@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from enum import IntEnum
 from typing import Annotated, ClassVar, Final, Self
 
@@ -9,14 +10,22 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import Exp, InputModel, Triangular
-from simopt.utils import override
 
 NUM_NETWORKS: Final = 10
 
 
 class NetworkConfig(BaseModel):
+    """Configuration for the queueing network model."""
+
     process_prob: Annotated[
         list[float],
         Field(
@@ -101,7 +110,7 @@ class NetworkConfig(BaseModel):
         # Make sure probabilities sum up to 1.
         if (
             any(prob_i > 1.0 or prob_i < 0 for prob_i in self.process_prob)
-            or round(sum(self.process_prob), 10) != 1.0
+            or abs(sum(self.process_prob) - 1.0) > 1e-10
         ):
             raise ValueError(
                 "All elements in process_prob must be between 0 and 1 and the sum of "
@@ -207,23 +216,21 @@ class NetworkMinTotalCostConfig(BaseModel):
 class RouteInputModel(InputModel):
     """Input model for routing choices in the network."""
 
-    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
-        self.rng = rng
+    rng: random.Random | None = None
 
-    def unset_rng(self) -> None:  # noqa: D102
-        self.rng = None
-
-    def random(self, choices: list, weights: list, k: int) -> list:  # noqa: D102
+    def random(self, choices: list[int], weights: list[float], k: int) -> list[int]:  # noqa: D102
+        assert self.rng is not None
         return self.rng.choices(choices, weights, k=k)
 
 
 class Network(Model):
     """Simulate messages being processed in a queueing network."""
 
+    class_name_abbr: ClassVar[str] = "NETWORK"
+    class_name: ClassVar[str] = "Communication Networks System"
     config_class: ClassVar[type[BaseModel]] = NetworkConfig
-    class_name: str = "Communication Networks System"
-    n_rngs: int = 3
-    n_responses: int = 1
+    n_rngs: ClassVar[int] = 3
+    n_responses: ClassVar[int] = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Network model.
@@ -237,44 +244,6 @@ class Network(Model):
         self.arrival_model = Exp()
         self.route_model = RouteInputModel()
         self.service_model = Triangular()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        if len(self.factors["process_prob"]) != self.factors["n_networks"]:
-            raise ValueError("The length of process_prob must equal n_networks.")
-        if len(self.factors["cost_process"]) != self.factors["n_networks"]:
-            raise ValueError("The length of cost_process must equal n_networks.")
-        if len(self.factors["cost_time"]) != self.factors["n_networks"]:
-            raise ValueError("The length of cost_time must equal n_networks.")
-        if len(self.factors["mode_transit_time"]) != self.factors["n_networks"]:
-            raise ValueError("The length of mode_transit_time must equal n_networks.")
-        if len(self.factors["lower_limits_transit_time"]) != self.factors["n_networks"]:
-            raise ValueError(
-                "The length of lower_limits_transit_time must equal n_networks."
-            )
-        if len(self.factors["upper_limits_transit_time"]) != self.factors["n_networks"]:
-            raise ValueError(
-                "The length of upper_limits_transit_time must equal n_networks."
-            )
-        if any(
-            self.factors["mode_transit_time"][i]
-            < self.factors["lower_limits_transit_time"][i]
-            for i in range(self.factors["n_networks"])
-        ):
-            raise ValueError(
-                "The mode_transit time must be greater than or equal to the "
-                "corresponding lower_limits_transit_time for each network."
-            )
-        if any(
-            self.factors["upper_limits_transit_time"][i]
-            < self.factors["mode_transit_time"][i]
-            for i in range(self.factors["n_networks"])
-        ):
-            raise ValueError(
-                "The mode_transit time must be less than or equal to the corresponding "
-                "upper_limits_transit_time for each network."
-            )
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.arrival_model.set_rng(rng_list[0])
@@ -312,7 +281,7 @@ class Network(Model):
             self.arrival_model.random(arrival_rate) for _ in range(total_arrivals)
         ]
         network_routes = self.route_model.random(
-            range(n_networks),
+            list(range(n_networks)),
             weights=process_prob,
             k=total_arrivals,
         )
@@ -387,66 +356,51 @@ class Network(Model):
         # Compute total costs for the simulation run.
         total_cost = np.sum(message_mat[:, Col.TOTAL_COST])
         responses = {"total_cost": total_cost}
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, {}
 
 
 class NetworkMinTotalCost(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "NETWORK-1"
+    class_name: ClassVar[str] = "Min Total Cost for Communication Networks System"
     config_class: ClassVar[type[BaseModel]] = NetworkMinTotalCostConfig
     model_class: ClassVar[type[Model]] = Network
-    class_name_abbr: str = "NETWORK-1"
-    class_name: str = "Min Total Cost for Communication Networks System"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.DETERMINISTIC
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.DETERMINISTIC
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"process_prob"}
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"process_prob"}
 
     @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return self.model.factors["n_networks"]
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (0,) * self.dim
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (1,) * self.dim
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"process_prob": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["process_prob"])
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["total_cost"],)
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+        responses, _ = self.model.replicate()
+        objectives = [Objective(stochastic=responses["total_cost"])]
+        return RepResult(objectives=objectives)
 
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = (0,) * self.model.factors["n_networks"]
-        return det_objectives, det_objectives_gradients
-
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         # Check box constraints.
         box_feasible = super().check_deterministic_constraints(x)
         if not box_feasible:
@@ -455,8 +409,7 @@ class NetworkMinTotalCost(Problem):
         # Check constraint that probabilities sum to one.
         return round(sum(x), 10) == 1.0
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         # Generating a random pmf with length equal to number of networks.
         x = rand_sol_rng.continuous_random_vector_from_simplex(
             n_elements=self.model.factors["n_networks"],
