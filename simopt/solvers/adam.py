@@ -6,10 +6,10 @@ stochastic objective functions, based on adaptive estimates of lower-order momen
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from simopt.base import (
     ConstraintType,
@@ -17,17 +17,14 @@ from simopt.base import (
     Problem,
     Solution,
     Solver,
+    SolverConfig,
     VariableType,
 )
-from simopt.utils import override
 
 
-class ADAMConfig(BaseModel):
+class ADAMConfig(SolverConfig):
     """Configuration for ADAM solver."""
 
-    crn_across_solns: Annotated[
-        bool, Field(default=True, description="use CRN across solutions?")
-    ]
     r: Annotated[
         int,
         Field(
@@ -72,14 +69,13 @@ class ADAM(Solver):
     """
 
     name: str = "ADAM"
-    config_class: type[BaseModel] = ADAMConfig
-    objective_type: ObjectiveType = ObjectiveType.SINGLE
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_needed: bool = False
+    config_class: ClassVar[type[SolverConfig]] = ADAMConfig
+    objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_needed: ClassVar[bool] = False
 
-    @override
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem) -> None:  # noqa: D102
         # Default values.
         r: int = self.factors["r"]
         beta_1: float = self.factors["beta_1"]
@@ -130,7 +126,7 @@ class ADAM(Solver):
                 finite_diff_budget = (
                     2 * problem.dim - np.count_nonzero(bounds_check)
                 ) * r
-                self.budget.request(finite_diff_budget)
+                self.budget.request(int(finite_diff_budget))
                 grad = self._finite_diff(new_solution, bounds_check, problem)
 
             # Update biased first moment estimate.

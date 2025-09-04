@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable
-from typing import Annotated, Literal, Self
+from typing import Annotated, ClassVar, Literal, Self
 
 import numpy as np
 from numpy.linalg import norm
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
 
 from simopt.base import (
     ConstraintType,
@@ -22,17 +22,15 @@ from simopt.base import (
     Problem,
     Solution,
     Solver,
+    SolverConfig,
     VariableType,
 )
-from simopt.utils import make_nonzero, override
+from simopt.utils import make_nonzero
 
 
-class STRONGConfig(BaseModel):
+class STRONGConfig(SolverConfig):
     """Configuration for STRONG solver."""
 
-    crn_across_solns: Annotated[
-        bool, Field(default=True, description="use CRN across solutions?")
-    ]
     n0: Annotated[int, Field(default=10, gt=0, description="initial sample size")]
     n_r: Annotated[
         int,
@@ -117,14 +115,13 @@ class STRONG(Solver):
     """
 
     name: str = "STRONG"
-    config_class: type[BaseModel] = STRONGConfig
-    objective_type: ObjectiveType = ObjectiveType.SINGLE
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_needed: bool = False
+    config_class: ClassVar[type[SolverConfig]] = STRONGConfig
+    objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_needed: ClassVar[bool] = False
 
-    @override
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem) -> None:  # noqa: D102
         # Default values.
         n0: int = self.factors["n0"]
         n_r: int = self.factors["n_r"]
