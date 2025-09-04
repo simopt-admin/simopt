@@ -27,11 +27,11 @@ from __future__ import annotations
 
 import logging
 from math import ceil, log
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 import numpy as np
 from numpy.linalg import LinAlgError, inv, norm, pinv
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
 from scipy.optimize import NonlinearConstraint, OptimizeResult, minimize
 
 from simopt.base import (
@@ -40,17 +40,14 @@ from simopt.base import (
     Problem,
     Solution,
     Solver,
+    SolverConfig,
     VariableType,
 )
-from simopt.utils import override
 
 
-class ASTRODFConfig(BaseModel):
+class ASTRODFConfig(SolverConfig):
     """Configuration for ASTRO-DF solver."""
 
-    crn_across_solns: Annotated[
-        bool, Field(default=True, description="use CRN across solutions")
-    ]
     eta_1: Annotated[
         float,
         Field(default=0.1, gt=0, description="threshold for a successful iteration"),
@@ -119,12 +116,12 @@ class ASTRODF(Solver):
     """The ASTRO-DF solver."""
 
     name: str = "ASTRODF"
-    config_class: type[BaseModel] = ASTRODFConfig
-    class_name: str = "ASTRO-DF"
-    objective_type: ObjectiveType = ObjectiveType.SINGLE
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_needed: bool = False
+    config_class: ClassVar[type[SolverConfig]] = ASTRODFConfig
+    class_name: ClassVar[str] = "ASTRO-DF"
+    objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_needed: ClassVar[bool] = False
 
     @property
     def iteration_count(self) -> int:
@@ -914,7 +911,7 @@ class ASTRODF(Solver):
 
             if condition_met or high_variance:
                 fval_tilde = min_fval
-                min_idx = fval.index(min_fval)
+                min_idx = np.argmin(fval)
                 candidate_x = y_var[min_idx][0]
                 candidate_solution = interpolation_solns[min_idx]
 
@@ -1024,8 +1021,7 @@ class ASTRODF(Solver):
         self.visited_pts_list = []
         self.kappa = None
 
-    @override
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem) -> None:  # noqa: D102
         self.problem = problem
         self._initialize_solving()
 

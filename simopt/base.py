@@ -7,13 +7,13 @@ import contextlib
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from enum import Enum
-from typing import Callable, ClassVar
+from typing import Annotated, Callable, ClassVar
 
 import numpy as np
-from pydantic import BaseModel
+from boltons.typeutils import classproperty
+from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.utils import classproperty
 
 
 def _get_specifications(config_class: type[BaseModel]) -> dict[str, dict]:
@@ -131,6 +131,14 @@ class Budget:
         return self.total - self._used
 
 
+class SolverConfig(BaseModel):
+    """Base class for solver configuration."""
+
+    crn_across_solns: Annotated[
+        bool, Field(default=True, description="use CRN across solutions?")
+    ]
+
+
 class Solver(ABC):
     """Base class to implement simulation-optimization solvers.
 
@@ -143,92 +151,26 @@ class Solver(ABC):
         fixed_factors (dict): Dictionary of user-specified solver factors.
     """
 
-    name: str
-    config_class: type[BaseModel]
+    class_name_abbr: ClassVar[str]
+    """Short name of the solver class."""
 
-    @classproperty
-    def class_name_abbr(cls) -> str:
-        """Short name of the solver class."""
-        return cls.__name__
+    class_name: ClassVar[str]
+    """Long name of the solver class."""
 
-    @classproperty
-    def class_name(cls) -> str:
-        """Long name of the solver class."""
-        return cls.__name__.replace("_", " ")
+    config_class: ClassVar[type[SolverConfig]]
+    """Configuration class for the solver."""
 
-    @classproperty
-    def compatibility(cls) -> str:
-        """Compatibility of the solver."""
-        return (
-            f"{cls.objective_type.symbol()}"
-            f"{cls.constraint_type.symbol()}"
-            f"{cls.variable_type.symbol()}"
-            f"{'G' if cls.gradient_needed else 'N'}"
-        )
+    objective_type: ClassVar[ObjectiveType]
+    """Description of objective types."""
 
-    @classproperty
-    @abstractmethod
-    def objective_type(cls) -> ObjectiveType:
-        """Description of objective types.
+    constraint_type: ClassVar[ConstraintType]
+    """Description of constraint types."""
 
-        One of: "single" or "multi".
-        """
-        raise NotImplementedError
+    variable_type: ClassVar[VariableType]
+    """Description of variable types."""
 
-    @classproperty
-    @abstractmethod
-    def constraint_type(cls) -> ConstraintType:
-        """Description of constraint types.
-
-        One of: "unconstrained", "box", "deterministic", or "stochastic".
-        """
-        raise NotImplementedError
-
-    @classproperty
-    @abstractmethod
-    def variable_type(cls) -> VariableType:
-        """Description of variable types.
-
-        One of: "discrete", "continuous", "mixed".
-        """
-        raise NotImplementedError
-
-    @classproperty
-    @abstractmethod
-    def gradient_needed(cls) -> bool:
-        """True if gradient of objective function is needed, otherwise False."""
-        raise NotImplementedError
-
-    @property
-    def factors(self) -> dict:
-        """Changeable factors (i.e., parameters) of the solver."""
-        return self.config.model_dump(by_alias=True)
-
-    @classproperty
-    @abstractmethod
-    def specifications(
-        cls,
-    ) -> dict[str, dict]:
-        """Details of each factor (for GUI, data validation, and defaults)."""
-        raise NotImplementedError
-
-    @property
-    def rng_list(self) -> list[MRG32k3a]:
-        """List of RNGs used for the solver's internal purposes."""
-        return self.__rng_list
-
-    @rng_list.setter
-    def rng_list(self, value: list[MRG32k3a]) -> None:
-        self.__rng_list = value
-
-    @property
-    def solution_progenitor_rngs(self) -> list[MRG32k3a]:
-        """List of RNGs used as a baseline for simulating solutions."""
-        return self.__solution_progenitor_rngs
-
-    @solution_progenitor_rngs.setter
-    def solution_progenitor_rngs(self, value: list[MRG32k3a]) -> None:
-        self.__solution_progenitor_rngs = value
+    gradient_needed: ClassVar[bool]
+    """True if gradient of objective function is needed, otherwise False."""
 
     def __init__(self, name: str = "", fixed_factors: dict | None = None) -> None:
         """Initialize a solver object.
@@ -242,6 +184,9 @@ class Solver(ABC):
 
         fixed_factors = fixed_factors or {}
         self.config = self.config_class(**fixed_factors)
+
+        self.rng_list: list[MRG32k3a] = []
+        self.solution_progenitor_rngs: list[MRG32k3a] = []
 
         self.recommended_solns = []
         self.intermediate_budgets = []
@@ -266,6 +211,21 @@ class Solver(ABC):
             int: Hash value of the solver.
         """
         return hash((self.name, tuple(self.factors.items())))
+
+    @classproperty
+    def compatibility(cls) -> str:  # noqa: N805
+        """Compatibility of the solver."""
+        return (
+            f"{cls.objective_type.symbol()}"
+            f"{cls.constraint_type.symbol()}"
+            f"{cls.variable_type.symbol()}"
+            f"{'G' if cls.gradient_needed else 'N'}"
+        )
+
+    @property
+    def factors(self) -> dict:
+        """Changeable factors (i.e., parameters) of the solver."""
+        return self.config.model_dump(by_alias=True)
 
     def attach_rngs(self, rng_list: list[MRG32k3a]) -> None:
         """Attach a list of random-number generators to the solver.
@@ -326,28 +286,13 @@ class Solver(ABC):
         new_solution = Solution(x, problem)
         new_solution.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
         # Manipulate progenitor rngs to prepare for next new solution.
-        if not self.factors["crn_across_solns"]:  # If CRN are not used ...
+        if not self.config.crn_across_solns:  # If CRN are not used ...
             # ...advance each rng to start of the substream
             # substream = current substream + # of model RNGs.
             for rng in self.solution_progenitor_rngs:
                 for _ in range(problem.model.n_rngs):
                     rng.advance_substream()
         return new_solution
-
-    def rebase(self, n_reps: int) -> None:
-        """Rebase the progenitor rngs to start at a later subsubstream index.
-
-        Args:
-            n_reps (int): Substream index to skip to.
-        """
-        new_rngs = []
-        for rng in self.solution_progenitor_rngs:
-            stream_index = rng.s_ss_sss_index[0]
-            substream_index = rng.s_ss_sss_index[1]
-            new_rngs.append(
-                MRG32k3a(s_ss_sss_index=[stream_index, substream_index, n_reps])
-            )
-        self.solution_progenitor_rngs = new_rngs
 
 
 class Problem(ABC):

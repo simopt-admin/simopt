@@ -7,26 +7,24 @@ A detailed description of the solver can be found `here <https://simopt.readthed
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, Field
+import numpy as np
+from pydantic import Field
 
 from simopt.base import (
     ConstraintType,
     ObjectiveType,
     Problem,
     Solver,
+    SolverConfig,
     VariableType,
 )
-from simopt.utils import override
 
 
-class RandomSearchConfig(BaseModel):
+class RandomSearchConfig(SolverConfig):
     """Configuration for Random Search solver."""
 
-    crn_across_solns: Annotated[
-        bool, Field(default=True, description="use CRN across solutions?")
-    ]
     sample_size: Annotated[
         int, Field(default=10, gt=0, description="sample size per solution")
     ]
@@ -40,16 +38,15 @@ class RandomSearch(Solver):
     """
 
     name: str = "RNDSRCH"
-    config_class: type[BaseModel] = RandomSearchConfig
-    class_name_abbr: str = "RNDSRCH"
-    class_name: str = "Random Search"
-    objective_type: ObjectiveType = ObjectiveType.SINGLE
-    constraint_type: ConstraintType = ConstraintType.STOCHASTIC
-    variable_type: VariableType = VariableType.MIXED
-    gradient_needed: bool = False
+    config_class: ClassVar[type[SolverConfig]] = RandomSearchConfig
+    class_name_abbr: ClassVar[str] = "RNDSRCH"
+    class_name: ClassVar[str] = "Random Search"
+    objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.STOCHASTIC
+    variable_type: ClassVar[VariableType] = VariableType.MIXED
+    gradient_needed: ClassVar[bool] = False
 
-    @override
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem) -> None:  # noqa: D102
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         # Start at initial solution and record as best.
@@ -72,7 +69,7 @@ class RandomSearch(Solver):
             # Check for improvement relative to incumbent best solution.
             # Also check for feasibility w.r.t. stochastic constraints.
             mean_diff = new_solution.objectives_mean - best_solution.objectives_mean
-            if all(problem.minmax * mean_diff > 0) and all(
+            if all(np.array(problem.minmax) * mean_diff > 0) and all(
                 new_solution.stoch_constraints_mean[idx] <= 0
                 for idx in stoch_constraint_range
             ):
