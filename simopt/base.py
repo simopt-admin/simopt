@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from enum import Enum
@@ -327,11 +328,18 @@ class Solver(ABC):
         raise NotImplementedError
 
     def run(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+        """Run the solver on a problem.
+
+        Args:
+            problem (Problem): The problem to solve.
+
+        Returns:
+            tuple[list[Solution], list[int]]: A tuple containing a list of solutions
+            and a list of intermediate budgets.
+        """
         self.budget = Budget(problem.factors["budget"])
-        try:
+        with contextlib.suppress(BudgetExhaustedError):
             self.solve(problem)
-        except BudgetExhaustedError:
-            pass
 
         recommended_solns = self.recommended_solns
         intermediate_budgets = self.intermediate_budgets
