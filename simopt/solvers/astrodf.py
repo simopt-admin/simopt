@@ -117,6 +117,7 @@ class ASTRODF(Solver):
 
     name: str = "ASTRODF"
     config_class: ClassVar[type[SolverConfig]] = ASTRODFConfig
+    class_name_abbr: ClassVar[str] = "ASTRODF"
     class_name: ClassVar[str] = "ASTRO-DF"
     objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
     constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX

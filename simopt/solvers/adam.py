@@ -70,6 +70,8 @@ class ADAM(Solver):
 
     name: str = "ADAM"
     config_class: ClassVar[type[SolverConfig]] = ADAMConfig
+    class_name_abbr: ClassVar[str] = "ADAM"
+    class_name: ClassVar[str] = "ADAM"
     objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
     constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
