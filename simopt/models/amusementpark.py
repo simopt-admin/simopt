@@ -5,11 +5,17 @@ from __future__ import annotations
 import math as math
 from typing import Annotated, ClassVar, Final, Self
 
-import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import Exp, Gamma, WeightedChoice
 from simopt.utils import override
 
@@ -478,11 +484,7 @@ class AmusementPark(Model):
             "average_number_in_system": time_average / time_open,
             "attraction_utilization_percentages": cumulative_util,
         }
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, None
 
 
 class AmusementParkMinDepart(Problem):
@@ -528,15 +530,9 @@ class AmusementParkMinDepart(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["queue_capacities"])
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["total_departed"],)
-
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ()
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple) -> RepResult:
+        responses, _ = self.model.replicate()
+        return RepResult(objectives=[Objective(stochastic=responses["total_departed"])])
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
