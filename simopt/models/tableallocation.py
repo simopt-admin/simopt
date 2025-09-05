@@ -11,7 +11,14 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import Exp, Poisson, Uniform, WeightedChoice
 from simopt.utils import override
 
@@ -311,11 +318,7 @@ class TableAllocation(Model):
             "total_revenue": total_rev,
             "service_rate": sum(found) / len(found),
         }
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, None
 
 
 class TableAllocationMaxRev(Problem):
@@ -347,15 +350,10 @@ class TableAllocationMaxRev(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["num_tables"],)
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["total_revenue"],)
-
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ((0,) * self.dim,)
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple) -> RepResult:
+        responses, _ = self.model.replicate()
+        objectives = [Objective(stochastic=responses["total_revenue"])]
+        return RepResult(objectives=objectives)
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:

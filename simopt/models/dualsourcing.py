@@ -8,7 +8,14 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.utils import override
 
 
@@ -295,11 +302,7 @@ class DualSourcing(Model):
             "average_penalty_cost": np.mean(total_penalty_cost),
             "average_holding_cost": np.mean(total_holding_cost),
         }
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, None
 
 
 class DualSourcingMinCost(Problem):
@@ -337,19 +340,17 @@ class DualSourcingMinCost(Problem):
             factor_dict["order_level_reg"],
         )
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (
-            response_dict["average_ordering_cost"]
-            + response_dict["average_penalty_cost"]
-            + response_dict["average_holding_cost"],
+    def replicate(self, x: tuple):
+        responses, _ = self.model.replicate()
+        return RepResult(
+            objectives=[
+                Objective(
+                    stochastic=responses["average_ordering_cost"]
+                    + responses["average_penalty_cost"]
+                    + responses["average_holding_cost"],
+                )
+            ],
         )
-
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ((0, 0),)
-        return det_objectives, det_objectives_gradients
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:

@@ -9,7 +9,14 @@ import numpy as np
 from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import Exp
 from simopt.utils import override
 
@@ -289,15 +296,17 @@ class MM1MinMeanSojournTime(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["mu"],)
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["avg_sojourn_time"],)
-
-    @override
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (self.factors["cost"] * (x[0] ** 2),)
-        det_objectives_gradients = ((2 * self.factors["cost"] * x[0],),)
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple) -> RepResult:
+        responses, gradients = self.model.replicate()
+        objectives = [
+            Objective(
+                stochastic=responses["avg_sojourn_time"],
+                stochastic_gradients=gradients["avg_sojourn_time"]["mu"],
+                deterministic=self.factors["cost"] * (x[0] ** 2),
+                deterministic_gradients=2 * self.factors["cost"] * x[0],
+            )
+        ]
+        return RepResult(objectives=objectives)
 
     @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:

@@ -8,7 +8,15 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    StochasticConstraint,
+    VariableType,
+)
 from simopt.input_models import Beta
 from simopt.utils import override
 
@@ -356,11 +364,7 @@ class Contamination(Model):
             levels[i] = contamination_change + restoration_change
         # Compose responses and gradients.
         responses = {"level": levels}
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, None
 
 
 class ContaminationTotalCostDisc(Problem):
@@ -413,48 +417,26 @@ class ContaminationTotalCostDisc(Problem):
     def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
         return (np.nan * len(self.model.factors["prev_decision"]),)
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
-        return (0,)
-
-    @override
-    def response_dict_to_objectives_gradients(self, _response_dict: dict) -> tuple:
-        return ((0,) * len(self.model.factors["prev_decision"]),)
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """Convert a response dictionary to a vector of stochastic constraint values.
-
-        Each returned value represents the left-hand side of a constraint of the form
-        E[Y] ≤ 0.
-
-        Args:
-            response_dict (dict): A dictionary containing response keys and their
-                associated values.
-
-        Returns:
-            tuple: A tuple representing the left-hand sides of the stochastic
-                constraints.
-        """
-        under_control = response_dict["level"] <= self.factors["upper_thres"]
-        return tuple([-1 * z for z in under_control])
-
-    def deterministic_stochastic_constraints_and_gradients(self) -> tuple[tuple, tuple]:
-        """Compute deterministic components of stochastic constraints.
-
-        Returns:
-            tuple:
-                - tuple: The deterministic components of the stochastic constraints.
-                - tuple: The gradients of those deterministic components.
-        """
-        det_stoch_constraints = tuple(np.ones(self.dim) - self.factors["error_prob"])
-        det_stoch_constraints_gradients = ((0,),)
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
-    @override
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (np.dot(self.factors["prev_cost"], x),)
-        det_objectives_gradients = (tuple(self.factors["prev_cost"]),)
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple) -> RepResult:
+        responses, _ = self.model.replicate()
+        objectives = [
+            Objective(
+                stochastic=0.0,
+                deterministic=np.dot(self.factors["prev_cost"], x),
+                deterministic_gradients=self.factors["prev_cost"],
+            )
+        ]
+        under_control = responses["level"] <= self.factors["upper_thres"]
+        error_prob = self.factors["error_prob"]
+        stochastic_constraints = [
+            StochasticConstraint(
+                stochastic=-1 * under_control[i], deterministic=1 - error_prob[i]
+            )
+            for i in range(len(under_control))
+        ]
+        return RepResult(
+            objectives=objectives, stochastic_constraints=stochastic_constraints
+        )
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
@@ -535,50 +517,27 @@ class ContaminationTotalCostCont(Problem):
     def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
         return (np.nan * len(self.model.factors["prev_decision"]),)
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
-        return (0,)
-
-    @override
-    def response_dict_to_objectives_gradients(self, _response_dict: dict) -> tuple:
-        return ((0,) * len(self.model.factors["prev_decision"]),)
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """Convert a response dictionary to a vector of stochastic constraint values.
-
-        Each returned value represents the left-hand side of a constraint of the form
-        E[Y] ≤ 0.
-
-        Args:
-            response_dict (dict): A dictionary containing response keys and their
-                associated values.
-
-        Returns:
-            tuple: A tuple representing the left-hand sides of the stochastic
-                constraints.
-        """
-        under_control = response_dict["level"] <= self.factors["upper_thres"]
-        return tuple([-1 * z for z in under_control])
-
-    def deterministic_stochastic_constraints_and_gradients(self) -> tuple[tuple, tuple]:
-        """Compute deterministic components of stochastic constraints.
-
-        Returns:
-            tuple:
-                - tuple: The deterministic components of the stochastic constraints.
-                - tuple: The gradients of those deterministic components.
-        """
-        det_stoch_constraints = tuple(np.ones(self.dim) - self.factors["error_prob"])
-        det_stoch_constraints_gradients = (
-            (0,),
-        )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
-    @override
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (np.dot(self.factors["prev_cost"], x),)
-        det_objectives_gradients = (tuple(self.factors["prev_cost"]),)
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple) -> RepResult:
+        responses, _ = self.model.replicate()
+        deterministic_cost = np.dot(self.factors["prev_cost"], x)
+        objectives = [
+            Objective(
+                stochastic=0.0,
+                deterministic=deterministic_cost,
+                deterministic_gradients=self.factors["prev_cost"],
+            )
+        ]
+        under_control = responses["level"] <= self.factors["upper_thres"]
+        error_prob = self.factors["error_prob"]
+        stochastic_constraints = [
+            StochasticConstraint(
+                stochastic=-1 * under_control[i], deterministic=1 - error_prob[i]
+            )
+            for i in range(len(under_control))
+        ]
+        return RepResult(
+            objectives=objectives, stochastic_constraints=stochastic_constraints
+        )
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:

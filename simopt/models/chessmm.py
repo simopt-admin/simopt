@@ -9,7 +9,15 @@ from pydantic import BaseModel, Field
 from scipy import special
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    StochasticConstraint,
+    VariableType,
+)
 from simopt.input_models import InputModel, Poisson
 from simopt.utils import override
 
@@ -218,11 +226,7 @@ class ChessMatchmaking(Model):
             "avg_diff": avg_diff,
             "avg_wait_time": np.mean(wait_times),
         }
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, None
 
 
 class ChessAvgDifference(Problem):
@@ -254,43 +258,17 @@ class ChessAvgDifference(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["allowable_diff"],)
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["avg_diff"],)
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """Convert a response dictionary to a vector of stochastic constraint values.
-
-        Each returned value represents the left-hand side of a constraint of the form
-        E[Y] ≤ 0.
-
-        Args:
-            response_dict (dict): A dictionary containing response keys and their
-                associated values.
-
-        Returns:
-            tuple: A tuple representing the left-hand sides of the stochastic
-                constraints.
-        """
-        return (response_dict["avg_wait_time"],)
-
-    def deterministic_stochastic_constraints_and_gradients(self) -> tuple[tuple, tuple]:
-        """Compute deterministic components of stochastic constraints.
-
-        Returns:
-            tuple:
-                - tuple: The deterministic components of the stochastic constraints.
-                - tuple: The gradients of those deterministic components.
-        """
-        det_stoch_constraints = (-1 * self.factors["upper_time"],)
-        det_stoch_constraints_gradients = ((0,),)
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ()
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple):
+        responses, _ = self.model.replicate()
+        return RepResult(
+            objectives=[Objective(stochastic=responses["avg_diff"])],
+            stochastic_constraints=[
+                StochasticConstraint(
+                    stochastic=responses["avg_wait_time"],
+                    deterministic=-1 * self.factors["upper_time"],
+                )
+            ],
+        )
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:

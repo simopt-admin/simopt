@@ -9,7 +9,14 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import Exp, InputModel, Triangular
 from simopt.utils import override
 
@@ -387,11 +394,7 @@ class Network(Model):
         # Compute total costs for the simulation run.
         total_cost = np.sum(message_mat[:, Col.TOTAL_COST])
         responses = {"total_cost": total_cost}
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, None
 
 
 class NetworkMinTotalCost(Problem):
@@ -435,15 +438,10 @@ class NetworkMinTotalCost(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["process_prob"])
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["total_cost"],)
-
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = (0,) * self.model.factors["n_networks"]
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple) -> RepResult:
+        responses, _ = self.model.replicate()
+        objectives = [Objective(stochastic=responses["total_cost"])]
+        return RepResult(objectives=objectives)
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:

@@ -8,7 +8,15 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    StochasticConstraint,
+    VariableType,
+)
 from simopt.input_models import InputModel
 from simopt.utils import override
 
@@ -279,11 +287,7 @@ class FacilitySize(Model):
             "n_fac_stockout": n_fac_stockout,
             "n_cut": n_cut,
         }
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, None
 
 
 class FacilitySizingTotalCost(Problem):
@@ -331,47 +335,24 @@ class FacilitySizingTotalCost(Problem):
     def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
         return (np.nan * len(self.model.factors["capacity"]),)
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:  # noqa: ARG002
-        return (0,)
-
-    @override
-    def response_dict_to_objectives_gradients(self, _response_dict: dict) -> tuple:
-        return ((0,) * len(self.model.factors["capacity"]),)
-
-    def response_dict_to_stoch_constraints(self, response_dict: dict) -> tuple:
-        """Convert a response dictionary to a vector of stochastic constraint values.
-
-        Each returned value represents the left-hand side of a constraint of the form
-        E[Y] ≤ 0.
-
-        Args:
-            response_dict (dict): A dictionary containing response keys and their
-                associated values.
-
-        Returns:
-            tuple: A tuple representing the left-hand sides of the stochastic
-                constraints.
-        """
-        return (response_dict["stockout_flag"],)
-
-    def deterministic_stochastic_constraints_and_gradients(self) -> tuple[tuple, tuple]:
-        """Compute deterministic components of stochastic constraints.
-
-        Returns:
-            tuple:
-                - tuple: The deterministic components of the stochastic constraints.
-                - tuple: The gradients of those deterministic components.
-        """
-        det_stoch_constraints = (-self.factors["epsilon"],)
-        det_stoch_constraints_gradients = ((0,),)
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
-    @override
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (np.dot(self.factors["installation_costs"], x),)
-        det_objectives_gradients = (tuple(self.factors["installation_costs"]),)
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple) -> RepResult:
+        responses, _ = self.model.replicate()
+        objectives = [
+            Objective(
+                stochastic=0.0,
+                deterministic=np.dot(self.factors["installation_costs"], x),
+                deterministic_gradients=self.factors["installation_costs"],
+            )
+        ]
+        stochastic_constraints = [
+            StochasticConstraint(
+                stochastic=responses["stockout_flag"],
+                deterministic=-self.factors["epsilon"],
+            )
+        ]
+        return RepResult(
+            objectives=objectives, stochastic_constraints=stochastic_constraints
+        )
 
     @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
@@ -427,15 +408,11 @@ class FacilitySizingMaxService(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["capacity"])
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (1 - response_dict["stockout_flag"],)
-
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ((0, 0, 0),)
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple) -> RepResult:
+        responses, _ = self.model.replicate()
+        service_value = 1 - responses["stockout_flag"]
+        objectives = [Objective(stochastic=service_value)]
+        return RepResult(objectives=objectives)
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:

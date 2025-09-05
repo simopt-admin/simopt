@@ -8,7 +8,14 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import Exp
 from simopt.utils import override
 
@@ -268,31 +275,18 @@ class FixedSANLongestPath(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["arc_means"])
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["longest_path_length"],)
-
-    def deterministic_stochastic_constraints_and_gradients(self) -> tuple[tuple, tuple]:
-        """Compute deterministic components of stochastic constraints.
-
-        Returns:
-            tuple:
-                - tuple: The deterministic components of the stochastic constraints.
-                - tuple: The gradients of those deterministic components.
-        """
-        det_stoch_constraints = ()
-        det_stoch_constraints_gradients = (
-            (0,) * self.dim,
-        )  # tuple of tuples - of sizes self.dim by self.dim, full of zeros
-        return det_stoch_constraints, det_stoch_constraints_gradients
-
-    @override
-    def deterministic_objectives_and_gradients(self, x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),)
-        det_objectives_gradients = (
-            -np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
-        )
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple) -> RepResult:
+        responses, gradients = self.model.replicate()
+        objectives = [
+            Objective(
+                stochastic=responses["longest_path_length"],
+                stochastic_gradients=gradients["longest_path_length"]["arc_means"],
+                deterministic=np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
+                deterministic_gradients=-np.array(self.factors["arc_costs"])
+                / (np.array(x) ** 2),
+            )
+        ]
+        return RepResult(objectives=objectives)
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:

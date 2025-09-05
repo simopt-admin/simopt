@@ -9,7 +9,14 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import Exp, Poisson
 from simopt.utils import override
 
@@ -299,11 +306,7 @@ class SSCont(Model):
             "avg_stockout": avg_stockout,
             "avg_order": avg_order,
         }
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, None
 
 
 class SSContMinCost(Problem):
@@ -335,19 +338,18 @@ class SSContMinCost(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (
-            response_dict["avg_backorder_costs"]
-            + response_dict["avg_order_costs"]
-            + response_dict["avg_holding_costs"],
-        )
-
-    @override
-    def deterministic_objectives_and_gradients(self, _x: tuple) -> tuple[tuple, tuple]:
-        det_objectives = (0,)
-        det_objectives_gradients = ((0,),)
-        return det_objectives, det_objectives_gradients
+    def replicate(self, x: tuple) -> RepResult:
+        responses, _ = self.model.replicate()
+        objectives = [
+            Objective(
+                stochastic=(
+                    responses["avg_backorder_costs"]
+                    + responses["avg_order_costs"]
+                    + responses["avg_holding_costs"]
+                )
+            )
+        ]
+        return RepResult(objectives=objectives)
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:

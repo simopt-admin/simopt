@@ -8,7 +8,14 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ConstraintType, Model, Problem, VariableType
+from simopt.base import (
+    ConstraintType,
+    Model,
+    Objective,
+    Problem,
+    RepResult,
+    VariableType,
+)
 from simopt.input_models import InputModel
 from simopt.utils import override
 
@@ -284,11 +291,7 @@ class RMITD(Model):
 
         # Compose responses and gradients.
         responses = {"revenue": revenue}
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, None
 
 
 class RMITDMaxRevenue(Problem):
@@ -326,9 +329,10 @@ class RMITDMaxRevenue(Problem):
             *tuple(factor_dict["reservation_qtys"]),
         )
 
-    @override
-    def response_dict_to_objectives(self, response_dict: dict) -> tuple:
-        return (response_dict["revenue"],)
+    def replicate(self, x: tuple) -> RepResult:
+        responses, _ = self.model.replicate()
+        objectives = [Objective(stochastic=responses["revenue"])]
+        return RepResult(objectives=objectives)
 
     @override
     def check_deterministic_constraints(self, x: tuple) -> bool:
