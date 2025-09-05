@@ -116,6 +116,8 @@ class STRONG(Solver):
 
     name: str = "STRONG"
     config_class: ClassVar[type[SolverConfig]] = STRONGConfig
+    class_name_abbr: ClassVar[str] = "STRONG"
+    class_name: ClassVar[str] = "STRONG"
     objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
     constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS

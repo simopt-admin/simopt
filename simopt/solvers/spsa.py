@@ -105,6 +105,8 @@ class SPSA(Solver):
 
     name: str = "SPSA"
     config_class: ClassVar[type[SolverConfig]] = SPSAConfig
+    class_name_abbr: ClassVar[str] = "SPSA"
+    class_name: ClassVar[str] = "SPSA"
     objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
     constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS

@@ -79,6 +79,8 @@ class ALOE(Solver):
 
     name: str = "ALOE"
     config_class: ClassVar[type[SolverConfig]] = ALOEConfig
+    class_name_abbr: ClassVar[str] = "ALOE"
+    class_name: ClassVar[str] = "ALOE"
     objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
     constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
