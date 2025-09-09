@@ -375,9 +375,6 @@ class Problem(ABC):
         # Gradients of objective function and stochastic constraint LHSs are temporarily
         # commented out. Under development.
 
-        # Pad numpy arrays if necessary.
-        if solution.n_reps + num_macroreps > solution.storage_size:
-            solution.pad_storage(num_macroreps)
         # Set the decision factors of the model.
         self.model.factors.update(solution.decision_factors)
         for _ in range(num_macroreps):
@@ -386,35 +383,8 @@ class Problem(ABC):
             self.before_replicate(self.model, solution.rng_list)
 
             result = self.replicate(solution.x)
-            objectives = result.objectives
-            stochastic_constraints = result.stochastic_constraints
+            solution.add_replicate_result(result)
 
-            # Convert responses and gradients to objectives and gradients and add
-            # to those of deterministic components of objectives.
-            solution.objectives[solution.n_reps] = np.array(
-                [objective.value() for objective in objectives]
-            )
-
-            if self.gradient_available:
-                gradients = []
-                for objective in objectives:
-                    grad = objective.grad()
-                    if grad is None:
-                        grad = np.zeros(self.dim)
-                    gradients.append(grad)
-                solution.objectives_gradients[solution.n_reps] = np.array(gradients)
-
-            if self.n_stochastic_constraints > 0:
-                assert stochastic_constraints is not None
-                # Convert responses and gradients to stochastic constraints and
-                # gradients and addto those of deterministic components of stochastic
-                # constraints.
-                solution.stoch_constraints[solution.n_reps] = np.array(
-                    [constraint.value() for constraint in stochastic_constraints]
-                )
-
-            # Increment counter.
-            solution.n_reps += 1
             # Advance rngs to start of next subsubstream.
             for rng in solution.rng_list:
                 rng.advance_subsubstream()
@@ -596,25 +566,41 @@ class Solution:
         super().__init__()
         self.x = x
         self.decision_factors = problem.vector_to_factor_dict(x)
-        self.n_reps = 0
-        # Initialize numpy arrays to store up to 100 replications.
-        init_size = 100
-        self.storage_size = init_size
-        # Raw data.
-        self.objectives = np.zeros((init_size, problem.n_objectives))
-        self.objectives_gradients = np.zeros(
-            (init_size, problem.n_objectives, problem.dim)
-        )
-        if problem.n_stochastic_constraints > 0:
-            self.stoch_constraints = np.zeros(
-                (init_size, problem.n_stochastic_constraints)
-            )
-            self.stoch_constraints_gradients = np.zeros(
-                (init_size, problem.n_stochastic_constraints, problem.dim)
-            )
-        else:
-            self.stoch_constraints = None
-            self.stoch_constraints_gradients = None
+        # self.n_reps = 0
+
+        self._objectives = []
+        self._objectives_gradients = []
+        self._stoch_constraints = []
+        self._stoch_constraints_gradients = []
+        self._objectives_array: np.ndarray | None = None
+        self._objectives_gradients_array: np.ndarray | None = None
+        self._stoch_constraints_array: np.ndarray | None = None
+
+    @property
+    def n_reps(self) -> int:
+        """Number of replications."""
+        return len(self._objectives)
+
+    @property
+    def objectives(self) -> np.ndarray:
+        """Objectives."""
+        if self._objectives_array is None:
+            self._objectives_array = np.array(self._objectives)
+        return self._objectives_array
+
+    @property
+    def objectives_gradients(self) -> np.ndarray:
+        """Objectives gradients."""
+        if self._objectives_gradients_array is None:
+            self._objectives_gradients_array = np.array(self._objectives_gradients)
+        return self._objectives_gradients_array
+
+    @property
+    def stoch_constraints(self) -> np.ndarray:
+        """Stochastic constraints."""
+        if self._stoch_constraints_array is None:
+            self._stoch_constraints_array = np.array(self._stoch_constraints)
+        return self._stoch_constraints_array
 
     def attach_rngs(self, rng_list: list[MRG32k3a], copy: bool = True) -> None:
         """Attach a list of random-number generators to the solution.
@@ -629,44 +615,36 @@ class Solution:
         else:
             self.rng_list = rng_list
 
-    def pad_storage(self, num_macroreps: int) -> None:
-        """Append zeros to numpy arrays for summary statistics.
+    def add_replicate_result(self, result: RepResult) -> None:
+        """Add a replicate result to the solution.
 
         Args:
-            num_macroreps (int): Number of replications to simulate.
+            result (RepResult): The replicate result to add.
         """
-        # Size of data storage.
-        n_objectives = self.objectives.shape[1]
-        base_pad_size = 100
-        # Default is to append space for 100 more replications.
-        # If more space needed, append in multiples of 100.
-        pad_size = int(np.ceil(num_macroreps / base_pad_size)) * base_pad_size
-        self.storage_size += pad_size
-        self.objectives = np.concatenate(
-            (self.objectives, np.zeros((pad_size, n_objectives)))
+        objectives = result.objectives
+        stochastic_constraints = result.stochastic_constraints
+
+        # Convert responses and gradients to objectives and gradients and add
+        # to those of deterministic components of objectives.
+        self._objectives.append(
+            np.array([objective.value() for objective in objectives])
         )
-        self.objectives_gradients = np.concatenate(
-            (
-                self.objectives_gradients,
-                np.zeros((pad_size, n_objectives, self.dim)),
+        self._objectives_array = None
+
+        gradients = []
+        for objective in objectives:
+            grad = objective.grad()
+            if grad is None:
+                grad = np.zeros(self.dim)
+            gradients.append(grad)
+        self._objectives_gradients.append(np.array(gradients))
+        self._objectives_gradients_array = None
+
+        # Convert responses and gradients to stochastic constraints and
+        # gradients and addto those of deterministic components of stochastic
+        # constraints.
+        if stochastic_constraints is not None:
+            self._stoch_constraints.append(
+                np.array([constraint.value() for constraint in stochastic_constraints])
             )
-        )
-        if self.stoch_constraints is not None:
-            n_stochastic_constraints = len(self.det_stoch_constraints)
-            self.stoch_constraints = np.concatenate(
-                (
-                    self.stoch_constraints,
-                    np.zeros((pad_size, n_stochastic_constraints)),
-                )
-            )
-            if self.stoch_constraints_gradients is not None:
-                self.stoch_constraints_gradients = np.concatenate(
-                    (
-                        self.stoch_constraints_gradients,
-                        np.zeros((pad_size, n_stochastic_constraints, self.dim)),
-                    )
-                )
-            else:
-                self.stoch_constraints_gradients = np.zeros(
-                    (pad_size, n_stochastic_constraints, self.dim)
-                )
+            self._stoch_constraints_array = None
