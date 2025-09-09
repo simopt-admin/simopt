@@ -375,10 +375,6 @@ class Problem(ABC):
         # Gradients of objective function and stochastic constraint LHSs are temporarily
         # commented out. Under development.
 
-        # Value checking
-        if num_macroreps <= 0:
-            error_msg = "Number of replications must be at least 1."
-            raise ValueError(error_msg)
         # Pad numpy arrays if necessary.
         if solution.n_reps + num_macroreps > solution.storage_size:
             solution.pad_storage(num_macroreps)
@@ -435,20 +431,6 @@ class Problem(ABC):
                 is not an integer.
             ValueError: If `n_reps` is less than or equal to 0.
         """
-        # Type checking
-        if not isinstance(solutions, list) or not all(
-            isinstance(solution, Solution) for solution in solutions
-        ):
-            error_msg = "Input solutions must be a list of Solution objects."
-            raise TypeError(error_msg)
-        if not isinstance(n_reps, int):
-            error_msg = "Number of replications must be an integer."
-            raise TypeError(error_msg)
-        # Value checking
-        if n_reps <= 0:
-            error_msg = "Number of replications must be at least 1."
-            raise ValueError(error_msg)
-
         for solution in solutions:
             # If more replications needed, take them.
             if solution.n_reps < n_reps:
