@@ -47,7 +47,7 @@ class STRONGConfig(SolverConfig):
         float,
         Field(default=1.2, gt=0, description="maximum value of the radius"),
     ]
-    delta_T: Annotated[
+    delta_t: Annotated[
         float,
         Field(default=2.0, description="initial size of trust region"),
     ]
@@ -86,7 +86,7 @@ class STRONGConfig(SolverConfig):
             default=2,
             gt=1,
             alias="lambda",
-            description="magnifying factor for n_r inside the finite difference function",
+            description="magnifying factor for n_r in finite difference function",
         ),
     ]
     lambda_2: Annotated[
@@ -100,8 +100,8 @@ class STRONGConfig(SolverConfig):
 
     @model_validator(mode="after")
     def _validate_cross_field_constraints(self) -> Self:
-        if self.delta_T <= self.delta_threshold:
-            raise ValueError("delta_T must be greater than delta_threshold")
+        if self.delta_t <= self.delta_threshold:
+            raise ValueError("delta_t must be greater than delta_threshold")
         if self.eta_1 <= self.eta_0:
             raise ValueError("eta_1 must be greater than eta_0")
         return self
@@ -128,7 +128,7 @@ class STRONG(Solver):
         n0: int = self.factors["n0"]
         n_r: int = self.factors["n_r"]
         delta_threshold: float = self.factors["delta_threshold"]
-        delta_t: float = self.factors["delta_T"]
+        delta_t: float = self.factors["delta_t"]
         eta_0: float = self.factors["eta_0"]
         eta_1: float = self.factors["eta_1"]
         gamma_1: float = self.factors["gamma_1"]
@@ -430,7 +430,7 @@ class STRONG(Solver):
         problem: Problem,
     ) -> np.ndarray:
         """Find the Cauchy point based on the gradient and Hessian matrix."""
-        delta_t = self.factors["delta_T"]
+        delta_t = self.factors["delta_t"]
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
 
@@ -530,7 +530,7 @@ class STRONG(Solver):
             return (neg_minmax * x_solution.objectives_mean)[0]
 
         # Initialize step sizes.
-        delta_t: float = self.factors["delta_T"]
+        delta_t: float = self.factors["delta_t"]
         ub_steps = np.minimum(delta_t, np.array(problem.upper_bounds) - new_x)
         lb_steps = np.minimum(delta_t, new_x - np.array(problem.lower_bounds))
 

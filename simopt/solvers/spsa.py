@@ -67,7 +67,7 @@ class SPSAConfig(SolverConfig):
         Field(
             default=2,
             gt=0,
-            description="number of loss function evaluations used in this gain calculation",
+            description="number of loss function evaluations used in gain calculation",
         ),
     ]
     eval_pct: Annotated[

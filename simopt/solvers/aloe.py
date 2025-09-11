@@ -68,7 +68,7 @@ class ALOEConfig(SolverConfig):
         Field(
             default=2,
             gt=0,
-            description="magnifying factor for n_r inside the finite difference function",
+            description="magnifying factor for n_r in the finite difference function",
             alias="lambda",
         ),
     ]

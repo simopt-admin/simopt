@@ -64,7 +64,7 @@ class NelderMeadConfig(SolverConfig):
         Field(
             default=0.1,
             gt=0,
-            description="fraction of the distance between bounds used to select initial points",
+            description="fraction of distance between bounds used for initial points",
         ),
     ]
 
