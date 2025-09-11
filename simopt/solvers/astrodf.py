@@ -64,7 +64,7 @@ class ASTRODFConfig(SolverConfig):
         Field(
             default=2.5,
             gt=1,
-            description="trust-region radius increase rate after a very successful iteration",
+            description="trust-region radius increase rate after successful iteration",
         ),
     ]
     gamma_2: Annotated[
@@ -73,7 +73,7 @@ class ASTRODFConfig(SolverConfig):
             default=0.5,
             gt=0,
             lt=1,
-            description="trust-region radius decrease rate after an unsuccessful iteration",
+            description="trust-region radius decrease rate after failed iteration",
         ),
     ]
     lambda_min: Annotated[
@@ -94,7 +94,10 @@ class ASTRODFConfig(SolverConfig):
         Field(
             default=0.1,
             ge=0,
-            description="use pattern search if with sufficient reduction, 0 always allows it, large value never does",
+            description=(
+                "use pattern search if with sufficient reduction, "
+                "0 always allows it, large value never does"
+            ),
         ),
     ]
     use_gradients: Annotated[
