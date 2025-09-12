@@ -24,9 +24,6 @@ values :math:`f(x_k^{+})` and :math:`f(x_k)`. Check the modified Arimjo conditio
 If the condition holds, then set :math:`x_{k+1} \leftarrow x_{k}` and :math:`\alpha_{k+1} \leftarrow \min\{ \alpha_{max}, \gamma^{-1}\alpha_k \}`.
 Otherwise, set :math:`x_{k+1} \leftarrow x_{k}` and :math:`\alpha_{k+1} \leftarrow \gamma \alpha_k`
 
-Helper functions:
-The finite_diff function uses finite difference methods to estimate the gradient of the objective function.
-
 Scope
 -----
 

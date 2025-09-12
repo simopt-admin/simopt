@@ -24,10 +24,6 @@ during the initial timesteps, and especially when the decay rates are small (i.e
 The bias-corrected estimates :math:`\hat{m_t}` and :math:`\hat{v_t}`. Lastly, the new solution can be found via
 current solution, the bias-corrected first and second moment estimate, and the step size.
 
-Helper functions:
-The finite_diff function uses finite difference methods to estimate the gradient of the
-objective function.
-
 Scope
 -----
 
