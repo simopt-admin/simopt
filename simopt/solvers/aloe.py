@@ -22,6 +22,7 @@ from simopt.base import (
     SolverConfig,
     VariableType,
 )
+from simopt.solvers.utils import finite_diff
 
 
 class ALOEConfig(SolverConfig):
@@ -130,15 +131,15 @@ class ALOE(Solver):
                     2 * problem.dim - np.count_nonzero(bounds_check)
                 ) * r
                 self.budget.request(int(finite_diff_budget))
-                grad = self._finite_diff(new_solution, bounds_check, problem, alpha, r)
+                grad = finite_diff(self, new_solution, bounds_check, problem, alpha, r)
 
                 while np.all(grad == 0):
                     finite_diff_budget = (
                         2 * problem.dim - np.count_nonzero(bounds_check)
                     ) * r
                     self.budget.request(int(finite_diff_budget))
-                    grad = self._finite_diff(
-                        new_solution, bounds_check, problem, alpha, r
+                    grad = finite_diff(
+                        self, new_solution, bounds_check, problem, alpha, r
                     )
                     r = int(self.factors["lambda"] * r)  # Update sample size
 
