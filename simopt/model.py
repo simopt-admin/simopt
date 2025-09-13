@@ -26,54 +26,20 @@ class Model(ABC):
     Each model defines the simulation logic behind a given problem instance.
     """
 
+    class_name_abbr: ClassVar[str]
+    """Short name of the model class."""
+
+    class_name: ClassVar[str]
+    """Long name of the model class."""
+
     config_class: ClassVar[type[BaseModel]]
+    """Configuration class for the model."""
 
-    @classproperty
-    def class_name_abbr(cls) -> str:
-        """Short name of the model class."""
-        return cls.__name__.capitalize()
+    n_rngs: ClassVar[int]
+    """Number of RNGs used to run a simulation replication."""
 
-    @classproperty
-    def class_name(cls) -> str:
-        """Long name of the model class."""
-        # Insert spaces before capital letters
-        import re
-
-        return re.sub(r"(?<!^)(?=[A-Z])", " ", cls.__name__)
-
-    @classproperty
-    def name(cls) -> str:
-        """Name of model."""
-        return cls.__name__.replace("_", " ")
-
-    @classproperty
-    @abstractmethod
-    def n_rngs(cls) -> int:
-        """Number of random-number generators used to run a simulation replication."""
-        raise NotImplementedError
-
-    @classproperty
-    @abstractmethod
-    def n_responses(cls) -> int:
-        """Number of responses (performance measures)."""
-        raise NotImplementedError
-
-    @classproperty
-    def specifications(cls) -> dict[str, dict]:
-        """Details of each factor (for GUI, data validation, and defaults)."""
-        return _get_specifications(cls.config_class)
-
-    @property
-    def factors(self) -> dict:
-        """Changeable factors of the simulation model."""
-        # TODO: this is currently needed because the solver may update the factors
-        return self._factors
-
-    @factors.setter
-    def factors(self, value: dict | None) -> None:
-        if value is None:
-            value = {}
-        self.__factors = value
+    n_responses: ClassVar[int]
+    """Number of responses (performance measures)."""
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize a model object.
@@ -107,6 +73,22 @@ class Model(ABC):
             int: Hash value of the model.
         """
         return hash((self.name, tuple(self.factors.items())))
+
+    @classproperty
+    def name(cls) -> str:  # noqa: N805
+        """Name of model."""
+        return cls.__name__.replace("_", " ")
+
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:  # noqa: N805
+        """Details of each factor (for GUI, data validation, and defaults)."""
+        return _get_specifications(cls.config_class)
+
+    @property
+    def factors(self) -> dict:
+        """Changeable factors of the simulation model."""
+        # TODO: this is currently needed because the solver may update the factors
+        return self._factors
 
     def model_created(self) -> None:  # noqa: B027
         """Hook called after the model is constructed.
