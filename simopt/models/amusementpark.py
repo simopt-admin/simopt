@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math as math
-from typing import Annotated, ClassVar, Final, Self
+from typing import Annotated, ClassVar, Final, Self, cast
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -17,7 +17,6 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp, Gamma, WeightedChoice
-from simopt.utils import override
 
 INF = float("inf")
 
@@ -27,6 +26,8 @@ NUM_ATTRACTIONS: Final[int] = 7
 
 
 class AmusementParkConfig(BaseModel):
+    """Configuration for the Amusement Park model."""
+
     park_capacity: Annotated[
         int,
         Field(
@@ -161,7 +162,7 @@ class AmusementParkConfig(BaseModel):
         Raises:
             ValueError: If any row has the wrong shape or an invalid total probability.
         """
-        transition_sums = list(map(sum, self.transition_probabilities))
+        transition_sums = [sum(row) for row in self.transition_probabilities]
         if not (
             all(
                 len(row) == len(self.transition_probabilities)
@@ -269,9 +270,11 @@ class AmusementPark(Model):
     and percent of tourists to leave the park due to full queues.
     """
 
+    class_name_abbr: ClassVar[str] = "AMUSEMENTPARK"
+    class_name: ClassVar[str] = "Amusement Park"
     config_class: ClassVar[type[BaseModel]] = AmusementParkConfig
-    n_rngs: int = 3
-    n_responses: int = 4
+    n_rngs: ClassVar[int] = 3
+    n_responses: ClassVar[int] = 4
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Amusement Park Model."""
@@ -284,15 +287,6 @@ class AmusementPark(Model):
         self.service_models = []
         for _ in range(self.factors["number_attractions"]):
             self.service_models.append(Gamma())
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        if sum(self.factors["queue_capacities"]) > self.factors["park_capacity"]:
-            raise ValueError(
-                "The sum of the queue capacities must be less than or equal to the "
-                "park capacity"
-            )
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.arrival_model.set_rng(rng_list[0])
@@ -357,36 +351,36 @@ class AmusementPark(Model):
         destination_range = range(num_attactions + 1)
         depart_idx = destination_range[-1]
         # initialize lists of each attraction's next completion time
-        completion_times = [INF] * num_attactions
+        completion_times: list[float] = [INF] * num_attactions
         min_completion_time = INF
         min_completion_index = -1
         # initialize actual queues.
-        queues = [0] * num_attactions
+        queues: list[int] = [0] * num_attactions
 
         # create external arrival probabilities for each attraction.
-        arrival_prob_sum = sum(arrival_gammas)
-        arrival_probabalities = [
+        arrival_prob_sum: float = float(sum(arrival_gammas))
+        arrival_probabalities: list[float] = [
             arrival_gammas[i] / arrival_prob_sum for i in attraction_range
         ]
 
         # Initiate clock variables for statistics tracking and event handling.
-        clock = 0
-        previous_clock = 0
+        clock: float = 0.0
+        previous_clock: float = 0.0
         next_arrival = self.arrival_model.random(arrival_prob_sum)
 
         # Initialize quantities to track:
-        total_visitors = 0
-        total_departed = 0
+        total_visitors: int = 0
+        total_departed: int = 0
         # initialize time average and utilization quantities.
-        in_system = 0
-        time_average = 0
-        cumulative_util = [0.0] * num_attactions
+        in_system: int = 0
+        time_average: float = 0.0
+        cumulative_util: list[float] = [0.0] * num_attactions
 
         # Run simulation over time horizon.
         while clock < time_open:
             # Count number of tourists on attractions and in queues.
-            riders = 0
-            delta_time = clock - previous_clock
+            riders: int = 0
+            delta_time: float = clock - previous_clock
             for i in attraction_range:
                 if not math.isinf(completion_times[i]):
                     riders += 1
@@ -399,9 +393,12 @@ class AmusementPark(Model):
                 # Next event is external tourist arrival.
                 total_visitors += 1
                 # Select attraction.
-                attraction_selection = self.attraction_model.random(
-                    attraction_range,
-                    arrival_probabalities,
+                attraction_selection = cast(
+                    int,
+                    self.attraction_model.random(
+                        attraction_range,
+                        arrival_probabalities,
+                    ),
                 )
                 # Check if attraction is currently available.
                 # If available, arrive at that attraction. Otherwise check queue.
@@ -446,10 +443,13 @@ class AmusementPark(Model):
                 else:  # If attraction queue is empty, set next completion to infinity.
                     set_completion(finished_attraction, INF)
                 # Check if that person will leave the park.
-                next_destination = self.destination_model.random(
-                    destination_range,
-                    transition_probabilities[finished_attraction]
-                    + [depart_probabilities[finished_attraction]],
+                next_destination = cast(
+                    int,
+                    self.destination_model.random(
+                        destination_range,
+                        transition_probabilities[finished_attraction]
+                        + [depart_probabilities[finished_attraction]],
+                    ),
                 )
 
                 # Check if tourist leaves park.
@@ -484,66 +484,59 @@ class AmusementPark(Model):
             "average_number_in_system": time_average / time_open,
             "attraction_utilization_percentages": cumulative_util,
         }
-        return responses, None
+        return responses, {}
 
 
 class AmusementParkMinDepart(Problem):
     """Class to make amusement park simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "AMUSEMENTPARK-1"
+    class_name: ClassVar[str] = "Min Total Departed Visitors for Amusement Park"
     config_class: ClassVar[type[BaseModel]] = AmusementParkMinDepartConfig
     model_class: ClassVar[type[Model]] = AmusementPark
-    class_name_abbr: str = "AMUSEMENTPARK-1"
-    class_name: str = "Min Total Departed Visitors for Amusement Park"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.DETERMINISTIC
-    variable_type: VariableType = VariableType.DISCRETE
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.DETERMINISTIC
+    variable_type: ClassVar[VariableType] = VariableType.DISCRETE
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"queue_capacities"}
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"queue_capacities"}
 
     @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return self.model.factors["number_attractions"]
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (0,) * self.dim
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (self.model.factors["park_capacity"],) * self.dim
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict[str, tuple]:
+    def vector_to_factor_dict(self, vector: tuple) -> dict[str, tuple]:  # noqa: D102
         return {
             "queue_capacities": vector[:],
         }
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["queue_capacities"])
 
-    def replicate(self, x: tuple) -> RepResult:
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
         responses, _ = self.model.replicate()
         return RepResult(objectives=[Objective(stochastic=responses["total_departed"])])
 
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         # Check box constraints.
         if not super().check_deterministic_constraints(x):
             return False
         # Check if sum of queue capacities is less than park capacity.
         return sum(x) <= self.model.factors["park_capacity"]
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         num_elements: int = self.model.factors["number_attractions"]
         summation: int = self.model.factors["park_capacity"]
         vector = rand_sol_rng.integer_random_vector_from_simplex(

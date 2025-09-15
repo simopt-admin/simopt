@@ -18,7 +18,6 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp
-from simopt.utils import override
 
 
 def _double_up(values: list[float]) -> list[float]:
@@ -260,10 +259,11 @@ class HotelRevenueConfig(BaseModel):
 class Hotel(Model):
     """A model that simulates business of a hotel with Poisson arrival rate."""
 
+    class_name_abbr: ClassVar[str] = "HOTEL"
+    class_name: ClassVar[str] = "Hotel Booking"
     config_class: ClassVar[type[BaseModel]] = HotelConfig
-    class_name: str = "Hotel Booking"
-    n_rngs: int = 1
-    n_responses: int = 1
+    n_rngs: ClassVar[int] = 1
+    n_responses: ClassVar[int] = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Hotel model.
@@ -276,25 +276,6 @@ class Hotel(Model):
         super().__init__(fixed_factors)
 
         self.arrival_model = Exp()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        if len(self.factors["lambda"]) != self.factors["num_products"]:
-            raise ValueError("The length of lambda must equal num_products.")
-        if len(self.factors["time_limit"]) != self.factors["num_products"]:
-            raise ValueError("The length of time_limit must equal num_products.")
-        if len(self.factors["booking_limits"]) != self.factors["num_products"]:
-            raise ValueError("The length of booking_limits must equal num_products.")
-        # TODO: get rid of this conversion to np.array
-        np_array = np.array(self.factors["product_incidence"])
-        # m, n = np_array.shape
-        # if m * n != self.factors["num_products"]:
-        _, n = np_array.shape
-        if n != self.factors["num_products"]:
-            raise ValueError(
-                "The number of elements in product_incidence must equal num_products."
-            )
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.arrival_model.set_rng(rng_list[0])
@@ -369,45 +350,38 @@ class Hotel(Model):
 
         # Compose responses and gradients.
         responses = {"revenue": total_revenue}
-        return responses, None
+        return responses, {}
 
 
 class HotelRevenue(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "HOTEL-1"
+    class_name: ClassVar[str] = "Max Revenue for Hotel Booking"
     config_class: ClassVar[type[BaseModel]] = HotelRevenueConfig
     model_class: ClassVar[type[Model]] = Hotel
-    class_name_abbr: str = "HOTEL-1"
-    class_name: str = "Max Revenue for Hotel Booking"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.DISCRETE
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.DISCRETE
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"booking_limits"}
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"booking_limits"}
 
     @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return self.model.factors["num_products"]
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (0,) * self.dim
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (self.model.factors["num_rooms"],) * self.dim
-
-    @override
-    def check_initial_solution(self) -> bool:
-        return len(self.factors["initial_solution"]) == self.dim
 
     # # TODO: figure out how Problem.check_simulatable_factors() works
     # def check_simulatable_factors(self) -> bool:
@@ -415,25 +389,21 @@ class HotelRevenue(Problem):
     #         len(self.lower_bounds) != self.dim or len(self.upper_bounds) != self.dim
     #     )
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"booking_limits": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["booking_limits"])
 
-    def replicate(self, x: tuple) -> RepResult:
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["revenue"])]
         return RepResult(objectives=objectives)
 
-    @override
-    def check_deterministic_constraints(self, _x: tuple) -> bool:
+    def check_deterministic_constraints(self, _x: tuple) -> bool:  # noqa: D102
         return True
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         return tuple(
             [
                 rand_sol_rng.randint(0, self.model.factors["num_rooms"])

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from typing import Annotated, ClassVar, Final, Self
 
 import numpy as np
@@ -18,7 +19,6 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import InputModel
-from simopt.utils import override
 
 NUM_FACILITIES: Final[int] = 3
 
@@ -204,15 +204,22 @@ class FacilitySizingTotalCostConfig(BaseModel):
 class DemandInputModel(InputModel):
     """Input model for multivariate normal demand at facilities."""
 
-    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
-        self.rng = rng
+    rng: random.Random | None = None
 
-    def unset_rng(self) -> None:  # noqa: D102
-        self.rng = None
+    def _mvnormalvariate(
+        self,
+        mean_vec: np.ndarray,
+        cov: np.ndarray,
+        factorized: bool = False,
+    ) -> np.ndarray:
+        chol = np.linalg.cholesky(cov) if not factorized else cov
+        assert self.rng is not None
+        observations = [self.rng.normalvariate(0, 1) for _ in range(len(cov))]
+        return np.dot(chol, observations).transpose() + mean_vec
 
-    def random(self, mean: list, cov: list) -> float:  # noqa: D102
+    def random(self, mean: np.ndarray, cov: np.ndarray) -> np.ndarray:  # noqa: D102
         while True:
-            demand = np.array(self.rng.mvnormalvariate(mean, cov))
+            demand = np.array(self._mvnormalvariate(mean, cov))
             if np.all(demand >= 0):
                 return demand
 
@@ -224,11 +231,11 @@ class FacilitySize(Model):
     distribution. Returns the probability of violating demand in each scenario.
     """
 
+    class_name_abbr: ClassVar[str] = "FACSIZE"
+    class_name: ClassVar[str] = "Facility Sizing"
     config_class: ClassVar[type[BaseModel]] = FacilitySizeConfig
-    class_name_abbr: str = "FACSIZE"
-    class_name: str = "Facility Sizing"
-    n_rngs: int = 1
-    n_responses: int = 3
+    n_rngs: ClassVar[int] = 1
+    n_responses: ClassVar[int] = 3
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the FacilitySize model.
@@ -242,20 +249,8 @@ class FacilitySize(Model):
 
         self.demand_model = DemandInputModel()
 
-    @override
-    def check_simulatable_factors(self) -> bool:
-        if len(self.factors["capacity"]) != self.factors["n_fac"]:
-            raise ValueError("The length of capacity must be equal to n_fac.")
-        if len(self.factors["mean_vec"]) != self.factors["n_fac"]:
-            raise ValueError("The length of mean_vec must be equal to n_fac.")
-        if len(self.factors["cov"]) != self.factors["n_fac"]:
-            raise ValueError("The length of cov must be equal to n_fac.")
-        if len(self.factors["cov"][0]) != self.factors["n_fac"]:
-            raise ValueError("The length of cov[0] must be equal to n_fac.")
-        return True
-
-    def before_replicate(self, rngs: list[MRG32k3a]) -> None:  # noqa: D102
-        self.demand_model.set_rng(rngs[0])
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+        self.demand_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication using the current model factors.
@@ -273,7 +268,7 @@ class FacilitySize(Model):
                     - "n_cut" (int): Total number of demand units that could not be satisfied.
                 - dict: Gradient estimates for each response.
         """  # noqa: E501
-        mean_vec: list[float | int] = self.factors["mean_vec"]
+        mean_vec = np.array(self.factors["mean_vec"])
         cov = np.array(self.factors["cov"])
         capacity = np.array(self.factors["capacity"])
         demand = self.demand_model.random(mean_vec, cov)
@@ -287,55 +282,46 @@ class FacilitySize(Model):
             "n_fac_stockout": n_fac_stockout,
             "n_cut": n_cut,
         }
-        return responses, None
+        return responses, {}
 
 
 class FacilitySizingTotalCost(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "FACSIZE-1"
+    class_name: ClassVar[str] = "Min Total Cost for Facility Sizing"
     config_class: ClassVar[type[BaseModel]] = FacilitySizingTotalCostConfig
     model_class: ClassVar[type[Model]] = FacilitySize
-    class_name_abbr: str = "FACSIZE-1"
-    class_name: str = "Min Total Cost for Facility Sizing"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 1
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.STOCHASTIC
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = True
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 1
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.STOCHASTIC
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = True
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"capacity"}
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"capacity"}
 
     @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return self.model.factors["n_fac"]
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (0,) * self.dim
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (np.inf,) * self.dim
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"capacity": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["capacity"])
 
-    @override
-    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
-        return (np.nan * len(self.model.factors["capacity"]),)
-
-    def replicate(self, x: tuple) -> RepResult:
+    def replicate(self, x: tuple) -> RepResult:  # noqa: D102
         responses, _ = self.model.replicate()
         objectives = [
             Objective(
@@ -354,15 +340,14 @@ class FacilitySizingTotalCost(Problem):
             objectives=objectives, stochastic_constraints=stochastic_constraints
         )
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         cov_matrix = np.diag([x**2 for x in self.factors["initial_solution"]])
         x = rand_sol_rng.mvnormalvariate(
-            self.factors["initial_solution"], cov_matrix, factorized=False
+            self.factors["initial_solution"], cov_matrix.tolist(), factorized=False
         )
         while any(elem < 0 for elem in x):
             x = rand_sol_rng.mvnormalvariate(
-                self.factors["initial_solution"], cov_matrix, factorized=False
+                self.factors["initial_solution"], cov_matrix.tolist(), factorized=False
             )
         return tuple(x)
 
@@ -370,52 +355,46 @@ class FacilitySizingTotalCost(Problem):
 class FacilitySizingMaxService(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "FACSIZE-2"
+    class_name: ClassVar[str] = "Max Service for Facility Sizing"
     config_class: ClassVar[type[BaseModel]] = FacilitySizingMaxServiceConfig
     model_class: ClassVar[type[Model]] = FacilitySize
-    class_name_abbr: str = "FACSIZE-2"
-    class_name: str = "Max Service for Facility Sizing"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (1,)
-    constraint_type: ConstraintType = ConstraintType.DETERMINISTIC
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.DETERMINISTIC
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"capacity"}
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"capacity"}
 
     @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return self.model.factors["n_fac"]
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (0,) * self.dim
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (np.inf,) * self.dim
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"capacity": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["capacity"])
 
-    def replicate(self, x: tuple) -> RepResult:
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
         responses, _ = self.model.replicate()
         service_value = 1 - responses["stockout_flag"]
         objectives = [Objective(stochastic=service_value)]
         return RepResult(objectives=objectives)
 
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         # Check budget constraint
         budget_feasible = (
             np.dot(self.factors["installation_costs"], x)
@@ -427,8 +406,7 @@ class FacilitySizingMaxService(Problem):
         # Check box constraints from the base class
         return super().check_deterministic_constraints(x)
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         # Generate random vector of length # of facilities of continuous values
         # summing to less than or equal to installation budget.
         x = rand_sol_rng.continuous_random_vector_from_simplex(

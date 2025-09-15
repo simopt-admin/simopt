@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from typing import Annotated, ClassVar, Self
 
 import numpy as np
@@ -16,7 +17,7 @@ from simopt.base import (
     RepResult,
     VariableType,
 )
-from simopt.utils import override
+from simopt.input_models import InputModel
 
 
 class DualSourcingConfig(BaseModel):
@@ -162,19 +163,16 @@ class DualSourcingMinCostConfig(BaseModel):
     ]
 
 
-class DemandInputModel:
+class DemandInputModel(InputModel):
     """Input model for daily demand."""
 
-    def set_rng(self, rng: MRG32k3a) -> None:  # noqa: D102
-        self.rng = rng
+    rng: random.Random | None = None
 
-    def unset_rng(self) -> None:  # noqa: D102
-        self.rng = None
-
-    def random(self, mu: float, sigma: float) -> float:  # noqa: D102
+    def random(self, mu: float, sigma: float) -> int:  # noqa: D102
         def round_and_clamp_non_neg(x: float | int) -> int:
-            return round(max(0, x))
+            return int(round(max(0.0, float(x))))
 
+        assert self.rng is not None
         return round_and_clamp_non_neg(self.rng.normalvariate(mu, sigma))
 
 
@@ -186,9 +184,11 @@ class DualSourcing(Model):
     cost, average penalty cost, and average ordering cost per period.
     """
 
+    class_name_abbr: ClassVar[str] = "DUALSOURCING"
+    class_name: ClassVar[str] = "Dual Sourcing"
     config_class: ClassVar[type[BaseModel]] = DualSourcingConfig
-    n_rngs: int = 1
-    n_responses: int = 3
+    n_rngs: ClassVar[int] = 1
+    n_responses: ClassVar[int] = 3
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the DualSourcing model.
@@ -201,17 +201,6 @@ class DualSourcing(Model):
         super().__init__(fixed_factors)
 
         self.demand_model = DemandInputModel()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        if (self.factors["lead_exp"] > self.factors["lead_reg"]) or (
-            self.factors["cost_exp"] < self.factors["cost_reg"]
-        ):
-            raise ValueError(
-                "lead_exp must be less than lead_reg and cost_exp must be greater than "
-                "cost_reg"
-            )
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         """Set the random number generator for the demand input model."""
@@ -251,12 +240,12 @@ class DualSourcing(Model):
         holding_cost: float = self.factors["holding_cost"]
 
         def round_and_clamp_non_neg(x: float | int) -> int:
-            return round(max(0, x))
+            return int(round(max(0.0, float(x))))
 
         # Vectors of regular orders to be received in periods n through n + lr - 1.
-        orders_reg = [0] * lead_reg
+        orders_reg: list[int] = [0] * lead_reg
         # Vectors of expedited orders to be received in periods n through n + le - 1.
-        orders_exp = [0] * lead_exp
+        orders_exp: list[int] = [0] * lead_exp
 
         # Generate demand.
         demand = [self.demand_model.random(mu, st_dev) for _ in n_days_range]
@@ -265,20 +254,22 @@ class DualSourcing(Model):
         total_holding_cost = np.zeros(n_days)
         total_penalty_cost = np.zeros(n_days)
         total_ordering_cost = np.zeros(n_days)
-        inv = initial_inv
+        inv: int = initial_inv
 
         # Run simulation over time horizon.
         for day in n_days_range:
             # Calculate inventory positions.
             inv_order_exp_sum = inv + sum(orders_exp)
-            inv_position_exp = round(inv_order_exp_sum + sum(orders_reg[:lead_exp]))
-            inv_position_reg = round(inv_order_exp_sum + sum(orders_reg))
+            inv_position_exp = int(
+                round(inv_order_exp_sum + sum(orders_reg[:lead_exp]))
+            )
+            inv_position_reg = int(round(inv_order_exp_sum + sum(orders_reg)))
             # Calculate how much to order.
-            order_exp = round_and_clamp_non_neg(
+            order_exp: int = round_and_clamp_non_neg(
                 order_level_exp - inv_position_exp - orders_reg[lead_exp]
             )
             orders_exp.append(order_exp)
-            order_reg = round_and_clamp_non_neg(
+            order_reg: int = round_and_clamp_non_neg(
                 order_level_reg - inv_position_reg - orders_exp[lead_exp]
             )
             orders_reg.append(order_reg)
@@ -293,8 +284,8 @@ class DualSourcing(Model):
             # inv = inv - dn
             inv -= demand[day]
             # Calculate holding and penalty costs.
-            total_penalty_cost[day] = -penalty_cost * min(0, inv)
-            total_holding_cost[day] = holding_cost * max(0, inv)
+            total_penalty_cost[day] = -penalty_cost * min(0, int(inv))
+            total_holding_cost[day] = holding_cost * max(0, int(inv))
 
         # Calculate responses from simulation data.
         responses = {
@@ -302,45 +293,52 @@ class DualSourcing(Model):
             "average_penalty_cost": np.mean(total_penalty_cost),
             "average_holding_cost": np.mean(total_holding_cost),
         }
-        return responses, None
+        return responses, {}
 
 
 class DualSourcingMinCost(Problem):
     """Class to make dual-sourcing inventory simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "DUALSOURCING-1"
+    class_name: ClassVar[str] = "Min Cost for Dual Sourcing"
     config_class: ClassVar[type[BaseModel]] = DualSourcingMinCostConfig
     model_class: ClassVar[type[Model]] = DualSourcing
-    class_name_abbr: str = "DUALSOURCING-1"
-    class_name: str = "Min Cost for Dual Sourcing"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.DISCRETE
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.DISCRETE
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"order_level_exp", "order_level_reg"}
-    dim: int = 2
-    lower_bounds: tuple = (0, 0)
-    upper_bounds: tuple = (np.inf, np.inf)
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"order_level_exp", "order_level_reg"}
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    @property
+    def dim(self) -> int:  # noqa: D102
+        return 2
+
+    @property
+    def lower_bounds(self) -> tuple:  # noqa: D102
+        return (0, 0)
+
+    @property
+    def upper_bounds(self) -> tuple:  # noqa: D102
+        return (np.inf, np.inf)
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {
             "order_level_exp": vector[0],
             "order_level_reg": vector[1],
         }
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return (
             factor_dict["order_level_exp"],
             factor_dict["order_level_reg"],
         )
 
-    def replicate(self, x: tuple):
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
         responses, _ = self.model.replicate()
         return RepResult(
             objectives=[
@@ -352,10 +350,8 @@ class DualSourcingMinCost(Problem):
             ],
         )
 
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return x[0] >= 0 and x[1] >= 0
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         return (rand_sol_rng.randint(40, 60), rand_sol_rng.randint(70, 90))
