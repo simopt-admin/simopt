@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+import random
 from typing import Annotated, ClassVar, Final, Self
 
 import numpy as np
@@ -17,7 +19,6 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import InputModel
-from simopt.utils import override
 
 NUM_PRODUCTS: Final[int] = 10
 
@@ -154,20 +155,24 @@ class DynamNewsMaxProfitConfig(BaseModel):
 class Utility(InputModel):
     """Input model for customer utility sampling."""
 
-    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
-        self.rng = rng
+    rng: random.Random | None = None
 
-    def unset_rng(self) -> None:  # noqa: D102
-        self.rng = None
+    def _gumbelvariate(self, mu: float, beta: float) -> float:
+        assert self.rng is not None
+        return mu - beta * math.log(-math.log(self.rng.random()))
 
     def random(  # noqa: D102
-        self, mu: float, num_customer: int, num_prod: int, c_utility: list
+        self,
+        mu: float,
+        num_customer: int,
+        num_prod: int,
+        c_utility: list[float],
     ) -> np.ndarray:
         # Compute Gumbel rvs for the utility of the products.
         gumbel_mu = -mu * np.euler_gamma
         gumbel_beta = mu
         gumbel_flat = [
-            self.rng.gumbelvariate(gumbel_mu, gumbel_beta)
+            self._gumbelvariate(gumbel_mu, gumbel_beta)
             for _ in range(num_customer * num_prod)
         ]
         gumbel = np.reshape(gumbel_flat, (num_customer, num_prod))
@@ -187,10 +192,11 @@ class DynamNews(Model):
     number of products that stock out.
     """
 
+    class_name_abbr: ClassVar[str] = "DYNAMNEWS"
+    class_name: ClassVar[str] = "Dynamic Newsvendor"
     config_class: ClassVar[type[BaseModel]] = DynamNewsConfig
-    class_name: str = "Dynamic Newsvendor"
-    n_rngs: int = 1
-    n_responses: int = 4
+    n_rngs: ClassVar[int] = 1
+    n_responses: ClassVar[int] = 4
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the model.
@@ -203,15 +209,6 @@ class DynamNews(Model):
         super().__init__(fixed_factors)
 
         self.utility_model = Utility()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        if any(np.subtract(self.factors["price"], self.factors["cost"]) < 0):
-            raise ValueError(
-                "Each element in price must be greater than its corresponding element "
-                "in cost."
-            )
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.utility_model.set_rng(rng_list[0])
@@ -289,63 +286,52 @@ class DynamNews(Model):
             "n_missed_orders": unmet_demand,
             "fill_rate": order_fill_rate,
         }
-        gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
-        }
-        return responses, gradients
+        return responses, {}
 
 
 class DynamNewsMaxProfit(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "DYNAMNEWS-1"
+    class_name: ClassVar[str] = "Max Profit for Dynamic Newsvendor"
     config_class: ClassVar[type[BaseModel]] = DynamNewsMaxProfitConfig
     model_class: ClassVar[type[Model]] = DynamNews
-    class_name_abbr: str = "DYNAMNEWS-1"
-    class_name: str = "Max Profit for Dynamic Newsvendor"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = False
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"init_level"}
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"init_level"}
 
     @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return self.model.factors["num_prod"]
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (0,) * self.dim
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (np.inf,) * self.dim
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"init_level": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["init_level"])
 
-    def replicate(self, x: tuple) -> RepResult:
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["profit"])]
         return RepResult(objectives=objectives)
 
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return all(x[j] > 0 for j in range(self.dim))
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         return tuple([rand_sol_rng.uniform(0, 10) for _ in range(self.dim)])

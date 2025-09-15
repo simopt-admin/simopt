@@ -21,7 +21,6 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Normal
-from simopt.utils import override
 
 
 class ExampleModelConfig(BaseModel):
@@ -66,11 +65,11 @@ class ExampleProblemConfig(BaseModel):
 class ExampleModel(Model):
     """A model that is a deterministic function evaluated with noise."""
 
+    class_name_abbr: ClassVar[str] = "EXAMPLE"
+    class_name: ClassVar[str] = "Deterministic Function + Noise"
     config_class: ClassVar[type[BaseModel]] = ExampleModelConfig
-    class_name_abbr: str = "EXAMPLE"
-    class_name: str = "Deterministic Function + Noise"
-    n_rngs: int = 1
-    n_responses: int = 1
+    n_rngs: ClassVar[int] = 1
+    n_responses: ClassVar[int] = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the model.
@@ -108,63 +107,48 @@ class ExampleModel(Model):
 class ExampleProblem(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "EXAMPLE-1"
+    class_name: ClassVar[str] = "Min Deterministic Function + Noise"
     config_class: ClassVar[type[BaseModel]] = ExampleProblemConfig
     model_class: ClassVar[type[Model]] = ExampleModel
-    class_name_abbr: str = "EXAMPLE-1"
-    class_name: str = "Min Deterministic Function + Noise"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.UNCONSTRAINED
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = True
-    optimal_value: float | None = 0.0
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.UNCONSTRAINED
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = True
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"x"}
 
     @property
-    @override
-    def optimal_solution(self) -> tuple:
+    def optimal_value(self) -> float | None:  # noqa: D102
+        return 0.0
+
+    @property
+    def optimal_solution(self) -> tuple | None:  # noqa: D102
         # Change if f is changed
         # TODO: figure out what f is
         return (0,) * self.dim
 
-    model_default_factors: dict = {}
-
     @property
-    @override
-    def model_fixed_factors(self) -> dict:
-        return {}
-
-    @model_fixed_factors.setter
-    def model_fixed_factors(self, value: dict | None) -> None:
-        # TODO: figure out if fixed factors should change
-        pass
-
-    model_decision_factors: set[str] = {"x"}
-
-    @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return len(self.factors["initial_solution"])
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (-np.inf,) * self.dim
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (np.inf,) * self.dim
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"x": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["x"])
 
-    def replicate(self, x: tuple) -> RepResult:
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
         responses, gradients = self.model.replicate()
         objectives = [
             Objective(
@@ -174,13 +158,12 @@ class ExampleProblem(Problem):
         ]
         return RepResult(objectives=objectives)
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         # x = tuple([rand_sol_rng.uniform(-2, 2) for _ in range(self.dim)])
         return tuple(
             rand_sol_rng.mvnormalvariate(
-                mean_vec=[0] * self.dim,
-                cov=np.eye(self.dim),
+                mean_vec=[0.0] * self.dim,
+                cov=np.eye(self.dim).tolist(),
                 factorized=False,
             )
         )

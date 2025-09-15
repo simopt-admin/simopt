@@ -17,7 +17,6 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp
-from simopt.utils import override
 
 # TODO: figure out if this should ever be anything other than 13
 NUM_ARCS: Final[int] = 13
@@ -117,10 +116,11 @@ class FixedSAN(Model):
     come with a cost.
     """
 
+    class_name_abbr: ClassVar[str] = "FIXEDSAN"
+    class_name: ClassVar[str] = "Fixed Stochastic Activity Network"
     config_class: ClassVar[type[BaseModel]] = FixedSANConfig
-    class_name: str = "Fixed Stochastic Activity Network"
-    n_rngs: int = 1
-    n_responses: int = 1
+    n_rngs: ClassVar[int] = 1
+    n_responses: ClassVar[int] = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Fixed Stochastic Activity Network model.
@@ -231,34 +231,33 @@ class FixedSAN(Model):
 class FixedSANLongestPath(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "FIXEDSAN-1"
+    class_name: ClassVar[str] = (
+        "Min Mean Longest Path for Fixed Stochastic Activity Network"
+    )
     config_class: ClassVar[type[BaseModel]] = FixedSANLongestPathConfig
     model_class: ClassVar[type[Model]] = FixedSAN
-    class_name_abbr: str = "FIXEDSAN-1"
-    class_name: str = "Min Mean Longest Path for Fixed Stochastic Activity Network"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = True
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = True
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"arc_means"}
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"arc_means"}
 
     @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return self.model.factors["num_arcs"]
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (1e-2,) * self.dim
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (np.inf,) * self.dim
 
     def check_arc_costs(self) -> bool:
@@ -267,15 +266,13 @@ class FixedSANLongestPath(Problem):
             x > 0 for x in self.factors["arc_costs"]
         )
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"arc_means": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["arc_means"])
 
-    def replicate(self, x: tuple) -> RepResult:
+    def replicate(self, x: tuple) -> RepResult:  # noqa: D102
         responses, gradients = self.model.replicate()
         objectives = [
             Objective(
@@ -288,12 +285,10 @@ class FixedSANLongestPath(Problem):
         ]
         return RepResult(objectives=objectives)
 
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return all(x_i >= 0 for x_i in x)
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         return tuple(
             [rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)]
         )

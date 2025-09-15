@@ -18,7 +18,6 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp
-from simopt.utils import override
 
 
 class MM1QueueConfig(BaseModel):
@@ -70,7 +69,9 @@ class MM1QueueConfig(BaseModel):
         int,
         Field(
             default=50,
-            description="number of people from which to calculate the average sojourn time",
+            description=(
+                "number of people from which to calculate the average " "sojourn time"
+            ),
             ge=1,
         ),
     ]
@@ -120,11 +121,11 @@ class MM1Queue(Model):
     for customers after a warmup period.
     """
 
+    class_name_abbr: ClassVar[str] = "MM1"
+    class_name: ClassVar[str] = "MM1 Queue"
     config_class: ClassVar[type[BaseModel]] = MM1QueueConfig
-    class_name_abbr: str = "MM1"
-    class_name: str = "MM1 Queue"
-    n_rngs: int = 2
-    n_responses: int = 3
+    n_rngs: ClassVar[int] = 2
+    n_responses: ClassVar[int] = 3
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the MM1Queue model.
@@ -270,33 +271,40 @@ class MM1Queue(Model):
 class MM1MinMeanSojournTime(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "MM1-1"
+    class_name: ClassVar[str] = "Min Mean Sojourn Time for MM1 Queue"
     config_class: ClassVar[type[BaseModel]] = MM1MinMeanSojournTimeConfig
     model_class: ClassVar[type[Model]] = MM1Queue
-    class_name_abbr: str = "MM1-1"
-    class_name: str = "Min Mean Sojourn Time for MM1 Queue"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = True
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = True
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {"warmup": 50, "people": 200}
-    model_decision_factors: set[str] = {"mu"}
-    dim: int = 1
-    lower_bounds: tuple = (0,) * dim
-    upper_bounds: tuple = (np.inf,) * dim
+    model_default_factors: ClassVar[dict] = {"warmup": 50, "people": 200}
+    model_decision_factors: ClassVar[set[str]] = {"mu"}
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    @property
+    def dim(self) -> int:  # noqa: D102
+        return 1
+
+    @property
+    def lower_bounds(self) -> tuple:  # noqa: D102
+        return (0,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:  # noqa: D102
+        return (np.inf,) * self.dim
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"mu": vector[0]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return (factor_dict["mu"],)
 
-    def replicate(self, x: tuple) -> RepResult:
+    def replicate(self, x: tuple) -> RepResult:  # noqa: D102
         responses, gradients = self.model.replicate()
         objectives = [
             Objective(
@@ -308,7 +316,6 @@ class MM1MinMeanSojournTime(Problem):
         ]
         return RepResult(objectives=objectives)
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         # Generate an Exponential(rate = 1/3) r.v.
         return (rand_sol_rng.expovariate(1 / 3),)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from typing import Annotated, ClassVar, Self
 
 import numpy as np
@@ -17,7 +18,6 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import InputModel
-from simopt.utils import override
 
 
 class CntNVConfig(BaseModel):
@@ -84,8 +84,9 @@ class CntNVConfig(BaseModel):
         # Cross-validation: check price ordering constraint
         if not (self.salvage_price < self.purchase_price < self.sales_price):
             raise ValueError(
-                "The salvage cost per unit must be greater than the purchasing cost per "
-                "unit, which must be greater than the sales price per unit."
+                "The salvage cost per unit must be greater than the purchasing "
+                "cost per unit, which must be greater than the sales price per "
+                "unit."
             )
 
         return self
@@ -119,11 +120,7 @@ class CntNVMaxProfitConfig(BaseModel):
 class DemandInputModel(InputModel):
     """Input model for Burr Type XII demand."""
 
-    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
-        self.rng = rng
-
-    def unset_rng(self) -> None:  # noqa: D102
-        self.rng = None
+    rng: random.Random | None = None
 
     def random(self, burr_c: float, burr_k: float) -> float:  # noqa: D102
         # Generate random demand according to Burr Type XII distribution.
@@ -134,6 +131,7 @@ class DemandInputModel(InputModel):
             """Return the nth root of x."""
             return x ** (1 / n)
 
+        assert self.rng is not None
         u = self.rng.random()
         return nth_root(nth_root(1 - u, -burr_k) - 1, burr_c)
 
@@ -146,11 +144,11 @@ class CntNV(Model):
     salvage.
     """
 
+    class_name_abbr: ClassVar[str] = "CNTNEWS"
+    class_name: ClassVar[str] = "Continuous Newsvendor"
     config_class: ClassVar[type[BaseModel]] = CntNVConfig
-    class_name_abbr: str = "CNTNEWS"
-    class_name: str = "Continuous Newsvendor"
-    n_rngs: int = 1
-    n_responses: int = 1
+    n_rngs: ClassVar[int] = 1
+    n_responses: ClassVar[int] = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Continuous Newsvendor model.
@@ -163,19 +161,6 @@ class CntNV(Model):
         super().__init__(fixed_factors)
 
         self.demand_model = DemandInputModel()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        if (
-            self.factors["salvage_price"]
-            < self.factors["purchase_price"]
-            < self.factors["sales_price"]
-        ):
-            return True
-        raise ValueError(
-            "The salvage cost per unit must be greater than the purchasing cost per "
-            "unit, which must be greater than the sales price per unit."
-        )
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.demand_model.set_rng(rng_list[0])
@@ -246,39 +231,46 @@ class CntNV(Model):
 class CntNVMaxProfit(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "CNTNEWS-1"
+    class_name: ClassVar[str] = "Max Profit for Continuous Newsvendor"
     config_class: ClassVar[type[BaseModel]] = CntNVMaxProfitConfig
     model_class: ClassVar[type[Model]] = CntNV
-    class_name_abbr: str = "CNTNEWS-1"
-    class_name: str = "Max Profit for Continuous Newsvendor"
-    n_objectives: int = 1
-    n_stochastic_constraints: int = 0
-    minmax: tuple[int] = (1,)
-    constraint_type: ConstraintType = ConstraintType.BOX
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = True
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = True
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {
+    model_default_factors: ClassVar[dict] = {
         "purchase_price": 5.0,
         "sales_price": 9.0,
         "salvage_price": 1.0,
         "Burr_c": 2.0,
         "Burr_k": 20.0,
     }
-    model_decision_factors: set[str] = {"order_quantity"}
-    dim: int = 1
-    lower_bounds: tuple = (0,)
-    upper_bounds: tuple = (np.inf,)
+    model_decision_factors: ClassVar[set[str]] = {"order_quantity"}
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    @property
+    def dim(self) -> int:  # noqa: D102
+        return 1
+
+    @property
+    def lower_bounds(self) -> tuple:  # noqa: D102
+        return (0,)
+
+    @property
+    def upper_bounds(self) -> tuple:  # noqa: D102
+        return (np.inf,)
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"order_quantity": vector[0]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return (factor_dict["order_quantity"],)
 
-    def replicate(self, x: tuple):
+    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
         responses, gradients = self.model.replicate()
         return RepResult(
             objectives=[
@@ -289,11 +281,9 @@ class CntNVMaxProfit(Problem):
             ],
         )
 
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return x[0] > 0
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         # Generate an Exponential(rate = 1) r.v.
         return (rand_sol_rng.expovariate(1),)

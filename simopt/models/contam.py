@@ -18,7 +18,6 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Beta
-from simopt.utils import override
 
 NUM_STAGES: Final[int] = 5
 
@@ -202,6 +201,11 @@ class ContaminationTotalCostContConfig(BaseModel):
         self._check_error_prob()
         self._check_upper_thres()
 
+        if any(u < 0 or u > 1 for u in self.initial_solution):
+            raise ValueError(
+                "All elements in initial_solution must be in the range [0, 1]."
+            )
+
         return self
 
 
@@ -284,10 +288,11 @@ class Contamination(Model):
     supply chain.
     """
 
+    class_name_abbr: ClassVar[str] = "CONTAM"
+    class_name: ClassVar[str] = "Contamination"
     config_class: ClassVar[type[BaseModel]] = ContaminationConfig
-    class_name_abbr: str = "CONTAM"
-    n_rngs: int = 2
-    n_responses: int = 1
+    n_rngs: ClassVar[int] = 2
+    n_responses: ClassVar[int] = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Contamination model.
@@ -300,16 +305,6 @@ class Contamination(Model):
         super().__init__(fixed_factors)
         self.contam_model = Beta()
         self.restore_model = Beta()
-
-    @override
-    def check_simulatable_factors(self) -> bool:
-        # Check for matching number of stages.
-        if len(self.factors["prev_decision"]) != self.factors["stages"]:
-            raise ValueError(
-                "The number of stages must be equal to the length of the previous "
-                "decision tuple."
-            )
-        return True
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
         self.contam_model.set_rng(rng_list[0])
@@ -364,60 +359,46 @@ class Contamination(Model):
             levels[i] = contamination_change + restoration_change
         # Compose responses and gradients.
         responses = {"level": levels}
-        return responses, None
+        return responses, {}
 
 
 class ContaminationTotalCostDisc(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "CONTAM-1"
+    class_name: ClassVar[str] = "Min Total Cost for Discrete Contamination"
     config_class: ClassVar[type[BaseModel]] = ContaminationTotalCostDiscConfig
     model_class: ClassVar[type[Model]] = Contamination
-    class_name_abbr: str = "CONTAM-1"
-    class_name: str = "Min Total Cost for Discrete Contamination"
-    n_objectives: int = 1
-
-    @property
-    @override
-    def n_stochastic_constraints(self) -> int:
-        return self.model.factors["stages"]
-
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.STOCHASTIC
-    variable_type: VariableType = VariableType.DISCRETE
-    gradient_available: bool = True
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = NUM_STAGES
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.STOCHASTIC
+    variable_type: ClassVar[VariableType] = VariableType.DISCRETE
+    gradient_available: ClassVar[bool] = True
     optimal_value: float | None = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"prev_decision"}
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"prev_decision"}
 
     @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return self.model.factors["stages"]
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (0,) * self.model.factors["stages"]
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (1,) * self.model.factors["stages"]
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"prev_decision": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["prev_decision"])
 
-    @override
-    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
-        return (np.nan * len(self.model.factors["prev_decision"]),)
-
-    def replicate(self, x: tuple) -> RepResult:
+    def replicate(self, x: tuple) -> RepResult:  # noqa: D102
         responses, _ = self.model.replicate()
         objectives = [
             Objective(
@@ -438,59 +419,42 @@ class ContaminationTotalCostDisc(Problem):
             objectives=objectives, stochastic_constraints=stochastic_constraints
         )
 
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return all(0 <= u <= 1 for u in x)
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         return tuple([rand_sol_rng.randint(0, 1) for _ in range(self.dim)])
 
 
 class ContaminationTotalCostCont(Problem):
     """Base class to implement simulation-optimization problems."""
 
+    class_name_abbr: ClassVar[str] = "CONTAM-2"
+    class_name: ClassVar[str] = "Min Total Cost for Continuous Contamination"
     config_class: ClassVar[type[BaseModel]] = ContaminationTotalCostContConfig
     model_class: ClassVar[type[Model]] = Contamination
-    class_name_abbr: str = "CONTAM-2"
-    class_name: str = "Min Total Cost for Continuous Contamination"
-    n_objectives: int = 1
-
-    @property
-    @override
-    def n_stochastic_constraints(self) -> int:
-        return self.model.factors["stages"]
-
-    minmax: tuple[int] = (-1,)
-    constraint_type: ConstraintType = ConstraintType.STOCHASTIC
-    variable_type: VariableType = VariableType.CONTINUOUS
-    gradient_available: bool = True
-    optimal_value: float | None = None
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = NUM_STAGES
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.STOCHASTIC
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = True
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
-    model_default_factors: dict = {}
-    model_decision_factors: set[str] = {"prev_decision"}
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"prev_decision"}
 
     @property
-    @override
-    def dim(self) -> int:
+    def dim(self) -> int:  # noqa: D102
         return self.model.factors["stages"]
 
     @property
-    @override
-    def lower_bounds(self) -> tuple:
+    def lower_bounds(self) -> tuple:  # noqa: D102
         return (0,) * self.model.factors["stages"]
 
     @property
-    @override
-    def upper_bounds(self) -> tuple:
+    def upper_bounds(self) -> tuple:  # noqa: D102
         return (1,) * self.model.factors["stages"]
-
-    @override
-    def check_initial_solution(self) -> bool:
-        return not (
-            len(self.factors["initial_solution"]) != self.dim
-            or all(u < 0 or u > 1 for u in self.factors["initial_solution"])
-        )
 
     # # TODO: figure out how Problem.check_simulatable_factors() works
     # def check_simulatable_factors(self) -> bool:
@@ -505,19 +469,13 @@ class ContaminationTotalCostCont(Problem):
     #         raise ValueError(error_msg)
     #     return True
 
-    @override
-    def vector_to_factor_dict(self, vector: tuple) -> dict:
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"prev_decision": vector[:]}
 
-    @override
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["prev_decision"])
 
-    @override
-    def factor_dict_to_vector_gradients(self, factor_dict: dict) -> tuple:  # noqa: ARG002
-        return (np.nan * len(self.model.factors["prev_decision"]),)
-
-    def replicate(self, x: tuple) -> RepResult:
+    def replicate(self, x: tuple) -> RepResult:  # noqa: D102
         responses, _ = self.model.replicate()
         deterministic_cost = np.dot(self.factors["prev_cost"], x)
         objectives = [
@@ -539,10 +497,8 @@ class ContaminationTotalCostCont(Problem):
             objectives=objectives, stochastic_constraints=stochastic_constraints
         )
 
-    @override
-    def check_deterministic_constraints(self, x: tuple) -> bool:
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return all(0 <= u <= 1 for u in x)
 
-    @override
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         return tuple([rand_sol_rng.random() for _ in range(self.dim)])
