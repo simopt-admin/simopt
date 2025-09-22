@@ -956,11 +956,10 @@ class TrafficLight(Model):
             return roadmap, label
 
         roadmap, labels = roadmap(self.factors["n_veins"], self.factors["n_arteries"])
-        roadmap = np.array(roadmap)
 
         # List each location and the locations that are next accessible
         def graph(
-            roadmap: np.ndarray, label: list[str], n_vein: int, n_artery: int
+            roadmap: list[list[str]], label: list[str], n_vein: int, n_artery: int
         ) -> dict[str, list[str]]:
             my_dict: dict[str, list[str]] = {}
             j = 0
@@ -1091,7 +1090,7 @@ class TrafficLight(Model):
                 )
             return path
 
-        def find_direction(start: str, end: str, roadmap: np.ndarray) -> str:
+        def find_direction(start: str, end: str, roadmap: list[list[str]]) -> str:
             """Takes in road and finds its direction based on the map.
 
             Args:
@@ -1102,8 +1101,12 @@ class TrafficLight(Model):
             Returns:
                 str: direction of the road
             """
-            yloc1, xloc1 = np.where(roadmap == start)
-            yloc2, xloc2 = np.where(roadmap == end)
+            yloc1, xloc1 = next(
+                (i, row.index(start)) for i, row in enumerate(roadmap) if start in row
+            )
+            yloc2, xloc2 = next(
+                (i, row.index(end)) for i, row in enumerate(roadmap) if end in row
+            )
             if xloc1 > xloc2:
                 direction = "West"
             elif xloc1 < xloc2:
