@@ -1,5 +1,6 @@
 """Simulate a single day of traffic for queuing problem."""
 
+import itertools
 import logging
 import math
 from typing import Callable
@@ -283,6 +284,7 @@ class Car:
     def finishtime(self) -> float:
         """Final time of the car in the system."""
         return self._finishtime
+
     @finishtime.setter
     def finishtime(self, value: float) -> None:
         self._finishtime = value
@@ -482,10 +484,7 @@ class TrafficLight(Model):
                     "from N, S, E and W."
                 ),
                 "datatype": list,
-                "default": [[0, 1, 2, 3],
-                            [1, 0, 2, 3],
-                            [1, 2, 0, 3],
-                            [1, 2, 3, 0]]
+                "default": [[0, 1, 2, 3], [1, 0, 2, 3], [1, 2, 0, 3], [1, 2, 3, 0]],
             },
             "pause": {
                 "description": "The pause (seconds) before move on a green light",
@@ -523,27 +522,21 @@ class TrafficLight(Model):
                 "default": [20, 20, 20, 20],
             },
             "n_veins": {
-                "description": (
-                     "The number of vein roads in the system"
-                ),
+                "description": ("The number of vein roads in the system"),
                 "datatype": int,
                 "default": 2,
             },
             "n_arteries": {
-                "description": (
-                    "The number of artery roads in the system"
-                ),
+                "description": ("The number of artery roads in the system"),
                 "datatype": int,
                 "default": 2,
             },
             "nodes": {
-                "description": (
-                    "The number of nodes in the system"
-                ),
+                "description": ("The number of nodes in the system"),
                 "datatype": int,
                 "default": 8,
-            },}
-            
+            },
+        }
 
     @property
     @override
@@ -579,7 +572,7 @@ class TrafficLight(Model):
         super().__init__(fixed_factors)
 
     def _check_lambdas(self) -> None:
-        #not zero #arteries > veins
+        # not zero #arteries > veins
         if len(self.factors["lambdas"]) != 4:
             raise ValueError(
                 "Lambdas must be a list of 4 elements, representing the "
@@ -614,13 +607,13 @@ class TrafficLight(Model):
             raise ValueError("Reaction time must be greater than 0.")
 
     def _check_transition_probs(self) -> None:
-        for l in self.factors["transition_probs"]:
-            for prob in l:
-                if prob < 0:
-                    raise ValueError(
-                        "Transition probabilities must be greater than or equal to 0."
-                    )
-            
+        for prob in list(
+            itertools.chain.from_iterable(self.factors["transition_probs"])
+        ):
+            if prob < 0:
+                raise ValueError(
+                    "Transition probabilities must be greater than or equal to 0."
+                )
 
     def _check_pause(self) -> None:
         if self.factors["pause"] <= 0:
@@ -649,21 +642,23 @@ class TrafficLight(Model):
         all_positive = all(redlight > 0 for redlight in self.factors["redlight_veins"])
         if not all_positive:
             raise ValueError("Redlight duration of veins must be greater than 0.")
-    
+
     def _check_n_veins(self) -> None:
         if self.factors["n_veins"] <= 0:
             raise ValueError("Number of veins must be greater than 0.")
-    
+
     def _check_n_arteries(self) -> None:
         if self.factors["n_arteries"] <= 0:
             raise ValueError("Number of arteries must be greater than 0.")
-    
+
     def _check_nodes(self) -> None:
-        if self.factors["nodes"] != (2*self.factors["n_veins"]) + (2*self.factors["n_arteries"]):
+        if self.factors["nodes"] != (2 * self.factors["n_veins"]) + (
+            2 * self.factors["n_arteries"]
+        ):
             raise ValueError(
-                "Number of nodes must be equal to 2 * number of veins + 2 * number of arteries."
+                "Number of nodes must be equal to "
+                "(2 * number of veins) + (2 * number of arteries)."
             )
-        
 
     @override
     def check_simulatable_factors(self) -> bool:
@@ -699,266 +694,332 @@ class TrafficLight(Model):
         next_start = outbounds
         next_sec_arrival = outbounds
         min_prim_arrival = 0
-        def start_prob(n_vein, n_artery, lambdas):
-            start_prob = []
-            i=0
+
+        def start_prob(n_vein: int, n_artery: int, lambdas: list[float]) -> list[float]:
+            start_prob: list[float] = []
+            i = 0
             while i < n_artery:
-                start_prob.append((lambdas[0]/sum(lambdas))/n_artery)
-                i+=1
-            while i < 2*n_artery:
-                start_prob.append((lambdas[1]/sum(lambdas)/n_artery))
-                i+=1
-            j=0
+                start_prob.append((lambdas[0] / sum(lambdas)) / n_artery)
+                i += 1
+            while i < 2 * n_artery:
+                start_prob.append(lambdas[1] / sum(lambdas) / n_artery)
+                i += 1
+            j = 0
             while j < n_vein:
-                if j%2 == 0:
+                if j % 2 == 0:
                     start_prob.append(0)
                 else:
-                    start_prob.append(lambdas[2]/sum(lambdas))
-                j+=1
-            k=0
+                    start_prob.append(lambdas[2] / sum(lambdas))
+                j += 1
+            k = 0
             while k < n_vein:
-                if k%2 == 0:
-                    start_prob.append(lambdas[3]/sum(lambdas))
+                if k % 2 == 0:
+                    start_prob.append(lambdas[3] / sum(lambdas))
                 else:
                     start_prob.append(0)
-                k+=1
+                k += 1
             return start_prob
-        start_prob = start_prob(self.factors["n_veins"], self.factors["n_arteries"], self.factors["lambdas"])
-         
-        #offset
-        def offset(decision_vector, redlight_veins, n_artery, n_vein):
+
+        start_prob = start_prob(
+            self.factors["n_veins"], self.factors["n_arteries"], self.factors["lambdas"]
+        )
+
+        # offset
+        def offset(
+            decision_vector: list[float],
+            redlight_veins: list[float],
+            n_artery: int,
+            n_vein: int,
+        ) -> list[int]:
             offset = [0]
             count = 0
-            
-            count+=1
-            i=0
-            while i < (n_artery-1):
-                    offset.append(decision_vector[i])
-                    i+=1
-            j=0
+
+            count += 1
+            i = 0
+            while i < (n_artery - 1):
+                offset.append(decision_vector[i])
+                i += 1
+            j = 0
             while j < (n_artery):
-                    offset.append(decision_vector[j]+redlight_veins[j])
-                    j+=1
+                offset.append(decision_vector[j] + redlight_veins[j])
+                j += 1
             offset.append(0)
-            k=0
-            while k < (n_artery-1):
-                    offset.append(decision_vector[k])
-                    k+=1
+            k = 0
+            while k < (n_artery - 1):
+                offset.append(decision_vector[k])
+                k += 1
             count = 1
             while count < n_vein:
-                count+=1
-                a=0
-                i = n_artery-1
+                count += 1
+                a = 0
+                i = n_artery - 1
                 while a < n_artery:
                     offset.append(decision_vector[i])
-                    a+=1
-                    i+=1
+                    a += 1
+                    i += 1
                 j = n_artery
-                b=0
+                b = 0
                 while b < n_artery:
-                    offset.append(decision_vector[j-1]+redlight_veins[j-1])
-                    b+=1
-                    j+=1
-                c=0
+                    offset.append(decision_vector[j - 1] + redlight_veins[j - 1])
+                    b += 1
+                    j += 1
+                c = 0
                 k = n_artery - 1
                 while c < (n_artery):
                     offset.append(decision_vector[k])
-                    c+=1
-                    k+=1
+                    c += 1
+                    k += 1
                 if count == n_vein:
                     break
             return offset
-        self.factors["offset"] = offset(self.factors["decision_vector"], self.factors["redlight_veins"], self.factors["n_arteries"], self.factors["n_veins"])
 
+        self.factors["offset"] = offset(
+            self.factors["decision_vector"],
+            self.factors["redlight_veins"],
+            self.factors["n_arteries"],
+            self.factors["n_veins"],
+        )
 
+        def transition_matrix(
+            n_vein: int, n_artery: int, transition_probs: list[list[float]]
+        ) -> list[list[float]]:
+            transition_matrix = [
+                [0 for _ in range((2 * n_artery) + (2 * n_vein))]
+                for _ in range((2 * n_artery) + (2 * n_vein))
+            ]
 
-        def transition_matrix(n_vein, n_artery, transition_probs):
-
-            transition_matrix = [[0 for _ in range((2*n_artery)+(2*n_vein))] 
-                             for _ in range((2*n_artery)+(2*n_vein))]
-            
             transition_probs_sum = []
             for i in range(4):
                 transition_probs_sum.append(sum(transition_probs[i]))
-            #NORTH 1
-            #S1:
-            transition_matrix[0][(2*n_artery) + n_vein - 1] = (1/(transition_probs[0][1]+transition_probs[0][3])) * transition_probs[0][1]
-            #West: 
+            # NORTH 1
+            # S1:
+            transition_matrix[0][(2 * n_artery) + n_vein - 1] = (
+                1 / (transition_probs[0][1] + transition_probs[0][3])
+            ) * transition_probs[0][1]
+            # West:
             count_west = 0
-            for i in range((2*n_artery) + n_vein, (2*n_artery) + (2*n_vein)):
-                if i%2 == 0:
-                    count_west+=1
-                    transition_matrix[0][i] = ((1/(transition_probs[0][1]+transition_probs[0][3])) * transition_probs[0][3]) / count_west
+            for i in range((2 * n_artery) + n_vein, (2 * n_artery) + (2 * n_vein)):
+                if i % 2 == 0:
+                    count_west += 1
+                    transition_matrix[0][i] = (
+                        (1 / (transition_probs[0][1] + transition_probs[0][3]))
+                        * transition_probs[0][3]
+                    ) / count_west
 
-
-            #OTHER NORTH
+            # OTHER NORTH
             for j in range(1, n_artery):
-                #E:
+                # E:
                 count_east = 0
                 for i in range((n_artery), n_artery + n_vein - 1):
-                    if i%2 == 0:
+                    if i % 2 == 0:
                         count_east += 1
-                        transition_matrix[j][i] = (((1/transition_probs_sum[0]) * transition_probs[0][2]) / count_east)
-                #S:
-                for i in range(n_artery + n_vein, (2*n_artery) + n_vein - 1):
-                    transition_matrix[j][i] = (((1/transition_probs_sum[0]) * transition_probs[0][1]) / (n_artery-1))
-                #W:
-                for i in range((2*n_artery) + n_vein, (2*n_artery) + (2*n_vein)):
-                    if i%2 == 0:
-                        transition_matrix[j][i] = (((1/transition_probs_sum[0]) * transition_probs[0][3]) / count_west)
+                        transition_matrix[j][i] = (
+                            (1 / transition_probs_sum[0]) * transition_probs[0][2]
+                        ) / count_east
+                # S:
+                for i in range(n_artery + n_vein, (2 * n_artery) + n_vein - 1):
+                    transition_matrix[j][i] = (
+                        (1 / transition_probs_sum[0]) * transition_probs[0][1]
+                    ) / (n_artery - 1)
+                # W:
+                for i in range((2 * n_artery) + n_vein, (2 * n_artery) + (2 * n_vein)):
+                    if i % 2 == 0:
+                        transition_matrix[j][i] = (
+                            (1 / transition_probs_sum[0]) * transition_probs[0][3]
+                        ) / count_west
 
-            #LAST SOUTH            
-            #lastN:
-            transition_matrix[n_vein+n_artery][n_artery - 1] = (1/(transition_probs[1][0]+transition_probs[1][2])) * transition_probs[1][0]
-            #East:
+            # LAST SOUTH
+            # lastN:
+            transition_matrix[n_vein + n_artery][n_artery - 1] = (
+                1 / (transition_probs[1][0] + transition_probs[1][2])
+            ) * transition_probs[1][0]
+            # East:
             for i in range(n_artery, (n_artery + n_vein)):
-                if i %2 == 0:
-                    transition_matrix[2*n_artery][i] = ((1/(transition_probs[1][0]+transition_probs[1][2])) * transition_probs[1][2]) / count_east
+                if i % 2 == 0:
+                    transition_matrix[2 * n_artery][i] = (
+                        (1 / (transition_probs[1][0] + transition_probs[1][2]))
+                        * transition_probs[1][2]
+                    ) / count_east
 
-            #OTHER SOUTH
-            for j in range((n_vein + n_artery) + 1, (2*n_artery) + n_vein):
-                #N:
-                for i in range(0, n_artery-1):
-                    transition_matrix[j][i] = ((1/transition_probs_sum[1]) * transition_probs[1][0]) / (n_artery-1)
-                
-                #E:
+            # OTHER SOUTH
+            for j in range((n_vein + n_artery) + 1, (2 * n_artery) + n_vein):
+                # N:
+                for i in range(0, n_artery - 1):
+                    transition_matrix[j][i] = (
+                        (1 / transition_probs_sum[1]) * transition_probs[1][0]
+                    ) / (n_artery - 1)
+
+                # E:
                 for i in range((n_artery), (n_vein + n_artery) - 1):
-                    if i%2 == 0:
-                        transition_matrix[j][i] = ((1/transition_probs_sum[1]) * transition_probs[1][2]) / count_east
-                
-                #W:
-                for i in range((2*n_artery) + n_vein, (2*n_artery) + (2*n_vein)):
-                    if i%2 == 0:
-                        transition_matrix[j][i] = (((1/transition_probs_sum[1]) * transition_probs[1][3]) / count_west)
-                        
-            #EAST
-            for j in range(n_artery+1 , (n_artery + n_vein)):
-                if j%2 != 0:
-                    #N:
+                    if i % 2 == 0:
+                        transition_matrix[j][i] = (
+                            (1 / transition_probs_sum[1]) * transition_probs[1][2]
+                        ) / count_east
+
+                # W:
+                for i in range((2 * n_artery) + n_vein, (2 * n_artery) + (2 * n_vein)):
+                    if i % 2 == 0:
+                        transition_matrix[j][i] = (
+                            (1 / transition_probs_sum[1]) * transition_probs[1][3]
+                        ) / count_west
+
+            # EAST
+            for j in range(n_artery + 1, (n_artery + n_vein)):
+                if j % 2 != 0:
+                    # N:
                     for i in range(0, n_artery):
-                        transition_matrix[j][i] = ((1/transition_probs_sum[2]) * transition_probs[2][0]) / n_artery
-                        
-                    #S:
-                    for i in range((n_artery+ n_vein), ((2*n_artery) + n_vein - 1)):
-                        transition_matrix[j][i] = ((1/transition_probs_sum[2]) * transition_probs[2][1]) / (n_artery - 1)
-                        
-                    #W:
-                    for i in range(((2*n_artery) + n_vein), ((2*n_vein) + (2*n_artery))):
-                        if i%2 == 0:
-                            transition_matrix[j][i] = ((1/transition_probs_sum[2]) * transition_probs[2][3]) / count_west
-                            
-            #WEST
-            for j in range((2*n_artery) + n_vein, (2*n_artery) + (2*n_vein)):
-                if j%2 != 0:
-                    #N:
-                    for i in range(0, n_artery-1):
-                        transition_matrix[j][i] = ((1/transition_probs_sum[3]) * transition_probs[3][0]) / (n_artery - 1)
-                        
-                    #E:
+                        transition_matrix[j][i] = (
+                            (1 / transition_probs_sum[2]) * transition_probs[2][0]
+                        ) / n_artery
+
+                    # S:
+                    for i in range((n_artery + n_vein), ((2 * n_artery) + n_vein - 1)):
+                        transition_matrix[j][i] = (
+                            (1 / transition_probs_sum[2]) * transition_probs[2][1]
+                        ) / (n_artery - 1)
+
+                    # W:
+                    for i in range(
+                        ((2 * n_artery) + n_vein), ((2 * n_vein) + (2 * n_artery))
+                    ):
+                        if i % 2 == 0:
+                            transition_matrix[j][i] = (
+                                (1 / transition_probs_sum[2]) * transition_probs[2][3]
+                            ) / count_west
+
+            # WEST
+            for j in range((2 * n_artery) + n_vein, (2 * n_artery) + (2 * n_vein)):
+                if j % 2 != 0:
+                    # N:
+                    for i in range(0, n_artery - 1):
+                        transition_matrix[j][i] = (
+                            (1 / transition_probs_sum[3]) * transition_probs[3][0]
+                        ) / (n_artery - 1)
+
+                    # E:
                     for i in range(n_artery, (n_artery + n_vein)):
-                        if i%2 == 0:
-                            transition_matrix[j][i] = ((1/transition_probs_sum[3]) * transition_probs[3][2]) / count_east
-                    
-                    #S:
-                    for i in range((n_artery + n_vein), ((2*n_artery) + n_vein)):
-                        transition_matrix[j][i] = ((1/transition_probs_sum[3]) * transition_probs[3][1]) / n_artery
+                        if i % 2 == 0:
+                            transition_matrix[j][i] = (
+                                (1 / transition_probs_sum[3]) * transition_probs[3][2]
+                            ) / count_east
+
+                    # S:
+                    for i in range((n_artery + n_vein), ((2 * n_artery) + n_vein)):
+                        transition_matrix[j][i] = (
+                            (1 / transition_probs_sum[3]) * transition_probs[3][1]
+                        ) / n_artery
             return transition_matrix
-        
-        transition_matrix = np.array(transition_matrix(self.factors["n_veins"], self.factors["n_arteries"], self.factors["transition_probs"]))
+
+        transition_matrix = np.array(
+            transition_matrix(
+                self.factors["n_veins"],
+                self.factors["n_arteries"],
+                self.factors["transition_probs"],
+            )
+        )
 
         # Draw out map of all locations in system
-        
-        def roadmap(n_vein, n_artery):
-            def num_to_label(n):
+
+        def roadmap(n_vein: int, n_artery: int) -> tuple[list, list]:
+            def num_to_label(n: int) -> str:
                 label = ""
                 while n >= 0:
-                    label = chr(n % 26 + ord('A')) + label
+                    label = chr(n % 26 + ord("A")) + label
                     n = n // 26 - 1
                 return label
 
             rows = n_vein + 2
             cols = n_artery + 2
             roadmap = [[0 for _ in range(cols)] for _ in range(rows)]
-            
+
             roadmap[0][0] = ""
             roadmap[-1][-1] = ""
             roadmap[0][-1] = ""
             roadmap[-1][0] = ""
 
             for col in range(1, cols - 1):
-                roadmap[0] [col] = f"N{col}"
-                roadmap[rows - 1] [col] = f"S{col}"
+                roadmap[0][col] = f"N{col}"
+                roadmap[rows - 1][col] = f"S{col}"
 
             for row in range(1, rows - 1):
-                roadmap[row] [0] = f"W{row}"
-                roadmap[row] [cols - 1] = f"E{row}"
+                roadmap[row][0] = f"W{row}"
+                roadmap[row][cols - 1] = f"E{row}"
 
             counter = 0
             label = []
             for row in range(1, rows - 1):
                 for col in range(1, cols - 1):
-                    roadmap[row] [col] = num_to_label(counter)
+                    roadmap[row][col] = num_to_label(counter)
                     label.append(num_to_label(counter))
                     counter += 1
 
             return roadmap, label
-        
+
         roadmap, labels = roadmap(self.factors["n_veins"], self.factors["n_arteries"])
         roadmap = np.array(roadmap)
-        
 
-            
         # List each location and the locations that are next accessible
-        def graph(roadmap, label, n_vein, n_artery):
-            my_dict = {}
-            j=0
+        def graph(
+            roadmap: np.ndarray, label: list[str], n_vein: int, n_artery: int
+        ) -> dict[str, list[str]]:
+            my_dict: dict[str, list[str]] = {}
+            j = 0
             vein = 1
             count = 0
-            while j < n_vein:   
-                if j%2 == 0:
+            while j < n_vein:
+                if j % 2 == 0:
                     for a in range(n_artery):
                         list1 = []
-                        list1 = [roadmap[vein-1][a+1], roadmap[vein][a+2], roadmap[vein+1][a+1]]
+                        list1 = [
+                            roadmap[vein - 1][a + 1],
+                            roadmap[vein][a + 2],
+                            roadmap[vein + 1][a + 1],
+                        ]
                         my_dict[label[count]] = list1
-                        count+=1
-                    vein+=1
-                elif j%2 !=0: 
+                        count += 1
+                    vein += 1
+                elif j % 2 != 0:
                     for a in range(n_artery):
                         list2 = []
-                        list2 = [roadmap[vein-1][a+1], roadmap[vein][a], roadmap[vein+1][a+1]]
+                        list2 = [
+                            roadmap[vein - 1][a + 1],
+                            roadmap[vein][a],
+                            roadmap[vein + 1][a + 1],
+                        ]
                         my_dict[label[count]] = list2
-                        count+=1
-                    vein+=1
-                j+=1
-            #north
+                        count += 1
+                    vein += 1
+                j += 1
+            # north
             for i in range(n_artery):
-                my_dict[roadmap[0][i+1]] = [roadmap[1][i+1]]
+                my_dict[roadmap[0][i + 1]] = [roadmap[1][i + 1]]
 
-            #east        
+            # east
             for i in range(n_vein):
-                if i%2 == 0:
-                    my_dict[roadmap[i+1][-1]] = []
+                if i % 2 == 0:
+                    my_dict[roadmap[i + 1][-1]] = []
                 else:
-                    my_dict[roadmap[i+1][-1]] = [roadmap[i+1][-2]]
-            #south
+                    my_dict[roadmap[i + 1][-1]] = [roadmap[i + 1][-2]]
+            # south
             for i in range(n_artery):
-                my_dict[roadmap[-1][i+1]] = [roadmap[-2][i+1]]
+                my_dict[roadmap[-1][i + 1]] = [roadmap[-2][i + 1]]
 
-            #west
+            # west
             for i in range(n_vein):
-                if i%2 == 0:
-                    my_dict[roadmap[i+1][0]] = [roadmap[i+1][1]]
+                if i % 2 == 0:
+                    my_dict[roadmap[i + 1][0]] = [roadmap[i + 1][1]]
                 else:
-                    my_dict[roadmap[i+1][0]] = []
+                    my_dict[roadmap[i + 1][0]] = []
             return my_dict
-        graph = graph(roadmap, labels, self.factors["n_veins"], self.factors["n_arteries"])
 
-        
-        #Lists each location in the system
+        graph = graph(
+            roadmap, labels, self.factors["n_veins"], self.factors["n_arteries"]
+        )
+
+        # Lists each location in the system
         points = list(graph.keys())
         # Lists each location in the system
-        
-        
+
         def find_shortest_path(
             graph: dict[str, list[str]],
             start: str,
@@ -1007,8 +1068,7 @@ class TrafficLight(Model):
                         if newpath and (not shortest or len(newpath) < len(shortest)):
                             shortest = newpath
             return shortest
-        
-        
+
         def generate_path(start: int) -> list[str]:
             """Generates shortest path through two random start and end locations.
 
@@ -1021,7 +1081,8 @@ class TrafficLight(Model):
             path = None
             while path is None:
                 end = end_rng.choices(
-                    population=range(self.factors["nodes"]), weights=transition_matrix[start]
+                    population=range(self.factors["nodes"]),
+                    weights=transition_matrix[start],
                 )[0]
                 path = find_shortest_path(
                     graph,
@@ -1077,22 +1138,31 @@ class TrafficLight(Model):
 
         road_pair = []
         for key, values in graph.items():
-            for node in values:  
-                road_pair.append((key,node))
-        def exit_nodes(n_vein, n_artery, roadmap):
+            for node in values:
+                road_pair.append((key, node))
+
+        def exit_nodes(n_vein: int, n_artery: int, roadmap: np.ndarray) -> list[str]:
             exit_nodes = []
-            for i in range(1,n_artery+1):
+            for i in range(1, n_artery + 1):
                 exit_nodes.append(roadmap[0][i])
-            for i in range(1, n_artery+1):
+            for i in range(1, n_artery + 1):
                 exit_nodes.append(roadmap[-1][i])
-            for i in range(1, n_vein+1):
-                if i%2 != 0:
+            for i in range(1, n_vein + 1):
+                if i % 2 != 0:
                     exit_nodes.append(roadmap[i][-1])
                 else:
                     exit_nodes.append(roadmap[i][0])
-            return exit_nodes
+            return list({str(x) for x in exit_nodes})
 
-        road_pair = sorted(road_pair, key=lambda x: (x[1] in exit_nodes(self.factors["n_veins"], self.factors["n_arteries"], roadmap), ))
+        road_pair = sorted(
+            road_pair,
+            key=lambda x: (
+                x[1]
+                in exit_nodes(
+                    self.factors["n_veins"], self.factors["n_arteries"], roadmap
+                ),
+            ),
+        )
         # Generates list of all road objects in the system
         roads: list[Road] = []
         for roadid, (key, value) in enumerate(road_pair):
@@ -1106,8 +1176,8 @@ class TrafficLight(Model):
             roads[roadid].queue.append(0)
 
         # add incoming roads
-        # only when startpoints are A, B, C, D, etc... have the overflow with overflow queue
-        # length issue
+        # only when startpoints are A, B, C, D, etc... have the overflow with overflow
+        # queue length issue
         start_points = np.array([key for key, _ in road_pair])
         for road in roads:
             endpoint = road.endpoint
@@ -1149,7 +1219,7 @@ class TrafficLight(Model):
         greenlight_arteries = self.factors["redlight_veins"]
         greenlight_veins = self.factors["redlight_arteries"]
 
-        for roadid in range(3*self.factors["numintersections"]):
+        for roadid in range(3 * self.factors["numintersections"]):
             offset = self.factors["offset"][roadid]
             road = roads[roadid]
             ind = labels.index(road.endpoint)
@@ -1190,7 +1260,7 @@ class TrafficLight(Model):
 
             mintimechange: float = self.factors["runtime"]
             # Loops through roads to find a minimum light changing time
-            for road in roads[:3*self.factors["numintersections"]]:
+            for road in roads[: 3 * self.factors["numintersections"]]:
                 nextchange = min([i for i in road.schedule if i > t])
                 if nextchange <= mintimechange:
                     mintimechange = nextchange
@@ -1204,10 +1274,10 @@ class TrafficLight(Model):
                 roads (list[Road]): list of all intersection objects
             """
             if t == 0:
-                nextlightlocation = roads[:3*self.factors["numintersections"]]
+                nextlightlocation = roads[: 3 * self.factors["numintersections"]]
             else:
                 nextlightlocation: list[Road] = []
-                for road in roads[:3*self.factors["numintersections"]]:
+                for road in roads[: 3 * self.factors["numintersections"]]:
                     if t in road.schedule:
                         nextlightlocation.append(road)
             for road in nextlightlocation:
@@ -1215,14 +1285,13 @@ class TrafficLight(Model):
                 road.nextchange = min(i for i in road.schedule if i > t)
             status = []
             nextc = []
-            for road in roads[:3*self.factors["numintersections"]]:
+            for road in roads[: 3 * self.factors["numintersections"]]:
                 light_status = "Green" if road.status else "Red"
                 status.append(light_status)
                 nextc.append(road.nextchange)
 
         cars: list[Car] = []
         lambda_sum = sum(self.factors["lambdas"])
-
 
         def gen_car(t: float) -> float:
             """Generates list of all car objects as they are created.
@@ -1236,7 +1305,9 @@ class TrafficLight(Model):
             # Set arrival time of next car
             initialarrival = t + arrival_rng.expovariate(lambda_sum)
             # Determine arrival location of next car
-            start = start_rng.choices(population=range(self.factors["nodes"]), weights=start_prob)[0]
+            start = start_rng.choices(
+                population=range(self.factors["nodes"]), weights=start_prob
+            )[0]
             visits = generate_path(start)
             while visits is None or len(visits) == 1:
                 visits = generate_path(start)
@@ -1339,7 +1410,7 @@ class TrafficLight(Model):
                 currentcar = cars[car_sim_index - 1]
                 initroad = currentcar.path[currentcar.locationindex]
                 find_place_in_queue(currentcar, initroad, t)
-            
+
             # The next event is a light changing
             elif next_event_time == next_light_time:
                 t = next_light_time
@@ -1473,7 +1544,6 @@ class TrafficLight(Model):
                 next_sec_arrival = min_sec_arrival
                 next_start = min_start
 
-            
             # sumwait = 0
             # finishedcars = 0
             carindex = min_car_index
@@ -1485,14 +1555,12 @@ class TrafficLight(Model):
                         f"{t}, Car {car.identify}, Finish, "
                         f"Pos {car.visits[car.locationindex]}, "
                         f"Road {car.path[car.locationindex].roadid}"
-
-
                     )
                     car.finished = True
                     car.finishtime = t - car.initialarrival
                     finishedcars += 1
                     sumwait += car.timewaiting
-                    
+
                 carindex += 1
             # Only update waiting stats if there are cars that have finished
             # Otherwise, we'll divide by zero
@@ -1506,7 +1574,7 @@ class TrafficLight(Model):
 
             # record queue length of each road and update overflow status
             overflow_total[t] = 0
-            for roadid in range(3*self.factors["numintersections"]):
+            for roadid in range(3 * self.factors["numintersections"]):
                 # num of cars in queue
                 cars_in_queue = sum([x != 0 for x in roads[roadid].queue])
                 # queue length =
@@ -1529,7 +1597,7 @@ class TrafficLight(Model):
             #   1. cars in incoming roads cannot get in
             #   2. calculated oveflow len
             current_overflow_len = []
-            for roadid in range(3*self.factors["numintersections"]):
+            for roadid in range(3 * self.factors["numintersections"]):
                 if roads[roadid].overflow and len(roads[roadid].incoming_roads) > 0:
                     # calculate oeverflow queue lenth
                     overflow_queue = [
@@ -1560,37 +1628,34 @@ class TrafficLight(Model):
                 )
             else:
                 overflow_len_total[t] = 0
-        
+
         total_waiting = 0
         for car in cars:
-            if car.finished == True:
+            if car.finished:
                 total_waiting += car.timewaiting
             else:
-                if car.moving == False:
+                if not car.moving:
                     car.timewaiting = t - car.prevstop
                 total_waiting += car.timewaiting
-        
-        avg_wait_over_time[t] = total_waiting / len(cars) 
-        
-        system_time = 0 
+
+        avg_wait_over_time[t] = total_waiting / len(cars)
+
+        system_time = 0
         for car in cars:
-            if car.finished == True:
+            if car.finished:
                 system_time += car.finishtime
             else:
-                if car.moving == False:
+                if not car.moving:
                     car.finishtime = t - car.initialarrival
                 system_time += car.finishtime
-        
+
         avg_system_time = system_time / len(cars)
-       
-        
-        
 
         # compute ave queue length for each road
         avg_queue_length = 0
         overflow_percentage = []
         overflow_avg_len = []
-        for roadid in range(3*self.factors["numintersections"]):
+        for roadid in range(3 * self.factors["numintersections"]):
             # use dictionary to get list of t and queue_len
             # (t - t-1)*queue_len/max(t)
             queue_len = list(roads[roadid].queue_hist.values())
@@ -1643,10 +1708,9 @@ class TrafficLight(Model):
             overflow_avg_len_system = overflow_system_len / overflow_system_duration
 
         # average queue
-        avg_queue_length = avg_queue_length / 3* self.factors["numintersections"]
-        
-        avg_total = total_waiting / (len(cars) if cars else 0)
+        avg_queue_length = avg_queue_length / 3 * self.factors["numintersections"]
 
+        avg_total = total_waiting / (len(cars) if cars else 0)
 
         # Compose responses and gradients.
         responses = {
