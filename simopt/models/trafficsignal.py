@@ -1,5 +1,6 @@
 """Simulate a single day of traffic for queuing problem."""
 
+import heapq
 import itertools
 import logging
 import math
@@ -696,28 +697,29 @@ class TrafficLight(Model):
         min_prim_arrival = 0
 
         def start_prob(n_vein: int, n_artery: int, lambdas: list[float]) -> list[float]:
+            """Generates the starting probabilities for each road.
+
+            Order of probabilities follows the clockwise traversal of the system.
+            """
             start_prob: list[float] = []
-            i = 0
-            while i < n_artery:
+            # North
+            for _ in range(n_artery):
                 start_prob.append((lambdas[0] / sum(lambdas)) / n_artery)
-                i += 1
-            while i < 2 * n_artery:
-                start_prob.append(lambdas[1] / sum(lambdas) / n_artery)
-                i += 1
-            j = 0
-            while j < n_vein:
-                if j % 2 == 0:
+            # East
+            for i in range(n_vein):
+                if i % 2 == 0:  # Can't start at exit nodes
                     start_prob.append(0)
                 else:
-                    start_prob.append(lambdas[2] / sum(lambdas))
-                j += 1
-            k = 0
-            while k < n_vein:
-                if k % 2 == 0:
-                    start_prob.append(lambdas[3] / sum(lambdas))
-                else:
+                    start_prob.append((lambdas[2] / sum(lambdas)) / n_vein)
+            # South
+            for _ in range(n_artery):
+                start_prob.append((lambdas[1] / sum(lambdas)) / n_artery)
+            # West
+            for i in range(n_vein):
+                if i % 2 == 0:  # Can't start at exit nodes
                     start_prob.append(0)
-                k += 1
+                else:
+                    start_prob.append((lambdas[3] / sum(lambdas)) / n_vein)
             return start_prob
 
         start_prob = start_prob(
@@ -783,9 +785,9 @@ class TrafficLight(Model):
         def transition_matrix(
             n_vein: int, n_artery: int, transition_probs: list[list[float]]
         ) -> list[list[float]]:
+            perimeter = 2 * (n_vein + n_artery)
             transition_matrix = [
-                [0 for _ in range((2 * n_artery) + (2 * n_vein))]
-                for _ in range((2 * n_artery) + (2 * n_vein))
+                [0 for _ in range(perimeter)] for _ in range(perimeter)
             ]
 
             transition_probs_sum = []
@@ -798,7 +800,7 @@ class TrafficLight(Model):
             ) * transition_probs[0][1]
             # West:
             count_west = 0
-            for i in range((2 * n_artery) + n_vein, (2 * n_artery) + (2 * n_vein)):
+            for i in range((2 * n_artery) + n_vein, perimeter):
                 if i % 2 == 0:
                     count_west += 1
                     transition_matrix[0][i] = (
@@ -822,7 +824,7 @@ class TrafficLight(Model):
                         (1 / transition_probs_sum[0]) * transition_probs[0][1]
                     ) / (n_artery - 1)
                 # W:
-                for i in range((2 * n_artery) + n_vein, (2 * n_artery) + (2 * n_vein)):
+                for i in range((2 * n_artery) + n_vein, perimeter):
                     if i % 2 == 0:
                         transition_matrix[j][i] = (
                             (1 / transition_probs_sum[0]) * transition_probs[0][3]
@@ -857,14 +859,14 @@ class TrafficLight(Model):
                         ) / count_east
 
                 # W:
-                for i in range((2 * n_artery) + n_vein, (2 * n_artery) + (2 * n_vein)):
+                for i in range((2 * n_artery) + n_vein, perimeter):
                     if i % 2 == 0:
                         transition_matrix[j][i] = (
                             (1 / transition_probs_sum[1]) * transition_probs[1][3]
                         ) / count_west
 
             # EAST
-            for j in range(n_artery + 1, (n_artery + n_vein)):
+            for j in range(n_artery + 1, n_artery + n_vein):
                 if j % 2 != 0:
                     # N:
                     for i in range(0, n_artery):
@@ -873,22 +875,20 @@ class TrafficLight(Model):
                         ) / n_artery
 
                     # S:
-                    for i in range((n_artery + n_vein), ((2 * n_artery) + n_vein - 1)):
+                    for i in range(n_artery + n_vein, (2 * n_artery) + n_vein - 1):
                         transition_matrix[j][i] = (
                             (1 / transition_probs_sum[2]) * transition_probs[2][1]
                         ) / (n_artery - 1)
 
                     # W:
-                    for i in range(
-                        ((2 * n_artery) + n_vein), ((2 * n_vein) + (2 * n_artery))
-                    ):
+                    for i in range((2 * n_artery) + n_vein, perimeter):
                         if i % 2 == 0:
                             transition_matrix[j][i] = (
                                 (1 / transition_probs_sum[2]) * transition_probs[2][3]
                             ) / count_west
 
             # WEST
-            for j in range((2 * n_artery) + n_vein, (2 * n_artery) + (2 * n_vein)):
+            for j in range((2 * n_artery) + n_vein, perimeter):
                 if j % 2 != 0:
                     # N:
                     for i in range(0, n_artery - 1):
@@ -910,12 +910,10 @@ class TrafficLight(Model):
                         ) / n_artery
             return transition_matrix
 
-        transition_matrix = np.array(
-            transition_matrix(
-                self.factors["n_veins"],
-                self.factors["n_arteries"],
-                self.factors["transition_probs"],
-            )
+        transition_matrix = transition_matrix(
+            self.factors["n_veins"],
+            self.factors["n_arteries"],
+            self.factors["transition_probs"],
         )
 
         # Draw out map of all locations in system
@@ -1017,7 +1015,29 @@ class TrafficLight(Model):
 
         # Lists each location in the system
         points = list(graph.keys())
-        # Lists each location in the system
+        # Reverse the indexing of S and W points to match the transition matrix
+        pairs_to_swap = []
+        # Generate S pairs to swap
+        s_start = (
+            self.factors["numintersections"]
+            + self.factors["n_arteries"]
+            + self.factors["n_veins"]
+        )
+        s_end = s_start + self.factors["n_arteries"] - 1
+        for i in range(self.factors["n_arteries"] // 2):
+            pairs_to_swap.append((s_start + i, s_end - i))
+        # Generate W pairs to swap
+        w_start = (
+            self.factors["numintersections"]
+            + 2 * self.factors["n_arteries"]
+            + self.factors["n_veins"]
+        )
+        w_end = w_start + self.factors["n_veins"] - 1
+        for i in range(self.factors["n_veins"] // 2):
+            pairs_to_swap.append((w_start + i, w_end - i))
+        # Perform the swaps
+        for i, j in pairs_to_swap:
+            points[i], points[j] = points[j], points[i]
 
         def find_shortest_path(
             graph: dict[str, list[str]],
@@ -1041,32 +1061,55 @@ class TrafficLight(Model):
                 list[str] | None: list of locations that represent the shortest path
                     from start to finish. None if no path exists.
             """
-            if path is None:
-                path = []
-            path = [*path, start]
-            # Path starts and ends at the same point
-            if start == end:
-                return path
+            # Priority queue stores (distance, path_list)
+            pq = [(0, [start])]
 
-            shortest = None
-            for node in graph[start]:
-                # if node not in path:
-                if sum(x == node for x in path) < 2:
-                    if len(path) >= 2:  # no left turn
-                        direction1 = find_direction(path[-2], path[-1], roadmap)
-                        direction2 = find_direction(path[-1], node, roadmap)
+            # Dictionary to store the shortest distance found to each node
+            distances = {start: 0}
+
+            while pq:
+                # Get the path with the smallest distance
+                distance, path = heapq.heappop(pq)
+                current_node = path[-1]
+
+                # If the current path is already longer than a known path, skip it
+                if distance > distances.get(current_node, float("inf")):
+                    continue
+
+                # If we have reached the end node, we've found the shortest path
+                if current_node == end:
+                    return path
+
+                # Explore all connected nodes
+                for neighbor in graph[current_node]:
+                    # The cost of each step is 1 since this is an unweighted graph
+                    cost = 1
+                    new_distance = distance + cost
+
+                    # Check for "no left turn" constraint
+                    is_valid_turn = True
+                    if len(path) >= 2:
+                        # Get the previous node to determine the turn
+                        previous_node = path[-2]
+                        direction1 = find_direction(
+                            previous_node, current_node, roadmap
+                        )
+                        direction2 = find_direction(current_node, neighbor, roadmap)
                         turn = find_turn(direction1 + direction2)
-                        if turn in ["Right", "Straight"]:
-                            newpath = find_shortest_path(graph, node, end, path)
-                            if newpath and (
-                                not shortest or len(newpath) < len(shortest)
-                            ):
-                                shortest = newpath
-                    else:
-                        newpath = find_shortest_path(graph, node, end, path)
-                        if newpath and (not shortest or len(newpath) < len(shortest)):
-                            shortest = newpath
-            return shortest
+
+                        if turn in ["Left", "Uturn"]:
+                            is_valid_turn = False
+
+                    # If the turn is valid and a new shorter path is found
+                    if is_valid_turn and new_distance < distances.get(
+                        neighbor, float("inf")
+                    ):
+                        distances[neighbor] = new_distance
+                        new_path = [*path, neighbor]
+                        heapq.heappush(pq, (new_distance, new_path))
+
+            # If the loop completes without finding the end node, no valid path exists
+            return None
 
         def generate_path(start: int) -> list[str]:
             """Generates shortest path through two random start and end locations.
@@ -1083,11 +1126,9 @@ class TrafficLight(Model):
                     population=range(self.factors["nodes"]),
                     weights=transition_matrix[start],
                 )[0]
-                path = find_shortest_path(
-                    graph,
-                    points[start + self.factors["numintersections"]],
-                    points[end + self.factors["numintersections"]],
-                )
+                start_str = points[start + self.factors["numintersections"]]
+                end_str = points[end + self.factors["numintersections"]]
+                path = find_shortest_path(graph, start_str, end_str)
             return path
 
         def find_direction(start: str, end: str, roadmap: list[list[str]]) -> str:
