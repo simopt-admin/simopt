@@ -1101,21 +1101,22 @@ class TrafficLight(Model):
             Returns:
                 str: direction of the road
             """
-            yloc1, xloc1 = next(
-                (i, row.index(start)) for i, row in enumerate(roadmap) if start in row
-            )
-            yloc2, xloc2 = next(
-                (i, row.index(end)) for i, row in enumerate(roadmap) if end in row
-            )
+            coords = {
+                location: (r_idx, c_idx)
+                for r_idx, row in enumerate(roadmap)
+                for c_idx, location in enumerate(row)
+            }
+
+            yloc1, xloc1 = coords.get(start)
+            yloc2, xloc2 = coords.get(end)
+
             if xloc1 > xloc2:
-                direction = "West"
-            elif xloc1 < xloc2:
-                direction = "East"
-            elif yloc1 > yloc2:
-                direction = "North"
-            else:
-                direction = "South"
-            return direction
+                return "West"
+            if xloc1 < xloc2:
+                return "East"
+            if yloc1 > yloc2:
+                return "North"
+            return "South"
 
         def find_turn(roadcombo: str) -> str:
             """Assigns the direction of a turn when given two roads.
@@ -1132,12 +1133,11 @@ class TrafficLight(Model):
                 "Right": ["NorthEast", "WestNorth", "SouthWest", "EastSouth"],
                 "Uturn": ["NorthSouth", "SouthNorth", "EastWest", "WestEast"],
             }
-            turn = ""
-            for key, values in turnkey.items():
-                for value in values:
-                    if roadcombo == value:
-                        turn = key
-            return turn
+            reverse_key = {
+                combo: turn for turn, combos in turnkey.items() for combo in combos
+            }
+
+            return reverse_key.get(roadcombo, "Invalid")
 
         road_pair = []
         for key, values in graph.items():
