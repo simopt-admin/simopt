@@ -36,9 +36,10 @@ Contents
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Reference
+   :caption: Developer's Guide
 
-   autoapi/simopt/index
+   Environment Setup <development/environment_setup>
+   API Reference <autoapi/simopt/index>
 
 .. toctree::
    :maxdepth: 1
