@@ -1,8 +1,8 @@
 Environment Setup
------------------
+=================
 
 Required Tools
-^^^^^^^^^^^^^^
+--------------
 
 - `Miniconda (recommended) or Anaconda <https://www.anaconda.com/download>`__
 
@@ -20,7 +20,7 @@ Required Tools
     - It is recommended to use VS Code for development due to its integrated terminal, debugging capabilities, and support for Python development.
 
 Installation Steps
-^^^^^^^^^^^^^^^^^^
+------------------
 
 1. **Install Miniconda or Anaconda**
 
