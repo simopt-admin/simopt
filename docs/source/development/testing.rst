@@ -55,7 +55,7 @@ Executing the tests can be done in several ways:
     
 2. **Using Visual Studio Code**:
 
-Since VS Code's testing interface automatically discovers tests via the `unittest` framework, you can run the tests directly from the VS Code interface.
+   Since VS Code's testing interface automatically discovers tests via the `unittest` framework, you can run the tests directly from the VS Code interface.
 
     - Open the SimOpt repository in VS Code.
     - Ensure that the SimOpt conda environment is selected as the interpreter.
