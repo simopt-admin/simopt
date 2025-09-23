@@ -3412,7 +3412,7 @@ def setup_plot(
             - QUANTILE_SOLVABILITY: Quantile solvability profile.
             - DIFFERENCE_OF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
             - DIFFERENCE_OF_QUANTILE_SOLVABILITY: Difference of quantile solvability
-                profiles.
+            profiles.
             - AREA: Area scatterplot.
             - BOX: Box plot of terminal progress.
             - VIOLIN: Violin plot of terminal progress.
@@ -3580,7 +3580,7 @@ def save_plot(
             - QUANTILE_SOLVABILITY: Quantile solvability profile.
             - DIFFERENCE_OF_CDF_SOLVABILITY: Difference of CDF solvability profiles.
             - DIFFERENCE_OF_QUANTILE_SOLVABILITY: Difference of quantile solvability
-                profiles.
+            profiles.
             - AREA: Area scatterplot.
             - TERMINAL_SCATTER: Scatterplot of mean and std dev of terminal progress.
         normalize (bool): Whether to normalize with respect to optimality gaps.
