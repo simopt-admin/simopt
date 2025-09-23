@@ -35,10 +35,12 @@ Contents
    solvers
 
 .. toctree::
-   :maxdepth: 2
-   :caption: API Reference
+   :maxdepth: 1
+   :caption: Developer's Guide
 
-   autoapi/simopt/index
+   Environment Setup <development/environment_setup>
+   Testing Guide <development/testing>
+   API Reference <autoapi/simopt/index>
 
 .. toctree::
    :maxdepth: 1
