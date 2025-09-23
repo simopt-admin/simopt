@@ -50,7 +50,7 @@ Executing the tests can be done in several ways:
         - MacOS/Linux: ``source activate simopt`` or ``conda activate simopt``
 
     - Run the tests using the following command: ``python -m unittest discover -s test -p "test_*.py"``
-        
+
         - This command will discover and run all test files in the `test` directory that match the pattern `test_*.py`.
     
 2. **Using Visual Studio Code**:
@@ -65,4 +65,23 @@ Since VS Code's testing interface automatically discovers tests via the `unittes
 Generating Expected Results
 ---------------------------
 
-Coming Soon
+The `generate_experiment_results.py` script in the `scripts` directory is used to generate the expected results for the tests.
+It automatically checks for any missing `.yaml` files in the `expected_results` directory and generates them by running the corresponding experiments, skipping any experiments that are not compatible.
+
+To run the script, use the following command:
+``python scripts/generate_experiment_results.py``
+
+Dealing with Test Failures
+--------------------------
+
+If a test fails, it indicates that the output of the experiment does not match the expected results.
+While this could be due to a bug in the code, it could also be due to legitimate changes/improvements in the code that change the end results.
+
+To determine the cause of the failure, you should:
+
+    1. Review the changes you made to the code to see if they could have affected the results.
+    2. If you don't believe the changes should have affected the results, roll back SimOpt to the last known good state (e.g., the last commit where all tests passed) and re-run the tests.
+       If the tests do not pass, it is likely that a dependencies update or other external factor has caused the failure.
+       If the tests do pass, you can incrementally re-apply your changes until you identify the specific change that caused the failure.
+    3. If you believe the changes you made should have affected the results, or if you have determined that the failure is due to a dependencies update or other external factor, you can update the expected results by deleting the relevant `.yaml` files in the `expected_results` directory and re-running the `generate_experiment_results.py` script.
+       Please ensure that you carefully review the changes in the expected results to confirm that they are indeed correct and expected.
