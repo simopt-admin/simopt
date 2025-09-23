@@ -47,7 +47,7 @@ Executing the tests can be done in several ways:
 
         - Windows (cmd): ``conda activate simopt``
         - Windows (PowerShell): ``conda activate simopt``
-        - MacOS/Linux: ``source activate simopt`` or ``conda activate simopt``
+        - MacOS/Linux: ``conda activate simopt``
 
     - Run the tests using the following command: ``python -m unittest discover -s test -p "test_*.py"``
 
