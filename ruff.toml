@@ -1,6 +1,6 @@
 # ruff.toml
 line-length = 88
-exclude = ["simopt/gui/*"]
+exclude = ["simopt/gui/*", "notebooks/*"]
 
 [lint]
 select = [
