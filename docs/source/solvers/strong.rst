@@ -22,11 +22,10 @@ Then, the solver either shrinks trust region size, or moves the center point whi
 trust region size stays constant, or moves the center point while the trust region enlarges.
 
 Helper functions:
-There are 3 helper functions in addition to the main algorithm:
+There are several helper functions in addition to the main algorithm:
 
 * **cauchy_point** finds the Cauchy Point by using the gradient and Hessian matrix to find the steepest descent direction.
 * **check_cons** checks the feasibility of the Cauchy point and updates the point accordingly.
-* **finite_diff** uses finite difference to estimate gradients and BFGS to estimate the Hessian matrix.
 
 Scope
 -----
