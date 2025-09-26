@@ -127,6 +127,13 @@ The symbolic node weight matrix is shown below:
 These values act as **weights** rather than strict probabilities, and are normalized during destination selection to ensure proper routing behavior.
 
 
+For example, if a car enters from north and we want to calculate the probability of it going east, first we divide the number from the north column and east row of the node transition weight matrix, which in this example is 1, by the sum of all the values in the north row, which in this case is (2+1+1=4), resulting in a probability of 0.25 or 25%.
+Then, we devide this number by the total of exit roads in the east direction, which when having 2 vein roads, is 1.
+Then we assing the value of 25% to the cell in the N2 row and E1 column. 
+Since no left turn is allowed in this model, if you arive on the node N1, you cannot exit on the East direction. This is already accounted for during the calculation of the probability matrix. 
+The model also accounts for the nodes in which you cannot exit such as E2 and W1.
+
+
 For example, given the default values in the transition weight matrix, the resulting probability matrix is:
 
 .. table:: Probability Matrix (Populated from ``transition_probs``)
@@ -152,6 +159,7 @@ For example, given the default values in the transition weight matrix, the resul
    | W1         | 40%  | X   | 20% | X   | 20% | 20% | X   | X   |
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
 
+
 Each vehicle finds the shortest available path to its destination using the current road network. The traffic system opens at 8:00 AM and closes at 10:00 AM. Time is measured in seconds. When the system closes, any remaining cars in the queue exit immediately.
 
 Sources of Randomness
@@ -172,7 +180,7 @@ Model Factors
     * Default: 7200
 * numintersections: The number of intersections in the traffic model.
     * Default: 4
-* decision_vector: Delay, in seconds, in light schedule based on distance from first intersection.
+* decision_vector: Delay, in seconds, in light schedule based on distance from first intersection. The lenght of the list has to be 1 less than the number of intersections in the system.
     * Default: [1, 2, 3]
 * speed: Constant speed in meter/second for the cars.
     * Default: 5
