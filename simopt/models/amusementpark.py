@@ -488,6 +488,25 @@ class AmusementPark(Model):
         return responses, {}
 
 
+def _patch() -> None:
+    import os
+
+    if os.getenv("SIMOPT_EXT") != "1":
+        return
+
+    try:
+        from simopt_extensions.amusement_park import replicate
+    except ImportError as e:
+        raise ImportError(
+            "SIMOPT_EXT=1 is set but simopt_extensions not installed"
+        ) from e
+
+    AmusementPark.replicate = replicate
+
+
+_patch()
+
+
 class AmusementParkMinDepart(Problem):
     """Class to make amusement park simulation-optimization problems."""
 

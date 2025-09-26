@@ -11,6 +11,9 @@ exclude = ["build*"]
 [tool.setuptools.package-data]
 "simopt.data_farming" = ["*.npz"]
 
+[tool.uv.sources]
+simopt-extensions = { git = "https://github.com/cenwangumass/simopt-extensions", rev = "b830a95" }
+
 [project]
 name = "simoptlib"
 version = "1.2.2.dev0"
@@ -53,6 +56,9 @@ dev = [
 ]
 docs = ["sphinx>=8.2.3", "sphinx-autoapi>=3.6.1", "sphinx-rtd-theme>=3.0.2"]
 notebooks = ["ipykernel>=7.1.0"]
+ext = [
+    "simopt-extensions",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"
