@@ -6,7 +6,6 @@ import importlib
 import itertools
 import logging
 import pickle
-import subprocess
 import time
 from enum import Enum
 from pathlib import Path
@@ -18,6 +17,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 import simopt.curve_utils as curve_utils
+import simopt.data_farming_port.nolhs as nolhs
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
@@ -4569,113 +4569,6 @@ def make_full_metaexperiment(
     return ProblemsSolvers(experiments=full_experiments)
 
 
-def lookup_datafarming_gem(design_type: str) -> str:
-    """Check if a compatible version of the datafarming Ruby gem is installed.
-
-    Args:
-        design_type (str): The type of design to check for.
-
-    Returns:
-        str: The name of the datafarming script to use.
-    """
-    # Local imports
-    import platform
-
-    # Dictionary of all the valid design types and their corresponding scripts
-    # Windows needs .bat file equivalents to any scripts being run
-    if platform.system() == "Windows":
-        datafarming_stack = {"nolhs": "stack_nolhs.rb.bat"}
-    else:
-        datafarming_stack = {"nolhs": "stack_nolhs.rb"}
-
-    # Error if design type is not valid
-    if design_type not in datafarming_stack:
-        error_msg = "Invalid design type."
-        raise Exception(error_msg)
-
-    # Check the design type
-    datafarming_file = datafarming_stack[design_type]
-    command = f"{datafarming_file} --help"
-    results = subprocess.run(
-        command,
-        shell=True,
-        capture_output=True,
-    )
-    # If the return code is 0, then the command was successful
-    if results.returncode == 0:
-        return datafarming_file
-
-    # The command was not successful, so check to see if the gem is installed
-    # Check to see if the datafarming gem is installed
-    command = "gem list"
-    results = subprocess.run(
-        command,
-        shell=True,
-        capture_output=True,
-    )
-    # If the return code is not 0, then the command was not successful
-    # Let's figure out what error we're throwing
-    # If the datafarming gem is not present, then tell the user
-    # that they need to install it
-    if "datafarming" not in results.stdout.decode("utf-8"):
-        error_msg = [
-            "Datafarming gem is not installed. Please install it by running:",
-            "gem install datafarming -v 1.4"
-            "Alternatively, you can run the setup_simopt script for your platform",
-        ]
-        error_msg = "\n".join(error_msg)
-        raise Exception(error_msg)
-    installed_gems = results.stdout.decode("utf-8").split("\n")
-    # If the datafarming gem is present, then check to see if the version is correct
-    # Strip away all the information except for version(s)
-    datafarming_gem_installs = [
-        gem.split(" ")[1] for gem in installed_gems if gem.startswith("datafarming ")
-    ]
-    # Local import
-    import re
-
-    # Strip away anything that isn't a period or a number
-    datafarming_versions = [
-        re.sub(r"[^0-9.]", "", version) for version in datafarming_gem_installs
-    ]
-    # Check for valid versions (min <= version < max)
-    min_version = "1.0.0"
-    max_version = "2.0.0"
-    version_check_results = [
-        min_version <= version < max_version for version in datafarming_versions
-    ]
-    if not any(version_check_results):
-        # Write the correct error message depending on plurality
-        error_msg = []
-        if len(version_check_results) == 1:
-            error_msg.append(
-                "Datafarming gem is installed, but the installed version "
-                f"{datafarming_versions} is not supported."
-            )
-        else:
-            error_msg.append(
-                f"Datafarming gem is installed, but the installed versions "
-                f"{datafarming_versions} are not supported."
-            )
-        error_msg.append(f"Please install version {min_version} <= x < {max_version}.")
-        error_msg.append(
-            "This can be done by running: `gem install datafarming -v 1.4' "
-            "or by running the setup_simopt script for your platform."
-        )
-        error_msg = " ".join(error_msg)
-        raise Exception(error_msg)
-    # We get here if the gem is installed and the version is correct, but
-    # we still can't run the stack script. This is likely due to the gem
-    # not being in the system path. We'll let the user know that they need
-    # to restart their terminal/IDE.
-    error_msg = (
-        "Ruby was able to detect the datafarming gem, but was unable to run the "
-        "stack script. If you just installed the datafarming gem, it may be necessary "
-        "to restart your terminal/IDE to refresh the system path."
-    )
-    raise Exception(error_msg)
-
-
 def create_design_list_from_table(design_table: DataFrame) -> list:
     """Create a list of solver or problem objects for each design point.
 
@@ -4776,26 +4669,22 @@ def create_design(
 
     source_file = df_dir / f"{factor_settings_filename}.txt"
     design_file = df_dir / f"{factor_settings_filename}_design.txt"
+
+    design_table = nolhs.import_design_table_from_file(source_file)
+    design_size = len(design_table)
+    nolhs_key = nolhs.determine_table_key(design_size)
+    factors = []
+    for min_val, max_val, decimals in design_table:
+        scaler = nolhs.Scaler(min_val, max_val, decimals, nolhs_key)
+        factors.append(scaler)
+
     # If the dest file already exists, delete it
-    # TODO: investigate if this may cause issues with multiple concurrent designs
     if design_file.exists():
         design_file.unlink()
+    nolhs.save_output(nolhs_key, n_stacks, design_size, factors, design_file)
 
     # Only run the Ruby script if there are factors to change
     if len(factor_headers) > 0:
-        # Check if the datafarming gem is installed
-        command_file: str = lookup_datafarming_gem(design_type)
-
-        # Create solver factor design from .txt file of factor settings.
-        command = f'{command_file} -s {n_stacks} "{source_file}" > "{design_file}"'
-        completed_process = subprocess.run(command, capture_output=True, shell=True)
-        # If the design file doesn't exist, there was an error in the Ruby script.
-        if not design_file.exists():
-            error_msg = completed_process.stderr.decode("utf-8")
-            raise Exception(
-                f"Ruby script did not complete successfully.\nError:\n{error_msg}"
-            )
-
         # Read in design matrix from .txt file. Result is a pandas DataFrame.
         try:
             design_table = pd.read_csv(
