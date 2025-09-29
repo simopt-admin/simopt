@@ -57,8 +57,7 @@ class NetworkConfig(BaseModel):
         Field(
             default_factory=lambda: [x + 1 for x in range(NUM_NETWORKS)],
             description=(
-                "mode time of transit for network i following a triangular "
-                "distribution"
+                "mode time of transit for network i following a triangular distribution"
             ),
         ),
     ]

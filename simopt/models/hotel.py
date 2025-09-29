@@ -162,8 +162,7 @@ class HotelConfig(BaseModel):
         Field(
             default=168,
             description=(
-                "hours before t=0 to start running "
-                "(e.g. 168 means start at time -168)"
+                "hours before t=0 to start running (e.g. 168 means start at time -168)"
             ),
             gt=0,
         ),
