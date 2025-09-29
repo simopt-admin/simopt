@@ -90,8 +90,7 @@ class ContaminationConfig(BaseModel):
         Field(
             default=30.0,
             description=(
-                "beta parameter of beta distribution for initial contamination "
-                "fraction"
+                "beta parameter of beta distribution for initial contamination fraction"
             ),
             gt=0,
         ),

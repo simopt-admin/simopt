@@ -70,7 +70,7 @@ class MM1QueueConfig(BaseModel):
         Field(
             default=50,
             description=(
-                "number of people from which to calculate the average " "sojourn time"
+                "number of people from which to calculate the average sojourn time"
             ),
             ge=1,
         ),
