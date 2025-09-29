@@ -17,7 +17,6 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 import simopt.curve_utils as curve_utils
-import simopt.data_farming_port.nolhs as nolhs
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
@@ -25,6 +24,7 @@ from simopt.curve import (
     Curve,
     CurveType,
 )
+from simopt.data_farming_port.nolhs import NOLHS
 from simopt.utils import make_nonzero, resolve_file_path
 
 # Workaround for AutoAPI
@@ -4670,18 +4670,9 @@ def create_design(
     source_file = df_dir / f"{factor_settings_filename}.txt"
     design_file = df_dir / f"{factor_settings_filename}_design.txt"
 
-    design_table = nolhs.import_design_table_from_file(source_file)
-    design_size = len(design_table)
-    nolhs_key = nolhs.determine_table_key(design_size)
-    factors = []
-    for min_val, max_val, decimals in design_table:
-        scaler = nolhs.Scaler(min_val, max_val, decimals, nolhs_key)
-        factors.append(scaler)
-
-    # If the dest file already exists, delete it
-    if design_file.exists():
-        design_file.unlink()
-    nolhs.save_output(nolhs_key, n_stacks, design_size, factors, design_file)
+    design = NOLHS()
+    design.import_design_table_from_file(source_file)
+    design.save_output(design_file)
 
     # Only run the Ruby script if there are factors to change
     if len(factor_headers) > 0:
