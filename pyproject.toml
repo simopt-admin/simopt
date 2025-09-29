@@ -17,23 +17,23 @@ authors = [
 description = "A testbed for simulation-optimization experiments."
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.9,<3.14"
+requires-python = ">=3.11,<3.14"
 classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
 ]
 dependencies = [
-    "numpy",
-    "scipy",
-    "matplotlib",
-    "pandas",
-    "seaborn",
-    "mrg32k3a",
-    "joblib>=1.5.1",
-    "pydantic>=2.11.7",
-    "click>=8.1.8",
-    "boltons>=25.0.0",
+  "numpy",
+  "scipy",
+  "matplotlib",
+  "pandas",
+  "seaborn",
+  "mrg32k3a",
+  "joblib>=1.5.1",
+  "pydantic>=2.11.7",
+  "click>=8.1.8",
+  "boltons>=25.0.0",
 ]
 
 [project.optional-dependencies]
