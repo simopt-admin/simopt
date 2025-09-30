@@ -1,5 +1,6 @@
 """Module for generating Nearly Orthogonal Latin Hypercube Samples (NOLHS)."""
 
+import bisect
 import re
 from pathlib import Path
 
@@ -101,8 +102,12 @@ class Scaler:
         self.precision = precision
         self._cached_scale = False
 
-    def scale_value(self, value: float) -> float:
-        """Scale a value from the original range to the scaled range."""
+    def scale_value(self, value: float) -> int | float:
+        """Scale a value from the original range to the scaled range.
+
+        Returns an int if the value has no decimal component after rounding,
+        otherwise returns a float.
+        """
         if not (self.original_min <= value <= self.original_max):
             raise ValueError(
                 f"Value {value} is out of bounds "
@@ -213,17 +218,27 @@ class NOLHS:
 
         Returns:
             int: The key to use for the design table.
+
+        Raises:
+            ValueError: If num_vars is not between 1 and 100.
         """
-        if 1 <= num_vars <= 7:
-            return 17
-        if 8 <= num_vars <= 11:
-            return 33
-        if 12 <= num_vars <= 16:
-            return 65
-        if 17 <= num_vars <= 22:
-            return 129
-        if 23 <= num_vars <= 29:
-            return 257
-        if 30 <= num_vars <= 100:
-            return 512
-        raise ValueError("Number of variables must be between 1 and 100.")
+        if not (1 <= num_vars <= 100):
+            raise ValueError("Number of variables must be between 1 and 100.")
+
+        # Keys are the minimum of each range, values are the return keys
+        ranges = {
+            1: 17,
+            8: 33,
+            12: 65,
+            17: 129,
+            23: 257,
+            30: 512,
+        }
+
+        # Get a sorted list of the keys (the range minimums)
+        min_vars = sorted(ranges.keys())
+
+        # Use bisect to find the correct range
+        # It finds the insertion point for num_vars in the sorted list
+        idx = bisect.bisect_right(min_vars, num_vars) - 1
+        return ranges[min_vars[idx]]
