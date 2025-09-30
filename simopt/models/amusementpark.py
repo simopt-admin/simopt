@@ -335,7 +335,7 @@ class AmusementPark(Model):
                 min_completion_index = completion_times.index(min_completion_time)
 
         # Keep local copies of factors to prevent excessive lookups
-        num_attactions: int = self.factors["number_attractions"]
+        num_attractions: int = self.factors["number_attractions"]
         arrival_gammas: list[int] = self.factors["arrival_gammas"]
         time_open: float = self.factors["time_open"]
         erlang_shape: list[int] = self.factors["erlang_shape"]
@@ -347,19 +347,19 @@ class AmusementPark(Model):
         depart_probabilities: list[float] = self.factors["depart_probabilities"]
 
         # initialize list of attractions to be selected upon arrival.
-        attraction_range = range(num_attactions)
-        destination_range = range(num_attactions + 1)
+        attraction_range = range(num_attractions)
+        destination_range = range(num_attractions + 1)
         depart_idx = destination_range[-1]
         # initialize lists of each attraction's next completion time
-        completion_times: list[float] = [INF] * num_attactions
+        completion_times: list[float] = [INF] * num_attractions
         min_completion_time = INF
         min_completion_index = -1
         # initialize actual queues.
-        queues: list[int] = [0] * num_attactions
+        queues: list[int] = [0] * num_attractions
 
         # create external arrival probabilities for each attraction.
         arrival_prob_sum: float = float(sum(arrival_gammas))
-        arrival_probabalities: list[float] = [
+        arrival_probabilities: list[float] = [
             arrival_gammas[i] / arrival_prob_sum for i in attraction_range
         ]
 
@@ -374,7 +374,7 @@ class AmusementPark(Model):
         # initialize time average and utilization quantities.
         in_system: int = 0
         time_average: float = 0.0
-        cumulative_util: list[float] = [0.0] * num_attactions
+        cumulative_util: list[float] = [0.0] * num_attractions
 
         # Run simulation over time horizon.
         while clock < time_open:
@@ -397,7 +397,7 @@ class AmusementPark(Model):
                     int,
                     self.attraction_model.random(
                         attraction_range,
-                        arrival_probabalities,
+                        arrival_probabilities,
                     ),
                 )
                 # Check if attraction is currently available.
