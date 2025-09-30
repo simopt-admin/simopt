@@ -197,7 +197,9 @@ class ChessMatchmaking(Model):
         elo_diffs = []
 
         # Simulate arrival and matching and players.
-        for interarrival_time, player_rating in zip(interarrival_times, player_ratings):
+        for interarrival_time, player_rating in zip(
+            interarrival_times, player_ratings, strict=False
+        ):
             # Try to match the player
             for i, waiting_rating in enumerate(waiting_players):
                 diff = abs(player_rating - waiting_rating)

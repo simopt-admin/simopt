@@ -133,8 +133,13 @@ class Curve:
         Returns:
             float: Area under the curve.
         """
-        x_diffs = (x_next - x for x, x_next in zip(self.x_vals[:-1], self.x_vals[1:]))
-        area_contributions = (y * dx for y, dx in zip(self.y_vals[:-1], x_diffs))
+        x_diffs = (
+            x_next - x
+            for x, x_next in zip(self.x_vals[:-1], self.x_vals[1:], strict=False)
+        )
+        area_contributions = (
+            y * dx for y, dx in zip(self.y_vals[:-1], x_diffs, strict=False)
+        )
 
         return sum(area_contributions)
 

@@ -470,7 +470,9 @@ class DataFarmingMetaExperiment:
 
             if solver_factor_headers is not None:
                 column_names = zip(
-                    range(len(solver_factor_headers)), solver_factor_headers
+                    range(len(solver_factor_headers)),
+                    solver_factor_headers,
+                    strict=False,
                 )
                 design_table.rename(columns=dict(column_names), inplace=True)
 
@@ -521,7 +523,9 @@ class DataFarmingMetaExperiment:
                 for combination in combinations:
                     # dictionary containing current combination of cross design
                     # factor values
-                    combination_dict = dict(zip(cross_factor_names, combination))
+                    combination_dict = dict(
+                        zip(cross_factor_names, combination, strict=False)
+                    )
                     working_design_table = design_table.copy()
 
                     for factor in combination_dict:

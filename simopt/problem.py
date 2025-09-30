@@ -326,7 +326,9 @@ class Problem(ABC):
         # Check box constraints.
         return all(
             lb <= x_i <= ub
-            for x_i, lb, ub in zip(x, self.lower_bounds, self.upper_bounds)
+            for x_i, lb, ub in zip(
+                x, self.lower_bounds, self.upper_bounds, strict=False
+            )
         )
 
     @abstractmethod

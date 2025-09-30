@@ -170,7 +170,7 @@ class DemandInputModel(InputModel):
 
     def random(self, mu: float, sigma: float) -> int:  # noqa: D102
         def round_and_clamp_non_neg(x: float | int) -> int:
-            return int(round(max(0.0, float(x))))
+            return round(max(0.0, float(x)))
 
         assert self.rng is not None
         return round_and_clamp_non_neg(self.rng.normalvariate(mu, sigma))
@@ -240,7 +240,7 @@ class DualSourcing(Model):
         holding_cost: float = self.factors["holding_cost"]
 
         def round_and_clamp_non_neg(x: float | int) -> int:
-            return int(round(max(0.0, float(x))))
+            return round(max(0.0, float(x)))
 
         # Vectors of regular orders to be received in periods n through n + lr - 1.
         orders_reg: list[int] = [0] * lead_reg
@@ -260,10 +260,8 @@ class DualSourcing(Model):
         for day in n_days_range:
             # Calculate inventory positions.
             inv_order_exp_sum = inv + sum(orders_exp)
-            inv_position_exp = int(
-                round(inv_order_exp_sum + sum(orders_reg[:lead_exp]))
-            )
-            inv_position_reg = int(round(inv_order_exp_sum + sum(orders_reg)))
+            inv_position_exp = round(inv_order_exp_sum + sum(orders_reg[:lead_exp]))
+            inv_position_reg = round(inv_order_exp_sum + sum(orders_reg))
             # Calculate how much to order.
             order_exp: int = round_and_clamp_non_neg(
                 order_level_exp - inv_position_exp - orders_reg[lead_exp]

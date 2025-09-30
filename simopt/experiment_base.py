@@ -4875,7 +4875,7 @@ def create_design(
         new_design_table = pd.DataFrame()  # Temp empty value.
         for combination in combinations:
             # Dictionary containing current combination of cross design factor values.
-            combination_dict = dict(zip(cross_factor_names, combination))
+            combination_dict = dict(zip(cross_factor_names, combination, strict=False))
             working_design_table = design_table.copy()
 
             for factor in combination_dict:
