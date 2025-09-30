@@ -1,4 +1,5 @@
-# noqa: D100
+"""Module for generating Nearly Orthogonal Latin Hypercube Samples (NOLHS)."""
+
 import re
 from pathlib import Path
 
@@ -66,6 +67,7 @@ class Scaler:
 
     @property
     def scale(self) -> float:
+        """The scale factor between the original and scaled ranges."""
         if not self._cached_scale:
             original_range = self.original_max - self.original_min
             scaled_range = self.scaled_max - self.scaled_min
@@ -81,7 +83,7 @@ class Scaler:
         scaled_min: float,
         scaled_max: float,
         precision: int = 0,
-    ):
+    ) -> None:
         """Initialize the Scaler.
 
         Args:
@@ -113,7 +115,10 @@ class Scaler:
 
 
 class NOLHS:
+    """Class to generate Nearly Orthogonal Latin Hypercube Samples (NOLHS)."""
+
     def __init__(self) -> None:
+        """Initialize the NOLHS class."""
         self.designs: list[tuple[float, float, int]] = []
         self.design_size = 0
         self.nolhs_size = 0
@@ -134,10 +139,6 @@ class NOLHS:
         output_file: Path,
     ) -> None:
         """Save the NOLHS design to a file."""
-
-        def rotate(dp: list) -> list:
-            return dp[1:] + dp[:1]
-
         lh_max = self.nolhs_size
         design_size = self.design_size
         factor = self.scalers
@@ -163,8 +164,7 @@ class NOLHS:
                         f.write("\t".join(map(str, scaled_dp)) + "\n")
 
                     # Rotate the data point for the next iteration
-                    design[i] = rotate(dp)
-        pass
+                    design[i] = dp[1:] + dp[:1]
 
     def import_design_table_from_file(
         self,
@@ -206,7 +206,7 @@ class NOLHS:
         ]
 
     def _determine_table_key(self, num_vars: int) -> int:
-        """Determine the key to use for the design table based on the number of variables.
+        """Determine the key to use for the design table based on number of variables.
 
         Args:
             num_vars (int): The number of variables in the optimization problem.
