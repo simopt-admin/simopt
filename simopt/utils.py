@@ -1,8 +1,9 @@
 """Utility functions for simopt."""
 
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 T = TypeVar("T", bound=type)
 R = TypeVar("R")
@@ -19,7 +20,7 @@ class ClassPropertyDescriptor(Generic[T, R]):
         """
         self.fget = fget
 
-    def __get__(self, instance: Optional[object], owner: type[T]) -> R:
+    def __get__(self, instance: object | None, owner: type[T]) -> R:
         """Get the class property.
 
         Args:
@@ -124,11 +125,13 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
     if isinstance(data, dict):
         data = list(data.items())
     # Calculate the maximum length of each column
-    data_widths = [max(len(str(item)) for item in col) for col in zip(*data)]
+    data_widths = [
+        max(len(str(item)) for item in col) for col in zip(*data, strict=False)
+    ]
     header_widths = [len(header) for header in headers]
     max_widths = [
         max(header_width, col_width)
-        for header_width, col_width in zip(header_widths, data_widths)
+        for header_width, col_width in zip(header_widths, data_widths, strict=False)
     ]
 
     # Compute total width of the table
@@ -182,7 +185,7 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
 
     underline_row = dash * (total_width + 2)  # Extend to the tees
     header_row = f" {pipe} ".join(
-        f"{header:<{width}}" for header, width in zip(headers, max_widths)
+        f"{header:<{width}}" for header, width in zip(headers, max_widths, strict=False)
     )
     sep_row = plus.join(dash * width for width in max_widths)
     rows = []
@@ -191,7 +194,7 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
             f"{item!s:>{width}}"
             if isinstance(item, (int, float))
             else f"{item!s:<{width}}"
-            for item, width in zip(row, max_widths)
+            for item, width in zip(row, max_widths, strict=False)
         )
         rows.append(row_str)
 

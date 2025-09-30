@@ -604,8 +604,8 @@ class ASTRODF(Solver):
             coord_vector = self.get_coordinate_vector(num_decision_vars, var_idx)
             coord_diff = delta * coord_vector
 
-            minus: list[float] = [x - d for x, d in zip(x_k, coord_diff)]
-            plus: list[float] = [x + d for x, d in zip(x_k, coord_diff)]
+            minus: list[float] = [x - d for x, d in zip(x_k, coord_diff, strict=False)]
+            plus: list[float] = [x + d for x, d in zip(x_k, coord_diff, strict=False)]
 
             if is_block_constraint:
                 minus = [

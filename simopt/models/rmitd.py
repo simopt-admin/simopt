@@ -248,7 +248,9 @@ class RMITD(Model):
         revenue = 0.0
 
         # Compute revenue for each period.
-        for reservation, demand, price in zip(reservations, list(demand_vec), prices):
+        for reservation, demand, price in zip(
+            reservations, list(demand_vec), prices, strict=False
+        ):
             available = max(remaining_inventory - reservation, 0)
             sell = min(available, demand)
             remaining_inventory -= sell
