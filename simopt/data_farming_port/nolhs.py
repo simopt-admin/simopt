@@ -147,20 +147,20 @@ class DesignType(ABC):
         self,
         output_file: Path,
     ) -> None:
-        """Save the NOLHS design to a file.
+        """Save the design to a file.
 
         Args:
             output_file (Path): The path to the output file.
         """
         # Generate the design
-        scaled_designs = self.generate_design()
+        design = self.generate_design()
 
         # Remove the output file if it exists
         if output_file.exists():
             output_file.unlink()
 
         with output_file.open("w") as f:
-            for row in scaled_designs:
+            for row in design:
                 f.write("\t".join(map(str, row)) + "\n")
 
 
@@ -169,12 +169,23 @@ class NOLHS(DesignType):
 
     def __init__(
         self,
-        designs: list[tuple[float, float, int]] | None = None,
+        designs: list[tuple[float, float, int]] | Path,
         num_stacks: int = 1,
     ) -> None:
-        """Initialize the NOLHS class."""
-        self._set_designs(designs)
-        self._num_stacks = num_stacks
+        """Initialize the NOLHS class.
+
+        Args:
+            designs (list[tuple[float, float, int]] | Path): A list of tuples where each
+                tuple contains (min, max, precision) for a design variable, or a Path to
+                a file containing the design config.
+            num_stacks (int, optional): The number of stacks to generate. Defaults to 1.
+        """
+        if isinstance(designs, Path):
+            self._import_design_config(designs)
+        else:
+            self._set_designs(designs)
+
+        self.num_stacks = num_stacks
 
     @property
     def num_stacks(self) -> int:
@@ -183,11 +194,19 @@ class NOLHS(DesignType):
 
     @num_stacks.setter
     def num_stacks(self, value: int) -> None:
+        if value < 0:
+            raise ValueError("Number of stacks cannot be negative.")
+        if self._nolhs_size and value > self._nolhs_size:
+            plural = "s" if self._design_size > 1 else ""
+            raise ValueError(
+                "Number of stacks cannot exceed the NOLHS size "
+                f"({self._nolhs_size} for {self._design_size} design variable{plural})."
+            )
         self._num_stacks = value
 
     def _set_designs(
         self,
-        designs: list[tuple[float, float, int]] | None,
+        designs: list[tuple[float, float, int]],
     ) -> None:
         """Set the design configurations.
 
@@ -195,18 +214,18 @@ class NOLHS(DesignType):
             designs (list[tuple[float, float, int]]): A list of tuples where each tuple
                 contains (min, max, precision) for a design variable.
         """
-        self.designs = designs or []
-        self.design_size = len(self.designs)
-        self.nolhs_size = self._determine_table_key(self.design_size)
-        self.scalers = [
+        self._designs = designs
+        self._design_size = len(self._designs)
+        self._nolhs_size = self._determine_table_key(self._design_size)
+        self._scalers = [
             Scaler(
                 original_min=1,
-                original_max=self.nolhs_size,
+                original_max=self._nolhs_size,
                 scaled_min=min_val,
                 scaled_max=max_val,
                 precision=num_digits,
             )
-            for min_val, max_val, num_digits in self.designs
+            for min_val, max_val, num_digits in self._designs
         ]
 
     def generate_design(self) -> list[list[float]]:
@@ -215,25 +234,21 @@ class NOLHS(DesignType):
         Returns:
             list[list[float]]: A 2D list containing the scaled design points.
         """
-        if not self.designs:
-            raise ValueError("Designs have not been set.")
-
-        lh_max = self.nolhs_size
-        design_size = self.design_size
-        factor = self.scalers
-        design = DESIGN_TABLE[lh_max].copy()
-        mid_range = lh_max // 2
+        # Copy the design to avoid modifying the original
+        design = DESIGN_TABLE[self._nolhs_size].copy()
+        mid_range = self._nolhs_size // 2
 
         all_scaled_designs = []
 
-        for stack_num in range(self._num_stacks):
+        for stack_idx in range(self._num_stacks):
             for i, dp in enumerate(design):
                 scaled_dp = [
-                    factor[k].scale_value(x) for k, x in enumerate(dp[:design_size])
+                    self._scalers[k].scale_value(x)
+                    for k, x in enumerate(dp[: self._design_size])
                 ]
 
-                condition = stack_num > 0 and i == mid_range and lh_max < 512
-                if not condition:
+                # TODO: revisit why this is needed
+                if not (stack_idx > 0 and i == mid_range and self._nolhs_size < 512):
                     all_scaled_designs.append(scaled_dp)
 
                 # Rotate the data point for the next iteration
@@ -241,7 +256,7 @@ class NOLHS(DesignType):
 
         return all_scaled_designs
 
-    def import_design_config(
+    def _import_design_config(
         self,
         file_path: Path,
     ) -> None:
