@@ -1866,11 +1866,9 @@ class NewExperimentWindow(Toplevel):
 
         # Modify the header to show the # of design points and # of duplicates
         unique_design_points = design_table.drop_duplicates().shape[0]
-        num_duplicates = design_table.shape[0] - unique_design_points
         point_plural = "" if unique_design_points == 1 else "s"
-        duplicate_plural = "" if num_duplicates == 1 else "s"
         self.tk_labels["gen_design.header"].configure(
-            text=f"Generated Design - {len(design_table)} Design Point{point_plural} ({num_duplicates} Duplicate{duplicate_plural})"
+            text=f"Generated Design - {len(design_table)} Design Point{point_plural} ({unique_design_points} Unique)"
         )
 
         self.design_tree = ttk.Treeview(master=master_frame)
