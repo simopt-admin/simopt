@@ -2,7 +2,9 @@
 
 import bisect
 import re
+from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Any
 
 from simopt.data_farming_port.nolhs_designs import DESIGN_TABLE
 
@@ -119,7 +121,50 @@ class Scaler:
         return int(rounded_val) if rounded_val == int(rounded_val) else rounded_val
 
 
-class NOLHS:
+class DesignType(ABC):
+    """Abstract base class for design types."""
+
+    @abstractmethod
+    def __init__(
+        self,
+        designs: list[tuple[float, float, int]] | None = None,
+        *args: Any,  # noqa: ANN401
+        **kwargs: Any,  # noqa: ANN401
+    ) -> None:
+        """Initialize the DesignType class."""
+        pass
+
+    @abstractmethod
+    def generate_design(self) -> list[list[float]]:
+        """Generate a design as a 2D list.
+
+        Returns:
+            list[list[float]]: A 2D list containing the scaled design points.
+        """
+        pass
+
+    def save_design(
+        self,
+        output_file: Path,
+    ) -> None:
+        """Save the NOLHS design to a file.
+
+        Args:
+            output_file (Path): The path to the output file.
+        """
+        # Generate the design
+        scaled_designs = self.generate_design()
+
+        # Remove the output file if it exists
+        if output_file.exists():
+            output_file.unlink()
+
+        with output_file.open("w") as f:
+            for row in scaled_designs:
+                f.write("\t".join(map(str, row)) + "\n")
+
+
+class NOLHS(DesignType):
     """Class to generate Nearly Orthogonal Latin Hypercube Samples (NOLHS)."""
 
     def __init__(
@@ -195,26 +240,6 @@ class NOLHS:
                 design[i] = dp[1:] + dp[:1]
 
         return all_scaled_designs
-
-    def save_design(
-        self,
-        output_file: Path,
-    ) -> None:
-        """Save the NOLHS design to a file.
-
-        Args:
-            output_file (Path): The path to the output file.
-        """
-        # Generate the design
-        scaled_designs = self.generate_design()
-
-        # Remove the output file if it exists
-        if output_file.exists():
-            output_file.unlink()
-
-        with output_file.open("w") as f:
-            for row in scaled_designs:
-                f.write("\t".join(map(str, row)) + "\n")
 
     def import_design_config(
         self,
