@@ -4637,31 +4637,19 @@ def create_design(
     if class_type is None:
         class_type = "solver"
 
-    # TODO: add additional checking
-    # Value checking
-    if n_stacks <= 0:
-        error_msg = "Number of stacks must be positive."
-        raise ValueError(error_msg)
-    if design_type not in ["nolhs"]:
-        error_msg = "Invalid design type."
-        raise ValueError(error_msg)
-
     # Search directories to create object based on name provided.
-    if class_type == "solver":
-        if name not in solver_directory:
-            error_msg = f"Solver name {name} not found in solver directory."
-            raise ValueError(error_msg)
-        design_object = solver_directory[name]()
-    elif class_type == "problem":
-        if name not in problem_directory:
-            error_msg = f"Problem name {name} not found in problem directory."
-            raise ValueError(error_msg)
-        design_object = problem_directory[name]()
-    elif class_type == "model":
-        if name not in model_directory:
-            error_msg = f"Model name {name} not found in model directory."
-            raise ValueError(error_msg)
-        design_object = model_directory[name]()
+    object_lookup = {
+        "solver": solver_directory,
+        "problem": problem_directory,
+        "model": model_directory,
+    }
+    if class_type not in object_lookup:
+        error_msg = f"Class type {class_type} not recognized."
+        raise ValueError(error_msg)
+    if name not in object_lookup[class_type]:
+        error_msg = f"{class_type.capitalize()} name {name} not found in directory."
+        raise ValueError(error_msg)
+    design_object = object_lookup[class_type][name]()
 
     # Make directory to store the current design file.
     df_dir = EXPERIMENT_DIR / "data_farming"
@@ -4670,27 +4658,21 @@ def create_design(
     config_file = df_dir / f"{factor_settings_filename}.txt"
     design_file = df_dir / f"{factor_settings_filename}_design.txt"
 
-    design = NOLHS(num_stacks=n_stacks)
-    design.import_design_config(config_file)
-    design.save_design(design_file)
+    if design_type == "nolhs":
+        design = NOLHS(designs=config_file, num_stacks=n_stacks)
+    else:
+        error_msg = f"Design type {design_type} not supported."
+        raise Exception(error_msg)
 
-    # Only run the Ruby script if there are factors to change
+    # Only datafarm if there are factors to vary.
     if len(factor_headers) > 0:
-        # Read in design matrix from .txt file. Result is a pandas DataFrame.
-        try:
-            design_table = pd.read_csv(
-                design_file,
-                header=None,
-                delimiter="\t",
-                encoding="utf-8",
-            )
-        except pd.errors.EmptyDataError:
-            error_msg = (
-                "Error in Ruby script. No data in design file.\n"
-                "Make sure to select factors for data farming."
-            )
-            raise Exception(error_msg) from pd.errors.EmptyDataError
-        design_table.columns = factor_headers  # Add factor headers names to dt.
+        generated_design = design.generate_design()
+        if len(generated_design) == 0:
+            error_msg = "Error in design generation. No design points generated."
+            raise Exception(error_msg)
+        design_table = pd.DataFrame(generated_design, columns=factor_headers)
+        # Save design to .txt file for backwards compatibility.
+        design.save_design(design_file)
     else:
         # Grab one key/value pair from the specifications
         first_item = design_object.specifications
