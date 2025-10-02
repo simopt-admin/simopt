@@ -4667,12 +4667,12 @@ def create_design(
     df_dir = EXPERIMENT_DIR / "data_farming"
     df_dir.mkdir(parents=True, exist_ok=True)
 
-    source_file = df_dir / f"{factor_settings_filename}.txt"
+    config_file = df_dir / f"{factor_settings_filename}.txt"
     design_file = df_dir / f"{factor_settings_filename}_design.txt"
 
-    design = NOLHS()
-    design.import_design_table_from_file(source_file)
-    design.save_output(design_file)
+    design = NOLHS(num_stacks=n_stacks)
+    design.import_design_config(config_file)
+    design.save_design(design_file)
 
     # Only run the Ruby script if there are factors to change
     if len(factor_headers) > 0:

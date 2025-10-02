@@ -122,13 +122,14 @@ class Scaler:
 class NOLHS:
     """Class to generate Nearly Orthogonal Latin Hypercube Samples (NOLHS)."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        designs: list[tuple[float, float, int]] | None = None,
+        num_stacks: int = 1,
+    ) -> None:
         """Initialize the NOLHS class."""
-        self.designs: list[tuple[float, float, int]] = []
-        self.design_size = 0
-        self.nolhs_size = 0
-        self.scalers: list[Scaler] = []
-        self._num_stacks = len(self.designs[0]) if self.designs else 1
+        self._set_designs(designs)
+        self._num_stacks = num_stacks
 
     @property
     def num_stacks(self) -> int:
@@ -139,65 +140,18 @@ class NOLHS:
     def num_stacks(self, value: int) -> None:
         self._num_stacks = value
 
-    def save_output(
+    def _set_designs(
         self,
-        output_file: Path,
+        designs: list[tuple[float, float, int]] | None,
     ) -> None:
-        """Save the NOLHS design to a file."""
-        lh_max = self.nolhs_size
-        design_size = self.design_size
-        factor = self.scalers
-
-        design = DESIGN_TABLE[lh_max]
-
-        mid_range = lh_max // 2
-
-        # Remove the output file if it exists
-        if output_file.exists():
-            output_file.unlink()
-        with output_file.open("w") as f:
-            for stack_num in range(self._num_stacks):
-                for i, dp in enumerate(design):
-                    # Slice the data point and scale each element
-                    scaled_dp = []
-                    for k, x in enumerate(dp[:design_size]):
-                        scaled_dp.append(factor[k].scale_value(x))
-
-                    # Join the scaled values with tabs and print conditionally
-                    condition = stack_num > 0 and i == mid_range and lh_max < 512
-                    if not condition:
-                        f.write("\t".join(map(str, scaled_dp)) + "\n")
-
-                    # Rotate the data point for the next iteration
-                    design[i] = dp[1:] + dp[:1]
-
-    def import_design_table_from_file(
-        self,
-        file_path: Path,
-    ) -> None:
-        """Import design table from a file.
+        """Set the design configurations.
 
         Args:
-            file_path (Path): The path to the file containing the design table.
+            designs (list[tuple[float, float, int]]): A list of tuples where each tuple
+                contains (min, max, precision) for a design variable.
         """
-        design_table = []
-        with file_path.open("r") as f:
-            for line in f:
-                line_data = re.split(r"\s*[,;:]\s*|\s+", line.strip())
-                # Skip empty lines
-                if len(line_data) == 0:
-                    continue
-                # Each line must contain exactly three values
-                if len(line_data) != 3:
-                    raise ValueError(
-                        f"Each line must contain exactly three values: {line.strip()}"
-                    )
-                # Add the design to the table
-                min_val, max_val, num_digits = line_data
-                design = (float(min_val), float(max_val), int(num_digits))
-                design_table.append(design)
-        self.designs = design_table
-        self.design_size = len(design_table)
+        self.designs = designs or []
+        self.design_size = len(self.designs)
         self.nolhs_size = self._determine_table_key(self.design_size)
         self.scalers = [
             Scaler(
@@ -207,8 +161,90 @@ class NOLHS:
                 scaled_max=max_val,
                 precision=num_digits,
             )
-            for min_val, max_val, num_digits in design_table
+            for min_val, max_val, num_digits in self.designs
         ]
+
+    def generate_design(self) -> list[list[float]]:
+        """Generate the scaled NOLHS design as a 2D list.
+
+        Returns:
+            list[list[float]]: A 2D list containing the scaled design points.
+        """
+        if not self.designs:
+            raise ValueError("Designs have not been set.")
+
+        lh_max = self.nolhs_size
+        design_size = self.design_size
+        factor = self.scalers
+        design = DESIGN_TABLE[lh_max]
+        mid_range = lh_max // 2
+
+        all_scaled_designs = []
+
+        for stack_num in range(self._num_stacks):
+            for i, dp in enumerate(design):
+                scaled_dp = [
+                    factor[k].scale_value(x) for k, x in enumerate(dp[:design_size])
+                ]
+
+                condition = stack_num > 0 and i == mid_range and lh_max < 512
+                if not condition:
+                    all_scaled_designs.append(scaled_dp)
+
+                # Rotate the data point for the next iteration
+                design[i] = dp[1:] + dp[:1]
+
+        return all_scaled_designs
+
+    def save_design(
+        self,
+        output_file: Path,
+    ) -> None:
+        """Save the NOLHS design to a file.
+
+        Args:
+            output_file (Path): The path to the output file.
+        """
+        # Generate the design
+        scaled_designs = self.generate_design()
+
+        # Remove the output file if it exists
+        if output_file.exists():
+            output_file.unlink()
+
+        with output_file.open("w") as f:
+            for row in scaled_designs:
+                f.write("\t".join(map(str, row)) + "\n")
+
+    def import_design_config(
+        self,
+        file_path: Path,
+    ) -> None:
+        """Import the design config from a file.
+
+        Args:
+            file_path (Path): The path to the file containing the design config.
+        """
+        # Read the design config from the specified file.
+        design_config = []
+        with file_path.open("r") as f:
+            for line in f:
+                line_data = re.split(r"\s*[,;:]\s*|\s+", line.strip())
+                # Skip empty lines
+                if len(line_data) == 0:
+                    continue
+                # Each line must contain exactly three values
+                if len(line_data) != 3:
+                    raise ValueError(
+                        f"Error importing design config at Path: {file_path}. "
+                        f"Each line must contain exactly three values: {line.strip()}"
+                    )
+                # Add the design to the config
+                min_val, max_val, num_digits = line_data
+                design = (float(min_val), float(max_val), int(num_digits))
+                design_config.append(design)
+        # Update the class attributes based on the imported design config
+        self._set_designs(design_config)
 
     def _determine_table_key(self, num_vars: int) -> int:
         """Determine the key to use for the design table based on number of variables.
@@ -220,10 +256,10 @@ class NOLHS:
             int: The key to use for the design table.
 
         Raises:
-            ValueError: If num_vars is not between 1 and 100.
+            ValueError: If num_vars is greater than 100.
         """
-        if not (1 <= num_vars <= 100):
-            raise ValueError("Number of variables must be between 1 and 100.")
+        if num_vars > 100:
+            raise ValueError("NOLHS only supports up to 100 variables at this time.")
 
         # Keys are the minimum of each range, values are the return keys
         ranges = {
