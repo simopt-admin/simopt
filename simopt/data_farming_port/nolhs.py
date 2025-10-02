@@ -221,7 +221,7 @@ class NOLHS(DesignType):
         lh_max = self.nolhs_size
         design_size = self.design_size
         factor = self.scalers
-        design = DESIGN_TABLE[lh_max]
+        design = DESIGN_TABLE[lh_max].copy()
         mid_range = lh_max // 2
 
         all_scaled_designs = []
