@@ -4607,7 +4607,7 @@ def create_design(
     design_type: Literal["nolhs"] = "nolhs",
     cross_design_factors: dict | None = None,
 ) -> list[dict]:
-    """Creates a design of solver, problem, or model factors using Ruby.
+    """Creates a design of solver, problem, or model factors.
 
     Args:
         name (str): Name of the solver, problem, or model.
@@ -4618,9 +4618,8 @@ def create_design(
         class_type (Literal["solver", "problem", "model"], optional): Type of class the
             design is built for. Use "problem" to combine problem and model factors,
             or "model" to run independently of any problem. Defaults to "solver".
-        n_stacks (int, optional): Number of Ruby stacks. Defaults to 1.
-        design_type (Literal["nolhs"], optional): Type of Ruby design.
-            Defaults to "nolhs".
+        n_stacks (int, optional): Number of stacks. Defaults to 1.
+        design_type (Literal["nolhs"], optional): Type of design. Defaults to "nolhs".
         cross_design_factors (dict, optional): Dictionary of lists of cross-design
             factor values. Defaults to None.
 
@@ -4629,7 +4628,7 @@ def create_design(
 
     Raises:
         ValueError: If input validation fails.
-        Exception: If Ruby is not installed or the design type is unsupported.
+        Exception: If the design type is unsupported.
     """
     # Default values
     if cross_design_factors is None:
@@ -4679,26 +4678,21 @@ def create_design(
         # Create a DataFrame with the key/value pair
         design_table = pd.DataFrame(first_item, index=[0])
 
-    # Combine model and problem specifications for problems
-    if isinstance(design_object, Problem):
-        specifications = {
-            **design_object.specifications,
-            **design_object.model.specifications,
-        }
-    else:
-        specifications = design_object.specifications
+    specifications = design_object.specifications
+    # If problem, add model specifications too.
+    if class_type == "problem":
+        specifications.update(design_object.model.specifications)
 
     # Add default values to str dict for unspecified factors.
-    for factor in specifications:
-        default = specifications[factor].get("default")
-        if factor not in fixed_factors and factor not in factor_headers:
-            fixed_factors[factor] = default
+    fixed_factors_and_headers = set(list(fixed_factors) + factor_headers)
+    unspecified_factors = set(specifications) - fixed_factors_and_headers
+    for factor in unspecified_factors:
+        fixed_factors[factor] = specifications[factor].get("default")
 
     # Add all the fixed factors to the design table
     for factor in fixed_factors:
-        design_table[factor] = str(
-            fixed_factors[factor]
-        )  # Change to string to ensure correct addition of tuples & list data types.
+        # Use string to ensure correct addition of tuples & list data types.
+        design_table[factor] = str(fixed_factors[factor])
 
     # Add cross design factors to design table.
     if len(cross_design_factors) != 0:
