@@ -4600,7 +4600,7 @@ def create_design_list_from_table(design_table: DataFrame) -> list:
 def create_design(
     name: str,
     factor_headers: list[str],
-    factor_settings_filename: str,
+    factor_settings: Path,
     fixed_factors: dict,
     class_type: Literal["solver", "problem", "model"] | None = None,
     n_stacks: int = 1,
@@ -4612,8 +4612,7 @@ def create_design(
     Args:
         name (str): Name of the solver, problem, or model.
         factor_headers (list[str]): Names of factors that vary in the design.
-        factor_settings_filename (str): Filename of the factor settings file located in
-            the `data_farming_experiments` folder.
+        factor_settings (Path): Path to the factor settings file.
         fixed_factors (dict): Dictionary of fixed factor values that override defaults.
         class_type (Literal["solver", "problem", "model"], optional): Type of class the
             design is built for. Use "problem" to combine problem and model factors,
@@ -4654,8 +4653,8 @@ def create_design(
     df_dir = EXPERIMENT_DIR / "data_farming"
     df_dir.mkdir(parents=True, exist_ok=True)
 
-    config_file = df_dir / f"{factor_settings_filename}.txt"
-    design_file = df_dir / f"{factor_settings_filename}_design.txt"
+    config_file = df_dir / f"{factor_settings}.txt"
+    design_file = df_dir / f"{factor_settings}_design.txt"
 
     if design_type == "nolhs":
         design = NOLHS(designs=config_file, num_stacks=n_stacks)

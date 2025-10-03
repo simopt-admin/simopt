@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import pickle
 import re
 import threading
@@ -1772,7 +1773,7 @@ class NewExperimentWindow(Toplevel):
             create_design(
                 name=base_name,
                 factor_headers=design_factors,
-                factor_settings_filename=design_name,
+                factor_settings=Path(design_name),
                 fixed_factors=fixed_factors,
                 cross_design_factors=cross_design_factors,
                 n_stacks=num_stacks,
