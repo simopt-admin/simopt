@@ -1239,7 +1239,7 @@ class DataFarmingWindow(Toplevel):
 
         # Use create_design to create a design txt file & design csv
         self.design_list = create_design(
-            name=self.model_object.name,
+            name=self.model_object.class_name_abbr,
             factor_headers=self.factor_names,
             factor_settings=Path(self.experiment_name),
             fixed_factors=self.fixed_factors,
