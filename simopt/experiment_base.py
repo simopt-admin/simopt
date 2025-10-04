@@ -4619,23 +4619,29 @@ def create_design_list_from_table(design_table: DataFrame) -> list[dict[str, Any
 def create_design(
     name: str,
     factor_headers: list[str],
-    factor_settings: Path,
-    fixed_factors: dict,
-    n_stacks: int = 1,
-    design_type: Literal["nolhs"] = "nolhs",
+    factor_settings: list[tuple[float, float, int]] | Path,
+    fixed_factors: dict | None = None,
     cross_design_factors: dict | None = None,
+    design_type: Literal["nolhs"] = "nolhs",
+    n_stacks: int = 1,  # TODO: make **variable for other design types?
 ) -> list[dict]:
     """Creates a design of solver, problem, or model factors.
+
+    Please ensure the indexing of the factor_headers argument matches the indexing of
+    the factor_settings argument.
 
     Args:
         name (str): Name of the solver, problem, or model.
         factor_headers (list[str]): Names of factors that vary in the design.
-        factor_settings (Path): Path to the factor settings file.
-        fixed_factors (dict): Dictionary of fixed factor values that override defaults.
-        n_stacks (int, optional): Number of stacks. Defaults to 1.
-        design_type (Literal["nolhs"], optional): Type of design. Defaults to "nolhs".
+        factor_settings (list[tuple[float, float, int]] | Path):
+            A list of tuples, each of the form (min, max, # decimals)
+            or a Path to a .txt file containing those factor settings.
+        fixed_factors (dict, optional): Dictionary of fixed factor values that
+            override defaults.
         cross_design_factors (dict, optional): Dictionary of lists of cross-design
             factor values. Defaults to None.
+        design_type (Literal["nolhs"], optional): Type of design. Defaults to "nolhs".
+        n_stacks (int, optional): Number of stacks. Defaults to 1.
 
     Returns:
         list[dict]: A list of dictionaries, where each dictionary represents a design
@@ -4647,6 +4653,8 @@ def create_design(
     # Default values
     if cross_design_factors is None:
         cross_design_factors = {}
+    if fixed_factors is None:
+        fixed_factors = {}
 
     # Create object of the correct type.
     directories = solver_directory | problem_directory | model_directory
@@ -4662,14 +4670,20 @@ def create_design(
     df_dir = EXPERIMENT_DIR / "data_farming"
     df_dir.mkdir(parents=True, exist_ok=True)
 
-    config_file = df_dir / f"{factor_settings}.txt"
-    design_file = df_dir / config_file.name.replace(".txt", "_design.txt")
+    # If factor settings is a list of tuples, use that directly.
+    if isinstance(factor_settings, list):
+        designs = factor_settings
+        design_file = df_dir / f"{name}_design.txt"
+    # Otherwise, setup the design to read from a text file.
+    elif isinstance(factor_settings, (Path, str)):
+        designs = df_dir / f"{factor_settings}.txt"
+        design_file = df_dir / designs.name.replace(".txt", "_design.txt")
 
     # Only datafarm if there are factors to vary.
     if len(factor_headers) > 0:
         # Select design type.
         if design_type == "nolhs":
-            design = NOLHS(designs=config_file, num_stacks=n_stacks)
+            design = NOLHS(designs=designs, num_stacks=n_stacks)
         else:
             error_msg = f"Design type {design_type} not supported."
             raise Exception(error_msg)
