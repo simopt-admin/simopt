@@ -1766,9 +1766,6 @@ class NewExperimentWindow(Toplevel):
                 settings_file.write(data_insert)
 
         try:
-            # Get the base object name in lowercase
-            base_object_lower = base_object.lower()
-            assert base_object_lower in ("problem", "solver")
             # Create the design
             create_design(
                 name=base_name,
@@ -1778,7 +1775,6 @@ class NewExperimentWindow(Toplevel):
                 cross_design_factors=cross_design_factors,
                 n_stacks=num_stacks,
                 design_type=design_type,  # type: ignore
-                class_type=base_object_lower,
             )
 
         except Exception as e:

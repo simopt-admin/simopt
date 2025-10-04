@@ -9,7 +9,7 @@ import pickle
 import time
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +19,7 @@ from joblib import Parallel, delayed
 import simopt.curve_utils as curve_utils
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
+from simopt.base import Model, ObjectiveType, Problem, Solution, Solver, VariableType
 from simopt.curve import (
     Curve,
     CurveType,
@@ -4555,21 +4555,43 @@ def make_full_metaexperiment(
     Returns:
         ProblemsSolvers: A new ProblemsSolvers object containing the completed set.
     """
+    # Make sure the right number of experiments are being given
+    expected_num_exps = len(unique_solvers) * len(unique_problems)
+    actual_num_exps = len(existing_experiments) + len(missing_experiments)
+    if actual_num_exps != expected_num_exps:
+        error_msg = (
+            "Error in creating full meta-experiment. "
+            "Number of existing and missing experiments specified does not match "
+            "number of unique solvers and problems. "
+            f"Expected: {expected_num_exps}, Actual: {actual_num_exps}"
+        )
+        raise Exception(error_msg)
+    # Create the missing experiments
+    created_experiments = [
+        ProblemSolver(solver=solver, problem=problem)
+        for solver, problem in missing_experiments
+    ]
+    # Create 2D list to hold all experiments.
     full_experiments = [[] * len(unique_problems) for _ in range(len(unique_solvers))]
-    for experiment in existing_experiments:
+    # Populate the 2D list with existing and new experiments.
+    for experiment in existing_experiments + created_experiments:
+        # Add the experiment to correct location in 2D list.
         solver_idx = unique_solvers.index(experiment.solver)
         problem_idx = unique_problems.index(experiment.problem)
+        # Make sure we aren't accidentally writing to the same index twice
+        if full_experiments[solver_idx][problem_idx] != []:
+            error_msg = (
+                "Error in creating full meta-experiment. "
+                "Duplicate experiment found for solver "
+                f"{experiment.solver.name} and problem {experiment.problem.name}."
+            )
+            raise Exception(error_msg)
+        # If empty, add experiment
         full_experiments[solver_idx][problem_idx] = experiment
-    for pair in missing_experiments:
-        solver_idx = unique_solvers.index(pair[0])
-        problem_idx = unique_problems.index(pair[1])
-        full_experiments[solver_idx][problem_idx] = ProblemSolver(
-            solver=pair[0], problem=pair[1]
-        )
     return ProblemsSolvers(experiments=full_experiments)
 
 
-def create_design_list_from_table(design_table: DataFrame) -> list:
+def create_design_list_from_table(design_table: DataFrame) -> list[dict[str, Any]]:
     """Create a list of solver or problem objects for each design point.
 
     Args:
@@ -4577,24 +4599,21 @@ def create_design_list_from_table(design_table: DataFrame) -> list:
             Each row represents a design point, and each column represents a factor.
 
     Returns:
-        list[dict]: List of dictionaries, where each dictionary contains the factor
-            values for a design point.
+        list[dict[str, Any]]: List of dictionaries, where each list entry corresponds
+        to a design point, and each dictionary contains the name and values for each
+        factor in that design point.
     """
-    # Local imports
-    import ast
+    from ast import literal_eval
 
-    # Create list of solver or problem objects for each dp using design_table.
-    design_list = []
-    dp_dict = design_table.to_dict(
-        orient="list"
-    )  # Creates dictonary of table to convert values to proper datatypes.
-    for dp in range(len(design_table)):
-        dp_factors = {}
-        for factor in dp_dict:
-            factor_str = str(dp_dict[factor][dp])
-            dp_factors[factor] = ast.literal_eval(factor_str)
-        design_list.append(dp_factors)
-    return design_list
+    # Creates dictonary of table to convert values to proper datatypes.
+    dp_dict = design_table.to_dict(orient="list")
+
+    # NOTE: the str cast for the factor name shouldn't be necessary, but it tells the
+    # typing system that the dict keys are definitely strings and not just hashable.
+    return [
+        {str(factor): literal_eval(str(dp_dict[factor][dp])) for factor in dp_dict}
+        for dp in range(len(design_table))
+    ]
 
 
 def create_design(
@@ -4602,7 +4621,6 @@ def create_design(
     factor_headers: list[str],
     factor_settings: Path,
     fixed_factors: dict,
-    class_type: Literal["solver", "problem", "model"] | None = None,
     n_stacks: int = 1,
     design_type: Literal["nolhs"] = "nolhs",
     cross_design_factors: dict | None = None,
@@ -4614,9 +4632,6 @@ def create_design(
         factor_headers (list[str]): Names of factors that vary in the design.
         factor_settings (Path): Path to the factor settings file.
         fixed_factors (dict): Dictionary of fixed factor values that override defaults.
-        class_type (Literal["solver", "problem", "model"], optional): Type of class the
-            design is built for. Use "problem" to combine problem and model factors,
-            or "model" to run independently of any problem. Defaults to "solver".
         n_stacks (int, optional): Number of stacks. Defaults to 1.
         design_type (Literal["nolhs"], optional): Type of design. Defaults to "nolhs".
         cross_design_factors (dict, optional): Dictionary of lists of cross-design
@@ -4632,43 +4647,40 @@ def create_design(
     # Default values
     if cross_design_factors is None:
         cross_design_factors = {}
-    if class_type is None:
-        class_type = "solver"
 
-    # Search directories to create object based on name provided.
-    object_lookup = {
-        "solver": solver_directory,
-        "problem": problem_directory,
-        "model": model_directory,
-    }
-    if class_type not in object_lookup:
-        error_msg = f"Class type {class_type} not recognized."
+    # Create object of the correct type.
+    directories = solver_directory | problem_directory | model_directory
+    # Make sure we don't accidentally have the same name in multiple directories.
+    if len(directories) != len(set(directories)):
+        error_msg = "Duplicate names found in solver, problem, or model directories."
         raise ValueError(error_msg)
-    if name not in object_lookup[class_type]:
-        error_msg = f"{class_type.capitalize()} name {name} not found in directory."
-        raise ValueError(error_msg)
-    design_object = object_lookup[class_type][name]()
+    if name not in directories:
+        raise ValueError(f"Name '{name}' not found in any directory.")
+    design_object = directories[name]()
 
     # Make directory to store the current design file.
     df_dir = EXPERIMENT_DIR / "data_farming"
     df_dir.mkdir(parents=True, exist_ok=True)
 
     config_file = df_dir / f"{factor_settings}.txt"
-    design_file = df_dir / f"{factor_settings}_design.txt"
-
-    if design_type == "nolhs":
-        design = NOLHS(designs=config_file, num_stacks=n_stacks)
-    else:
-        error_msg = f"Design type {design_type} not supported."
-        raise Exception(error_msg)
+    design_file = df_dir / config_file.name.replace(".txt", "_design.txt")
 
     # Only datafarm if there are factors to vary.
     if len(factor_headers) > 0:
+        # Select design type.
+        if design_type == "nolhs":
+            design = NOLHS(designs=config_file, num_stacks=n_stacks)
+        else:
+            error_msg = f"Design type {design_type} not supported."
+            raise Exception(error_msg)
+
+        # Generate design table from design object.
         generated_design = design.generate_design()
         if len(generated_design) == 0:
             error_msg = "Error in design generation. No design points generated."
             raise Exception(error_msg)
         design_table = pd.DataFrame(generated_design, columns=factor_headers)
+
         # Save design to .txt file for backwards compatibility.
         design.save_design(design_file)
     else:
@@ -4679,8 +4691,8 @@ def create_design(
 
     specifications = design_object.specifications
     # If problem, add model specifications too.
-    if class_type == "problem":
-        specifications.update(design_object.model.specifications)
+    if isinstance(design_object, Problem):
+        specifications |= design_object.model.specifications
 
     # Add default values to str dict for unspecified factors.
     fixed_factors_and_headers = set(list(fixed_factors) + factor_headers)
@@ -4694,9 +4706,7 @@ def create_design(
         design_table[factor] = str(fixed_factors[factor])
 
     # Add cross design factors to design table.
-    if len(cross_design_factors) != 0:
-        # num_cross = 0 # number of times cross design is run
-
+    if len(cross_design_factors) > 0:
         # Create combination of categorical factor options.
         cross_factor_names = list(cross_design_factors.keys())
         combinations = itertools.product(
@@ -4706,44 +4716,42 @@ def create_design(
         new_design_table = pd.DataFrame()  # Temp empty value.
         for combination in combinations:
             # Dictionary containing current combination of cross design factor values.
-            combination_dict = dict(zip(cross_factor_names, combination))
+            combination_dict = dict(zip(cross_factor_names, str(combination)))
             working_design_table = design_table.copy()
 
-            for factor in combination_dict:
-                str_factor_val = str(combination_dict[factor])
-                working_design_table[factor] = str_factor_val
+            # Batch add cross design factors to working design table.
+            working_design_table = working_design_table.assign(
+                **{k: str(v) for k, v in combination_dict.items()}
+            )
 
+            # Append working design table to new design table.
             new_design_table = pd.concat(
                 [new_design_table, working_design_table], ignore_index=True
             )
-
+        # Update design table to new design table after all combinations added.
         design_table = new_design_table
 
     design_list = create_design_list_from_table(design_table)
 
     # check factors for each design point
     for dp in design_list:
-        if class_type == "solver":
+        if isinstance(design_object, Solver):
             # initialize temporary solver to run factor checks
             temp = solver_directory[name](fixed_factors=dp)
-        if class_type == "model":
+        if isinstance(design_object, Model):
             # initialize temporary model to run factor checks
             temp = model_directory[name](fixed_factors=dp)
             # run check function on temp model
-            temp.run_all_checks(factor_names=dp.keys())
-        if class_type == "problem":
+            temp.run_all_checks(factor_names=list(dp.keys()))
+        if isinstance(design_object, Problem):
             # seperate problem and model factors in dp
-            problem_factor_names = design_object.specifications.keys()
-            problem_factors = {}
-            model_factors = {}
-            for factor in dp:
-                if factor in problem_factor_names:
-                    problem_factors[factor] = dp[factor]
-                else:
-                    model_factors[factor] = dp[factor]
+            prob_factor_keys = set(design_object.specifications.keys())
+            problem_factors = {k: v for k, v in dp.items() if k in prob_factor_keys}
+            model_factors = {k: v for k, v in dp.items() if k not in prob_factor_keys}
             # initialize temporary problem to run factor checks
             temp_problem = problem_directory[name](
-                fixed_factors=problem_factors, model_fixed_factors=model_factors
+                fixed_factors=problem_factors,
+                model_fixed_factors=model_factors,
             )
             # initialize temporary model to run factor checks
             model_factor_names = list(temp_problem.model.specifications.keys())

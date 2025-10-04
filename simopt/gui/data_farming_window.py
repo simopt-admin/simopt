@@ -1245,7 +1245,6 @@ class DataFarmingWindow(Toplevel):
             fixed_factors=self.fixed_factors,
             n_stacks=n_stacks,
             design_type=design_type,
-            class_type="model",
         )
         # Pop up message that csv design file has been created
         messagebox.showinfo(
