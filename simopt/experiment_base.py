@@ -4624,7 +4624,7 @@ def create_design(
     cross_design_factors: dict | None = None,
     design_type: Literal["nolhs"] = "nolhs",
     n_stacks: int = 1,  # TODO: make **variable for other design types?
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Creates a design of solver, problem, or model factors.
 
     Please ensure the indexing of the factor_headers argument matches the indexing of
@@ -4644,7 +4644,8 @@ def create_design(
         n_stacks (int, optional): Number of stacks. Defaults to 1.
 
     Returns:
-        list[dict]: A list of dictionaries, where each dictionary represents a design
+        list[dict[str, Any]]: A list of dictionaries, where each dictionary represents
+            a design.
 
     Raises:
         ValueError: If input validation fails.
@@ -4659,7 +4660,8 @@ def create_design(
     # Create object of the correct type.
     directories = solver_directory | problem_directory | model_directory
     # Make sure we don't accidentally have the same name in multiple directories.
-    if len(directories) != len(set(directories)):
+    expected_len = len(solver_directory) + len(problem_directory) + len(model_directory)
+    if len(directories) != expected_len:
         error_msg = "Duplicate names found in solver, problem, or model directories."
         raise ValueError(error_msg)
     if name not in directories:
