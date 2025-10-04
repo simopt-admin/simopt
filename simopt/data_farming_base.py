@@ -6,7 +6,6 @@ import ast
 import csv
 import itertools
 import logging
-import subprocess
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
@@ -18,6 +17,7 @@ from numpy import inf
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import Model
+from simopt.data_farming_port.nolhs import NOLHS
 from simopt.experiment_base import EXPERIMENT_DIR, ProblemSolver, post_normalize
 from simopt.utils import resolve_file_path
 
@@ -206,6 +206,10 @@ class DataFarmingExperiment:
         if stacks <= 0:
             error_msg = "Number of stacks must be greater than 0."
             raise ValueError(error_msg)
+        if design_type not in ["nolhs"]:
+            error_msg = "design_type must be a valid design type."
+            raise ValueError(error_msg)
+
         # Make sure the file_names resolve to valid paths
         if factor_settings_file_name is not None:
             factor_settings_file_name = resolve_file_path(
@@ -236,11 +240,13 @@ class DataFarmingExperiment:
             partial_file_path = DATA_FARMING_DIR / factor_settings_file_name
             source_path = partial_file_path.with_suffix(".txt")
             design_path = partial_file_path.with_suffix("_design.txt")
-            command = (
-                f"stack_{design_type}.rb -s {stacks} {source_path} > {design_path}"
+            # Create a design and save to design_path
+            design = NOLHS(
+                designs=source_path,
+                num_stacks=stacks,
             )
-            subprocess.run(command)
-            # Append design to base file name.
+            design.generate_design()
+            design.save_design(design_path)
         # Read in design matrix from .txt file. Result is a pandas DataFrame.
         design_table = pd.read_csv(
             design_path,
@@ -448,10 +454,13 @@ class DataFarmingMetaExperiment:
             partial_file_path = DATA_FARMING_DIR / solver_factor_settings_file_path
             source_path = partial_file_path.with_suffix(".txt")
             design_path = partial_file_path.with_suffix("_design.txt")
-            command = (
-                f"stack_{design_type}.rb -s {n_stacks} {source_path} > {design_path}"
+            # Create a design and save to design_path
+            design = NOLHS(
+                designs=source_path,
+                num_stacks=n_stacks,
             )
-            subprocess.run(command)
+            design.generate_design()
+            design.save_design(design_path)
             # Append design to base file name.
             design_file_path = f"{solver_factor_settings_file_path}_design"
 
