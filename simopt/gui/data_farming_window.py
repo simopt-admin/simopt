@@ -1192,7 +1192,7 @@ class DataFarmingWindow(Toplevel):
             for factor_index, factor in enumerate(self.model_object.specifications):
                 factor_datatype = self.model_object.specifications[factor].get("datatype")
                 is_datafarmable_factor = self.model_object.specifications[factor].get(
-                    "isDatafarmable"
+                    "isDatafarmable", True
                 )
                 factor_include = check_values[factor_index]
 
@@ -1225,6 +1225,8 @@ class DataFarmingWindow(Toplevel):
                 # add fixed factors to dictionary and increase index values
                 else:
                     def_factor_str[factor] = default_values[factor_index]
+                    if not is_datafarmable_factor:
+                        continue
                     if factor_datatype is float:
                         dec_index += 1
                         maxmin_index += 1
