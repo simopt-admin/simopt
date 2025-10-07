@@ -8,7 +8,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.17.3
 #   kernelspec:
-#     display_name: simopt
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -21,7 +21,9 @@
 # %% [markdown]
 # ## Append SimOpt Path
 #
-# Since the notebook is stored in simopt/notebooks, we need to append the parent simopt directory to the system path to import the necessary modules later on.
+# Since the notebook is stored in simopt/notebooks, we need to append the
+# parent simopt directory to the system path to import the necessary modules
+# later on.
 
 # %%
 import sys
@@ -29,6 +31,16 @@ from pathlib import Path
 
 # Take the current directory, find the parent, and add it to the system path
 sys.path.append(str(Path.cwd().parent))
+
+from simopt.experiment_base import (
+    PlotType,
+    plot_area_scatterplots,
+    plot_progress_curves,
+    plot_solvability_profiles,
+    plot_terminal_progress,
+    plot_terminal_scatterplots,
+)
+from simopt.experimental import run_experiment
 
 # %% [markdown]
 # ## Experiment Configuration Parameters
@@ -43,100 +55,6 @@ num_postnorms = 200
 
 
 # %% [markdown]
-# ## Helper Functions
-#
-# Helper functions to streamline the experiment process.
-
-
-# %%
-# Classes for Problem and Solver config info
-# These don't need modified
-class ProblemConfig:
-    """Class to hold problem config information."""
-
-    def __init__(
-        self,
-        name: str,
-        rename: str | None = None,
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the Problem with name, rename, and problem/model fixed factors."""
-        self.name = name
-        self.rename = rename if rename else name
-        self.fixed_factors = fixed_factors if fixed_factors else {}
-        self.model_fixed_factors = model_fixed_factors if model_fixed_factors else {}
-
-
-class SolverConfig:
-    """Class to hold solver config information."""
-
-    def __init__(
-        self, name: str, rename: str | None = None, fixed_factors: dict | None = None
-    ) -> None:
-        """Initialize the Solver with name, rename, and solver fixed factors."""
-        self.name = name
-        self.rename = rename if rename else name
-        self.fixed_factors = fixed_factors if fixed_factors else {}
-
-
-# %%
-from simopt.experiment_base import ProblemSolver, post_normalize
-
-
-# Function to run an experiment with the given problem and solver configs.
-def run_experiment(
-    problems: list[ProblemConfig],
-    solvers: list[SolverConfig],
-) -> list[list[ProblemSolver]]:
-    """Run an experiment using the provided configurations.
-
-    Args:
-        problems: List of ProblemConfig instances.
-        solvers: List of SolverConfig instances.
-
-    Returns:
-        List[list[ProblemSolver]]: A list of lists containing ProblemSolver instances,
-        grouped by problem.
-    """
-    all_experiments = []
-    for problem_idx, problem in enumerate(problems):
-        print(
-            f"Running Problem {problem_idx + 1}/{len(problems)}: {problem.rename}...",
-            end="",
-            flush=True,
-        )
-        # Keep track of experiments on the same problem for post-processing.
-        experiments_same_problem = []
-        # Create each ProblemSolver and run it.
-        for solver in solvers:
-            new_experiment = ProblemSolver(
-                solver_name=solver.name,
-                solver_rename=solver.rename,
-                solver_fixed_factors=solver.fixed_factors,
-                problem_name=problem.name,
-                problem_rename=problem.rename,
-                problem_fixed_factors=problem.fixed_factors,
-                model_fixed_factors=problem.model_fixed_factors,
-            )
-            # Run and post-replicate the experiment.
-            new_experiment.run(n_macroreps=num_macroreps)
-            new_experiment.post_replicate(n_postreps=num_postreps)
-            experiments_same_problem.append(new_experiment)
-
-        # Post-normalize experiments with L.
-        # Provide NO proxies for f(x0), f(x*), or f(x).
-        post_normalize(
-            experiments=experiments_same_problem,
-            n_postreps_init_opt=num_postnorms,
-        )
-        all_experiments.append(experiments_same_problem)
-        print("Done.")
-    print("All experiments completed.")
-    return all_experiments
-
-
-# %% [markdown]
 # ## Problem/Solver Configuration Parameters
 #
 # Define the problems and solvers used in the experiments.
@@ -146,15 +64,19 @@ def run_experiment(
 # Includes two versions of random search with varying sample sizes.
 # The rename will be used in the plots to differentiate them.
 solvers = [
-    SolverConfig(
-        name="RNDSRCH", rename="RNDSRCH_ss=10", fixed_factors={"sample_size": 10}
-    ),
-    SolverConfig(
-        name="RNDSRCH", rename="RNDSRCH_ss=50", fixed_factors={"sample_size": 50}
-    ),
-    SolverConfig(name="ASTRODF"),
-    SolverConfig(name="NELDMD"),
-    SolverConfig(name="STRONG"),
+    {
+        "name": "RNDSRCH",
+        "rename": "RNDSRCH_ss=10",
+        "fixed_factors": {"sample_size": 10},
+    },
+    {
+        "name": "RNDSRCH",
+        "rename": "RNDSRCH_ss=50",
+        "fixed_factors": {"sample_size": 50},
+    },
+    {"name": "ASTRODF"},
+    {"name": "NELDMD"},
+    {"name": "STRONG"},
 ]
 
 # %%
@@ -164,15 +86,15 @@ lead_means = [1.0, 3.0, 6.0, 9.0]
 
 # Create all the problem variants.
 SSCONT_problems = [
-    ProblemConfig(
-        name="SSCONT-1",
-        rename=f"SSCONT-1_dm={dm}_lm={lm}",
-        fixed_factors={"budget": 1000},
-        model_fixed_factors={
+    {
+        "name": "SSCONT-1",
+        "rename": f"SSCONT-1_dm={dm}_lm={lm}",
+        "fixed_factors": {"budget": 1000},
+        "model_fixed_factors": {
             "demand_mean": dm,
             "lead_mean": lm,
         },
-    )
+    }
     for dm in demand_means
     for lm in lead_means
 ]
@@ -181,6 +103,9 @@ SSCONT_problems = [
 SSCONT_experiments = run_experiment(
     problems=SSCONT_problems,
     solvers=solvers,
+    num_macroreps=num_macroreps,
+    num_postreps=num_postreps,
+    num_postnorms=num_postnorms,
 )
 
 # %%
@@ -205,15 +130,6 @@ experiments = list(experiment_dict.values())
 # Define the plotting settings for the experiments.
 
 # %%
-from simopt.experiment_base import (
-    PlotType,
-    plot_area_scatterplots,
-    plot_progress_curves,
-    plot_solvability_profiles,
-    plot_terminal_progress,
-    plot_terminal_scatterplots,
-)
-
 enable_confidence_intervals = True
 alpha = 0.2
 
