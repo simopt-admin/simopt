@@ -180,7 +180,7 @@ Model Factors
     * Default: [4, 4, 1, 1]
 * runtime: The number of seconds that the traffic model runs.
     * Default: 7200
-* numintersections: The number of intersections in the traffic model.
+* numintersections: The number of intersections in the traffic model. Can be changed depending on the desired scale of the traffic system.
     * Default: 4
 * decision_vector: Delay, in seconds, in light schedule based on distance from first intersection. The lenght of the list has to be 1 less than the number of intersections in the system.
     * Default: [1, 2, 3]
@@ -203,9 +203,9 @@ Model Factors
     * Default: 100
 * length_veins: The length in meters of vein roads between each intersection or node.
     * Default: 100
-* redlight_arteries : The length of redlight duration of artery roads in each intersection.
+* redlight_arteries : The length of redlight duration of artery roads in each intersection. The length of this list have to be equal to the number of intersections in the system.
     * Default: [10, 10, 10, 10]
-* redlight_veins : The length of redlight duration of vein roads in each intersection.
+* redlight_veins : The length of redlight duration of vein roads in each intersection. The length of this list have to be equal to the number of intersections in the system.
     * Default : [20, 20, 20, 20]
 * n_veins: The number of vein roads in the system.
     * Default: 2
