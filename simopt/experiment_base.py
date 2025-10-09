@@ -456,7 +456,7 @@ class ProblemSolver:
         # Strip trailing newline character.
         return "\n".join(error_messages)
 
-    def run(self, n_macroreps: int) -> None:
+    def run(self, n_macroreps: int, n_jobs: int = -1) -> None:
         """Runs the solver on the problem for a given number of macroreplications.
 
         Note:
@@ -465,6 +465,9 @@ class ProblemSolver:
 
         Args:
             n_macroreps (int): Number of macroreplications to run.
+            n_jobs (int, optional): Number of jobs to run in parallel. Defaults to -1.
+                -1: use all available cores
+                1: run sequentially
 
         Raises:
             ValueError: If `n_macroreps` is not positive.
@@ -510,9 +513,14 @@ class ProblemSolver:
         run_multithread_partial = partial(
             self.run_multithread, solver=self.solver, problem=self.problem
         )
-        results = Parallel()(
-            delayed(run_multithread_partial)(i) for i in range(n_macroreps)
-        )
+
+        if n_jobs == 1:
+            results = [run_multithread_partial(i) for i in range(n_macroreps)]
+        else:
+            results = Parallel(n_jobs=n_jobs)(
+                delayed(run_multithread_partial)(i) for i in range(n_macroreps)
+            )
+
         for mrep, recommended_xs, intermediate_budgets, timing in results:
             self.all_recommended_xs[mrep] = recommended_xs
             self.all_intermediate_budgets[mrep] = intermediate_budgets
