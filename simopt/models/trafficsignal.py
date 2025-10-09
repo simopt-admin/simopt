@@ -636,12 +636,12 @@ class TrafficLight(Model):
         all_positive = all(
             redlight > 0 for redlight in self.factors["redlight_arteries"]
         )
-        if not all_positive:
+        if not all_positive or len(self.factors["redlight_arteries"]) != self.factors["numintersections"]:
             raise ValueError("Redlight duration of arteries must be greater than 0.")
 
     def _check_redlight_veins(self) -> None:
         all_positive = all(redlight > 0 for redlight in self.factors["redlight_veins"])
-        if not all_positive:
+        if not all_positive or len(self.factors["redlight_veins"]) != self.factors["numintersections"]:
             raise ValueError("Redlight duration of veins must be greater than 0.")
 
     def _check_n_veins(self) -> None:
