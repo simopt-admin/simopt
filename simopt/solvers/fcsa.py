@@ -109,14 +109,14 @@ class FCSA(Solver):  # noqa: N801
             "crn_across_solns": self.check_crn_across_solns,  # type: ignore
             "r": self.check_r,
             "h": self.return_true,
-            "step_const": self.check_step_const,
             "step_mult": self.check_step_mult,
             "tolerance": self.return_true,
             "feas_const": self.check_feas_const,
             "search_direction": self.check_search_direction,
             "normalize_grads": self.return_true,
             "feas_score": self.check_feas_score,
-            "report_all_solns": self.return_true
+            "report_all_solns": self.return_true,
+            "step_type": self.check_step_type
         }
 
     """
@@ -127,8 +127,6 @@ class FCSA(Solver):  # noqa: N801
     def __init__(
         self, name: str = "FCSA", fixed_factors: dict | None = None
     ) -> None:
-        if fixed_factors is None:
-            fixed_factors = {"max_iters": 300}
 
         super().__init__(name, fixed_factors)
 
@@ -137,8 +135,8 @@ class FCSA(Solver):  # noqa: N801
         if self.factors["r"] <= 0:
             raise ValueError("Number of replications must be greater than 0.")
     
-    def check_step_const(self)-> None:
-        if self.factors["step_const"] not in ("const", "decay"):
+    def check_step_type(self)-> None:
+        if self.factors["step_type"] not in ("const", "decay"):
             raise ValueError("Step size type not supported. Choose 'const' or 'decay'.")
             
     def check_step_mult(self)-> None:
@@ -152,6 +150,7 @@ class FCSA(Solver):  # noqa: N801
     def check_search_direction(self) -> None:
         if self.factors["search_direction"] not in ("FCSA", "CSA-M", "CSA"):
             raise ValueError("Invalid search direction factor. Must be 'FCSA', 'CSA-M', or 'CSA'.")
+        
     def check_feas_score(self)-> None:
         if self.factors["feas_score"] <= 0:
             raise ValueError("Feasibility score must be a positive integer.")
@@ -454,7 +453,8 @@ class FCSA(Solver):  # noqa: N801
                         * new_solution.objectives_gradients_mean[0]
                     )
                     # normalize gradient
-                    grad = grad/np.linalg.norm(grad)
+                    if self.factors["normalize_grads"]:
+                        grad = grad/np.linalg.norm(grad)
                 else:
                     # Use finite difference to estimate gradient if IPA gradient is not available.
                     # grad, budget_spent = self.finite_diff(new_solution, problem, r, stepsize = alpha)
