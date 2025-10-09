@@ -461,7 +461,7 @@ class TrafficLight(Model):
                     "first intersection (intersection A in docs)."
                 ),
                 "datatype": list,
-                "default": [1.0, 2.0, 3.0],
+                "default": [1.0, 2.0, 3.0]
             },
             "speed": {
                 "description": "Constant speed in meter/second for the cars",
@@ -485,7 +485,7 @@ class TrafficLight(Model):
                     "from N, S, E and W."
                 ),
                 "datatype": list,
-                "default": [[0, 1, 2, 3], [1, 0, 2, 3], [1, 2, 0, 3], [1, 2, 3, 0]],
+                "default": [[0, 2, 1, 1], [2, 0, 1, 1], [2, 2, 0, 1], [2, 2, 1, 0]],
             },
             "pause": {
                 "description": "The pause (seconds) before move on a green light",
@@ -513,7 +513,7 @@ class TrafficLight(Model):
                     "each intersection"
                 ),
                 "datatype": list,
-                "default": [10, 10, 10, 10],
+                "default": [10, 10, 10, 10]
             },
             "redlight_veins": {
                 "description": (
@@ -590,7 +590,7 @@ class TrafficLight(Model):
 
     def _check_decision_vector(self) -> None:
         all_positive = all(value >= 0 for value in self.factors["decision_vector"])
-        if not all_positive:
+        if not all_positive or len(self.factors["decision_vector"]) != self.factors["numintersections"] - 1:
             raise ValueError(
                 "Decision vector values must be greater than or equal to 0."
             )
@@ -807,14 +807,27 @@ class TrafficLight(Model):
                         (1 / (transition_probs[0][1] + transition_probs[0][3]))
                         * transition_probs[0][3]
                     ) / count_west
+            
+            # LAST SOUTH
+            # lastN:
+            transition_matrix[n_vein + n_artery][n_artery - 1] = (
+                1 / (transition_probs[1][0] + transition_probs[1][2])
+            ) * transition_probs[1][0]
+            # East:
+            count_east = 0
+            for i in range(n_artery, (n_artery + n_vein)):
+                if i % 2 == 0:
+                    count_east += 1
+                    transition_matrix[n_artery + n_vein][i] = (
+                        (1 / (transition_probs[1][0] + transition_probs[1][2]))
+                        * transition_probs[1][2]
+                    ) / count_east
 
             # OTHER NORTH
             for j in range(1, n_artery):
                 # E:
-                count_east = 0
                 for i in range((n_artery), n_artery + n_vein - 1):
                     if i % 2 == 0:
-                        count_east += 1
                         transition_matrix[j][i] = (
                             (1 / transition_probs_sum[0]) * transition_probs[0][2]
                         ) / count_east
@@ -838,7 +851,7 @@ class TrafficLight(Model):
             # East:
             for i in range(n_artery, (n_artery + n_vein)):
                 if i % 2 == 0:
-                    transition_matrix[2 * n_artery][i] = (
+                    transition_matrix[n_artery + n_vein][i] = (
                         (1 / (transition_probs[1][0] + transition_probs[1][2]))
                         * transition_probs[1][2]
                     ) / count_east
@@ -867,7 +880,7 @@ class TrafficLight(Model):
 
             # EAST
             for j in range(n_artery + 1, n_artery + n_vein):
-                if j % 2 != 0:
+                if n_artery%2 == 0 and j % 2 != 0:
                     # N:
                     for i in range(0, n_artery):
                         transition_matrix[j][i] = (
@@ -886,6 +899,26 @@ class TrafficLight(Model):
                             transition_matrix[j][i] = (
                                 (1 / transition_probs_sum[2]) * transition_probs[2][3]
                             ) / count_west
+                else:
+                    if j%2 == 0:
+                        # N:
+                        for i in range(0, n_artery):
+                            transition_matrix[j][i] = (
+                                (1 / transition_probs_sum[2]) * transition_probs[2][0]
+                            ) / n_artery
+
+                        # S:
+                        for i in range(n_artery + n_vein, (2 * n_artery) + n_vein - 1):
+                            transition_matrix[j][i] = (
+                                (1 / transition_probs_sum[2]) * transition_probs[2][1]
+                            ) / (n_artery - 1)
+
+                        # W:
+                        for i in range((2 * n_artery) + n_vein, perimeter):
+                            if i % 2 == 0:
+                                transition_matrix[j][i] = (
+                                    (1 / transition_probs_sum[2]) * transition_probs[2][3]
+                                ) / count_west
 
             # WEST
             for j in range((2 * n_artery) + n_vein, perimeter):
@@ -1122,13 +1155,15 @@ class TrafficLight(Model):
             """
             path = None
             while path is None:
-                end = end_rng.choices(
-                    population=range(self.factors["nodes"]),
-                    weights=transition_matrix[start],
-                )[0]
-                start_str = points[start + self.factors["numintersections"]]
-                end_str = points[end + self.factors["numintersections"]]
-                path = find_shortest_path(graph, start_str, end_str)
+                weights = transition_matrix[start]
+                if sum(weights)!=0:
+                    end = end_rng.choices(
+                        population=range(self.factors["nodes"]),
+                        weights=transition_matrix[start],
+                    )[0]
+                    start_str = points[start + self.factors["numintersections"]]
+                    end_str = points[end + self.factors["numintersections"]]
+                    path = find_shortest_path(graph, start_str, end_str)
             return path
 
         def find_direction(start: str, end: str, roadmap: list[list[str]]) -> str:
@@ -1436,7 +1471,7 @@ class TrafficLight(Model):
             # The next event is a car being introduced to the system
             if next_event_time == min_prim_arrival:
                 t = min_prim_arrival
-                for i in range(12, 18):
+                for i in range(12, len(road_pair)):
                     roads[i].nextchange = t
 
                 car = cars[car_sim_index]
@@ -1458,7 +1493,9 @@ class TrafficLight(Model):
             # The next event is a light changing
             elif next_event_time == next_light_time:
                 t = next_light_time
-                for i in range(12, 18):
+                for i in range(len(road_pair) - len(exit_nodes(
+                    self.factors["n_veins"], self.factors["n_arteries"], roadmap
+                )), len(road_pair)):
                     roads[i].nextchange = t
                 # Roads that change lights at this time are updated
                 update_road_lights(t, roads)
@@ -1466,7 +1503,9 @@ class TrafficLight(Model):
             # The next event is a car starting to move
             elif next_event_time == next_start:
                 t = next_start
-                for i in range(12, 18):
+                for i in range(len(road_pair) - len(exit_nodes(
+                    self.factors["n_veins"], self.factors["n_arteries"], roadmap
+                )), len(road_pair)):
                     roads[i].nextchange = t
 
                 logging.debug(
@@ -1511,7 +1550,9 @@ class TrafficLight(Model):
             # The next event is a car arriving within the system
             elif next_event_time == next_sec_arrival:
                 t = next_sec_arrival
-                for i in range(12, 18):
+                for i in range(len(road_pair) - len(exit_nodes(
+                    self.factors["n_veins"], self.factors["n_arteries"], roadmap
+                )), len(road_pair)):
                     roads[i].nextchange = t
 
                 # Car is first in its queue
