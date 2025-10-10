@@ -8,7 +8,6 @@ The SimOpt testbed does not use testing in the traditional sense of verifying co
 Instead, testing is used to check experiment outputs against known results to ensure that changes to the code base do not inadvertently change results.
 This means that even though the tests may fail, it does not necessarily indicate a problem with the code.
 The tests are primarily intended for developers making changes to the code base.
-Non-developers of SimOpt should not need to run the tests, but they are welcome to do so if they wish.
 
 Testing Framework
 -----------------
@@ -24,7 +23,9 @@ Additionally, there are two test scripts of note: `experiment_test_core.py` and 
   Each test class inherits from a base class in `experiment_test_core.py` that contains the actual test methods.
   This design allows for easy addition of new test cases by simply adding a new YAML file to the `expected_results` directory.
 - `experiment_test_core.py` contains the base class and mixin class for the tests.
-  The base class sets up the experiment, while the mixin class contains the test methods that check the results of the experiment against the expected results.
+
+  - The `ExperimentTest` class is responsible for the common setup logic needed to run an experiment.
+  - The `ExperimentTestMixin` class contains the actual test methods that check the results. It's called a mixin because its sole purpose is to be "mixed in" with the base class to provide specific, reusable testing functionality without being a complete class on its own.
 
 Running Tests
 -------------
