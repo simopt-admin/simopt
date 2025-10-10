@@ -39,6 +39,7 @@ traffic patterns within a simplified urban environment.
     Cars are not allowed to turn left at intersections. 
 
 
+
 The ``lambdas`` parameter defines these arrival rates. 
 It is a list of 4 values specifying the Poisson rate parameters (`\lambda`) for car arrivals at each direction, listed in the following order:
 
@@ -217,8 +218,8 @@ Responses
 
 * AvgWaitTime: The average time each finished car spends in the system.
 * AvgWaitTimeOverTime: The average time spent in the system, mapped to the time (t) after the system starts.
-* SystemTime: The average time of the number of cars arriving the destination in the model
-* AvgQueueLen: The average queue length of the number of cars in the model 
+* SystemTime: The average time of the number of cars arriving the destination in the model.
+* AvgQueueLen: The average queue length of the number of cars in the model.
 * OverflowPercentage: The ratio of overflow time to total system time.
 * OverflowPercentageOver51: Whether the overflow time is larger than 51% of the total system time.
 
@@ -242,7 +243,7 @@ Decision Variables
 Objectives
 ^^^^^^^^^^
 
-Minimize average queueing time for each car in the system.
+Minimize average waiting time for each car in the system.
 
 Constraints
 ^^^^^^^^^^^
