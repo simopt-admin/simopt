@@ -40,7 +40,7 @@ traffic patterns within a simplified urban environment.
 
 
 
-The ``lambdas`` parameter defines these arrival rates. 
+The ``lambdas`` parameter defines the arrival rates. 
 It is a list of 4 values specifying the Poisson rate parameters (`\lambda`) for car arrivals at each direction, listed in the following order:
 
 .. table:: Lambda Index Mappings
@@ -62,7 +62,7 @@ It is a list of 4 values specifying the Poisson rate parameters (`\lambda`) for 
 Cars are not allowed to spawn at exit-only nodes (E1 and W2), so ``lambdas[2]`` and ``lambdas[3]`` must be less than the lambda values of the entry and exit nodes (N1, N2, S2, S2), so ``lambdas[0]`` and ``lambdas[1]``.
 To translate these direction lambdas into specific entry nodes, we add all the lambda values and divide each one by the total.
 
-The probability of selecting a given arrival direction (North, South, East or West), is proportional to its lambda value:
+The probability of selecting a given arrival node (N1, N2, S1, S2, E1, E2, W1, W2), is proportional to its lambda value:
 
 .. math::
     :label: eq_lambda_selection
