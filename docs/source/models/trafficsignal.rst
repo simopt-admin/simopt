@@ -9,8 +9,8 @@ Model: Traffic Signal
 Description
 ^^^^^^^^^^^
 
-This model simulates a traffic system composed of arrival and departure nodes, direction and bidirectional roads, and a series of intersections.
-A visual representation of this simplified traffic light roadmap, illustrating the flow of traffic within this structured network when the number of vein and artery road are both 2, is provided in this document.
+This model simulates a traffic system composed of arrival and departure nodes, directional and bidirectional roads, and a series of intersections.
+
  
 
 
@@ -20,7 +20,7 @@ The layout of the simplified traffic network is shown below:
    :alt: TrafficLight Roadmap
    :align: center
 
-The graph depicts a system with:
+The figure depicts a system with:
 
 * **6 Allowable Starting Nodes:** These nodes represent entry points into the road network: **N1, N2, E2, S2, S1, and W1**.
 * **6 Allowable Ending Nodes:** These nodes represent exit points from the road network: **N1, N2, E1, S2, S1, and W2**.
@@ -32,13 +32,35 @@ The road network consists of two distinct types of roads:
 * **Vein Roads (Horizontal):** Represented by **blue lines**, these **unidirectional** roads are smaller in capacity and primarily oriented horizontally.
 
 The arrows on the roads indicate the permitted direction of traffic flow.
-This roadmap is designed to help understand the fundamental structure and
+This roadmap is designed to help demonstrate the fundamental structure and
 traffic patterns within a simplified urban environment.
 
 .. note:: 
-    Cars are not allowed to turn left at intersections due to technical constraints of the model.
+    Cars are not allowed to turn left at intersections. 
 
-Each car enters the system through one of the designated arrival nodes. In the visual representation above, there are six arrival nodes.
+
+The ``lambdas`` parameter defines these arrival rates. 
+It is a list of 4 values specifying the Poisson rate parameters (`\lambda`) for car arrivals at each direction, listed in the following order:
+
+.. table:: Lambda Index Mappings
+    :align: center
+
+    +-------+------+----------+-------------------------+
+    | Index | Direction | Entrance | Default :math:`\lambda` |
+    +=======+======+==========+=========================+
+    | 0     | N         | ✓        | 4                       |
+    +-------+------+----------+-------------------------+
+    | 1     | S         | ✓        | 4                       |
+    +-------+------+----------+-------------------------+
+    | 2     | E         | ✓        | 1                       |
+    +-------+------+----------+-------------------------+
+    | 3     | W         | ✓        | 1                       |
+    +-------+------+----------+-------------------------+
+ 
+
+Cars are not allowed to spawn at exit-only nodes (E1 and W2), so ``lambdas[2]`` and ``lambdas[3]`` must be less than the lambda values of the entry and exit nodes (N1, N2, S2, S2), so ``lambdas[0]`` and ``lambdas[1]``.
+To translate these direction lambdas into specific entry nodes, we add all the lambda values and divide each one by the total.
+
 The probability of selecting a given arrival direction (North, South, East or West), is proportional to its lambda value:
 
 .. math::
@@ -67,36 +89,13 @@ The probability of selecting a given arrival direction (North, South, East or We
                         k+=1 }
     \text{ where } \lambda_i \text{ is the arrival rate for direction i.}
 
-The ``lambdas`` parameter defines these arrival rates.
-It is a list of 4 values specifying the Poisson rate parameters (`\lambda`) for car arrivals at each direction, listed in the following order:
 
-.. table:: Lambda Index Mappings
-    :align: center
-
-    +-------+------+----------+-------------------------+
-    | Index | Direction | Entrance | Default :math:`\lambda` |
-    +=======+======+==========+=========================+
-    | 0     | N         | ✓        | 4                       |
-    +-------+------+----------+-------------------------+
-    | 1     | S         | ✓        | 4                       |
-    +-------+------+----------+-------------------------+
-    | 2     | E         | ✓        | 1                       |
-    +-------+------+----------+-------------------------+
-    | 3     | W         | ✓        | 1                       |
-    +-------+------+----------+-------------------------+
- 
-
-Cars are not allowed to spawn at exit-only nodes (E1 and W2), so ``lambdas[2]`` and ``lambdas[3]`` must be set to ``1``.
-To translate these direction lambdas into specific entry nodes, we add all the lambda values and devide each one by the total. Then devide the result by the number of entering nodes in each direction and assign the result to its respective node.
 In this example the resulting lambda would be: 
 
-[0.2, 0.2, 0.2, 0.2, 0, 0.1, 0.1, 0], in this respective node order: [N1, N2, S2, S1, E1, E2, W2, W1].
-
-
-The car generation rates at vein (E2 and W1) must not exceed the arrival rates at any of the artery entry points (N1, N2, S1, S2).
+[0.2, 0.2, 0.2, 0.2, 0, 0.1, 0.1, 0], in this respective node order: [N1, N2, S2, S1, E1, E2, W2, W1]. The nodes with value of 0 are the exit only nodes.
 
 For each arriving car, the lambda value associated with the selected entry node determines the distribution of interarrival times.
-Once a car enters the system, it is randomly assigned a destination node based on a weighted transition matrix inputed by the user.
+Once a car enters the system, it is randomly assigned a destination node based on a weighted transition matrix input by the user.
 
 Each entry in this matrix represents a *relative weight* indicating how likely a car is to travel from one direction to another.
 Larger weights increase the chances of selecting that path, but the values do not need to sum to 1.
@@ -128,7 +127,7 @@ These values act as **weights** rather than strict probabilities, and are normal
 
 
 For example, if a car enters from north and we want to calculate the probability of it going east, first we divide the number from the north column and east row of the node transition weight matrix, which in this example is 1, by the sum of all the values in the north row, which in this case is (2+1+1=4), resulting in a probability of 0.25 or 25%.
-Then, we devide this number by the total of exit roads in the east direction, which when having 2 vein roads, is 1.
+Then, we divide this number by the total of exit roads in the east direction, which when having 2 vein roads, is 1.
 Then we assing the value of 25% to the cell in the N2 row and E1 column. 
 
 
@@ -162,7 +161,7 @@ For example, given the default values in the transition weight matrix, the resul
    +------------+------+-----+-----+-----+-----+-----+-----+-----+
 
 
-Each vehicle finds the shortest available path to its destination using the current road network. The traffic system opens at 8:00 AM and closes at 10:00 AM. Time is measured in seconds. When the system closes, any remaining cars in the queue exit immediately.
+Each vehicle finds the shortest available path to its destination using the road network. The traffic network opens at 8:00 AM and closes at 10:00 AM. Time is measured in seconds. When the network closes, any remaining cars in the queue exit immediately.
 
 Sources of Randomness
 ^^^^^^^^^^^^^^^^^^^^^
@@ -171,7 +170,7 @@ There are 3 sources of randomness in this model:
 
 1. Randomized selection of the **arrival node** for each car (see Equation :eq:`eq_lambda_selection`).
 2. The arrival time of the **first car** is fixed at 1 second. The arrival times of subsequent cars follow an exponential distribution with rate parameter :math:`\lambda_i`, where *i* is the index of the arrival node selected for the **previous** car.
-3. The probability for each node to selected as the destination for cars from different arrival nodes (see above).
+3. The probability for each node to be selected as the destination for cars from different arrival nodes (see above).
 
 Model Factors
 ^^^^^^^^^^^^^
