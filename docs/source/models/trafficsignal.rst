@@ -182,7 +182,7 @@ Model Factors
     * Default: 7200
 * numintersections: The number of intersections in the traffic model. Can be changed depending on the desired scale of the traffic system.
     * Default: 4
-* decision_vector: Delay, in seconds, in light schedule based on distance from first intersection. The lenght of the list has to be 1 less than the number of intersections in the system.
+* offset: Delay, in seconds, in light schedule based on distance from first intersection. The lenght of the list has to be 1 less than the number of intersections in the system.
     * Default: [1, 2, 3]
 * speed: Constant speed in meter/second for the cars.
     * Default: 5
@@ -238,7 +238,7 @@ Optimization Problem: Minimize Waiting Time (MinWaitingTime-1)
 Decision Variables
 ^^^^^^^^^^^^^^^^^^
 
-* decision_vector
+* offset
 
 Objectives
 ^^^^^^^^^^
