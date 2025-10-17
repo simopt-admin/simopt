@@ -449,13 +449,7 @@ class TrafficLight(Model):
                 "datatype": int,
                 "default": 7200,
             },
-            "numintersections": {
-                "description": "The number of intersections in the traffic model",
-                "datatype": int,
-                "default": 4,
-                "isDatafarmable": False,
-            },
-            "decision_vector": {
+            "offset": {
                 "description": (
                     "Delay (seconds) in light schedule based on distance from "
                     "first intersection (intersection A in docs)."
@@ -532,11 +526,6 @@ class TrafficLight(Model):
                 "datatype": int,
                 "default": 2,
             },
-            "nodes": {
-                "description": ("The number of nodes in the system"),
-                "datatype": int,
-                "default": 8,
-            },
         }
 
     @property
@@ -545,8 +534,7 @@ class TrafficLight(Model):
         return {
             "runtime": self._check_runtime,
             "lambdas": self._check_lambdas,
-            "numintersections": self._check_numintersections,
-            "decision_vector": self._check_decision_vector,
+            "offset": self._check_offset,
             "speed": self._check_speed,
             "carlength": self._check_carlength,
             "reaction": self._check_reaction,
@@ -559,7 +547,6 @@ class TrafficLight(Model):
             "redlight_veins": self._check_redlight_veins,
             "n_veins": self._check_n_veins,
             "n_arteries": self._check_n_arteries,
-            "nodes": self._check_nodes,
         }
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -584,13 +571,9 @@ class TrafficLight(Model):
         if self.factors["runtime"] <= 0:
             raise ValueError("Runtime must be greater than 0.")
 
-    def _check_numintersections(self) -> None:
-        if self.factors["numintersections"] <= 0:
-            raise ValueError("Number of intersections must be greater than 0.")
-
-    def _check_decision_vector(self) -> None:
-        all_positive = all(value >= 0 for value in self.factors["decision_vector"])
-        if not all_positive or len(self.factors["decision_vector"]) != self.factors["numintersections"] - 1:
+    def _check_offset(self) -> None:
+        all_positive = all(value >= 0 for value in self.factors["offset"])
+        if not all_positive:
             raise ValueError(
                 "Decision vector values must be greater than or equal to 0."
             )
@@ -636,12 +619,12 @@ class TrafficLight(Model):
         all_positive = all(
             redlight > 0 for redlight in self.factors["redlight_arteries"]
         )
-        if not all_positive or len(self.factors["redlight_arteries"]) != self.factors["numintersections"]:
+        if not all_positive:
             raise ValueError("Redlight duration of arteries must be greater than 0.")
 
     def _check_redlight_veins(self) -> None:
         all_positive = all(redlight > 0 for redlight in self.factors["redlight_veins"])
-        if not all_positive or len(self.factors["redlight_veins"]) != self.factors["numintersections"]:
+        if not all_positive:
             raise ValueError("Redlight duration of veins must be greater than 0.")
 
     def _check_n_veins(self) -> None:
@@ -652,21 +635,20 @@ class TrafficLight(Model):
         if self.factors["n_arteries"] <= 0:
             raise ValueError("Number of arteries must be greater than 0.")
 
-    def _check_nodes(self) -> None:
-        if self.factors["nodes"] != (2 * self.factors["n_veins"]) + (
-            2 * self.factors["n_arteries"]
-        ):
-            raise ValueError(
-                "Number of nodes must be equal to "
-                "(2 * number of veins) + (2 * number of arteries)."
-            )
 
     @override
     def check_simulatable_factors(self) -> bool:
-        if len(self.factors["decision_vector"]) != self.factors["numintersections"] - 1:
+        if len(self.factors["offset"]) != (self.factors['n_veins'] * self.factors['n_arteries']) - 1:
             raise ValueError(
                 "Decision vectors must be equal to the number of intersections - 1."
             )
+        
+        if len(self.factors["redlight_arteries"]) != (self.factors['n_veins'] * self.factors['n_arteries']):
+            raise ValueError("Redlight duration of arteries must be greater than 0.")
+        
+        if len(self.factors["redlight_veins"]) != (self.factors['n_veins'] * self.factors['n_arteries']):
+            raise ValueError("Redlight duration of veins must be greater than 0.")
+
         return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
@@ -776,7 +758,7 @@ class TrafficLight(Model):
             return offset
 
         self.factors["offset"] = offset(
-            self.factors["decision_vector"],
+            self.factors["offset"],
             self.factors["redlight_veins"],
             self.factors["n_arteries"],
             self.factors["n_veins"],
@@ -1052,7 +1034,7 @@ class TrafficLight(Model):
         pairs_to_swap = []
         # Generate S pairs to swap
         s_start = (
-            self.factors["numintersections"]
+            (self.factors['n_veins'] * self.factors['n_arteries'])
             + self.factors["n_arteries"]
             + self.factors["n_veins"]
         )
@@ -1061,7 +1043,7 @@ class TrafficLight(Model):
             pairs_to_swap.append((s_start + i, s_end - i))
         # Generate W pairs to swap
         w_start = (
-            self.factors["numintersections"]
+            (self.factors['n_veins'] * self.factors['n_arteries'])
             + 2 * self.factors["n_arteries"]
             + self.factors["n_veins"]
         )
@@ -1158,12 +1140,14 @@ class TrafficLight(Model):
                 weights = transition_matrix[start]
                 if sum(weights)!=0:
                     end = end_rng.choices(
-                        population=range(self.factors["nodes"]),
+                        population=range((2 * self.factors["n_veins"]) + (2 * self.factors["n_arteries"])),
                         weights=transition_matrix[start],
                     )[0]
-                    start_str = points[start + self.factors["numintersections"]]
-                    end_str = points[end + self.factors["numintersections"]]
+                    start_str = points[start + (self.factors['n_veins'] * self.factors['n_arteries'])]
+                    end_str = points[end + (self.factors['n_veins'] * self.factors['n_arteries'])]
                     path = find_shortest_path(graph, start_str, end_str)
+            
+            print(path)
             return path
 
         def find_direction(start: str, end: str, roadmap: list[list[str]]) -> str:
@@ -1263,7 +1247,7 @@ class TrafficLight(Model):
             if endpoint in labels:
                 indices = np.where(endpoint == start_points)[0]
                 for i in indices:
-                    if i < self.factors["numintersections"] * 3:
+                    if i < (self.factors['n_veins'] * self.factors['n_arteries']) * 3:
                         turn = find_turn(road.direction + roads[i].direction)
                         if turn != "Left":
                             roads[i].incoming_roads.append(road)
@@ -1286,8 +1270,8 @@ class TrafficLight(Model):
 
         # Generates list of all intersection objects
         intersections = []
-        decision_vectors: list[float] = self.factors["decision_vector"]
-        for i in range(self.factors["numintersections"]):
+        decision_vectors: list[float] = self.factors["offset"]
+        for i in range(self.factors['n_veins'] * self.factors['n_arteries']):
             location = points[i]
             intersections.append(Intersection(location, roads))
             offset = 0 if i == 0 else decision_vectors[i - 1]
@@ -1298,7 +1282,7 @@ class TrafficLight(Model):
         greenlight_arteries = self.factors["redlight_veins"]
         greenlight_veins = self.factors["redlight_arteries"]
 
-        for roadid in range(3 * self.factors["numintersections"]):
+        for roadid in range(3 * self.factors['n_veins'] * self.factors['n_arteries']):
             offset = self.factors["offset"][roadid]
             road = roads[roadid]
             ind = labels.index(road.endpoint)
@@ -1339,7 +1323,7 @@ class TrafficLight(Model):
 
             mintimechange: float = self.factors["runtime"]
             # Loops through roads to find a minimum light changing time
-            for road in roads[: 3 * self.factors["numintersections"]]:
+            for road in roads[: 3 * self.factors['n_veins'] * self.factors['n_arteries']]:
                 nextchange = min([i for i in road.schedule if i > t])
                 if nextchange <= mintimechange:
                     mintimechange = nextchange
@@ -1353,10 +1337,10 @@ class TrafficLight(Model):
                 roads (list[Road]): list of all intersection objects
             """
             if t == 0:
-                nextlightlocation = roads[: 3 * self.factors["numintersections"]]
+                nextlightlocation = roads[: 3 * self.factors['n_veins'] * self.factors['n_arteries']]
             else:
                 nextlightlocation: list[Road] = []
-                for road in roads[: 3 * self.factors["numintersections"]]:
+                for road in roads[: 3 * self.factors['n_veins'] * self.factors['n_arteries']]:
                     if t in road.schedule:
                         nextlightlocation.append(road)
             for road in nextlightlocation:
@@ -1364,7 +1348,7 @@ class TrafficLight(Model):
                 road.nextchange = min(i for i in road.schedule if i > t)
             status = []
             nextc = []
-            for road in roads[: 3 * self.factors["numintersections"]]:
+            for road in roads[: 3 * self.factors['n_veins'] * self.factors['n_arteries']]:
                 light_status = "Green" if road.status else "Red"
                 status.append(light_status)
                 nextc.append(road.nextchange)
@@ -1385,7 +1369,7 @@ class TrafficLight(Model):
             initialarrival = t + arrival_rng.expovariate(lambda_sum)
             # Determine arrival location of next car
             start = start_rng.choices(
-                population=range(self.factors["nodes"]), weights=start_prob
+                population=range((2 * self.factors["n_veins"]) + (2 * self.factors["n_arteries"])), weights=start_prob
             )[0]
             visits = generate_path(start)
             while visits is None or len(visits) == 1:
@@ -1659,7 +1643,7 @@ class TrafficLight(Model):
 
             # record queue length of each road and update overflow status
             overflow_total[t] = 0
-            for roadid in range(3 * self.factors["numintersections"]):
+            for roadid in range(3 * self.factors['n_veins'] * self.factors['n_arteries']):
                 # num of cars in queue
                 cars_in_queue = sum([x != 0 for x in roads[roadid].queue])
                 # queue length =
@@ -1682,7 +1666,7 @@ class TrafficLight(Model):
             #   1. cars in incoming roads cannot get in
             #   2. calculated oveflow len
             current_overflow_len = []
-            for roadid in range(3 * self.factors["numintersections"]):
+            for roadid in range(3 * self.factors['n_veins'] * self.factors['n_arteries']):
                 if roads[roadid].overflow and len(roads[roadid].incoming_roads) > 0:
                     # calculate oeverflow queue lenth
                     overflow_queue = [
@@ -1740,7 +1724,7 @@ class TrafficLight(Model):
         avg_queue_length = 0
         overflow_percentage = []
         overflow_avg_len = []
-        for roadid in range(3 * self.factors["numintersections"]):
+        for roadid in range(3 * self.factors['n_veins'] * self.factors['n_arteries']):
             # use dictionary to get list of t and queue_len
             # (t - t-1)*queue_len/max(t)
             queue_len = list(roads[roadid].queue_hist.values())
@@ -1793,7 +1777,7 @@ class TrafficLight(Model):
             overflow_avg_len_system = overflow_system_len / overflow_system_duration
 
         # average queue
-        avg_queue_length = avg_queue_length / 3 * self.factors["numintersections"]
+        avg_queue_length = avg_queue_length / 3 * self.factors['n_veins'] * self.factors['n_arteries']
 
         avg_total = total_waiting / (len(cars) if cars else 0)
 
@@ -1875,7 +1859,7 @@ class MinWaitingTime(Problem):
     @classproperty
     @override
     def model_decision_factors(cls) -> set[str]:
-        return {"decision_vector"}
+        return {"offset"}
 
     @classproperty
     @override
@@ -1945,12 +1929,12 @@ class MinWaitingTime(Problem):
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
-        return {"decision_vector": vector}
+        return {"offset": vector}
 
     @override
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         # TODO: change this to decision variable
-        return tuple(factor_dict["decision_vector"])
+        return tuple(factor_dict["offset"])
 
     @override
     def response_dict_to_objectives(self, response_dict: dict) -> tuple:
