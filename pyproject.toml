@@ -33,6 +33,7 @@ dependencies = [
     "joblib>=1.5.1",
     "pydantic>=2.11.7",
     "boltons>=25.0.0",
+    "cvxpy>=1.7.3",
 ]
 
 [project.optional-dependencies]

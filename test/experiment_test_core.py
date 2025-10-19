@@ -19,6 +19,7 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import yaml
 
 from simopt.experiment_base import ProblemSolver, post_normalize
@@ -55,6 +56,7 @@ class ExperimentTest(unittest.TestCase):
             "all_intermediate_budgets"
         ]
         self.expected_all_est_objectives = expected_results["all_est_objectives"]
+        self.expected_all_est_lhs = expected_results.get("all_est_lhs", [])
         self.expected_objective_curves = expected_results["objective_curves"]
         self.expected_progress_curves = expected_results["progress_curves"]
 
@@ -190,6 +192,24 @@ class ExperimentTestMixin:
                     f"Estimated objectives do not match",
                 )
 
+            self.assertEqual(
+                len(self.myexperiment.all_est_lhs),
+                len(self.expected_all_est_lhs),
+                f"[{ps_names} | {mrep}] Length of `all_est_lhs` do not match",
+            )
+
+            if len(self.myexperiment.all_est_lhs) == 0:
+                continue
+
+            est_lhs = self.myexperiment.all_est_lhs[mrep]
+            expected_est_lhs = self.expected_all_est_lhs[mrep]
+            self.assertEqual(
+                len(est_lhs),
+                len(expected_est_lhs),
+                f"[{ps_names} | {mrep}] Length of `est_lhs` do not match",
+            )
+            assert np.allclose(est_lhs, expected_est_lhs)
+
     def test_post_normalize(self: Any) -> None:
         """Test the post_normalize method of the experiment."""
         ps_names = f"{self.expected_problem_name} | {self.expected_solver_name}"
@@ -204,6 +224,7 @@ class ExperimentTestMixin:
             self.expected_all_intermediate_budgets
         )
         self.myexperiment.all_est_objectives = self.expected_all_est_objectives
+        self.myexperiment.all_est_lhs = self.expected_all_est_lhs
         self.myexperiment.has_run = True
         self.myexperiment.has_postreplicated = True
         # Check actual post-normalization results against expected

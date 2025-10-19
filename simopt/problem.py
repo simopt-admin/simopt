@@ -99,6 +99,24 @@ class StochasticConstraint:
         """Return the total constraint value (stochastic + deterministic if present)."""
         return self.stochastic + self.deterministic
 
+    def grad(self) -> np.ndarray | None:
+        """Return the combined gradients of both components, or None if unavailable."""
+        match self.stochastic_gradients, self.deterministic_gradients:
+            case None, None:
+                return None
+            case None, _:
+                return _to_grad_array(self.deterministic_gradients)  # pyrefly: ignore
+            case _, None:
+                return _to_grad_array(self.stochastic_gradients)  # pyrefly: ignore
+            case _, _:
+                stochastic_gradients = _to_grad_array(
+                    self.stochastic_gradients  # pyrefly: ignore
+                )
+                deterministic_gradients = _to_grad_array(
+                    self.deterministic_gradients  # pyrefly: ignore
+                )
+                return stochastic_gradients + deterministic_gradients
+
 
 class RepResult:
     """Container for results from a single simulation replication."""
@@ -537,6 +555,21 @@ class Solution:
         cov = np.cov(self.stoch_constraints[: self.n_reps], rowvar=False, ddof=1)
         return np.round(cov, 15)
 
+    @property
+    def stoch_constraints_gradients(self) -> np.ndarray:
+        """Gradients of stochastic constraints."""
+        if not self._stoch_constraints_gradients:
+            return np.array([])
+        return np.array(self._stoch_constraints_gradients)
+
+    @property
+    def stoch_constraints_gradients_mean(self) -> np.ndarray:
+        """Mean of gradients of stochastic constraints."""
+        if not self._stoch_constraints_gradients:
+            return np.array([])
+        mean = np.mean(self.stoch_constraints_gradients[: self.n_reps], axis=0)
+        return np.round(mean, 15)
+
     # TODO: implement these properties
     # self.stoch_constraints_gradients_mean = np.mean(
     #     self.stoch_constraints_gradients[: self.n_reps], axis=0
@@ -650,3 +683,13 @@ class Solution:
                 np.array([constraint.value() for constraint in stochastic_constraints])
             )
             self._stoch_constraints_array = None
+
+            gradients = []
+            for constraint in stochastic_constraints:
+                grad = constraint.grad()
+                if grad is None:
+                    grad = np.zeros(self.dim)
+                gradients.append(grad)
+            gradients = np.array(gradients)
+            self._stoch_constraints_gradients.append(gradients)
+            self._stoch_constraints_gradients_array = None

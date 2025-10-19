@@ -9,7 +9,7 @@ all_est_lhs:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
     - 5
   - &id002 !!python/object/apply:numpy.dtype
     args:
@@ -28,8 +28,7 @@ all_est_lhs:
   - false
   - !!binary |
     cBSuR+F6xL9EuB6F61HIv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv3AUrkfhesS/RLgehetRyL+M
-    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb9wFK5H4XrEv0S4HoXrUci/jJmZmZmZyb+MmZmZmZnJv4yZ
-    mZmZmcm/
+    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb8=
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -40,14 +39,13 @@ all_est_lhs:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
     - 5
   - *id002
   - false
   - !!binary |
     t/UoXI/Cxb+MmZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv7f1KFyPwsW/jJmZmZmZyb+M
-    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+39Shcj8LFv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv4yZ
-    mZmZmcm/
+    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb8=
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -58,14 +56,13 @@ all_est_lhs:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
     - 5
   - *id002
   - false
   - !!binary |
     tvUoXI/Cxb+MmZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv7b1KFyPwsW/jJmZmZmZyb+M
-    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+29Shcj8LFv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv4yZ
-    mZmZmcm/
+    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb8=
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -76,14 +73,13 @@ all_est_lhs:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
     - 5
   - *id002
   - false
   - !!binary |
     m3A9CtejwL+MmZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv5twPQrXo8C/jJmZmZmZyb+M
-    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+bcD0K16PAv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv4yZ
-    mZmZmcm/
+    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb8=
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -94,14 +90,13 @@ all_est_lhs:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
     - 5
   - *id002
   - false
   - !!binary |
     LDMzMzMzw7+MmZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJvywzMzMzM8O/jJmZmZmZyb+M
-    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb8sMzMzMzPDv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv4yZ
-    mZmZmcm/
+    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb8=
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -112,14 +107,13 @@ all_est_lhs:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
     - 5
   - *id002
   - false
   - !!binary |
     RLgehetRyL+MmZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv0S4HoXrUci/jJmZmZmZyb+M
-    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb9EuB6F61HIv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv4yZ
-    mZmZmcm/
+    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb8=
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -130,14 +124,13 @@ all_est_lhs:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
     - 5
   - *id002
   - false
   - !!binary |
     tPUoXI/Cxb9EuB6F61HIv0S4HoXrUci/RLgehetRyL+MmZmZmZnJv7T1KFyPwsW/RLgehetRyL9E
-    uB6F61HIv0S4HoXrUci/jJmZmZmZyb+09Shcj8LFv0S4HoXrUci/RLgehetRyL9EuB6F61HIv4yZ
-    mZmZmcm/
+    uB6F61HIv0S4HoXrUci/jJmZmZmZyb8=
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -148,14 +141,13 @@ all_est_lhs:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
     - 5
   - *id002
   - false
   - !!binary |
     /NajcD0Kx7+MmZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv/zWo3A9Cse/jJmZmZmZyb+M
-    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb/81qNwPQrHv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv4yZ
-    mZmZmcm/
+    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb8=
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -166,14 +158,13 @@ all_est_lhs:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
     - 5
   - *id002
   - false
   - !!binary |
     tPUoXI/Cxb+MmZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv7T1KFyPwsW/jJmZmZmZyb+M
-    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+09Shcj8LFv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv4yZ
-    mZmZmcm/
+    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb8=
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -184,14 +175,13 @@ all_est_lhs:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 4
+    - 2
     - 5
   - *id002
   - false
   - !!binary |
     uPUoXI/Cxb+MmZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+MmZmZmZnJv7j1KFyPwsW/jJmZmZmZyb+M
-    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb+49Shcj8LFv4yZmZmZmcm/jJmZmZmZyb/zKFyPwvXYP3IU
-    rkfheoS/uPUoXI/Cxb+MmZmZmZnJv4yZmZmZmcm/8yhcj8L12D9yFK5H4XqEvw==
+    mZmZmZnJv4yZmZmZmcm/jJmZmZmZyb8=
 all_est_objectives:
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
@@ -203,11 +193,11 @@ all_est_objectives:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
   - *id002
   - false
   - !!binary |
-    AAAAAAAAFEAAAAAAAAAQQAAAAAAAABBA
+    AAAAAAAAFEAAAAAAAAAUQA==
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -218,11 +208,11 @@ all_est_objectives:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
   - *id002
   - false
   - !!binary |
-    AAAAAAAAFEAAAAAAAAAQQAAAAAAAABBA
+    AAAAAAAAFEAAAAAAAAAUQA==
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -233,11 +223,11 @@ all_est_objectives:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
   - *id002
   - false
   - !!binary |
-    AAAAAAAAFEAAAAAAAAAQQAAAAAAAABBA
+    AAAAAAAAFEAAAAAAAAAUQA==
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -248,11 +238,11 @@ all_est_objectives:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
   - *id002
   - false
   - !!binary |
-    AAAAAAAAFEAAAAAAAAAQQAAAAAAAABBA
+    AAAAAAAAFEAAAAAAAAAUQA==
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -263,11 +253,11 @@ all_est_objectives:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
   - *id002
   - false
   - !!binary |
-    AAAAAAAAFEAAAAAAAAAQQAAAAAAAABBA
+    AAAAAAAAFEAAAAAAAAAUQA==
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -278,11 +268,11 @@ all_est_objectives:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
   - *id002
   - false
   - !!binary |
-    AAAAAAAAFEAAAAAAAAAQQAAAAAAAABBA
+    AAAAAAAAFEAAAAAAAAAUQA==
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -293,11 +283,11 @@ all_est_objectives:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
   - *id002
   - false
   - !!binary |
-    AAAAAAAAFEAAAAAAAAAQQAAAAAAAABBA
+    AAAAAAAAFEAAAAAAAAAUQA==
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -308,11 +298,11 @@ all_est_objectives:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
   - *id002
   - false
   - !!binary |
-    AAAAAAAAFEAAAAAAAAAQQAAAAAAAABBA
+    AAAAAAAAFEAAAAAAAAAUQA==
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -323,11 +313,11 @@ all_est_objectives:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 3
+    - 2
   - *id002
   - false
   - !!binary |
-    AAAAAAAAFEAAAAAAAAAQQAAAAAAAABBA
+    AAAAAAAAFEAAAAAAAAAUQA==
 - !!python/object/apply:numpy._core.multiarray._reconstruct
   args:
   - *id001
@@ -338,42 +328,31 @@ all_est_objectives:
   state: !!python/tuple
   - 1
   - !!python/tuple
-    - 4
+    - 2
   - *id002
   - false
   - !!binary |
-    AAAAAAAAFEAAAAAAAAAQQAAAAAAAAAhAAAAAAAAACEA=
+    AAAAAAAAFEAAAAAAAAAUQA==
 all_intermediate_budgets:
-- - 0
-  - 350
+- - 30
   - 10000
-- - 0
-  - 50
+- - 30
   - 10000
-- - 0
-  - 460
+- - 30
   - 10000
-- - 0
-  - 110
+- - 30
   - 10000
-- - 0
-  - 1050
+- - 30
   - 10000
-- - 0
-  - 1310
+- - 30
   - 10000
-- - 0
-  - 680
+- - 30
   - 10000
-- - 0
-  - 340
+- - 30
   - 10000
-- - 0
-  - 600
+- - 30
   - 10000
-- - 0
-  - 120
-  - 240
+- - 30
   - 10000
 all_recommended_xs:
 - - !!python/tuple
@@ -383,13 +362,7 @@ all_recommended_xs:
     - 1.0
     - 1.0
   - !!python/tuple
-    - 0.0
     - 1.0
-    - 1.0
-    - 1.0
-    - 1.0
-  - !!python/tuple
-    - 0.0
     - 1.0
     - 1.0
     - 1.0
@@ -401,13 +374,7 @@ all_recommended_xs:
     - 1.0
     - 1.0
   - !!python/tuple
-    - 0.0
     - 1.0
-    - 1.0
-    - 1.0
-    - 1.0
-  - !!python/tuple
-    - 0.0
     - 1.0
     - 1.0
     - 1.0
@@ -419,13 +386,7 @@ all_recommended_xs:
     - 1.0
     - 1.0
   - !!python/tuple
-    - 0.0
     - 1.0
-    - 1.0
-    - 1.0
-    - 1.0
-  - !!python/tuple
-    - 0.0
     - 1.0
     - 1.0
     - 1.0
@@ -437,13 +398,7 @@ all_recommended_xs:
     - 1.0
     - 1.0
   - !!python/tuple
-    - 0.0
     - 1.0
-    - 1.0
-    - 1.0
-    - 1.0
-  - !!python/tuple
-    - 0.0
     - 1.0
     - 1.0
     - 1.0
@@ -455,13 +410,7 @@ all_recommended_xs:
     - 1.0
     - 1.0
   - !!python/tuple
-    - 0.0
     - 1.0
-    - 1.0
-    - 1.0
-    - 1.0
-  - !!python/tuple
-    - 0.0
     - 1.0
     - 1.0
     - 1.0
@@ -473,13 +422,7 @@ all_recommended_xs:
     - 1.0
     - 1.0
   - !!python/tuple
-    - 0.0
     - 1.0
-    - 1.0
-    - 1.0
-    - 1.0
-  - !!python/tuple
-    - 0.0
     - 1.0
     - 1.0
     - 1.0
@@ -491,13 +434,7 @@ all_recommended_xs:
     - 1.0
     - 1.0
   - !!python/tuple
-    - 0.0
     - 1.0
-    - 1.0
-    - 1.0
-    - 1.0
-  - !!python/tuple
-    - 0.0
     - 1.0
     - 1.0
     - 1.0
@@ -509,13 +446,7 @@ all_recommended_xs:
     - 1.0
     - 1.0
   - !!python/tuple
-    - 0.0
     - 1.0
-    - 1.0
-    - 1.0
-    - 1.0
-  - !!python/tuple
-    - 0.0
     - 1.0
     - 1.0
     - 1.0
@@ -527,13 +458,7 @@ all_recommended_xs:
     - 1.0
     - 1.0
   - !!python/tuple
-    - 0.0
     - 1.0
-    - 1.0
-    - 1.0
-    - 1.0
-  - !!python/tuple
-    - 0.0
     - 1.0
     - 1.0
     - 1.0
@@ -545,210 +470,154 @@ all_recommended_xs:
     - 1.0
     - 1.0
   - !!python/tuple
-    - 0.0
     - 1.0
     - 1.0
     - 1.0
     - 1.0
-  - !!python/tuple
-    - 0.0
-    - 1.0
-    - 1.0
-    - 0.0
-    - 1.0
-  - !!python/tuple
-    - 0.0
-    - 1.0
-    - 1.0
-    - 0.0
     - 1.0
 num_macroreps: 10
 num_postreps: 100
 objective_curves:
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 350.0
+    - 30.0
     - 10000.0
   - !!python/tuple
     - 5.0
-    - 4.0
-    - 4.0
+    - 5.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 50.0
+    - 30.0
     - 10000.0
   - !!python/tuple
     - 5.0
-    - 4.0
-    - 4.0
+    - 5.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 460.0
+    - 30.0
     - 10000.0
   - !!python/tuple
     - 5.0
-    - 4.0
-    - 4.0
+    - 5.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 110.0
+    - 30.0
     - 10000.0
   - !!python/tuple
     - 5.0
-    - 4.0
-    - 4.0
+    - 5.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 1050.0
+    - 30.0
     - 10000.0
   - !!python/tuple
     - 5.0
-    - 4.0
-    - 4.0
+    - 5.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 1310.0
+    - 30.0
     - 10000.0
   - !!python/tuple
     - 5.0
-    - 4.0
-    - 4.0
+    - 5.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 680.0
+    - 30.0
     - 10000.0
   - !!python/tuple
     - 5.0
-    - 4.0
-    - 4.0
+    - 5.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 340.0
+    - 30.0
     - 10000.0
   - !!python/tuple
     - 5.0
-    - 4.0
-    - 4.0
+    - 5.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 600.0
+    - 30.0
     - 10000.0
   - !!python/tuple
     - 5.0
-    - 4.0
-    - 4.0
+    - 5.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 120.0
-    - 240.0
+    - 30.0
     - 10000.0
   - !!python/tuple
     - 5.0
-    - 4.0
-    - 3.0
-    - 3.0
-problem_name: CONTAM-1
+    - 5.0
+problem_name: CONTAM-2
 progress_curves:
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 0.035
+    - 0.003
     - 1.0
   - !!python/tuple
-    - 1.0
     - 0.0
     - 0.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 0.005
+    - 0.003
     - 1.0
   - !!python/tuple
-    - 1.0
     - 0.0
     - 0.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 0.046
+    - 0.003
     - 1.0
   - !!python/tuple
-    - 1.0
     - 0.0
     - 0.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 0.011
+    - 0.003
     - 1.0
   - !!python/tuple
-    - 1.0
     - 0.0
     - 0.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 0.105
+    - 0.003
     - 1.0
   - !!python/tuple
-    - 1.0
     - 0.0
     - 0.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 0.131
+    - 0.003
     - 1.0
   - !!python/tuple
-    - 1.0
     - 0.0
     - 0.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 0.068
+    - 0.003
     - 1.0
   - !!python/tuple
-    - 1.0
     - 0.0
     - 0.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 0.034
+    - 0.003
     - 1.0
   - !!python/tuple
-    - 1.0
     - 0.0
     - 0.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 0.06
+    - 0.003
     - 1.0
   - !!python/tuple
-    - 1.0
     - 0.0
     - 0.0
 - !!python/tuple
   - !!python/tuple
-    - 0.0
-    - 0.012
-    - 0.024
+    - 0.003
     - 1.0
   - !!python/tuple
-    - 1.0
     - 0.0
-    - -1.0
-    - -1.0
-solver_name: RNDSRCH
+    - 0.0
+solver_name: FCSA
