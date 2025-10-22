@@ -106,3 +106,72 @@ Optimal Objective Function Value
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Unknown
+
+Optimization Problem: Minimize Longest Path Plus Penalty with Stochastic Constraints (SAN-2)
+============================================================================================
+
+Decision Variables
+-------------------
+* **arc_means**
+
+Objectives
+-----------
+Suppose that we can select :math:`\theta_i > 0` for each :math:`i`, but there is an associated cost.  
+In particular, we want to minimize:
+
+.. math::
+
+    \mathbb{E}[T(\theta)] + f(\theta),
+
+where :math:`T(\theta)` is the (random) duration of the longest path from node :math:`a` to node :math:`i`, and  
+
+.. math::
+
+    f(\theta) = \sum_{i=1}^{n} \theta_i^{-1},
+
+where :math:`n` is the number of arcs.
+
+The objective function is convex in :math:`\theta`.  
+
+Constraints
+------------
+We require that :math:`\theta_i > 0` for each :math:`i`.  
+Additionally, we allow :math:`n` stochastic constraints that restrict the expected time to reach node :math:`i`, of the form:
+
+.. math::
+
+    \mathbb{E}[T_i(\theta)] \leq a_i.
+
+Problem Factors
+----------------
+* **budget**: Maximum number of replications the solver is allowed to take.  
+  *Default:* ``10000``
+
+* **arc_costs**: Cost associated with each arc.  
+  *Default:* ``(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)``
+
+* **constraint_nodes**: Nodes with corresponding stochastic constraints.  
+  *Default:* ``[6, 8]``
+
+* **length_to_node_constraint**: Maximum expected length to corresponding constraint nodes.  
+  *Default:* ``[5, 5]``
+
+Fixed Model Factors
+--------------------
+* **N/A**
+
+Starting Solution
+------------------
+* **initial_solution**: ``(8,) * 13``
+
+Random Solutions
+-----------------
+Each arc mean is sampled independently from a lognormal distribution with 2.5th and 97.5th percentiles equal to 0.1 and 10, respectively.
+
+Optimal Solution
+-----------------
+* **Unknown**
+
+Optimal Objective Function Value
+---------------------------------
+* **Unknown**
