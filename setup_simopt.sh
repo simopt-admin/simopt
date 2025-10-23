@@ -25,14 +25,4 @@ fi
 echo "Activating environment..."
 source activate "$ENV_NAME"
 
-# Ensure activation persists by checking Ruby installation
-if ! command -v ruby &> /dev/null; then
-    echo "Ruby installation not found in Conda environment. Please check installation."
-    exit 1
-fi
-
-# Install datafarming gem
-echo "Installing Ruby 'datafarming' gem..."
-gem install datafarming -v 1.4
-
 echo "Setup complete! Run: conda activate $ENV_NAME"

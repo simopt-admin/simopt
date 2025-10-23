@@ -11,19 +11,19 @@ The most-up-to-date publication about this library is [Eckman et al. (2023)](htt
 ## Before Workshop
 Before attending the workshop please follow the instructions below:
 
-1. Install Python, Ruby, and required dependencies [as detailed in the README](https://github.com/simopt-admin/simopt/blob/master/README.md#getting-started). (Please note that the Ruby installation is only needed for a small portion of the workshop; if you encounter issues with installing Ruby, you can still fully follow along.)
+1. Install Python and required dependencies [as detailed in the README](https://github.com/simopt-admin/simopt/blob/master/README.md#getting-started).
 
-3. Install Microsoft's [Visual Studio Code (VS Code) IDE](https://code.visualstudio.com).
+2. Install Microsoft's [Visual Studio Code (VS Code) IDE](https://code.visualstudio.com).
 
-4. Next, install the [Python extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python) from the Visual Studio Marketplace. This will automatically install the Pylance (intellisense) and Python Debugger extensions as well.
+3. Next, install the [Python extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python) from the Visual Studio Marketplace. This will automatically install the Pylance (intellisense) and Python Debugger extensions as well.
 
-5. To work with Python in Jupyter Notebooks, you must activate an Anaconda environment in VS Code, or another Python environment in which you've installed the [Jupyter package](https://pypi.org/project/jupyter/). To select an environment, use the **Python: Select Interpreter** command from the Command Palette `(⇧⌘P)`.
+4. To work with Python in Jupyter Notebooks, you must activate an Anaconda environment in VS Code, or another Python environment in which you've installed the [Jupyter package](https://pypi.org/project/jupyter/). To select an environment, use the **Python: Select Interpreter** command from the Command Palette `(⇧⌘P)`.
 
-6. On your local hard drive, create a folder named `simopt_workspace` somewhere convenient.
+5. On your local hard drive, create a folder named `simopt_workspace` somewhere convenient.
 
-7. In VS Code, go to the File menu and select “Open Folder…” and open the folder you created. That folder will become your VSCode workspace.
+6. In VS Code, go to the File menu and select “Open Folder…” and open the folder you created. That folder will become your VSCode workspace.
 
-8. Test the python interpreter:
+7. Test the python interpreter:
 * In the Explorer panel of VSCode editor click on the New File icon, and type `hello.py`.
 ![screen-addfile](./figs/screen-addfile.png)
 * In the new file in the next panel, type:
