@@ -127,16 +127,21 @@ class CntNV(Model):
 
     @override
     def check_simulatable_factors(self) -> bool:
-        if (
-            self.factors["salvage_price"]
-            < self.factors["purchase_price"]
-            < self.factors["sales_price"]
-        ):
-            return True
-        raise ValueError(
-            "The salvage cost per unit must be greater than the purchasing cost per "
-            "unit, which must be greater than the sales price per unit."
-        )
+        if self.factors["salvage_price"] >= self.factors["purchase_price"]:
+            error_msg = (
+                f"salvage_price ({self.factors['salvage_price']}) "
+                "must be less than "
+                f"purchase_price ({self.factors['purchase_price']})."
+            )
+            raise ValueError(error_msg)
+        if self.factors["purchase_price"] >= self.factors["sales_price"]:
+            error_msg = (
+                f"purchase_price ({self.factors['purchase_price']}) "
+                "must be less than "
+                f"sales_price ({self.factors['sales_price']})."
+            )
+            raise ValueError(error_msg)
+        return True
 
     def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
