@@ -82,12 +82,20 @@ class CntNVConfig(BaseModel):
     @model_validator(mode="after")
     def _validate_model(self) -> Self:
         # Cross-validation: check price ordering constraint
-        if not (self.salvage_price < self.purchase_price < self.sales_price):
-            raise ValueError(
-                "The salvage cost per unit must be greater than the purchasing "
-                "cost per unit, which must be greater than the sales price per "
-                "unit."
+        if self.salvage_price >= self.purchase_price:
+            error_msg = (
+                f"salvage_price ({self.salvage_price}) "
+                "must be less than "
+                f"purchase_price ({self.purchase_price})."
             )
+            raise ValueError(error_msg)
+        if self.purchase_price >= self.sales_price:
+            error_msg = (
+                f"purchase_price ({self.purchase_price}) "
+                "must be less than "
+                f"sales_price ({self.sales_price})."
+            )
+            raise ValueError(error_msg)
 
         return self
 
