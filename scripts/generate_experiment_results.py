@@ -77,6 +77,7 @@ def create_test(problem_name: str, solver_name: str) -> None:
         "all_est_objectives": myexperiment.all_est_objectives,
         "objective_curves": myexperiment.objective_curves,
         "progress_curves": myexperiment.progress_curves,
+        "all_est_lhs": myexperiment.all_est_lhs,
     }
 
     # Define the directory and output file
