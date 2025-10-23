@@ -260,15 +260,12 @@ class ASTRODF(Solver):
         """
         if kappa == 0:
             kappa = 1
-        # lambda_k = max(
-        #     self.factors["lambda_min"], 2 * log(dim + 0.5, 10)
-        # ) * max(log(k + 0.1, 10) ** (1.01), 1)
 
         # compute sample size
         raw_sample_size = pilot_run * max(
             1.0, sig2 / (kappa**2 * delta**self.delta_power)
         )
-        return ceil(float(raw_sample_size))
+        return ceil(raw_sample_size)
 
     def select_interpolation_points(
         self, delta_k: float, f_index: int
@@ -379,7 +376,7 @@ class ASTRODF(Solver):
                 sig2 = max(sig2, np.trace(solution.objectives_gradients_var))
 
             # Compute stopping condition
-            kappa = None
+            kappa: float | None = None
             if compute_kappa:
                 if self.enable_gradient:
                     rhs_for_kappa = norm(solution.objectives_gradients_mean[0])
@@ -389,7 +386,7 @@ class ASTRODF(Solver):
                     rhs_for_kappa
                     * np.sqrt(pilot_run)
                     / (delta_k ** (self.delta_power / 2))
-                )
+                ).item()
 
             # Set k to the right kappa
             if kappa is not None:
