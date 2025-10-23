@@ -4680,7 +4680,7 @@ def create_design(
         design_file = df_dir / f"{name}_design.txt"
     # Otherwise, setup the design file output.
     elif isinstance(factor_settings, Path):
-        designs = df_dir / factor_settings.name
+        designs = df_dir / f"{factor_settings.name}.txt"
         design_file = df_dir / f"{factor_settings.stem}_design.txt"
 
     # Only datafarm if there are factors to vary.
