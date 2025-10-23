@@ -486,9 +486,9 @@ class ProblemSolver:
         run_multithread_partial = partial(
             self.run_multithread, solver=self.solver, problem=self.problem
         )
-        results = Parallel()(
+        results: list[tuple] = Parallel(return_as="list")(
             delayed(run_multithread_partial)(i) for i in range(n_macroreps)
-        )
+        )  # pyright: ignore[reportAssignmentType]
         for mrep, recommended_xs, intermediate_budgets, timing in results:
             self.all_recommended_xs[mrep] = recommended_xs
             self.all_intermediate_budgets[mrep] = intermediate_budgets
@@ -630,10 +630,10 @@ class ProblemSolver:
         function_start = time.time()
 
         logging.info("Starting postreplications")
-        results = Parallel()(
+        results: list[tuple] = Parallel(return_as="list")(
             delayed(self.post_replicate_multithread)(mrep)
             for mrep in range(self.n_macroreps)
-        )
+        )  # pyright: ignore[reportAssignmentType]
         for mrep, post_rep, timing in results:
             self.all_post_replicates[mrep] = post_rep
             self.timings[mrep] = timing
