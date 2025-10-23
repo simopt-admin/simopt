@@ -25,15 +25,4 @@ if %errorlevel% == 0 (
 :: Activate environment
 call conda activate %ENV_NAME%
 
-:: Ensure activation persists by checking Ruby version
-call ruby -v >nul 2>nul
-if %errorlevel% neq 0 (
-    echo Ruby installation not found in Conda environment. Please check installation.
-    exit /b 1
-)
-
-:: Install datafarming gem inside the activated environment
-echo Installing Ruby 'datafarming' gem...
-call gem install datafarming -v 1.4
-
 echo Setup complete! Run: conda activate %ENV_NAME%
