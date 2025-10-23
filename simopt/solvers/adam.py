@@ -200,7 +200,7 @@ class ADAM(Solver):
                     new_solution=new_solution,
                     bounds_check=bounds_check,
                     problem=problem,
-                    stepsize=np.full(problem.dim, self.factors["alpha"]),
+                    stepsize=self.factors["alpha"],
                     r=self.factors["r"],
                 )
 
