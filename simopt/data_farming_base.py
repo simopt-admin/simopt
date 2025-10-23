@@ -6,7 +6,6 @@ import ast
 import csv
 import itertools
 import logging
-import subprocess
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
@@ -18,6 +17,7 @@ from numpy import inf
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import Model
+from simopt.data_farming.nolhs import NOLHS
 from simopt.experiment_base import EXPERIMENT_DIR, ProblemSolver, post_normalize
 from simopt.utils import resolve_file_path
 
@@ -171,76 +171,85 @@ class DataFarmingExperiment:
     def __init__(
         self,
         model_name: str,
-        factor_settings_file_name: Path | str | None,
         factor_headers: list[str],
+        factor_settings: list[tuple[float, float, int]] | Path | str | None = None,
         design_path: Path | str | None = None,
         model_fixed_factors: dict | None = None,
-        stacks: int = 1,
         design_type: Literal["nolhs"] = "nolhs",
+        stacks: int = 1,
     ) -> None:
         """Initializes a data-farming experiment with a model and factor design.
 
+        Either `factor_settings` or `design_path` must be provided.
+
         Args:
             model_name (str): Name of the model to run.
-            factor_settings_file_name (Path | str | None): Path to the .txt file
-                containing factor ranges and precision digits.
             factor_headers (list[str]): Ordered list of factor names in the
                 settings/design file.
+            factor_settings (list[tuple[float, float, int]] | Path | str | None, optional):
+                Either a list of tuples (min, max, decimals) specifying factor ranges
+                and precision digits, or a Path/str to a .txt file containing
+                this information.
             design_path (Path | str | None, optional): Path to the design matrix file.
                 Defaults to None.
             model_fixed_factors (dict, optional): Fixed model factor values that are
                 not varied.
-            stacks (int, optional): Number of stacks in the design. Must be > 0.
-                Defaults to 1.
             design_type (Literal["nolhs"], optional): Design type to use.
                 Defaults to "nolhs".
+            stacks (int, optional): Number of stacks in the design. Defaults to 1.
 
         Raises:
-            ValueError: If `model_name` is invalid or `stacks` is not positive.
+            ValueError: If `model_name` is invalid or `design_type` is unsupported.
             FileNotFoundError: If any specified file path does not exist.
-        """
+        """  # noqa: E501
+        if model_fixed_factors is None:
+            model_fixed_factors = {}
+
         # Value checking
         if model_name not in model_directory:
             error_msg = "model_name must be a valid model name."
             raise ValueError(error_msg)
-        if stacks <= 0:
-            error_msg = "Number of stacks must be greater than 0."
+        if design_type not in ["nolhs"]:
+            error_msg = "design_type must be a valid design type."
             raise ValueError(error_msg)
-        # Make sure the file_names resolve to valid paths
-        if factor_settings_file_name is not None:
-            factor_settings_file_name = resolve_file_path(
-                factor_settings_file_name, DATA_FARMING_DIR
+
+        # Initialize model object with fixed factors.
+        self.model = model_directory[model_name](fixed_factors=model_fixed_factors)
+
+        # If factor_settings is provided, create design from it.
+        if factor_settings is not None:
+            if isinstance(factor_settings, (str, Path)):
+                # Check the filepath resolves
+                factor_settings = resolve_file_path(factor_settings, DATA_FARMING_DIR)
+                if not factor_settings.exists():
+                    error_msg = f"{factor_settings} is not a valid file path."
+                    raise FileNotFoundError(error_msg)
+                # Set the path for the design file
+                design_path = (DATA_FARMING_DIR / factor_settings).with_name(
+                    f"{factor_settings.stem}_design.txt"
+                )
+            # If factor_settings is given as a list of tuples, no changes needed.
+            else:
+                design_path = DATA_FARMING_DIR / f"{model_name}_design.txt"
+            # Create the design and save to design_path
+            design = NOLHS(
+                designs=factor_settings,
+                num_stacks=stacks,
             )
-            if not factor_settings_file_name.exists():
-                error_msg = f"{factor_settings_file_name} is not a valid file path."
-                raise FileNotFoundError(error_msg)
-        if design_path is not None:
+            design.generate_design()
+            design.save_design(design_path)
+            logging.info(f"Design saved to {design_path}")
+        elif design_path is None:
+            error_msg = "Either factor_settings or design_path must be provided."
+            raise ValueError(error_msg)
+
+        # Make sure the design_path resolves to a valid file path
+        if isinstance(design_path, (str, Path)):
             design_path = resolve_file_path(design_path, DATA_FARMING_DIR)
             if not design_path.exists():
                 error_msg = f"{design_path} is not a valid file path."
                 raise FileNotFoundError(error_msg)
 
-        if model_fixed_factors is None:
-            model_fixed_factors = {}
-
-        # Initialize model object with fixed factors.
-        self.model = model_directory[model_name](fixed_factors=model_fixed_factors)
-        if design_path is None:
-            if factor_settings_file_name is None:
-                error_msg = (
-                    "factor_settings_file_name must be provided if "
-                    "design_file_path is None."
-                )
-                raise ValueError(error_msg)
-            # Create model factor design from .txt file of factor settings.
-            partial_file_path = DATA_FARMING_DIR / factor_settings_file_name
-            source_path = partial_file_path.with_suffix(".txt")
-            design_path = partial_file_path.with_suffix("_design.txt")
-            command = (
-                f"stack_{design_type}.rb -s {stacks} {source_path} > {design_path}"
-            )
-            subprocess.run(command)
-            # Append design to base file name.
         # Read in design matrix from .txt file. Result is a pandas DataFrame.
         design_table = pd.read_csv(
             design_path,
@@ -250,6 +259,12 @@ class DataFarmingExperiment:
         )
         # Count number of design_points.
         self.n_design_pts = len(design_table)
+        if len(factor_headers) != len(design_table.columns):
+            error_msg = (
+                f"Length of factor_headers ({len(factor_headers)}) does not match "
+                f"number of columns in design ({len(design_table.columns)})."
+            )
+            raise ValueError(error_msg)
         # Create all design points.
         self.design = []
         design_pt_factors = {}
@@ -307,17 +322,30 @@ class DataFarmingExperiment:
                     for _ in range(len(main_rng_list)):
                         rng.advance_substream()
 
-    def print_to_csv(self, csv_file_name: Path | str = "raw_results") -> None:
+    def print_to_csv(
+        self, csv_file_name: Path | str = "raw_results", overwrite: bool = False
+    ) -> None:
         """Writes simulated responses for all design points to a CSV file.
 
         Args:
             csv_file_name (Path | str, optional): Output file name (with or without
                 .csv extension). Defaults to "raw_results".
+            overwrite (bool, optional): If True, overwrite existing file. Otherwise,
+                raises an error if the file already exists. Defaults to False.
         """
         # Resolve the file path
         csv_file_name = resolve_file_path(csv_file_name, DATA_FARMING_DIR)
         # Add CSV extension if not present.
         csv_file_name = csv_file_name.with_suffix(".csv")
+
+        if csv_file_name.exists():
+            if overwrite:
+                csv_file_name.unlink()
+            else:
+                error_msg = (
+                    f"{csv_file_name} already exists. Set overwrite=True to overwrite."
+                )
+                raise FileExistsError(error_msg)
 
         # Write results to csv file.
         with csv_file_name.open(mode="x", newline="") as output_file:
@@ -355,6 +383,8 @@ class DataFarmingExperiment:
                     csv_writer.writerow(print_list)
 
 
+# TODO: investigate if this class can be pruned as it is completely unmentioned by
+# any other code in the repo.
 class DataFarmingMetaExperiment:
     """Base class for data-farming meta-experiments with problem-solver designs."""
 
@@ -448,10 +478,13 @@ class DataFarmingMetaExperiment:
             partial_file_path = DATA_FARMING_DIR / solver_factor_settings_file_path
             source_path = partial_file_path.with_suffix(".txt")
             design_path = partial_file_path.with_suffix("_design.txt")
-            command = (
-                f"stack_{design_type}.rb -s {n_stacks} {source_path} > {design_path}"
+            # Create a design and save to design_path
+            design = NOLHS(
+                designs=source_path,
+                num_stacks=n_stacks,
             )
-            subprocess.run(command)
+            design.generate_design()
+            design.save_design(design_path)
             # Append design to base file name.
             design_file_path = f"{solver_factor_settings_file_path}_design"
 

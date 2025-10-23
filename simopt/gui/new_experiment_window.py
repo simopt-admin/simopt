@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import pickle
 import re
 import threading
@@ -1765,19 +1766,15 @@ class NewExperimentWindow(Toplevel):
                 settings_file.write(data_insert)
 
         try:
-            # Get the base object name in lowercase
-            base_object_lower = base_object.lower()
-            assert base_object_lower in ("problem", "solver")
             # Create the design
             create_design(
                 name=base_name,
                 factor_headers=design_factors,
-                factor_settings_filename=design_name,
+                factor_settings=Path(design_name),
                 fixed_factors=fixed_factors,
                 cross_design_factors=cross_design_factors,
                 n_stacks=num_stacks,
                 design_type=design_type,  # type: ignore
-                class_type=base_object_lower,
             )
 
         except Exception as e:
@@ -1866,11 +1863,9 @@ class NewExperimentWindow(Toplevel):
 
         # Modify the header to show the # of design points and # of duplicates
         unique_design_points = design_table.drop_duplicates().shape[0]
-        num_duplicates = design_table.shape[0] - unique_design_points
         point_plural = "" if unique_design_points == 1 else "s"
-        duplicate_plural = "" if num_duplicates == 1 else "s"
         self.tk_labels["gen_design.header"].configure(
-            text=f"Generated Design - {len(design_table)} Design Point{point_plural} ({num_duplicates} Duplicate{duplicate_plural})"
+            text=f"Generated Design - {len(design_table)} Design Point{point_plural} ({unique_design_points} Unique)"
         )
 
         self.design_tree = ttk.Treeview(master=master_frame)

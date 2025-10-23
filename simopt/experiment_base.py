@@ -6,11 +6,10 @@ import importlib
 import itertools
 import logging
 import pickle
-import subprocess
 import time
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,6 +33,7 @@ from simopt.curve import (
     Curve,
     CurveType,
 )
+from simopt.data_farming.nolhs import NOLHS
 from simopt.feasibility import feasibility_score_history
 from simopt.utils import make_nonzero, resolve_file_path
 
@@ -5694,128 +5694,45 @@ def make_full_metaexperiment(
     Returns:
         ProblemsSolvers: A new ProblemsSolvers object containing the completed set.
     """
-    full_experiments = [[] * len(unique_problems) for _ in range(len(unique_solvers))]
-    for experiment in existing_experiments:
+    # Make sure the right number of experiments are being given
+    expected_num_exps = len(unique_solvers) * len(unique_problems)
+    actual_num_exps = len(existing_experiments) + len(missing_experiments)
+    if actual_num_exps != expected_num_exps:
+        error_msg = (
+            "Error in creating full meta-experiment. "
+            "Number of existing and missing experiments specified does not match "
+            "number of unique solvers and problems. "
+            f"Expected: {expected_num_exps}, Actual: {actual_num_exps}"
+        )
+        raise Exception(error_msg)
+    # Create the missing experiments
+    created_experiments = [
+        ProblemSolver(solver=solver, problem=problem)
+        for solver, problem in missing_experiments
+    ]
+    # Create 2D list to hold all experiments.
+    full_experiments: list[list[ProblemSolver | None]] = [
+        [None for _ in range(len(unique_problems))] for _ in range(len(unique_solvers))
+    ]
+    # Populate the 2D list with existing and new experiments.
+    for experiment in existing_experiments + created_experiments:
+        # Add the experiment to correct location in 2D list.
         solver_idx = unique_solvers.index(experiment.solver)
         problem_idx = unique_problems.index(experiment.problem)
         full_experiments[solver_idx][problem_idx] = experiment
-    for pair in missing_experiments:
-        solver_idx = unique_solvers.index(pair[0])
-        problem_idx = unique_problems.index(pair[1])
-        full_experiments[solver_idx][problem_idx] = ProblemSolver(
-            solver=pair[0], problem=pair[1]
-        )
-    return ProblemsSolvers(experiments=full_experiments)
+    # Ensure all entries are ProblemSolvers and not None
+    for row in full_experiments:
+        for experiment in row:
+            if not isinstance(experiment, ProblemSolver):
+                error_msg = (
+                    "Error in creating full meta-experiment. "
+                    "Some problem-solver pairs are still missing."
+                )
+                raise Exception(error_msg)
+    return ProblemsSolvers(experiments=full_experiments)  # type: ignore
 
 
-def lookup_datafarming_gem(design_type: str) -> str:
-    """Check if a compatible version of the datafarming Ruby gem is installed.
-
-    Args:
-        design_type (str): The type of design to check for.
-
-    Returns:
-        str: The name of the datafarming script to use.
-    """
-    # Local imports
-    import platform
-
-    # Dictionary of all the valid design types and their corresponding scripts
-    # Windows needs .bat file equivalents to any scripts being run
-    if platform.system() == "Windows":
-        datafarming_stack = {"nolhs": "stack_nolhs.rb.bat"}
-    else:
-        datafarming_stack = {"nolhs": "stack_nolhs.rb"}
-
-    # Error if design type is not valid
-    if design_type not in datafarming_stack:
-        error_msg = "Invalid design type."
-        raise Exception(error_msg)
-
-    # Check the design type
-    datafarming_file = datafarming_stack[design_type]
-    command = f"{datafarming_file} --help"
-    results = subprocess.run(
-        command,
-        shell=True,
-        capture_output=True,
-    )
-    # If the return code is 0, then the command was successful
-    if results.returncode == 0:
-        return datafarming_file
-
-    # The command was not successful, so check to see if the gem is installed
-    # Check to see if the datafarming gem is installed
-    command = "gem list"
-    results = subprocess.run(
-        command,
-        shell=True,
-        capture_output=True,
-    )
-    # If the return code is not 0, then the command was not successful
-    # Let's figure out what error we're throwing
-    # If the datafarming gem is not present, then tell the user
-    # that they need to install it
-    if "datafarming" not in results.stdout.decode("utf-8"):
-        error_msg = [
-            "Datafarming gem is not installed. Please install it by running:",
-            "gem install datafarming -v 1.4"
-            "Alternatively, you can run the setup_simopt script for your platform",
-        ]
-        error_msg = "\n".join(error_msg)
-        raise Exception(error_msg)
-    installed_gems = results.stdout.decode("utf-8").split("\n")
-    # If the datafarming gem is present, then check to see if the version is correct
-    # Strip away all the information except for version(s)
-    datafarming_gem_installs = [
-        gem.split(" ")[1] for gem in installed_gems if gem.startswith("datafarming ")
-    ]
-    # Local import
-    import re
-
-    # Strip away anything that isn't a period or a number
-    datafarming_versions = [
-        re.sub(r"[^0-9.]", "", version) for version in datafarming_gem_installs
-    ]
-    # Check for valid versions (min <= version < max)
-    min_version = "1.0.0"
-    max_version = "2.0.0"
-    version_check_results = [
-        min_version <= version < max_version for version in datafarming_versions
-    ]
-    if not any(version_check_results):
-        # Write the correct error message depending on plurality
-        error_msg = []
-        if len(version_check_results) == 1:
-            error_msg.append(
-                "Datafarming gem is installed, but the installed version "
-                f"{datafarming_versions} is not supported."
-            )
-        else:
-            error_msg.append(
-                f"Datafarming gem is installed, but the installed versions "
-                f"{datafarming_versions} are not supported."
-            )
-        error_msg.append(f"Please install version {min_version} <= x < {max_version}.")
-        error_msg.append(
-            "This can be done by running: `gem install datafarming -v 1.4' "
-            "or by running the setup_simopt script for your platform."
-        )
-        error_msg = " ".join(error_msg)
-        raise Exception(error_msg)
-    # We get here if the gem is installed and the version is correct, but
-    # we still can't run the stack script. This is likely due to the gem
-    # not being in the system path. We'll let the user know that they need
-    # to restart their terminal/IDE.
-    error_msg = (
-        "Ruby was able to detect the datafarming gem, but was unable to run the "
-        "stack script. If you just installed the datafarming gem, it may be necessary "
-        "to restart your terminal/IDE to refresh the system path."
-    )
-    raise Exception(error_msg)
-
-
-def create_design_list_from_table(design_table: DataFrame) -> list:
+def create_design_list_from_table(design_table: DataFrame) -> list[dict[str, Any]]:
     """Create a list of solver or problem objects for each design point.
 
     Args:
@@ -5823,164 +5740,130 @@ def create_design_list_from_table(design_table: DataFrame) -> list:
             Each row represents a design point, and each column represents a factor.
 
     Returns:
-        list[dict]: List of dictionaries, where each dictionary contains the factor
-            values for a design point.
+        list[dict[str, Any]]: List of dictionaries, where each list entry corresponds
+        to a design point, and each dictionary contains the name and values for each
+        factor in that design point.
     """
-    # Local imports
-    import ast
+    from ast import literal_eval
 
-    # Create list of solver or problem objects for each dp using design_table.
-    design_list = []
-    dp_dict = design_table.to_dict(
-        orient="list"
-    )  # Creates dictonary of table to convert values to proper datatypes.
-    for dp in range(len(design_table)):
-        dp_factors = {}
-        for factor in dp_dict:
-            factor_str = str(dp_dict[factor][dp])
-            dp_factors[factor] = ast.literal_eval(factor_str)
-        design_list.append(dp_factors)
-    return design_list
+    # Creates dictonary of table to convert values to proper datatypes.
+    dp_dict = design_table.to_dict(orient="list")
+
+    # NOTE: the str cast for the factor name shouldn't be necessary, but it tells the
+    # typing system that the dict keys are definitely strings and not just hashable.
+    return [
+        {str(factor): literal_eval(str(dp_dict[factor][dp])) for factor in dp_dict}
+        for dp in range(len(design_table))
+    ]
 
 
 def create_design(
     name: str,
     factor_headers: list[str],
-    factor_settings_filename: str,
-    fixed_factors: dict,
-    class_type: Literal["solver", "problem", "model"] | None = None,
-    n_stacks: int = 1,
-    design_type: Literal["nolhs"] = "nolhs",
+    factor_settings: list[tuple[float, float, int]] | Path,
+    fixed_factors: dict | None = None,
     cross_design_factors: dict | None = None,
-) -> list[dict]:
-    """Creates a design of solver, problem, or model factors using Ruby.
+    design_type: Literal["nolhs"] = "nolhs",
+    n_stacks: int = 1,  # TODO: make **variable for other design types?
+) -> list[dict[str, Any]]:
+    """Creates a design of solver, problem, or model factors.
+
+    Please ensure the indexing of the factor_headers argument matches the indexing of
+    the factor_settings argument.
 
     Args:
         name (str): Name of the solver, problem, or model.
         factor_headers (list[str]): Names of factors that vary in the design.
-        factor_settings_filename (str): Filename of the factor settings file located in
-            the `data_farming_experiments` folder.
-        fixed_factors (dict): Dictionary of fixed factor values that override defaults.
-        class_type (Literal["solver", "problem", "model"], optional): Type of class the
-            design is built for. Use "problem" to combine problem and model factors,
-            or "model" to run independently of any problem. Defaults to "solver".
-        n_stacks (int, optional): Number of Ruby stacks. Defaults to 1.
-        design_type (Literal["nolhs"], optional): Type of Ruby design.
-            Defaults to "nolhs".
+        factor_settings (list[tuple[float, float, int]] | Path):
+            A list of tuples, each of the form (min, max, # decimals)
+            or a Path to a .txt file containing those factor settings.
+        fixed_factors (dict, optional): Dictionary of fixed factor values that
+            override defaults.
         cross_design_factors (dict, optional): Dictionary of lists of cross-design
             factor values. Defaults to None.
+        design_type (Literal["nolhs"], optional): Type of design. Defaults to "nolhs".
+        n_stacks (int, optional): Number of stacks. Defaults to 1.
 
     Returns:
-        list[dict]: A list of dictionaries, where each dictionary represents a design
+        list[dict[str, Any]]: A list of dictionaries, where each dictionary represents
+            a design.
 
     Raises:
         ValueError: If input validation fails.
-        Exception: If Ruby is not installed or the design type is unsupported.
+        Exception: If the design type is unsupported.
     """
     # Default values
     if cross_design_factors is None:
         cross_design_factors = {}
-    if class_type is None:
-        class_type = "solver"
+    if fixed_factors is None:
+        fixed_factors = {}
 
-    # TODO: add additional checking
-    # Value checking
-    if n_stacks <= 0:
-        error_msg = "Number of stacks must be positive."
+    # Create object of the correct type.
+    directories = solver_directory | problem_directory | model_directory
+    # Make sure we don't accidentally have the same name in multiple directories.
+    expected_len = len(solver_directory) + len(problem_directory) + len(model_directory)
+    if len(directories) != expected_len:
+        error_msg = "Duplicate names found in solver, problem, or model directories."
         raise ValueError(error_msg)
-    if design_type not in ["nolhs"]:
-        error_msg = "Invalid design type."
-        raise ValueError(error_msg)
-
-    # Search directories to create object based on name provided.
-    if class_type == "solver":
-        if name not in solver_directory:
-            error_msg = f"Solver name {name} not found in solver directory."
-            raise ValueError(error_msg)
-        design_object = solver_directory[name]()
-    elif class_type == "problem":
-        if name not in problem_directory:
-            error_msg = f"Problem name {name} not found in problem directory."
-            raise ValueError(error_msg)
-        design_object = problem_directory[name]()
-    elif class_type == "model":
-        if name not in model_directory:
-            error_msg = f"Model name {name} not found in model directory."
-            raise ValueError(error_msg)
-        design_object = model_directory[name]()
+    if name not in directories:
+        raise ValueError(f"Name '{name}' not found in any directory.")
+    design_object = directories[name]()
 
     # Make directory to store the current design file.
     df_dir = EXPERIMENT_DIR / "data_farming"
     df_dir.mkdir(parents=True, exist_ok=True)
 
-    source_file = df_dir / f"{factor_settings_filename}.txt"
-    design_file = df_dir / f"{factor_settings_filename}_design.txt"
-    # If the dest file already exists, delete it
-    # TODO: investigate if this may cause issues with multiple concurrent designs
-    if design_file.exists():
-        design_file.unlink()
+    # If factor settings is a list of tuples, use that directly.
+    if isinstance(factor_settings, list):
+        designs = factor_settings
+        design_file = df_dir / f"{name}_design.txt"
+    # Otherwise, setup the design file output.
+    elif isinstance(factor_settings, Path):
+        designs = df_dir / factor_settings.name
+        design_file = df_dir / f"{factor_settings.stem}_design.txt"
 
-    # Only run the Ruby script if there are factors to change
+    # Only datafarm if there are factors to vary.
     if len(factor_headers) > 0:
-        # Check if the datafarming gem is installed
-        command_file: str = lookup_datafarming_gem(design_type)
+        # Select design type.
+        if design_type == "nolhs":
+            design = NOLHS(designs=designs, num_stacks=n_stacks)
+        else:
+            error_msg = f"Design type {design_type} not supported."
+            raise Exception(error_msg)
 
-        # Create solver factor design from .txt file of factor settings.
-        command = f'{command_file} -s {n_stacks} "{source_file}" > "{design_file}"'
-        completed_process = subprocess.run(command, capture_output=True, shell=True)
-        # If the design file doesn't exist, there was an error in the Ruby script.
-        if not design_file.exists():
-            error_msg = completed_process.stderr.decode("utf-8")
-            raise Exception(
-                f"Ruby script did not complete successfully.\nError:\n{error_msg}"
-            )
+        # Generate design table from design object.
+        generated_design = design.generate_design()
+        if len(generated_design) == 0:
+            error_msg = "Error in design generation. No design points generated."
+            raise Exception(error_msg)
+        design_table = pd.DataFrame(generated_design, columns=factor_headers)
 
-        # Read in design matrix from .txt file. Result is a pandas DataFrame.
-        try:
-            design_table = pd.read_csv(
-                design_file,
-                header=None,
-                delimiter="\t",
-                encoding="utf-8",
-            )
-        except pd.errors.EmptyDataError:
-            error_msg = (
-                "Error in Ruby script. No data in design file.\n"
-                "Make sure to select factors for data farming."
-            )
-            raise Exception(error_msg) from pd.errors.EmptyDataError
-        design_table.columns = factor_headers  # Add factor headers names to dt.
+        # Save design to .txt file for backwards compatibility.
+        design.save_design(design_file)
     else:
         # Grab one key/value pair from the specifications
         first_item = design_object.specifications
         # Create a DataFrame with the key/value pair
         design_table = pd.DataFrame(first_item, index=[0])
 
-    # Combine model and problem specifications for problems
+    specifications = design_object.specifications
+    # If problem, add model specifications too.
     if isinstance(design_object, Problem):
-        specifications = {
-            **design_object.specifications,
-            **design_object.model.specifications,
-        }
-    else:
-        specifications = design_object.specifications
+        specifications = {**specifications, **design_object.model.specifications}
 
     # Add default values to str dict for unspecified factors.
-    for factor in specifications:
-        default = specifications[factor].get("default")
-        if factor not in fixed_factors and factor not in factor_headers:
-            fixed_factors[factor] = default
+    fixed_factors_and_headers = set(list(fixed_factors) + factor_headers)
+    unspecified_factors = set(specifications) - fixed_factors_and_headers
+    for factor in unspecified_factors:
+        fixed_factors[factor] = specifications[factor].get("default")
 
     # Add all the fixed factors to the design table
     for factor in fixed_factors:
-        design_table[factor] = str(
-            fixed_factors[factor]
-        )  # Change to string to ensure correct addition of tuples & list data types.
+        # Use string to ensure correct addition of tuples & list data types.
+        design_table[factor] = str(fixed_factors[factor])
 
     # Add cross design factors to design table.
-    if len(cross_design_factors) != 0:
-        # num_cross = 0 # number of times cross design is run
-
+    if len(cross_design_factors) > 0:
         # Create combination of categorical factor options.
         cross_factor_names = list(cross_design_factors.keys())
         combinations = itertools.product(
@@ -5993,41 +5876,39 @@ def create_design(
             combination_dict = dict(zip(cross_factor_names, combination, strict=False))
             working_design_table = design_table.copy()
 
-            for factor in combination_dict:
-                str_factor_val = str(combination_dict[factor])
-                working_design_table[factor] = str_factor_val
+            # Batch add cross design factors to working design table.
+            working_design_table = working_design_table.assign(
+                **{k: str(v) for k, v in combination_dict.items()}
+            )
 
+            # Append working design table to new design table.
             new_design_table = pd.concat(
                 [new_design_table, working_design_table], ignore_index=True
             )
-
+        # Update design table to new design table after all combinations added.
         design_table = new_design_table
 
     design_list = create_design_list_from_table(design_table)
 
     # check factors for each design point
     for dp in design_list:
-        if class_type == "solver":
+        if isinstance(design_object, Solver):
             # initialize temporary solver to run factor checks
             temp = solver_directory[name](fixed_factors=dp)
-        if class_type == "model":
+        if isinstance(design_object, Model):
             # initialize temporary model to run factor checks
             temp = model_directory[name](fixed_factors=dp)
             # run check function on temp model
-            temp.run_all_checks(factor_names=dp.keys())
-        if class_type == "problem":
+            temp.run_all_checks(factor_names=list(dp.keys()))
+        if isinstance(design_object, Problem):
             # seperate problem and model factors in dp
-            problem_factor_names = design_object.specifications.keys()
-            problem_factors = {}
-            model_factors = {}
-            for factor in dp:
-                if factor in problem_factor_names:
-                    problem_factors[factor] = dp[factor]
-                else:
-                    model_factors[factor] = dp[factor]
+            prob_factor_keys = set(design_object.specifications.keys())
+            problem_factors = {k: v for k, v in dp.items() if k in prob_factor_keys}
+            model_factors = {k: v for k, v in dp.items() if k not in prob_factor_keys}
             # initialize temporary problem to run factor checks
             temp_problem = problem_directory[name](
-                fixed_factors=problem_factors, model_fixed_factors=model_factors
+                fixed_factors=problem_factors,
+                model_fixed_factors=model_factors,
             )
             # initialize temporary model to run factor checks
             model_factor_names = list(temp_problem.model.specifications.keys())
