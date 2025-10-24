@@ -574,7 +574,7 @@ class DataFarmingMetaExperiment:
                 design_table = new_design_table
 
             # Add design information to table
-            design_table.insert(0, "Design #", range(len(design_table)))
+            design_table.insert(0, "Design #", pd.Series(range(len(design_table))))
             design_table["Solver Name"] = solver_name
             design_table["Design Type"] = design_type
             design_table["Number Stacks"] = str(n_stacks)
