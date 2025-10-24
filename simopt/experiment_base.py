@@ -4697,7 +4697,7 @@ def create_design(
         if len(generated_design) == 0:
             error_msg = "Error in design generation. No design points generated."
             raise Exception(error_msg)
-        design_table = pd.DataFrame(generated_design, columns=factor_headers)
+        design_table = pd.DataFrame(generated_design, columns=pd.Index(factor_headers))
 
         # Save design to .txt file for backwards compatibility.
         design.save_design(design_file)
@@ -4705,7 +4705,7 @@ def create_design(
         # Grab one key/value pair from the specifications
         first_item = design_object.specifications
         # Create a DataFrame with the key/value pair
-        design_table = pd.DataFrame(first_item, index=[0])
+        design_table = pd.DataFrame(first_item, index=pd.Index([0]))
 
     specifications = design_object.specifications
     # If problem, add model specifications too.
@@ -4776,7 +4776,7 @@ def create_design(
             temp_problem.model.run_all_checks(factor_names=model_factor_names)
 
     # Write extra design information to design table.
-    design_table.insert(0, "design_num", range(len(design_table)))
+    design_table.insert(0, "design_num", pd.Series(range(len(design_table))))
     design_table["name"] = design_object.name
     design_table["design_type"] = design_type
     design_table["num_stacks"] = str(n_stacks)
