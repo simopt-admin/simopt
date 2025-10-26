@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Final
+from collections.abc import Callable, Final
 
 import numpy as np
 

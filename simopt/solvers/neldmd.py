@@ -8,8 +8,7 @@ contraction, and shrinking. A detailed description of the solver can be found
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import Callable
+from collections.abc import Callable, Iterable
 
 import numpy as np
 

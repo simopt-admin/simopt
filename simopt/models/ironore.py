@@ -6,8 +6,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from math import copysign, sqrt
-from typing import Callable
 
 import numpy as np
 

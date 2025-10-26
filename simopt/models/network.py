@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Final
 from enum import IntEnum
-from typing import Callable, Final
 
 import numpy as np
 

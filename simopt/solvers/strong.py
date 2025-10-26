@@ -9,7 +9,7 @@ A detailed description of the solver can be found
 from __future__ import annotations
 
 import math
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 from numpy.linalg import norm

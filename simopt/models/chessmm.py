@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Final
+from collections.abc import Callable, Final
 
 import numpy as np
 from scipy import special
@@ -181,7 +181,9 @@ class ChessMatchmaking(Model):
         elo_diffs = []
 
         # Simulate arrival and matching and players.
-        for interarrival_time, player_rating in zip(interarrival_times, player_ratings):
+        for interarrival_time, player_rating in zip(
+            interarrival_times, player_ratings, strict=True
+        ):
             # Try to match the player
             for i, waiting_rating in enumerate(waiting_players):
                 diff = abs(player_rating - waiting_rating)
