@@ -210,7 +210,6 @@ class RMITD(Model):
             beta=1.0 / gamma_scale,
         )
         y_demand = np.array([y_rng.expovariate(1) for _ in range(time_horizon)])
-        reservations = [*reservation_qtys, 0]
         demand_vec = demand_means * x_demand * y_demand
 
         # Set initial inventory and revenue
@@ -219,7 +218,7 @@ class RMITD(Model):
 
         # Compute revenue for each period.
         for reservation, demand, price in zip(
-            reservations, demand_vec, prices, strict=False
+            reservation_qtys, demand_vec, prices, strict=True
         ):
             available = max(remaining_inventory - reservation, 0)
             sell = min(available, demand)
