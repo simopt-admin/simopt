@@ -1,0 +1,10 @@
+[src]
+# Temporarily ignore the GUI since it hasn't been typed fully.
+exclude = ["simopt/gui/*"]
+
+# See https://docs.astral.sh/ty/reference/rules/ for Rules documentation.
+# Rule options are ["error", "warn", "ignore"]
+[rules]
+division-by-zero = "warn" # Default is "ignore"
+possibly-unresolved-reference = "warn" # Default is "ignore"
+unused-ignore-comment = "warn" # Default is "ignore"
