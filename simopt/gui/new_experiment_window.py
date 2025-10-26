@@ -9,7 +9,7 @@ import tkinter as tk
 from abc import ABCMeta
 from tkinter import filedialog, messagebox, ttk
 from tkinter.font import nametofont
-from typing import Callable, Final, Literal
+from collections.abc import Callable, Final, Literal
 
 import matplotlib.pyplot as plt
 import pandas as pd

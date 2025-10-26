@@ -7,7 +7,7 @@ A detailed description of the solver can be found `here <https://simopt.readthed
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from simopt.base import (
     ConstraintType,

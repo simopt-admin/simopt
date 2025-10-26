@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import contextlib
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from copy import deepcopy
 from enum import Enum
-from typing import Callable
 
 import numpy as np
 
@@ -957,7 +957,9 @@ class Problem(ABC):
         # Check box constraints.
         return all(
             lb <= x_i <= ub
-            for x_i, lb, ub in zip(_x, self.lower_bounds, self.upper_bounds)
+            for x_i, lb, ub in zip(
+                _x, self.lower_bounds, self.upper_bounds, strict=True
+            )
         )
 
     @abstractmethod
@@ -1016,14 +1018,16 @@ class Problem(ABC):
                 for pairs in zip(
                     self.response_dict_to_objectives(responses),
                     solution.det_objectives,
+                    strict=True,
                 )
             ]
             if self.gradient_available:
                 solution.objectives_gradients[solution.n_reps] = [
-                    [sum(pairs) for pairs in zip(stoch_obj, det_obj)]
+                    [sum(pairs) for pairs in zip(stoch_obj, det_obj, strict=True)]
                     for stoch_obj, det_obj in zip(
                         self.response_dict_to_objectives_gradients(vector_gradients),
                         solution.det_objectives_gradients,
+                        strict=True,
                     )
                 ]
                 # solution.objectives_gradients[solution.n_reps] = [
@@ -1045,6 +1049,7 @@ class Problem(ABC):
                     for pairs in zip(
                         self.response_dict_to_stoch_constraints(responses),
                         solution.det_stoch_constraints,
+                        strict=True,
                     )
                 ]
                 # solution.stoch_constraints_gradients[solution.n_reps] = [

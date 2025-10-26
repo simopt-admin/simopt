@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 
@@ -210,7 +210,6 @@ class RMITD(Model):
             beta=1.0 / gamma_scale,
         )
         y_demand = np.array([y_rng.expovariate(1) for _ in range(time_horizon)])
-        reservations = [*reservation_qtys, 0]
         demand_vec = demand_means * x_demand * y_demand
 
         # Set initial inventory and revenue
@@ -218,7 +217,9 @@ class RMITD(Model):
         revenue = 0.0
 
         # Compute revenue for each period.
-        for reservation, demand, price in zip(reservations, demand_vec, prices):
+        for reservation, demand, price in zip(
+            reservation_qtys, demand_vec, prices, strict=True
+        ):
             available = max(remaining_inventory - reservation, 0)
             sell = min(available, demand)
             remaining_inventory -= sell
