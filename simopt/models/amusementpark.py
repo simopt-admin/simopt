@@ -5,7 +5,8 @@ from __future__ import annotations
 import bisect
 import itertools
 import math as math
-from collections.abc import Callable, Final, Sequence
+from collections.abc import Callable, Sequence
+from typing import Final
 
 import numpy as np
 
