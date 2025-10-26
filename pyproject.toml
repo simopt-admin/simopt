@@ -17,24 +17,27 @@ authors = [
 description = "A testbed for simulation-optimization experiments."
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.9,<3.14"
+requires-python = ">=3.11"
 classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
 ]
 dependencies = [
-    "numpy",
-    "scipy",
-    "matplotlib",
-    "pandas",
-    "seaborn",
-    "mrg32k3a",
-    "joblib>=1.5.1",
+  "joblib",
+  "matplotlib",
+  "mrg32k3a>=2.0",
+  "numpy",
+  "pandas",
+  "pillow",
+  "scipy",
+  "seaborn",
 ]
 
 [project.optional-dependencies]
-dev = ["sphinx"]
+demo = ["jupyter"]
+dev = ["ruff"]
+docs = ["sphinx", "sphinx-autoapi", "sphinx-rtd-theme"]
 
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"
