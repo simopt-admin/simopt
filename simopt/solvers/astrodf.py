@@ -434,9 +434,9 @@ class ASTRODF(Solver):
 
         while True:
             # Compute variance
-            sig2 = solution.objectives_var[0]
+            sig2 = solution.objectives_var[0].item()
             if self.delta_power == 0:
-                sig2 = max(sig2, np.trace(solution.objectives_gradients_var))
+                sig2 = max(sig2, np.trace(solution.objectives_gradients_var).item())
 
             # Compute stopping condition
             kappa: float | None = None

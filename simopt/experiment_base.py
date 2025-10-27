@@ -9,7 +9,7 @@ import pickle
 import time
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, no_type_check
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1266,7 +1266,7 @@ def post_normalize(
                 if np.equal(soln, x0).all():
                     est_objectives.append(np.mean(x0_postreps))
                 # TODO: ensure xstar is not None.
-                elif np.equal(soln, xstar).all():  # type: ignore
+                elif np.equal(soln, xstar).all():
                     est_objectives.append(np.mean(xstar_postreps))
                 else:
                     est_objectives.append(experiment.all_est_objectives[mrep][budget])
@@ -1520,6 +1520,7 @@ def bootstrap_procedure(
     return bs_conf_int_lower_bounds, bs_conf_int_upper_bounds
 
 
+@no_type_check
 def functional_of_curves(
     bootstrap_curves: list[list[list[Curve]]],
     plot_type: PlotType,
@@ -1615,7 +1616,7 @@ def functional_of_curves(
                     curve_utils.cdf_of_curves_crossing_times(
                         curves, threshold=solve_tol
                     )
-                    for curves in solver_2_curves  # type: ignore
+                    for curves in solver_2_curves
                 ]
             ),
         ),
@@ -1633,7 +1634,7 @@ def functional_of_curves(
                     curve_utils.quantile_cross_jump(
                         curves, threshold=solve_tol, beta=beta
                     )
-                    for curves in solver_2_curves  # type: ignore
+                    for curves in solver_2_curves
                 ]
             ),
         ),
@@ -2707,7 +2708,7 @@ def plot_solvability_profiles(
                         experiments=[experiments[solver_idx]],
                         n_bootstraps=n_bootstraps,
                         conf_level=conf_level,
-                        plot_type=plot_type,  # type: ignore
+                        plot_type=plot_type,
                         solve_tol=solve_tol,
                         beta=beta,
                         estimator=solver_curve,
@@ -2807,7 +2808,7 @@ def plot_solvability_profiles(
                                 ],
                                 n_bootstraps=n_bootstraps,
                                 conf_level=conf_level,
-                                plot_type=plot_type,  # type: ignore
+                                plot_type=plot_type,
                                 solve_tol=solve_tol,
                                 beta=beta,
                                 estimator=diff_solver_curve,
@@ -4007,9 +4008,9 @@ class ProblemsSolvers:
             else:
                 fixed_factors_filename = "experiments.inputs." + fixed_factors_filename
                 all_factors = importlib.import_module(fixed_factors_filename)
-                self.all_solver_fixed_factors = all_factors.all_solver_fixed_factors
-                self.all_problem_fixed_factors = all_factors.all_problem_fixed_factors
-                self.all_model_fixed_factors = all_factors.all_model_fixed_factors
+                self.all_solver_fixed_factors = all_factors.all_solver_fixed_factors  # type: ignore
+                self.all_problem_fixed_factors = all_factors.all_problem_fixed_factors  # type: ignore
+                self.all_model_fixed_factors = all_factors.all_model_fixed_factors  # type: ignore
             # Create all problem-solver pairs (i.e., instances of ProblemSolver class).
             self.experiments = []
             for solver_idx in range(self.n_solvers):
@@ -4590,7 +4591,7 @@ def make_full_metaexperiment(
                     "Some problem-solver pairs are still missing."
                 )
                 raise Exception(error_msg)
-    return ProblemsSolvers(experiments=full_experiments)  # type: ignore
+    return ProblemsSolvers(experiments=full_experiments)
 
 
 def create_design_list_from_table(design_table: DataFrame) -> list[dict[str, Any]]:

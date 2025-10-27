@@ -49,7 +49,7 @@ def classproperty(
 
 def override(obj: T) -> T:
     """Decorator to mark a method as overridden."""
-    obj.__override__ = True
+    obj.__override__ = True  # type: ignore
     return obj
 
 

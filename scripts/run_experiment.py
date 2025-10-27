@@ -221,7 +221,7 @@ def run_partials(
         runtime_tuple = (
             problem_name,
             solver_name,
-            part_func.func.__name__,
+            part_func.func.__name__,  # type: ignore
             elapsed,
         )
         runtimes.append(runtime_tuple)

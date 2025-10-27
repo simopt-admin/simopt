@@ -15,7 +15,12 @@ from simopt.base import Model, Problem, Solver
 def load_models_and_problems() -> tuple[
     dict[str, type[Model]], dict[str, type[Problem]]
 ]:
-    """Dynamically load models and problems from simopt.models."""
+    """Dynamically load models and problems from simopt.models.
+
+    Returns:
+        tuple: Two dictionaries mapping abbreviated class names to classes for
+            models and problems, respectively.
+    """
     models = {}
     problems = {}
 
@@ -35,7 +40,11 @@ def load_models_and_problems() -> tuple[
 
 
 def load_solvers() -> dict[str, type[Solver]]:
-    """Dynamically load solvers from simopt.solvers."""
+    """Dynamically load solvers from simopt.solvers.
+
+    Returns:
+        dict: Dictionary mapping abbreviated solver class names to solver classes.
+    """
     solvers = {}
 
     for _, modname, _ in pkgutil.iter_modules(
@@ -55,15 +64,38 @@ def load_solvers() -> dict[str, type[Solver]]:
 
 
 def generate_unabbreviated_mapping(
-    class_dict: dict[str, type], include_compatibility: bool = False
+    class_dict: dict[str, type[Model]]
+    | dict[str, type[Problem]]
+    | dict[str, type[Solver]],
+    include_compatibility: bool = False,
 ) -> dict[str, type]:
-    """Generate dictionary with full names (and compatibility for solvers/problems)."""
+    """Generate dictionary with full names (and compatibility for solvers/problems).
+
+    Args:
+        class_dict (dict[str, type]): Dictionary mapping abbreviated class names to
+            class types.
+        include_compatibility (bool): Whether to include compatibility information.
+
+    Returns:
+        dict: Dictionary mapping full class names to class types (with compatibility
+            if specified).
+
+    Raises:
+        AttributeError: If a class does not have a compatibility attribute when
+            requested.
+    """
     mapping = {}
     for cls in class_dict.values():
+        compat_str = ""
         if include_compatibility:
-            mapping[f"{cls.class_name} ({cls.compatibility})"] = cls
-        else:
-            mapping[cls.class_name] = cls
+            try:
+                # ty still wants an ignore here even though it's inside a try block.
+                compat_str = f" ({cls.compatibility})"  # type: ignore[possibly-missing-attribute]
+            except AttributeError as e:
+                raise AttributeError(
+                    f"Class {cls.__name__} does not have a compatibility attribute."
+                ) from e
+        mapping[f"{cls.class_name}{compat_str}"] = cls
     return mapping
 
 
