@@ -459,10 +459,16 @@ class AmusementPark(Model):
         cumulative_util = [cumulative_util[i] / time_open for i in attraction_range]
 
         # Calculate responses from simulation data.
+        # Avoid division by zero if simulation was uneventful.
+        percent_departed = (
+            total_departed / total_visitors if total_visitors != 0 else 0.0
+        )
+        avg_num_in_system = time_average / time_open if time_open != 0 else 0.0
+        # Return responses and gradients.
         responses = {
             "total_departed": total_departed,
-            "percent_departed": total_departed / total_visitors,
-            "average_number_in_system": time_average / time_open,
+            "percent_departed": percent_departed,
+            "average_number_in_system": avg_num_in_system,
             "attraction_utilization_percentages": cumulative_util,
         }
         gradients = {

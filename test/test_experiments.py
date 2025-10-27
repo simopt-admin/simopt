@@ -10,7 +10,7 @@ eliminates DRY violations in the experiment testing process.
 from pathlib import Path
 
 # these imports aren't used outside of the exec
-from experiment_test_core import (  # noqa: F401
+from test.experiment_test_core import (  # noqa: F401
     ExperimentTest,
     ExperimentTestMixin,
 )

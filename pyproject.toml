@@ -36,7 +36,7 @@ dependencies = [
 
 [project.optional-dependencies]
 demo = ["jupyter"]
-dev = ["ruff"]
+dev = ["ruff", "nbstripout", "ty"]
 docs = ["sphinx", "sphinx-autoapi", "sphinx-rtd-theme"]
 
 [project.urls]
