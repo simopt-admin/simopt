@@ -549,11 +549,13 @@ class ProblemSolver:
         )
 
         if n_jobs == 1:
-            results = [run_multithread_partial(i) for i in range(n_macroreps)]
+            results: list[tuple] = [
+                run_multithread_partial(i) for i in range(n_macroreps)
+            ]
         else:
-            results = Parallel(n_jobs=n_jobs)(
+            results: list[tuple] = Parallel(n_jobs=n_jobs)(
                 delayed(run_multithread_partial)(i) for i in range(n_macroreps)
-            )
+            )  # type: ignore
 
         for mrep, recommended_xs, intermediate_budgets, timing in results:
             self.all_recommended_xs[mrep] = recommended_xs
@@ -699,10 +701,10 @@ class ProblemSolver:
         function_start = time.time()
 
         logging.info("Starting postreplications")
-        results = Parallel()(
+        results: list[tuple] = Parallel()(
             delayed(self.post_replicate_multithread)(mrep)
             for mrep in range(self.n_macroreps)
-        )
+        )  # type: ignore
         for mrep, post_rep, timing, stoch_constraints in results:
             self.all_post_replicates[mrep] = post_rep
             self.timings[mrep] = timing
