@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.model import Model
 from simopt.problem_types import ConstraintType, VariableType
+from simopt.utils import get_specifications
 
 
 def _to_grad_array(gradients: float | Iterable[float]) -> np.ndarray:
@@ -291,6 +292,11 @@ class Problem(ABC):
             f"{cls.variable_type.symbol()}"
             f"{'G' if cls.gradient_available else 'N'}"
         )
+
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:  # noqa: N805
+        """Details of each factor (for GUI, data validation, and defaults)."""
+        return get_specifications(cls.config_class)
 
     @property
     def factors(self) -> dict:

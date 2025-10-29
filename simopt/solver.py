@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.problem import Problem, Solution
 from simopt.problem_types import ConstraintType, ObjectiveType, VariableType
+from simopt.utils import get_specifications
 
 
 class BudgetExhaustedError(Exception):
@@ -158,6 +159,11 @@ class Solver(ABC):
             f"{cls.variable_type.symbol()}"
             f"{'G' if cls.gradient_needed else 'N'}"
         )
+
+    @classproperty
+    def specifications(cls) -> dict[str, dict]:  # noqa: N805
+        """Details of each factor (for GUI, data validation, and defaults)."""
+        return get_specifications(cls.config_class)
 
     @property
     def factors(self) -> dict:

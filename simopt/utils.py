@@ -1,9 +1,13 @@
 """Utility functions for simopt."""
 
 import sys
+import types
 from collections.abc import Callable
 from pathlib import Path
 from typing import Generic, TypeVar
+
+from pydantic import BaseModel
+from pydantic_core import PydanticUndefined
 
 T = TypeVar("T", bound=type)
 R = TypeVar("R")
@@ -212,3 +216,44 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
         print(f"{bg_black}{fg_white}{pipe}{row_bg} {row} {bg_black}{pipe}{reset}")
     print(f"{corner_bl}{dash * border_width}{corner_br}")
     print(reset, end="")  # Reset colors
+
+
+def get_specifications(config_class: type[BaseModel]) -> dict[str, dict]:
+    """Get the specifications for a configuration class."""
+    spec = {}
+
+    for name, field in config_class.model_fields.items():
+        data = {
+            "description": field.description,
+        }
+
+        datatype = field.annotation
+
+        # `field.default` can be missing when `default_factory` is used
+        default = (
+            field.default
+            if field.default is not PydanticUndefined
+            else field.default_factory()
+        )
+
+        # Handle data type like list[int]
+        if isinstance(datatype, types.GenericAlias):
+            datatype = datatype.__origin__
+            # NOTE: the GUI only supports lists
+            if datatype is tuple:
+                datatype = list
+                default = list(default)
+
+        data["datatype"] = datatype
+        data["default"] = default
+
+        if (
+            field.json_schema_extra is not None
+            and "isDatafarmable" in field.json_schema_extra
+        ):
+            data["isDatafarmable"] = field.json_schema_extra["isDatafarmable"]
+
+        name = field.alias or name
+        spec[name] = data
+
+    return spec

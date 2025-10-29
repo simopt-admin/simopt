@@ -7,17 +7,7 @@ from boltons.typeutils import classproperty
 from pydantic import BaseModel
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-
-
-def _get_specifications(config_class: type[BaseModel]) -> dict[str, dict]:
-    spec = {}
-    for name, field in config_class.model_fields.items():
-        spec[name] = {
-            "description": field.description,
-            "datatype": field.annotation,
-            "default": field.default,
-        }
-    return spec
+from simopt.utils import get_specifications
 
 
 class Model(ABC):
@@ -82,7 +72,7 @@ class Model(ABC):
     @classproperty
     def specifications(cls) -> dict[str, dict]:  # noqa: N805
         """Details of each factor (for GUI, data validation, and defaults)."""
-        return _get_specifications(cls.config_class)
+        return get_specifications(cls.config_class)
 
     @property
     def factors(self) -> dict:
