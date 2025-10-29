@@ -5892,30 +5892,6 @@ def create_design(
 
     design_list = create_design_list_from_table(design_table)
 
-    # check factors for each design point
-    for dp in design_list:
-        if isinstance(design_object, Solver):
-            # initialize temporary solver to run factor checks
-            temp = solver_directory[name](fixed_factors=dp)
-        if isinstance(design_object, Model):
-            # initialize temporary model to run factor checks
-            temp = model_directory[name](fixed_factors=dp)
-            # run check function on temp model
-            temp.run_all_checks(factor_names=list(dp.keys()))
-        if isinstance(design_object, Problem):
-            # seperate problem and model factors in dp
-            prob_factor_keys = set(design_object.specifications.keys())
-            problem_factors = {k: v for k, v in dp.items() if k in prob_factor_keys}
-            model_factors = {k: v for k, v in dp.items() if k not in prob_factor_keys}
-            # initialize temporary problem to run factor checks
-            temp_problem = problem_directory[name](
-                fixed_factors=problem_factors,
-                model_fixed_factors=model_factors,
-            )
-            # initialize temporary model to run factor checks
-            model_factor_names = list(temp_problem.model.specifications.keys())
-            temp_problem.model.run_all_checks(factor_names=model_factor_names)
-
     # Write extra design information to design table.
     design_table.insert(0, "design_num", pd.Series(range(len(design_table))))
     design_table["name"] = design_object.name
