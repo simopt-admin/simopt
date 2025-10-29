@@ -24,21 +24,31 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 dependencies = [
-    "numpy",
-    "scipy",
-    "matplotlib",
-    "pandas",
-    "seaborn",
-    "mrg32k3a",
-    "joblib>=1.5.1",
-    "pydantic>=2.11.7",
     "boltons>=25.0.0",
     "cvxpy>=1.7.3",
+    "joblib>=1.5.2",
+    "matplotlib>=3.10.7",
+    "mrg32k3a[rust]>=2.0.0",
+    "numpy>=2.3.4",
+    "pandas>=2.3.3",
+    "pillow>=12.0.0",
+    "pydantic>=2.12.3",
+    "scipy>=1.16.3",
+    "seaborn>=0.13.2",
 ]
 
 [project.optional-dependencies]
-dev = ["sphinx"]
+docs = [
+    "sphinx>=8.2.3",
+    "sphinx-autoapi>=3.6.1",
+    "sphinx-rtd-theme>=3.0.2",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"
 "Documentation" = "https://simopt.readthedocs.io/en/latest/"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.2",
+]
