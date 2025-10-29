@@ -8,9 +8,10 @@ the solver can be found `here <https://simopt.readthedocs.io/en/latest/aloe.html
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Annotated
 
 import numpy as np
+from pydantic import BaseModel, Field
 
 from simopt.base import (
     ConstraintType,
@@ -20,154 +21,74 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty, override
+from simopt.utils import override
+
+
+class ALOEConfig(BaseModel):
+    """Configuration for ALOE solver."""
+
+    crn_across_solns: Annotated[
+        bool, Field(default=True, description="use CRN across solutions?")
+    ]
+    r: Annotated[
+        int,
+        Field(
+            default=30,
+            gt=0,
+            description="number of replications taken at each solution",
+        ),
+    ]
+    theta: Annotated[
+        float,
+        Field(
+            default=0.2,
+            gt=0,
+            lt=1,
+            description="constant in the Armijo condition",
+        ),
+    ]
+    gamma: Annotated[
+        float,
+        Field(
+            default=0.8,
+            gt=0,
+            lt=1,
+            description="constant for shrinking the step size",
+        ),
+    ]
+    alpha_max: Annotated[int, Field(default=10, gt=0, description="maximum step size")]
+    alpha_0: Annotated[int, Field(default=1, gt=0, description="initial step size")]
+    epsilon_f: Annotated[
+        int,
+        Field(default=1, gt=0, description="additive constant in the Armijo condition"),
+    ]
+    sensitivity: Annotated[
+        float,
+        Field(default=1e-7, gt=0, description="shrinking scale for variable bounds"),
+    ]
+    lambda_: Annotated[
+        int,
+        Field(
+            default=2,
+            gt=0,
+            description="magnifying factor for n_r inside the finite difference function",
+            alias="lambda",
+        ),
+    ]
 
 
 class ALOE(Solver):
     """Adaptive Line-search with Oracle Estimations."""
 
-    @classproperty
-    @override
-    def objective_type(cls) -> ObjectiveType:
-        return ObjectiveType.SINGLE
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_needed(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "crn_across_solns": {
-                "description": "use CRN across solutions?",
-                "datatype": bool,
-                "default": True,
-            },
-            "r": {
-                "description": "number of replications taken at each solution",
-                "datatype": int,
-                "default": 30,
-            },
-            "theta": {
-                "description": "constant in the Armijo condition",
-                "datatype": float,
-                "default": 0.2,
-            },
-            "gamma": {
-                "description": "constant for shrinking the step size",
-                "datatype": float,
-                "default": 0.8,
-            },
-            "alpha_max": {
-                "description": "maximum step size",
-                "datatype": int,
-                "default": 10,
-            },
-            "alpha_0": {
-                "description": "initial step size",
-                "datatype": int,
-                "default": 1,
-            },
-            # In the paper, this value is estimated for every epoch but a value > 0
-            # is justified in practice.
-            "epsilon_f": {
-                "description": "additive constant in the Armijo condition",
-                "datatype": int,
-                "default": 1,
-            },
-            "sensitivity": {
-                "description": "shrinking scale for variable bounds",
-                "datatype": float,
-                "default": 10 ** (-7),
-            },
-            "lambda": {
-                "description": (
-                    "magnifying factor for n_r inside the finite difference function"
-                ),
-                "datatype": int,
-                "default": 2,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "crn_across_solns": self.check_crn_across_solns,
-            "r": self._check_r,
-            "theta": self._check_theta,
-            "gamma": self._check_gamma,
-            "alpha_max": self._check_alpha_max,
-            "alpha_0": self._check_alpha_0,
-            "epsilon_f": self._check_epsilon_f,
-            "sensitivity": self._check_sensitivity,
-            "lambda": self._check_lambda,
-        }
-
-    def __init__(self, name: str = "ALOE", fixed_factors: dict | None = None) -> None:
-        """Initialize the ALOE solver.
-
-        Args:
-            name (str): The name of the solver.
-            fixed_factors (dict, optional): Fixed factors for the solver.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(name, fixed_factors)
-
-    def _check_r(self) -> None:
-        if self.factors["r"] <= 0:
-            raise ValueError(
-                "The number of replications taken at each solution must be greater "
-                "than 0."
-            )
-
-    def _check_theta(self) -> None:
-        if self.factors["theta"] <= 0 or self.factors["theta"] >= 1:
-            raise ValueError("Theta must be between 0 and 1.")
-
-    def _check_gamma(self) -> None:
-        if self.factors["gamma"] <= 0 or self.factors["gamma"] >= 1:
-            raise ValueError("Gamma must be between 0 and 1.")
-
-    def _check_alpha_max(self) -> None:
-        if self.factors["alpha_max"] <= 0:
-            raise ValueError("The maximum step size must be greater than 0.")
-
-    def _check_alpha_0(self) -> None:
-        if self.factors["alpha_0"] <= 0:
-            raise ValueError("The initial step size must be greater than 0.")
-
-    def _check_epsilon_f(self) -> None:
-        if self.factors["epsilon_f"] <= 0:
-            raise ValueError("epsilon_f must be greater than 0.")
-
-    def _check_sensitivity(self) -> None:
-        if self.factors["sensitivity"] <= 0:
-            raise ValueError("Sensitivity must be greater than 0.")
-
-    def _check_lambda(self) -> None:
-        if self.factors["lambda"] <= 0:
-            raise ValueError("Lambda must be greater than 0.")
+    name: str = "ALOE"
+    config_class: type[BaseModel] = ALOEConfig
+    objective_type: ObjectiveType = ObjectiveType.SINGLE
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_needed: bool = False
 
     @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
-
+    def solve(self, problem: Problem) -> None:
         # Default values.
         r = self.factors["r"]
         theta = self.factors["theta"]
@@ -184,48 +105,51 @@ class ALOE(Solver):
         new_solution = self.create_new_solution(
             problem.factors["initial_solution"], problem
         )
-        recommended_solns.append(new_solution)
-        intermediate_budgets.append(expended_budget)
+        self.recommended_solns.append(new_solution)
+        self.intermediate_budgets.append(self.budget.used)
+
+        self.budget.request(r)
         problem.simulate(new_solution, r)
-        expended_budget += r
+
         best_solution = new_solution
 
-        while expended_budget < problem.factors["budget"]:
+        while True:
             new_x = np.array(new_solution.x, dtype=float)
 
             # Check variable bounds
             forward = np.isclose(
                 new_x, lower_bound, atol=self.factors["sensitivity"]
-            ).astype(int)
+            ).astype(np.int64)
             backward = np.isclose(
                 new_x, upper_bound, atol=self.factors["sensitivity"]
-            ).astype(int)
+            ).astype(np.int64)
             bounds_check = forward - backward
 
             if problem.gradient_available:
                 grad = -problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
-                grad = self._finite_diff(new_solution, bounds_check, problem, alpha, r)
-                expended_budget += (
+                finite_diff_budget = (
                     2 * problem.dim - np.count_nonzero(bounds_check)
                 ) * r
-                while (
-                    np.all(grad == 0) and expended_budget <= problem.factors["budget"]
-                ):
+                self.budget.request(finite_diff_budget)
+                grad = self._finite_diff(new_solution, bounds_check, problem, alpha, r)
+
+                while np.all(grad == 0):
+                    finite_diff_budget = (
+                        2 * problem.dim - np.count_nonzero(bounds_check)
+                    ) * r
+                    self.budget.request(finite_diff_budget)
                     grad = self._finite_diff(
                         new_solution, bounds_check, problem, alpha, r
                     )
-                    expended_budget += (
-                        2 * problem.dim - np.count_nonzero(bounds_check)
-                    ) * r
                     r = int(self.factors["lambda"] * r)  # Update sample size
 
             # Compute candidate solution and apply box constraints (vectorized).
             candidate_x = np.clip(new_x - alpha * grad, lower_bound, upper_bound)
             candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
+            self.budget.request(r)
             problem.simulate(candidate_solution, r)
-            expended_budget += r
 
             # Check modified Armijo condition
             if (-problem.minmax[0] * candidate_solution.objectives_mean) <= (
@@ -243,10 +167,8 @@ class ALOE(Solver):
                 > problem.minmax[0] * best_solution.objectives_mean
             ):
                 best_solution = new_solution
-                recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)
-
-        return recommended_solns, intermediate_budgets
+                self.recommended_solns.append(new_solution)
+                self.intermediate_budgets.append(self.budget.used)
 
     def _finite_diff(
         self,
@@ -273,7 +195,7 @@ class ALOE(Solver):
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -1 * problem.minmax[0] * new_solution.objectives_mean
-        new_x = np.array(new_solution.x, dtype=float)
+        new_x = np.array(new_solution.x, dtype=np.float64)
         # Store values for each dimension.
         function_diff = np.zeros((problem.dim, 3))
 

@@ -6,9 +6,10 @@ stochastic objective functions, based on adaptive estimates of lower-order momen
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Annotated
 
 import numpy as np
+from pydantic import BaseModel, Field
 
 from simopt.base import (
     ConstraintType,
@@ -18,7 +19,49 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty, override
+from simopt.utils import override
+
+
+class ADAMConfig(BaseModel):
+    """Configuration for ADAM solver."""
+
+    crn_across_solns: Annotated[
+        bool, Field(default=True, description="use CRN across solutions?")
+    ]
+    r: Annotated[
+        int,
+        Field(
+            default=30,
+            gt=0,
+            description="number of replications taken at each solution",
+        ),
+    ]
+    beta_1: Annotated[
+        float,
+        Field(
+            default=0.9,
+            gt=0,
+            lt=1,
+            description="exponential decay of the rate for the first moment estimates",
+        ),
+    ]
+    beta_2: Annotated[
+        float,
+        Field(
+            default=0.999,
+            lt=1,
+            description="exponential decay rate for the second-moment estimates",
+        ),
+    ]
+    alpha: Annotated[float, Field(default=0.5, gt=0, description="step size")]
+    epsilon: Annotated[
+        float,
+        Field(default=1e-8, gt=0, description="a small value to prevent zero-division"),
+    ]
+    sensitivity: Annotated[
+        float,
+        Field(default=1e-7, gt=0, description="shrinking scale for variable bounds"),
+    ]
 
 
 class ADAM(Solver):
@@ -28,126 +71,15 @@ class ADAM(Solver):
     stochastic objective functions, based on adaptive estimates of lower-order moments.
     """
 
-    @classproperty
-    @override
-    def objective_type(cls) -> ObjectiveType:
-        return ObjectiveType.SINGLE
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_needed(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "crn_across_solns": {
-                "description": "use CRN across solutions?",
-                "datatype": bool,
-                "default": True,
-            },
-            "r": {
-                "description": "number of replications taken at each solution",
-                "datatype": int,
-                "default": 30,
-            },
-            "beta_1": {
-                "description": (
-                    "exponential decay of the rate for the first moment estimates"
-                ),
-                "datatype": float,
-                "default": 0.9,
-            },
-            "beta_2": {
-                "description": "exponential decay rate for the second-moment estimates",
-                "datatype": float,
-                "default": 0.999,
-            },
-            "alpha": {
-                "description": "step size",
-                "datatype": float,
-                "default": 0.5,  # Changing the step size matters a lot.
-            },
-            "epsilon": {
-                "description": "a small value to prevent zero-division",
-                "datatype": float,
-                "default": 10 ** (-8),
-            },
-            "sensitivity": {
-                "description": "shrinking scale for variable bounds",
-                "datatype": float,
-                "default": 10 ** (-7),
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "crn_across_solns": self.check_crn_across_solns,
-            "r": self._check_r,
-            "beta_1": self._check_beta_1,
-            "beta_2": self._check_beta_2,
-            "alpha": self._check_alpha,
-            "epsilon": self._check_epsilon,
-            "sensitivity": self._check_sensitivity,
-        }
-
-    def __init__(self, name: str = "ADAM", fixed_factors: dict | None = None) -> None:
-        """Initialize the ADAM solver.
-
-        Args:
-            name (str, optional): The name of the solver. Defaults to "ADAM".
-            fixed_factors (dict, optional): A dictionary of fixed factors.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(name, fixed_factors)
-
-    def _check_r(self) -> None:
-        if self.factors["r"] <= 0:
-            raise ValueError(
-                "The number of replications taken at each solution must be greater "
-                "than 0."
-            )
-
-    def _check_beta_1(self) -> None:
-        if self.factors["beta_1"] <= 0 or self.factors["beta_1"] >= 1:
-            raise ValueError("Beta 1 must be between 0 and 1.")
-
-    def _check_beta_2(self) -> None:
-        if self.factors["beta_2"] > 0 and self.factors["beta_2"] >= 1:
-            raise ValueError("Beta 2 must be less than 1.")
-
-    def _check_alpha(self) -> None:
-        if self.factors["alpha"] <= 0:
-            raise ValueError("Alpha must be greater than 0.")
-
-    def _check_epsilon(self) -> None:
-        if self.factors["epsilon"] <= 0:
-            raise ValueError("Epsilon must be greater than 0.")
-
-    def _check_sensitivity(self) -> None:
-        if self.factors["sensitivity"] <= 0:
-            raise ValueError("Sensitivity must be greater than 0.")
+    name: str = "ADAM"
+    config_class: type[BaseModel] = ADAMConfig
+    objective_type: ObjectiveType = ObjectiveType.SINGLE
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_needed: bool = False
 
     @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
-
+    def solve(self, problem: Problem) -> None:
         # Default values.
         r: int = self.factors["r"]
         beta_1: float = self.factors["beta_1"]
@@ -163,10 +95,12 @@ class ADAM(Solver):
         new_solution = self.create_new_solution(
             problem.factors["initial_solution"], problem
         )
-        recommended_solns.append(new_solution)
-        intermediate_budgets.append(expended_budget)
+        self.recommended_solns.append(new_solution)
+        self.intermediate_budgets.append(self.budget.used)
+
+        self.budget.request(r)
         problem.simulate(new_solution, r)
-        expended_budget += r
+
         best_solution = new_solution
 
         # Initialize the first moment vector, the second moment vector,
@@ -175,7 +109,7 @@ class ADAM(Solver):
         v = np.zeros(problem.dim)
         t = 0
 
-        while expended_budget < problem.factors["budget"]:
+        while True:
             # Update timestep.
             t += 1
             # Check variable bounds.
@@ -193,10 +127,11 @@ class ADAM(Solver):
             else:
                 # Use finite difference to estimate gradient if IPA gradient is
                 # not available.
-                grad = self._finite_diff(new_solution, bounds_check, problem)
-                expended_budget += (
+                finite_diff_budget = (
                     2 * problem.dim - np.count_nonzero(bounds_check)
                 ) * r
+                self.budget.request(finite_diff_budget)
+                grad = self._finite_diff(new_solution, bounds_check, problem)
 
             # Update biased first moment estimate.
             m = beta_1 * m + (1 - beta_1) * grad
@@ -213,16 +148,15 @@ class ADAM(Solver):
             # Create new solution based on new x
             new_solution = self.create_new_solution(tuple(new_x), problem)
             # Use r simulated observations to estimate the objective value.
+            self.budget.request(r)
             problem.simulate(new_solution, r)
-            expended_budget += r
+
             if (new_solution.objectives_mean > best_solution.objectives_mean) ^ (
                 problem.minmax[0] < 0
             ):
                 best_solution = new_solution
-                recommended_solns.append(new_solution)
-                intermediate_budgets.append(expended_budget)
-
-        return recommended_solns, intermediate_budgets
+                self.recommended_solns.append(new_solution)
+                self.intermediate_budgets.append(self.budget.used)
 
     def _finite_diff(
         self,
@@ -247,7 +181,7 @@ class ADAM(Solver):
         lower_bound = problem.lower_bounds
         upper_bound = problem.upper_bounds
         fn = -problem.minmax[0] * new_solution.objectives_mean
-        new_x = np.array(new_solution.x, dtype=float)
+        new_x = np.array(new_solution.x, dtype=np.float64)
 
         function_diff = np.zeros((problem.dim, 3))
 

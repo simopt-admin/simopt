@@ -3,36 +3,28 @@
 
 from __future__ import annotations
 
+import contextlib
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from enum import Enum
-from typing import Callable
+from typing import Callable, ClassVar
 
 import numpy as np
+from pydantic import BaseModel
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.utils import classproperty
 
 
-def _factor_check(self: Solver | Problem | Model, factor_name: str) -> bool:
-    # Check if factor is of permissible data type.
-    datatype_check = self.check_factor_datatype(factor_name)
-    if not datatype_check:
-        return False
-    # Check if the factor check exists
-    if factor_name not in self.check_factor_list:
-        # If the factor is a boolean, it's fine
-        if self.specifications[factor_name]["datatype"] is bool:
-            return True
-        # Raise an error since there's an error in the check list
-        datatype = self.specifications[factor_name]["datatype"]
-        error_msg = f"Missing check for factor {factor_name} of type {datatype}"
-        raise ValueError(error_msg)
-    # Otherwise, the factor exists in the check list and should be checked
-    # This will raise an error if the factor is not permissible
-    self.check_factor_list[factor_name]()
-    # Return true if we successfully checked the factor
-    return True
+def _get_specifications(config_class: type[BaseModel]) -> dict[str, dict]:
+    spec = {}
+    for name, field in config_class.model_fields.items():
+        spec[name] = {
+            "description": field.description,
+            "datatype": field.annotation,
+            "default": field.default,
+        }
+    return spec
 
 
 class ObjectiveType(Enum):
@@ -83,6 +75,62 @@ class VariableType(Enum):
         return symbol_mapping.get(self, "?")
 
 
+class BudgetExhaustedError(Exception):
+    """Raised when a solver exceeds its allotted simulation budget.
+
+    This exception is thrown by :class:`Budget` when a call to
+    :meth:`Budget.request` asks for more replications than remain in the
+    available budget. It is caught in :meth:`Solver.run` to stop the
+    macroreplication cleanly once the budget is exhausted.
+    """
+
+
+class Budget:
+    """Tracks and enforces a solver's replication budget.
+
+    A ``Budget`` instance is attached to each solver run and measures the number of
+    simulation replications consumed. Solvers should call :meth:`request` before
+    taking replications. If the request would exceed ``total``, a
+    :class:`BudgetExhaustedException` is raised. This provides a consistent way for
+    solvers to terminate exactly at the specified budget.
+
+    Args:
+        total (int): Total number of replications available for the run.
+    """
+
+    def __init__(self, total: int) -> None:
+        """Initialize object with the total number of replications available."""
+        self.total = total
+        self._used = 0
+
+    def request(self, amount: int) -> None:
+        """Consume ``amount`` replications from the budget.
+
+        Typical usage is to call ``request(r)`` immediately before taking ``r``
+        replications at the current solution.
+
+        Args:
+            amount (int): Number of replications to consume.
+
+        Raises:
+            BudgetExhaustedException: If ``amount`` would cause usage to exceed
+                :attr:`total`.
+        """
+        if self._used + amount > self.total:
+            raise BudgetExhaustedError()
+        self._used += amount
+
+    @property
+    def used(self) -> int:
+        """Number of replications consumed so far."""
+        return self._used
+
+    @property
+    def remaining(self) -> int:
+        """Number of replications still available (``total - used``)."""
+        return self.total - self._used
+
+
 class Solver(ABC):
     """Base class to implement simulation-optimization solvers.
 
@@ -94,6 +142,9 @@ class Solver(ABC):
         name (str): Name of the solver.
         fixed_factors (dict): Dictionary of user-specified solver factors.
     """
+
+    name: str
+    config_class: type[BaseModel]
 
     @classproperty
     def class_name_abbr(cls) -> str:
@@ -114,17 +165,6 @@ class Solver(ABC):
             f"{cls.variable_type.symbol()}"
             f"{'G' if cls.gradient_needed else 'N'}"
         )
-
-    @property
-    def name(self) -> str:
-        """Name of solver."""
-        return self.__name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        if len(value) == 0:
-            raise ValueError("Name must not be empty.")
-        self.__name = value
 
     @classproperty
     @abstractmethod
@@ -162,13 +202,7 @@ class Solver(ABC):
     @property
     def factors(self) -> dict:
         """Changeable factors (i.e., parameters) of the solver."""
-        return self.__factors
-
-    @factors.setter
-    def factors(self, value: dict | None) -> None:
-        if value is None:
-            value = {}
-        self.__factors = value
+        return self.config.model_dump(by_alias=True)
 
     @classproperty
     @abstractmethod
@@ -196,12 +230,6 @@ class Solver(ABC):
     def solution_progenitor_rngs(self, value: list[MRG32k3a]) -> None:
         self.__solution_progenitor_rngs = value
 
-    @property
-    @abstractmethod
-    def check_factor_list(self) -> dict[str, Callable]:
-        """Dictionary of functions to check if a factor is permissible."""
-        raise NotImplementedError
-
     def __init__(self, name: str = "", fixed_factors: dict | None = None) -> None:
         """Initialize a solver object.
 
@@ -210,17 +238,13 @@ class Solver(ABC):
             fixed_factors (dict | None, optional): Dictionary of user-specified solver
                 factors. Defaults to None.
         """
-        self.name = name
-        # Add all the fixed factors to the solver
-        self.factors = fixed_factors
-        all_factors = set(self.specifications.keys())
-        present_factors = set(self.factors.keys())
-        missing_factors = all_factors - present_factors
-        for factor in missing_factors:
-            self.factors[factor] = self.specifications[factor]["default"]
-        # Run checks
-        factor_names = list(self.factors.keys())
-        self.run_all_checks(factor_names=factor_names)
+        self.name = name or self.name
+
+        fixed_factors = fixed_factors or {}
+        self.config = self.config_class(**fixed_factors)
+
+        self.recommended_solns = []
+        self.intermediate_budgets = []
 
     def __eq__(self, other: object) -> bool:
         """Check if two solvers are equivalent.
@@ -253,7 +277,7 @@ class Solver(ABC):
         self.rng_list = rng_list
 
     @abstractmethod
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+    def solve(self, problem: Problem) -> None:
         """Run a single macroreplication of a solver on a problem.
 
         Args:
@@ -267,81 +291,26 @@ class Solver(ABC):
         """
         raise NotImplementedError
 
-    def check_crn_across_solns(self) -> bool:
-        """Check solver factor crn_across_solns.
-
-        Returns:
-            bool: True if the solver factor is permissible, otherwise False.
-        """
-        # NOTE: Currently implemented to always return True
-        return True
-
-    def check_solver_factor(self, factor_name: str) -> bool:
-        """Determine if the setting of a solver factor is permissible.
+    def run(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+        """Run the solver on a problem.
 
         Args:
-            factor_name (str): Name of factor for dictionary lookup (i.e., key).
+            problem (Problem): The problem to solve.
 
         Returns:
-            bool: True if the solver factor is permissible, otherwise False.
+            tuple[list[Solution], list[int]]: A tuple containing a list of solutions
+            and a list of intermediate budgets.
         """
-        return _factor_check(self, factor_name)
+        self.budget = Budget(problem.factors["budget"])
+        with contextlib.suppress(BudgetExhaustedError):
+            self.solve(problem)
 
-    # TODO: Figure out if this should be abstract or not
-    # @abstractmethod
-    def check_solver_factors(self) -> bool:
-        """Determine if the joint settings of solver factors are permissible.
+        recommended_solns = self.recommended_solns
+        intermediate_budgets = self.intermediate_budgets
+        self.recommended_solns = []
+        self.intermediate_budgets = []
 
-        Returns:
-            bool: True if the solver factors are permissible, otherwise False.
-        """
-        return True
-
-    def check_factor_datatype(self, factor_name: str) -> bool:
-        """Determine if a factor's data type matches its specification.
-
-        Args:
-            factor_name (str): The name of the factor to check.
-
-        Returns:
-            bool: True if factor is of specified data type, otherwise False.
-        """
-        expected_data_type = self.specifications[factor_name]["datatype"]
-        return isinstance(self.factors[factor_name], expected_data_type)
-
-    def run_all_checks(self, factor_names: list[str]) -> bool:
-        """Run all checks for the solver factors.
-
-        Args:
-            factor_names (list[str]): A list of factor names to check.
-
-        Returns:
-            bool: True if all checks are passed, otherwise False.
-        """
-        is_joint_factors = (
-            self.check_solver_factors()
-        )  # check all joint factor settings
-
-        if not is_joint_factors:
-            error_msg = (
-                "There is a joint setting of a solver factor that is not permissible"
-            )
-            raise ValueError(error_msg)
-
-        # check datatypes for all factors
-        for factor in factor_names:
-            is_right_type = self.check_factor_datatype(factor)
-            if not is_right_type:
-                error_msg = f"Solver factor {factor} is not the correct data type."
-                raise ValueError(error_msg)
-
-            is_permissible = self.check_solver_factor(factor)
-            if not is_permissible:
-                error_msg = f"Solver factor {factor} is not permissible."
-                raise ValueError(error_msg)
-
-        # Return true if no issues
-        return True
+        return recommended_solns, intermediate_budgets
 
     def create_new_solution(self, x: tuple, problem: Problem) -> Solution:
         """Create a new solution object with attached RNGs.
@@ -390,6 +359,9 @@ class Problem(ABC):
         model_fixed_factors (dict): Subset of non-decision factors passed to the model.
         model (Callable[..., Model]): Simulation model that generates replications.
     """
+
+    config_class: ClassVar[type[BaseModel]]
+    model_class: ClassVar[type[Model]]
 
     @classproperty
     def class_name_abbr(cls) -> str:
@@ -512,13 +484,11 @@ class Problem(ABC):
     @property
     def model_fixed_factors(self) -> dict:
         """Combination of overriden model-level factors and defaults."""
-        return self.__model_fixed_factors
+        raise RuntimeError("deprecated")
 
     @model_fixed_factors.setter
     def model_fixed_factors(self, value: dict | None) -> None:
-        if value is None:
-            value = {}
-        self.__model_fixed_factors = value
+        raise RuntimeError("deprecated")
 
     @classproperty
     @abstractmethod
@@ -538,24 +508,16 @@ class Problem(ABC):
     @property
     def factors(self) -> dict:
         """Changeable factors of the problem."""
-        return self.__factors
+        return self.config.model_dump(by_alias=True)
 
     @factors.setter
     def factors(self, value: dict | None) -> None:
-        if value is None:
-            value = {}
-        self.__factors = value
+        raise RuntimeError("factors are read-only")
 
     @classproperty
     @abstractmethod
     def specifications(cls) -> dict:
         """Details of each factor (for GUI, data validation, and defaults)."""
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def check_factor_list(self) -> dict:
-        """Dictionary of functions to check if a factor is permissible."""
         raise NotImplementedError
 
     def __init__(
@@ -575,32 +537,22 @@ class Problem(ABC):
             model (Callable[..., Model] | None): Simulation model that generates
                 replications.
         """
-        if model is None:
-            raise ValueError("Model must be specified.")
         # Assign the name of the problem
-        self.name = name
+        self.name = name or self.class_name_abbr
 
         # Add all the fixed factors to the problem
-        self.factors = fixed_factors
-        all_factors = set(self.specifications.keys())
-        present_factors = set(self.factors.keys())
-        missing_factors = all_factors - present_factors
-        for factor in missing_factors:
-            self.factors[factor] = self.specifications[factor]["default"]
+        fixed_factors = fixed_factors or {}
+        self.config = self.config_class(**fixed_factors)
 
-        # Add all the fixed factors to the model
-        self.model_fixed_factors = model_fixed_factors
-        all_model_factors = set(self.model_default_factors.keys())
-        present_model_factors = set(self.model_fixed_factors.keys())
-        missing_model_factors = all_model_factors - present_model_factors
-        for factor in missing_model_factors:
-            self.model_fixed_factors[factor] = self.model_default_factors[factor]
+        model_factors = {}
+        model_config = self.model_class.config_class()
+        model_factors.update(model_config.model_dump(by_alias=True))
+        model_factors.update(self.model_default_factors)
+        model_fixed_factors = model_fixed_factors or {}
+        model_factors.update(model_fixed_factors)
 
         # Set the model
-        self.model = model(self.model_fixed_factors)
-
-        keys = list(self.factors.keys())
-        self.run_all_checks(factor_names=keys)
+        self.model = self.model_class(model_factors)
 
     def __eq__(self, other: object) -> bool:
         """Check if two problems are equivalent.
@@ -640,106 +592,6 @@ class Problem(ABC):
                 tuple([(key, self.model.factors[key]) for key in non_decision_factors]),
             )
         )
-
-    def check_initial_solution(self) -> bool:
-        """Check if initial solution is feasible and of correct dimension.
-
-        Returns:
-            bool: True if initial solution is feasible and of correct dimension;
-                False otherwise.
-        """
-        return True
-
-    def check_budget(self) -> bool:
-        """Check if budget is strictly positive.
-
-        Returns:
-            bool: True if budget is strictly positive, otherwise False.
-        """
-        return self.factors["budget"] > 0
-
-    def check_problem_factor(self, factor_name: str) -> bool:
-        """Determine if the setting of a problem factor is permissible.
-
-        Args:
-            factor_name (str): The name of the factor to check
-
-        Returns:
-            bool: True if the factor setting is permissible; False otherwise.
-        """
-        return _factor_check(self, factor_name)
-
-    # NOTE: This was originally supposed to be an abstract method, but only
-    # SPSA actually implements it. It's currently not clear if this
-    # method should be implemented in other Problems as well.
-    # @abstractmethod
-    def check_problem_factors(self) -> bool:
-        """Determine if the joint settings of problem factors are permissible.
-
-        Returns:
-            bool: True if problem factors are permissible; False otherwise.
-        """
-        return True
-
-    def check_factor_datatype(self, factor_name: str) -> bool:
-        """Determine if a factor's data type matches its specification.
-
-        Args:
-            factor_name (str): The name of the factor to check.
-
-        Returns:
-            bool: True if factor is of specified data type, otherwise False.
-        """
-        return isinstance(
-            self.factors[factor_name],
-            self.specifications[factor_name]["datatype"],
-        )
-
-    def run_all_checks(self, factor_names: list[str]) -> bool:
-        """Run all checks for the problem factors.
-
-        Args:
-            factor_names (list[str]): A list of factor names to check.
-
-        Returns:
-            bool: True if all checks are passed, otherwise False.
-        """
-        is_joint_factors = (
-            self.check_problem_factors()
-        )  # check all joint factor settings
-        if not is_joint_factors:
-            error_msg = (
-                "There is a joint setting of a problem factor that is not permissible"
-            )
-            raise ValueError(error_msg)
-
-        is_initial_sol = self.check_initial_solution()
-        if not is_initial_sol:
-            error_msg = (
-                "The initial solution is not feasible and/or not correct dimension"
-            )
-            raise ValueError(error_msg)
-
-        # TODO: investigate why this is not working
-        # is_budget = self.check_budget()
-        if isinstance(self.factors["budget"], int) and self.factors["budget"] <= 0:
-            error_msg = "The budget is not positive."
-            raise ValueError(error_msg)
-
-        # check datatypes for all factors
-        for factor in factor_names:
-            is_permissible = self.check_problem_factor(factor)
-            is_right_type = self.check_factor_datatype(factor)
-
-            if not is_right_type:
-                error_msg = f"Problem factor {factor} is not a permissible data type."
-                raise ValueError(error_msg)
-
-            if not is_permissible:
-                error_msg = f"Problem factor {factor} is not permissible."
-                raise ValueError(error_msg)
-
-        return True
 
     def attach_rngs(self, rng_list: list[MRG32k3a]) -> None:
         """Attach a list of random-number generators to the problem.
@@ -893,6 +745,17 @@ class Problem(ABC):
         """
         raise NotImplementedError
 
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: B027
+        """Hook executed before each simulation replication.
+
+        Subclasses can override this to perform per-replication setup such as
+        using the same RNG for different input models.
+
+        Args:
+            rng_list (list[MRG32k3a]): RNGs used for this replication.
+        """
+        pass
+
     def simulate(self, solution: Solution, num_macroreps: int = 1) -> None:
         """Simulate `m` i.i.d. replications at solution `x`.
 
@@ -916,7 +779,10 @@ class Problem(ABC):
         self.model.factors.update(solution.decision_factors)
         for _ in range(num_macroreps):
             # Generate one replication at x.
-            responses, gradients = self.model.replicate(solution.rng_list)
+            self.model.before_replicate(solution.rng_list)
+            self.before_replicate(self.model, solution.rng_list)
+
+            responses, gradients = self.model.replicate()
             # Convert gradient subdictionaries to vectors mapping to decision variables.
             vector_gradients = {}
             if self.gradient_available:
@@ -1018,6 +884,8 @@ class Model(ABC):
     Each model defines the simulation logic behind a given problem instance.
     """
 
+    config_class: ClassVar[type[BaseModel]]
+
     @classproperty
     def class_name_abbr(cls) -> str:
         """Short name of the model class."""
@@ -1049,21 +917,15 @@ class Model(ABC):
         raise NotImplementedError
 
     @classproperty
-    @abstractmethod
     def specifications(cls) -> dict[str, dict]:
         """Details of each factor (for GUI, data validation, and defaults)."""
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def check_factor_list(self) -> dict[str, Callable]:
-        """Switch case for checking factor simulatability."""
-        raise NotImplementedError
+        return _get_specifications(cls.config_class)
 
     @property
     def factors(self) -> dict:
         """Changeable factors of the simulation model."""
-        return self.__factors
+        # TODO: this is currently needed because the solver may update the factors
+        return self._factors
 
     @factors.setter
     def factors(self, value: dict | None) -> None:
@@ -1079,15 +941,9 @@ class Model(ABC):
                 factors.
         """
         # Add all the fixed factors to the model
-        self.factors = fixed_factors
-        all_factors = set(self.specifications.keys())
-        present_factors = set(self.factors.keys())
-        missing_factors = all_factors - present_factors
-        for key in missing_factors:
-            self.factors[key] = self.specifications[key]["default"]
-
-        factor_names = list(self.factors.keys())
-        self.run_all_checks(factor_names=factor_names)
+        fixed_factors = fixed_factors or {}
+        self.config = self.config_class(**fixed_factors)
+        self._factors = self.config.model_dump(by_alias=True)
 
     def __eq__(self, other: object) -> bool:
         """Check if two models are equivalent.
@@ -1110,82 +966,27 @@ class Model(ABC):
         """
         return hash((self.name, tuple(self.factors.items())))
 
-    def check_simulatable_factor(self, factor_name: str) -> bool:
-        """Determine if a simulation replication can be run with the given factor.
+    def model_created(self) -> None:  # noqa: B027
+        """Hook called after the model is constructed.
 
-        Args:
-            factor_name (str): Name of factor for dictionary lookup (i.e., key).
-
-        Returns:
-            bool: True if the model specified by factors is simulatable;
-                False otherwise.
+        Subclasses can override this to use custom input models.
         """
-        return _factor_check(self, factor_name)
-
-    def check_simulatable_factors(self) -> bool:
-        """Determine whether a simulation can be run with the current factor settings.
-
-        Each subclass of `Model` can override this method to implement custom logic.
-        If not overridden, this base implementation returns True.
-
-        Returns:
-            bool: True if the model configuration is considered simulatable;
-                False otherwise.
-        """
-        return True
-
-    def check_factor_datatype(self, factor_name: str) -> bool:
-        """Determine if a factor's data type matches its specification.
-
-        Args:
-            factor_name (str): The name of the factor to check.
-
-        Returns:
-            bool: True if factor is of specified data type, otherwise False.
-        """
-        datatype = self.specifications[factor_name]["datatype"]
-        if datatype is float:
-            datatype = (int, float)
-        return isinstance(self.factors[factor_name], datatype)
-
-    def run_all_checks(self, factor_names: list[str]) -> bool:
-        """Run all checks for the model factors.
-
-        Args:
-            factor_names (list[str]): A list of factor names to check.
-
-        Returns:
-            bool: True if all checks are passed, otherwise False.
-
-        Raises:
-            ValueError: If any of the checks fail.
-        """
-        is_joint_factors = (
-            self.check_simulatable_factors()
-        )  # check all joint factor settings
-
-        if not is_joint_factors:
-            error_msg = (
-                "There is a joint setting of a model factor that is not permissible"
-            )
-            raise ValueError(error_msg)
-
-        # check datatypes for all factors
-        for factor in factor_names:
-            is_right_type = self.check_factor_datatype(factor)
-            if not is_right_type:
-                error_msg = f"Model factor {factor} is not a permissible data type."
-                raise ValueError(error_msg)
-
-            is_permissible = self.check_simulatable_factor(factor)
-            if not is_permissible:
-                error_msg = f"Model factor {factor} is not permissible."
-                raise ValueError(error_msg)
-
-        return True
+        pass
 
     @abstractmethod
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
+        """Prepare the model just before generating a replication.
+
+        Args:
+            rng_list (list[MRG32k3a]): RNGs used to drive the simulation.
+
+        Raises:
+            NotImplementedError: If the subclass does not implement this hook.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
