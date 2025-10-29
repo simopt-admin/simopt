@@ -34,44 +34,54 @@ from pathlib import Path
 # Take the current directory, find the parent, and add it to the system path
 sys.path.append(str(Path.cwd().parent))
 
-# %%
-problem_name = "CNTNEWS-1"
-model_name = "CNTNEWS"
-solver_names = ["ASTRODF", "RNDSRCH"]
+# %% [markdown]
+# ## Problem/Model Configuration Parameters
+#
+# To query model/problem/solver names, run `python scripts/list_directories.py`
 
-# Specify the names of the model factors (in order) that will be varied.
+# %%
+# Abbreviated name of the problem and model
+problem_abbr_name = "CNTNEWS-1"
+model_abbr_name = "CNTNEWS"
+
+# Name of each factor being data farmed for the model
 model_factor_headers = ["purchase_price", "sales_price", "order_quantity"]
 
-# OPTIONAL: factors chosen for cross design
-# factor name followed by list containing factor values to cross design over
-# model_cross_design_factors = {}
+# List of tuples defining the minimum, maximum, and # of decimals for each factor
+# Each tuple corresponds to a factor in model_factor_headers
+model_factor_settings = [(4.0, 6.0, 1), (8.0, 12.0, 1), (0.4, 0.6, 2)]
 
-# OPTIONAL: Provide additional overrides for model default factors.
-# If empty, default factor settings are used.
-model_fixed_factors = {"salvage_price": 5, "Burr_c": 1}
+# Number of stacks for the model
+model_n_stacks = 1
 
-# OPTIONAL: Provide additional overrides for solver default factors.
-# If empty, default factor settings are used.
-# list of dictionaries that provide fixed factors for problems when you don't want
-# to use the default values. if you want to use all default values use empty
-# dictionary, order must match problem names
-solver_fixed_factors = [{"eta_1": 0.5, "eta_2": 0.4}, {"sample_size": 15}]
+# Fixed factors for the model (if any)
+model_fixed_factors = {"salvage_price": 3, "Burr_c": 1}
 
-# uncomment this version to run w/ only default solver factors
-# sp;ver_fixed_factors = [{},{}]
+# Cross design factors for the model (if any)
+model_cross_design_factors = {}
 
-# Provide the name of a file  .txt locatated in the datafarming_experiments folder
-# containing the following:
-#    - one row corresponding to each solver factor being varied
-#    - three columns:
-#         - first column: lower bound for factor value
-#         - second column: upper bound for factor value
-#         - third column: (integer) number of digits for discretizing values
-#                         (e.g., 0 corresponds to integral values for the factor)
-model_factor_settings_filename = "testing_model_cntnews_1"
+# %% [markdown]
+# ## Create Problem/Model Design
 
-# Specify the number stacks to use for ruby design creation
-problem_n_stacks = 1
+# %%
+from simopt.experiment_base import create_design
+
+# Create DataFarmingExperiment object for model design
+model_design_list = create_design(
+    name=model_abbr_name,
+    factor_headers=model_factor_headers,
+    factor_settings=model_factor_settings,
+    n_stacks=model_n_stacks,
+    fixed_factors=model_fixed_factors,  # optional
+    # cross_design_factors=model_cross_design_factors, #optional
+)
+
+# %% [markdown]
+# ## Experiment Configuration Parameters
+
+# %%
+solver_names = ["ASTRODF", "RNDSRCH"]
+solver_fixed_factors = [{"eta_1": 0.1, "eta_2": 0.8}, {"sample_size": 15}]
 
 # Specify a common number of macroreplications of each unique solver/problem
 # combination (i.e., the number of runs at each design point.)
@@ -89,27 +99,14 @@ crn_across_budget = True  # Default
 crn_across_macroreps = False  # Default
 crn_across_init_opt = True  # Default
 
-# %%
-from simopt.experiment_base import create_design
-
-# Create DataFarmingExperiment object for model design
-model_design_list = create_design(
-    name=model_name,
-    factor_headers=model_factor_headers,
-    factor_settings_filename=model_factor_settings_filename,
-    class_type="model",
-    n_stacks=problem_n_stacks,
-    fixed_factors=model_fixed_factors,  # optional
-    # cross_design_factors=model_cross_design_factors, #optional
-)
+# %% [markdown]
+# ## Create Experiment using Specified Configuration
 
 # %%
 from simopt.experiment_base import ProblemsSolvers
 
-# create problem name list for ProblemsSolvers
-problem_names = []
-for _ in range(len(model_design_list)):
-    problem_names.append(problem_name)
+# create problem name list
+problem_names = [problem_abbr_name] * len(model_design_list)
 
 # Create ProblemsSolvers experiment with solver and model design
 experiment = ProblemsSolvers(
@@ -121,6 +118,9 @@ experiment = ProblemsSolvers(
 
 # check compatibility of selected solvers and problems
 experiment.check_compatibility()
+
+# %% [markdown]
+# ## Run Experiment
 
 # %%
 # Run macroreplications at each design point.

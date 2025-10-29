@@ -7,6 +7,10 @@
 #       format_name: percent
 #       format_version: '1.3'
 #       jupytext_version: 1.17.3
+#   kernelspec:
+#     display_name: simopt
+#     language: python
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -31,51 +35,56 @@ from pathlib import Path
 sys.path.append(str(Path.cwd().parent))
 
 # %% [markdown]
-# ## Configuration Parameters
-#
-# This section defines the core parameters for the data farming experiment.
+# ## Solver Configuration Parameters
 #
 # To query model/problem/solver names, run `python scripts/list_directories.py`
 
 # %%
-solver_name = "ASTRODF"
-# list of problem names for solver design to be run on
-# (if more than one version of same problem, repeat name)
-problem_names = ["SSCONT-1", "SAN-1"]
+# Abbreviated name of the solver
+solver_abbr_name = "ASTRODF"
 
-# Specify the names of the sovler factors (in order) that will be varied.
+# Name of each factor being data farmed
 solver_factor_headers = ["eta_1", "eta_2", "lambda_min"]
 
-# OPTIONAL: factors chosen for cross design
-# factor name followed by list containing factor values to cross design over
+# List of tuples defining the minimum, maximum, and # of decimals for each factor
+# Each tuple corresponds to a factor in solver_factor_headers
+solver_factor_settings = [(0.05, 0.15, 2), (0.6, 1.0, 2), (5, 6, 0)]
+
+# Number of stacks for the solver
+solver_n_stacks = 1
+
+# Fixed factors for the solver (if any)
+solver_fixed_factors = {}
+
+# Cross design factors for the solver (if any)
 solver_cross_design_factors = {"crn_across_solns": [True, False]}
 
-# OPTIONAL: Provide additional overrides for solver default factors.
-# If empty, default factor settings are used.
-solver_fixed_factors = {}
-# OPTIONAL: Provide additional overrides for problem default factors.
-# If empty, default factor settings are used.
-# list of dictionaries that provide fixed factors for problems when you don't want
-# to use the default values. if you want to use all default values use empty
-# dictionary, order must match problem names
+# %% [markdown]
+# ## Create Solver Design
+
+# %%
+from simopt.experiment_base import create_design
+
+# Create DataFarmingExperiment object for solver design
+solver_design_list = create_design(
+    name=solver_abbr_name,
+    factor_headers=solver_factor_headers,
+    factor_settings=solver_factor_settings,
+    n_stacks=solver_n_stacks,
+    fixed_factors=solver_fixed_factors,
+    cross_design_factors=solver_cross_design_factors,
+)
+
+# %% [markdown]
+# ## Experiment Configuration Parameters
+
+# %%
+problem_names = ["SSCONT-1", "SAN-1"]
+
 problem_fixed_factors = [
     {"budget": 2000, "demand_mean": 90.0, "fixed_cost": 25},
     {"budget": 500},
 ]
-
-# Provide the name of a file  .txt locatated in the datafarming_experiments
-# folder containing
-# the following:
-#    - one row corresponding to each solver factor being varied
-#    - three columns:
-#         - first column: lower bound for factor value
-#         - second column: upper bound for factor value
-#         - third column: (integer) number of digits for discretizing values
-#                         (e.g., 0 corresponds to integral values for the factor)
-solver_factor_settings_filename = "astrodf_testing"
-
-# Specify the number stacks to use for ruby design creation
-solver_n_stacks = 1
 
 # Specify a common number of macroreplications of each unique solver/problem
 # combination (i.e., the number of runs at each design point.)
@@ -93,26 +102,14 @@ crn_across_budget = True  # Default
 crn_across_macroreps = False  # Default
 crn_across_init_opt = True  # Default
 
-# %%
-from simopt.experiment_base import create_design
-
-# Create DataFarmingExperiment object for sovler design
-solver_design_list = create_design(
-    name=solver_name,
-    factor_headers=solver_factor_headers,
-    factor_settings_filename=solver_factor_settings_filename,
-    n_stacks=solver_n_stacks,
-    fixed_factors=solver_fixed_factors,  # optional
-    cross_design_factors=solver_cross_design_factors,  # optional
-)
+# %% [markdown]
+# ## Create Experiment using Specified Configuration
 
 # %%
 from simopt.experiment_base import ProblemsSolvers
 
-# create solver name list for ProblemsSolvers
-solver_names = []
-for _ in range(len(solver_design_list)):
-    solver_names.append(solver_name)
+# create solver name list
+solver_names = [solver_abbr_name] * len(solver_design_list)
 
 # Create ProblemsSolvers experiment with solver and model design
 experiment = ProblemsSolvers(
@@ -124,6 +121,9 @@ experiment = ProblemsSolvers(
 
 # check compatibility of selected solvers and problems
 experiment.check_compatibility()
+
+# %% [markdown]
+# ## Run Experiment
 
 # %%
 # Run macroreplications at each design point.
