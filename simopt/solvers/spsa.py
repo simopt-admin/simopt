@@ -6,20 +6,96 @@ optimizing systems with multiple unknown parameters.
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Annotated, Self
 
 import numpy as np
 from numpy.typing import NDArray
+from pydantic import BaseModel, Field, model_validator
 
 from simopt.base import (
     ConstraintType,
     ObjectiveType,
     Problem,
-    Solution,
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty, make_nonzero, override
+from simopt.utils import make_nonzero, override
+
+
+class SPSAConfig(BaseModel):
+    """Configuration for SPSA solver."""
+
+    crn_across_solns: Annotated[
+        bool, Field(default=True, description="use CRN across solutions?")
+    ]
+    alpha: Annotated[
+        float,
+        Field(
+            default=0.602,
+            gt=0,
+            description="non-negative coefficient in the SPSA gain sequence ak",
+        ),
+    ]
+    gamma: Annotated[
+        float,
+        Field(
+            default=0.101,
+            gt=0,
+            description="non-negative coefficient in the SPSA gain sequence ck",
+        ),
+    ]
+    step: Annotated[
+        float,
+        Field(
+            default=0.1,
+            gt=0,
+            description="initial desired magnitude of change in the theta elements",
+        ),
+    ]
+    gavg: Annotated[
+        int,
+        Field(default=1, gt=0, description="averaged SP gradients used per iteration"),
+    ]
+    n_reps: Annotated[
+        int,
+        Field(
+            default=30,
+            gt=0,
+            description="number of replications takes at each solution",
+        ),
+    ]
+    n_loss: Annotated[
+        int,
+        Field(
+            default=2,
+            gt=0,
+            description="number of loss function evaluations used in this gain calculation",
+        ),
+    ]
+    eval_pct: Annotated[
+        float,
+        Field(
+            default=2 / 3,
+            gt=0,
+            le=1,
+            description="percentage of the expected number of loss evaluations per run",
+        ),
+    ]
+    iter_pct: Annotated[
+        float,
+        Field(
+            default=0.1,
+            gt=0,
+            le=1,
+            description="percentage of the maximum expected number of iterations",
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def _validate_n_loss_and_gavg(self) -> Self:
+        if self.n_loss % (2 * self.gavg) != 0:
+            raise ValueError("n_loss must be a multiple of 2 * gavg.")
+        return self
 
 
 class SPSA(Solver):
@@ -29,147 +105,12 @@ class SPSA(Solver):
     optimizing systems with multiple unknown parameters.
     """
 
-    @classproperty
-    @override
-    def objective_type(cls) -> ObjectiveType:
-        return ObjectiveType.SINGLE
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_needed(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "crn_across_solns": {
-                "description": "use CRN across solutions?",
-                "datatype": bool,
-                "default": True,
-            },
-            "alpha": {
-                "description": (
-                    "non-negative coefficient in the SPSA gain sequecence ak"
-                ),
-                "datatype": float,
-                "default": 0.602,
-            },
-            "gamma": {
-                "description": "non-negative coefficient in the SPSA gain sequence ck",
-                "datatype": float,
-                "default": 0.101,
-            },
-            "step": {
-                "description": (
-                    "initial desired magnitude of change in the theta elements"
-                ),
-                "datatype": float,
-                "default": 0.1,
-            },
-            "gavg": {
-                "description": "averaged SP gradients used per iteration",
-                "datatype": int,
-                "default": 1,
-            },
-            "n_reps": {
-                "description": "number of replications takes at each solution",
-                "datatype": int,
-                "default": 30,
-            },
-            "n_loss": {
-                "description": (
-                    "number of loss function evaluations used in this gain calculation"
-                ),
-                "datatype": int,
-                "default": 2,
-            },
-            "eval_pct": {
-                "description": (
-                    "percentage of the expected number of loss evaluations per run"
-                ),
-                "datatype": float,
-                "default": 2 / 3,
-            },
-            "iter_pct": {
-                "description": (
-                    "percentage of the maximum expected number of iterations"
-                ),
-                "datatype": float,
-                "default": 0.1,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "crn_across_solns": self.check_crn_across_solns,
-            "alpha": self._check_alpha,
-            "gamma": self._check_gamma,
-            "step": self._check_step,
-            "gavg": self._check_gavg,
-            "n_reps": self._check_n_reps,
-            "n_loss": self._check_n_loss,
-            "eval_pct": self._check_eval_pct,
-            "iter_pct": self._check_iter_pct,
-        }
-
-    def __init__(self, name: str = "SPSA", fixed_factors: dict | None = None) -> None:
-        """Initialize the SPSA solver.
-
-        Args:
-            name (str): Name of the solver.
-            fixed_factors (dict, optional): Fixed factors for the solver.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(name, fixed_factors)
-
-    def _check_alpha(self) -> None:
-        if self.factors["alpha"] <= 0:
-            raise ValueError("Alpha must be greater than 0.")
-
-    def _check_gamma(self) -> None:
-        if self.factors["gamma"] <= 0:
-            raise ValueError("Gamma must be greater than 0.")
-
-    def _check_step(self) -> None:
-        if self.factors["step"] <= 0:
-            raise ValueError("Step must be greater than 0.")
-
-    def _check_gavg(self) -> None:
-        if self.factors["gavg"] <= 0:
-            raise ValueError("gavg must be greater than 0.")
-
-    def _check_n_reps(self) -> None:
-        if self.factors["n_reps"] <= 0:
-            raise ValueError(
-                "The number of replications taken at each solution must be greater "
-                "than 0."
-            )
-
-    def _check_n_loss(self) -> None:
-        if self.factors["n_loss"] <= 0:
-            raise ValueError("n_loss must be greater than 0.")
-
-    def _check_eval_pct(self) -> None:
-        if self.factors["eval_pct"] <= 0 or self.factors["eval_pct"] > 1:
-            raise ValueError("eval_pct must be between 0 and 1.")
-
-    def _check_iter_pct(self) -> None:
-        if self.factors["iter_pct"] <= 0 or self.factors["iter_pct"] > 1:
-            raise ValueError("iter_pct must be between 0 and 1.")
+    name: str = "SPSA"
+    config_class: type[BaseModel] = SPSAConfig
+    objective_type: ObjectiveType = ObjectiveType.SINGLE
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_needed: bool = False
 
     def check_problem_factors(self) -> bool:
         """Determine if the joint settings of problem factors are permissible.
@@ -196,10 +137,7 @@ class SPSA(Solver):
         return np.array(self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim))
 
     @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
+    def solve(self, problem: Problem) -> None:
         # -minmax is needed to cast this as a minimization problem
         neg_minmax = -np.array(problem.minmax)
         lower_bound = np.array(problem.lower_bounds)
@@ -208,11 +146,12 @@ class SPSA(Solver):
         # Start at initial solution and record as best.
         theta = problem.factors["initial_solution"]
         theta_sol = self.create_new_solution(tuple(theta), problem)
-        recommended_solns.append(theta_sol)
-        intermediate_budgets.append(expended_budget)
+        self.recommended_solns.append(theta_sol)
+        self.intermediate_budgets.append(self.budget.used)
+
         # Simulate initial solution.
+        self.budget.request(self.factors["n_reps"])
         problem.simulate(theta_sol, self.factors["n_reps"])
-        expended_budget += self.factors["n_reps"]
 
         # Determine initial value for the parameters c, a, and A (Aalg)
         # (according to Section III.B of Spall (1998)).
@@ -221,8 +160,7 @@ class SPSA(Solver):
 
         # Calculating the maximum expected number of loss evaluations per run.
         num_evals = round(
-            (problem.factors["budget"] / self.factors["n_reps"])
-            * self.factors["eval_pct"]
+            (self.budget.total / self.factors["n_reps"]) * self.factors["eval_pct"]
         )
         aalg = self.factors["iter_pct"] * num_evals / (2 * self.factors["gavg"])
         gbar = np.zeros((1, problem.dim))
@@ -250,9 +188,9 @@ class SPSA(Solver):
                     tuple(theta_backward), problem
                 )
                 # Evaluate two points and update budget spent.
+                self.budget.request(2 * self.factors["n_reps"])
                 problem.simulate(thetaplus_sol, self.factors["n_reps"])
                 problem.simulate(thetaminus_sol, self.factors["n_reps"])
-                expended_budget += 2 * self.factors["n_reps"]
                 # Estimate gradient.
                 # (-minmax is needed to cast this as a minimization problem,
                 # but is not essential here because of the absolute value taken.)
@@ -271,8 +209,8 @@ class SPSA(Solver):
         # Run the main algorithm.
         # Initiate iteration counter.
         k = 0
-        best_solution_value = None
-        while expended_budget < problem.factors["budget"]:
+        best_solution_value: float | None = None
+        while True:
             k += 1
             # Calculate the gain sequences ak and ck.
             ak = a / (k + aalg) ** self.factors["alpha"]
@@ -292,9 +230,9 @@ class SPSA(Solver):
             thetaplus_sol = self.create_new_solution(tuple(theta_forward), problem)
             thetaminus_sol = self.create_new_solution(tuple(theta_backward), problem)
             # Evaluate two points and update budget spent.
+            self.budget.request(2 * self.factors["n_reps"])
             problem.simulate(thetaplus_sol, self.factors["n_reps"])
             problem.simulate(thetaminus_sol, self.factors["n_reps"])
-            expended_budget += 2 * self.factors["n_reps"]
             # Estimate current solution's objective funtion value by weighted average.
             mean_minus = thetaplus_sol.objectives_mean * step_weight_minus
             mean_plus = thetaminus_sol.objectives_mean * step_weight_plus
@@ -310,8 +248,8 @@ class SPSA(Solver):
             if solution_value < best_solution_value:
                 best_solution_value = solution_value
                 # Record data from the new best solution.
-                recommended_solns.append(theta_sol)
-                intermediate_budgets.append(expended_budget)
+                self.recommended_solns.append(theta_sol)
+                self.intermediate_budgets.append(self.budget.used)
             # Estimate gradient.
             theta_mean_diff = (
                 thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
@@ -321,7 +259,6 @@ class SPSA(Solver):
             theta_next = theta - (ak * ghat)
             theta, _ = _check_cons(theta_next, theta, lower_bound, upper_bound)
             theta_sol = self.create_new_solution(tuple(theta), problem)
-        return recommended_solns, intermediate_budgets
 
 
 def _check_cons(
@@ -355,14 +292,14 @@ def _check_cons(
 
         diff = upper_bound - new_x
         step_size = diff[pos_mask] / current_step[pos_mask]
-        min_step_size = min(min_step_size, float(np.min(step_size)))
+        min_step_size = min(float(min_step_size), float(np.min(step_size)))
 
     # Check negative steps for a minimum
     neg_mask = current_step < 0
     if np.any(neg_mask):
         diff = lower_bound - new_x
         step_size = diff[neg_mask] / current_step[neg_mask]
-        min_step_size = min(min_step_size, float(np.min(step_size)))
+        min_step_size = min(float(min_step_size), float(np.min(step_size)))
 
     # Calculate the modified x.
     modified_x = new_x + min_step_size * current_step

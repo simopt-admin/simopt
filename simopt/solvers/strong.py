@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable
-from typing import Callable, Literal
+from typing import Annotated, Literal, Self
 
 import numpy as np
 from numpy.linalg import norm
+from pydantic import BaseModel, Field, model_validator
 
 from simopt.base import (
     ConstraintType,
@@ -23,7 +24,89 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty, make_nonzero, override
+from simopt.utils import make_nonzero, override
+
+
+class STRONGConfig(BaseModel):
+    """Configuration for STRONG solver."""
+
+    crn_across_solns: Annotated[
+        bool, Field(default=True, description="use CRN across solutions?")
+    ]
+    n0: Annotated[int, Field(default=10, gt=0, description="initial sample size")]
+    n_r: Annotated[
+        int,
+        Field(
+            default=10,
+            gt=0,
+            description="number of replications taken at each solution",
+        ),
+    ]
+    sensitivity: Annotated[
+        float, Field(default=1e-7, gt=0, description="shrinking scale for VarBds")
+    ]
+    delta_threshold: Annotated[
+        float,
+        Field(default=1.2, gt=0, description="maximum value of the radius"),
+    ]
+    delta_T: Annotated[
+        float,
+        Field(default=2.0, description="initial size of trust region"),
+    ]
+    eta_0: Annotated[
+        float,
+        Field(default=0.01, gt=0, lt=1, description="constant for accepting"),
+    ]
+    eta_1: Annotated[
+        float,
+        Field(
+            default=0.3,
+            lt=1,
+            description="constant for more confident accepting",
+        ),
+    ]
+    gamma_1: Annotated[
+        float,
+        Field(
+            default=0.9,
+            gt=0,
+            lt=1,
+            description="constant for shrinking the trust region",
+        ),
+    ]
+    gamma_2: Annotated[
+        float,
+        Field(
+            default=1.11,
+            gt=1,
+            description="constant for expanding the trust region",
+        ),
+    ]
+    lambda_: Annotated[
+        int,
+        Field(
+            default=2,
+            gt=1,
+            alias="lambda",
+            description="magnifying factor for n_r inside the finite difference function",
+        ),
+    ]
+    lambda_2: Annotated[
+        float,
+        Field(
+            default=1.01,
+            gt=1,
+            description="magnifying factor for n_r in stage I and stage II (>1)",
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def _validate_cross_field_constraints(self) -> Self:
+        if self.delta_T <= self.delta_threshold:
+            raise ValueError("delta_T must be greater than delta_threshold")
+        if self.eta_1 <= self.eta_0:
+            raise ValueError("eta_1 must be greater than eta_0")
+        return self
 
 
 class STRONG(Solver):
@@ -33,177 +116,15 @@ class STRONG(Solver):
     function evaluations taken within a neighborhood of the incumbent solution.
     """
 
-    @classproperty
-    @override
-    def objective_type(cls) -> ObjectiveType:
-        return ObjectiveType.SINGLE
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_needed(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "crn_across_solns": {
-                "description": "use CRN across solutions?",
-                "datatype": bool,
-                "default": True,
-            },
-            "n0": {
-                "description": "initial sample size",
-                "datatype": int,
-                "default": 10,
-            },
-            "n_r": {
-                "description": "number of replications taken at each solution",
-                "datatype": int,
-                "default": 10,
-            },
-            "sensitivity": {
-                "description": "shrinking scale for VarBds",
-                "datatype": float,
-                "default": 10 ** (-7),
-            },
-            "delta_threshold": {
-                "description": "maximum value of the radius",
-                "datatype": float,
-                "default": 1.2,
-            },
-            "delta_T": {
-                "description": "initial size of trust region",
-                "datatype": float,
-                "default": 2.0,
-            },
-            "eta_0": {
-                "description": "constant for accepting",
-                "datatype": float,
-                "default": 0.01,
-            },
-            "eta_1": {
-                "description": "constant for more confident accepting",
-                "datatype": float,
-                "default": 0.3,
-            },
-            "gamma_1": {
-                "description": "constant for shrinking the trust region",
-                "datatype": float,
-                "default": 0.9,
-            },
-            "gamma_2": {
-                "description": "constant for expanding the trust region",
-                "datatype": float,
-                "default": 1.11,
-            },
-            "lambda": {
-                "description": (
-                    "magnifying factor for n_r inside the finite difference function"
-                ),
-                "datatype": int,
-                "default": 2,
-            },
-            "lambda_2": {
-                "description": "magnifying factor for n_r in stage I and stage II (>1)",
-                "datatype": float,
-                "default": 1.01,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "crn_across_solns": self.check_crn_across_solns,
-            "n0": self._check_n0,
-            "n_r": self._check_n_r,
-            "sensitivity": self._check_sensitivity,
-            "delta_threshold": self._check_delta_threshold,
-            "delta_T": self._check_delta_t,
-            "eta_0": self._check_eta_0,
-            "eta_1": self._check_eta_1,
-            "gamma_1": self._check_gamma_1,
-            "gamma_2": self._check_gamma_2,
-            "lambda": self._check_lambda,
-            "lambda_2": self._check_lambda_2,
-        }
-
-    def __init__(self, name: str = "STRONG", fixed_factors: dict | None = None) -> None:
-        """Initialize STRONG solver.
-
-        Args:
-            name (str): name of the solver.
-            fixed_factors (dict, optional): fixed factors of the solver.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(name, fixed_factors)
-
-    def _check_n0(self) -> None:
-        if self.factors["n0"] <= 0:
-            raise ValueError("n0 must be greater than 0.")
-
-    def _check_n_r(self) -> None:
-        if self.factors["n_r"] <= 0:
-            raise ValueError(
-                "The number of replications taken at each solution must be greater "
-                "than 0."
-            )
-
-    def _check_sensitivity(self) -> None:
-        if self.factors["sensitivity"] <= 0:
-            raise ValueError("sensitivity must be greater than 0.")
-
-    def _check_delta_threshold(self) -> None:
-        if self.factors["delta_threshold"] <= 0:
-            raise ValueError("delta_threshold must be greater than 0.")
-
-    def _check_delta_t(self) -> None:
-        if self.factors["delta_T"] <= self.factors["delta_threshold"]:
-            raise ValueError("delta_T must be greater than delta_threshold")
-
-    def _check_eta_0(self) -> None:
-        if self.factors["eta_0"] <= 0 or self.factors["eta_0"] >= 1:
-            raise ValueError("eta_0 must be between 0 and 1.")
-
-    def _check_eta_1(self) -> None:
-        if self.factors["eta_1"] >= 1 or self.factors["eta_1"] <= self.factors["eta_0"]:
-            raise ValueError("eta_1 must be between eta_0 and 1.")
-
-    def _check_gamma_1(self) -> None:
-        if self.factors["gamma_1"] <= 0 or self.factors["gamma_1"] >= 1:
-            raise ValueError("gamma_1 must be between 0 and 1.")
-
-    def _check_gamma_2(self) -> None:
-        if self.factors["gamma_2"] <= 1:
-            raise ValueError("gamma_2 must be greater than 1.")
-
-    def _check_lambda(self) -> None:
-        if self.factors["lambda"] <= 1:
-            raise ValueError("lambda must be greater than 1.")
-
-    def _check_lambda_2(self) -> None:
-        # TODO: Check if this is the correct condition.
-        if self.factors["lambda_2"] <= 1:
-            raise ValueError("lambda_2 must be greater than 1.")
+    name: str = "STRONG"
+    config_class: type[BaseModel] = STRONGConfig
+    objective_type: ObjectiveType = ObjectiveType.SINGLE
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_needed: bool = False
 
     @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
-        recommended_solns = []
-        intermediate_budgets = []
-        expended_budget = 0
-
+    def solve(self, problem: Problem) -> None:
         # Default values.
         n0: int = self.factors["n0"]
         n_r: int = self.factors["n_r"]
@@ -223,11 +144,13 @@ class STRONG(Solver):
         new_solution = self.create_new_solution(
             problem.factors["initial_solution"], problem
         )
+
+        self.budget.request(n0)
         problem.simulate(new_solution, n0)
-        expended_budget += n0
+
         best_solution = new_solution
-        recommended_solns.append(new_solution)
-        intermediate_budgets.append(expended_budget)
+        self.recommended_solns.append(new_solution)
+        self.intermediate_budgets.append(self.budget.used)
 
         # Precompute factorials
         factorials = np.array([math.factorial(i) for i in range(1, problem.dim + 1)])
@@ -235,15 +158,15 @@ class STRONG(Solver):
         neg_minmax = -problem.minmax[0]
         dim_sq = problem.dim**2
 
-        while expended_budget < problem.factors["budget"]:
+        while True:
             new_x = np.array(new_solution.x)
             # Check variable bounds.
             forward = np.isclose(
                 new_x, lower_bound, atol=self.factors["sensitivity"]
-            ).astype(int)
+            ).astype(np.int32)
             backward = np.isclose(
                 new_x, upper_bound, atol=self.factors["sensitivity"]
-            ).astype(int)
+            ).astype(np.int32)
             # bounds_check:
             #   1 stands for forward, -1 stands for backward, 0 means central diff.
             bounds_check = forward - backward
@@ -258,13 +181,13 @@ class STRONG(Solver):
                     grad, hessian = self.finite_diff(
                         new_solution, bounds_check, 1, problem, n_r
                     )
-                    expended_budget += num_evals * n_r
+                    self.budget.request(num_evals * n_r)
                     num_generated_grads += 1
                     if num_generated_grads > 2:
                         # Update n_r and counter after each loop.
                         n_r *= lam
                     # Accept any non-zero gradient, or exit if the budget is exceeded.
-                    if norm(grad) != 0 or expended_budget > problem.factors["budget"]:
+                    if norm(grad) != 0:
                         break
 
                 # Step 2: Solve the subproblem.
@@ -276,8 +199,8 @@ class STRONG(Solver):
 
                 # Step 3: Compute the ratio.
                 # Use n_r simulated observations to estimate g_new.
+                self.budget.request(n_r)
                 problem.simulate(candidate_solution, n_r)
-                expended_budget += n_r
                 # Find the old objective value and the new objective value.
                 g_old = neg_minmax * new_solution.objectives_mean
                 g_new = neg_minmax * candidate_solution.objectives_mean
@@ -307,8 +230,8 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
+                        self.recommended_solns.append(new_solution)
+                        self.intermediate_budgets.append(self.budget.used)
                 else:
                     # The center point moves to the new solution and the trust
                     # region enlarges.
@@ -320,8 +243,8 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
+                        self.recommended_solns.append(new_solution)
+                        self.intermediate_budgets.append(self.budget.used)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
 
             # Stage II.
@@ -344,13 +267,13 @@ class STRONG(Solver):
                     grad, hessian = self.finite_diff(
                         new_solution, bounds_check, 2, problem, n_r
                     )
-                    expended_budget += num_evals * n_r
+                    self.budget.request(num_evals * n_r)
                     num_generated_grads += 1
                     if num_generated_grads > 2:
                         # Update n_r and counter after each loop.
                         n_r *= lam
                     # Accept any non-zero gradient, or exit if the budget is exceeded.
-                    if norm(grad) != 0 or expended_budget > problem.factors["budget"]:
+                    if norm(grad) != 0 or self.budget.remaining <= 0:
                         break
 
                 # Step 2: Solve the subproblem.
@@ -367,7 +290,7 @@ class STRONG(Solver):
                 # Step 3: Compute the ratio.
                 # Use r simulated observations to estimate g(x_start\).
                 problem.simulate(candidate_solution, n_r)
-                expended_budget += n_r
+                self.budget.request(n_r)
                 # Find the old objective value and the new objective value.
                 g_old = neg_minmax * new_solution.objectives_mean
                 g_new = neg_minmax * candidate_solution.objectives_mean
@@ -391,7 +314,7 @@ class STRONG(Solver):
                     result_x = new_x
 
                     while np.sum(result_x != new_x) == 0:
-                        if expended_budget > problem.factors["budget"]:
+                        if self.budget.remaining <= 0:
                             break
                         # A while loop to prevent zero gradient
                         while True:
@@ -403,17 +326,14 @@ class STRONG(Solver):
                                 problem,
                                 n_r_loop,
                             )
-                            expended_budget += num_evals * n_r_loop
+                            self.budget.request(num_evals * n_r_loop)
                             num_generated_grads += 1
                             if num_generated_grads > 2:
                                 # Update n_r and counter after each loop.
                                 n_r *= lam
                             # Accept any non-zero gradient, or exit if the budget
                             # is exceeded.
-                            if (
-                                norm(grad) != 0
-                                or expended_budget > problem.factors["budget"]
-                            ):
+                            if norm(grad) != 0 or self.budget.remaining <= 0:
                                 break
 
                         # Step 2: determine the new inner solution based on the
@@ -433,11 +353,11 @@ class STRONG(Solver):
                         mreps = int(n_r + counter_ceiling)
 
                         problem.simulate(try_solution, mreps)
-                        expended_budget += mreps
+                        self.budget.request(mreps)
                         g_b_new = neg_minmax * try_solution.objectives_mean
                         dummy_solution = new_solution
                         problem.simulate(dummy_solution, ceiling_diff)
-                        expended_budget += ceiling_diff
+                        self.budget.request(ceiling_diff)
 
                         dummy = neg_minmax * dummy_solution.objectives_mean
                         # Update g_old.
@@ -483,8 +403,8 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
+                        self.recommended_solns.append(new_solution)
+                        self.intermediate_budgets.append(self.budget.used)
                 else:
                     # The center point moves to the new solution and the trust
                     # region enlarges.
@@ -497,12 +417,11 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        recommended_solns.append(new_solution)
-                        intermediate_budgets.append(expended_budget)
+                        self.recommended_solns.append(new_solution)
+                        self.intermediate_budgets.append(self.budget.used)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
         # Loop through each budget and convert any numpy int32s to Python ints.
-        intermediate_budgets = [int(i) for i in intermediate_budgets]
-        return recommended_solns, intermediate_budgets
+        self.intermediate_budgets = [int(i) for i in self.intermediate_budgets]
 
     def cauchy_point(
         self,
@@ -555,19 +474,19 @@ class STRONG(Solver):
         upper_bound_arr = np.array(upper_bound)
         # The current step.
         # Form a matrix to determine the possible stepsize.
-        min_step = 1
+        min_step = 1.0
         pos_mask = current_step > 0
         if np.any(pos_mask):
             step_diff = (upper_bound_arr[pos_mask] - new_x[pos_mask]) / current_step[
                 pos_mask
             ]
-            min_step = min(min_step, float(np.min(step_diff)))
+            min_step = min(min_step, float(np.min(step_diff).item()))
         neg_mask = current_step < 0
         if np.any(neg_mask):
             step_diff = (lower_bound_arr[neg_mask] - new_x[neg_mask]) / current_step[
                 neg_mask
             ]
-            min_step = min(min_step, float(np.min(step_diff)))
+            min_step = min(min_step, float(np.min(step_diff).item()))
         # Calculate the modified x.
         return new_x + min_step * current_step
 

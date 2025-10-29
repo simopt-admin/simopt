@@ -3,98 +3,58 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Callable, Final
+from typing import Annotated, ClassVar, Final, Self
 
 import numpy as np
+from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty, override
+from simopt.input_models import Exp
+from simopt.utils import override
 
 NUM_ARCS: Final[int] = 13
 
 
-class SAN(Model):
-    """Stochastic Activity Network (SAN) Model.
-
-    A model that simulates a stochastic activity network problem with
-    tasks that have exponentially distributed durations, and the selected
-    means come with a cost.
-    """
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Stochastic Activity Network"
-
-    @classproperty
-    @override
-    def n_rngs(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_responses(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "num_nodes": {
-                "description": "number of nodes",
-                "datatype": int,
-                "default": 9,
-                "isDatafarmable": False,
-            },
-            "arcs": {
-                "description": "list of arcs",
-                "datatype": list,
-                "default": [
-                    (1, 2),
-                    (1, 3),
-                    (2, 3),
-                    (2, 4),
-                    (2, 6),
-                    (3, 6),
-                    (4, 5),
-                    (4, 7),
-                    (5, 6),
-                    (5, 8),
-                    (6, 9),
-                    (7, 8),
-                    (8, 9),
-                ],
-            },
-            "arc_means": {
-                "description": "mean task durations for each arc",
-                "datatype": tuple,
-                "default": (1,) * NUM_ARCS,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "num_nodes": self._check_num_nodes,
-            "arcs": self._check_arcs,
-            "arc_means": self._check_arc_means,
-        }
-
-    def __init__(self, fixed_factors: dict | None = None) -> None:
-        """Initialize the SAN model.
-
-        Args:
-            fixed_factors : dict
-                fixed factors of the simulation model
-        """
-        # Let the base class handle default arguments.
-        super().__init__(fixed_factors)
-
-    def _check_num_nodes(self) -> None:
-        if self.factors["num_nodes"] <= 0:
-            raise ValueError("num_nodes must be greater than 0.")
+class SANConfig(BaseModel):
+    num_nodes: Annotated[
+        int,
+        Field(
+            default=9,
+            description="number of nodes",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+    arcs: Annotated[
+        list[tuple[int, int]],
+        Field(
+            default=[
+                (1, 2),
+                (1, 3),
+                (2, 3),
+                (2, 4),
+                (2, 6),
+                (3, 6),
+                (4, 5),
+                (4, 7),
+                (5, 6),
+                (5, 8),
+                (6, 9),
+                (7, 8),
+                (8, 9),
+            ],
+            description="list of arcs",
+            min_length=1,
+        ),
+    ]
+    arc_means: Annotated[
+        tuple[float, ...],
+        Field(
+            default=(1.0,) * NUM_ARCS,
+            description="mean task durations for each arc",
+        ),
+    ]
 
     def __dfs(
         self, graph: dict[int, set], start: int, visited: set | None = None
@@ -107,21 +67,117 @@ class SAN(Model):
             self.__dfs(graph, next_point, visited)
         return visited
 
-    def _check_arcs(self) -> bool:
-        if len(self.factors["arcs"]) <= 0:
+    def _check_arcs(self) -> None:
+        if len(self.arcs) <= 0:
             raise ValueError("The length of arcs must be greater than 0.")
         # Check graph is connected.
-        graph = {node: set() for node in range(1, self.factors["num_nodes"] + 1)}
-        for a in self.factors["arcs"]:
+        graph = {node: set() for node in range(1, self.num_nodes + 1)}
+        for a in self.arcs:
             graph[a[0]].add(a[1])
         visited = self.__dfs(graph, 1)
-        return self.factors["num_nodes"] in visited
+
+        if self.num_nodes not in visited:
+            raise ValueError("Graph must be connected from node 1 to the final node.")
 
     def _check_arc_means(self) -> bool:
         positive = True
-        for x in list(self.factors["arc_means"]):
+        for x in list(self.arc_means):
             positive = positive and (x > 0)
-        return positive
+        if not positive:
+            raise ValueError("All elements in arc_means must be greater than 0.")
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        self._check_arcs()
+        self._check_arc_means()
+        if len(self.arc_means) != len(self.arcs):
+            raise ValueError(
+                "The length of arc_means must be equal to the length of arcs."
+            )
+        return self
+
+
+class SANLongestPathConfig(BaseModel):
+    """Configuration model for SAN Longest Path Problem.
+
+    Min Mean Longest Path for Stochastic Activity Network simulation-optimization problem.
+    """
+
+    initial_solution: Annotated[
+        tuple[float, ...],
+        Field(
+            default_factory=lambda: (8,) * NUM_ARCS,
+            description="initial solution",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=10000,
+            description="max # of replications for a solver to take",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+    arc_costs: Annotated[
+        tuple[float, ...],
+        Field(
+            default_factory=lambda: (1,) * NUM_ARCS,
+            description="Cost associated to each arc.",
+        ),
+    ]
+
+    def _check_arc_costs(self) -> None:
+        if len(self.arc_costs) != NUM_ARCS:
+            raise ValueError(f"arc_costs must be of length {NUM_ARCS}.")
+
+        positive = True
+        for x in list(self.arc_costs):
+            positive = positive and (x > 0)
+        if not positive:
+            raise ValueError("All elements in arc_costs must be greater than 0.")
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        self._check_arc_costs()
+        return self
+
+
+class SAN(Model):
+    """Stochastic Activity Network (SAN) Model.
+
+    A model that simulates a stochastic activity network problem with
+    tasks that have exponentially distributed durations, and the selected
+    means come with a cost.
+    """
+
+    config_class: ClassVar[type[BaseModel]] = SANConfig
+    class_name: str = "Stochastic Activity Network"
+    n_rngs: int = 1
+    n_responses: int = 1
+
+    def __init__(self, fixed_factors: dict | None = None) -> None:
+        """Initialize the SAN model.
+
+        Args:
+            fixed_factors : dict
+                fixed factors of the simulation model
+        """
+        # Let the base class handle default arguments.
+        super().__init__(fixed_factors)
+
+        self.time_model = Exp()
+
+    def __dfs(
+        self, graph: dict[int, set], start: int, visited: set | None = None
+    ) -> set:
+        if visited is None:
+            visited = set()
+        visited.add(start)
+
+        for next_point in graph[start] - visited:
+            self.__dfs(graph, next_point, visited)
+        return visited
 
     @override
     def check_simulatable_factors(self) -> bool:
@@ -131,7 +187,10 @@ class SAN(Model):
             )
         return True
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+        self.time_model.set_rng(rng_list[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -148,8 +207,6 @@ class SAN(Model):
         num_nodes: int = self.factors["num_nodes"]
         arcs: list[tuple[int, int]] = self.factors["arcs"]
         arc_means: tuple[int, ...] = self.factors["arc_means"]
-        # Designate separate random number generators.
-        exp_rng = rng_list[0]
 
         # Topological sort.
         node_range = range(1, num_nodes + 1)
@@ -173,7 +230,7 @@ class SAN(Model):
 
         # Arc lengths
         arc_length = {
-            arc: exp_rng.expovariate(1 / arc_means[i]) for i, arc in enumerate(arcs)
+            arc: self.time_model.random(1 / arc_means[i]) for i, arc in enumerate(arcs)
         }
 
         # Longest path
@@ -220,96 +277,20 @@ class SAN(Model):
 class SANLongestPath(Problem):
     """Base class to implement simulation-optimization problems."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "SAN-1"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Min Mean Longest Path for Stochastic Activity Network"
-
-    @classproperty
-    @override
-    def n_objectives(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_stochastic_constraints(cls) -> int:
-        return 0
-
-    @classproperty
-    @override
-    def minmax(cls) -> tuple[int]:
-        return (-1,)
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_available(cls) -> bool:
-        return True
-
-    @classproperty
-    @override
-    def optimal_value(cls) -> None:
-        return None
-
-    @classproperty
-    @override
-    def optimal_solution(cls) -> None:
-        return None
-
-    @classproperty
-    @override
-    def model_default_factors(cls) -> dict:
-        return {}
-
-    @classproperty
-    @override
-    def model_decision_factors(cls) -> set[str]:
-        return {"arc_means"}
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "initial_solution": {
-                "description": "initial solution",
-                "datatype": tuple,
-                "default": (8,) * NUM_ARCS,
-            },
-            "budget": {
-                "description": "max # of replications for a solver to take",
-                "datatype": int,
-                "default": 10000,
-                "isDatafarmable": False,
-            },
-            "arc_costs": {
-                "description": "Cost associated to each arc.",
-                "datatype": tuple,
-                "default": (1,) * NUM_ARCS,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-            "arc_costs": self._check_arc_costs,
-        }
+    config_class: ClassVar[type[BaseModel]] = SANLongestPathConfig
+    model_class: ClassVar[type[Model]] = SAN
+    class_name_abbr: str = "SAN-1"
+    class_name: str = "Min Mean Longest Path for Stochastic Activity Network"
+    n_objectives: int = 1
+    n_stochastic_constraints: int = 0
+    minmax: tuple[int] = (-1,)
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_available: bool = True
+    optimal_value: float | None = None
+    optimal_solution: tuple | None = None
+    model_default_factors: dict = {}
+    model_decision_factors: set[str] = {"arc_means"}
 
     @property
     @override
@@ -325,38 +306,6 @@ class SANLongestPath(Problem):
     @override
     def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
-
-    def __init__(
-        self,
-        name: str = "SAN-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the SANLongestPath problem.
-
-        Args:
-            name : str
-                user-specified name for problem
-            fixed_factors : dict
-                dictionary of user-specified problem factors
-            model_fixed_factors : dict
-                subset of user-specified non-decision factors to pass through to the
-                model
-        """
-        # Let the base class handle default arguments.
-        super().__init__(
-            name=name,
-            fixed_factors=fixed_factors,
-            model_fixed_factors=model_fixed_factors,
-            model=SAN,
-        )
-
-    def _check_arc_costs(self) -> bool:
-        positive = True
-        for x in list(self.factors["arc_costs"]):
-            positive = positive and x > 0
-        matching_len = len(self.factors["arc_costs"]) == len(self.model.factors["arcs"])
-        return positive and matching_len
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:

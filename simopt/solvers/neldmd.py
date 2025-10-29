@@ -9,9 +9,10 @@ contraction, and shrinking. A detailed description of the solver can be found
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Callable
+from typing import Annotated
 
 import numpy as np
+from pydantic import BaseModel, Field
 
 from simopt.base import (
     ConstraintType,
@@ -21,7 +22,54 @@ from simopt.base import (
     Solver,
     VariableType,
 )
-from simopt.utils import classproperty, override
+from simopt.utils import override
+
+
+class NelderMeadConfig(BaseModel):
+    """Configuration for Nelder-Mead solver."""
+
+    crn_across_solns: Annotated[
+        bool, Field(default=True, description="use CRN across solutions?")
+    ]
+    r: Annotated[
+        int,
+        Field(
+            default=30,
+            gt=0,
+            description="number of replications taken at each solution",
+        ),
+    ]
+    alpha: Annotated[
+        float, Field(default=1.0, gt=0, description="reflection coefficient > 0")
+    ]
+    gammap: Annotated[
+        float, Field(default=2.0, gt=1, description="expansion coefficient > 1")
+    ]
+    betap: Annotated[
+        float,
+        Field(
+            default=0.5,
+            gt=0,
+            lt=1,
+            description="contraction coefficient > 0, < 1",
+        ),
+    ]
+    delta: Annotated[
+        float,
+        Field(default=0.5, gt=0, lt=1, description="shrink factor > 0, < 1"),
+    ]
+    sensitivity: Annotated[
+        float,
+        Field(default=1e-7, gt=0, description="shrinking scale for bounds"),
+    ]
+    initial_spread: Annotated[
+        float,
+        Field(
+            default=0.1,
+            gt=0,
+            description="fraction of the distance between bounds used to select initial points",
+        ),
+    ]
 
 
 class NelderMead(Solver):
@@ -32,149 +80,24 @@ class NelderMead(Solver):
     expansion, contraction, and shrinking.
     """
 
-    @classproperty
+    name: str = "NELDMD"
+    config_class: type[BaseModel] = NelderMeadConfig
+    class_name_abbr: str = "NELDMD"
+    class_name: str = "Nelder-Mead"
+    objective_type: ObjectiveType = ObjectiveType.SINGLE
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_needed: bool = False
+
+    # FIXME: fix typing on `sort_sol`
     @override
-    def class_name_abbr(cls) -> str:
-        return "NELDMD"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Nelder-Mead"
-
-    @classproperty
-    @override
-    def objective_type(cls) -> ObjectiveType:
-        return ObjectiveType.SINGLE
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_needed(cls) -> bool:
-        return False
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "crn_across_solns": {
-                "description": "use CRN across solutions?",
-                "datatype": bool,
-                "default": True,
-            },
-            "r": {
-                "description": "number of replications taken at each solution",
-                "datatype": int,
-                "default": 30,
-            },
-            "alpha": {
-                "description": "reflection coefficient > 0",
-                "datatype": float,
-                "default": 1.0,
-            },
-            "gammap": {
-                "description": "expansion coefficient > 1",
-                "datatype": float,
-                "default": 2.0,
-            },
-            "betap": {
-                "description": "contraction coefficient > 0, < 1",
-                "datatype": float,
-                "default": 0.5,
-            },
-            "delta": {
-                "description": "shrink factor > 0, < 1",
-                "datatype": float,
-                "default": 0.5,
-            },
-            "sensitivity": {
-                "description": "shrinking scale for bounds",
-                "datatype": float,
-                "default": 10 ** (-7),
-            },
-            "initial_spread": {
-                "description": (
-                    "fraction of the distance between bounds used to select initial "
-                    "points"
-                ),
-                "datatype": float,
-                "default": 1 / 10,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "crn_across_solns": self.check_crn_across_solns,
-            "r": self._check_r,
-            "alpha": self._check_alpha,
-            "gammap": self._check_gammap,
-            "betap": self._check_betap,
-            "delta": self._check_delta,
-            "sensitivity": self._check_sensitivity,
-            "initial_spread": self._check_initial_spread,
-        }
-
-    def __init__(self, name: str = "NELDMD", fixed_factors: dict | None = None) -> None:
-        """Initialize the Nelder-Mead solver.
-
-        Args:
-            name (str): Name of the solver.
-            fixed_factors (dict, optional): Fixed factors for the solver.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(name, fixed_factors)
-
-    def _check_r(self) -> None:
-        if self.factors["r"] <= 0:
-            raise ValueError(
-                "The number of replications taken at each solution must be greater "
-                "than 0."
-            )
-
-    def _check_alpha(self) -> None:
-        if self.factors["alpha"] <= 0:
-            raise ValueError("Alpha must be greater than 0.")
-
-    def _check_gammap(self) -> None:
-        if self.factors["gammap"] <= 1:
-            raise ValueError("Gammap must be greater than 1.")
-
-    def _check_betap(self) -> None:
-        if (self.factors["betap"] <= 0) or (self.factors["betap"] >= 1):
-            raise ValueError("betap must be between 0 and 1.")
-
-    def _check_delta(self) -> None:
-        if (self.factors["delta"] <= 0) or (self.factors["delta"] >= 1):
-            raise ValueError("Delta must be between 0 and 1.")
-
-    def _check_sensitivity(self) -> None:
-        if self.factors["sensitivity"] <= 0:
-            raise ValueError("Sensitivity must be greater than 0.")
-
-    def _check_initial_spread(self) -> None:
-        if self.factors["initial_spread"] <= 0:
-            raise ValueError("Initial spread must be greater than 0.")
-
-    @override
-    def solve(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+    def solve(self, problem: Problem) -> None:
         # Designate random number generator for random sampling.
         get_rand_soln_rng = self.rng_list[1]
         n_pts = problem.dim + 1
 
         # Check for sufficiently large budget.
-        if problem.factors["budget"] < self.factors["r"] * n_pts:
+        if self.budget.total < self.factors["r"] * n_pts:
             err_msg = "Budget is too small for a good quality run of Nelder-Mead."
             raise ValueError(err_msg)
 
@@ -235,32 +158,32 @@ class NelderMead(Solver):
 
             sol.extend(self.create_new_solution(pt, problem) for pt in new_pts)
 
-        # Initialize lists to track budget and best solutions.
-        intermediate_budgets = []
-        recommended_solns = []
-        # Track overall budget spent.
-        budget_spent = 0
         r = self.factors["r"]  # For increasing replications.
 
         # Start Solving.
         # Evaluate solutions in initial structure.
         for solution in sol:
+            self.budget.request(r)
             problem.simulate(solution, r)
-            budget_spent += r
+
         # Record initial solution data.
-        intermediate_budgets.append(0)
-        recommended_solns.append(sol[0])
+        # FIXME: I think this might be wrong
+        self.intermediate_budgets.append(0)
+        self.recommended_solns.append(sol[0])
         # Sort solutions by obj function estimate.
         sort_sol = self._sort_and_end_update(problem, sol)
 
         # Maximization problem is converted to minimization by using minmax.
-        while budget_spent <= problem.factors["budget"]:
+        while True:
             # Shrink towards best if out of bounds.
             while True:
                 # Reflect worst and update sort_sol.
-                p_high = sort_sol[-1]  # Current worst point.
+                p_high = sort_sol[-1]  # Current worst point. # pyrefly: ignore
                 p_high_x = np.array(p_high.x)
-                p_cent = np.mean([s.x for s in sort_sol[:-1]], axis=0)
+                p_cent = np.mean(
+                    [s.x for s in sort_sol[:-1]],  # pyrefly: ignore
+                    axis=0,
+                )
                 p_refl = np.array(
                     (1 + self.factors["alpha"]) * p_cent
                     - self.factors["alpha"] * p_high_x
@@ -270,46 +193,53 @@ class NelderMead(Solver):
                 if np.equal(p_refl, self._check_const(p_refl, p_high_x)).all():
                     break
 
-                sol_0_x = np.array(sort_sol[0].x)
+                sol_0_x = np.array(sort_sol[0].x)  # pyrefly: ignore
                 for i in range(1, len(sort_sol)):
                     p_new = (
-                        self.factors["delta"] * np.array(sort_sol[i].x)
+                        self.factors["delta"]
+                        * np.array(sort_sol[i].x)  # pyrefly: ignore
                         + (1 - self.factors["delta"]) * sol_0_x
                     )
                     p_new = self._check_const(p_new, sol_0_x)
                     p_new = Solution(p_new, problem)
                     p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+                    self.budget.request(r)
                     problem.simulate(p_new, r)
-                    budget_spent += r
 
                     # Update sort_sol.
                     sort_sol[i] = p_new  # p_new replaces pi.
 
                 # Sort & end updating.
-                sort_sol = self._sort_and_end_update(problem, sort_sol)
+                sort_sol = self._sort_and_end_update(
+                    problem,
+                    sort_sol,  # pyrefly: ignore
+                )
 
             # Evaluate reflected point.
             p_refl = tuple(p_refl.tolist())
             p_refl = Solution(p_refl, problem)
             p_refl.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+            self.budget.request(r)
             problem.simulate(p_refl, r)
-            budget_spent += r
             np_minmax = np.array(problem.minmax)
             refl_fn_val = np_minmax * -p_refl.objectives_mean
 
             # Track best, worst, and second worst points.
-            p_low = sort_sol[0]  # Current best pt.
+            p_low = sort_sol[0]  # Current best pt. # pyrefly: ignore
             inv_minmax = np_minmax * -1
-            fn_low = inv_minmax * sort_sol[0].objectives_mean
-            fn_sec = inv_minmax * sort_sol[-2].objectives_mean
-            fn_high = inv_minmax * sort_sol[-1].objectives_mean
+            fn_low = inv_minmax * sort_sol[0].objectives_mean  # pyrefly: ignore
+            fn_sec = inv_minmax * sort_sol[-2].objectives_mean  # pyrefly: ignore
+            fn_high = inv_minmax * sort_sol[-1].objectives_mean  # pyrefly: ignore
 
             # Check if accept reflection.
             if fn_low <= refl_fn_val and refl_fn_val <= fn_sec:
                 # The new point replaces the previous worst.
-                sort_sol[-1] = p_refl
+                sort_sol[-1] = p_refl  # pyrefly: ignore
                 # Sort & end updating.
-                sort_sol = self._sort_and_end_update(problem, sort_sol)
+                sort_sol = self._sort_and_end_update(
+                    problem,
+                    sort_sol,  # pyrefly: ignore
+                )
                 # Best solution remains the same, so no reporting.
 
             # Check if accept expansion (of reflection in the same direction).
@@ -322,20 +252,24 @@ class NelderMead(Solver):
                 # Evaluate expansion point.
                 p_exp = Solution(p_exp, problem)
                 p_exp.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+                self.budget.request(r)
                 problem.simulate(p_exp, r)
-                budget_spent += r
                 exp_fn_val = inv_minmax * p_exp.objectives_mean
 
                 # Check if expansion point is an improvement relative to simplex.
-                sort_sol[-1] = p_exp if exp_fn_val < fn_low else p_refl
+                sort_sol[-1] = (  # pyrefly: ignore
+                    p_exp if exp_fn_val < fn_low else p_refl
+                )
 
                 # Sort & end updating.
-                sort_sol = self._sort_and_end_update(problem, sort_sol)
+                sort_sol = self._sort_and_end_update(
+                    problem,
+                    sort_sol,  # pyrefly: ignore
+                )
 
                 # Record data if within budget.
-                if budget_spent <= problem.factors["budget"]:
-                    intermediate_budgets.append(budget_spent)
-                    recommended_solns.append(p_exp if exp_fn_val < fn_low else p_refl)
+                self.intermediate_budgets.append(self.budget.used)
+                self.recommended_solns.append(p_exp if exp_fn_val < fn_low else p_refl)
 
             # Check if accept contraction or shrink.
             elif refl_fn_val > fn_sec:
@@ -353,32 +287,32 @@ class NelderMead(Solver):
                 # Evaluate contraction point.
                 p_cont = Solution(p_cont, problem)
                 p_cont.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+                self.budget.request(r)
                 problem.simulate(p_cont, r)
-                budget_spent += r
                 cont_fn_val = inv_minmax * p_cont.objectives_mean
 
                 # Accept contraction.
                 if cont_fn_val <= fn_high:
-                    sort_sol[-1] = p_cont  # p_cont replaces p_high.
+                    sort_sol[-1] = p_cont  # p_cont replaces p_high. # pyrefly: ignore
 
                     # Sort & end updating.
-                    sort_sol = self._sort_and_end_update(problem, sort_sol)
+                    sort_sol = self._sort_and_end_update(
+                        problem,
+                        sort_sol,  # pyrefly: ignore
+                    )
 
                     # Check if contraction point is new best.
-                    if (
-                        cont_fn_val < fn_low
-                        and budget_spent <= problem.factors["budget"]
-                    ):
+                    if cont_fn_val < fn_low:
                         # Record data from contraction point (new best).
-                        intermediate_budgets.append(budget_spent)
-                        recommended_solns.append(p_cont)
+                        self.intermediate_budgets.append(self.budget.used)
+                        self.recommended_solns.append(p_cont)
                 # Contraction fails -> simplex shrinks by delta with p_low fixed.
                 else:
                     # Set pre-loop variables
-                    sort_sol[-1] = p_high  # Replaced by p_refl.
+                    sort_sol[-1] = p_high  # Replaced by p_refl. # pyrefly: ignore
                     is_new_best = False
                     p_low_x = np.array(p_low.x)
-                    for i in range(1, len(sort_sol)):
+                    for i in range(1, len(sort_sol)):  # pyrefly: ignore
                         p_new = (
                             self.factors["delta"] * np.array(sort_sol[i].x)
                             + (1 - self.factors["delta"]) * p_low_x
@@ -389,8 +323,8 @@ class NelderMead(Solver):
                         p_new.attach_rngs(
                             rng_list=self.solution_progenitor_rngs, copy=True
                         )
+                        self.budget.request(r)
                         problem.simulate(p_new, r)
-                        budget_spent += r
                         new_fn_val = inv_minmax * p_new.objectives_mean
 
                         # Check for new best.
@@ -401,14 +335,15 @@ class NelderMead(Solver):
                         sort_sol[i] = p_new  # p_new replaces pi.
 
                     # Sort & end updating.
-                    sort_sol = self._sort_and_end_update(problem, sort_sol)
+                    sort_sol = self._sort_and_end_update(
+                        problem,
+                        sort_sol,  # pyrefly: ignore
+                    )
 
                     # Record data if there is a new best solution in the contraction.
-                    if is_new_best and budget_spent <= problem.factors["budget"]:
-                        intermediate_budgets.append(budget_spent)
-                        recommended_solns.append(sort_sol[0])
-
-        return recommended_solns, intermediate_budgets
+                    if is_new_best:
+                        self.intermediate_budgets.append(self.budget.used)
+                        self.recommended_solns.append(sort_sol[0])
 
     def _sort_and_end_update(
         self, problem: Problem, sol: Iterable[Solution]

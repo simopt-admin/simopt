@@ -2,13 +2,133 @@
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Annotated, ClassVar, Self
 
 import numpy as np
+from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import ConstraintType, Model, Problem, VariableType
-from simopt.utils import classproperty, override
+from simopt.input_models import InputModel
+from simopt.utils import override
+
+
+class CntNVConfig(BaseModel):
+    """Configuration model for Continuous Newsvendor simulation.
+
+    A model that simulates a day's worth of sales for a newsvendor with a Burr Type XII
+    demand distribution. Returns the profit, after accounting for order costs and
+    salvage.
+    """
+
+    purchase_price: Annotated[
+        float,
+        Field(
+            default=5.0,
+            description="purchasing cost per unit",
+            gt=0,
+        ),
+    ]
+    sales_price: Annotated[
+        float,
+        Field(
+            default=9.0,
+            description="sales price per unit",
+            gt=0,
+        ),
+    ]
+    salvage_price: Annotated[
+        float,
+        Field(
+            default=1.0,
+            description="salvage cost per unit",
+            gt=0,
+        ),
+    ]
+    order_quantity: Annotated[
+        float,
+        Field(
+            default=0.5,
+            description="order quantity",
+            gt=0,
+        ),
+    ]
+    burr_c: Annotated[
+        float,
+        Field(
+            default=2.0,
+            description="Burr Type XII cdf shape parameter",
+            gt=0,
+            alias="Burr_c",
+        ),
+    ]
+    burr_k: Annotated[
+        float,
+        Field(
+            default=20.0,
+            description="Burr Type XII cdf shape parameter",
+            gt=0,
+            alias="Burr_k",
+        ),
+    ]
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        # Cross-validation: check price ordering constraint
+        if not (self.salvage_price < self.purchase_price < self.sales_price):
+            raise ValueError(
+                "The salvage cost per unit must be greater than the purchasing cost per "
+                "unit, which must be greater than the sales price per unit."
+            )
+
+        return self
+
+
+class CntNVMaxProfitConfig(BaseModel):
+    """Configuration model for Continuous Newsvendor Max Profit Problem.
+
+    A problem configuration that maximizes profit for a continuous newsvendor
+    by optimizing the order quantity.
+    """
+
+    initial_solution: Annotated[
+        tuple[float, ...],
+        Field(
+            default=(0,),
+            description="initial solution",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=1000,
+            description="max # of replications for a solver to take",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+
+
+class DemandInputModel(InputModel):
+    """Input model for Burr Type XII demand."""
+
+    def set_rng(self, rng: random.Random) -> None:  # noqa: D102
+        self.rng = rng
+
+    def unset_rng(self) -> None:  # noqa: D102
+        self.rng = None
+
+    def random(self, burr_c: float, burr_k: float) -> float:  # noqa: D102
+        # Generate random demand according to Burr Type XII distribution.
+        # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
+        #   X = ((1-U)**(-1/k) - 1)**(1/c) has the desired distribution.
+        # https://en.wikipedia.org/wiki/Burr_distribution
+        def nth_root(x: float, n: float) -> float:
+            """Return the nth root of x."""
+            return x ** (1 / n)
+
+        u = self.rng.random()
+        return nth_root(nth_root(1 - u, -burr_k) - 1, burr_c)
 
 
 class CntNV(Model):
@@ -19,73 +139,11 @@ class CntNV(Model):
     salvage.
     """
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "CNTNEWS"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Continuous Newsvendor"
-
-    @classproperty
-    @override
-    def n_rngs(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_responses(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "purchase_price": {
-                "description": "purchasing cost per unit",
-                "datatype": float,
-                "default": 5.0,
-            },
-            "sales_price": {
-                "description": "sales price per unit",
-                "datatype": float,
-                "default": 9.0,
-            },
-            "salvage_price": {
-                "description": "salvage cost per unit",
-                "datatype": float,
-                "default": 1.0,
-            },
-            "order_quantity": {
-                "description": "order quantity",
-                "datatype": float,  # or int
-                "default": 0.5,
-            },
-            "Burr_c": {
-                "description": "Burr Type XII cdf shape parameter",
-                "datatype": float,
-                "default": 2.0,
-            },
-            "Burr_k": {
-                "description": "Burr Type XII cdf shape parameter",
-                "datatype": float,
-                "default": 20.0,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "purchase_price": self._check_purchase_price,
-            "sales_price": self._check_sales_price,
-            "salvage_price": self._check_salvage_price,
-            "order_quantity": self._check_order_quantity,
-            "Burr_c": self._check_burr_c,
-            "Burr_k": self._check_burr_k,
-        }
+    config_class: ClassVar[type[BaseModel]] = CntNVConfig
+    class_name_abbr: str = "CNTNEWS"
+    class_name: str = "Continuous Newsvendor"
+    n_rngs: int = 1
+    n_responses: int = 1
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
         """Initialize the Continuous Newsvendor model.
@@ -97,33 +155,7 @@ class CntNV(Model):
         # Let the base class handle default arguments.
         super().__init__(fixed_factors)
 
-    def _check_purchase_price(self) -> None:
-        if self.factors["purchase_price"] <= 0:
-            raise ValueError("Purchasing cost per unit must be greater than 0.")
-
-    def _check_sales_price(self) -> None:
-        if self.factors["sales_price"] <= 0:
-            raise ValueError("Sales price per unit must be greater than 0.")
-
-    def _check_salvage_price(self) -> None:
-        if self.factors["salvage_price"] <= 0:
-            raise ValueError("Salvage cost per unit must be greater than 0.")
-
-    def _check_order_quantity(self) -> None:
-        if self.factors["order_quantity"] <= 0:
-            raise ValueError("Order quantity must be greater than 0.")
-
-    def _check_burr_c(self) -> None:
-        if self.factors["Burr_c"] <= 0:
-            raise ValueError(
-                "Burr Type XII cdf shape parameter must be greater than 0."
-            )
-
-    def _check_burr_k(self) -> None:
-        if self.factors["Burr_k"] <= 0:
-            raise ValueError(
-                "Burr Type XII cdf shape parameter must be greater than 0."
-            )
+        self.demand_model = DemandInputModel()
 
     @override
     def check_simulatable_factors(self) -> bool:
@@ -138,7 +170,10 @@ class CntNV(Model):
             "unit, which must be greater than the sales price per unit."
         )
 
-    def replicate(self, rng_list: list[MRG32k3a]) -> tuple[dict, dict]:
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+        self.demand_model.set_rng(rng_list[0])
+
+    def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -160,18 +195,7 @@ class CntNV(Model):
         burr_k: float = self.factors["Burr_k"]
         burr_c: float = self.factors["Burr_c"]
         # Designate random number generator for demand variability.
-        demand_rng = rng_list[0]
-
-        # Generate random demand according to Burr Type XII distribution.
-        # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
-        #   X = ((1-U)**(-1/k) - 1)**(1/c) has the desired distribution.
-        # https://en.wikipedia.org/wiki/Burr_distribution
-        def nth_root(x: float, n: float) -> float:
-            """Return the nth root of x."""
-            return x ** (1 / n)
-
-        u = demand_rng.random()
-        demand = nth_root(nth_root(1 - u, -burr_k) - 1, burr_c)
+        demand = self.demand_model.random(burr_c, burr_k)
 
         # Calculate units sold, as well as unsold/stockout
         units_sold = min(demand, ord_quant)
@@ -215,136 +239,29 @@ class CntNV(Model):
 class CntNVMaxProfit(Problem):
     """Base class to implement simulation-optimization problems."""
 
-    @classproperty
-    @override
-    def class_name_abbr(cls) -> str:
-        return "CNTNEWS-1"
-
-    @classproperty
-    @override
-    def class_name(cls) -> str:
-        return "Max Profit for Continuous Newsvendor"
-
-    @classproperty
-    @override
-    def n_objectives(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def n_stochastic_constraints(cls) -> int:
-        return 0
-
-    @classproperty
-    @override
-    def minmax(cls) -> tuple[int]:
-        return (1,)
-
-    @classproperty
-    @override
-    def constraint_type(cls) -> ConstraintType:
-        return ConstraintType.BOX
-
-    @classproperty
-    @override
-    def variable_type(cls) -> VariableType:
-        return VariableType.CONTINUOUS
-
-    @classproperty
-    @override
-    def gradient_available(cls) -> bool:
-        return True
-
-    @classproperty
-    @override
-    def optimal_value(cls) -> float | None:
-        return None
-
-    @classproperty
-    @override
-    def optimal_solution(cls) -> tuple | None:
-        # TODO: Generalize to function of factors.
-        # return (0.1878,)
-        return None
-
-    @classproperty
-    @override
-    def model_default_factors(cls) -> dict:
-        return {
-            "purchase_price": 5.0,
-            "sales_price": 9.0,
-            "salvage_price": 1.0,
-            "Burr_c": 2.0,
-            "Burr_k": 20.0,
-        }
-
-    @classproperty
-    @override
-    def model_decision_factors(cls) -> set[str]:
-        return {"order_quantity"}
-
-    @classproperty
-    @override
-    def specifications(cls) -> dict[str, dict]:
-        return {
-            "initial_solution": {
-                "description": "initial solution",
-                "datatype": tuple,
-                "default": (0,),
-            },
-            "budget": {
-                "description": "max # of replications for a solver to take",
-                "datatype": int,
-                "default": 1000,
-                "isDatafarmable": False,
-            },
-        }
-
-    @property
-    @override
-    def check_factor_list(self) -> dict[str, Callable]:
-        return {
-            "initial_solution": self.check_initial_solution,
-            "budget": self.check_budget,
-        }
-
-    @classproperty
-    @override
-    def dim(cls) -> int:
-        return 1
-
-    @classproperty
-    @override
-    def lower_bounds(cls) -> tuple:
-        return (0,)
-
-    @classproperty
-    @override
-    def upper_bounds(cls) -> tuple:
-        return (np.inf,)
-
-    def __init__(
-        self,
-        name: str = "CNTNEWS-1",
-        fixed_factors: dict | None = None,
-        model_fixed_factors: dict | None = None,
-    ) -> None:
-        """Initialize the Continuous Newsvendor problem.
-
-        Args:
-            name (str, optional): Name of the problem. Defaults to "CNTNEWS-1".
-            fixed_factors (dict, optional): Fixed factors for the problem.
-                Defaults to None.
-            model_fixed_factors (dict, optional): Fixed factors for the model.
-                Defaults to None.
-        """
-        # Let the base class handle default arguments.
-        super().__init__(
-            name=name,
-            fixed_factors=fixed_factors,
-            model_fixed_factors=model_fixed_factors,
-            model=CntNV,
-        )
+    config_class: ClassVar[type[BaseModel]] = CntNVMaxProfitConfig
+    model_class: ClassVar[type[Model]] = CntNV
+    class_name_abbr: str = "CNTNEWS-1"
+    class_name: str = "Max Profit for Continuous Newsvendor"
+    n_objectives: int = 1
+    n_stochastic_constraints: int = 0
+    minmax: tuple[int] = (1,)
+    constraint_type: ConstraintType = ConstraintType.BOX
+    variable_type: VariableType = VariableType.CONTINUOUS
+    gradient_available: bool = True
+    optimal_value: float | None = None
+    optimal_solution: tuple | None = None
+    model_default_factors: dict = {
+        "purchase_price": 5.0,
+        "sales_price": 9.0,
+        "salvage_price": 1.0,
+        "Burr_c": 2.0,
+        "Burr_k": 20.0,
+    }
+    model_decision_factors: set[str] = {"order_quantity"}
+    dim: int = 1
+    lower_bounds: tuple = (0,)
+    upper_bounds: tuple = (np.inf,)
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:

@@ -20,7 +20,7 @@ from joblib import Parallel, delayed
 import simopt.curve_utils as curve_utils
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import ObjectiveType, Problem, Solution, Solver, VariableType
+from simopt.base import Model, ObjectiveType, Problem, Solution, Solver, VariableType
 from simopt.curve import (
     Curve,
     CurveType,
@@ -352,12 +352,15 @@ class ProblemSolver:
                 fixed_factors=problem_fixed_factors,
                 model_fixed_factors=model_fixed_factors,
             )
+        self.problem.model.model_created()
+        self.model_created(self.problem.model)
         # Rename problem if necessary.
         if problem_rename is not None:
             if problem_rename == "":
                 error_msg = "Problem rename cannot be an empty string."
                 raise ValueError(error_msg)
             self.problem.name = problem_rename
+        self.problem.before_replicate = self.before_replicate
 
         # Initialize file path.
         if not isinstance(file_name_path, Path):
@@ -369,6 +372,27 @@ class ProblemSolver:
 
         # Make sure the experiment directory exists
         EXPERIMENT_DIR.mkdir(parents=True, exist_ok=True)
+
+    def model_created(self, model: Model) -> None:
+        """Hook called after the problem's model is instantiated.
+
+        Args:
+            model: The initialized model associated with the experiment's problem.
+
+        This is a helper function to customize the experiment's input model.
+        """
+        pass
+
+    def before_replicate(self, model: Model, rng_list: list[MRG32k3a]) -> None:
+        """Hook executed immediately before each replication during an experiment.
+
+        Args:
+            model: The model about to be simulated.
+            rng_list: The list of RNGs used for the replication.
+
+        This is a helper function to customize behavior before each replication.
+        """
+        pass
 
     # TODO: Convert this to throwing exceptions?
     # TODO: Convert this functionality to run automatically
@@ -559,7 +583,7 @@ class ProblemSolver:
         # logging.debug([rng.s_ss_sss_index for rng in progenitor_rngs])
         # Run the solver on the problem.
         tic = time.perf_counter()
-        recommended_solns, intermediate_budgets = solver.solve(problem=problem)
+        recommended_solns, intermediate_budgets = solver.run(problem=problem)
         toc = time.perf_counter()
         runtime = toc - tic
         logging.debug(
