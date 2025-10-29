@@ -14,7 +14,7 @@ The algorithm alternates between two phases:
 When infeasible, the solver determines a search direction to restore feasibility by either:
 
 1. Using the gradient of the most violated constraint (**CSA**), or
-2. Solving a nonlinear program (NLP) to find the direction that forms the **maximum angle** with all violated constraints (**CSA-M**), optionally incorporating the objective gradient (**FCSA**).
+2. Solving a nonlinear program (NLP) to find the direction that forms the **maximum angle** with all violated constraints (**CSA-N**), optionally incorporating the objective gradient (**FCSA**).
 
 When the current solution is feasible, the objective gradient alone is used to determine the search direction.
 The next iterate is then computed using the **proximal mapping**.
@@ -58,7 +58,7 @@ Solver Factors
 * **search_direction**: Method used to determine the search direction.  
   Options:  
   - ``"CSA"`` – use the gradient of the most violated constraint.  
-  - ``"CSA-M"`` – solve an NLP involving all violated constraints.  
+  - ``"CSA-N"`` – solve an NLP involving all violated constraints.  
   - ``"FCSA"`` – solve an NLP involving all violated constraints and the objective gradient.  
   *Default:* ``"FCSA"``
 

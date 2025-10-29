@@ -60,12 +60,12 @@ class FCSAConfig(SolverConfig):
         Field(default=0.01, ge=0, description="tolerance function"),
     ]
     search_direction: Annotated[
-        Literal["FCSA", "CSA-M", "CSA"],
+        Literal["FCSA", "CSA-N", "CSA"],
         Field(
             default="FCSA",
             description=(
                 "determines how solver finds the search direction for the next "
-                "iteration. Can be FCSA, CSA-M, or CSA"
+                "iteration. Can be FCSA, CSA-N, or CSA"
             ),
         ),
     ]
@@ -177,7 +177,7 @@ class FCSA(Solver):
             norm = EPSILON
         return grad / norm if self.factors["normalize_grads"] else grad
 
-    def _direction_csa_m(self, solution: Solution) -> np.ndarray:
+    def _direction_csa_n(self, solution: Solution) -> np.ndarray:
         normalize = self.factors["normalize_grads"]
         _, violated_grads = self._violated_constraint_values_and_grads(
             solution, normalize
@@ -240,8 +240,8 @@ class FCSA(Solver):
             return self._direction_no_violation(problem, solution)
         if method == "CSA":
             return self._direction_csa(solution)
-        if method == "CSA-M":
-            return self._direction_csa_m(solution)
+        if method == "CSA-N":
+            return self._direction_csa_n(solution)
         if method == "FCSA":
             return self._direction_fcsa(problem, solution)
 
