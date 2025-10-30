@@ -441,7 +441,10 @@ class ProblemSolver:
             error_messages.append(error_message)
 
         if (
-            self.solver.constraint_type == ConstraintType.STOCHASTIC
+            # TODO: this is a hack to get around the fact that compatibility checks are
+            # not implemented correctly.
+            self.solver.class_name_abbr == "FCSA"
+            and self.solver.constraint_type == ConstraintType.STOCHASTIC
             and self.problem.constraint_type != ConstraintType.STOCHASTIC
         ):
             error_message = (
