@@ -141,7 +141,8 @@ class DesignPoint:
 
         for _ in range(num_macroreps):
             # Generate a single replication of model, as described by design point.
-            responses, gradients = self.model.replicate(rng_list=self.rng_list)
+            self.model.before_replicate(self.rng_list)
+            responses, gradients = self.model.replicate()
             # If first replication, set up recording responses and gradients.
             if self.n_reps == 0:
                 self.responses = {response_key: [] for response_key in responses}

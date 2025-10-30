@@ -51,19 +51,6 @@ fixed_factors = {"lambda": 3.0, "mu": 8.0}
 mymodel = MM1Queue(fixed_factors=fixed_factors)
 
 # %%
-# Check that all factors describe a simulatable model.
-# Check fixed factors individually.
-for key, value in mymodel.factors.items():
-    print(
-        f"The factor {key} is set as {value}. "
-        f"Is this simulatable? {bool(mymodel.check_simulatable_factor(key))}."
-    )
-# Check all factors collectively.
-print(
-    f"Is the specified model simulatable? {bool(mymodel.check_simulatable_factors())}."
-)
-
-# %%
 # Create a list of RNG objects for the simulation model to use when
 # running replications.
 
@@ -73,7 +60,8 @@ rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
 
 # %%
 # Run a single replication of the model.
-responses, gradients = mymodel.replicate(rng_list)
+mymodel.before_replicate(rng_list)
+responses, gradients = mymodel.replicate()
 print("\nFor a single replication:")
 print("\nResponses:")
 for key, value in responses.items():
