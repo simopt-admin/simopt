@@ -373,7 +373,7 @@ class ProblemSolver:
                 error_msg = "Problem rename cannot be an empty string."
                 raise ValueError(error_msg)
             self.problem.name = problem_rename
-        self.problem.before_replicate = self.before_replicate
+        self.problem.before_replicate_override = self.before_replicate
 
         # Initialize file path.
         if not isinstance(file_name_path, Path):

@@ -215,6 +215,7 @@ class Problem(ABC):
         self.model = self.model_class(model_factors)
 
         self.rng_list: list[MRG32k3a] = []
+        self.before_replicate_override = None
 
     def __eq__(self, other: object) -> bool:
         """Check if two problems are equivalent.
@@ -406,7 +407,9 @@ class Problem(ABC):
         for _ in range(num_macroreps):
             # Generate one replication at x.
             self.model.before_replicate(solution.rng_list)
-            self.before_replicate(self.model, solution.rng_list)
+            self.before_replicate(solution.rng_list)
+            if self.before_replicate_override is not None:
+                self.before_replicate_override(self.model, solution.rng_list)
 
             result = self.replicate(solution.x)
             solution.add_replicate_result(result)
