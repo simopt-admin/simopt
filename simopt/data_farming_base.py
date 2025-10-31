@@ -6,6 +6,7 @@ import ast
 import csv
 import itertools
 import logging
+from contextlib import suppress
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
@@ -205,6 +206,14 @@ class DataFarmingExperiment:
         if model_fixed_factors is None:
             model_fixed_factors = {}
 
+        # If for some reason the user provides the module name instead of the
+        # abbreviated class name, set the proper name.
+        if model_name not in model_directory:
+            for name, model_class in directory.model_directory.items():
+                if model_class.name == model_name:
+                    model_name = name
+                    break
+
         # Value checking
         if model_name not in model_directory:
             error_msg = "model_name must be a valid model name."
@@ -239,41 +248,65 @@ class DataFarmingExperiment:
             design.generate_design()
             design.save_design(design_path)
             logging.info(f"Design saved to {design_path}")
-        elif design_path is None:
+        # If design_path is provided, validate it.
+        elif design_path is not None:
+            # If a string was provided, attempt to resolve it to a Path.
+            if isinstance(design_path, str):
+                # 1 - Full Path w/ Extension
+                design_path = Path(design_path)
+                # 2 - Filename w/ Extension (need to add directory)
+                if not design_path.exists():
+                    design_path = Path(DATA_FARMING_DIR / design_path)
+                # 3 - Filename w/o Extension (need to add directory and extension)
+                if not design_path.suffix:
+                    design_path = design_path.with_suffix(".csv")
+            if not design_path.exists():
+                raise FileNotFoundError(
+                    f"Path to design ({design_path}) "
+                    "was provided but cannot be located."
+                )
+        # If neither is provided, raise an error.
+        else:
             error_msg = "Either factor_settings or design_path must be provided."
             raise ValueError(error_msg)
 
-        # Make sure the design_path resolves to a valid file path
-        if isinstance(design_path, (str, Path)):
-            design_path = resolve_file_path(design_path, DATA_FARMING_DIR)
-            if not design_path.exists():
-                error_msg = f"{design_path} is not a valid file path."
-                raise FileNotFoundError(error_msg)
-
-        # Read in design matrix from .txt file. Result is a pandas DataFrame.
         design_table = pd.read_csv(
             design_path,
-            header=None,
-            delimiter="\t",
+            sep="\t",
             encoding="utf-8",
         )
-        # Count number of design_points.
+        # If we don't have factor headers, use the column names from the design table.
+        if not factor_headers:
+            factor_headers = design_table.columns.tolist()
+        # Ensure all the design table columns are numeric where possible.
+        for factor in factor_headers:
+            # Ignore values that cannot be converted to numeric
+            # (e.g., categorical factors).
+            with suppress(Exception):
+                design_table[factor] = pd.to_numeric(design_table[factor])
+                # Convert from numpy to standard Python types.
+                design_table[factor] = design_table[factor].apply(lambda x: x.item())
+        # Double check the indexing aligns before continuing.
         self.n_design_pts = len(design_table)
-        if len(factor_headers) != len(design_table.columns):
+        if len(factor_headers) > len(design_table.columns):
             error_msg = (
-                f"Length of factor_headers ({len(factor_headers)}) does not match "
-                f"number of columns in design ({len(design_table.columns)})."
+                f"Number of columns in design table ({len(design_table.columns)}) "
+                "must be at least the number of factor headers provided "
+                f"({len(factor_headers)})."
             )
             raise ValueError(error_msg)
         # Create all design points.
         self.design = []
         design_pt_factors = {}
         for dp_index in range(self.n_design_pts):
-            for factor_idx in range(len(factor_headers)):
+            for factor in factor_headers:
+                # Skip any extra factors that got read in but are not part of the model.
+                if factor not in self.model.factors:
+                    logging.debug(f"Factor '{factor}' not in model; skipping.")
+                    continue
                 # Parse model factors for next design point.
-                design_pt_factors[factor_headers[factor_idx]] = design_table[
-                    factor_idx
-                ][dp_index]
+                design_pt_factors[factor] = design_table[factor].iloc[dp_index]
+            # TODO: investigate if deepcopy is needed for self.model
             # Update model factors according to next design point.
             self.model.factors.update(design_pt_factors)
             # Create new design point and add to design.
@@ -351,7 +384,7 @@ class DataFarmingExperiment:
         with csv_file_name.open(mode="x", newline="") as output_file:
             csv_writer = csv.writer(
                 output_file,
-                delimiter=",",
+                delimiter="\t",
                 quotechar='"',
                 quoting=csv.QUOTE_MINIMAL,
             )
