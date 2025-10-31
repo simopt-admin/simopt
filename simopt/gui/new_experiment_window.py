@@ -1284,7 +1284,7 @@ class NewExperimentWindow(Toplevel):
             return
         # Open the file with Pandas
         try:
-            design_df = pd.read_csv(design_file)
+            design_df = pd.read_csv(design_file, sep="\t")
         except Exception as e:
             messagebox.showerror(
                 "Error Reading File",
@@ -1846,7 +1846,7 @@ class NewExperimentWindow(Toplevel):
         # If the CSV filename is provided, read the design table from the CSV
         if csv_filename is not None:
             # Read  the design table from the csv file
-            design_table = pd.read_csv(csv_filename, index_col="design_num")
+            design_table = pd.read_csv(csv_filename, index_col="design_num", sep="\t")
             # Now drop the 'name', 'design_type', and 'num_stacks' columns
             design_table.drop(
                 columns=["name", "design_type", "num_stacks"], inplace=True
