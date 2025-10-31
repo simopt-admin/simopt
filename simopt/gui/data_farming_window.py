@@ -217,12 +217,13 @@ class DataFarmingWindow(Toplevel):
         self.experiment_name = name.replace("_design", "")
 
         # convert loaded design to data frame
-        self.design_table = pd.read_csv(self.csv_filename, index_col=False)
+        self.design_table = pd.read_csv(self.csv_filename, header=None, index_col=False)
+        self.design_table.columns = self.design_table.iloc[0]
 
         # Get design information from table
-        self.model_name = self.design_table.at[1, "Name"]
-        self.design_type = self.design_table.at[1, "Design Type"]
-        self.n_stacks = self.design_table.at[1, "Number Stacks"]
+        self.model_name = self.design_table.at[1, "name"]
+        self.design_type = self.design_table.at[1, "design_type"]
+        self.n_stacks = self.design_table.at[1, "num_stacks"]
         self.model_var.set(self.model_name)
 
         all_factor_names = list(self.design_table.columns[1:-3])
@@ -490,7 +491,9 @@ class DataFarmingWindow(Toplevel):
         self.experiment_name = self.design_filename_var.get()
         self.design_filename = f"{self.experiment_name}_design.csv"
         file_path = DATA_FARMING_DIR / self.design_filename
-        self.design_table[self.factor_names].to_csv(
+        if not file_path.parent.exists():
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+        self.design_table.to_csv(
             file_path,
             sep="\t",
             index=False,
