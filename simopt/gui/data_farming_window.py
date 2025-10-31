@@ -217,7 +217,7 @@ class DataFarmingWindow(Toplevel):
         self.experiment_name = name.replace("_design", "")
 
         # convert loaded design to data frame
-        self.design_table = pd.read_csv(self.csv_filename, header=None, index_col=False)
+        self.design_table = pd.read_csv(self.csv_filename, sep="\t", header=None, index_col=False)
         self.design_table.columns = self.design_table.iloc[0]
 
         # Get design information from table
@@ -471,7 +471,7 @@ class DataFarmingWindow(Toplevel):
 
         self.csv_filename = DATA_FARMING_DIR / design_csv_name
 
-        self.design_table.to_csv(self.csv_filename, index=False)
+        self.design_table.to_csv(self.csv_filename, index=False, sep="\t")
 
         # read new design csv and convert to df
         self.design_table = pd.read_csv(self.csv_filename, index_col=False)
@@ -1078,7 +1078,7 @@ class DataFarmingWindow(Toplevel):
         self.design_tree.heading("#0", text="Design #")
 
         # Get design point values from csv
-        design_table = pd.read_csv(self.csv_filename, index_col="design_num")
+        design_table = pd.read_csv(self.csv_filename, index_col="design_num", sep="\t")
         num_dp = len(design_table)  # used for label
         self.create_design_label = tk.Label(
             master=self.create_design_frame,

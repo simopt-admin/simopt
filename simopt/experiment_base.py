@@ -5518,7 +5518,7 @@ class ProblemsSolvers:
         with file_path.open(mode="w", newline="") as output_file:
             csv_writer = csv.writer(
                 output_file,
-                delimiter=",",
+                delimiter="\t",
                 quotechar='"',
                 quoting=csv.QUOTE_MINIMAL,
             )
@@ -5902,7 +5902,7 @@ def create_design(
     design_table["num_stacks"] = str(n_stacks)
     # Dump the design table to a csv file.
     design_file_csv = design_file.with_suffix(".csv")
-    design_table.to_csv(design_file_csv, mode="w", header=True, index=False)
+    design_table.to_csv(design_file_csv, mode="w", header=True, index=False, sep="\t")
 
     # Now return the list from earlier
     return design_list

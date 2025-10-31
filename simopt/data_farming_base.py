@@ -385,7 +385,7 @@ class DataFarmingExperiment:
         with csv_file_name.open(mode="x", newline="") as output_file:
             csv_writer = csv.writer(
                 output_file,
-                delimiter=",",
+                delimiter="\t",
                 quotechar='"',
                 quoting=csv.QUOTE_MINIMAL,
             )
