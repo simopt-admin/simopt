@@ -245,6 +245,15 @@ class DataFarmingWindow(Toplevel):
             else:
                 self.factor_names.append(factor)
 
+        # TODO: consolidate with copy in data_farming_base.py
+        # If for some reason the user provides the module name instead of the
+        # abbreviated class name, set the proper name.
+        if self.model_name not in model_directory:
+            for name, model_class in directory.model_directory.items():
+                if model_class.name == self.model_name:
+                    self.model_name = name
+                    break
+
         self.model_object = model_directory[self.model_name]()
 
         # Allow user to change default values
@@ -1272,7 +1281,7 @@ class DataFarmingWindow(Toplevel):
         # of the model.
         crn_across_design_pts = self.crn_var.get() == "Yes"
 
-        raw_results = f"{self.experiment_name}_raw_results"
+        raw_results = f"{self.experiment_name}_raw_results.csv"
         output_filename = DATA_FARMING_DIR / raw_results
 
         # Create DataFarmingExperiment object.
@@ -1286,7 +1295,7 @@ class DataFarmingWindow(Toplevel):
 
         # Run replications and print results to file.
         myexperiment.run(n_reps=n_reps, crn_across_design_pts=crn_across_design_pts)
-        myexperiment.print_to_csv(csv_file_name=output_filename)
+        myexperiment.print_to_csv(csv_file_name=output_filename, overwrite=True)
 
         # run confirmation message
         messagebox.showinfo(
