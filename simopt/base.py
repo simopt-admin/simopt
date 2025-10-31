@@ -15,9 +15,43 @@ from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.utils import classproperty
 
 
+def _check_factor_datatype(self: Solver | Problem | Model, factor_name: str) -> bool:
+    """Determine if a factor's data type matches its specification.
+
+    Args:
+        self (Solver | Problem | Model): The instance to check the factor on.
+        factor_name (str): The name of the factor to check.
+
+    Returns:
+        bool: True if factor is of specified data type, otherwise False.
+
+    Raises:
+        ValueError: If factor_name is not found in specifications.
+    """
+    # The expected type is a pure Python type (e.g., int, float)
+    expected_type = self.specifications[factor_name]["datatype"]
+
+    # Map the expected Python type to a tuple of all compatible types
+    type_map = {
+        int: (int, np.integer),
+        float: (int, float, np.integer, np.floating),
+        bool: (bool, np.bool_),
+        str: (str, np.str_),
+    }
+
+    # Find the correct tuple of types to check against.
+    # If expected_type isn't in our map (e.g., list),
+    # it will just check against the type itself.
+    types_to_check = type_map.get(expected_type, expected_type)
+
+    # Check if the actual value is an instance of any type in that tuple
+    value = self.factors[factor_name]
+    return isinstance(value, types_to_check)
+
+
 def _factor_check(self: Solver | Problem | Model, factor_name: str) -> bool:
     # Check if factor is of permissible data type.
-    datatype_check = self.check_factor_datatype(factor_name)
+    datatype_check = _check_factor_datatype(self, factor_name)
     if not datatype_check:
         return False
     # Check if the factor check exists
@@ -382,13 +416,16 @@ class Solver(ABC):
         """Determine if a factor's data type matches its specification.
 
         Args:
+            self (Solver | Problem | Model): The instance to check the factor on.
             factor_name (str): The name of the factor to check.
 
         Returns:
             bool: True if factor is of specified data type, otherwise False.
+
+        Raises:
+            ValueError: If factor_name is not found in specifications.
         """
-        expected_data_type = self.specifications[factor_name]["datatype"]
-        return isinstance(self.factors[factor_name], expected_data_type)
+        return _check_factor_datatype(self, factor_name)
 
     def run_all_checks(self, factor_names: list[str]) -> bool:
         """Run all checks for the solver factors.
@@ -766,15 +803,16 @@ class Problem(ABC):
         """Determine if a factor's data type matches its specification.
 
         Args:
+            self (Solver | Problem | Model): The instance to check the factor on.
             factor_name (str): The name of the factor to check.
 
         Returns:
             bool: True if factor is of specified data type, otherwise False.
+
+        Raises:
+            ValueError: If factor_name is not found in specifications.
         """
-        return isinstance(
-            self.factors[factor_name],
-            self.specifications[factor_name]["datatype"],
-        )
+        return _check_factor_datatype(self, factor_name)
 
     def run_all_checks(self, factor_names: list[str]) -> bool:
         """Run all checks for the problem factors.
@@ -1224,15 +1262,16 @@ class Model(ABC):
         """Determine if a factor's data type matches its specification.
 
         Args:
+            self (Solver | Problem | Model): The instance to check the factor on.
             factor_name (str): The name of the factor to check.
 
         Returns:
             bool: True if factor is of specified data type, otherwise False.
+
+        Raises:
+            ValueError: If factor_name is not found in specifications.
         """
-        datatype = self.specifications[factor_name]["datatype"]
-        if datatype is float:
-            datatype = (int, float)
-        return isinstance(self.factors[factor_name], datatype)
+        return _check_factor_datatype(self, factor_name)
 
     def run_all_checks(self, factor_names: list[str]) -> bool:
         """Run all checks for the model factors.
