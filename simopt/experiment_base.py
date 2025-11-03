@@ -704,7 +704,7 @@ class ProblemSolver:
         function_start = time.time()
 
         logging.info("Starting postreplications")
-        results: list[tuple] = Parallel()(
+        results: list[tuple] = Parallel(n_jobs=-1)(
             delayed(self.post_replicate_multithread)(mrep)
             for mrep in range(self.n_macroreps)
         )  # type: ignore
