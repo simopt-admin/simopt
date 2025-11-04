@@ -8,6 +8,7 @@ Solvers
    solvers/adam
    solvers/aloe
    solvers/astrodf
+   solvers/fcsa
    solvers/neldmd
    solvers/randomsearch
    solvers/spsa
