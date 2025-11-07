@@ -38,17 +38,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-docs = [
-    "sphinx>=8.2.3",
-    "sphinx-autoapi>=3.6.1",
-    "sphinx-rtd-theme>=3.0.2",
-]
+dev = ["ruff>=0.14.2"]
+docs = ["sphinx>=8.2.3", "sphinx-autoapi>=3.6.1", "sphinx-rtd-theme>=3.0.2"]
 
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"
 "Documentation" = "https://simopt.readthedocs.io/en/latest/"
-
-[dependency-groups]
-dev = [
-    "ruff>=0.14.2",
-]
