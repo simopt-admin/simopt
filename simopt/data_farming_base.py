@@ -6,7 +6,6 @@ import csv
 import logging
 from contextlib import suppress
 from copy import deepcopy
-from enum import Enum
 from pathlib import Path
 from typing import Literal
 
@@ -24,12 +23,6 @@ DATA_FARMING_DIR = EXPERIMENT_DIR / "data_farming"
 # Workaround for AutoAPI
 model_directory = directory.model_directory
 solver_directory = directory.solver_directory
-
-
-class DesignType(Enum):
-    """Enum for design types."""
-
-    NOLHS = "nolhs"
 
 
 class DesignPoint:
