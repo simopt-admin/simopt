@@ -6,7 +6,8 @@ sphinx:
 build:
   os: ubuntu-lts-latest
   tools:
-    python: miniconda-latest
-
-conda:
-  environment: docs/environment.yml
+    python: "3"
+  jobs:
+    pre_install:
+      - python -m pip install --upgrade pip
+      - python -m pip install .[docs]
