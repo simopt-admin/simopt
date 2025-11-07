@@ -300,13 +300,20 @@ class DataFarmingExperiment:
         self.design = []
         design_pt_factors = {}
         for dp_index in range(self.n_design_pts):
-            for factor in factor_headers:
+            for idx, factor in enumerate(factor_headers):
                 # Skip any extra factors that got read in but are not part of the model.
                 if factor not in self.model.factors:
                     logging.debug(f"Factor '{factor}' not in model; skipping.")
                     continue
                 # Parse model factors for next design point.
-                design_pt_factors[factor] = design_table[factor].iloc[dp_index]
+                # If column names are given, then use them to index
+                # (columns can be in any order)
+                if factor in design_table.columns:
+                    factor_val = design_table[factor].iloc[dp_index]
+                # Otherwise, use positional indexing (assume columns align with headers)
+                else:
+                    factor_val = design_table.iloc[dp_index, idx]
+                design_pt_factors[factor] = factor_val
             # TODO: investigate if deepcopy is needed for self.model
             # Update model factors according to next design point.
             self.model.factors.update(design_pt_factors)
