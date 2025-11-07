@@ -103,10 +103,6 @@ class Model(ABC):
     def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
-        Args:
-            rng_list (list[``mrg32k3a.mrg32k3a.MRG32k3a``]): List of random-number
-                generators used to generate a random replication.
-
         Returns:
             tuple:
                 - dict: Performance measures of interest.
