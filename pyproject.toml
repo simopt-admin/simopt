@@ -45,6 +45,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "nbstripout>=0.8.0",
     "jupytext>=1.18.1",
     "pytest-xdist>=3.8.0",
     "pytest>=9.0.1",
