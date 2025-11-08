@@ -40,6 +40,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["ruff>=0.14.2", "jupytext"]
 docs = ["sphinx>=8.2.3", "sphinx-autoapi>=3.6.1", "sphinx-rtd-theme>=3.0.2"]
+testing = ["pyyaml"]
 notebooks = ["ipykernel"]
 
 [project.urls]
