@@ -45,11 +45,21 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+notebooks = ["ipykernel"]
+
+# https://packaging.python.org/en/latest/specifications/dependency-groups/#dependency-groups
+[dependency-groups]
+all = [
+  { include-group = "notebooks" },
+  { include-group = "build" },
+  { include-group = "dev" },
+  { include-group = "docs" },
+  { include-group = "testing" },
+]
 build = ["setuptools>=77.0.3", "build"]
 dev = ["ruff>=0.14.0", "jupytext"]
 docs = ["sphinx>=8.0.0", "sphinx-autoapi>=3.6.0", "sphinx-rtd-theme>=3.0.0"]
 testing = ["pyyaml"]
-notebooks = ["ipykernel"]
 
 [project.urls]
 Documentation = "https://simopt.readthedocs.io/en/latest/"
