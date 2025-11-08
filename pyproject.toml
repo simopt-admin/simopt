@@ -50,8 +50,8 @@ dependencies = [
   "seaborn>=0.13.0",
 ]
 
-[project.optional-dependencies]
-notebooks = ["ipykernel"]
+# [project.optional-dependencies]
+# Add Plotting?
 
 # https://packaging.python.org/en/latest/specifications/dependency-groups/#dependency-groups
 [dependency-groups]
@@ -59,11 +59,13 @@ all = [
   { include-group = "build" },
   { include-group = "dev" },
   { include-group = "docs" },
+  { include-group = "notebooks" },
   { include-group = "testing" },
 ]
 build = ["setuptools>=77.0.3", "build"]
 dev = ["ruff>=0.14.0", "jupytext"]
 docs = ["sphinx>=8.0.0", "sphinx-autoapi>=3.6.0", "sphinx-rtd-theme>=3.0.0"]
+notebooks = ["ipykernel"]
 testing = ["pyyaml"]
 
 [project.urls]
