@@ -3,7 +3,16 @@ requires = ["setuptools>=77.0.3", "build"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["simopt", "simopt.gui", "simopt.models", "simopt.solvers"]
+packages = [
+  "simopt",
+  "simopt.data_farming",
+  "simopt.gui",
+  "simopt.models",
+  "simopt.solvers",
+]
+
+[tool.setuptools.package-data]
+"simopt.data_farming" = ["*.npz"]
 
 [project]
 name = "simoptlib"
