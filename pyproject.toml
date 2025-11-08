@@ -27,13 +27,13 @@ dependencies = [
   "boltons>=0.6.3",
   "cvxpy>=1.6.0",
   "joblib>=1.0.0",
-  "matplotlib>=3.10.7",    # TODO: check compat with GUI
+  "matplotlib>=3.9.0",
   "mrg32k3a[rust]>=2.0.0",
   "numpy>=2.0.0",
   "pandas>=2.2.2",
-  "pydantic>=2.2",
-  "scipy>=1.13",
-  "seaborn>=0.13.2",       # TODO: check compat with GUI
+  "pydantic>=2.2.0",
+  "scipy>=1.13.0",
+  "seaborn>=0.13.0",
 ]
 
 [project.optional-dependencies]
