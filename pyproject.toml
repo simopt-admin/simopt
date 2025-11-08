@@ -51,7 +51,8 @@ dependencies = [
 ]
 
 # [project.optional-dependencies]
-# Add Plotting?
+# TODO: convert plotting imports to lazy imports in library code
+# plotting = ["matplotlib>=3.9.0", "seaborn>=0.13.0"]
 
 # https://packaging.python.org/en/latest/specifications/dependency-groups/#dependency-groups
 [dependency-groups]
