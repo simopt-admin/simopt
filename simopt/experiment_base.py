@@ -3484,8 +3484,6 @@ def plot_terminal_progress(
                 labels=[experiment.solver.name for experiment in experiments],
             )
         elif plot_type == PlotType.VIOLIN:
-            import seaborn as sns
-
             # Construct dictionary of lists directly
             terminal_data_dict = {
                 "Solvers": [
@@ -3545,8 +3543,6 @@ def plot_terminal_progress(
                     "Solver": [experiment.solver.name] * len(terminal_data),
                     "Terminal": terminal_data,
                 }
-                import seaborn as sns
-
                 sns.violinplot(
                     x=terminal_data_dict["Solver"],
                     y=terminal_data_dict["Terminal"],
