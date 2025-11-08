@@ -50,7 +50,6 @@ notebooks = ["ipykernel"]
 # https://packaging.python.org/en/latest/specifications/dependency-groups/#dependency-groups
 [dependency-groups]
 all = [
-  { include-group = "notebooks" },
   { include-group = "build" },
   { include-group = "dev" },
   { include-group = "docs" },
