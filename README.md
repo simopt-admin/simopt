@@ -36,7 +36,7 @@ Full documentation for the source code can be found on our **[readthedocs page](
     - It is ***highly recommended*** to check the box during installation to add Python/Miniconda/Anaconda to your system PATH.
     - If you know you have Python installed but are getting a `Command not found` error when trying to use Python commands, then you may need to [add Python to your PATH](https://realpython.com/add-python-to-path/).
 - [VS Code](https://code.visualstudio.com/download) (optional)
-    - This is a lightweight IDE that is compatible with Miniconda and is recommended for running the GUI
+    - This is a lightweight IDE that is compatible with Miniconda.
 - [Git](https://git-scm.com/downloads) (optional)
     - If you don't have Git installed, you can download the code as a zip file instead
 
@@ -49,7 +49,7 @@ There are two ways to download a copy of the source code onto your machine:
 
 If you do not need the source code for SimOpt, you may install the library as a Python package instead. See the [Package](#package) and [Basic Example](#basic-example) sections for more details about this option.
 
-The `demo` folder contains a handful of useful scripts that can be easily modified, as directed in the comments:
+The `notebooks` folder includes several useful Jupyter notebooks and scripts that are easy to customize. You can either run the scripts as standalone programs or open the notebooks in JupyterLab or VS Code. A description of the contents is provided below:
 
 | File                                     | Description                                                                                                                                                                                                        |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -190,33 +190,37 @@ from simopt import models, solvers, experiment_base
 ```
 
 The following snippet of code will run 10 macroreplications of the Random Search solver ("RNDSRCH") on the Continuous Newsvendor problem ("CNTNEWS-1"):
-```
+```python
 myexperiment = simopt.experiment_base.ProblemSolver("RNDSRCH", "CNTNEWS-1")
 myexperiment.run(n_macroreps=10)
 ```
 
 The results will be saved to a .pickle file in a folder called `experiments/outputs`. To post-process the results, by taking, for example 200 postreplications at each recommended solution, run the following:
-```
+```python
 myexperiment.post_replicate(n_postreps=200)
 simopt.experiment_base.post_normalize([myexperiment], n_postreps_init_opt=200)
 ```
 
 A .txt file summarizing the progress of the solver on each macroreplication can be produced:
-```    
+```python
 myexperiment.log_experiment_results()
 ```
 
 A .txt file called `RNDSRCH_on_CNTNEWS-1_experiment_results.txt` will be saved in a folder called `experiments/logs`.
 
 One can then plot the mean progress curve of the solver (with confidence intervals) with the objective function values shown on the y-axis:
-```
-simopt.experiment_base.plot_progress_curves(experiments=[myexperiment], plot_type="mean", normalize=False)
+```python
+simopt.experiment_base.plot_progress_curves(
+    experiments=[myexperiment],
+    plot_type=simopt.experiment_base.PlotType.MEAN,
+    normalize=False,
+)
 ```
 
-The Python scripts in the `demo` folder provide more guidance on how to run common experiments using the library.
+The Python scripts in the `notebooks` folder provide more guidance on how to run common experiments using the library.
 
 One can also use the SimOpt graphical user interface by running the following from the terminal:
-```
+```bash
 python -m simopt
 ```
 
@@ -230,6 +234,7 @@ The core development team currently consists of
 - [**Sara Shashaani**](https://shashaani.wordpress.ncsu.edu) (North Carolina State University)
 - [**Shane Henderson**](https://people.orie.cornell.edu/shane/) (Cornell University)
 - [**William Grochocinski**](https://github.com/Grochocinski) (North Carolina State University)
+- [**Cen Wang**](https://cenwangumass.github.io/) (Texas A&M University)
 
 ## Citation
 To cite this work, please use the `CITATION.cff` file or use the built-in citation generator:
