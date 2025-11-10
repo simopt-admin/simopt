@@ -17,8 +17,8 @@ Regular orders arrive after :math:`l_r` periods while expedited orders arrive af
 :math:`l_e < l_r`. Let the difference in lead times be :math:`l = l_r − l_e ≥ 1`. 
 
 If there is remaining on-hand inventory at the end of period :math:`n` (after demand :math:`d_n` is satisfied), 
-these items are carried over to the next period (i.e., :math:`I_n+1 > 0`) at a holding cost per unit. 
-However, if there is a stock-out (i.e., :math:`In + 1 < 0`), there is a penalty cost per unit 
+these items are carried over to the next period (i.e., :math:`I_{n+1} > 0`) at a holding cost per unit. 
+However, if there is a stock-out (i.e., :math:`I_{n+1} < 0`), there is a penalty cost per unit 
 of unsatisfied demand.
 
 We will let the period :math:`n` expediting order be based on the on-hand inventory plus the orders that 
