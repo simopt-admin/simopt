@@ -24,23 +24,32 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 dependencies = [
-    "boltons>=25.0.0",
-    "cvxpy>=1.7.3",
-    "joblib>=1.5.2",
-    "matplotlib>=3.10.7",
-    "mrg32k3a[rust]>=2.0.0",
-    "numpy>=2.3.4",
-    "pandas>=2.3.3",
-    "pillow>=12.0.0",
-    "pydantic>=2.12.3",
-    "scipy>=1.16.3",
-    "seaborn>=0.13.2",
+  "boltons>=0.6.3",
+  "cvxpy>=1.6.0",
+  "joblib>=1.0.0",
+  "matplotlib>=3.9.0",
+  "mrg32k3a[rust]>=2.0.0",
+  "numpy>=2.0.0",
+  "pandas>=2.2.2",
+  "pydantic>=2.2.0",
+  "scipy>=1.13.0",
+  "seaborn>=0.13.0",
 ]
 
-[project.optional-dependencies]
-dev = ["ruff>=0.14.2", "jupytext"]
-docs = ["sphinx>=8.2.3", "sphinx-autoapi>=3.6.1", "sphinx-rtd-theme>=3.0.2"]
+
+[dependency-groups]
+all = [
+  { include-group = "build" },
+  { include-group = "dev" },
+  { include-group = "docs" },
+  { include-group = "notebooks" },
+  { include-group = "testing" },
+]
+build = ["setuptools>=77.0.3", "build"]
+dev = ["ruff>=0.14.0", "jupytext"]
+docs = ["sphinx>=8.0.0", "sphinx-autoapi>=3.6.0", "sphinx-rtd-theme>=3.0.0"]
 notebooks = ["ipykernel"]
+testing = ["pyyaml"]
 
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"
