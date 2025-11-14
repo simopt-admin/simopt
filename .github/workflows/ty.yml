@@ -1,0 +1,28 @@
+name: "ty CI"
+
+on:
+  push:
+    branches: [ "master", "development" ]
+  pull_request:
+    branches: [ "master" , "development" ]
+
+jobs:
+  type_checker:
+    runs-on: ubuntu-latest 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      run: pip install uv
+
+    - name: Install Dependencies
+      run: uv sync --all-extras
+
+    - name: ty Type Checking
+      run: uv run ty check
