@@ -19,15 +19,19 @@ from pathlib import Path
 # Figure out the top-level directory and add it to the system path
 # This is necessary to import the simopt package
 src_path = Path(__file__).resolve().parent
-project_path = src_path.parents[1]
+project_path = src_path.parent.parent
 sys.path.insert(0, str(project_path))
 
 # -- Project information -----------------------------------------------------
 
+# Import the version string
+from simopt import __version__  # noqa: E402
+
 project = "SimOpt"
-copyright = "2025, simopt-admin"  # noqa: A001
+project_copyright = "%Y, simopt-admin"
 author = "simopt-admin"
-release = "1.2.0"
+release = __version__
+version: str = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
 
