@@ -1,4 +1,4 @@
-![SimOpt Logo](.github/resources/logo_full_magnifying_glass.png)
+![SimOpt Logo](https://raw.githubusercontent.com/simopt-admin/simopt/master/.github/resources/logo_full_magnifying_glass.png)
 
 ## About the Project
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
