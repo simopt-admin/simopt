@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import random
+from random import Random
 from typing import Annotated, ClassVar, Self
 
 import numpy as np
@@ -128,7 +128,7 @@ class CntNVMaxProfitConfig(BaseModel):
 class DemandInputModel(InputModel):
     """Input model for Burr Type XII demand."""
 
-    rng: random.Random | None = None
+    rng: Random | None = None
 
     def random(self, burr_c: float, burr_k: float) -> float:  # noqa: D102
         # Generate random demand according to Burr Type XII distribution.

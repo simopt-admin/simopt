@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import random
+from random import Random
 from typing import Annotated, ClassVar, Final
 
 import numpy as np
@@ -111,7 +111,7 @@ class ChessAvgDifferenceConfig(BaseModel):
 class EloInputModel(InputModel):
     """Input model for player Elo ratings."""
 
-    rng: random.Random | None = None
+    rng: Random | None = None
 
     def random(
         self, mean: float, std: float, min_rating: float, max_rating: float
