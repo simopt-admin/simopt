@@ -12,7 +12,7 @@ authors = [
   { name = "David Eckman", email = "eckman@tamu.edu" },
   { name = "Shane Henderson", email = "sgh9@cornell.edu" },
   { name = "Sara Shashaani", email = "sshasha2@ncsu.edu" },
-  { name = "William Grochocinski", email = "wagrocho@ncsu.edu" },
+  { name = "William Grochocinski", email = "williamgrochocinski@gmail.com" },
 ]
 description = "A testbed for simulation-optimization experiments."
 readme = "README.md"
