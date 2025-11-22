@@ -7,7 +7,7 @@ import logging
 from contextlib import suppress
 from copy import deepcopy
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -141,7 +141,7 @@ class DesignPoint:
                     response_key: {
                         factor_key: [] for factor_key in gradients[response_key]
                     }
-                    for response_key in responses
+                    for response_key in gradients
                 }
             # Append responses and gradients.
             for key in self.responses:
@@ -266,6 +266,20 @@ class DataFarmingExperiment:
             sep="\t",
             encoding="utf-8",
         )
+
+        def fn(x: Any) -> Any:  # noqa: ANN401
+            import ast
+
+            if isinstance(x, str):
+                try:
+                    return ast.literal_eval(x)
+                except Exception:
+                    return x
+
+            return x
+
+        design_table = design_table.applymap(fn)
+
         # If we don't have factor headers, use the column names from the design table.
         if not factor_headers:
             factor_headers = design_table.columns.tolist()
