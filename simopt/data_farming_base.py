@@ -278,7 +278,7 @@ class DataFarmingExperiment:
 
             return x
 
-        design_table = design_table.applymap(fn)
+        design_table = design_table.map(fn)
 
         # If we don't have factor headers, use the column names from the design table.
         if not factor_headers:
