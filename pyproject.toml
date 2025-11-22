@@ -39,14 +39,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "jupytext",
+    "jupytext>=1.18.1",
     "pytest-xdist>=3.8.0",
     "pytest>=9.0.1",
     "ruff>=0.14.2",
     "ty>=0.0.1a26",
 ]
 docs = ["sphinx>=8.2.3", "sphinx-autoapi>=3.6.1", "sphinx-rtd-theme>=3.0.2"]
-notebooks = ["ipykernel"]
+notebooks = ["ipykernel>=7.1.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"
