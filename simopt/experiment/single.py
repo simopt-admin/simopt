@@ -41,8 +41,7 @@ if TYPE_CHECKING:
     from pandas import DataFrame as DataFrame
 
 # Setup the experiment directory
-SIMOPT_TOPLEVEL = Path(__file__).resolve().parent.parent
-EXPERIMENT_DIR = SIMOPT_TOPLEVEL / "experiments" / time.strftime("%Y-%m-%d_%H-%M-%S")
+EXPERIMENT_DIR = Path.cwd() / "experiments" / time.strftime("%Y-%m-%d_%H-%M-%S")
 # Make sure the experiment directory gets created
 # TODO: move this into __init__
 
