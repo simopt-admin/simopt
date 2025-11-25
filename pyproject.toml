@@ -13,12 +13,12 @@ exclude = ["build*"]
 
 [project]
 name = "simoptlib"
-version = "1.2.0.post2"
+version = "1.2.1"
 authors = [
   { name = "David Eckman", email = "eckman@tamu.edu" },
   { name = "Shane Henderson", email = "sgh9@cornell.edu" },
   { name = "Sara Shashaani", email = "sshasha2@ncsu.edu" },
-  { name = "William Grochocinski", email = "wagrocho@ncsu.edu" },
+  { name = "William Grochocinski", email = "williamgrochocinski@gmail.com" },
 ]
 description = "A testbed for simulation-optimization experiments."
 readme = "README.md"
@@ -44,17 +44,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-docs = [
-    "sphinx>=8.2.3",
-    "sphinx-autoapi>=3.6.1",
-    "sphinx-rtd-theme>=3.0.2",
+dev = [
+    "jupytext>=1.18.1",
+    "pytest-xdist>=3.8.0",
+    "pytest>=9.0.1",
+    "ruff>=0.14.2",
+    "ty>=0.0.1a26",
 ]
+docs = ["sphinx>=8.2.3", "sphinx-autoapi>=3.6.1", "sphinx-rtd-theme>=3.0.2"]
+notebooks = ["ipykernel>=7.1.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"
 "Documentation" = "https://simopt.readthedocs.io/en/latest/"
-
-[dependency-groups]
-dev = [
-    "ruff>=0.14.2",
-]

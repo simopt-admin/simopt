@@ -1,0 +1,45 @@
+[src]
+# Ignore files that haven't been typed yet.
+# As files are typed, they can be removed from this list.
+# DO NOT ADD NEW FILES TO THIS LIST, NEW FILES SHOULD BE TYPED.
+exclude = [
+    "notebooks/demo_data_driven.ipynb",
+    "notebooks/demo_data_driven.py",
+    "notebooks/demo_fcsa.ipynb",
+    "notebooks/demo_fcsa.py",
+    "notebooks/demo_problem.ipynb",
+    "notebooks/demo_problem.py",
+    "scripts/list_directories.py",
+    "scripts/run_experiment.py",
+    "simopt/bootstrap.py",
+    "simopt/directory.py",
+    "simopt/experiment",
+    "simopt/experiment_base.py",
+    "simopt/gui/data_farming_window.py",
+    "simopt/gui/new_experiment_window.py",
+    "simopt/gui/plot_window.py",
+    "simopt/model.py",
+    "simopt/models/amusementpark.py",
+    "simopt/models/chessmm.py",
+    "simopt/models/cntnv.py",
+    "simopt/models/dualsourcing.py",
+    "simopt/models/dynamnews.py",
+    "simopt/models/facilitysizing.py",
+    "simopt/models/ironore.py",
+    "simopt/models/network.py",
+    "simopt/models/tableallocation.py",
+    "simopt/plot_type.py",
+    "simopt/plots",
+    "simopt/problem.py",
+    "simopt/solvers/astrodf.py",
+    "simopt/solvers/fcsa.py",
+    "simopt/utils.py",
+    "test/test_experiments.py",
+]
+
+# See https://docs.astral.sh/ty/reference/rules/ for Rules documentation.
+# Rule options are ["error", "warn", "ignore"]
+[rules]
+division-by-zero = "warn"              # Default is "ignore"
+possibly-unresolved-reference = "warn" # Default is "ignore"
+unused-ignore-comment = "warn"         # Default is "ignore"
