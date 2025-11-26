@@ -43,6 +43,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+build = ["setuptools>=61.0"]
 dev = [
   "jupytext==1.18.1",
   "pytest-xdist>=3.2.0",
