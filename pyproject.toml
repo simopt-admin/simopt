@@ -42,7 +42,7 @@ dependencies = [
   "seaborn>=0.13.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 build = ["setuptools>=61.0"]
 dev = ["jupytext==1.17.3", "ruff==0.14.6", "ty==0.0.1a28"]
 docs = ["sphinx>=8.2.0", "sphinx-autoapi>=3.6.0", "sphinx-rtd-theme>=3.0.0"]
