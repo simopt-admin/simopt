@@ -24,10 +24,14 @@ sys.path.insert(0, str(project_path))
 
 # -- Project information -----------------------------------------------------
 
+# Import the version string
+from simopt import __version__  # noqa: E402
+
 project = "SimOpt"
-copyright = "2025, simopt-admin"  # noqa: A001
+project_copyright = "%Y, simopt-admin"
 author = "simopt-admin"
-release = "1.2.1"
+release = __version__
+version: str = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
 
