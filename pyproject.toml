@@ -44,7 +44,7 @@ dependencies = [
 
 [project.optional-dependencies]
 build = ["setuptools>=61.0"]
-dev = ["jupytext==1.18.1", "ruff>=0.14.0", "ty>=0.0.1a28"]
+dev = ["jupytext==1.17.3", "ruff==0.14.6", "ty==0.0.1a28"]
 docs = ["sphinx>=8.2.0", "sphinx-autoapi>=3.6.0", "sphinx-rtd-theme>=3.0.0"]
 notebooks = ["ipykernel>=7.0.0"]
 testing = ["pyyaml>=6.0", "pytest-xdist>=3.2.0", "pytest>=8.0.0"]
