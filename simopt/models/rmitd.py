@@ -165,7 +165,7 @@ class DemandInputModel(InputModel):
     x_rng: MRG32k3a | None = None
     y_rng: MRG32k3a | None = None
 
-    def set_rng(self, rng: list[MRG32k3a] | tuple[MRG32k3a, MRG32k3a]) -> None:  # noqa: D102 # pyrefly: ignore
+    def set_rng(self, rng: list[MRG32k3a] | tuple[MRG32k3a, MRG32k3a]) -> None:  # noqa: D102 # type: ignore
         self.x_rng = rng[0]
         self.y_rng = rng[1]
 
