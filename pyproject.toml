@@ -30,29 +30,24 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 dependencies = [
-    "boltons>=25.0.0",
-    "cvxpy>=1.7.3",
-    "joblib>=1.5.2",
-    "matplotlib>=3.10.7",
-    "mrg32k3a[rust]>=2.0.0",
-    "numpy>=2.3.4",
-    "pandas>=2.3.3",
-    "pillow>=12.0.0",
-    "pydantic>=2.12.3",
-    "scipy>=1.16.3",
-    "seaborn>=0.13.2",
+  "boltons>=0.6.3",
+  "cvxpy>=1.6.0",
+  "joblib>=1.0.0",
+  "matplotlib>=3.9.0",
+  "mrg32k3a[rust]>=2.0.0",
+  "numpy>=2.0.0",
+  "pandas>=2.2.2",
+  "pydantic>=2.2.0",
+  "scipy>=1.13.0",
+  "seaborn>=0.13.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "jupytext>=1.18.1",
-    "pytest-xdist>=3.8.0",
-    "pytest>=9.0.1",
-    "ruff>=0.14.2",
-    "ty>=0.0.1a26",
-]
-docs = ["sphinx>=8.2.3", "sphinx-autoapi>=3.6.1", "sphinx-rtd-theme>=3.0.2"]
-notebooks = ["ipykernel>=7.1.0"]
+[dependency-groups]
+build = ["setuptools>=61.0"]
+dev = ["jupytext==1.17.3", "ruff==0.14.6", "ty==0.0.1a28"]
+docs = ["sphinx>=8.2.0", "sphinx-autoapi>=3.6.0", "sphinx-rtd-theme>=3.0.0"]
+notebooks = ["ipykernel>=7.0.0"]
+testing = ["pyyaml>=6.0", "pytest-xdist>=3.2.0", "pytest>=8.0.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"
