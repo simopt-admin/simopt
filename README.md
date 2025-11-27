@@ -1,4 +1,4 @@
-![SimOpt Logo](https://raw.githubusercontent.com/simopt-admin/simopt/master/.github/resources/logo_full_magnifying_glass.png)
+![SimOpt Logo](https://raw.githubusercontent.com/simopt-admin/simopt/master/.github/resources/logo_full_arrows.png)
 
 ## About the Project
 SimOpt is a testbed of simulation-optimization problems and solvers. Its purpose is to encourage the development and constructive comparison of simulation-optimization (SO) solvers (algorithms). We are particularly interested in the finite-time performance of solvers, rather than the asymptotic results that one often finds in related literature.
@@ -15,7 +15,7 @@ Several papers have discussed the development of SimOpt and experiments run on t
 * [Pasupathy and Henderson (2011)](https://www.informs-sim.org/wsc11papers/363.pdf) describes an earlier interface for MATLAB implementations of problems and solvers.
 * [Pasupathy and Henderson (2006)](https://www.informs-sim.org/wsc06papers/028.pdf) explains the original motivation for the testbed.
 
-## Code
+## Languages & Branches
 ### Python
 - The [`master branch`](https://github.com/simopt-admin/simopt/tree/master) contains the source code for the latest stable release of the testbed
 - The [`development branch`](https://github.com/simopt-admin/simopt/tree/development) contains the latest code for the testbed, but may contain more bugs than the master branch
@@ -29,25 +29,48 @@ Full documentation for the source code can be found on our **[readthedocs page](
 
 [![Documentation Status](https://readthedocs.org/projects/simopt/badge/?version=latest)](https://simopt.readthedocs.io/en/latest/?badge=latest)
 
-## Getting Started
+## Getting Started with SimOpt's Source Code
 ### Requirements
-- [Miniconda or Anaconda](https://www.anaconda.com/download)
-    - If you already have a compatible IDE (such as VS Code), we've found that Miniconda will work fine at 1/10 of the size of Anaconda. Otherwise, you may need the Spyder IDE that comes with the full Anaconda distribution.
-    - It is ***highly recommended*** to check the box during installation to add Python/Miniconda/Anaconda to your system PATH.
+- [Python >=3.11, <3.14](https://www.python.org/downloads/)
     - If you know you have Python installed but are getting a `Command not found` error when trying to use Python commands, then you may need to [add Python to your PATH](https://realpython.com/add-python-to-path/).
-- [VS Code](https://code.visualstudio.com/download) (optional)
-    - This is a lightweight IDE that is compatible with Miniconda.
+- A Python-compatible IDE
+    - We recommend using [VS Code](https://code.visualstudio.com/download), a very popular & lightweight IDE.
 - [Git](https://git-scm.com/downloads) (optional)
-    - If you don't have Git installed, you can download the code as a zip file instead
+    - Git is required if you wish to contribute back to the SimOpt project. If you simply want to run the SimOpt package, you can download the code as a zip file instead.
 
 ### Downloading Source Code
-There are two ways to download a copy of the source code onto your machine:
+There are two main ways to download a copy of the source code onto your machine:
+
 1. Download the code in a zip file by clicking the green `<> Code` button above repo contents and clicking the `Download ZIP` option, then unzip the code to a folder on your computer. This does not require `git` to be installed but makes downloading updates to the repository more challenging.
 ![image](https://github.com/user-attachments/assets/3c45804c-f8b0-48ed-b32c-a443550c6ef5)
 
 1. [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) the branch you'd like to download to a folder on your computer. This requires `git` to be installed but makes downloading updates to the repository much easier.
 
 If you do not need the source code for SimOpt, you may install the library as a Python package instead. See the [Package](#package) and [Basic Example](#basic-example) sections for more details about this option.
+
+### Environment Setup
+
+Navigate to the toplevel folder of the `simopt` repository and run the following command to set up a virtual environment:
+
+```bash
+python -m venv .venv --prompt simopt
+```
+
+Then, activate the virtual environment with the following command:
+
+```bash
+.venv\Scripts\activate
+```
+
+Now all you need to do is install the required packages from the `pyproject.toml` file with the following command:
+
+```bash
+python -m pip install .[notebooks]
+```
+
+Now that the environment is set up, you can run the example notebooks below or follow the instructions below to launch the GUI.
+
+### Example Notebooks
 
 The `notebooks` folder includes several useful Jupyter notebooks and scripts that are easy to customize. You can either run the scripts as standalone programs or open the notebooks in JupyterLab or VS Code. A description of the contents is provided below:
 
@@ -59,33 +82,6 @@ The `notebooks` folder includes several useful Jupyter notebooks and scripts tha
 | `demo_problems_solvers.py`               | Run multiple macroreplications of groups of problem-solver pairs and save the outputs and plots                                                                                                                    |
 | `demo_data_farming_model.py`             | Create a design over model factors, run multiple replications at each design point, and save the results to a comma separated value (`.csv`) file in the `data_farming_experiments` folder                         |
 | `demo_san-sscont-ironorecont_experiment` | Run multiple solvers on multiple versions of (s, S) inventory, iron ore, and stochastic activiy network problems and produce plots                                                                                 |
-
-### Environment Setup
-
-After downloading the source code, you will need to configure the conda environment to run the code. This can be done by running the following command in the terminal:
-
-#### Windows (Command Prompt)
-```cmd
-setup_simopt.bat
-```
-
-#### Windows (PowerShell)
-```powershell
-cmd /c setup_simopt.bat
-```
-
-#### MacOS/Linux
-```bash
-chmod +x setup_simopt.sh && ./setup_simopt.sh
-```
-
-This script will create a new conda environment called `simopt` and install all necessary packages. To activate the environment, run the following command in the terminal:
-
-```bash
-conda activate simopt
-```
-
-If you wish to update the environment with the latest compatible packages, you can simply rerun the setup script.
 
 ## Graphical User Interface (GUI) - User Guide
 
@@ -177,14 +173,16 @@ The type of plots that are currently available in the GUI are: Mean Progress Cur
 7. To return to the main page, click the red "x" in the top-left corner of the window.
 
 ## Package
+> ℹ️ The `simoptlib` package does not contain the example notebooks or testing suite. If you wish to use either of those features, please download the source code instead.
+
 The `simoptlib` package is available to download through the Python Packaging Index (PyPI) and can be installed from the terminal with the following command:
-```
+```bash
 python -m pip install simoptlib
 ```
 
 ## Basic Example
 After installing `simoptlib`, the package's main modules can be imported from the Python console (or in code):
-```
+```python
 import simopt
 from simopt import models, solvers, experiment_base
 ```
