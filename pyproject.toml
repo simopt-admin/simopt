@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -22,11 +22,19 @@ authors = [
 ]
 description = "A testbed for simulation-optimization experiments."
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11,<3.14"
 classifiers = [
+  # Application Info
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  # Python Versions
   "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  # Other Classifiers
   "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -57,3 +65,4 @@ notebooks = ["ipykernel>=7.1.0"]
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"
 "Documentation" = "https://simopt.readthedocs.io/en/latest/"
+"Issues" = "https://github.com/simopt-admin/simopt/issues"
