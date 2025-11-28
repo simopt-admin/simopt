@@ -44,10 +44,10 @@ sys.path.append(str(Path.cwd().parent))
 # Example with random search solver on continuous newsvendor problem:
 # solver_abbr_name = "RNDSRCH"
 # problem_abbr_name = "CNTNEWS-1"
-solver_abbr_name = "RNDSRCH"
-problem_abbr_name = "CNTNEWS-1"
+solver_abbr_name = "COBYQA"
+problem_abbr_name = "NETWORK-1"
 
-num_macroreps = 10
+num_macroreps = 1
 num_postreps = 200
 num_postreps_init_opt = 200
 
@@ -64,7 +64,7 @@ if file_name_path is None:
     myexperiment = ProblemSolver(solver_abbr_name, problem_abbr_name)
 
     # Run a fixed number of macroreplications of the solver on the problem.
-    myexperiment.run(n_macroreps=num_macroreps)
+    myexperiment.run(n_macroreps=num_macroreps,n_jobs=1)
 else:
     # following pair of lines (and uncomment the myexperiment.run(...)
     # line above) to read in results from a .pickle file.

@@ -376,6 +376,8 @@ class NetworkMinTotalCost(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"process_prob"}
 
+    
+
     @property
     def dim(self) -> int:  # noqa: D102
         return self.model.factors["n_networks"]
@@ -416,3 +418,7 @@ class NetworkMinTotalCost(Problem):
             exact_sum=True,
         )
         return tuple(x)
+    
+    #added for cobyqa
+    def sum_constraint(self):
+        return [1,]*self.dim
