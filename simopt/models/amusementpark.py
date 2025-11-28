@@ -17,6 +17,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp, Gamma, WeightedChoice
+from simopt.models._ext import patch_model
 
 INF = float("inf")
 
@@ -488,25 +489,6 @@ class AmusementPark(Model):
         return responses, {}
 
 
-def _patch() -> None:
-    import os
-
-    if os.getenv("SIMOPT_EXT") != "1":
-        return
-
-    try:
-        from simopt_extensions.amusement_park import replicate
-    except ImportError as e:
-        raise ImportError(
-            "SIMOPT_EXT=1 is set but simopt_extensions not installed"
-        ) from e
-
-    AmusementPark.replicate = replicate
-
-
-_patch()
-
-
 class AmusementParkMinDepart(Problem):
     """Class to make amusement park simulation-optimization problems."""
 
@@ -563,3 +545,6 @@ class AmusementParkMinDepart(Problem):
             n_elements=num_elements, summation=summation, with_zero=False
         )
         return tuple(vector)
+
+
+patch_model(AmusementPark)
