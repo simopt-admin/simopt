@@ -49,213 +49,6 @@ EXPERIMENT_DIR = Path.cwd() / "experiments" / time.strftime("%Y-%m-%d_%H-%M-%S")
 class ProblemSolver:
     """Base class for running one solver on one problem."""
 
-    @property
-    def solver(self) -> Solver:
-        """Simulation-optimization solver."""
-        return self.__solver
-
-    @solver.setter
-    def solver(self, solver: Solver) -> None:
-        self.__solver = solver
-
-    @property
-    def problem(self) -> Problem:
-        """Simulation-optimization problem."""
-        return self.__problem
-
-    @problem.setter
-    def problem(self, problem: Problem) -> None:
-        self.__problem = problem
-
-    @property
-    def n_macroreps(self) -> int:
-        """Number of macroreplications run."""
-        return self.__n_macroreps
-
-    @n_macroreps.setter
-    def n_macroreps(self, n_macroreps: int) -> None:
-        self.__n_macroreps = n_macroreps
-
-    @property
-    def file_name_path(self) -> Path:
-        """Path of .pickle file for saving ProblemSolver object."""
-        return self.__file_name_path
-
-    @file_name_path.setter
-    def file_name_path(self, file_name_path: Path) -> None:
-        self.__file_name_path = file_name_path
-
-    @property
-    def all_recommended_xs(self) -> list[list[tuple]]:
-        """Sequences of recommended solutions from each macroreplication."""
-        return self.__all_recommended_xs
-
-    @all_recommended_xs.setter
-    def all_recommended_xs(self, all_recommended_xs: list[list[tuple]]) -> None:
-        self.__all_recommended_xs = all_recommended_xs
-
-    @property
-    def all_intermediate_budgets(self) -> list[list]:
-        """Sequences of intermediate budgets from each macroreplication."""
-        return self.__all_intermediate_budgets
-
-    @all_intermediate_budgets.setter
-    def all_intermediate_budgets(self, all_intermediate_budgets: list[list]) -> None:
-        self.__all_intermediate_budgets = all_intermediate_budgets
-
-    @property
-    def timings(self) -> list[float]:
-        """Runtimes (in seconds) for each macroreplication."""
-        return self.__timings
-
-    @timings.setter
-    def timings(self, timings: list[float]) -> None:
-        self.__timings = timings
-
-    @property
-    def n_postreps(self) -> int:
-        """Number of postreps to take at each recommended solution."""
-        return self.__n_postreps
-
-    @n_postreps.setter
-    def n_postreps(self, n_postreps: int) -> None:
-        self.__n_postreps = n_postreps
-
-    @property
-    def crn_across_budget(self) -> bool:
-        """Whether CRN is used across solutions recommended at different times."""
-        return self.__crn_across_budget
-
-    @crn_across_budget.setter
-    def crn_across_budget(self, crn_across_budget: bool) -> None:
-        self.__crn_across_budget = crn_across_budget
-
-    @property
-    def crn_across_macroreps(self) -> bool:
-        """Whether CRN is used across solutions from different macroreplications."""
-        return self.__crn_across_macroreps
-
-    @crn_across_macroreps.setter
-    def crn_across_macroreps(self, crn_across_macroreps: bool) -> None:
-        self.__crn_across_macroreps = crn_across_macroreps
-
-    @property
-    def all_post_replicates(self) -> list[list[list]]:
-        """All post-replicates from all solutions from all macroreplications."""
-        return self.__all_post_replicates
-
-    @all_post_replicates.setter
-    def all_post_replicates(self, all_post_replicates: list[list[list]]) -> None:
-        self.__all_post_replicates = all_post_replicates
-
-    @property
-    def all_est_objectives(self) -> list[list[float]]:
-        """Estimated objective values of all solutions from all macroreplications."""
-        return self.__all_est_objectives
-
-    @all_est_objectives.setter
-    def all_est_objectives(self, all_est_objectives: list[list[float]]) -> None:
-        self.__all_est_objectives = all_est_objectives
-
-    @property
-    def n_postreps_init_opt(self) -> int:
-        """Number of postreplications at initial (x0) and optimal (x*) solutions."""
-        return self.__n_postreps_init_opt
-
-    @n_postreps_init_opt.setter
-    def n_postreps_init_opt(self, n_postreps_init_opt: int) -> None:
-        self.__n_postreps_init_opt = n_postreps_init_opt
-
-    @property
-    def crn_across_init_opt(self) -> bool:
-        """Whether CRN is used for postreplications at x0 and x* solutions."""
-        return self.__crn_across_init_opt
-
-    @crn_across_init_opt.setter
-    def crn_across_init_opt(self, crn_across_init_opt: bool) -> None:
-        self.__crn_across_init_opt = crn_across_init_opt
-
-    @property
-    def x0(self) -> tuple:
-        """Initial solution (x0)."""
-        return self.__x0
-
-    @x0.setter
-    def x0(self, x0: tuple) -> None:
-        self.__x0 = x0
-
-    @property
-    def x0_postreps(self) -> list:
-        """Post-replicates at x0."""
-        return self.__x0_postreps
-
-    @x0_postreps.setter
-    def x0_postreps(self, x0_postreps: list) -> None:
-        self.__x0_postreps = x0_postreps
-
-    @property
-    def xstar(self) -> tuple:
-        """Proxy for optimal solution (x*)."""
-        return self.__xstar
-
-    @xstar.setter
-    def xstar(self, xstar: tuple) -> None:
-        self.__xstar = xstar
-
-    @property
-    def xstar_postreps(self) -> list:
-        """Post-replicates at x*."""
-        return self.__xstar_postreps
-
-    @xstar_postreps.setter
-    def xstar_postreps(self, xstar_postreps: list) -> None:
-        self.__xstar_postreps = xstar_postreps
-
-    @property
-    def objective_curves(self) -> list[Curve]:
-        """Estimated objective function curves, one per macroreplication."""
-        return self.__objective_curves
-
-    @objective_curves.setter
-    def objective_curves(self, objective_curves: list[Curve]) -> None:
-        self.__objective_curves = objective_curves
-
-    @property
-    def progress_curves(self) -> list[Curve]:
-        """Progress curves, one for each macroreplication."""
-        return self.__progress_curves
-
-    @progress_curves.setter
-    def progress_curves(self, progress_curves: list[Curve]) -> None:
-        self.__progress_curves = progress_curves
-
-    @property
-    def has_run(self) -> bool:
-        """True if the solver has been run on the problem, otherwise False."""
-        return self.__has_run
-
-    @has_run.setter
-    def has_run(self, has_run: bool) -> None:
-        self.__has_run = has_run
-
-    @property
-    def has_postreplicated(self) -> bool:
-        """True if the solver has been postreplicated, otherwise False."""
-        return self.__has_postreplicated
-
-    @has_postreplicated.setter
-    def has_postreplicated(self, has_postreplicated: bool) -> None:
-        self.__has_postreplicated = has_postreplicated
-
-    @property
-    def has_postnormalized(self) -> bool:
-        """True if the solver has been postprocessed, otherwise False."""
-        return self.__has_postnormalized
-
-    @has_postnormalized.setter
-    def has_postnormalized(self, has_postnormalized: bool) -> None:
-        self.__has_postnormalized = has_postnormalized
-
     def __init__(
         self,
         solver_name: str | None = None,
@@ -314,6 +107,21 @@ class ProblemSolver:
         self.all_stoch_constraints = []
         self.all_est_lhs = []
         self.feasibility_curves = []
+
+        self.n_macroreps: int = 0
+        self.file_name_path: Path | None = None
+        self.all_recommended_xs: list[list[tuple]] = []
+        self.all_intermediate_budgets: list[list] = []
+        self.timings: list[float] = []
+        self.n_postreps: int = 0
+        self.crn_across_budget: bool = False
+        self.crn_across_macroreps: bool = False
+        self.all_post_replicates: list[list[list]] = []
+        self.all_est_objectives: list[list[float]] = []
+        self.n_postreps_init_opt: int = 0
+        self.crn_across_init_opt: bool = False
+        self.x0_postreps: list[float] = []
+        self.xstar_postreps: list[float] = []
 
         # Initialize solver.
         if isinstance(solver, Solver):  # Method 2
