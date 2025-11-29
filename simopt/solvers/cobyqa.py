@@ -12,9 +12,13 @@ from typing import Annotated, ClassVar
 import numpy as np
 from pydantic import Field
 
-
+import os
+import pandas as pd
 
 import cobyqa as cq
+
+from simopt.solver_utils.main import minimize
+import matplotlib.pyplot as plt
 
 from simopt.base import (
     ConstraintType,
@@ -64,22 +68,92 @@ class COBYQA(Solver):
         # simulate problem at x to obtain estimate of the objective (single objective only)
         x = np.array(x, dtype=float)
         solution = self.create_new_solution(x, problem)
-        self.budget.request(10)
-        problem.simulate(solution, 10)
+        enough_replications = False
+        n=self.n_replications
+        c = self.c
+        self.budget.request(n)
+        problem.simulate(solution, n)
+        print("first simulations complete")
+        if self.adaptive: 
+            while not enough_replications:
+                #print("n", n)
+                # get objective gradient using finite differencing if not available
+                grad = self._objective_grad(problem, solution,n)
+                sd = solution.objectives_stderr[0]
+                # print("grad", grad)
+                # print("sd", sd)
+                # test if n big enough
+                if (abs(sd)/np.sqrt(n))< c*grad:
+                    enough_replications = True
+                else:
+                    n+= 1
+                    # run one replication of simulation
+                    self.budget.request(1)
+                    problem.simulate(solution, 1)
+            self.n_replications = n
+            self.all_n.append(n)
+            
         self.recommended_solns.append(solution)
         self.intermediate_budgets.append(self.budget.used)
         
         obj = -problem.minmax[0] * solution.objectives_mean[0]
+        
         print("calculated objective", obj)
-        #print('current x', x)
+        print('n', n)
 
-        return obj        
+        return obj   
+    
+    def _objective_grad(
+        self, problem: Problem, solution: Solution,n) -> np.ndarray:
+        if problem.gradient_available:
+            grad = -problem.minmax[0] * solution.objectives_gradients_mean[0]
+        else:
+            # h = self.factors["h"]
+            # r = self.factors["r"]
+            h = .001
+            grad = self._finite_difference(problem, np.array(solution.x), h, n)
+        norm = np.linalg.norm(grad)
+        if norm == 0:
+            norm = EPSILON
+        grad /= norm   
+        return grad
+            
+    def _finite_difference(
+        self, problem: Problem, x: np.ndarray, h: float, r: int
+    ) -> np.ndarray:
+        if x.ndim == 1:
+            solution = self.create_new_solution(tuple(x), problem)
+            self.budget.request(r)
+            problem.simulate(solution, r)
+            return -problem.minmax[0] * solution.objectives_mean[0]
+
+    # batched case
+        values = np.zeros(x.shape[1])
+        for j in range(x.shape[1]):
+            solution = self.create_new_solution(tuple(x[:, j]), problem)
+            self.budget.request(r)
+            problem.simulate(solution, r)
+            values[j] = -problem.minmax[0] * solution.objectives_mean[0]
+        print("finite diff complete")
+        return values
+
+
+    def _objective_at(self, problem: Problem, x: np.ndarray, r: int) -> float:
+        solution = self.create_new_solution(tuple(x), problem)
+        self.budget.request(r)
+        problem.simulate(solution, r)
+        return -problem.minmax[0] * solution.objectives_mean[0]
     
     def solve(self, problem: Problem) -> None:  # noqa: D102
         
         # temp hard code for network 
         print('test print 1')
         x0 = problem.config.initial_solution
+        # initial sample size 
+        self.n_replications = 10
+        self.all_n = [self.n_replications]
+        self.adaptive = True
+        self.c = 2
         solution = self.create_new_solution(x0, problem)
         self.recommended_solns.append(solution)
         self.intermediate_budgets.append(self.budget.used)
@@ -89,15 +163,92 @@ class COBYQA(Solver):
 
         bounds = Bounds((EPSILON,)*problem.dim, problem.upper_bounds)
         options = {
-            "maxfev": problem.config.budget/10
+            "maxfev": problem.config.budget
         }
-        res = cq.minimize(self.simulate, x0, problem,bounds = bounds, constraints=constraints, options=options)
-        print('optimal x',res.x)
-        print("after minimize, success =", res.success)
-        self.recommended_solns.append(solution)
-        self.intermediate_budgets.append(self.budget.used)
-        print('optimal x',res.x)
-        print('test print')
-    
+        try:
+            res = minimize(self.simulate, x0, problem,bounds = bounds, constraints=constraints)
+            print('optimal x',res.x)
+            print("after minimize, success =", res.success)
+            self.recommended_solns.append(solution)
+            self.intermediate_budgets.append(self.budget.used)
+            print('optimal x',res.x)
+            print(self.recommended_solns[-1].x)
+            
+            self.save_results_to_excel(self, filename="fcsa_results.xlsx", sheet_name="run_log")
+        except:
+            print("Not solved... last solution is")
+            print(self.recommended_solns[-1].x)
+            
+            self.save_results_to_excel()
+            
         
+        #temp plotting stuff
+
+
+        # # Create the plot
+        # plt.figure()
+        # plt.plot(self.intermediate_budgets, self.all_n)
+        
+        # # Add labels and title
+        # plt.title("n vs budget")
+        # plt.xlabel("budget")
+        # plt.ylabel("sample size")
+        
+        # # Show the plot
+        # plt.show()
+            
+    def save_results_to_excel(self, filename="results.xlsx", sheet_name="Sheet1"):
+        """
+        Save self.all_n, self.intermediate_budgets, and self.c to an Excel file.
+        Adds new columns to an existing file/sheet without overwriting existing columns.
+        """
+        # Build data for this run
+        length = len(self.all_n)
+        data = {
+            "all_n": self.all_n,
+            "intermediate_budgets": self.intermediate_budgets,
+            "c": [self.c] * length,  # repeat c so it lines up with rows
+        }
+        df_new = pd.DataFrame(data)
+        print("saving results to file")
+    
+        # Load existing file/sheet if it exists
+        if os.path.exists(filename):
+            try:
+                df_existing = pd.read_excel(filename, sheet_name=sheet_name)
+            except ValueError:
+                # File exists but sheet does not
+                df_existing = pd.DataFrame()
+        else:
+            df_existing = pd.DataFrame()
+    
+        # If existing is empty, just write new data
+        if df_existing.empty:
+            df_final = df_new
+        else:
+            # Make sure we have enough rows to hold both old and new data
+            max_len = max(len(df_existing), len(df_new))
+            df_existing = df_existing.reindex(range(max_len))
+            df_new = df_new.reindex(range(max_len))
+    
+            # Add each new column without overwriting existing ones
+            for col in df_new.columns:
+                new_col_name = col
+                k = 1
+                # If column name already exists, add suffix _1, _2, ...
+                while new_col_name in df_existing.columns:
+                    new_col_name = f"{col}_{k}"
+                    k += 1
+                df_existing[new_col_name] = df_new[col]
+    
+            df_final = df_existing
+    
+        # Write back to Excel (overwriting only this sheet with the merged data)
+        with pd.ExcelWriter(
+            filename,
+            engine="openpyxl",
+            mode="a" if os.path.exists(filename) else "w",
+            if_sheet_exists="replace" if os.path.exists(filename) else None,
+        ) as writer:
+            df_final.to_excel(writer, sheet_name=sheet_name, index=False)
 

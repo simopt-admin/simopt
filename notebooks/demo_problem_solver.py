@@ -47,7 +47,7 @@ sys.path.append(str(Path.cwd().parent))
 solver_abbr_name = "COBYQA"
 problem_abbr_name = "NETWORK-1"
 
-num_macroreps = 3
+num_macroreps = 1
 num_postreps = 50
 num_postreps_init_opt = 50
 
@@ -62,11 +62,11 @@ if file_name_path is None:
 
     # Initialize an instance of the experiment class.
     myexperiment = ProblemSolver(solver_abbr_name, problem_abbr_name,problem_fixed_factors={
-        "budget": 600,
+        "budget": 1000,
     })
 
     # Run a fixed number of macroreplications of the solver on the problem.
-    myexperiment.run(n_macroreps=num_macroreps,n_jobs=1)
+    myexperiment.run(n_macroreps=num_macroreps, n_jobs=1)
 else:
     # following pair of lines (and uncomment the myexperiment.run(...)
     # line above) to read in results from a .pickle file.
@@ -107,7 +107,7 @@ def _print_path(plot_path: list[Path]) -> None:
 
 _print_path(
     plot_progress_curves(
-        experiments=[myexperiment], plot_type=PlotType.ALL, normalize=False
+        experiments=[myexperiment], plot_type=PlotType.ALL, normalize=True
     )
 )
 # _print_path(

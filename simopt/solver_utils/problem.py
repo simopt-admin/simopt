@@ -70,7 +70,7 @@ class ObjectiveFunction:
             f = 0.0
         else:
             f = float(np.squeeze(self._fun(x, *self._args)))
-            self._n_eval += 1
+            #self._n_eval += n
             if self._verbose:
                 with np.printoptions(**PRINT_OPTIONS):
                     print(f"{self.name}({x}) = {f}")
