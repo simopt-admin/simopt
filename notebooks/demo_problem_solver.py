@@ -47,9 +47,9 @@ sys.path.append(str(Path.cwd().parent))
 solver_abbr_name = "COBYQA"
 problem_abbr_name = "NETWORK-1"
 
-num_macroreps = 1
-num_postreps = 200
-num_postreps_init_opt = 200
+num_macroreps = 3
+num_postreps = 50
+num_postreps_init_opt = 50
 
 # %%
 # If the solver runs have already been performed, specify the file name path.
@@ -61,7 +61,9 @@ if file_name_path is None:
     from simopt.experiment_base import ProblemSolver
 
     # Initialize an instance of the experiment class.
-    myexperiment = ProblemSolver(solver_abbr_name, problem_abbr_name)
+    myexperiment = ProblemSolver(solver_abbr_name, problem_abbr_name,problem_fixed_factors={
+        "budget": 600,
+    })
 
     # Run a fixed number of macroreplications of the solver on the problem.
     myexperiment.run(n_macroreps=num_macroreps,n_jobs=1)
@@ -108,19 +110,19 @@ _print_path(
         experiments=[myexperiment], plot_type=PlotType.ALL, normalize=False
     )
 )
-_print_path(
-    plot_progress_curves(
-        experiments=[myexperiment], plot_type=PlotType.MEAN, normalize=False
-    )
-)
-_print_path(
-    plot_progress_curves(
-        experiments=[myexperiment],
-        plot_type=PlotType.QUANTILE,
-        beta=0.90,
-        normalize=False,
-    )
-)
-_print_path(plot_solvability_cdfs(experiments=[myexperiment], solve_tol=0.1))
+# _print_path(
+#     plot_progress_curves(
+#         experiments=[myexperiment], plot_type=PlotType.MEAN, normalize=False
+#     )
+# )
+# _print_path(
+#     plot_progress_curves(
+#         experiments=[myexperiment],
+#         plot_type=PlotType.QUANTILE,
+#         beta=0.90,
+#         normalize=False,
+#     )
+# )
+# _print_path(plot_solvability_cdfs(experiments=[myexperiment], solve_tol=0.1))
 
 print("Plotting complete!")

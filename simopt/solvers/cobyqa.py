@@ -66,10 +66,12 @@ class COBYQA(Solver):
         solution = self.create_new_solution(x, problem)
         self.budget.request(10)
         problem.simulate(solution, 10)
+        self.recommended_solns.append(solution)
+        self.intermediate_budgets.append(self.budget.used)
         
         obj = -problem.minmax[0] * solution.objectives_mean[0]
         print("calculated objective", obj)
-        print('current x', x)
+        #print('current x', x)
 
         return obj        
     
@@ -87,10 +89,11 @@ class COBYQA(Solver):
 
         bounds = Bounds((EPSILON,)*problem.dim, problem.upper_bounds)
         options = {
-            "maxfev": 1000/10
+            "maxfev": problem.config.budget/10
         }
         res = cq.minimize(self.simulate, x0, problem,bounds = bounds, constraints=constraints, options=options)
         print('optimal x',res.x)
+        print("after minimize, success =", res.success)
         self.recommended_solns.append(solution)
         self.intermediate_budgets.append(self.budget.used)
         print('optimal x',res.x)
