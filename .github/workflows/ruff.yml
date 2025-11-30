@@ -2,9 +2,9 @@ name: "Ruff CI"
 
 on:
   push:
-    branches: [ "master", "development" ]
+    branches: [ "master", "development", "develop" ]
   pull_request:
-    branches: [ "master" , "development" ]
+    branches: [ "master" , "development", "develop" ]
 
 jobs:
   linter:
