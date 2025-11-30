@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-import random
+from random import Random
 from typing import Annotated, ClassVar, Final, Self
 
 import numpy as np
@@ -155,7 +155,7 @@ class DynamNewsMaxProfitConfig(BaseModel):
 class Utility(InputModel):
     """Input model for customer utility sampling."""
 
-    rng: random.Random | None = None
+    rng: Random | None = None
 
     def _gumbelvariate(self, mu: float, beta: float) -> float:
         assert self.rng is not None
