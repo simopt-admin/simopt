@@ -17,6 +17,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp, Gamma, WeightedChoice
+from simopt.models._ext import patch_model
 
 INF = float("inf")
 
@@ -544,3 +545,6 @@ class AmusementParkMinDepart(Problem):
             n_elements=num_elements, summation=summation, with_zero=False
         )
         return tuple(vector)
+
+
+patch_model(AmusementPark)
