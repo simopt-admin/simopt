@@ -23,6 +23,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.curve import Curve
+from simopt.experiment import run_solver
 from simopt.feasibility import feasibility_score_history
 from simopt.utils import resolve_file_path
 
@@ -303,64 +304,17 @@ class ProblemSolver:
         Raises:
             ValueError: If `n_macroreps` is not positive.
         """
-        # Local Imports
-        from functools import partial
-
-        # Value checking
-        if n_macroreps <= 0:
-            error_msg = "Number of macroreplications must be positive."
-            raise ValueError(error_msg)
-
-        msg = f"Running Solver {self.solver.name} on Problem {self.problem.name}."
-        logging.info(msg)
-
-        # Initialize variables
-        self.n_macroreps = n_macroreps
-        self.all_recommended_xs = [[] for _ in range(n_macroreps)]
-        self.all_intermediate_budgets = [[] for _ in range(n_macroreps)]
-        self.timings = [0.0 for _ in range(n_macroreps)]
-
-        # Create, initialize, and attach random number generators
-        #     Stream 0: reserved for taking post-replications
-        #     Stream 1: reserved for bootstrapping
-        #     Stream 2: reserved for overhead ...
-        #         Substream 0: rng for random problem instance
-        #         Substream 1: rng for random initial solution x0 and
-        #                      restart solutions
-        #         Substream 2: rng for selecting random feasible solutions
-        #         Substream 3: rng for solver's internal randomness
-        #     Streams 3, 4, ..., n_macroreps + 2: reserved for
-        #                                         macroreplications
-        # rng0 = MRG32k3a(s_ss_sss_index=[2, 0, 0])  # Currently unused.
-        rng_list = [MRG32k3a(s_ss_sss_index=[2, i + 1, 0]) for i in range(3)]
-        self.solver.attach_rngs(rng_list)
-
-        # Start a timer
-        function_start = time.time()
-
-        logging.debug("Starting macroreplications")
-
-        # Start the macroreplications in parallel (async)
-        run_multithread_partial = partial(
-            self.run_multithread, solver=self.solver, problem=self.problem
+        start = time.time()
+        df, elapsed_times = run_solver.run_solver(
+            self.solver, self.problem, n_macroreps, n_jobs
         )
+        elapsed = time.time() - start
+        logging.info(f"Finished running {n_macroreps} mreps in {elapsed:.3f} seconds.")
 
-        if n_jobs == 1:
-            results: list[tuple] = [
-                run_multithread_partial(i) for i in range(n_macroreps)
-            ]
-        else:
-            results: list[tuple] = Parallel(n_jobs=n_jobs)(
-                delayed(run_multithread_partial)(i) for i in range(n_macroreps)
-            )  # type: ignore
-
-        for mrep, recommended_xs, intermediate_budgets, timing in results:
-            self.all_recommended_xs[mrep] = recommended_xs
-            self.all_intermediate_budgets[mrep] = intermediate_budgets
-            self.timings[mrep] = timing
-
-        runtime = round(time.time() - function_start, 3)
-        logging.info(f"Finished running {n_macroreps} mreps in {runtime} seconds.")
+        self.n_macroreps = n_macroreps
+        self.all_recommended_xs = run_solver._to_list(df, "solution")
+        self.all_intermediate_budgets = run_solver._to_list(df, "budget")
+        self.timings = elapsed_times
 
         self.has_run = True
         self.has_postreplicated = False
@@ -370,88 +324,6 @@ class ProblemSolver:
         if self.create_pickle:
             file_name = self.file_name_path.name
             self.record_experiment_results(file_name=file_name)
-
-    def run_multithread(self, mrep: int, solver: Solver, problem: Problem) -> tuple:
-        """Runs one macroreplication of the solver on the problem.
-
-        Args:
-            mrep (int): Index of the macroreplication.
-            solver (Solver): The simulation-optimization solver to run.
-            problem (Problem): The problem to solve.
-
-        Returns:
-            tuple: A tuple containing:
-                - int: Macroreplication index.
-                - list: Recommended solutions.
-                - list: Intermediate budgets.
-                - float: Runtime for the macroreplication.
-
-        Raises:
-            ValueError: If `mrep` is negative.
-        """
-        # Value checking
-        if mrep < 0:
-            error_msg = "Macroreplication index must be non-negative."
-            raise ValueError(error_msg)
-
-        logging.debug(
-            f"Macroreplication {mrep + 1}: "
-            f"Starting Solver {solver.name} on Problem {problem.name}."
-        )
-        # Create, initialize, and attach RNGs used for simulating solutions.
-        progenitor_rngs = [
-            MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0])
-            for ss in range(problem.model.n_rngs)
-        ]
-        # Create a new set of RNGs for the solver based on the current macroreplication.
-        # Tried re-using the progentior RNGs, but we need to match the number needed by
-        # the solver, not the problem
-        solver_rngs = [
-            MRG32k3a(
-                s_ss_sss_index=[
-                    mrep + 3,
-                    problem.model.n_rngs + rng_index,
-                    0,
-                ]
-            )
-            for rng_index in range(len(solver.rng_list))
-        ]
-
-        # Set progenitor_rngs and rng_list for solver.
-        solver.solution_progenitor_rngs = progenitor_rngs
-        solver.rng_list = solver_rngs
-
-        # logging.debug([rng.s_ss_sss_index for rng in progenitor_rngs])
-        # Run the solver on the problem.
-        tic = time.perf_counter()
-        recommended_solns, intermediate_budgets = solver.run(problem=problem)
-        toc = time.perf_counter()
-        runtime = toc - tic
-        logging.debug(
-            f"Macroreplication {mrep + 1}: "
-            f"Finished Solver {solver.name} on Problem {problem.name} "
-            f"in {runtime:0.4f} seconds."
-        )
-
-        # Trim the recommended solutions and intermediate budgets
-        recommended_solns, intermediate_budgets = trim_solver_results(
-            problem=problem,
-            recommended_solutions=recommended_solns,
-            intermediate_budgets=intermediate_budgets,
-        )
-        # Sometimes we end up with numpy scalar values in the solutions,
-        # so we convert them to Python scalars. This is especially problematic
-        # when trying to dump the solutions to human-readable files as numpy
-        # scalars just spit out binary data.
-        # TODO: figure out where numpy scalars are coming from and fix it
-        solutions = [tuple([float(x) for x in soln.x]) for soln in recommended_solns]
-        # Return tuple (rec_solns, int_budgets, runtime)
-        return (
-            mrep,
-            solutions,
-            intermediate_budgets,
-            runtime,
-        )
 
     def _has_stochastic_constraints(self) -> bool:
         return self.problem.n_stochastic_constraints > 0
@@ -1002,38 +874,3 @@ class ProblemSolver:
                 #     "\tThe time taken to complete this macroreplication was "
                 #     f"{round(self.timings[mrep], 2)} s.\n"
                 # )
-
-
-def trim_solver_results(
-    problem: Problem,
-    recommended_solutions: list[Solution],
-    intermediate_budgets: list[int],
-) -> tuple[list[Solution], list[int]]:
-    """Trims solver-recommended solutions beyond the problem's maximum budget.
-
-    Args:
-        problem (Problem): The problem the solver was run on.
-        recommended_solutions (list[Solution]): Solutions recommended by the solver.
-        intermediate_budgets (list[int]): Budgets at which solutions were recommended.
-
-    Returns:
-        tuple: A tuple containing:
-            - list[Solution]: Trimmed list of recommended solutions.
-            - list[int]: Trimmed list of corresponding intermediate budgets.
-    """
-    # Remove solutions corresponding to intermediate budgets exceeding max budget.
-    invalid_idxs = [
-        idx
-        for idx, element in enumerate(intermediate_budgets)
-        if element > problem.factors["budget"]
-    ]
-    for invalid_idx in sorted(invalid_idxs, reverse=True):
-        del recommended_solutions[invalid_idx]
-        del intermediate_budgets[invalid_idx]
-    # If no solution is recommended at the final budget,
-    # re-recommend the latest recommended solution.
-    # (Necessary for clean plotting of progress curves.)
-    if intermediate_budgets[-1] < problem.factors["budget"]:
-        recommended_solutions.append(recommended_solutions[-1])
-        intermediate_budgets.append(problem.factors["budget"])
-    return recommended_solutions, intermediate_budgets
