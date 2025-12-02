@@ -66,7 +66,9 @@ However, to account for the number of nodes in each direction, when adding the l
 The probability of selecting a given arrival node (N1, N2, E1, E2, S2, S1, W2, W1), is proportional to its lambda value:
 
 .. math::
-    :label: eq_lambda_selection\frac{\lambda_i}{i=0
+    :label: eq_lambda_selection
+
+    \frac{\lambda_i}{i=0
                     while i < n_artery:
                         lambdas_nodes.append((lambdas[0]/sum(lambdas))/n_artery)
                         i+=1
@@ -92,7 +94,7 @@ The probability of selecting a given arrival node (N1, N2, E1, E2, S2, S1, W2, W
 
 In this example the resulting lambda would be: 
 
-[0.1111111111111111, 0.1111111111111111, 0, 0.027777777777777776, 0.1111111111111111, 0.1111111111111111, 0.027777777777777776, 0], in this respective node order: [N1, N2, E1, E2, S2, S1, W2, W1]. The nodes with value of 0 are the exit only nodes.
+[0.111, 0.111, 0, 0.0276, 0.111, 0.111, 0.0276, 0], in this respective node order: [N1, N2, E1, E2, S2, S1, W2, W1]. The nodes with value of 0 are the exit only nodes.
 
 For each arriving car, the lambda value associated with the selected entry node determines the distribution of interarrival times.
 Once a car enters the system, it is randomly assigned a destination node based on a weighted transition matrix input by the user.
