@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import random
 from enum import IntEnum
+from random import Random
 from typing import Annotated, ClassVar, Final, Self
 
 import numpy as np
@@ -215,7 +215,7 @@ class NetworkMinTotalCostConfig(BaseModel):
 class RouteInputModel(InputModel):
     """Input model for routing choices in the network."""
 
-    rng: random.Random | None = None
+    rng: Random | None = None
 
     def random(self, choices: list[int], weights: list[float], k: int) -> list[int]:  # noqa: D102
         assert self.rng is not None

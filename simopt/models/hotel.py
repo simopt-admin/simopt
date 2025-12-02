@@ -307,7 +307,7 @@ class Hotel(Model):
         total_revenue = 0
 
         # Generate interarrival times
-        arr_bound = 10 * round(168 * np.sum(f_lambda))
+        arr_bound = 10 * round(168 * sum(f_lambda))
         arr_time = np.array(
             [
                 [self.arrival_model.random(f_lambda[i]) for _ in range(arr_bound)]

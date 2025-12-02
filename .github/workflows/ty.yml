@@ -2,9 +2,9 @@ name: "ty CI"
 
 on:
   push:
-    branches: [ "master", "development" ]
+    branches: [ "master", "development", "develop" ]
   pull_request:
-    branches: [ "master" , "development" ]
+    branches: [ "master" , "development", "develop" ]
 
 jobs:
   type_checker:

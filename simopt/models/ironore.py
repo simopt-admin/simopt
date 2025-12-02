@@ -6,8 +6,8 @@
 
 from __future__ import annotations
 
-import random
 from math import copysign, sqrt
+from random import Random
 from typing import Annotated, ClassVar, Self
 
 import numpy as np
@@ -202,7 +202,7 @@ class IronOreMaxRevConfig(BaseModel):
 class MovementInputModel(InputModel):
     """Input model for mining movement and price shocks."""
 
-    rng: random.Random | None = None
+    rng: Random | None = None
 
     def random(self, mean: float, std: float) -> float:  # noqa: D102
         assert self.rng is not None

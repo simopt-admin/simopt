@@ -3,9 +3,9 @@
 import bisect
 import itertools
 import math
-import random
 from abc import abstractmethod
 from collections.abc import Sequence
+from random import Random
 from typing import ParamSpec, Protocol, TypeVar
 
 P = ParamSpec("P")
@@ -15,9 +15,9 @@ R = TypeVar("R", covariant=True)
 class InputModel(Protocol[P, R]):
     """Abstract base for input models used by simulations."""
 
-    rng: random.Random | None = None
+    rng: Random | None = None
 
-    def set_rng(self, rng: random.Random) -> None:
+    def set_rng(self, rng: Random) -> None:
         """Attach a Python RNG to the input model.
 
         Args:

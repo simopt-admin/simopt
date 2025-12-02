@@ -5,7 +5,7 @@ from __future__ import annotations
 import bisect
 import itertools
 from collections.abc import Sequence
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, cast
 
 import numpy as np
 from pydantic import BaseModel, Field, model_validator
@@ -256,9 +256,12 @@ class TableAllocation(Model):
         # Pass through all arrivals of groups to the restaurants.
         for n in range(n_arrivals):
             # Determine group size.
-            group_size = self.group_size_model.random(
-                population=group_size_options,
-                weights=f_lambda,
+            group_size = cast(
+                int,
+                self.group_size_model.random(
+                    population=group_size_options,
+                    weights=f_lambda,
+                ),
             )
 
             # Find smallest table size to start search.

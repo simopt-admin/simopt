@@ -17,6 +17,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp, Gamma, WeightedChoice
+from simopt.models._ext import patch_model
 
 INF = float("inf")
 
@@ -478,9 +479,10 @@ class AmusementPark(Model):
         cumulative_util = [cumulative_util[i] / time_open for i in attraction_range]
 
         # Calculate responses from simulation data.
+        percent_departed = total_departed / total_visitors if total_visitors else 0
         responses = {
             "total_departed": total_departed,
-            "percent_departed": total_departed / total_visitors,
+            "percent_departed": percent_departed,
             "average_number_in_system": time_average / time_open,
             "attraction_utilization_percentages": cumulative_util,
         }
@@ -543,3 +545,6 @@ class AmusementParkMinDepart(Problem):
             n_elements=num_elements, summation=summation, with_zero=False
         )
         return tuple(vector)
+
+
+patch_model(AmusementPark)

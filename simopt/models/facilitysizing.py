@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import random
+from random import Random
 from typing import Annotated, ClassVar, Final, Self
 
 import numpy as np
@@ -204,7 +204,7 @@ class FacilitySizingTotalCostConfig(BaseModel):
 class DemandInputModel(InputModel):
     """Input model for multivariate normal demand at facilities."""
 
-    rng: random.Random | None = None
+    rng: Random | None = None
 
     def _mvnormalvariate(
         self,
