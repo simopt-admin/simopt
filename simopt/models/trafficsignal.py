@@ -706,30 +706,51 @@ class TrafficLight(Model):
 
             Order of probabilities follows the clockwise traversal of the system.
             """
+            lambdas_sum: list[float] = []
+            # North
+            for i in range(n_artery):
+                lambdas_sum.append((lambdas[0]))
+            # East
+            for i in range(n_vein):
+                if i % 2 == 0:  # Can't start at exit nodes
+                    lambdas_sum.append(0)
+                else:
+                    lambdas_sum.append((lambdas[2]))
+            # South
+            for i in range(n_artery):
+                lambdas_sum.append((lambdas[1]))
+            # West
+            for i in range(n_vein):
+                if i % 2 != 0:  # Can't start at exit nodes
+                    lambdas_sum.append(0)
+                else:
+                    lambdas_sum.append((lambdas[3]))
+
             start_prob: list[float] = []
             # North
-            for _ in range(n_artery):
-                start_prob.append((lambdas[0] / sum(lambdas)) / n_artery)
+            for i in range(n_artery):
+                start_prob.append((lambdas[0] / sum(lambdas_sum)))
             # East
             for i in range(n_vein):
                 if i % 2 == 0:  # Can't start at exit nodes
                     start_prob.append(0)
                 else:
-                    start_prob.append((lambdas[2] / sum(lambdas)) / n_vein)
+                    start_prob.append((lambdas[2] / sum(lambdas_sum)))
             # South
-            for _ in range(n_artery):
-                start_prob.append((lambdas[1] / sum(lambdas)) / n_artery)
+            for i in range(n_artery):
+                start_prob.append((lambdas[1] / sum(lambdas_sum)))
             # West
             for i in range(n_vein):
                 if i % 2 == 0:  # Can't start at exit nodes
-                    start_prob.append(0)
+                    start_prob.append((lambdas[3] / sum(lambdas_sum)))
                 else:
-                    start_prob.append((lambdas[3] / sum(lambdas)) / n_vein)
-            return start_prob
+                    start_prob.append(0)
+            return start_prob, sum(lambdas_sum)
 
-        start_prob = start_prob(
+        start_prob, lambda_sum = start_prob(
             self.factors["n_veins"], self.factors["n_arteries"], self.factors["lambdas"]
         )
+
 
         # offset
         def offset(
@@ -1392,7 +1413,6 @@ class TrafficLight(Model):
                 nextc.append(road.nextchange)
 
         cars: list[Car] = []
-        lambda_sum = sum(self.factors["lambdas"])
 
         def gen_car(t: float) -> float:
             """Generates list of all car objects as they are created.
@@ -1876,7 +1896,7 @@ class MinWaitingTimeConfig(BaseModel):
     budget: Annotated[
         int,
         Field(
-            default=125,
+            default=1000,
             description="max # of replications for a solver to take",
             gt=0,
             json_schema_extra={"isDatafarmable": False},
