@@ -24,6 +24,7 @@ def main() -> None:
     root = GUIMaster()
     root.title("SimOpt Library Graphical User Interface")
     root.pack_propagate(False)
+    root.tk.call("tk", "scaling", 1.0)
 
     # Parse command line
     log_level = logging.INFO
