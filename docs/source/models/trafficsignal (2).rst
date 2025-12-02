@@ -67,10 +67,9 @@ The probability of selecting a given arrival node (N1, N2, E1, E2, S2, S1, W2, W
 
 .. math::
     :label: eq_lambda_selection
+    \frac{\lambdas_sum}{S = (N_A \cdot \lambda_N) + (N_A \cdot \lambda_S) + \sum_{i=0}^{N_V-1} w_{E,i} + \sum_{i=0}^{N_V-1} w_{W,i}}
 
-    S = (N_A \cdot \lambda_N) + (N_A \cdot \lambda_S) + \sum_{i=0}^{N_V-1} w_{E,i} + \sum_{i=0}^{N_V-1} w_{W,i}
-
-    P{N,i} = \frac{\lambda_N}{S \cdot N_A} \quad \text{for } i \in \{0, \dots, N_A-1\}
+    \frac{\lambda}{{P{N,i} = \frac{\lambda_N}{S \cdot N_A} \quad \text{for } i \in \{0, \dots, N_A-1\}
     P{S,i} = \frac{\lambda_S}{S \cdot N_A} \quad \text{for } i \in \{0, \dots, N_A-1\}
     P{E,i} = \begin{cases} 
     0 & \text{if } i \text{ is even} \\
@@ -79,7 +78,7 @@ The probability of selecting a given arrival node (N1, N2, E1, E2, S2, S1, W2, W
     P{W,i} = \begin{cases} 
     \frac{\lambda_W}{S \cdot N_V} & \text{if } i \text{ is even} \\
     0 & \text{if } i \text{ is odd}
-    \end{cases}
+    \end{cases}}
     
     \text{ where} \i \text{ is the node number.}
 
