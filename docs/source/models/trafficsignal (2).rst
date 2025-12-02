@@ -16,7 +16,7 @@ This model simulates a traffic system composed of arrival and departure nodes, d
 
 The layout of the simplified traffic network is shown below:
 
-.. image:: _static/trafficlight_roadmap (1).png
+.. image:: docs/source/models/_static/trafficlight_roadmap (1).png
    :alt: TrafficLight Roadmap
    :align: center
 
