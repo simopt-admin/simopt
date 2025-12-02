@@ -79,7 +79,6 @@ The probability of selecting a given arrival node (N1, N2, E1, E2, S2, S1, W2, W
     \frac{\lambda_W}{S \cdot N_V} & \text{if } i \text{ is even} \\
     0 & \text{if } i \text{ is odd}
     \end{cases}
-    
     \text{ where} \i \text{ is the node number.}
 
 
