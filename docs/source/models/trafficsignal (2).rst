@@ -60,14 +60,13 @@ It is a list of 4 values specifying the Poisson rate parameters (`\lambda`) for 
  
 
 Cars are not allowed to spawn at exit-only nodes (E1 and W2), so ``lambdas[2]`` and ``lambdas[3]`` must be less than the lambda values of the entry and exit nodes (N1, N2, S2, S2), so ``lambdas[0]`` and ``lambdas[1]``.
-To translate these direction lambdas into specific entry nodes, we add all the lambda values and divide each one by the total.
+To translate these direction lambdas into specific entry nodes, we add all the lambda values and divide each one by the total. 
+However, to account for the number of nodes in each direction, when adding the lambda values we add the direction value the same amount of times as the number of nodes in that direction.
 
-The probability of selecting a given arrival node (N1, N2, S1, S2, E1, E2, W1, W2), is proportional to its lambda value:
+The probability of selecting a given arrival node (N1, N2, E1, E2, S2, S1, W2, W1), is proportional to its lambda value:
 
 .. math::
-    :label: eq_lambda_selection
-
-    \frac{\lambda_i}{i=0
+    :label: eq_lambda_selection\frac{\lambda_i}{i=0
                     while i < n_artery:
                         lambdas_nodes.append((lambdas[0]/sum(lambdas))/n_artery)
                         i+=1
@@ -93,7 +92,7 @@ The probability of selecting a given arrival node (N1, N2, S1, S2, E1, E2, W1, W
 
 In this example the resulting lambda would be: 
 
-[0.2, 0.2, 0.2, 0.2, 0, 0.1, 0.1, 0], in this respective node order: [N1, N2, S2, S1, E1, E2, W2, W1]. The nodes with value of 0 are the exit only nodes.
+[0.1111111111111111, 0.1111111111111111, 0, 0.027777777777777776, 0.1111111111111111, 0.1111111111111111, 0.027777777777777776, 0], in this respective node order: [N1, N2, E1, E2, S2, S1, W2, W1]. The nodes with value of 0 are the exit only nodes.
 
 For each arriving car, the lambda value associated with the selected entry node determines the distribution of interarrival times.
 Once a car enters the system, it is randomly assigned a destination node based on a weighted transition matrix input by the user.
