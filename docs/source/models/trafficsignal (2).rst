@@ -68,16 +68,20 @@ The probability of selecting a given arrival node (N1, N2, E1, E2, S2, S1, W2, W
 .. math::
     :label: eq_lambda_selection
 
-    $$S = (N_A \cdot \lambda_N) + (N_A \cdot \lambda_S) + \sum_{i=0}^{N_V-1} w_{E,i} + \sum_{i=0}^{N_V-1} w_{W,i}$$
+    S = (N_A \cdot \lambda_N) + (N_A \cdot \lambda_S) + \sum_{i=0}^{N_V-1} w_{E,i} + \sum_{i=0}^{N_V-1} w_{W,i}
 
-    North Artery ($i \in \{0, \dots, N_A-1\}$)$$P_{N,i} = \frac{\lambda_N}{S \cdot N_A}$$South Artery ($i \in \{0, \dots, N_A-1\}$)$$P_{S,i} = \frac{\lambda_S}{S \cdot N_A}$$East Vein ($i \in \{0, \dots, N_V-1\}$)$$P_{E,i} = \begin{cases} 
+    P{N,i} = \frac{\lambda_N}{S \cdot N_A} \quad \text{for } i \in \{0, \dots, N_A-1\}
+    P{S,i} = \frac{\lambda_S}{S \cdot N_A} \quad \text{for } i \in \{0, \dots, N_A-1\}
+    P{E,i} = \begin{cases} 
     0 & \text{if } i \text{ is even} \\
     \frac{\lambda_E}{S \cdot N_V} & \text{if } i \text{ is odd}
-    \end{cases}$$West Vein ($i \in \{0, \dots, N_V-1\}$)$$P_{W,i} = \begin{cases} 
+    \end{cases}
+    P{W,i} = \begin{cases} 
     \frac{\lambda_W}{S \cdot N_V} & \text{if } i \text{ is even} \\
     0 & \text{if } i \text{ is odd}
-    \end{cases}$$
-    \text{ where } \lambda_i \text{ is the arrival rate for direction i.}
+    \end{cases}
+    
+    \text{ where} \i \text{ is the node number.}
 
 
 In this example the resulting lambda would be: 
