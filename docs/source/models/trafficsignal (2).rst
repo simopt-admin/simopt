@@ -68,27 +68,15 @@ The probability of selecting a given arrival node (N1, N2, E1, E2, S2, S1, W2, W
 .. math::
     :label: eq_lambda_selection
 
-    \frac{\lambda_i}{i=0
-                    while i < n_artery:
-                        lambdas_nodes.append((lambdas[0]/sum(lambdas))/n_artery)
-                        i+=1
-                    while i < 2*n_artery:
-                        lambdas_nodes.append((lambdas[1]/sum(lambdas)/n_artery))
-                        i+=1
-                    j=0
-                    while j < n_vein:
-                        if j%2 == 0:
-                            lambdas_nodes.append(0)
-                        else:
-                            lambdas_nodes.append(lambdas[2]/sum(lambdas))
-                        j+=1
-                    k=0
-                    while k < n_vein:
-                        if k%2 == 0:
-                            lambdas_nodes.append(lambdas[3]/sum(lambdas))
-                        else:
-                            lambdas_nodes.append(0)
-                        k+=1 }
+    $$S = (N_A \cdot \lambda_N) + (N_A \cdot \lambda_S) + \sum_{i=0}^{N_V-1} w_{E,i} + \sum_{i=0}^{N_V-1} w_{W,i}$$
+
+    North Artery ($i \in \{0, \dots, N_A-1\}$)$$P_{N,i} = \frac{\lambda_N}{S \cdot N_A}$$South Artery ($i \in \{0, \dots, N_A-1\}$)$$P_{S,i} = \frac{\lambda_S}{S \cdot N_A}$$East Vein ($i \in \{0, \dots, N_V-1\}$)$$P_{E,i} = \begin{cases} 
+    0 & \text{if } i \text{ is even} \\
+    \frac{\lambda_E}{S \cdot N_V} & \text{if } i \text{ is odd}
+    \end{cases}$$West Vein ($i \in \{0, \dots, N_V-1\}$)$$P_{W,i} = \begin{cases} 
+    \frac{\lambda_W}{S \cdot N_V} & \text{if } i \text{ is even} \\
+    0 & \text{if } i \text{ is odd}
+    \end{cases}$$
     \text{ where } \lambda_i \text{ is the arrival rate for direction i.}
 
 
