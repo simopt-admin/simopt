@@ -82,7 +82,8 @@ The probability of selecting a given arrival node (N1, N2, E1, E2, S2, S1, W2, W
 
 In this example the resulting lambda would be: 
 
-[0.111, 0.111, 0, 0.0276, 0.111, 0.111, 0.0276, 0], in this respective node order: [N1, N2, E1, E2, S2, S1, W2, W1]. The nodes with value of 0 are the exit only nodes.
+[0.2222222222222222, 0.2222222222222222, 0, 0.05555555555555555, 0.2222222222222222, 0.2222222222222222, 0.05555555555555555, 0],
+in this respective node order: [N1, N2, E1, E2, S2, S1, W2, W1]. The nodes with value of 0 are the exit only nodes.
 
 For each arriving car, the lambda value associated with the selected entry node determines the distribution of interarrival times.
 Once a car enters the system, it is randomly assigned a destination node based on a weighted transition matrix input by the user.
