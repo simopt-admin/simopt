@@ -5,7 +5,7 @@ Stochastically Constrained Simulation Optimization Problems' by Felice, N.,
 D. J. Eckman, S. G. Henderson, and S. Shashaani
 """
 
-from typing import Annotated, ClassVar, Literal
+from typing import Annotated, ClassVar
 
 import cvxpy as cp
 import numpy as np
@@ -44,7 +44,9 @@ class FCSAConfig(SolverConfig):
         ),
     ]
     step_type: Annotated[
-        Literal["const", "decay"],
+        # TODO: change back when the old GUI is removed
+        # Literal["const", "decay"],
+        str,
         Field(default="const", description="constant or decaying step size?"),
     ]
     step_mult: Annotated[
@@ -60,7 +62,9 @@ class FCSAConfig(SolverConfig):
         Field(default=0.01, ge=0, description="tolerance function"),
     ]
     search_direction: Annotated[
-        Literal["FCSA", "CSA-N", "CSA"],
+        # TODO: change back when the old GUI is removed
+        # Literal["FCSA", "CSA-N", "CSA"],
+        str,
         Field(
             default="FCSA",
             description=(

@@ -1647,6 +1647,13 @@ class NewExperimentWindow(Toplevel):
             for factor in model_specifications:
                 specifications[factor] = model_specifications[factor]
         # Convert the specifications to a dictionary of DFFactor objects
+
+        # TODO: This is a hack to remove the step_type and search_direction factors 
+        # because str type is not currently supported in the GUI.
+        if isinstance(base_object, Solver) and base_object.class_name_abbr == "FCSA":
+            del specifications["step_type"]
+            del specifications["search_direction"]
+
         self.factor_dict = spec_dict_to_df_dict(specifications)
 
         # Add all the column headers

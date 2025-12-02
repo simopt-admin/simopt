@@ -202,12 +202,22 @@ def create_design_list_from_table(design_table: DataFrame) -> list[dict[str, Any
     # Creates dictonary of table to convert values to proper datatypes.
     dp_dict = design_table.to_dict(orient="list")
 
-    # NOTE: the str cast for the factor name shouldn't be necessary, but it tells the
-    # typing system that the dict keys are definitely strings and not just hashable.
-    return [
-        {str(factor): literal_eval(str(dp_dict[factor][dp])) for factor in dp_dict}
-        for dp in range(len(design_table))
-    ]
+    # TODO: this is a hack to get the data type of the factors back.
+    design_list = []
+    for dp in range(len(design_table)):
+        config = {}
+        for factor in dp_dict:
+            key = str(factor)
+            raw_value = str(dp_dict[factor][dp])
+            try:
+                value = literal_eval(raw_value)
+            except ValueError:
+                # This exception handles the case where the value is a string.
+                value = raw_value
+            config[key] = value
+        design_list.append(config)
+
+    return design_list
 
 
 def create_design(
