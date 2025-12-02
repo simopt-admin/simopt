@@ -2355,7 +2355,7 @@ class NewExperimentWindow(Toplevel):
         self.__update_experiment_label(experiment_name, "Logging")
         # Try to log the experiment
         try:
-            self.post_normalize(experiment_name)
+            self.log_results(experiment_name)
             # If successful, update the label and button
             self.__update_experiment_label(experiment_name, "Logged")
             self.__update_action_button(experiment_name, "All Steps\nComplete")
