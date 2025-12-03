@@ -14,13 +14,14 @@ the setup was not run and the test cases would fail.
 """
 
 import math
+import pickle
 import unittest
 from abc import abstractmethod
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-import yaml
+import zstandard as zstd
 
 from simopt.experiment_base import ProblemSolver, post_normalize
 
@@ -44,8 +45,8 @@ class ExperimentTest(unittest.TestCase):
     def setUp(self) -> None:
         """Set up the experiment and load expected results."""
         # Set the name of the experiment file
-        with self.filepath.open("rb") as f:
-            expected_results = yaml.load(f, Loader=yaml.Loader)
+        with zstd.open(self.filepath, "rb") as f:
+            expected_results = pickle.load(f)
 
         self.num_macroreps = expected_results["num_macroreps"]
         self.num_postreps = expected_results["num_postreps"]
