@@ -12,7 +12,7 @@ exclude = ["build*"]
 "simopt.data_farming" = ["*.npz"]
 
 [tool.uv.sources]
-simopt-extensions = { git = "https://github.com/cenwangumass/simopt-extensions", rev = "2bcf002" }
+simopt-extensions = { git = "https://github.com/cenwangumass/simopt-extensions", rev = "b40a9c8" }
 
 [project]
 name = "simoptlib"
