@@ -702,3 +702,10 @@ class Solution:
             gradients = np.array(gradients)
             self._stoch_constraints_gradients.append(gradients)
             self._stoch_constraints_gradients_array = None
+
+        else:
+            self._stoch_constraints.append(np.array([]))
+            self._stoch_constraints_array = None
+
+            self._stoch_constraints_gradients.append(np.array([]))
+            self._stoch_constraints_gradients_array = None

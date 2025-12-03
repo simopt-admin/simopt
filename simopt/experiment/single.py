@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
-from joblib import Parallel, delayed
+import pandas as pd
 
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -18,12 +18,11 @@ from simopt.base import (
     Model,
     ObjectiveType,
     Problem,
-    Solution,
     Solver,
     VariableType,
 )
 from simopt.curve import Curve
-from simopt.experiment import run_solver
+from simopt.experiment import post_replicate, run_solver
 from simopt.feasibility import feasibility_score_history
 from simopt.utils import resolve_file_path
 
@@ -105,7 +104,7 @@ class ProblemSolver:
         self.x0 = ()
         self.objective_curves = []
         self.progress_curves = []
-        self.all_stoch_constraints = []
+        self.all_stoch_constraints: list[list[np.ndarray]] = []
         self.all_est_lhs = []
         self.feasibility_curves = []
 
@@ -117,7 +116,7 @@ class ProblemSolver:
         self.n_postreps: int = 0
         self.crn_across_budget: bool = False
         self.crn_across_macroreps: bool = False
-        self.all_post_replicates: list[list[list]] = []
+        self.all_post_replicates: list[list[np.ndarray]] = []
         self.all_est_objectives: list[list[float]] = []
         self.n_postreps_init_opt: int = 0
         self.crn_across_init_opt: bool = False
@@ -330,6 +329,11 @@ class ProblemSolver:
     def _has_stochastic_constraints(self) -> bool:
         return self.problem.n_stochastic_constraints > 0
 
+    def _get_solver_history(self) -> pd.DataFrame:
+        budget = run_solver._from_list(self.all_intermediate_budgets, "budget")
+        solution = run_solver._from_list(self.all_recommended_xs, "solution")
+        return pd.merge(budget, solution, on=["mrep", "step"])
+
     def post_replicate(
         self,
         n_postreps: int,
@@ -348,58 +352,32 @@ class ProblemSolver:
         Raises:
             ValueError: If `n_postreps` is not positive.
         """
-        # Value checking
-        if n_postreps <= 0:
-            error_msg = "Number of postreplications must be positive."
-            raise ValueError(error_msg)
-
-        logging.debug(
-            f"Setting up {n_postreps} postreplications for {self.n_macroreps} mreps of "
-            f"{self.solver.name} on {self.problem.name}."
-        )
-
         self.n_postreps = n_postreps
         self.crn_across_budget = crn_across_budget
         self.crn_across_macroreps = crn_across_macroreps
-        # Initialize variables
-        self.all_post_replicates = [[] for _ in range(self.n_macroreps)]
-        for mrep in range(self.n_macroreps):
-            self.all_post_replicates[mrep] = [] * len(
-                self.all_intermediate_budgets[mrep]
-            )
-        self.timings = [0.0 for _ in range(self.n_macroreps)]
-
-        function_start = time.time()
 
         logging.info("Starting postreplications")
-        results: list[tuple] = Parallel(n_jobs=-1)(
-            delayed(self.post_replicate_multithread)(mrep)
-            for mrep in range(self.n_macroreps)
+
+        start = time.time()
+        df = self._get_solver_history()
+        df, elapsed_times = post_replicate.post_replicate(
+            self.problem, df, n_postreps, crn_across_macroreps, crn_across_budget
         )
-        for mrep, post_rep, timing, stoch_constraints in results:
-            self.all_post_replicates[mrep] = post_rep
-            self.timings[mrep] = timing
-            self.all_stoch_constraints.append(stoch_constraints)
-
-        # Store estimated objective for each macrorep for each budget.
-        self.all_est_objectives = []
-        for mrep in range(self.n_macroreps):
-            self.all_est_objectives.append(
-                np.array(self.all_post_replicates[mrep]).mean(axis=1)
-            )
-
-        if self._has_stochastic_constraints():
-            self.all_est_lhs = []
-            for mrep in range(self.n_macroreps):
-                self.all_est_lhs.append(
-                    np.array(self.all_stoch_constraints[mrep]).mean(axis=1)
-                )
-
-        runtime = round(time.time() - function_start, 3)
+        elapsed = time.time() - start
         logging.info(
-            f"Finished running {self.n_macroreps} postreplications "
-            f"in {runtime} seconds."
+            f"Finished running {self.n_macroreps} postreplications in "
+            f"{elapsed:.3f} seconds."
         )
+
+        # Set up attributes to maintain compatibility with the old API.
+        self.all_post_replicates = post_replicate._to_list_reps(df, "objective")
+        self.all_est_objectives = post_replicate._to_list(df, "objective")
+        if self._has_stochastic_constraints():
+            self.all_stoch_constraints = post_replicate._to_list_reps(
+                df, "stochastic_constraints"
+            )
+            self.all_est_lhs = post_replicate._to_list(df, "stochastic_constraints")
+        self.timings = elapsed_times
 
         self.has_postreplicated = True
         self.has_postnormalized = False
@@ -408,79 +386,6 @@ class ProblemSolver:
         if self.create_pickle:
             file_name = self.file_name_path.name
             self.record_experiment_results(file_name=file_name)
-
-    def post_replicate_multithread(self, mrep: int) -> tuple:
-        """Runs postreplications for a given macroreplication's recommended solutions.
-
-        Args:
-            mrep (int): Index of the macroreplication.
-
-        Returns:
-            tuple: A tuple containing:
-                - int: Macroreplication index.
-                - list: Postreplicates for each recommended solution.
-                - float: Runtime for the macroreplication.
-
-        Raises:
-            ValueError: If `mrep` is negative.
-        """
-        # Value checking
-        if mrep < 0:
-            error_msg = "Macroreplication index must be non-negative."
-            raise ValueError(error_msg)
-
-        logging.debug(
-            f"Macroreplication {mrep + 1}: Starting postreplications for "
-            f"{self.solver.name} on {self.problem.name}."
-        )
-        # Create RNG list for the macroreplication.
-        if self.crn_across_macroreps:
-            # Use the same RNGs for all macroreps.
-            baseline_rngs = [
-                MRG32k3a(s_ss_sss_index=[0, self.problem.model.n_rngs + rng_index, 0])
-                for rng_index in range(self.problem.model.n_rngs)
-            ]
-        else:
-            baseline_rngs = [
-                MRG32k3a(
-                    s_ss_sss_index=[
-                        0,
-                        self.problem.model.n_rngs * (mrep + 1) + rng_index,
-                        0,
-                    ]
-                )
-                for rng_index in range(self.problem.model.n_rngs)
-            ]
-
-        tic = time.perf_counter()
-
-        # Create an empty list for each budget
-        post_replicates = []
-        stoch_constraints = []
-        # Loop over all recommended solutions.
-        for budget_index in range(len(self.all_intermediate_budgets[mrep])):
-            x = self.all_recommended_xs[mrep][budget_index]
-            fresh_soln = Solution(x, self.problem)
-            # Attach RNGs for postreplications.
-            # If CRN is used across budgets, then we should use a copy rather
-            # than passing in the original RNGs.
-            if self.crn_across_budget:
-                fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=True)
-            else:
-                fresh_soln.attach_rngs(rng_list=baseline_rngs, copy=False)
-            self.problem.simulate(solution=fresh_soln, num_macroreps=self.n_postreps)
-            # Store results
-            post_replicates.append(
-                list(fresh_soln.objectives[: fresh_soln.n_reps][:, 0])
-            )  # 0 <- assuming only one objective
-
-            if self._has_stochastic_constraints():
-                stoch_constraints.append(fresh_soln.stoch_constraints)
-        toc = time.perf_counter()
-        runtime = toc - tic
-        logging.debug(f"\t{mrep + 1}: Finished in {round(runtime, 3)} seconds")
-
-        return mrep, post_replicates, runtime, stoch_constraints
 
     def bootstrap_sample(
         self,
