@@ -18,7 +18,7 @@ def _best_with_feasibility(
     baseline_rngs: list[MRG32k3a],
     n_postreps_init_opt: int,
 ) -> tuple:
-    infeasible_pentalty = np.inf
+    infeasible_penalty = np.inf
     best_est_objectives = np.zeros(len(experiments))
 
     for experiment_idx in range(len(experiments)):
@@ -43,7 +43,7 @@ def _best_with_feasibility(
                 )
             else:
                 exp_best_est_objectives[mrep] = (
-                    experiment.problem.minmax[0] * infeasible_pentalty
+                    experiment.problem.minmax[0] * infeasible_penalty
                 )
 
         best_est_objectives[experiment_idx] = np.max(exp_best_est_objectives)
@@ -52,7 +52,7 @@ def _best_with_feasibility(
     best_experiment = experiments[best_index]
     best_objective = best_experiment.problem.minmax[0] * best_est_objectives[best_index]
 
-    if abs(best_objective) == infeasible_pentalty:
+    if abs(best_objective) == infeasible_penalty:
         raise RuntimeError(
             "No feasible solutions found for which to estimate proxy for x*."
         )
