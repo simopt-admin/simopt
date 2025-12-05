@@ -110,7 +110,7 @@ class ProblemSolver:
         self.feasibility_curves = []
 
         self.n_macroreps: int = 0
-        self.file_name_path: Path | None = None
+        self.file_name_path: Path
         self.all_recommended_xs: list[list[tuple]] = []
         self.all_intermediate_budgets: list[list] = []
         self.timings: list[float] = []
@@ -375,7 +375,7 @@ class ProblemSolver:
         results: list[tuple] = Parallel(n_jobs=-1)(
             delayed(self.post_replicate_multithread)(mrep)
             for mrep in range(self.n_macroreps)
-        )  # type: ignore
+        )
         for mrep, post_rep, timing, stoch_constraints in results:
             self.all_post_replicates[mrep] = post_rep
             self.timings[mrep] = timing
@@ -609,14 +609,14 @@ class ProblemSolver:
                     bootstrap_curves.append(new_progress_curve)
                 else:
                     new_objective_curve = Curve(
-                        x_vals=np.array(self.all_intermediate_budgets[mrep]),
+                        x_vals=self.all_intermediate_budgets[mrep],
                         y_vals=est_objectives,
                     )
                     bootstrap_curves.append(new_objective_curve)
 
                 bootstrap_feasibility_curves.append(
                     Curve(
-                        x_vals=np.array(self.all_intermediate_budgets[mrep]),
+                        x_vals=self.all_intermediate_budgets[mrep],
                         y_vals=feasibility_score_history(
                             est_lhs,
                             feasibility_score_method,
@@ -695,13 +695,13 @@ class ProblemSolver:
                     bootstrap_curves.append(new_progress_curve)
                 else:
                     new_objective_curve = Curve(
-                        x_vals=np.array(self.all_intermediate_budgets[mrep]),
+                        x_vals=self.all_intermediate_budgets[mrep],
                         y_vals=est_objectives,
                     )
                     bootstrap_curves.append(new_objective_curve)
                 bootstrap_feasibility_curves.append(
                     Curve(
-                        x_vals=np.array(self.all_intermediate_budgets[mrep]),
+                        x_vals=self.all_intermediate_budgets[mrep],
                         y_vals=feasibility_score_history(
                             est_lhs,
                             feasibility_score_method,
@@ -753,7 +753,7 @@ class ProblemSolver:
             lhs = self.all_est_lhs[mrep]
             self.feasibility_curves.append(
                 Curve(
-                    x_vals=np.array(self.all_intermediate_budgets[mrep]),
+                    x_vals=self.all_intermediate_budgets[mrep],
                     y_vals=feasibility_score_history(
                         lhs,
                         feasibility_score_method,

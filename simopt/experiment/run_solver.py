@@ -118,7 +118,7 @@ def run_solver(
     else:
         results: list[tuple] = Parallel(n_jobs=n_jobs)(
             delayed(_run_mrep)(solver, problem, i) for i in range(n_macroreps)
-        )  # type: ignore
+        )
 
     dfs = []
     elapsed_times = []
