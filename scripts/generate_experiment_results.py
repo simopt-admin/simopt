@@ -58,12 +58,12 @@ def create_test(problem_name: str, solver_name: str) -> None:
     # Loop through each curve object and convert it into a tuple
     # This is done to avoid packing custom classes into the YAML file
     for i in range(len(myexperiment.objective_curves)):
-        myexperiment.objective_curves[i] = (  # type: ignore
+        myexperiment.objective_curves[i] = (
             myexperiment.objective_curves[i].x_vals,
             myexperiment.objective_curves[i].y_vals,
         )
     for i in range(len(myexperiment.progress_curves)):
-        myexperiment.progress_curves[i] = (  # type: ignore
+        myexperiment.progress_curves[i] = (
             myexperiment.progress_curves[i].x_vals,
             myexperiment.progress_curves[i].y_vals,
         )
