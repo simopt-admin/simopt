@@ -4,6 +4,7 @@ import contextlib
 from abc import ABC, abstractmethod
 from typing import Annotated, ClassVar
 
+import pandas as pd
 from boltons.typeutils import classproperty
 from pydantic import BaseModel, Field
 
@@ -194,7 +195,7 @@ class Solver(ABC):
         """
         raise NotImplementedError
 
-    def run(self, problem: Problem) -> tuple[list[Solution], list[int]]:
+    def run(self, problem: Problem) -> pd.DataFrame:
         """Run the solver on a problem.
 
         Args:
@@ -213,7 +214,16 @@ class Solver(ABC):
         self.recommended_solns = []
         self.intermediate_budgets = []
 
-        return recommended_solns, intermediate_budgets
+        df = pd.DataFrame(
+            {
+                "step": range(len(recommended_solns)),
+                "solution": recommended_solns,
+                "budget": intermediate_budgets,
+            }
+        )
+        df["solution"] = df["solution"].apply(lambda solution: solution.x)
+
+        return df
 
     def create_new_solution(self, x: tuple, problem: Problem) -> Solution:
         """Create a new solution object with attached RNGs.
