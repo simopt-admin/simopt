@@ -233,8 +233,11 @@ The core development team currently consists of
 - [**David Eckman**](https://eckman.engr.tamu.edu) (Texas A&M University)
 - [**Sara Shashaani**](https://shashaani.wordpress.ncsu.edu) (North Carolina State University)
 - [**Shane Henderson**](https://people.orie.cornell.edu/shane/) (Cornell University)
-- [**William Grochocinski**](https://github.com/Grochocinski) (North Carolina State University)
 - [**Cen Wang**](https://cenwangumass.github.io/) (Texas A&M University)
+
+Previous maintainer:
+
+- [**William Grochocinski**](https://github.com/Grochocinski) (North Carolina State University)
 
 ## Citation
 To cite this work, please use the `CITATION.cff` file or use the built-in citation generator:
