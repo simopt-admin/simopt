@@ -19,6 +19,7 @@ exclude = [
     "simopt/gui/new_experiment_window.py",
     "simopt/gui/plot_window.py",
     "simopt/model.py",
+    "simopt/models/ermexample.py",
     "simopt/plot_type.py",
     "simopt/plots",
     "simopt/problem.py",
