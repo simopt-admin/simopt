@@ -1,6 +1,12 @@
 # ruff.toml
 line-length = 88
-exclude = ["simopt/gui/*", "notebooks/*"]
+exclude = [
+    "simopt/gui/*",
+    "notebooks/*",
+    "simopt/models/ermexample.py",
+    "workshop/erm_data_generator.ipynb",
+    "workshop/workshop.ipynb"
+]
 
 [lint]
 select = [
