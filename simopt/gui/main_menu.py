@@ -9,7 +9,7 @@ from simopt.gui.data_farming_window import DataFarmingWindow
 from simopt.gui.new_experiment_window import NewExperimentWindow
 from simopt.gui.toplevel_custom import Toplevel
 
-FONT_SCALE: Final[float] = 1.5
+FONT_SCALE: Final[float] = 1
 
 
 class MainMenuWindow(Toplevel):
