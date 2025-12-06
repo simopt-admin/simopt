@@ -2365,10 +2365,10 @@ class NewExperimentWindow(Toplevel):
             self.log_results(experiment_name)
             # If successful, update the label and button
             self.__update_experiment_label(experiment_name, "Logged")
-            self.__update_action_button(experiment_name, "All Steps\nComplete")
+            self.__update_action_button(experiment_name, "All Steps Complete")
             # Update the all button to reflect that all steps are done
             all_bttn_name: Final[str] = "exp." + experiment_name + ".all"
-            self.tk_buttons[all_bttn_name].configure(text="All Steps\nComplete")
+            self.tk_buttons[all_bttn_name].configure(text="All Steps Complete")
         except Exception as e:
             messagebox.showerror("Error", str(e))
             self.__update_experiment_label(experiment_name, "Post-Normalized")
@@ -2426,8 +2426,8 @@ class NewExperimentWindow(Toplevel):
             row=row_idx, column=0, padx=5, pady=5, sticky="nsew"
         )
 
-        bttn_text_run_all = "Run All\nRemaining Steps"
-        bttn_text_run = "Run\nExperiment"
+        bttn_text_run_all = "Run All Remaining Steps"
+        bttn_text_run = "Run Experiment"
 
         def view(experiment_name: str) -> None:
             # Check if there's an experiment in progress
