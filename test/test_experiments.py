@@ -22,12 +22,12 @@ _FILE_CLASS_MAP = {}
 
 
 def _filename_to_classname(file: str) -> str:
-    name = file.replace(".yaml", "")
+    name = file.replace(".pickle.zst", "")
     parts = name.replace("-", "_").split("_")
     return "Test" + "".join(part.title() for part in parts)
 
 
-for yaml_path in EXPECTED_RESULTS_DIR.glob("*.yaml"):
+for yaml_path in EXPECTED_RESULTS_DIR.glob("*.pickle.zst"):
     class_name = _filename_to_classname(yaml_path.name)
     _FILE_CLASS_MAP[class_name] = yaml_path.resolve()  # store full path
 

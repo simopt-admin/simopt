@@ -1,9 +1,10 @@
 """Create test cases for all compatible problem-solver pairs."""
 
+import pickle
 import sys
 from pathlib import Path
 
-import yaml
+import zstandard as zstd
 
 # Append the parent directory (simopt package) to the system path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -83,11 +84,11 @@ def create_test(problem_name: str, solver_name: str) -> None:
     # Define the directory and output file
     file_problem_name = "".join(e for e in problem_name if e.isalnum())
     file_solver_name = "".join(e for e in solver_name if e.isalnum())
-    results_filename = f"{file_problem_name}_{file_solver_name}.yaml"
+    results_filename = f"{file_problem_name}_{file_solver_name}.pickle.zst"
     results_filepath = EXPECTED_RESULTS_DIR / results_filename
     # Write the results to the file
-    with Path.open(results_filepath, "w") as f:
-        yaml.dump(results_dict, f)
+    with zstd.open(results_filepath, "wb") as f:
+        pickle.dump(results_dict, f)
 
 
 def main() -> None:
@@ -103,7 +104,7 @@ def main() -> None:
     # Create the test directory if it doesn't exist
     # Create the expected directory if it doesn't exist
     Path.mkdir(EXPECTED_RESULTS_DIR, parents=True, exist_ok=True)
-    existing_results = [path.name for path in EXPECTED_RESULTS_DIR.glob("*.yaml")]
+    existing_results = [path.name for path in EXPECTED_RESULTS_DIR.glob("*.pickle.zst")]
 
     # Don't generate any tests for pairs that already have tests generated
     for pair in compatible_pairs:
@@ -112,7 +113,7 @@ def main() -> None:
         # Generate the expected filenames
         file_problem_name = "".join(e for e in problem_name if e.isalnum())
         file_solver_name = "".join(e for e in solver_name if e.isalnum())
-        results_filename = f"{file_problem_name}_{file_solver_name}.yaml"
+        results_filename = f"{file_problem_name}_{file_solver_name}.pickle.zst"
         # If file exists, skip it
         if results_filename in existing_results:
             print(f"Test for {pair} already exists")
