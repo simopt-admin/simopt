@@ -46,7 +46,7 @@ sys.path.append(str(Path.cwd().parent))
 # problem_abbr_name = "CNTNEWS-1"
 solver_abbr_name = "COBYQA"
 problem_abbr_name = "NETWORK-1"
-
+solver_factors = {"adaptive": True, "n":10, "c":1}
 num_macroreps = 1
 num_postreps = 50
 num_postreps_init_opt = 50
@@ -62,8 +62,8 @@ if file_name_path is None:
 
     # Initialize an instance of the experiment class.
     myexperiment = ProblemSolver(solver_abbr_name, problem_abbr_name,problem_fixed_factors={
-        "budget": 1000,
-    })
+        "budget": 20000,
+    }, solver_fixed_factors=solver_factors)
 
     # Run a fixed number of macroreplications of the solver on the problem.
     myexperiment.run(n_macroreps=num_macroreps, n_jobs=1)
@@ -107,7 +107,7 @@ def _print_path(plot_path: list[Path]) -> None:
 
 _print_path(
     plot_progress_curves(
-        experiments=[myexperiment], plot_type=PlotType.ALL, normalize=True
+        experiments=[myexperiment], plot_type=PlotType.ALL, normalize=False
     )
 )
 # _print_path(
