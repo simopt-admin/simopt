@@ -6,11 +6,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.18.1
+#       jupytext_version: 1.17.3
 #   kernelspec:
-#     display_name: Python [conda env:base] *
+#     display_name: Python 3 (ipykernel)
 #     language: python
-#     name: conda-base-py
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -174,5 +174,3 @@ post_normalize([experiment2, experiment3], 100)
 
 # %%
 plot_terminal_feasibility([[experiment2], [experiment3]], PlotType.FEASIBILITY_SCATTER)
-
-# %%
