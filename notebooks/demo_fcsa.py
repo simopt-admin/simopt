@@ -6,12 +6,23 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.17.3
+#       jupytext_version: 1.18.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
+
+# %% [markdown]
+# # Demo for an experiment with FCSA on the SAN problem
+# This script is intented to demonstrate an experiment with three different versions of the FCSA solver on the SAN problem. 
+
+# %% [markdown]
+# ## Append SimOpt Path
+#
+# Since the notebook is stored in simopt/notebooks, we need to append the
+# parent simopt directory to the system path to import the necessary modules
+# later on.
 
 # %%
 import sys
@@ -30,6 +41,11 @@ from simopt.experiment_base import (
 )
 from simopt.models.san import SANLongestPathStochastic
 from simopt.solvers.fcsa import FCSA
+
+# %% [markdown]
+# ## Experiment Configuration Parameters
+#
+# Configure 3 versions of the solver: CSA, CSA-N, and FCSA and set problem configuration. Set report_all_solutions = True meaning all incumbent solutions will be reported. 
 
 # %%
 fixed_factors = {
@@ -88,6 +104,11 @@ experiments = [
 experiment1, experiment2, experiment3 = experiments
 post_normalize(experiments, n_postreps)
 
+# %% [markdown]
+# ## Plotting Settings
+#
+# Define the plotting settings for the experiments. Plot terminal objective progress, terminal feasibility progress, objective progress curve, and feasiblity progress curve for all incumbent solutions.
+
 # %%
 plot_terminal_progress([experiment1], PlotType.VIOLIN, normalize=False)
 
@@ -113,6 +134,11 @@ plot_feasibility_progress(
     PlotType.ALL_FEASIBILITY_PROGRESS,
     print_max_hw=False,
 )
+
+# %% [markdown]
+# ## Experiment Configuration Parameters
+#
+# Configure 2 versions of the solver: CSA-N, and FCSA and set problem configuration. Set report_all_solutions = False meaning only recommended solutions will be reported. 
 
 # %%
 csa_n = FCSA(
@@ -140,6 +166,11 @@ experiments = [
 ]
 experiment2, experiment3 = experiments
 post_normalize([experiment2, experiment3], 100)
+
+# %% [markdown]
+# ## Plotting Settings
+#
+# Define the plotting settings for the experiments. Plot terminal objective vs feasibility scatter plot for recommended solutions. 
 
 # %%
 plot_terminal_feasibility([[experiment2], [experiment3]], PlotType.FEASIBILITY_SCATTER)
