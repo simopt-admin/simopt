@@ -79,6 +79,11 @@ def create_test(problem_name: str, solver_name: str) -> None:
         "objective_curves": myexperiment.objective_curves,
         "progress_curves": myexperiment.progress_curves,
         "all_est_lhs": myexperiment.all_est_lhs,
+        "all_post_replicates": myexperiment.all_post_replicates,
+        "all_stoch_constraints": myexperiment.all_stoch_constraints,
+        "n_postreps_init_opt": myexperiment.n_postreps_init_opt,
+        "x0_postreps": myexperiment.x0_postreps,
+        "xstar_postreps": myexperiment.xstar_postreps,
     }
 
     # Define the directory and output file
