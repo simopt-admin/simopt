@@ -8,6 +8,7 @@ import simopt.curve_utils as curve_utils
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.curve import Curve
 from simopt.experiment import ProblemSolver
+from simopt.feasibility import feasibility_score_history
 from simopt.plot_type import PlotType
 
 
@@ -424,3 +425,245 @@ def compute_bootstrap_conf_int(
     bs_conf_int_lower_bound = np.quantile(observations, q=q_lower)
     bs_conf_int_upper_bound = np.quantile(observations, q=q_upper)
     return bs_conf_int_lower_bound, bs_conf_int_upper_bound
+
+
+def bootstrap_sample(
+    problem_solver: ProblemSolver,
+    bootstrap_rng: MRG32k3a,
+    normalize: bool = True,
+    feasibility_score_method: Literal["inf_norm", "norm"] = "inf_norm",
+    feasibility_norm_degree: int = 1,
+    feasibility_two_sided: bool = False,
+    disable_macrorep_bootstrap: bool = False,
+) -> tuple[list[Curve], list[Curve]]:
+    """Generates bootstrap samples of objective/progress and feasibility curves.
+
+    Args:
+        problem_solver (ProblemSolver): The ProblemSolver instance.
+        bootstrap_rng (MRG32k3a): Random number generator used for bootstrapping.
+        normalize (bool, optional): If True, normalize progress curves with respect
+            to optimality gaps. Defaults to True.
+        feasibility_score_method (Literal["inf_norm", "norm"], optional):
+            Feasibility scoring method. Defaults to "inf_norm".
+        feasibility_norm_degree (int, optional): Degree of the norm when
+        ``feasibility_score_method == "norm"``. Defaults to 1.
+        feasibility_two_sided (bool, optional): Whether to award a non-zero score
+            to feasible solutions based on the best violation.
+        disable_macrorep_bootstrap (bool, optional): Whether to disable bootstrap
+            across macroreplications. Defaults to False.
+
+    Returns:
+        tuple[list[Curve], list[Curve]]: Bootstrapped progress curves and
+        feasibility curves for all macroreplications.
+    """
+    bootstrap_curves: list[Curve] = []
+    bootstrap_feasibility_curves: list[Curve] = []
+    has_stochastic_constraints = problem_solver.problem.n_stochastic_constraints >= 1
+
+    # Uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1.
+    # Subsubstream 0: reserved for this outer-level bootstrapping.
+    if disable_macrorep_bootstrap:
+        bs_mrep_idxs = list(range(problem_solver.n_macroreps))
+    else:
+        bs_mrep_idxs = bootstrap_rng.choices(
+            range(problem_solver.n_macroreps), k=problem_solver.n_macroreps
+        )
+    # Advance RNG subsubstream to prepare for inner-level bootstrapping.
+    bootstrap_rng.advance_subsubstream()
+    # Subsubstream 1: reserved for bootstrapping at x0 and x*.
+    # Bootstrap sample post-replicates at common x0.
+    # Uniformly resample L postreps (with replacement) from 0, 1, ..., L-1.
+    bs_postrep_idxs = bootstrap_rng.choices(
+        range(problem_solver.n_postreps_init_opt), k=problem_solver.n_postreps_init_opt
+    )
+    # Compute the mean of the resampled postreplications.
+    bs_initial_obj_val = np.mean(
+        [problem_solver.x0_postreps[postrep] for postrep in bs_postrep_idxs]
+    )
+    # Reset subsubstream if using CRN across budgets.
+    # This means the same postreplication indices will be used for resampling at
+    # x0 and x*.
+    if problem_solver.crn_across_init_opt:
+        bootstrap_rng.reset_subsubstream()
+    # Bootstrap sample postreplicates at reference optimal solution x*.
+    # Uniformly resample L postreps (with replacement) from 0, 1, ..., L.
+    bs_postrep_idxs = bootstrap_rng.choices(
+        range(problem_solver.n_postreps_init_opt), k=problem_solver.n_postreps_init_opt
+    )
+    # Compute the mean of the resampled postreplications.
+    bs_optimal_obj_val = np.mean(
+        [problem_solver.xstar_postreps[postrep] for postrep in bs_postrep_idxs]
+    )
+    # Compute initial optimality gap.
+    bs_initial_opt_gap = bs_initial_obj_val - bs_optimal_obj_val
+    # Advance RNG subsubstream to prepare for inner-level bootstrapping.
+    # Will now be at start of subsubstream 2.
+    bootstrap_rng.advance_subsubstream()
+    # Bootstrap within each bootstrapped macroreplication.
+    # Option 1: Simpler (default) CRN scheme, which makes for faster code.
+    if problem_solver.crn_across_budget and not problem_solver.crn_across_macroreps:
+        for idx in range(problem_solver.n_macroreps):
+            mrep = bs_mrep_idxs[idx]
+            # Inner-level bootstrapping over intermediate recommended solutions.
+            est_objectives = []
+            est_lhs = []
+            # Same postreplication indices for all intermediate budgets on
+            # a given macroreplciation.
+            bs_postrep_idxs = bootstrap_rng.choices(
+                range(problem_solver.n_postreps), k=problem_solver.n_postreps
+            )
+            for budget in range(len(problem_solver.all_intermediate_budgets[mrep])):
+                if has_stochastic_constraints:
+                    est_lhs.append(
+                        problem_solver.all_stoch_constraints[mrep][budget][
+                            bs_postrep_idxs
+                        ].mean(axis=0)
+                    )
+                else:
+                    est_lhs.append(np.array([]))
+                # If solution is x0...
+                if problem_solver.all_recommended_xs[mrep][budget] == problem_solver.x0:
+                    est_objectives.append(bs_initial_obj_val)
+                # ...else if solution is x*...
+                elif (
+                    problem_solver.all_recommended_xs[mrep][budget]
+                    == problem_solver.xstar
+                ):
+                    est_objectives.append(bs_optimal_obj_val)
+                # ... else solution other than x0 or x*.
+                else:
+                    # Compute the mean of the resampled postreplications.
+                    est_objectives.append(
+                        np.mean(
+                            [
+                                problem_solver.all_post_replicates[mrep][budget][
+                                    postrep
+                                ]
+                                for postrep in bs_postrep_idxs
+                            ]
+                        )
+                    )
+            # Record objective or progress curve.
+            if normalize:
+                frac_intermediate_budgets = [
+                    budget / problem_solver.problem.factors["budget"]
+                    for budget in problem_solver.all_intermediate_budgets[mrep]
+                ]
+                norm_est_objectives = [
+                    (est_objective - bs_optimal_obj_val) / bs_initial_opt_gap
+                    for est_objective in est_objectives
+                ]
+                new_progress_curve = Curve(
+                    x_vals=frac_intermediate_budgets,
+                    y_vals=norm_est_objectives,
+                )
+                bootstrap_curves.append(new_progress_curve)
+            else:
+                new_objective_curve = Curve(
+                    x_vals=problem_solver.all_intermediate_budgets[mrep],
+                    y_vals=est_objectives,
+                )
+                bootstrap_curves.append(new_objective_curve)
+
+            bootstrap_feasibility_curves.append(
+                Curve(
+                    x_vals=problem_solver.all_intermediate_budgets[mrep],
+                    y_vals=feasibility_score_history(
+                        est_lhs,
+                        feasibility_score_method,
+                        feasibility_norm_degree,
+                        feasibility_two_sided,
+                    ),
+                )
+            )
+    # Option 2: Non-default CRN behavior.
+    else:
+        for idx in range(problem_solver.n_macroreps):
+            mrep = bs_mrep_idxs[idx]
+            # Inner-level bootstrapping over intermediate recommended solutions.
+            est_objectives = []
+            est_lhs = []
+            for budget in range(len(problem_solver.all_intermediate_budgets[mrep])):
+                if has_stochastic_constraints:
+                    indices = bootstrap_rng.choices(
+                        range(problem_solver.n_postreps), k=problem_solver.n_postreps
+                    )
+                    est_lhs.append(
+                        problem_solver.all_stoch_constraints[mrep][budget][
+                            indices
+                        ].mean(axis=0)
+                    )
+                else:
+                    est_lhs.append(np.array([]))
+
+                # If solution is x0...
+                if problem_solver.all_recommended_xs[mrep][budget] == problem_solver.x0:
+                    est_objectives.append(bs_initial_obj_val)
+                # ...else if solution is x*...
+                elif (
+                    problem_solver.all_recommended_xs[mrep][budget]
+                    == problem_solver.xstar
+                ):
+                    est_objectives.append(bs_optimal_obj_val)
+                # ... else solution other than x0 or x*.
+                else:
+                    # Uniformly resample N postreps (with replacement)
+                    # from 0, 1, ..., N-1.
+                    bs_postrep_idxs = bootstrap_rng.choices(
+                        range(problem_solver.n_postreps), k=problem_solver.n_postreps
+                    )
+                    # Compute the mean of the resampled postreplications.
+                    est_objectives.append(
+                        np.mean(
+                            [
+                                problem_solver.all_post_replicates[mrep][budget][
+                                    postrep
+                                ]
+                                for postrep in bs_postrep_idxs
+                            ]
+                        )
+                    )
+                    # Reset subsubstream if using CRN across budgets.
+                    if problem_solver.crn_across_budget:
+                        bootstrap_rng.reset_subsubstream()
+            # If using CRN across macroreplications...
+            if problem_solver.crn_across_macroreps:
+                # ...reset subsubstreams...
+                bootstrap_rng.reset_subsubstream()
+            # ...else if not using CRN across macrorep...
+            else:
+                # ...advance subsubstream.
+                bootstrap_rng.advance_subsubstream()
+            # Record objective or progress curve.
+            if normalize:
+                frac_intermediate_budgets = [
+                    budget / problem_solver.problem.factors["budget"]
+                    for budget in problem_solver.all_intermediate_budgets[mrep]
+                ]
+                norm_est_objectives = [
+                    (est_objective - bs_optimal_obj_val) / bs_initial_opt_gap
+                    for est_objective in est_objectives
+                ]
+                new_progress_curve = Curve(
+                    x_vals=frac_intermediate_budgets,
+                    y_vals=norm_est_objectives,
+                )
+                bootstrap_curves.append(new_progress_curve)
+            else:
+                new_objective_curve = Curve(
+                    x_vals=problem_solver.all_intermediate_budgets[mrep],
+                    y_vals=est_objectives,
+                )
+                bootstrap_curves.append(new_objective_curve)
+            bootstrap_feasibility_curves.append(
+                Curve(
+                    x_vals=problem_solver.all_intermediate_budgets[mrep],
+                    y_vals=feasibility_score_history(
+                        est_lhs,
+                        feasibility_score_method,
+                        feasibility_norm_degree,
+                        feasibility_two_sided,
+                    ),
+                )
+            )
+    return bootstrap_curves, bootstrap_feasibility_curves
