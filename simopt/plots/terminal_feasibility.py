@@ -12,6 +12,7 @@ import seaborn as sns
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.bootstrap import compute_bootstrap_conf_int
 from simopt.experiment import ProblemSolver
+from simopt.logging import Logger, null_logger
 from simopt.plot_type import PlotType
 
 from .utils import save_plot, setup_plot
@@ -38,6 +39,7 @@ def plot_terminal_feasibility(
     legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
+    logger: Logger = null_logger,
 ) -> list[str]:
     """Plot the feasibility of one solver problem pair. (for now).
 
@@ -202,6 +204,19 @@ def plot_terminal_feasibility(
                                 np.array(feas_conf_int_ub) - np.array(term_feas_score)
                             ),
                         ]
+                        logger.debug(
+                            "data",
+                            data=np.array(
+                                [
+                                    terminals,
+                                    term_feas_score,
+                                    x_err[0],
+                                    x_err[1],
+                                    y_err[0],
+                                    y_err[1],
+                                ]
+                            ),
+                        )
                         handle = plt.errorbar(
                             x=terminals,
                             y=term_feas_score,
@@ -213,6 +228,9 @@ def plot_terminal_feasibility(
                             linestyle="none",
                         )
                     else:  # do not plot conf int
+                        logger.debug(
+                            "data", data=np.array([terminals, term_feas_score])
+                        )
                         handle = plt.scatter(
                             x=terminals,
                             y=term_feas_score,
@@ -322,6 +340,19 @@ def plot_terminal_feasibility(
                                 np.array(feas_conf_int_ub) - np.array(term_feas_score)
                             ),
                         ]
+                        logger.debug(
+                            "data",
+                            data=np.array(
+                                [
+                                    terminals,
+                                    term_feas_score,
+                                    x_err[0],
+                                    x_err[1],
+                                    y_err[0],
+                                    y_err[1],
+                                ]
+                            ),
+                        )
                         handle = plt.errorbar(
                             x=terminals,
                             y=term_feas_score,
@@ -333,6 +364,9 @@ def plot_terminal_feasibility(
                             linestyle="none",
                         )
                     else:  # no confidence intervals
+                        logger.debug(
+                            "data", data=np.array([terminals, term_feas_score])
+                        )
                         # edit plot
                         handle = plt.scatter(
                             x=terminals,

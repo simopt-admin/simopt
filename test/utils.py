@@ -24,6 +24,7 @@ def load_problem_solver(path: str) -> ProblemSolver:
     problem_solver.all_intermediate_budgets = data["all_intermediate_budgets"]
     problem_solver.all_post_replicates = data["all_post_replicates"]
     problem_solver.all_stoch_constraints = data.get("all_stoch_constraints", [])
+    problem_solver.all_est_lhs = data.get("all_est_lhs", [])
     problem_solver.x0 = data["x0"]
     problem_solver.xstar = data["xstar"]
     problem_solver.x0_postreps = data["x0_postreps"]

@@ -12,7 +12,36 @@ import seaborn as sns
 from simopt.analysis.bootstrap import bootstrap
 from simopt.bootstrap import compute_bootstrap_conf_int
 from simopt.experiment.api import AnalysisInput
+from simopt.experiment.single import ProblemSolver
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
+
+R = TypeVar("R")
+
+
+def styled_group_entries(
+    group: list[tuple[ProblemSolver, R]],
+    colors: list[str],
+    markers: list[str],
+) -> tuple[list[tuple[ProblemSolver, R, str, str, str]], set[str]]:
+    """Attach color, marker, and legend label metadata to grouped entries."""
+    style_map: dict[str, tuple[str, str]] = {}
+    style_index = 0
+    used_labels: set[str] = set()
+    styled_entries: list[tuple[ProblemSolver, R, str, str, str]] = []
+
+    for experiment, result in group:
+        style_key = experiment.solver.name
+        if style_key not in style_map:
+            color = colors[style_index % len(colors)]
+            marker = markers[style_index % len(markers)]
+            style_map[style_key] = (color, marker)
+            style_index += 1
+        color, marker = style_map[style_key]
+        label = style_key if style_key not in used_labels else "_nolegend_"
+        used_labels.add(style_key)
+        styled_entries.append((experiment, result, color, marker, label))
+
+    return styled_entries, used_labels
 
 
 def aggregate_curve(

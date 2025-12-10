@@ -3,10 +3,12 @@
 from typing import Literal
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 import simopt.curve_utils as curve_utils
 from simopt.bootstrap import bootstrap_procedure
 from simopt.experiment import ProblemSolver
+from simopt.logging import Logger, null_logger
 from simopt.plot_type import PlotType
 
 from .utils import plot_bootstrap_conf_ints, report_max_halfwidth, save_plot, setup_plot
@@ -33,6 +35,7 @@ def plot_feasibility_progress(
     legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
+    logger: Logger = null_logger,
 ) -> list[str]:
     """Plot feasibility over solver progress.
 
@@ -80,6 +83,8 @@ def plot_feasibility_progress(
          Extension to add to image file path to change file type
     save_as_pickle: bool, default = False
          True if plot should be saved to pickle file, False otherwise.
+    logger: Logger, optional
+        Logger for debugging.
 
     Returns:
     -------
@@ -186,6 +191,17 @@ def plot_feasibility_progress(
                                 "for scalar estimators."
                             )
                             raise ValueError(error_msg)
+                        logger.debug(
+                            "data",
+                            data=np.array(
+                                [
+                                    estimator.x_vals,
+                                    estimator.y_vals,
+                                    bs_conf_int_lb_curve.y_vals,
+                                    bs_conf_int_ub_curve.y_vals,
+                                ]
+                            ),
+                        )
                         plot_bootstrap_conf_ints(
                             bs_conf_int_lb_curve,
                             bs_conf_int_ub_curve,
@@ -279,6 +295,17 @@ def plot_feasibility_progress(
                                 "for scalar estimators."
                             )
                             raise ValueError(error_msg)
+                        logger.debug(
+                            "data",
+                            data=np.array(
+                                [
+                                    estimator.x_vals,
+                                    estimator.y_vals,
+                                    bs_conf_int_lb_curve.y_vals,
+                                    bs_conf_int_ub_curve.y_vals,
+                                ]
+                            ),
+                        )
                         plot_bootstrap_conf_ints(
                             bs_conf_int_lb_curve,
                             bs_conf_int_ub_curve,

@@ -9,6 +9,7 @@ import numpy as np
 from simopt.bootstrap import bootstrap_procedure
 from simopt.curve import Curve
 from simopt.experiment import ProblemSolver
+from simopt.logging import Logger, null_logger
 from simopt.plot_type import PlotType
 
 from .utils import save_plot, setup_plot
@@ -29,6 +30,7 @@ def plot_area_scatterplots(
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
     problem_set_name: str = "PROBLEM_SET",
+    logger: Logger = null_logger,
 ) -> list[Path]:
     """Plots scatterplots of mean vs. standard deviation of area under progress curves.
 
@@ -59,6 +61,7 @@ def plot_area_scatterplots(
             Defaults to "SOLVER_SET".
         problem_set_name (str, optional): Label for problem group in plot titles.
             Defaults to "PROBLEM_SET".
+        logger (Any, optional): Logger for debugging. Defaults to `null_logger`.
 
     Returns:
         list[Path]: List of file paths for the plots produced.
@@ -126,6 +129,19 @@ def plot_area_scatterplots(
                             estimator=std_dev_estimator,
                             normalize=True,
                         )
+                    )
+                    logger.debug(
+                        "data",
+                        data=np.array(
+                            [
+                                mean_estimator,
+                                std_dev_estimator,
+                                mean_bs_conf_int_lb,
+                                mean_bs_conf_int_ub,
+                                std_dev_bs_conf_int_lb,
+                                std_dev_bs_conf_int_ub,
+                            ]
+                        ),
                     )
                     # if print_max_hw:
                     #     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])
@@ -238,6 +254,19 @@ def plot_area_scatterplots(
                             estimator=std_dev_estimator,
                             normalize=True,
                         )
+                    )
+                    logger.debug(
+                        "data",
+                        data=np.array(
+                            [
+                                mean_estimator,
+                                std_dev_estimator,
+                                mean_bs_conf_int_lb,
+                                mean_bs_conf_int_ub,
+                                std_dev_bs_conf_int_lb,
+                                std_dev_bs_conf_int_ub,
+                            ]
+                        ),
                     )
                     # if print_max_hw:
                     #     curve_pairs.append([bs_CI_lb_curve, bs_CI_ub_curve])

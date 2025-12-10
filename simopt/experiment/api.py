@@ -50,6 +50,11 @@ class ProxyValues(BaseModel):
 DEFAULT_PROXY_VALUES = ProxyValues()
 
 
+@dataclass(frozen=True)
+class PlotConfig:
+    """Base class for plot configuration dataclasses."""
+
+
 def to_solver(config: dict) -> Solver:
     config_model = SolverConfig(**config)
     return solver_directory[config_model.name](fixed_factors=config_model.fixed_factors)

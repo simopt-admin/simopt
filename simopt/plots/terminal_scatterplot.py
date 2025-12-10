@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from simopt.experiment import ProblemSolver
+from simopt.logging import Logger, null_logger
 from simopt.plot_type import PlotType
 
 from .utils import save_plot, setup_plot
@@ -13,13 +14,14 @@ from .utils import save_plot, setup_plot
 
 def plot_terminal_scatterplots(
     experiments: list[list[ProblemSolver]],
-    all_in_one: float = True,
+    all_in_one: bool = True,
     plot_title: str | None = None,
     legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
     problem_set_name: str = "PROBLEM_SET",
+    logger: Logger = null_logger,
 ) -> list[Path]:
     """Plot scatter plots of the mean and standard deviation of terminal progress.
 
@@ -42,6 +44,7 @@ def plot_terminal_scatterplots(
             Defaults to "SOLVER_SET".
         problem_set_name (str, optional): Name for the problem group used in plot
             titles. Defaults to "PROBLEM_SET".
+        logger (Logger, optional): Logger for logging data. Defaults to null_logger.
 
     Returns:
         list[Path]: A list of file paths to the plots produced.
@@ -77,6 +80,7 @@ def plot_terminal_scatterplots(
                 terminals = [curve.y_vals[-1] for curve in experiment.progress_curves]
                 mean_estimator = np.mean(terminals)
                 std_dev_estimator = np.std(terminals, ddof=1)
+                logger.debug("data", data=np.array([mean_estimator, std_dev_estimator]))
                 handle = plt.scatter(
                     x=mean_estimator,
                     y=std_dev_estimator,
@@ -111,6 +115,7 @@ def plot_terminal_scatterplots(
                 terminals = [curve.y_vals[-1] for curve in experiment.progress_curves]
                 mean_estimator = np.mean(terminals)
                 std_dev_estimator = np.std(terminals, ddof=1)
+                logger.debug("data", data=np.array([mean_estimator, std_dev_estimator]))
                 handle = plt.scatter(
                     x=mean_estimator,
                     y=std_dev_estimator,

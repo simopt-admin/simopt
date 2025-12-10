@@ -3,8 +3,10 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from simopt.experiment import ProblemSolver
+from simopt.logging import Logger, null_logger
 from simopt.plot_type import PlotType
 
 from .utils import check_common_problem_and_reference, save_plot, setup_plot
@@ -19,6 +21,7 @@ def plot_terminal_progress(
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
+    logger: Logger = null_logger,
 ) -> list[Path]:
     """Plots terminal progress as box or violin plots for solvers on a single problem.
 
@@ -39,6 +42,7 @@ def plot_terminal_progress(
             Defaults to False.
         solver_set_name (str, optional): Label for solver group in plot titles.
             Defaults to "SOLVER_SET".
+        logger (Logger, optional): Logger for logging data. Defaults to null_logger.
 
     Returns:
         list[str]: List of file paths for the plots produced.
@@ -143,6 +147,7 @@ def plot_terminal_progress(
             else:
                 curves = experiment.objective_curves
             terminal_data = [curve.y_vals[-1] for curve in curves]
+            logger.debug("data", data=np.array(terminal_data))
             if plot_type == PlotType.BOX:
                 plt.boxplot(terminal_data)
                 plt.xticks([1], labels=[experiment.solver.name])

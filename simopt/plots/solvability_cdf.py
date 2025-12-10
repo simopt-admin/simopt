@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import simopt.curve_utils as curve_utils
 from simopt.bootstrap import bootstrap_procedure
 from simopt.experiment import ProblemSolver
+from simopt.logging import Logger, null_logger
 from simopt.plot_type import PlotType
 
 from .utils import (
@@ -31,6 +32,7 @@ def plot_solvability_cdfs(
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
+    logger: Logger = null_logger,
 ) -> list[Path]:
     """Plots solvability CDFs for one or more solvers on a single problem.
 
@@ -56,6 +58,7 @@ def plot_solvability_cdfs(
             Defaults to False.
         solver_set_name (str, optional): Label for solver group in plot titles.
             Defaults to "SOLVER_SET".
+        logger (Logger, optional): Logger for logging data. Defaults to null_logger.
 
     Returns:
         list[Path]: List of file paths for the generated plots.
@@ -126,8 +129,18 @@ def plot_solvability_cdfs(
                         bs_conf_int_ub_curve,
                         color_str=color_str,
                     )
+                    logger.debug(
+                        "data",
+                        data=[
+                            bs_conf_int_lb_curve.x_vals,
+                            bs_conf_int_lb_curve.y_vals,
+                            bs_conf_int_ub_curve.x_vals,
+                            bs_conf_int_ub_curve.y_vals,
+                        ],
+                    )
                 if print_max_hw:
                     curve_pairs.append([bs_conf_int_lb_curve, bs_conf_int_ub_curve])
+
         plt.legend(
             handles=solver_curve_handles,
             labels=[experiment.solver.name for experiment in experiments],
@@ -181,6 +194,14 @@ def plot_solvability_cdfs(
                         )
                         raise ValueError(error_msg)
                     plot_bootstrap_conf_ints(bs_conf_int_lb_curve, bs_conf_int_ub_curve)
+                    logger.debug(
+                        "data",
+                        data=[
+                            bs_conf_int_lb_curve.x_vals,
+                            bs_conf_int_lb_curve.y_vals,
+                            bs_conf_int_ub_curve.y_vals,
+                        ],
+                    )
                 if print_max_hw:
                     if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
                         bs_conf_int_ub_curve, (int, float)
@@ -194,6 +215,7 @@ def plot_solvability_cdfs(
                         normalize=True,
                         conf_level=conf_level,
                     )
+
             file_list.append(
                 save_plot(
                     solver_name=experiment.solver.name,

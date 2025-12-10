@@ -13,3 +13,15 @@ class CrnOptions:
 
 
 DEFAULT_CRN_OPTIONS = CrnOptions()
+
+
+@dataclass(frozen=True)
+class ConfidenceIntervalOptions:
+    """Options for computing confidence intervals via bootstrapping."""
+
+    n_bootstraps: int = 100
+    confidence_level: float = 0.95
+    bias_correction: bool = True
+
+
+DEFAULT_CONFIDENCE_INTERVAL_OPTIONS = ConfidenceIntervalOptions()

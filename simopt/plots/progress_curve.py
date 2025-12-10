@@ -3,10 +3,12 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 import simopt.curve_utils as curve_utils
 from simopt.bootstrap import bootstrap_procedure
 from simopt.experiment import ProblemSolver
+from simopt.logging import Logger, null_logger
 from simopt.plot_type import PlotType
 
 from .utils import (
@@ -33,6 +35,7 @@ def plot_progress_curves(
     ext: str = ".png",
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
+    logger: Logger = null_logger,
 ) -> list[Path]:
     """Plots individual or aggregate progress curves for solvers on a single problem.
 
@@ -61,6 +64,7 @@ def plot_progress_curves(
             Defaults to False.
         solver_set_name (str, optional): Label for solver group in plot titles.
             Defaults to "SOLVER_SET".
+        logger (Logger, optional): Logger for logging data. Defaults to null_logger.
 
     Returns:
         list[Path]: List of file paths where the plots were saved.
@@ -142,6 +146,17 @@ def plot_progress_curves(
                     beta=beta,
                     estimator=estimator,
                     normalize=normalize,
+                )
+                logger.debug(
+                    "data",
+                    data=np.array(
+                        [
+                            estimator.x_vals,
+                            estimator.y_vals,
+                            bs_conf_int_lb_curve.y_vals,
+                            bs_conf_int_ub_curve.y_vals,
+                        ]
+                    ),
                 )
                 if plot_conf_ints:
                     if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(

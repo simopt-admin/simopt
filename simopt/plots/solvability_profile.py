@@ -3,10 +3,12 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 import simopt.curve_utils as curve_utils
 from simopt.bootstrap import bootstrap_procedure
 from simopt.experiment import ProblemSolver
+from simopt.logging import Logger, null_logger
 from simopt.plot_type import PlotType
 
 from .utils import plot_bootstrap_conf_ints, report_max_halfwidth, save_plot, setup_plot
@@ -29,6 +31,7 @@ def plot_solvability_profiles(
     save_as_pickle: bool = False,
     solver_set_name: str = "SOLVER_SET",
     problem_set_name: str = "PROBLEM_SET",
+    logger: Logger = null_logger,
 ) -> list[Path]:
     """Plots solvability or difference profiles for solvers on multiple problems.
 
@@ -65,6 +68,7 @@ def plot_solvability_profiles(
             Defaults to "SOLVER_SET".
         problem_set_name (str, optional): Name of problem group for plot titles.
             Defaults to "PROBLEM_SET".
+        logger (Logger, optional): Logger for logging data. Defaults to null_logger.
 
     Returns:
         list[Path]: List of file paths for the plots produced.
@@ -175,6 +179,8 @@ def plot_solvability_profiles(
             if plot_type in [PlotType.CDF_SOLVABILITY, PlotType.QUANTILE_SOLVABILITY]:
                 handle = solver_curve.plot(color_str=color_str)
                 solver_curve_handles.append(handle)
+                bs_conf_int_lb_curve = None
+                bs_conf_int_ub_curve = None
                 if plot_conf_ints or print_max_hw:
                     bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
                         experiments=[experiments[solver_idx]],
@@ -202,6 +208,25 @@ def plot_solvability_profiles(
                         )
                     if print_max_hw:
                         curve_pairs.append([bs_conf_int_lb_curve, bs_conf_int_ub_curve])
+
+                if (
+                    bs_conf_int_lb_curve is not None
+                    and bs_conf_int_ub_curve is not None
+                ):
+                    logger.debug(
+                        "data",
+                        data=[
+                            bs_conf_int_lb_curve.x_vals,
+                            bs_conf_int_lb_curve.y_vals,
+                            bs_conf_int_ub_curve.y_vals,
+                        ],
+                    )
+                else:
+                    logger.debug(
+                        "data",
+                        data=np.array([solver_curve.x_vals, solver_curve.y_vals]),
+                    )
+
         if plot_type == PlotType.CDF_SOLVABILITY:
             plt.legend(
                 handles=solver_curve_handles,
@@ -271,6 +296,8 @@ def plot_solvability_profiles(
                     color_str = "C" + str(solver_idx)
                     handle = diff_solver_curve.plot(color_str=color_str)
                     solver_curve_handles.append(handle)
+                    bs_conf_int_lb_curve = None
+                    bs_conf_int_ub_curve = None
                     if plot_conf_ints or print_max_hw:
                         bs_conf_int_lb_curve, bs_conf_int_ub_curve = (
                             bootstrap_procedure(
@@ -305,6 +332,27 @@ def plot_solvability_profiles(
                             curve_pairs.append(
                                 [bs_conf_int_lb_curve, bs_conf_int_ub_curve]
                             )
+
+                    if (
+                        bs_conf_int_lb_curve is not None
+                        and bs_conf_int_ub_curve is not None
+                    ):
+                        logger.debug(
+                            "data",
+                            data=[
+                                bs_conf_int_lb_curve.x_vals,
+                                bs_conf_int_lb_curve.y_vals,
+                                bs_conf_int_ub_curve.y_vals,
+                            ],
+                        )
+                    else:
+                        logger.debug(
+                            "data",
+                            data=np.array(
+                                [diff_solver_curve.x_vals, diff_solver_curve.y_vals]
+                            ),
+                        )
+
             offset_labels = [
                 f"{non_ref_solver} - {ref_solver}" for non_ref_solver in non_ref_solvers
             ]
@@ -408,6 +456,8 @@ def plot_solvability_profiles(
                         )
                     )
                 handle = solver_curve.plot()
+                bs_conf_int_lb_curve = None
+                bs_conf_int_ub_curve = None
                 if plot_conf_ints or print_max_hw:
                     bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
                         experiments=[experiments[solver_idx]],
@@ -444,6 +494,25 @@ def plot_solvability_profiles(
                             normalize=True,
                             conf_level=conf_level,
                         )
+
+                if (
+                    bs_conf_int_lb_curve is not None
+                    and bs_conf_int_ub_curve is not None
+                ):
+                    logger.debug(
+                        "data",
+                        data=[
+                            bs_conf_int_lb_curve.x_vals,
+                            bs_conf_int_lb_curve.y_vals,
+                            bs_conf_int_ub_curve.y_vals,
+                        ],
+                    )
+                else:
+                    logger.debug(
+                        "data",
+                        data=np.array([solver_curve.x_vals, solver_curve.y_vals]),
+                    )
+
                 if plot_type == PlotType.CDF_SOLVABILITY:
                     file_list.append(
                         save_plot(
@@ -506,6 +575,8 @@ def plot_solvability_profiles(
                         solver_curves[solver_idx], solver_curves[ref_solver_idx]
                     )
                     handle = diff_solver_curve.plot()
+                    bs_conf_int_lb_curve = None
+                    bs_conf_int_ub_curve = None
                     if plot_conf_ints or print_max_hw:
                         bs_conf_int_lb_curve, bs_conf_int_ub_curve = (
                             bootstrap_procedure(
@@ -551,6 +622,27 @@ def plot_solvability_profiles(
                                 conf_level=conf_level,
                                 difference=True,
                             )
+
+                    if (
+                        bs_conf_int_lb_curve is not None
+                        and bs_conf_int_ub_curve is not None
+                    ):
+                        logger.debug(
+                            "data",
+                            data=[
+                                bs_conf_int_lb_curve.x_vals,
+                                bs_conf_int_lb_curve.y_vals,
+                                bs_conf_int_ub_curve.y_vals,
+                            ],
+                        )
+                    else:
+                        logger.debug(
+                            "data",
+                            data=np.array(
+                                [diff_solver_curve.x_vals, diff_solver_curve.y_vals]
+                            ),
+                        )
+
                     if plot_type == PlotType.DIFFERENCE_OF_CDF_SOLVABILITY:
                         file_list.append(
                             save_plot(
