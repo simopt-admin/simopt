@@ -186,10 +186,10 @@ def plot_terminal_feasibility(
                                 bias_correction=bias_correction,
                                 overall_estimator=term_feas_score[mrep],
                             )
-                            obj_conf_int_lb.append(lower_obj[0])
-                            obj_conf_int_ub.append(upper_obj[0])
-                            feas_conf_int_lb.append(lower_feas[0])
-                            feas_conf_int_ub.append(upper_feas[0])
+                            obj_conf_int_lb.append(lower_obj)
+                            obj_conf_int_ub.append(upper_obj)
+                            feas_conf_int_lb.append(lower_feas)
+                            feas_conf_int_ub.append(upper_feas)
                         x_err = [
                             np.abs(np.array(terminals) - np.array(obj_conf_int_lb)),
                             np.abs(np.array(obj_conf_int_ub) - np.array(terminals)),

@@ -179,21 +179,13 @@ def bootstrap_procedure(
             )
             raise ValueError(error_msg)
         # Functional returns a scalar.
-        computed_bootstrap = compute_bootstrap_conf_int(
+        lb, ub = compute_bootstrap_conf_int(
             bootstrap_replications,
             conf_level=conf_level,
             bias_correction=True,
             overall_estimator=estimator,
         )
-        # Get the first and second float values from the computed bootstrap.
-        float_1 = computed_bootstrap[0]
-        float_2 = computed_bootstrap[1]
-        # Keep indexing into them until they are floats.
-        while not isinstance(float_1, (int, float)):
-            float_1 = float_1[0]
-        while not isinstance(float_2, (int, float)):
-            float_2 = float_2[0]
-        return float_1, float_2
+        return lb, ub
     # Functional returns a curve.
     unique_budget_list = list(
         np.unique(
@@ -229,13 +221,11 @@ def bootstrap_procedure(
     # Create the curves for the lower and upper bounds of the bootstrap
     # confidence intervals.
     unique_budget_list_floats = [float(val) for val in unique_budget_list]
-    lower_bound_list = [float(val) for val in bs_conf_int_lower_bound_list]
     bs_conf_int_lower_bounds = Curve(
-        x_vals=unique_budget_list_floats, y_vals=lower_bound_list
+        x_vals=unique_budget_list_floats, y_vals=bs_conf_int_lower_bound_list
     )
-    upper_bound_list = [float(val) for val in bs_conf_int_upper_bound_list]
     bs_conf_int_upper_bounds = Curve(
-        x_vals=unique_budget_list_floats, y_vals=upper_bound_list
+        x_vals=unique_budget_list_floats, y_vals=bs_conf_int_upper_bound_list
     )
     return bs_conf_int_lower_bounds, bs_conf_int_upper_bounds
 
@@ -375,13 +365,12 @@ def functional_of_curves(
         raise NotImplementedError(f"'{plot_type.value}' is not implemented.") from e
 
 
-# TODO: double check observations type and return type
 def compute_bootstrap_conf_int(
     observations: list[float | int],
     conf_level: float,
     bias_correction: bool = True,
     overall_estimator: float | None = None,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[float, float]:
     """Construct a bootstrap confidence interval for an estimator.
 
     Args:
@@ -409,6 +398,11 @@ def compute_bootstrap_conf_int(
         error_msg = "Overall estimator must be provided for bias correction."
         raise ValueError(error_msg)
 
+    # This assertion is used during refactoring to ensure that observations is a 1D
+    # array.
+    observations = np.array(observations, dtype=float)
+    assert observations.ndim == 1
+
     # Compute bootstrapping confidence interval via percentile method.
     # See Efron (1981) "Nonparameteric Standard Errors and Confidence Intervals."
     if bias_correction:
@@ -429,9 +423,4 @@ def compute_bootstrap_conf_int(
         q_upper = 1 - (1 - conf_level) / 2
     bs_conf_int_lower_bound = np.quantile(observations, q=q_lower)
     bs_conf_int_upper_bound = np.quantile(observations, q=q_upper)
-    # Sometimes quantile returns a scalar, so convert to array.
-    if not isinstance(bs_conf_int_lower_bound, np.ndarray):
-        bs_conf_int_lower_bound = np.array([bs_conf_int_lower_bound])
-    if not isinstance(bs_conf_int_upper_bound, np.ndarray):
-        bs_conf_int_upper_bound = np.array([bs_conf_int_upper_bound])
     return bs_conf_int_lower_bound, bs_conf_int_upper_bound
