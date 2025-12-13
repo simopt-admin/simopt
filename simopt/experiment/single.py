@@ -23,6 +23,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.curve import Curve
+from simopt.experiment import run_solver
 from simopt.feasibility import feasibility_score_history
 from simopt.utils import resolve_file_path
 
@@ -48,213 +49,6 @@ EXPERIMENT_DIR = Path.cwd() / "experiments" / time.strftime("%Y-%m-%d_%H-%M-%S")
 
 class ProblemSolver:
     """Base class for running one solver on one problem."""
-
-    @property
-    def solver(self) -> Solver:
-        """Simulation-optimization solver."""
-        return self.__solver
-
-    @solver.setter
-    def solver(self, solver: Solver) -> None:
-        self.__solver = solver
-
-    @property
-    def problem(self) -> Problem:
-        """Simulation-optimization problem."""
-        return self.__problem
-
-    @problem.setter
-    def problem(self, problem: Problem) -> None:
-        self.__problem = problem
-
-    @property
-    def n_macroreps(self) -> int:
-        """Number of macroreplications run."""
-        return self.__n_macroreps
-
-    @n_macroreps.setter
-    def n_macroreps(self, n_macroreps: int) -> None:
-        self.__n_macroreps = n_macroreps
-
-    @property
-    def file_name_path(self) -> Path:
-        """Path of .pickle file for saving ProblemSolver object."""
-        return self.__file_name_path
-
-    @file_name_path.setter
-    def file_name_path(self, file_name_path: Path) -> None:
-        self.__file_name_path = file_name_path
-
-    @property
-    def all_recommended_xs(self) -> list[list[tuple]]:
-        """Sequences of recommended solutions from each macroreplication."""
-        return self.__all_recommended_xs
-
-    @all_recommended_xs.setter
-    def all_recommended_xs(self, all_recommended_xs: list[list[tuple]]) -> None:
-        self.__all_recommended_xs = all_recommended_xs
-
-    @property
-    def all_intermediate_budgets(self) -> list[list]:
-        """Sequences of intermediate budgets from each macroreplication."""
-        return self.__all_intermediate_budgets
-
-    @all_intermediate_budgets.setter
-    def all_intermediate_budgets(self, all_intermediate_budgets: list[list]) -> None:
-        self.__all_intermediate_budgets = all_intermediate_budgets
-
-    @property
-    def timings(self) -> list[float]:
-        """Runtimes (in seconds) for each macroreplication."""
-        return self.__timings
-
-    @timings.setter
-    def timings(self, timings: list[float]) -> None:
-        self.__timings = timings
-
-    @property
-    def n_postreps(self) -> int:
-        """Number of postreps to take at each recommended solution."""
-        return self.__n_postreps
-
-    @n_postreps.setter
-    def n_postreps(self, n_postreps: int) -> None:
-        self.__n_postreps = n_postreps
-
-    @property
-    def crn_across_budget(self) -> bool:
-        """Whether CRN is used across solutions recommended at different times."""
-        return self.__crn_across_budget
-
-    @crn_across_budget.setter
-    def crn_across_budget(self, crn_across_budget: bool) -> None:
-        self.__crn_across_budget = crn_across_budget
-
-    @property
-    def crn_across_macroreps(self) -> bool:
-        """Whether CRN is used across solutions from different macroreplications."""
-        return self.__crn_across_macroreps
-
-    @crn_across_macroreps.setter
-    def crn_across_macroreps(self, crn_across_macroreps: bool) -> None:
-        self.__crn_across_macroreps = crn_across_macroreps
-
-    @property
-    def all_post_replicates(self) -> list[list[list]]:
-        """All post-replicates from all solutions from all macroreplications."""
-        return self.__all_post_replicates
-
-    @all_post_replicates.setter
-    def all_post_replicates(self, all_post_replicates: list[list[list]]) -> None:
-        self.__all_post_replicates = all_post_replicates
-
-    @property
-    def all_est_objectives(self) -> list[list[float]]:
-        """Estimated objective values of all solutions from all macroreplications."""
-        return self.__all_est_objectives
-
-    @all_est_objectives.setter
-    def all_est_objectives(self, all_est_objectives: list[list[float]]) -> None:
-        self.__all_est_objectives = all_est_objectives
-
-    @property
-    def n_postreps_init_opt(self) -> int:
-        """Number of postreplications at initial (x0) and optimal (x*) solutions."""
-        return self.__n_postreps_init_opt
-
-    @n_postreps_init_opt.setter
-    def n_postreps_init_opt(self, n_postreps_init_opt: int) -> None:
-        self.__n_postreps_init_opt = n_postreps_init_opt
-
-    @property
-    def crn_across_init_opt(self) -> bool:
-        """Whether CRN is used for postreplications at x0 and x* solutions."""
-        return self.__crn_across_init_opt
-
-    @crn_across_init_opt.setter
-    def crn_across_init_opt(self, crn_across_init_opt: bool) -> None:
-        self.__crn_across_init_opt = crn_across_init_opt
-
-    @property
-    def x0(self) -> tuple:
-        """Initial solution (x0)."""
-        return self.__x0
-
-    @x0.setter
-    def x0(self, x0: tuple) -> None:
-        self.__x0 = x0
-
-    @property
-    def x0_postreps(self) -> list:
-        """Post-replicates at x0."""
-        return self.__x0_postreps
-
-    @x0_postreps.setter
-    def x0_postreps(self, x0_postreps: list) -> None:
-        self.__x0_postreps = x0_postreps
-
-    @property
-    def xstar(self) -> tuple:
-        """Proxy for optimal solution (x*)."""
-        return self.__xstar
-
-    @xstar.setter
-    def xstar(self, xstar: tuple) -> None:
-        self.__xstar = xstar
-
-    @property
-    def xstar_postreps(self) -> list:
-        """Post-replicates at x*."""
-        return self.__xstar_postreps
-
-    @xstar_postreps.setter
-    def xstar_postreps(self, xstar_postreps: list) -> None:
-        self.__xstar_postreps = xstar_postreps
-
-    @property
-    def objective_curves(self) -> list[Curve]:
-        """Estimated objective function curves, one per macroreplication."""
-        return self.__objective_curves
-
-    @objective_curves.setter
-    def objective_curves(self, objective_curves: list[Curve]) -> None:
-        self.__objective_curves = objective_curves
-
-    @property
-    def progress_curves(self) -> list[Curve]:
-        """Progress curves, one for each macroreplication."""
-        return self.__progress_curves
-
-    @progress_curves.setter
-    def progress_curves(self, progress_curves: list[Curve]) -> None:
-        self.__progress_curves = progress_curves
-
-    @property
-    def has_run(self) -> bool:
-        """True if the solver has been run on the problem, otherwise False."""
-        return self.__has_run
-
-    @has_run.setter
-    def has_run(self, has_run: bool) -> None:
-        self.__has_run = has_run
-
-    @property
-    def has_postreplicated(self) -> bool:
-        """True if the solver has been postreplicated, otherwise False."""
-        return self.__has_postreplicated
-
-    @has_postreplicated.setter
-    def has_postreplicated(self, has_postreplicated: bool) -> None:
-        self.__has_postreplicated = has_postreplicated
-
-    @property
-    def has_postnormalized(self) -> bool:
-        """True if the solver has been postprocessed, otherwise False."""
-        return self.__has_postnormalized
-
-    @has_postnormalized.setter
-    def has_postnormalized(self, has_postnormalized: bool) -> None:
-        self.__has_postnormalized = has_postnormalized
 
     def __init__(
         self,
@@ -314,6 +108,21 @@ class ProblemSolver:
         self.all_stoch_constraints = []
         self.all_est_lhs = []
         self.feasibility_curves = []
+
+        self.n_macroreps: int = 0
+        self.file_name_path: Path
+        self.all_recommended_xs: list[list[tuple]] = []
+        self.all_intermediate_budgets: list[list] = []
+        self.timings: list[float] = []
+        self.n_postreps: int = 0
+        self.crn_across_budget: bool = False
+        self.crn_across_macroreps: bool = False
+        self.all_post_replicates: list[list[list]] = []
+        self.all_est_objectives: list[list[float]] = []
+        self.n_postreps_init_opt: int = 0
+        self.crn_across_init_opt: bool = False
+        self.x0_postreps: list[float] = []
+        self.xstar_postreps: list[float] = []
 
         # Initialize solver.
         if isinstance(solver, Solver):  # Method 2
@@ -497,64 +306,17 @@ class ProblemSolver:
         Raises:
             ValueError: If `n_macroreps` is not positive.
         """
-        # Local Imports
-        from functools import partial
-
-        # Value checking
-        if n_macroreps <= 0:
-            error_msg = "Number of macroreplications must be positive."
-            raise ValueError(error_msg)
-
-        msg = f"Running Solver {self.solver.name} on Problem {self.problem.name}."
-        logging.info(msg)
-
-        # Initialize variables
-        self.n_macroreps = n_macroreps
-        self.all_recommended_xs = [[] for _ in range(n_macroreps)]
-        self.all_intermediate_budgets = [[] for _ in range(n_macroreps)]
-        self.timings = [0.0 for _ in range(n_macroreps)]
-
-        # Create, initialize, and attach random number generators
-        #     Stream 0: reserved for taking post-replications
-        #     Stream 1: reserved for bootstrapping
-        #     Stream 2: reserved for overhead ...
-        #         Substream 0: rng for random problem instance
-        #         Substream 1: rng for random initial solution x0 and
-        #                      restart solutions
-        #         Substream 2: rng for selecting random feasible solutions
-        #         Substream 3: rng for solver's internal randomness
-        #     Streams 3, 4, ..., n_macroreps + 2: reserved for
-        #                                         macroreplications
-        # rng0 = MRG32k3a(s_ss_sss_index=[2, 0, 0])  # Currently unused.
-        rng_list = [MRG32k3a(s_ss_sss_index=[2, i + 1, 0]) for i in range(3)]
-        self.solver.attach_rngs(rng_list)
-
-        # Start a timer
-        function_start = time.time()
-
-        logging.debug("Starting macroreplications")
-
-        # Start the macroreplications in parallel (async)
-        run_multithread_partial = partial(
-            self.run_multithread, solver=self.solver, problem=self.problem
+        start = time.time()
+        df, elapsed_times = run_solver.run_solver(
+            self.solver, self.problem, n_macroreps, n_jobs
         )
+        elapsed = time.time() - start
+        logging.info(f"Finished running {n_macroreps} mreps in {elapsed:.3f} seconds.")
 
-        if n_jobs == 1:
-            results: list[tuple] = [
-                run_multithread_partial(i) for i in range(n_macroreps)
-            ]
-        else:
-            results: list[tuple] = Parallel(n_jobs=n_jobs)(
-                delayed(run_multithread_partial)(i) for i in range(n_macroreps)
-            )  # type: ignore
-
-        for mrep, recommended_xs, intermediate_budgets, timing in results:
-            self.all_recommended_xs[mrep] = recommended_xs
-            self.all_intermediate_budgets[mrep] = intermediate_budgets
-            self.timings[mrep] = timing
-
-        runtime = round(time.time() - function_start, 3)
-        logging.info(f"Finished running {n_macroreps} mreps in {runtime} seconds.")
+        self.n_macroreps = n_macroreps
+        self.all_recommended_xs = run_solver._to_list(df, "solution")
+        self.all_intermediate_budgets = run_solver._to_list(df, "budget")
+        self.timings = elapsed_times
 
         self.has_run = True
         self.has_postreplicated = False
@@ -564,88 +326,6 @@ class ProblemSolver:
         if self.create_pickle:
             file_name = self.file_name_path.name
             self.record_experiment_results(file_name=file_name)
-
-    def run_multithread(self, mrep: int, solver: Solver, problem: Problem) -> tuple:
-        """Runs one macroreplication of the solver on the problem.
-
-        Args:
-            mrep (int): Index of the macroreplication.
-            solver (Solver): The simulation-optimization solver to run.
-            problem (Problem): The problem to solve.
-
-        Returns:
-            tuple: A tuple containing:
-                - int: Macroreplication index.
-                - list: Recommended solutions.
-                - list: Intermediate budgets.
-                - float: Runtime for the macroreplication.
-
-        Raises:
-            ValueError: If `mrep` is negative.
-        """
-        # Value checking
-        if mrep < 0:
-            error_msg = "Macroreplication index must be non-negative."
-            raise ValueError(error_msg)
-
-        logging.debug(
-            f"Macroreplication {mrep + 1}: "
-            f"Starting Solver {solver.name} on Problem {problem.name}."
-        )
-        # Create, initialize, and attach RNGs used for simulating solutions.
-        progenitor_rngs = [
-            MRG32k3a(s_ss_sss_index=[mrep + 3, ss, 0])
-            for ss in range(problem.model.n_rngs)
-        ]
-        # Create a new set of RNGs for the solver based on the current macroreplication.
-        # Tried re-using the progentior RNGs, but we need to match the number needed by
-        # the solver, not the problem
-        solver_rngs = [
-            MRG32k3a(
-                s_ss_sss_index=[
-                    mrep + 3,
-                    problem.model.n_rngs + rng_index,
-                    0,
-                ]
-            )
-            for rng_index in range(len(solver.rng_list))
-        ]
-
-        # Set progenitor_rngs and rng_list for solver.
-        solver.solution_progenitor_rngs = progenitor_rngs
-        solver.rng_list = solver_rngs
-
-        # logging.debug([rng.s_ss_sss_index for rng in progenitor_rngs])
-        # Run the solver on the problem.
-        tic = time.perf_counter()
-        recommended_solns, intermediate_budgets = solver.run(problem=problem)
-        toc = time.perf_counter()
-        runtime = toc - tic
-        logging.debug(
-            f"Macroreplication {mrep + 1}: "
-            f"Finished Solver {solver.name} on Problem {problem.name} "
-            f"in {runtime:0.4f} seconds."
-        )
-
-        # Trim the recommended solutions and intermediate budgets
-        recommended_solns, intermediate_budgets = trim_solver_results(
-            problem=problem,
-            recommended_solutions=recommended_solns,
-            intermediate_budgets=intermediate_budgets,
-        )
-        # Sometimes we end up with numpy scalar values in the solutions,
-        # so we convert them to Python scalars. This is especially problematic
-        # when trying to dump the solutions to human-readable files as numpy
-        # scalars just spit out binary data.
-        # TODO: figure out where numpy scalars are coming from and fix it
-        solutions = [tuple([float(x) for x in soln.x]) for soln in recommended_solns]
-        # Return tuple (rec_solns, int_budgets, runtime)
-        return (
-            mrep,
-            solutions,
-            intermediate_budgets,
-            runtime,
-        )
 
     def _has_stochastic_constraints(self) -> bool:
         return self.problem.n_stochastic_constraints > 0
@@ -695,7 +375,7 @@ class ProblemSolver:
         results: list[tuple] = Parallel(n_jobs=-1)(
             delayed(self.post_replicate_multithread)(mrep)
             for mrep in range(self.n_macroreps)
-        )  # type: ignore
+        )
         for mrep, post_rep, timing, stoch_constraints in results:
             self.all_post_replicates[mrep] = post_rep
             self.timings[mrep] = timing
@@ -929,14 +609,14 @@ class ProblemSolver:
                     bootstrap_curves.append(new_progress_curve)
                 else:
                     new_objective_curve = Curve(
-                        x_vals=np.array(self.all_intermediate_budgets[mrep]),
+                        x_vals=self.all_intermediate_budgets[mrep],
                         y_vals=est_objectives,
                     )
                     bootstrap_curves.append(new_objective_curve)
 
                 bootstrap_feasibility_curves.append(
                     Curve(
-                        x_vals=np.array(self.all_intermediate_budgets[mrep]),
+                        x_vals=self.all_intermediate_budgets[mrep],
                         y_vals=feasibility_score_history(
                             est_lhs,
                             feasibility_score_method,
@@ -1015,13 +695,13 @@ class ProblemSolver:
                     bootstrap_curves.append(new_progress_curve)
                 else:
                     new_objective_curve = Curve(
-                        x_vals=np.array(self.all_intermediate_budgets[mrep]),
+                        x_vals=self.all_intermediate_budgets[mrep],
                         y_vals=est_objectives,
                     )
                     bootstrap_curves.append(new_objective_curve)
                 bootstrap_feasibility_curves.append(
                     Curve(
-                        x_vals=np.array(self.all_intermediate_budgets[mrep]),
+                        x_vals=self.all_intermediate_budgets[mrep],
                         y_vals=feasibility_score_history(
                             est_lhs,
                             feasibility_score_method,
@@ -1073,7 +753,7 @@ class ProblemSolver:
             lhs = self.all_est_lhs[mrep]
             self.feasibility_curves.append(
                 Curve(
-                    x_vals=np.array(self.all_intermediate_budgets[mrep]),
+                    x_vals=self.all_intermediate_budgets[mrep],
                     y_vals=feasibility_score_history(
                         lhs,
                         feasibility_score_method,
@@ -1196,38 +876,3 @@ class ProblemSolver:
                 #     "\tThe time taken to complete this macroreplication was "
                 #     f"{round(self.timings[mrep], 2)} s.\n"
                 # )
-
-
-def trim_solver_results(
-    problem: Problem,
-    recommended_solutions: list[Solution],
-    intermediate_budgets: list[int],
-) -> tuple[list[Solution], list[int]]:
-    """Trims solver-recommended solutions beyond the problem's maximum budget.
-
-    Args:
-        problem (Problem): The problem the solver was run on.
-        recommended_solutions (list[Solution]): Solutions recommended by the solver.
-        intermediate_budgets (list[int]): Budgets at which solutions were recommended.
-
-    Returns:
-        tuple: A tuple containing:
-            - list[Solution]: Trimmed list of recommended solutions.
-            - list[int]: Trimmed list of corresponding intermediate budgets.
-    """
-    # Remove solutions corresponding to intermediate budgets exceeding max budget.
-    invalid_idxs = [
-        idx
-        for idx, element in enumerate(intermediate_budgets)
-        if element > problem.factors["budget"]
-    ]
-    for invalid_idx in sorted(invalid_idxs, reverse=True):
-        del recommended_solutions[invalid_idx]
-        del intermediate_budgets[invalid_idx]
-    # If no solution is recommended at the final budget,
-    # re-recommend the latest recommended solution.
-    # (Necessary for clean plotting of progress curves.)
-    if intermediate_budgets[-1] < problem.factors["budget"]:
-        recommended_solutions.append(recommended_solutions[-1])
-        intermediate_budgets.append(problem.factors["budget"])
-    return recommended_solutions, intermediate_budgets

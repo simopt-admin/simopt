@@ -13,7 +13,7 @@ exclude = [
     "scripts/run_experiment.py",
     "simopt/bootstrap.py",
     "simopt/directory.py",
-    "simopt/experiment",
+    "simopt/experiment/post_normalize.py",
     "simopt/experiment_base.py",
     "simopt/gui/data_farming_window.py",
     "simopt/gui/new_experiment_window.py",
