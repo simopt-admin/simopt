@@ -10,6 +10,9 @@ mrg32k3a/
 
 # MacOS
 .DS_Store
+Thumbs.db
+*.tmp
+*.swp
 
 # The following is from GitHub's Python .gitignore template
 # https://github.com/github/gitignore/blob/main/Python.gitignore
@@ -140,6 +143,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env*
 .venv
 env/
 venv/
@@ -283,3 +287,7 @@ fabric.properties
 # Azure Toolkit for IntelliJ plugin
 # https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
 .idea/**/azureSettings.xml
+test/data/
+.idea
+.codex/
+.tasks/
