@@ -584,13 +584,15 @@ def bootstrap_sample(
             est_objectives = []
             est_lhs = []
             for budget in range(len(problem_solver.all_intermediate_budgets[mrep])):
+                # Uniformly resample N postreps (with replacement)
+                # from 0, 1, ..., N-1.
+                bs_postrep_idxs = bootstrap_rng.choices(
+                    range(problem_solver.n_postreps), k=problem_solver.n_postreps
+                )
                 if has_stochastic_constraints:
-                    indices = bootstrap_rng.choices(
-                        range(problem_solver.n_postreps), k=problem_solver.n_postreps
-                    )
                     est_lhs.append(
                         problem_solver.all_stoch_constraints[mrep][budget][
-                            indices
+                            bs_postrep_idxs
                         ].mean(axis=0)
                     )
                 else:
@@ -607,11 +609,6 @@ def bootstrap_sample(
                     est_objectives.append(bs_optimal_obj_val)
                 # ... else solution other than x0 or x*.
                 else:
-                    # Uniformly resample N postreps (with replacement)
-                    # from 0, 1, ..., N-1.
-                    bs_postrep_idxs = bootstrap_rng.choices(
-                        range(problem_solver.n_postreps), k=problem_solver.n_postreps
-                    )
                     # Compute the mean of the resampled postreplications.
                     est_objectives.append(
                         np.mean(
@@ -623,9 +620,9 @@ def bootstrap_sample(
                             ]
                         )
                     )
-                    # Reset subsubstream if using CRN across budgets.
-                    if problem_solver.crn_across_budget:
-                        bootstrap_rng.reset_subsubstream()
+                # Reset subsubstream if using CRN across budgets.
+                if problem_solver.crn_across_budget:
+                    bootstrap_rng.reset_subsubstream()
             # If using CRN across macroreplications...
             if problem_solver.crn_across_macroreps:
                 # ...reset subsubstreams...
