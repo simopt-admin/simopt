@@ -46,7 +46,7 @@ class RandomSearch(Solver):
     variable_type: ClassVar[VariableType] = VariableType.MIXED
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem) -> None:  # noqa: D102
+    def solve(self, problem: Problem) -> None:
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         # Start at initial solution and record as best.

@@ -204,7 +204,7 @@ class MovementInputModel(InputModel):
 
     rng: Random | None = None
 
-    def random(self, mean: float, std: float) -> float:  # noqa: D102
+    def random(self, mean: float, std: float) -> float:
         assert self.rng is not None
         return self.rng.normalvariate(mean, std)
 
@@ -236,7 +236,7 @@ class IronOre(Model):
 
         self.movement_model = MovementInputModel()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.movement_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:
@@ -368,18 +368,18 @@ class IronOreMaxRev(Problem):
     }
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return 4
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {
             "price_prod": vector[0],
             "inven_stop": vector[1],
@@ -387,7 +387,7 @@ class IronOreMaxRev(Problem):
             "price_sell": vector[3],
         }
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (
             factor_dict["price_prod"],
             factor_dict["inven_stop"],
@@ -395,12 +395,12 @@ class IronOreMaxRev(Problem):
             factor_dict["price_sell"],
         )
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["total_profit"])]
         return RepResult(objectives=objectives)
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # return (
         #     rand_sol_rng.randint(70, 90),
         #     rand_sol_rng.randint(2000, 8000),
@@ -438,40 +438,40 @@ class IronOreMaxRevCnt(Problem):
     }
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return 3
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0.0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {
             "price_prod": vector[0],
             "price_stop": vector[1],
             "price_sell": vector[2],
         }
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (
             factor_dict["price_prod"],
             factor_dict["price_stop"],
             factor_dict["price_sell"],
         )
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["total_profit"])]
         return RepResult(objectives=objectives)
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         return x[0] >= 0 and x[1] >= 0 and x[2] >= 0
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # return (
         #     rand_sol_rng.randint(70, 90),
         #     rand_sol_rng.randint(30, 50),

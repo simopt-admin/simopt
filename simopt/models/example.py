@@ -82,7 +82,7 @@ class ExampleModel(Model):
         super().__init__(fixed_factors)
         self.noise_model = Normal()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.noise_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:
@@ -121,34 +121,34 @@ class ExampleProblem(Problem):
     model_decision_factors: ClassVar[set[str]] = {"x"}
 
     @property
-    def optimal_value(self) -> float | None:  # noqa: D102
+    def optimal_value(self) -> float | None:
         return 0.0
 
     @property
-    def optimal_solution(self) -> tuple | None:  # noqa: D102
+    def optimal_solution(self) -> tuple | None:
         # Change if f is changed
         # TODO: figure out what f is
         return (0,) * self.dim
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return len(self.factors["initial_solution"])
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (-np.inf,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"x": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["x"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, gradients = self.model.replicate()
         objectives = [
             Objective(
@@ -158,7 +158,7 @@ class ExampleProblem(Problem):
         ]
         return RepResult(objectives=objectives)
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # x = tuple([rand_sol_rng.uniform(-2, 2) for _ in range(self.dim)])
         return tuple(
             rand_sol_rng.mvnormalvariate(
@@ -228,7 +228,7 @@ class Example2Model(Model):
         super().__init__(fixed_factors)
         self.noise_model = Normal()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.noise_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:
@@ -258,35 +258,35 @@ class Example2Problem(Problem):
     model_decision_factors: ClassVar[set[str]] = {"x"}
 
     @property
-    def optimal_value(self) -> float | None:  # noqa: D102
+    def optimal_value(self) -> float | None:
         return 0.0
 
     @property
-    def optimal_solution(self) -> tuple | None:  # noqa: D102
+    def optimal_solution(self) -> tuple | None:
         return (1, 2, 3, 4)
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return 4
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (-4,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (4,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"x": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["x"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["est_f(x)"])]
         return RepResult(objectives=objectives)
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         return tuple(rand_sol_rng.randint(-4, 4) for _ in range(self.dim))

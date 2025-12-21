@@ -151,7 +151,7 @@ class ChessMatchmaking(Model):
         self.elo_model = EloInputModel()
         self.arrival_model = Poisson()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.elo_model.set_rng(rng_list[0])
         self.arrival_model.set_rng(rng_list[1])
 
@@ -242,24 +242,24 @@ class ChessAvgDifference(Problem):
     model_decision_factors: ClassVar[set[str]] = {"allowable_diff"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return 1
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,)
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (2400,)
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"allowable_diff": vector[0]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["allowable_diff"],)
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         return RepResult(
             objectives=[Objective(stochastic=responses["avg_diff"])],
@@ -271,9 +271,9 @@ class ChessAvgDifference(Problem):
             ],
         )
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(x_val > 0 for x_val in x)
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         val = rand_sol_rng.normalvariate(150, 50)
         return (min(max(0.0, float(val)), 2400.0),)

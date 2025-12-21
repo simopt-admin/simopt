@@ -217,7 +217,7 @@ class RouteInputModel(InputModel):
 
     rng: Random | None = None
 
-    def random(self, choices: list[int], weights: list[float], k: int) -> list[int]:  # noqa: D102
+    def random(self, choices: list[int], weights: list[float], k: int) -> list[int]:
         assert self.rng is not None
         return self.rng.choices(choices, weights, k=k)
 
@@ -244,7 +244,7 @@ class Network(Model):
         self.route_model = RouteInputModel()
         self.service_model = Triangular()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.arrival_model.set_rng(rng_list[0])
         self.route_model.set_rng(rng_list[1])
         self.service_model.set_rng(rng_list[2])
@@ -377,29 +377,29 @@ class NetworkMinTotalCost(Problem):
     model_decision_factors: ClassVar[set[str]] = {"process_prob"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return self.model.factors["n_networks"]
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (1,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"process_prob": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["process_prob"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["total_cost"])]
         return RepResult(objectives=objectives)
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         # Check box constraints.
         box_feasible = super().check_deterministic_constraints(x)
         if not box_feasible:
@@ -408,7 +408,7 @@ class NetworkMinTotalCost(Problem):
         # Check constraint that probabilities sum to one.
         return round(sum(x), 10) == 1.0
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # Generating a random pmf with length equal to number of networks.
         x = rand_sol_rng.continuous_random_vector_from_simplex(
             n_elements=self.model.factors["n_networks"],

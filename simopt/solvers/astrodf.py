@@ -1022,7 +1022,7 @@ class ASTRODF(Solver):
         self.visited_pts_list = []
         self.kappa = None
 
-    def solve(self, problem: Problem) -> None:  # noqa: D102
+    def solve(self, problem: Problem) -> None:
         self.problem = problem
         self._initialize_solving()
 

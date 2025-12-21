@@ -130,7 +130,7 @@ class DemandInputModel(InputModel):
 
     rng: Random | None = None
 
-    def random(self, burr_c: float, burr_k: float) -> float:  # noqa: D102
+    def random(self, burr_c: float, burr_k: float) -> float:
         # Generate random demand according to Burr Type XII distribution.
         # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
         #   X = ((1-U)**(-1/k) - 1)**(1/c) has the desired distribution.
@@ -170,7 +170,7 @@ class CntNV(Model):
 
         self.demand_model = DemandInputModel()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.demand_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:
@@ -261,24 +261,24 @@ class CntNVMaxProfit(Problem):
     model_decision_factors: ClassVar[set[str]] = {"order_quantity"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return 1
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,)
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,)
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"order_quantity": vector[0]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["order_quantity"],)
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, gradients = self.model.replicate()
         return RepResult(
             objectives=[
@@ -289,9 +289,9 @@ class CntNVMaxProfit(Problem):
             ],
         )
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         return x[0] > 0
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # Generate an Exponential(rate = 1) r.v.
         return (rand_sol_rng.expovariate(1),)

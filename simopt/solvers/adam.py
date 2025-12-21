@@ -77,7 +77,7 @@ class ADAM(Solver):
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem) -> None:  # noqa: D102
+    def solve(self, problem: Problem) -> None:
         # Default values.
         r: int = self.factors["r"]
         beta_1: float = self.factors["beta_1"]

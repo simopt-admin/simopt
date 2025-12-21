@@ -122,7 +122,7 @@ class STRONG(Solver):
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem) -> None:  # noqa: D102
+    def solve(self, problem: Problem) -> None:
         # Default values.
         n0: int = self.factors["n0"]
         n_r: int = self.factors["n_r"]

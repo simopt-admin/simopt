@@ -134,7 +134,7 @@ class FixedSAN(Model):
 
         self.time_model = Exp()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.time_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:
@@ -249,15 +249,15 @@ class FixedSANLongestPath(Problem):
     model_decision_factors: ClassVar[set[str]] = {"arc_means"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return self.model.factors["num_arcs"]
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (1e-2,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
     def check_arc_costs(self) -> bool:
@@ -266,13 +266,13 @@ class FixedSANLongestPath(Problem):
             x > 0 for x in self.factors["arc_costs"]
         )
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"arc_means": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["arc_means"])
 
-    def replicate(self, x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, x: tuple) -> RepResult:
         responses, gradients = self.model.replicate()
         objectives = [
             Objective(
@@ -285,10 +285,10 @@ class FixedSANLongestPath(Problem):
         ]
         return RepResult(objectives=objectives)
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(x_i >= 0 for x_i in x)
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         return tuple(
             [rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)]
         )

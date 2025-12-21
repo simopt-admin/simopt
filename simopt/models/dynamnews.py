@@ -161,7 +161,7 @@ class Utility(InputModel):
         assert self.rng is not None
         return mu - beta * math.log(-math.log(self.rng.random()))
 
-    def random(  # noqa: D102
+    def random(
         self,
         mu: float,
         num_customer: int,
@@ -210,7 +210,7 @@ class DynamNews(Model):
 
         self.utility_model = Utility()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.utility_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:
@@ -308,30 +308,30 @@ class DynamNewsMaxProfit(Problem):
     model_decision_factors: ClassVar[set[str]] = {"init_level"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return self.model.factors["num_prod"]
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"init_level": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["init_level"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["profit"])]
         return RepResult(objectives=objectives)
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(x[j] > 0 for j in range(self.dim))
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         return tuple([rand_sol_rng.uniform(0, 10) for _ in range(self.dim)])

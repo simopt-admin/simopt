@@ -165,15 +165,15 @@ class DemandInputModel(InputModel):
     x_rng: MRG32k3a | None = None
     y_rng: MRG32k3a | None = None
 
-    def set_rng(self, rng: list[MRG32k3a] | tuple[MRG32k3a, MRG32k3a]) -> None:  # noqa: D102 # type: ignore
+    def set_rng(self, rng: list[MRG32k3a] | tuple[MRG32k3a, MRG32k3a]) -> None:  # type: ignore
         self.x_rng = rng[0]
         self.y_rng = rng[1]
 
-    def unset_rng(self) -> None:  # noqa: D102
+    def unset_rng(self) -> None:
         self.x_rng = None
         self.y_rng = None
 
-    def random(  # noqa: D102
+    def random(
         self, demand_means: np.ndarray, gamma_shape: float, gamma_scale: float
     ) -> np.ndarray:
         assert self.x_rng is not None and self.y_rng is not None
@@ -212,7 +212,7 @@ class RMITD(Model):
 
         self.demand_model = DemandInputModel()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.demand_model.set_rng(rng_list)
 
     def replicate(self) -> tuple[dict, dict]:
@@ -285,38 +285,38 @@ class RMITDMaxRevenue(Problem):
     }
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return 3
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {
             "initial_inventory": vector[0],
             "reservation_qtys": list(vector[0:]),
         }
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (
             factor_dict["initial_inventory"],
             *tuple(factor_dict["reservation_qtys"]),
         )
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["revenue"])]
         return RepResult(objectives=objectives)
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1))
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # Generate random solution using acceptable/rejection.
         while True:
             x = tuple([200 * rand_sol_rng.random() for _ in range(self.dim)])

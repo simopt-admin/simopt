@@ -321,7 +321,7 @@ class FCSA(Solver):
 
         return solution
 
-    def solve(self, problem: Problem) -> None:  # noqa: D102
+    def solve(self, problem: Problem) -> None:
         assert problem.n_stochastic_constraints > 0
 
         lower = np.array(problem.lower_bounds)

@@ -136,7 +136,7 @@ class SPSA(Solver):
         """
         return np.array(self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim))
 
-    def solve(self, problem: Problem) -> None:  # noqa: D102
+    def solve(self, problem: Problem) -> None:
         # -minmax is needed to cast this as a minimization problem
         neg_minmax = -np.array(problem.minmax)
         lower_bound = np.array(problem.lower_bounds)

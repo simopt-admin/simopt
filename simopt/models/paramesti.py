@@ -106,7 +106,7 @@ class ParameterEstimation(Model):
         self.y1_model = Gamma()
         self.y2_model = Gamma()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.y2_model.set_rng(rng_list[0])
         self.y1_model.set_rng(rng_list[1])
 
@@ -157,43 +157,43 @@ class ParamEstiMaxLogLik(Problem):
     model_decision_factors: ClassVar[set[str]] = {"x"}
 
     @property
-    def optimal_value(self) -> float | None:  # noqa: D102
+    def optimal_value(self) -> float | None:
         return None
 
     @property
-    def optimal_solution(self) -> tuple | None:  # noqa: D102
+    def optimal_solution(self) -> tuple | None:
         solution = self.model.factors["xstar"]
         if isinstance(solution, list):
             return tuple(solution)
         return solution
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return 2
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0.1,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (10,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"x": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["x"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["loglik"])]
         return RepResult(objectives=objectives)
 
-    def check_deterministic_constraints(self, _x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, _x: tuple) -> bool:
         return True
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         return tuple(
             [
                 rand_sol_rng.uniform(self.lower_bounds[idx], self.upper_bounds[idx])

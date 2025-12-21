@@ -217,7 +217,7 @@ class DemandInputModel(InputModel):
         observations = [self.rng.normalvariate(0, 1) for _ in range(len(cov))]
         return np.dot(chol, observations).transpose() + mean_vec
 
-    def random(self, mean: np.ndarray, cov: np.ndarray) -> np.ndarray:  # noqa: D102
+    def random(self, mean: np.ndarray, cov: np.ndarray) -> np.ndarray:
         while True:
             demand = np.array(self._mvnormalvariate(mean, cov))
             if np.all(demand >= 0):
@@ -249,7 +249,7 @@ class FacilitySize(Model):
 
         self.demand_model = DemandInputModel()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.demand_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:
@@ -304,24 +304,24 @@ class FacilitySizingTotalCost(Problem):
     model_decision_factors: ClassVar[set[str]] = {"capacity"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return self.model.factors["n_fac"]
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"capacity": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["capacity"])
 
-    def replicate(self, x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [
             Objective(
@@ -340,7 +340,7 @@ class FacilitySizingTotalCost(Problem):
             objectives=objectives, stochastic_constraints=stochastic_constraints
         )
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         cov_matrix = np.diag([x**2 for x in self.factors["initial_solution"]])
         x = rand_sol_rng.mvnormalvariate(
             self.factors["initial_solution"], cov_matrix.tolist(), factorized=False
@@ -371,30 +371,30 @@ class FacilitySizingMaxService(Problem):
     model_decision_factors: ClassVar[set[str]] = {"capacity"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return self.model.factors["n_fac"]
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"capacity": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["capacity"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         service_value = 1 - responses["stockout_flag"]
         objectives = [Objective(stochastic=service_value)]
         return RepResult(objectives=objectives)
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         # Check budget constraint
         budget_feasible = (
             np.dot(self.factors["installation_costs"], x)
@@ -406,7 +406,7 @@ class FacilitySizingMaxService(Problem):
         # Check box constraints from the base class
         return super().check_deterministic_constraints(x)
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # Generate random vector of length # of facilities of continuous values
         # summing to less than or equal to installation budget.
         x = rand_sol_rng.continuous_random_vector_from_simplex(

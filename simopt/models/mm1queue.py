@@ -139,7 +139,7 @@ class MM1Queue(Model):
         self.arrival_model = Exp()
         self.service_model = Exp()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.arrival_model.set_rng(rng_list[0])
         self.service_model.set_rng(rng_list[1])
 
@@ -287,24 +287,24 @@ class MM1MinMeanSojournTime(Problem):
     model_decision_factors: ClassVar[set[str]] = {"mu"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return 1
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"mu": vector[0]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["mu"],)
 
-    def replicate(self, x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, x: tuple) -> RepResult:
         responses, gradients = self.model.replicate()
         objectives = [
             Objective(
@@ -316,6 +316,6 @@ class MM1MinMeanSojournTime(Problem):
         ]
         return RepResult(objectives=objectives)
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # Generate an Exponential(rate = 1/3) r.v.
         return (rand_sol_rng.expovariate(1 / 3),)

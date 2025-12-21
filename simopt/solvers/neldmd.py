@@ -87,7 +87,7 @@ class NelderMead(Solver):
     gradient_needed: ClassVar[bool] = False
 
     # FIXME: fix typing on `sort_sol`
-    def solve(self, problem: Problem) -> None:  # noqa: D102
+    def solve(self, problem: Problem) -> None:
         # Designate random number generator for random sampling.
         get_rand_soln_rng = self.rng_list[1]
         n_pts = problem.dim + 1

@@ -167,7 +167,7 @@ class SSCont(Model):
         self.demand_model = Exp()
         self.lead_model = Poisson()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.demand_model.set_rng(rng_list[0])
         self.lead_model.set_rng(rng_list[1])
 
@@ -324,24 +324,24 @@ class SSContMinCost(Problem):
     model_decision_factors: ClassVar[set[str]] = {"s", "S"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return 2
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"s": vector[0], "S": vector[0] + vector[1]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [
             Objective(
@@ -354,10 +354,10 @@ class SSContMinCost(Problem):
         ]
         return RepResult(objectives=objectives)
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         return x[0] >= 0 and x[1] >= 0
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # x = (rand_sol_rng.expovariate(1 / 300), rand_sol_rng.expovariate(1 / 300))
         # x = tuple(
         #     sorted(

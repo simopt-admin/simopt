@@ -276,7 +276,7 @@ class Hotel(Model):
 
         self.arrival_model = Exp()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.arrival_model.set_rng(rng_list[0])
 
     def replicate(self) -> tuple[dict, dict]:
@@ -371,15 +371,15 @@ class HotelRevenue(Problem):
     model_decision_factors: ClassVar[set[str]] = {"booking_limits"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return self.model.factors["num_products"]
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (self.model.factors["num_rooms"],) * self.dim
 
     # # TODO: figure out how Problem.check_simulatable_factors() works
@@ -388,21 +388,21 @@ class HotelRevenue(Problem):
     #         len(self.lower_bounds) != self.dim or len(self.upper_bounds) != self.dim
     #     )
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"booking_limits": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["booking_limits"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["revenue"])]
         return RepResult(objectives=objectives)
 
-    def check_deterministic_constraints(self, _x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, _x: tuple) -> bool:
         return True
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         return tuple(
             [
                 rand_sol_rng.randint(0, self.model.factors["num_rooms"])

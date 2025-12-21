@@ -290,7 +290,7 @@ class AmusementPark(Model):
         for _ in range(self.factors["number_attractions"]):
             self.service_models.append(Gamma())
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.arrival_model.set_rng(rng_list[0])
         self.attraction_model.set_rng(rng_list[0])
         self.destination_model.set_rng(rng_list[1])
@@ -509,37 +509,37 @@ class AmusementParkMinDepart(Problem):
     model_decision_factors: ClassVar[set[str]] = {"queue_capacities"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return self.model.factors["number_attractions"]
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (self.model.factors["park_capacity"],) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict[str, tuple]:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict[str, tuple]:
         return {
             "queue_capacities": vector[:],
         }
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["queue_capacities"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         return RepResult(objectives=[Objective(stochastic=responses["total_departed"])])
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         # Check box constraints.
         if not super().check_deterministic_constraints(x):
             return False
         # Check if sum of queue capacities is less than park capacity.
         return sum(x) <= self.model.factors["park_capacity"]
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         num_elements: int = self.model.factors["number_attractions"]
         summation: int = self.model.factors["park_capacity"]
         vector = rand_sol_rng.integer_random_vector_from_simplex(

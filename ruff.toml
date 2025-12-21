@@ -53,3 +53,7 @@ known-first-party = ["simopt", "mrg32k3a"]
 
 [lint.pep8-naming]
 classmethod-decorators = ["simopt.utils.classproperty"]
+
+[lint.per-file-ignores]
+"simopt/models/*" = ["D"]
+"simopt/solvers/*" = ["D"]

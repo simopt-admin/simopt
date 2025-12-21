@@ -182,7 +182,7 @@ class TableAllocation(Model):
         self.group_size_model = WeightedChoice()
         self.service_time_model = Exp()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.arrival_time_model.set_rng(rng_list[0])
         self.arrival_number_model.set_rng(rng_list[0])
         self.group_size_model.set_rng(rng_list[1])
@@ -321,35 +321,35 @@ class TableAllocationMaxRev(Problem):
     model_decision_factors: ClassVar[set[str]] = {"num_tables"}
 
     @property
-    def dim(self) -> int:  # noqa: D102
+    def dim(self) -> int:
         return 4
 
     @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
+    def lower_bounds(self) -> tuple:
         return (0,) * self.dim
 
     @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
+    def upper_bounds(self) -> tuple:
         return (np.inf,) * self.dim
 
-    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+    def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"num_tables": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["num_tables"],)
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         responses, _ = self.model.replicate()
         objectives = [Objective(stochastic=responses["total_revenue"])]
         return RepResult(objectives=objectives)
 
-    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+    def check_deterministic_constraints(self, x: tuple) -> bool:
         return (
             np.sum(np.multiply(self.model.factors["table_cap"], x))
             <= self.model.factors["capacity"]
         )
 
-    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # Add new tables of random size to the restaurant until the capacity is reached.
         # TODO: Replace this with call to integer_random_vector_from_simplex().
         # The different-weight case is not yet implemented.

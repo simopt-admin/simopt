@@ -86,7 +86,7 @@ class ALOE(Solver):
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem) -> None:  # noqa: D102
+    def solve(self, problem: Problem) -> None:
         # Default values.
         r = self.factors["r"]
         theta = self.factors["theta"]
