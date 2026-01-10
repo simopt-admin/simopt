@@ -123,8 +123,9 @@ def compute_ci(
     if estimator is not None:
         estimator = (
             estimator.set_index("budget")[value_column]
-            .reindex(budget)
+            .reindex(np.sort(np.unique(np.concatenate([budget, estimator["budget"]]))))
             .ffill()
+            .reindex(budget)
             .to_numpy()
         )
 

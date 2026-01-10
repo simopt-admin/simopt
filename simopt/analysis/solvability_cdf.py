@@ -28,11 +28,13 @@ class SolvabilityCdfResult:
     """Container for solvability CDF results.
 
     Attributes:
-        df: DataFrame containing the solvability CDF data and confidence intervals.
+        df: DataFrame containing the solvability CDF estimator data.
+        ci: Optional DataFrame containing confidence interval data.
         normalize: Whether the data is normalized.
     """
 
     df: pd.DataFrame
+    ci: pd.DataFrame | None
     normalize: bool
 
 
@@ -96,13 +98,7 @@ def analyze(
         normalize=normalize,
     )
 
-    if ci is None:
-        return SolvabilityCdfResult(df=estimator, normalize=normalize)
-
-    result = pd.merge(estimator, ci, on="budget", how="outer")
-    result[["cdf", "lb", "ub"]] = result[["cdf", "lb", "ub"]].ffill()
-    result["value"] = result["cdf"]
-    return SolvabilityCdfResult(df=result, normalize=normalize)
+    return SolvabilityCdfResult(df=estimator, ci=ci, normalize=normalize)
 
 
 def plot(
@@ -124,11 +120,14 @@ def plot(
     """
     df = result.df
 
-    handle = plot_step(ax, df["budget"], df["value"], linewidth=2, color=color)
+    handle = plot_step(ax, df["budget"], df["cdf"], linewidth=2, color=color)
 
-    if "lb" in df.columns and "ub" in df.columns:
-        logger.debug("data", data=[df["budget"], df["lb"], df["ub"]])
-        plot_ci(ax, df, color=color)
+    if result.ci is not None:
+        ci = result.ci
+        logger.debug(
+            "data", data=[df["budget"], df["cdf"], ci["budget"], ci["lb"], ci["ub"]]
+        )
+        plot_ci(ax, ci, color=color)
 
     return handle
 

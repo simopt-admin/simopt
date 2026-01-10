@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from simopt.experiment.api import AnalysisInput, PlotConfig
@@ -37,11 +38,13 @@ class SolvabilityProfileResult:
     """Container for solvability profile results.
 
     Attributes:
-        df: DataFrame containing the solvability profile data and confidence intervals.
+        df: DataFrame containing the solvability profile estimator data.
+        ci: Optional DataFrame containing confidence interval data.
         normalize: Whether the data is normalized.
     """
 
     df: pd.DataFrame
+    ci: pd.DataFrame | None
     normalize: bool
 
 
@@ -114,12 +117,7 @@ def analyze(
         normalize=normalize,
     )
 
-    if ci is None:
-        return SolvabilityProfileResult(df=estimator, normalize=normalize)
-
-    df = pd.merge(estimator, ci, on="budget", how="outer")
-    df[["value", "lb", "ub"]] = df[["value", "lb", "ub"]].ffill()
-    return SolvabilityProfileResult(df=df, normalize=normalize)
+    return SolvabilityProfileResult(df=estimator, ci=ci, normalize=normalize)
 
 
 def plot(
@@ -144,9 +142,14 @@ def plot(
         ax, df["budget"].to_numpy(), df["value"].to_numpy(), linewidth=2, color=color
     )
 
-    if "lb" in df.columns and "ub" in df.columns:
-        logger.debug("data", data=[df["budget"], df["lb"], df["ub"]])
-        plot_ci(ax, df, color=color)
+    if result.ci is not None:
+        ci = result.ci
+        logger.debug(
+            "data", data=[df["budget"], df["value"], ci["budget"], ci["lb"], ci["ub"]]
+        )
+        plot_ci(ax, ci, color=color)
+    else:
+        logger.debug("data", data=np.array([df["budget"], df["value"]]))
 
     return handle
 

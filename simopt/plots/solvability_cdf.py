@@ -132,9 +132,10 @@ def plot_solvability_cdfs(
                     logger.debug(
                         "data",
                         data=[
+                            estimator.x_vals,
+                            estimator.y_vals,
                             bs_conf_int_lb_curve.x_vals,
                             bs_conf_int_lb_curve.y_vals,
-                            bs_conf_int_ub_curve.x_vals,
                             bs_conf_int_ub_curve.y_vals,
                         ],
                     )
@@ -197,6 +198,8 @@ def plot_solvability_cdfs(
                     logger.debug(
                         "data",
                         data=[
+                            estimator.x_vals,
+                            estimator.y_vals,
                             bs_conf_int_lb_curve.x_vals,
                             bs_conf_int_lb_curve.y_vals,
                             bs_conf_int_ub_curve.y_vals,

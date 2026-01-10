@@ -216,6 +216,8 @@ def plot_solvability_profiles(
                     logger.debug(
                         "data",
                         data=[
+                            solver_curve.x_vals,
+                            solver_curve.y_vals,
                             bs_conf_int_lb_curve.x_vals,
                             bs_conf_int_lb_curve.y_vals,
                             bs_conf_int_ub_curve.y_vals,
@@ -340,6 +342,8 @@ def plot_solvability_profiles(
                         logger.debug(
                             "data",
                             data=[
+                                diff_solver_curve.x_vals,
+                                diff_solver_curve.y_vals,
                                 bs_conf_int_lb_curve.x_vals,
                                 bs_conf_int_lb_curve.y_vals,
                                 bs_conf_int_ub_curve.y_vals,
@@ -502,6 +506,8 @@ def plot_solvability_profiles(
                     logger.debug(
                         "data",
                         data=[
+                            solver_curve.x_vals,
+                            solver_curve.y_vals,
                             bs_conf_int_lb_curve.x_vals,
                             bs_conf_int_lb_curve.y_vals,
                             bs_conf_int_ub_curve.y_vals,
@@ -630,6 +636,8 @@ def plot_solvability_profiles(
                         logger.debug(
                             "data",
                             data=[
+                                diff_solver_curve.x_vals,
+                                diff_solver_curve.y_vals,
                                 bs_conf_int_lb_curve.x_vals,
                                 bs_conf_int_lb_curve.y_vals,
                                 bs_conf_int_ub_curve.y_vals,
