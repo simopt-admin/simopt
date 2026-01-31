@@ -223,6 +223,9 @@ def _get_xstar_and_sample(
     # Proxy for f(x*) is specified
     if proxy_optimal_value is not None:
         logging.info("Finding f(x*) using provided proxy f(x*).")
+        # TODO: should revisit this question. Do we always assume that both proxy_xstar
+        # and proxy_optimal_value are provided?
+        assert proxy_xstar is not None
         return proxy_xstar, np.full(n_reps, proxy_optimal_value)
 
     # Proxy for x* is specified.
@@ -247,7 +250,11 @@ def _get_xstar_and_sample(
         logging.info("Finding f(x*) using coded f(x*).")
         # NOTE: optimal_value is a tuple.
         # Currently hard-coded for single objective case, i.e., optimal_value[0].
-        return None, np.full(n_reps, problem.optimal_value)
+
+        # TODO: should revisit this question. Do we always assume that both
+        # problem.optimal_solution and problem.optimal_value are provided?
+        assert problem.optimal_solution is not None
+        return problem.optimal_solution, np.full(n_reps, problem.optimal_value)
 
     # x* is known...
     if problem.optimal_solution is not None:
