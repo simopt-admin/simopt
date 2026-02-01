@@ -2,7 +2,8 @@
 
 import copy
 from collections.abc import Callable
-from typing import TypeVar
+from statistics import quantiles
+from typing import Literal, TypeVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,6 +50,7 @@ def aggregate_curve(
     agg: str,
     value_column: str,
     beta: float | None = None,
+    quantile_method: Literal["python", "pandas"] = "python",
 ) -> pd.DataFrame:
     """Aggregate a curve across macroreplications.
 
@@ -60,12 +62,15 @@ def aggregate_curve(
         agg: Aggregation type, either 'mean' or 'quantile'.
         value_column: Name of the column containing values to aggregate.
         beta: Quantile level (0-1) required when agg is 'quantile'.
+        quantile_method: Quantile implementation method. Supported values:
+            "python" (statistics.quantiles) or "pandas" (DataFrame.quantile).
 
     Returns:
         DataFrame with 'budget' and aggregated value columns.
 
     Raises:
-        ValueError: If agg is 'quantile' but beta is None, or if agg is unsupported.
+        ValueError: If agg is 'quantile' but beta is None, if quantile method is
+            unsupported, or if agg is unsupported.
     """
     x = np.sort(df["budget"].unique())
     pivot = df.pivot_table(index="budget", columns="mrep", values=value_column)
@@ -75,10 +80,16 @@ def aggregate_curve(
     elif agg == "quantile":
         if beta is None:
             raise ValueError("beta is required for quantile aggregation.")
-        y = pivot.quantile(q=beta, axis=1)
+        if quantile_method == "python":
+            i = int(beta * 99)
+            y = [quantiles(row, n=100)[i] for _, row in pivot.iterrows()]
+        elif quantile_method == "pandas":
+            y = pivot.quantile(q=beta, axis=1).to_numpy()
+        else:
+            raise ValueError("unsupported quantile method.")
     else:
         raise ValueError("unsupported curve type.")
-    return pd.DataFrame({"budget": x, value_column: y.to_numpy()})
+    return pd.DataFrame({"budget": x, value_column: np.asarray(y)})
 
 
 def compute_ci(
