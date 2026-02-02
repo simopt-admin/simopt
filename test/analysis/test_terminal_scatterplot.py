@@ -4,7 +4,7 @@ import numpy as np
 from simopt.analysis.terminal_scatterplot import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.plots.terminal_scatterplot import plot_terminal_scatterplots
-from test.utils import capture_log_data, to_analysis_input
+from test.utils import capture_log_data
 
 
 def test_terminal_scatterplot(experiment):
@@ -20,8 +20,7 @@ def test_terminal_scatterplot(experiment):
         problem_set_name="PROBLEM_SET",
     )
 
-    result = convert(experiment)
-    analysis_input = to_analysis_input(result)
+    analysis_input = convert(experiment)
     analysis_result = analyze(
         analysis_input,
         normalize=True,
@@ -46,10 +45,7 @@ def test_terminal_scatterplot_same_problem_experiments(same_problem_experiments)
         problem_set_name="PROBLEM_SET",
     )
 
-    analysis_inputs = [
-        to_analysis_input(convert(experiment))
-        for experiment in same_problem_experiments
-    ]
+    analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         normalize=True,
@@ -78,8 +74,7 @@ def test_terminal_scatterplot_different_problem_experiments(
     )
 
     analysis_inputs = [
-        to_analysis_input(convert(experiment))
-        for experiment in different_problem_experiments
+        convert(experiment) for experiment in different_problem_experiments
     ]
     analysis_results = analyze_many(
         analysis_inputs,

@@ -2,14 +2,12 @@ import pickle
 from collections.abc import Callable
 from typing import Any
 
-import numpy as np
 import structlog
 import zstandard as zstd
 from structlog.testing import capture_logs
 
 from simopt.curve import Curve
 from simopt.experiment import ProblemSolver
-from simopt.experiment.api import AnalysisInput, Result
 
 
 def load_problem_solver(path: str) -> ProblemSolver:
@@ -46,14 +44,3 @@ def capture_log_data(
     with capture_logs() as logs:
         func(*args, logger=logger, **kwargs)
     return [log["data"] for log in logs if "data" in log]
-
-
-def to_analysis_input(result: Result) -> AnalysisInput:
-    normalization_result = result.normalization_result
-    return AnalysisInput(
-        full_df=result.full_df,
-        x0=np.array(normalization_result.x0),
-        x0_sample=normalization_result.x0_sample,
-        xstar=np.array(normalization_result.xstar),
-        xstar_sample=normalization_result.xstar_sample,
-    )

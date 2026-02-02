@@ -7,7 +7,7 @@ from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plot_type import PlotType
 from simopt.plots.feasibility_progress import plot_feasibility_progress
-from test.utils import capture_log_data, to_analysis_input
+from test.utils import capture_log_data
 
 
 @pytest.mark.parametrize(
@@ -47,8 +47,7 @@ def test_feasibility_progress(experiment):
         save_as_pickle=False,
     )
 
-    result = convert(experiment)
-    analysis_input = to_analysis_input(result)
+    analysis_input = convert(experiment)
     analysis_result = analyze(
         analysis_input,
         "mean",
@@ -102,9 +101,7 @@ def test_feasibility_progress_plot_many(san2_experiments):
         save_as_pickle=False,
     )
 
-    analysis_inputs = [
-        to_analysis_input(convert(experiment)) for experiment in san2_experiments
-    ]
+    analysis_inputs = [convert(experiment) for experiment in san2_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         "mean",
@@ -166,7 +163,7 @@ def test_feasibility_progress_different_problem_experiments(
     )
 
     analysis_inputs = [
-        to_analysis_input(convert(experiment))
+        convert(experiment)
         for experiment in different_problem_experiments_stochastic_constraints
     ]
     analysis_results = analyze_many(

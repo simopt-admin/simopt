@@ -12,7 +12,7 @@ from simopt.experiment.data import (
     ManyPostReplicateSchema,
     ManySolverHistorySchema,
 )
-from simopt.experiment.post_normalize import NormalizationResult, normalize
+from simopt.experiment.post_normalize import normalize
 from simopt.experiment.post_replicate import post_replicate
 from simopt.experiment.run_solver import run_solver
 from simopt.experiment.single import ProblemSolver
@@ -87,15 +87,6 @@ def create_matrix(
     ]
 
 
-@dataclass
-class Result:
-    experiments: list[ProblemSolver]
-    solver_history_df: pd.DataFrame
-    post_replicate_df: pd.DataFrame
-    full_df: pd.DataFrame
-    normalization_result: NormalizationResult
-
-
 def _mean(
     full_df: pd.DataFrame,
     x0: np.ndarray,
@@ -155,7 +146,20 @@ def run_experiment(
     crn_options: CrnOptions = DEFAULT_CRN_OPTIONS,
     proxy_values: ProxyValues | None = None,
     n_jobs: int = -1,
-) -> Result:
+) -> list[AnalysisInput]:
+    """Run experiments and return analysis inputs.
+
+    Args:
+        experiments: List of ProblemSolver experiments to run. All must share
+            the same problem.
+        simulation_config: Configuration for the simulation (n_mreps, n_preps, etc.).
+        crn_options: Options for common random numbers.
+        proxy_values: Optional proxy values for normalization.
+        n_jobs: Number of parallel jobs to run.
+
+    Returns:
+        A list of AnalysisInput objects, one per experiment.
+    """
     if not experiments:
         raise ValueError("experiments must not be empty.")
 
@@ -204,10 +208,17 @@ def run_experiment(
         proxy_values.optimal_objective,
     )
 
-    return Result(
-        experiments=experiments,
-        solver_history_df=many_solver_history_df,
-        post_replicate_df=many_post_replicate_df,
-        full_df=full_df,
-        normalization_result=normalization_result,
-    )
+    # Build list of AnalysisInput objects
+    analysis_inputs = []
+    for i in range(len(experiments)):
+        sliced_full_df = full_df.loc[i]
+        analysis_inputs.append(
+            AnalysisInput(
+                full_df=sliced_full_df,
+                x0=np.array(normalization_result.x0),
+                x0_sample=normalization_result.x0_sample,
+                xstar=np.array(normalization_result.xstar),
+                xstar_sample=normalization_result.xstar_sample,
+            )
+        )
+    return analysis_inputs

@@ -4,11 +4,9 @@ import numpy as np
 import pandas as pd
 
 from simopt.experiment import post_replicate, run_solver
-from simopt.experiment.api import Result
+from simopt.experiment.api import AnalysisInput
 from simopt.experiment.data import ManyPostReplicateSchema, ManySolverHistorySchema
-from simopt.experiment.post_normalize import NormalizationResult
 from simopt.experiment.single import ProblemSolver
-from simopt.utils import make_nonzero
 
 
 def _validate_experiment(experiment: ProblemSolver) -> None:
@@ -52,26 +50,8 @@ def _build_post_replicate_df(experiment: ProblemSolver) -> pd.DataFrame:
     return ManyPostReplicateSchema.validate(df)
 
 
-def _build_normalization_result(experiment: ProblemSolver) -> NormalizationResult:
-    x0_sample = np.array(experiment.x0_postreps, dtype=float)
-    xstar_sample = np.array(experiment.xstar_postreps, dtype=float)
-    initial_objective = float(np.mean(x0_sample))
-    optimal_objective = float(np.mean(xstar_sample))
-    initial_gap = make_nonzero(initial_objective - optimal_objective, "initial_gap")
-
-    return NormalizationResult(
-        x0=experiment.x0,
-        x0_sample=x0_sample,
-        xstar=experiment.xstar,
-        xstar_sample=xstar_sample,
-        initial_objective=initial_objective,
-        optimal_objective=optimal_objective,
-        initial_gap=initial_gap,
-    )
-
-
-def convert(experiment: ProblemSolver) -> Result:
-    """Convert a ProblemSolver object to a Result object."""
+def convert(experiment: ProblemSolver) -> AnalysisInput:
+    """Convert a ProblemSolver object to an AnalysisInput object."""
     _validate_experiment(experiment)
 
     solver_history_df = _build_solver_history_df(experiment)
@@ -81,13 +61,16 @@ def convert(experiment: ProblemSolver) -> Result:
         post_replicate_df, on=["experiment", "mrep", "step"]
     )
     full_df = full_df.set_index(["experiment", "mrep", "step", "rep"])
+    # Slice to remove experiment index level (there's only one experiment)
+    full_df = full_df.loc[0]
 
-    normalization_result = _build_normalization_result(experiment)
+    x0_sample = np.array(experiment.x0_postreps, dtype=float)
+    xstar_sample = np.array(experiment.xstar_postreps, dtype=float)
 
-    return Result(
-        experiments=[experiment],
-        solver_history_df=solver_history_df,
-        post_replicate_df=post_replicate_df,
+    return AnalysisInput(
         full_df=full_df,
-        normalization_result=normalization_result,
+        x0=np.array(experiment.x0),
+        x0_sample=x0_sample,
+        xstar=np.array(experiment.xstar),
+        xstar_sample=xstar_sample,
     )

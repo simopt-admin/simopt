@@ -6,7 +6,7 @@ from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plot_type import PlotType
 from simopt.plots.progress_curve import plot_progress_curves
-from test.utils import capture_log_data, to_analysis_input
+from test.utils import capture_log_data
 
 
 def test_progress_curve(experiment):
@@ -40,8 +40,7 @@ def test_progress_curve(experiment):
         solver_set_name="SOLVER_SET",
     )
 
-    result = convert(experiment)
-    analysis_input = to_analysis_input(result)
+    analysis_input = convert(experiment)
     analysis_result = analyze(
         analysis_input,
         "mean",
@@ -88,10 +87,7 @@ def test_progress_curve_same_problem_experiments(same_problem_experiments):
         solver_set_name="SOLVER_SET",
     )
 
-    analysis_inputs = [
-        to_analysis_input(convert(experiment))
-        for experiment in same_problem_experiments
-    ]
+    analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         "mean",

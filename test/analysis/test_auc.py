@@ -5,7 +5,7 @@ from simopt.analysis.auc import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plots.area_scatterplot import plot_area_scatterplots
-from test.utils import capture_log_data, to_analysis_input
+from test.utils import capture_log_data
 
 
 def test_auc(experiment):
@@ -35,8 +35,7 @@ def test_auc(experiment):
         problem_set_name="PROBLEM_SET",
     )
 
-    result = convert(experiment)
-    analysis_input = to_analysis_input(result)
+    analysis_input = convert(experiment)
     analysis_result = analyze(
         analysis_input,
         ci_options,
@@ -79,10 +78,7 @@ def test_auc_same_problem_experiments(same_problem_experiments):
         problem_set_name="PROBLEM_SET",
     )
 
-    analysis_inputs = [
-        to_analysis_input(convert(experiment))
-        for experiment in same_problem_experiments
-    ]
+    analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         ci_options,
@@ -127,8 +123,7 @@ def test_auc_different_problem_experiments(different_problem_experiments):
     )
 
     analysis_inputs = [
-        to_analysis_input(convert(experiment))
-        for experiment in different_problem_experiments
+        convert(experiment) for experiment in different_problem_experiments
     ]
     analysis_results = analyze_many(
         analysis_inputs,

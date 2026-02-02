@@ -6,7 +6,7 @@ from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plot_type import PlotType
 from simopt.plots.solvability_profile import plot_solvability_profiles
-from test.utils import capture_log_data, to_analysis_input
+from test.utils import capture_log_data
 
 
 def test_solvability_profile(experiment):
@@ -42,8 +42,7 @@ def test_solvability_profile(experiment):
         problem_set_name="PROBLEM_SET",
     )
 
-    result = convert(experiment)
-    analysis_input = to_analysis_input(result)
+    analysis_input = convert(experiment)
     analysis_result = analyze(
         analysis_input,
         "cdf",
@@ -99,10 +98,7 @@ def test_solvability_profile_same_problem_experiments(same_problem_experiments):
         problem_set_name="PROBLEM_SET",
     )
 
-    analysis_inputs = [
-        to_analysis_input(convert(experiment))
-        for experiment in same_problem_experiments
-    ]
+    analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         same_problem_experiments,
@@ -160,8 +156,7 @@ def test_solvability_profile_different_problem_experiments(
     )
 
     analysis_inputs = [
-        to_analysis_input(convert(experiment))
-        for experiment in different_problem_experiments
+        convert(experiment) for experiment in different_problem_experiments
     ]
     analysis_results = analyze_many(
         analysis_inputs,

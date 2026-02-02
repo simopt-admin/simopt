@@ -9,13 +9,27 @@ from simopt.options import CrnOptions
 from test.utils import load_problem_solver
 
 
+def _solver_history_df(result):
+    df = result.full_df.reset_index()
+    df["experiment"] = 0
+    return df
+
+
+def _post_replicate_df(result):
+    df = result.full_df.reset_index()
+    df["experiment"] = 0
+    return df
+
+
 def test_convert_matches_new_api_result():
     path = "test/expected_results/CNTNEWS1_ADAM.pickle.zst"
     experiment1 = load_problem_solver(path)
 
     result1 = convert(experiment1)
-    ManySolverHistorySchema.validate(result1.solver_history_df)
-    ManyPostReplicateSchema.validate(result1.post_replicate_df)
+    solver_history_df1 = _solver_history_df(result1)
+    post_replicate_df1 = _post_replicate_df(result1)
+    ManySolverHistorySchema.validate(solver_history_df1)
+    ManyPostReplicateSchema.validate(post_replicate_df1)
 
     # Run new experiment to compare
     n_mreps = experiment1.n_macroreps
@@ -39,14 +53,17 @@ def test_convert_matches_new_api_result():
             across_budget=True, across_macroreps=False, across_x0_xstar=True
         ),
         n_jobs=1,
-    )
-    ManySolverHistorySchema.validate(result2.solver_history_df)
-    ManyPostReplicateSchema.validate(result2.post_replicate_df)
+    )[0]
+
+    solver_history_df2 = _solver_history_df(result2)
+    post_replicate_df2 = _post_replicate_df(result2)
+    ManySolverHistorySchema.validate(solver_history_df2)
+    ManyPostReplicateSchema.validate(post_replicate_df2)
 
     columns = ["experiment", "mrep", "step", "budget", "solution"]
     pdt.assert_frame_equal(
-        result1.solver_history_df[columns],
-        result2.solver_history_df[columns],
+        solver_history_df1[columns],
+        solver_history_df2[columns],
         check_exact=False,
         rtol=1e-8,
         atol=1e-8,
@@ -61,8 +78,8 @@ def test_convert_matches_new_api_result():
         "stochastic_constraints",
     ]
     pdt.assert_frame_equal(
-        result1.post_replicate_df[columns],
-        result2.post_replicate_df[columns],
+        post_replicate_df1[columns],
+        post_replicate_df2[columns],
         check_exact=False,
         rtol=1e-8,
         atol=1e-8,
@@ -86,12 +103,9 @@ def test_convert_matches_new_api_result():
         atol=1e-8,
     )
 
-    norm_result1 = result1.normalization_result
-    norm_result2 = result2.normalization_result
-    assert norm_result1.x0 == norm_result2.x0
-    assert norm_result1.xstar == norm_result2.xstar
-    assert np.allclose(norm_result1.x0_sample, norm_result2.x0_sample)
-    assert np.allclose(norm_result1.xstar_sample, norm_result2.xstar_sample)
-    assert np.allclose(norm_result1.initial_objective, norm_result2.initial_objective)
-    assert np.allclose(norm_result1.optimal_objective, norm_result2.optimal_objective)
-    assert np.allclose(norm_result1.initial_gap, norm_result2.initial_gap)
+    assert np.allclose(result1.x0, result2.x0)
+    assert np.allclose(result1.xstar, result2.xstar)
+    assert np.allclose(result1.x0_sample, result2.x0_sample)
+    assert np.allclose(result1.xstar_sample, result2.xstar_sample)
+    assert np.allclose(np.mean(result1.x0_sample), np.mean(result2.x0_sample))
+    assert np.allclose(np.mean(result1.xstar_sample), np.mean(result2.xstar_sample))
