@@ -144,6 +144,7 @@ def _bootstrap_sample(
         x0_sample=x0_sample,
         xstar=analysis_input.xstar,
         xstar_sample=xstar_sample,
+        skip_aggregation=True,
     )
 
 

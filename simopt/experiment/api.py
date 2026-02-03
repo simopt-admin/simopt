@@ -93,19 +93,23 @@ def _mean(
     x0_sample: np.ndarray,
     xstar: np.ndarray,
     xstar_sample: np.ndarray,
+    skip_aggregation: bool = False,
 ) -> tuple[float, pd.DataFrame]:
-    df_mean = (
-        full_df.groupby(["mrep", "step"])
-        .agg(
-            {
-                "budget": "first",
-                "solution": "first",
-                "objective": "mean",
-                "stochastic_constraints": "mean",
-            }
+    if skip_aggregation:
+        df_mean = full_df
+    else:
+        df_mean = (
+            full_df.groupby(["mrep", "step"])
+            .agg(
+                {
+                    "budget": "first",
+                    "solution": "first",
+                    "objective": "mean",
+                    "stochastic_constraints": "mean",
+                }
+            )
+            .reset_index()
         )
-        .reset_index()
-    )
 
     initial_objective = float(np.mean(x0_sample))
     optimal_objective = float(np.mean(xstar_sample))
@@ -130,6 +134,7 @@ class AnalysisInput:
         x0_sample: np.ndarray,
         xstar: np.ndarray,
         xstar_sample: np.ndarray,
+        skip_aggregation: bool = False,
     ) -> None:
         """Initialize AnalysisInput with data and compute mean statistics."""
         self.full_df = full_df
@@ -137,7 +142,9 @@ class AnalysisInput:
         self.x0_sample = x0_sample
         self.xstar = xstar
         self.xstar_sample = xstar_sample
-        self.budget, self.mean_df = _mean(full_df, x0, x0_sample, xstar, xstar_sample)
+        self.budget, self.mean_df = _mean(
+            full_df, x0, x0_sample, xstar, xstar_sample, skip_aggregation
+        )
 
 
 def run_experiment(
