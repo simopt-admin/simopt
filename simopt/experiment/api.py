@@ -222,3 +222,53 @@ def run_experiment(
             )
         )
     return analysis_inputs
+
+
+def run(
+    experiments: list[ProblemSolver],
+    simulation_config: SimulationConfig,
+    crn_options: CrnOptions = DEFAULT_CRN_OPTIONS,
+    proxy_values: ProxyValues | None = None,
+    n_jobs: int = -1,
+) -> list[AnalysisInput]:
+    """Run experiments and return analysis inputs.
+
+    This is a wrapper around run_experiment that allows experiments on different
+    problems. Experiments are grouped by problem and run_experiment is called
+    for each group.
+
+    Args:
+        experiments: List of ProblemSolver experiments to run. Can be on
+            different problems.
+        simulation_config: Configuration for the simulation (n_mreps, n_preps, etc.).
+        crn_options: Options for common random numbers.
+        proxy_values: Optional proxy values for normalization.
+        n_jobs: Number of parallel jobs to run.
+
+    Returns:
+        A list of AnalysisInput objects, one per experiment, in the same order as input.
+    """
+    if not experiments:
+        return []
+
+    # Group experiments by problem
+    problem_groups = {}
+    for i, exp in enumerate(experiments):
+        problem_key = id(exp.problem)  # Group by problem instance
+        if problem_key not in problem_groups:
+            problem_groups[problem_key] = []
+        problem_groups[problem_key].append((i, exp))
+
+    # Run experiments for each problem group
+    results: list[tuple[int, AnalysisInput]] = []
+    for group in problem_groups.values():
+        indices, exps = zip(*group, strict=True)
+        analysis_inputs = run_experiment(
+            list(exps), simulation_config, crn_options, proxy_values, n_jobs
+        )
+        for idx, ai in zip(indices, analysis_inputs, strict=True):
+            results.append((idx, ai))
+
+    # Sort by original index and return
+    results.sort(key=lambda x: x[0])
+    return [ai for _, ai in results]
