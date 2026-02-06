@@ -23,7 +23,7 @@ from simopt.options import (
     CrnOptions,
 )
 
-from .bootstrap import _bootstrap_sample, _get_n_preps
+from .bootstrap import _bootstrap_sample, _get_n_preps, _transform_bootstrap_data
 from .common import compute_estimator_and_ci, plot_distribution
 
 
@@ -46,13 +46,14 @@ def _bootstrap(
 ) -> list[tuple[np.ndarray, np.ndarray]]:
     df = analysis_input.full_df
     n_preps = _get_n_preps(df)
+    data = _transform_bootstrap_data(df, n_preps)
     rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
     results = []
     for _ in range(n_bootstraps):
         bootstrap_input = _bootstrap_sample(
             analysis_input,
+            data,
             rng,
-            n_preps,
             crn_options.across_budget,
             crn_options.across_macroreps,
             crn_options.across_x0_xstar,

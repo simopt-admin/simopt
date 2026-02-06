@@ -51,20 +51,18 @@ def _bootstrap_common(
 
 
 def _bootstrap_mrep(
-    df: pd.DataFrame,
+    mrep_data: dict[str, np.ndarray],
     rng: MRG32k3a,
-    n_preps: int,
     crn_across_budget: bool,
     crn_across_macroreps: bool,
 ) -> pd.DataFrame:
     """Bootstrap a single macroreplication."""
-    n_steps = len(df) // n_preps
-    budgets = df["budget"].to_numpy().reshape(n_steps, n_preps)[:, 0]
-    solutions = df["solution"].to_numpy().reshape(n_steps, n_preps)[:, 0]
-    objectives = df["objective"].to_numpy().reshape(n_steps, n_preps)
-    stochastic_constraints = (
-        df["stochastic_constraints"].to_numpy().reshape(n_steps, n_preps)
-    )
+    budgets = mrep_data["budget"]
+    solutions = mrep_data["solution"]
+    objectives = mrep_data["objective"]
+    stochastic_constraints = mrep_data["stochastic_constraints"]
+    n_steps = objectives.shape[0]
+    n_preps = objectives.shape[1]
 
     use_special_indices = crn_across_budget and not crn_across_macroreps
     special_indices = (
@@ -80,15 +78,16 @@ def _bootstrap_mrep(
         )
 
         bootstrap_objective = float(np.mean(objectives[i, indices]))
+        bootstrap_stochastic_constraints = np.mean(
+            stochastic_constraints[i, indices], axis=0
+        )
 
         datum = {
             "step": i,
             "budget": budgets[i],
             "solution": solutions[i],
             "objective": bootstrap_objective,
-            "stochastic_constraints": np.stack(stochastic_constraints[i, indices]).mean(
-                axis=0
-            ),
+            "stochastic_constraints": bootstrap_stochastic_constraints,
         }
         data.append(datum)
 
@@ -104,17 +103,43 @@ def _bootstrap_mrep(
     return pd.DataFrame.from_records(data)
 
 
+def _transform_bootstrap_data(
+    df: pd.DataFrame,
+    n_preps: int,
+) -> list[dict[str, np.ndarray]]:
+    """Precompute per-macrorep arrays used by bootstrap sampling."""
+    data: list[dict[str, np.ndarray]] = []
+    for mrep in df.index.get_level_values("mrep").unique().to_list():
+        df_mrep = df.xs(mrep, level="mrep")
+        n_steps = len(df_mrep) // n_preps
+        budgets = df_mrep["budget"].to_numpy().reshape(n_steps, n_preps)[:, 0]
+        solutions = df_mrep["solution"].to_numpy().reshape(n_steps, n_preps)[:, 0]
+        objectives = df_mrep["objective"].to_numpy().reshape(n_steps, n_preps)
+        stochastic_constraint_dim = len(df_mrep["stochastic_constraints"].iloc[0])
+        stochastic_constraints = np.vstack(
+            df_mrep["stochastic_constraints"].to_numpy()
+        ).reshape(n_steps, n_preps, stochastic_constraint_dim)
+        data.append(
+            {
+                "budget": budgets,
+                "solution": solutions,
+                "objective": objectives,
+                "stochastic_constraints": stochastic_constraints,
+            }
+        )
+    return data
+
+
 def _bootstrap_sample(
     analysis_input: AnalysisInput,
+    data: list[dict[str, np.ndarray]],
     rng: MRG32k3a,
-    n_preps: int,
     crn_across_budget: bool,
     crn_across_macroreps: bool,
     crn_across_x0_xstar: bool,
     disable_macrorep_bootstrap: bool,
 ) -> AnalysisInput:
-    df = analysis_input.full_df
-    mreps = df.index.get_level_values("mrep").unique().to_list()
+    mreps = list(range(len(data)))
     bootstrap_mreps = _resample_macroreps(rng, mreps, disable_macrorep_bootstrap)
 
     x0_sample, xstar_sample = _bootstrap_common(
@@ -126,11 +151,9 @@ def _bootstrap_sample(
 
     dfs = []
     for i, mrep in enumerate(bootstrap_mreps):
-        df_mrep = df.xs(mrep, level="mrep")
         bootstrap_df = _bootstrap_mrep(
-            df_mrep,
+            data[mrep],
             rng,
-            n_preps,
             crn_across_budget,
             crn_across_macroreps,
         )
@@ -185,6 +208,7 @@ def bootstrap(
     # Compute n_preps directly from df
     df = analysis_input.full_df
     n_preps = _get_n_preps(df)
+    data = _transform_bootstrap_data(df, n_preps)
 
     results = []
     for i in range(n_bootstraps):
@@ -193,8 +217,8 @@ def bootstrap(
         rng = MRG32k3a(s_ss_sss_index=[1, i, 0])
         bootstrap_input = _bootstrap_sample(
             analysis_input,
+            data,
             rng,
-            n_preps,
             crn_across_budget,
             crn_across_macroreps,
             crn_across_x0_xstar,
