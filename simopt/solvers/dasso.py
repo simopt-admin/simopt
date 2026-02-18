@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import math
 import random
+from dataclasses import dataclass, field
 from typing import Annotated, ClassVar, Self
 
 import numpy as np
@@ -65,6 +66,14 @@ class DASSOConfig(SolverConfig):
         return self
 
 
+@dataclass
+class _RunState:
+    design_point_indices: list[int] = field(default_factory=list)
+    design_points_actual: list = field(default_factory=list)
+    sample_means_vec_d: np.ndarray = field(default_factory=lambda: np.array([]))
+    noise_cov_mat_diagonals: np.ndarray = field(default_factory=lambda: np.array([]))
+
+
 class DASSO(Solver):
     """Dice and Slice Simulation Optimization (DASSO).
 
@@ -93,17 +102,9 @@ class DASSO(Solver):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-        # Initialize attributes.
-        self._design_point_indices = []  # solution index of each design point
-        self._design_points_actual = []  # actual values of each design point
-        self._sample_means_vec_d = np.array(
-            []
-        )  # sample mean vector for the design points
-        self._noise_cov_mat_diagonals = np.array(
-            []
-        )  # noise covariance matrix diagonals for the design points
-
     def solve(self, problem: Problem) -> None:  # noqa: D102
+        run_state = _RunState()
+
         # Problem specifications.
         dim = problem.dim
         lower_bounds = problem.lower_bounds
@@ -124,13 +125,13 @@ class DASSO(Solver):
 
         # Parameter estimation.
         theta_parameters, random_effect_variances, beta_0 = (
-            self._hyperparameter_estimation(problem, mapping, decomposition)
+            self._hyperparameter_estimation(run_state, problem, mapping, decomposition)
         )
 
         # Identify the sample-best solution.
-        best_solution_candidate_index = self._sample_means_vec_d.argmin()
+        best_solution_candidate_index = run_state.sample_means_vec_d.argmin()
         self.recommended_solns.append(
-            self._design_points_actual[best_solution_candidate_index]
+            run_state.design_points_actual[best_solution_candidate_index]
         )
         self.intermediate_budgets.append(self.budget.used)
 
@@ -146,11 +147,11 @@ class DASSO(Solver):
         ]
 
         for group in groups:
-            group.add_design_points(self._design_point_indices)
+            group.add_design_points(run_state.design_point_indices)
 
         # Iterate each stage until the algorithm terminates.
         while True:
-            sample_best_solution_index = self._design_point_indices[
+            sample_best_solution_index = run_state.design_point_indices[
                 best_solution_candidate_index
             ]
 
@@ -159,7 +160,7 @@ class DASSO(Solver):
             random_effect_group_index = np.random.choice(list(range(len(groups))))
 
             # Calculate the covariance matrix corresponding to design points, Sigma_DD
-            num_design_points = len(self._design_point_indices)
+            num_design_points = len(run_state.design_point_indices)
             cov_mat_dd = sum(
                 group.transformed_cov_mat_dd
                 if group_index != random_effect_group_index
@@ -173,14 +174,14 @@ class DASSO(Solver):
                 1 / sum(np.linalg.solve(cov_mat_dd, ones_vec)) * ones_vec
             )  # (1_D * Sigma^-1 * 1_D^T)^-1 * 1_D^T
             part2 = np.linalg.solve(
-                cov_mat_dd, self._sample_means_vec_d
+                cov_mat_dd, run_state.sample_means_vec_d
             )  # Sigma^-1 * \bar{Y}_D
             beta_0 = part1 @ part2
 
             # Get vectors needed to compute CEI for solutions in D and find
             # Pareto-efficient points.
             sample_means_vec_d_stand = (
-                self._sample_means_vec_d - beta_0
+                run_state.sample_means_vec_d - beta_0
             )  # \bar{Y}_D - beta_0
             cond_var_of_diff_vec_d = np.zeros(
                 num_design_points
@@ -190,7 +191,7 @@ class DASSO(Solver):
             )  # m(x_best) - m(x) for x in D
 
             covariance_matrix_d = cov_mat_dd + np.diag(
-                self._noise_cov_mat_diagonals
+                run_state.noise_cov_mat_diagonals
             )  # Sigma_DD + Q_epsilon^-1
             eye_d = np.eye(num_design_points)
             covariance_matrix_inv_d = np.linalg.solve(
@@ -215,7 +216,7 @@ class DASSO(Solver):
             cond_std_of_diff_vec_d = np.sqrt(
                 cond_var_of_diff_vec_d
             )  # sqrt{v(x_best, x)}
-            sample_best_index = self._design_point_indices.index(
+            sample_best_index = run_state.design_point_indices.index(
                 sample_best_solution_index
             )
             cond_std_of_diff_vec_d[sample_best_index] = np.inf
@@ -269,7 +270,7 @@ class DASSO(Solver):
             if (
                 cei_values_d[max_cei_index_d] > cei_values_f[max_cei_index_f]
             ):  # if it is a design point
-                max_cei_solution = self._design_point_indices[max_cei_index_d]
+                max_cei_solution = run_state.design_point_indices[max_cei_index_d]
 
                 best_non_g_comp = tuple(
                     mapping.get_low_dim_comp_ind_from_sol_index(
@@ -297,13 +298,15 @@ class DASSO(Solver):
             )
 
             # Simulate the sample best solution.
-            self._record_simulations([sample_best_solution_index], problem, mapping)
+            self._record_simulations(
+                run_state, [sample_best_solution_index], problem, mapping
+            )
 
             # Simulate a solution from the restricted set if it does not have any
             # solution that has been simulated.
-            if not any(sol in self._design_point_indices for sol in restricted_set):
+            if not any(sol in run_state.design_point_indices for sol in restricted_set):
                 solution_index = np.random.choice(restricted_set)
-                self._record_simulations([solution_index], problem, mapping)
+                self._record_simulations(run_state, [solution_index], problem, mapping)
                 for group in groups:
                     group.add_design_points([solution_index])
 
@@ -314,7 +317,7 @@ class DASSO(Solver):
             for sol in restricted_set:
                 solutions_d.append(
                     sol
-                ) if sol in self._design_point_indices else solutions_u.append(sol)
+                ) if sol in run_state.design_point_indices else solutions_u.append(sol)
             reordered_solutions = solutions_u + solutions_d
             low_dim_comp_indices_reordered = [
                 mapping.get_low_dim_comp_ind_from_sol_index(i, group_g.coord_ids)
@@ -325,13 +328,13 @@ class DASSO(Solver):
             num_d = len(solutions_d)
 
             design_point_indices_slice = [
-                self._design_point_indices.index(i) for i in solutions_d
+                run_state.design_point_indices.index(i) for i in solutions_d
             ]
             noise_prec_mat = np.diag(
-                1 / self._noise_cov_mat_diagonals[design_point_indices_slice]
+                1 / run_state.noise_cov_mat_diagonals[design_point_indices_slice]
             )
             noise_cov_mat = np.diag(
-                self._noise_cov_mat_diagonals[design_point_indices_slice]
+                run_state.noise_cov_mat_diagonals[design_point_indices_slice]
             )
 
             # Conditional precision matrix: \bar{Q}
@@ -352,7 +355,7 @@ class DASSO(Solver):
             q_bar_inv = np.linalg.solve(q_bar, np.eye(num_u + num_d))
 
             # # Calculate the conditional mean vector.
-            sample_means_vec_d_slice = self._sample_means_vec_d[
+            sample_means_vec_d_slice = run_state.sample_means_vec_d[
                 design_point_indices_slice
             ]  # \bar{Y}_D
 
@@ -411,21 +414,21 @@ class DASSO(Solver):
             # Simulate max-CEI solution.
             max_cei_index = np.argmax(cei_values)
             max_cei_solution = reordered_solutions[max_cei_index]
-            if max_cei_solution not in self._design_point_indices:
+            if max_cei_solution not in run_state.design_point_indices:
                 for group in groups:
                     group.add_design_points([max_cei_solution])
-            self._record_simulations([max_cei_solution], problem, mapping)
+            self._record_simulations(run_state, [max_cei_solution], problem, mapping)
 
             # Simulate sample-best solution of the restricted set.
             sample_best_solution_restricted = reordered_solutions[sample_best_index]
             self._record_simulations(
-                [sample_best_solution_restricted], problem, mapping
+                run_state, [sample_best_solution_restricted], problem, mapping
             )
 
             # Identify the sample best solution.
-            best_solution_candidate_index = self._sample_means_vec_d.argmin()
+            best_solution_candidate_index = run_state.sample_means_vec_d.argmin()
             self.recommended_solns.append(
-                self._design_points_actual[best_solution_candidate_index]
+                run_state.design_points_actual[best_solution_candidate_index]
             )
             self.intermediate_budgets.append(self.budget.used)
 
@@ -675,11 +678,16 @@ class DASSO(Solver):
             return solution_indices
 
     def _hyperparameter_estimation(
-        self, problem: Problem, mapping: DASSO._Mapping, decomposition: list
+        self,
+        run_state: _RunState,
+        problem: Problem,
+        mapping: DASSO._Mapping,
+        decomposition: list,
     ) -> tuple[dict, dict, float]:
         """Estimate the hyperparameters for each group and the overall mean.
 
         Args:
+            run_state (_RunState): Run-scoped storage for design point data.
             problem (Problem): The problem instance providing bounds and function
                 evaluations.
             mapping (DASSO._Mapping): The mapping instance providing mapping between
@@ -770,7 +778,7 @@ class DASSO(Solver):
         design_point_indices = [
             mapping.get_solution_index(sol) for sol in design_points
         ]
-        self._record_simulations(design_point_indices, problem, mapping)
+        self._record_simulations(run_state, design_point_indices, problem, mapping)
 
         # Estimate hyperparameters for each group.
         random_effect_variances = {}
@@ -779,15 +787,24 @@ class DASSO(Solver):
         for coord_ids in decomposition:
             diff_mat = diff_matrices[coord_ids]
             random_effect_variances[coord_ids] = self._estimate_random_effect_variance(
-                self._sample_means_vec_d, self._noise_cov_mat_diagonals, diff_mat
+                run_state.sample_means_vec_d,
+                run_state.noise_cov_mat_diagonals,
+                diff_mat,
             )
             theta_parameters[coord_ids], transformed_cov_matrices_dd[coord_ids] = (
-                self._estimate_theta(mapping, coord_ids, design_point_indices, diff_mat)
+                self._estimate_theta(
+                    mapping,
+                    coord_ids,
+                    design_point_indices,
+                    diff_mat,
+                    run_state.sample_means_vec_d,
+                    run_state.noise_cov_mat_diagonals,
+                )
             )
 
         # Sigma_DD + Q_epsilon^-1
         cov_sum = sum(transformed_cov_matrices_dd.values()) + np.diag(
-            self._noise_cov_mat_diagonals
+            run_state.noise_cov_mat_diagonals
         )
         # Estimate the location parameter.
         num_design_points, _ = cov_sum.shape
@@ -796,7 +813,7 @@ class DASSO(Solver):
             1 / sum(np.linalg.solve(cov_sum, ones_vec)) * ones_vec
         )  # (1_D * Sigma^-1 * 1_D^T)^-1 * 1_D^T
         part2 = np.linalg.solve(
-            cov_sum, self._sample_means_vec_d
+            cov_sum, run_state.sample_means_vec_d
         )  # Sigma^-1 * \bar{Y}_D
         beta_0 = part1 @ part2
 
@@ -873,6 +890,8 @@ class DASSO(Solver):
         coordinate_ids: tuple,
         solution_indices: list,
         diff_mat: sparse.csc_matrix,
+        sample_means_vec_d: np.ndarray,
+        noise_cov_mat_diagonals: np.ndarray,
     ) -> tuple[list, np.ndarray]:
         """Estimate hyperparameters of the precision matrix via MLE.
 
@@ -884,6 +903,9 @@ class DASSO(Solver):
             solution_indices (list[int]): The solution indices to be simulated.
             diff_mat (sparse.csc_matrix): The matrix with 1's and -1's to be used for
                 efficient computation of MLE.
+            sample_means_vec_d (np.ndarray): The vector of sample means of design
+                points.
+            noise_cov_mat_diagonals (np.ndarray): The diagonal noise covariance values.
 
         Returns:
             list: The estimated theta values for the precision matrix.
@@ -958,7 +980,7 @@ class DASSO(Solver):
 
         # B^(rho) Q_eps^-1 [B^(rho)]^T, which is a diagonal matrix since Q_eps^-1 is
         # diagonal.
-        noise_cov_mat_diff = np.diag(np.abs(diff_mat) @ self._noise_cov_mat_diagonals)  # type: ignore
+        noise_cov_mat_diff = np.diag(np.abs(diff_mat) @ noise_cov_mat_diagonals)  # type: ignore
 
         diff_tf_mat_d = diff_mat @ rearranged_tf_mat_d  # B^(rho) T^(rho)_DD
 
@@ -974,9 +996,7 @@ class DASSO(Solver):
         )
 
         # Find the best candidate
-        sample_mean_differences = (
-            diff_mat @ self._sample_means_vec_d
-        )  # B^(rho) * \bar{Y}
+        sample_mean_differences = diff_mat @ sample_means_vec_d  # B^(rho) * \bar{Y}
         theta_0_init = 1 / np.var(sample_mean_differences)
 
         def _get_covariance_matrix_dd(precision_matrix_parameters: list) -> np.ndarray:
@@ -1427,11 +1447,16 @@ class DASSO(Solver):
         return (2 * math.pi) ** (-0.5) * np.exp(-0.5 * values**2)
 
     def _record_simulations(
-        self, solution_indices: list[int], problem: Problem, mapping: DASSO._Mapping
+        self,
+        run_state: _RunState,
+        solution_indices: list[int],
+        problem: Problem,
+        mapping: DASSO._Mapping,
     ) -> None:
         """Record the simulation results.
 
         Args:
+            run_state (_RunState): Run-scoped storage for design point data.
             solution_indices (list[int]): The solution indices to be simulated.
             problem (Problem): The problem instance providing bounds and function
                 evaluations.
@@ -1442,14 +1467,14 @@ class DASSO(Solver):
         additional_noise_cov_mat_diagonals = []
         sample_size = self.factors["sample_size"]
         for solution_index in solution_indices:
-            if solution_index in self._design_point_indices:
-                array_index = self._design_point_indices.index(solution_index)
-                solution = self._design_points_actual[array_index]
+            if solution_index in run_state.design_point_indices:
+                array_index = run_state.design_point_indices.index(solution_index)
+                solution = run_state.design_points_actual[array_index]
                 problem.simulate(solution, sample_size)
-                self._sample_means_vec_d[array_index] = (
+                run_state.sample_means_vec_d[array_index] = (
                     solution.objectives_mean[0] * problem.minmax[0] * (-1)
                 )  # minimization problem
-                self._noise_cov_mat_diagonals[array_index] = (
+                run_state.noise_cov_mat_diagonals[array_index] = (
                     solution.objectives_var[0] / solution.n_reps
                 )
             else:
@@ -1464,14 +1489,14 @@ class DASSO(Solver):
                 additional_noise_cov_mat_diagonals += [
                     solution.objectives_var[0] / solution.n_reps
                 ]
-                self._design_point_indices.append(solution_index)
-                self._design_points_actual.append(solution)
+                run_state.design_point_indices.append(solution_index)
+                run_state.design_points_actual.append(solution)
 
-        self._sample_means_vec_d = np.append(
-            self._sample_means_vec_d, additional_sample_means_vec_d
+        run_state.sample_means_vec_d = np.append(
+            run_state.sample_means_vec_d, additional_sample_means_vec_d
         )
-        self._noise_cov_mat_diagonals = np.append(
-            self._noise_cov_mat_diagonals, additional_noise_cov_mat_diagonals
+        run_state.noise_cov_mat_diagonals = np.append(
+            run_state.noise_cov_mat_diagonals, additional_noise_cov_mat_diagonals
         )
 
         self.budget.request(sample_size * len(solution_indices))
