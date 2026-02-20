@@ -34,9 +34,7 @@ class AucResult:
 
     def to_numpy(self) -> np.ndarray:
         """Convert the AUC result to a NumPy array."""
-        return np.array(
-            [self.mean, self.std, self.lb_mean, self.ub_mean, self.lb_std, self.ub_std]
-        )
+        return np.array([self.mean, self.std, self.lb_mean, self.ub_mean, self.lb_std, self.ub_std])
 
 
 def _auc(x: np.ndarray, y: np.ndarray) -> float:

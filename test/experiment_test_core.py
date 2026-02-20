@@ -53,9 +53,7 @@ class ExperimentTest(unittest.TestCase):
         self.expected_problem_name = expected_results["problem_name"]
         self.expected_solver_name = expected_results["solver_name"]
         self.expected_all_recommended_xs = expected_results["all_recommended_xs"]
-        self.expected_all_intermediate_budgets = expected_results[
-            "all_intermediate_budgets"
-        ]
+        self.expected_all_intermediate_budgets = expected_results["all_intermediate_budgets"]
         self.expected_all_est_objectives = expected_results["all_est_objectives"]
         self.expected_all_est_lhs = expected_results.get("all_est_lhs", [])
         self.expected_objective_curves = expected_results["objective_curves"]
@@ -65,9 +63,7 @@ class ExperimentTest(unittest.TestCase):
         del expected_results
 
         # Setup the solver and experiment
-        self.myexperiment = ProblemSolver(
-            self.expected_solver_name, self.expected_problem_name
-        )
+        self.myexperiment = ProblemSolver(self.expected_solver_name, self.expected_problem_name)
         self.assertEqual(
             self.myexperiment.solver.name,
             self.expected_solver_name,
@@ -146,22 +142,17 @@ class ExperimentTestMixin:
                     int_budg_list,
                     expected_int_budg_list,
                     5,
-                    f"[{ps_names} | {mrep} | {sol_list_idx}] "
-                    f"Intermediate budgets do not match",
+                    f"[{ps_names} | {mrep} | {sol_list_idx}] Intermediate budgets do not match",
                 )
 
     def test_post_replicate(self: Any) -> None:
         """Test the post_replicate method of the experiment."""
         ps_names = f"{self.expected_problem_name} | {self.expected_solver_name}"
         # Simulate results from the run method
-        self.myexperiment = ProblemSolver(
-            self.expected_solver_name, self.expected_problem_name
-        )
+        self.myexperiment = ProblemSolver(self.expected_solver_name, self.expected_problem_name)
         self.myexperiment.n_macroreps = self.num_macroreps
         self.myexperiment.all_recommended_xs = self.expected_all_recommended_xs
-        self.myexperiment.all_intermediate_budgets = (
-            self.expected_all_intermediate_budgets
-        )
+        self.myexperiment.all_intermediate_budgets = self.expected_all_intermediate_budgets
 
         # Check actual post-replication results against expected
         self.myexperiment.post_replicate(n_postreps=self.num_postreps)
@@ -189,8 +180,7 @@ class ExperimentTestMixin:
                     est_obj_list,
                     expected_est_obj_list,
                     5,
-                    f"[{ps_names} | {mrep} | {objective_idx}] "
-                    f"Estimated objectives do not match",
+                    f"[{ps_names} | {mrep} | {objective_idx}] Estimated objectives do not match",
                 )
 
             self.assertEqual(
@@ -215,15 +205,11 @@ class ExperimentTestMixin:
         """Test the post_normalize method of the experiment."""
         ps_names = f"{self.expected_problem_name} | {self.expected_solver_name}"
         # Simulate results from the post_replicate method
-        self.myexperiment = ProblemSolver(
-            self.expected_solver_name, self.expected_problem_name
-        )
+        self.myexperiment = ProblemSolver(self.expected_solver_name, self.expected_problem_name)
         self.myexperiment.n_macroreps = self.num_macroreps
         self.myexperiment.n_postreps = self.num_postreps
         self.myexperiment.all_recommended_xs = self.expected_all_recommended_xs
-        self.myexperiment.all_intermediate_budgets = (
-            self.expected_all_intermediate_budgets
-        )
+        self.myexperiment.all_intermediate_budgets = self.expected_all_intermediate_budgets
         self.myexperiment.all_est_objectives = self.expected_all_est_objectives
         self.myexperiment.all_est_lhs = self.expected_all_est_lhs
         self.myexperiment.has_run = True
@@ -275,8 +261,7 @@ class ExperimentTestMixin:
                     if math.isnan(obj_curve_x_val):
                         self.assertTrue(
                             math.isnan(expected_obj_curve_x_val),
-                            f"[{ps_names} | {mrep} | {x_index}] "
-                            f"Unexpected NaN value in X values",
+                            f"[{ps_names} | {mrep} | {x_index}] Unexpected NaN value in X values",
                         )
                     # Otherwise, check the value normally
                     else:
@@ -293,8 +278,7 @@ class ExperimentTestMixin:
                     if math.isnan(obj_curve_y_val):
                         self.assertTrue(
                             math.isnan(expected_obj_curve_y_val),
-                            f"[{ps_names} | {mrep} | {y_index}] "
-                            f"Unexpected NaN value in Y values",
+                            f"[{ps_names} | {mrep} | {y_index}] Unexpected NaN value in Y values",
                         )
                     # Otherwise, check the value normally
                     else:
@@ -340,8 +324,7 @@ class ExperimentTestMixin:
                     if math.isnan(prog_curve_x_val):
                         self.assertTrue(
                             math.isnan(expected_prog_curve_x_val),
-                            f"[{ps_names} | {mrep} | {x_index}] "
-                            f"Unexpected NaN value in X values",
+                            f"[{ps_names} | {mrep} | {x_index}] Unexpected NaN value in X values",
                         )
                     # Otherwise, check the value normally
                     else:
@@ -361,8 +344,7 @@ class ExperimentTestMixin:
                     if math.isnan(prog_curve_y_val):
                         self.assertTrue(
                             math.isnan(expected_prog_curve_y_val),
-                            f"[{ps_names} | {mrep} | {y_index}] "
-                            f"Unexpected NaN value in Y values",
+                            f"[{ps_names} | {mrep} | {y_index}] Unexpected NaN value in Y values",
                         )
                     # Otherwise, check the value normally
                     else:

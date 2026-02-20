@@ -158,9 +158,7 @@ def compute_ci(
 E = TypeVar("E")
 B = TypeVar("B")
 Ci = TypeVar("Ci")
-BootstrapFn = Callable[
-    [AnalysisInput, int, Callable[[AnalysisInput], B], CrnOptions], list[B]
-]
+BootstrapFn = Callable[[AnalysisInput, int, Callable[[AnalysisInput], B], CrnOptions], list[B]]
 CiFn = Callable[[list[B], E | None, ConfidenceIntervalOptions], Ci]
 
 
@@ -234,9 +232,7 @@ def compute_estimator_and_ci(
         wrapped_estimator,
         crn_options,
     )
-    ci = ci_fn(
-        bootstraps, estimator if ci_options.bias_correction else None, ci_options
-    )
+    ci = ci_fn(bootstraps, estimator if ci_options.bias_correction else None, ci_options)
     return estimator, ci
 
 

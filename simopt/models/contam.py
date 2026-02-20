@@ -46,8 +46,7 @@ class ContaminationConfig(BaseModel):
         Field(
             default=round(17 / 3, 2),
             description=(
-                "beta parameter of beta distribution for growth rate of "
-                "contamination at each stage"
+                "beta parameter of beta distribution for growth rate of contamination at each stage"
             ),
             gt=0,
         ),
@@ -78,10 +77,7 @@ class ContaminationConfig(BaseModel):
         float,
         Field(
             default=1.0,
-            description=(
-                "alpha parameter of beta distribution for initial contamination "
-                "fraction"
-            ),
+            description=("alpha parameter of beta distribution for initial contamination fraction"),
             gt=0,
         ),
     ]
@@ -89,9 +85,7 @@ class ContaminationConfig(BaseModel):
         float,
         Field(
             default=30.0,
-            description=(
-                "beta parameter of beta distribution for initial contamination fraction"
-            ),
+            description=("beta parameter of beta distribution for initial contamination fraction"),
             gt=0,
         ),
     ]
@@ -113,9 +107,7 @@ class ContaminationConfig(BaseModel):
 
     def _check_prev_decision(self) -> None:
         if not all(0 <= u <= 1 for u in self.prev_decision):
-            raise ValueError(
-                "All elements in prev_decision must be in the range [0, 1]."
-            )
+            raise ValueError("All elements in prev_decision must be in the range [0, 1].")
 
     @model_validator(mode="after")
     def _validate_model(self) -> Self:
@@ -124,8 +116,7 @@ class ContaminationConfig(BaseModel):
         # Cross-validation: check for matching number of stages
         if len(self.prev_decision) != self.stages:
             raise ValueError(
-                "The number of stages must be equal to the length of the previous "
-                "decision tuple."
+                "The number of stages must be equal to the length of the previous decision tuple."
             )
 
         return self
@@ -201,9 +192,7 @@ class ContaminationTotalCostContConfig(BaseModel):
         self._check_upper_thres()
 
         if any(u < 0 or u > 1 for u in self.initial_solution):
-            raise ValueError(
-                "All elements in initial_solution must be in the range [0, 1]."
-            )
+            raise ValueError("All elements in initial_solution must be in the range [0, 1].")
 
         return self
 
@@ -409,14 +398,10 @@ class ContaminationTotalCostDisc(Problem):
         under_control = responses["level"] <= self.factors["upper_thres"]
         error_prob = self.factors["error_prob"]
         stochastic_constraints = [
-            StochasticConstraint(
-                stochastic=-1 * under_control[i], deterministic=1 - error_prob[i]
-            )
+            StochasticConstraint(stochastic=-1 * under_control[i], deterministic=1 - error_prob[i])
             for i in range(len(under_control))
         ]
-        return RepResult(
-            objectives=objectives, stochastic_constraints=stochastic_constraints
-        )
+        return RepResult(objectives=objectives, stochastic_constraints=stochastic_constraints)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(0 <= u <= 1 for u in x)
@@ -487,14 +472,10 @@ class ContaminationTotalCostCont(Problem):
         under_control = responses["level"] <= self.factors["upper_thres"]
         error_prob = self.factors["error_prob"]
         stochastic_constraints = [
-            StochasticConstraint(
-                stochastic=-1 * under_control[i], deterministic=1 - error_prob[i]
-            )
+            StochasticConstraint(stochastic=-1 * under_control[i], deterministic=1 - error_prob[i])
             for i in range(len(under_control))
         ]
-        return RepResult(
-            objectives=objectives, stochastic_constraints=stochastic_constraints
-        )
+        return RepResult(objectives=objectives, stochastic_constraints=stochastic_constraints)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(0 <= u <= 1 for u in x)

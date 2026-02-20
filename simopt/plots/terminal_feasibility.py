@@ -114,9 +114,7 @@ def plot_terminal_feasibility(
     elif score_type == "norm":
         extra = f"{norm_degree}_norm"
 
-    for problem_idx in range(
-        n_problems
-    ):  # must create new plot for every different problem
+    for problem_idx in range(n_problems):  # must create new plot for every different problem
         if plot_type == PlotType.FEASIBILITY_SCATTER:
             if all_in_one:  # plot all solvers together
                 ref_experiment = experiments[0][problem_idx]
@@ -131,8 +129,7 @@ def plot_terminal_feasibility(
                     feasibility_norm_degree=norm_degree,
                 )
                 solver_names = [
-                    solver_experiments[0].solver.name
-                    for solver_experiments in experiments
+                    solver_experiments[0].solver.name for solver_experiments in experiments
                 ]
                 solver_curve_handles = []
                 handle = None
@@ -146,13 +143,9 @@ def plot_terminal_feasibility(
                     experiment.feasibility_score_history(
                         score_type, norm_degree, two_sided
                     )  # gives list of feasibility scores for each macrorep
-                    term_feas_score = [
-                        curve.y_vals[-1] for curve in experiment.feasibility_curves
-                    ]
+                    term_feas_score = [curve.y_vals[-1] for curve in experiment.feasibility_curves]
                     # Plot mean of terminal progress.
-                    terminals = [
-                        curve.y_vals[-1] for curve in experiment.objective_curves
-                    ]
+                    terminals = [curve.y_vals[-1] for curve in experiment.objective_curves]
                     if plot_conf_ints:
                         bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
                         all_obj_reps = []
@@ -197,12 +190,8 @@ def plot_terminal_feasibility(
                             np.abs(np.array(obj_conf_int_ub) - np.array(terminals)),
                         ]
                         y_err = [
-                            np.abs(
-                                np.array(term_feas_score) - np.array(feas_conf_int_lb)
-                            ),
-                            np.abs(
-                                np.array(feas_conf_int_ub) - np.array(term_feas_score)
-                            ),
+                            np.abs(np.array(term_feas_score) - np.array(feas_conf_int_lb)),
+                            np.abs(np.array(feas_conf_int_ub) - np.array(term_feas_score)),
                         ]
                         logger.debug(
                             "data",
@@ -228,9 +217,7 @@ def plot_terminal_feasibility(
                             linestyle="none",
                         )
                     else:  # do not plot conf int
-                        logger.debug(
-                            "data", data=np.array([terminals, term_feas_score])
-                        )
+                        logger.debug("data", data=np.array([terminals, term_feas_score]))
                         handle = plt.scatter(
                             x=terminals,
                             y=term_feas_score,
@@ -282,13 +269,9 @@ def plot_terminal_feasibility(
                     experiment.feasibility_score_history(
                         score_type, norm_degree, two_sided
                     )  # gives list of feasibility scores for each macrorep
-                    term_feas_score = [
-                        curve.y_vals[-1] for curve in experiment.feasibility_curves
-                    ]
+                    term_feas_score = [curve.y_vals[-1] for curve in experiment.feasibility_curves]
                     # Plot mean and of terminal progress.
-                    terminals = [
-                        curve.y_vals[-1] for curve in experiment.objective_curves
-                    ]
+                    terminals = [curve.y_vals[-1] for curve in experiment.objective_curves]
                     if plot_conf_ints:
                         bootstrap_rng = MRG32k3a(s_ss_sss_index=[1, 0, 0])
                         all_obj_reps = []
@@ -333,12 +316,8 @@ def plot_terminal_feasibility(
                             np.abs(np.array(obj_conf_int_ub) - np.array(terminals)),
                         ]
                         y_err = [
-                            np.abs(
-                                np.array(term_feas_score) - np.array(feas_conf_int_lb)
-                            ),
-                            np.abs(
-                                np.array(feas_conf_int_ub) - np.array(term_feas_score)
-                            ),
+                            np.abs(np.array(term_feas_score) - np.array(feas_conf_int_lb)),
+                            np.abs(np.array(feas_conf_int_ub) - np.array(term_feas_score)),
                         ]
                         logger.debug(
                             "data",
@@ -364,9 +343,7 @@ def plot_terminal_feasibility(
                             linestyle="none",
                         )
                     else:  # no confidence intervals
-                        logger.debug(
-                            "data", data=np.array([terminals, term_feas_score])
-                        )
+                        logger.debug("data", data=np.array([terminals, term_feas_score]))
                         # edit plot
                         handle = plt.scatter(
                             x=terminals,
@@ -420,9 +397,7 @@ def plot_terminal_feasibility(
                     experiment.feasibility_score_history(
                         score_type, norm_degree, two_sided
                     )  # gives list of feasibility scores for each macrorep
-                    term_feas_score = [
-                        curve.y_vals[-1] for curve in experiment.feasibility_curves
-                    ]
+                    term_feas_score = [curve.y_vals[-1] for curve in experiment.feasibility_curves]
                     feas_data.append(term_feas_score)
                     solver_names.append(experiment.solver.name)
 
@@ -432,9 +407,7 @@ def plot_terminal_feasibility(
                 }
                 feas_data_df = pd.DataFrame(feas_data_dict)
                 feas_data_df = feas_data_df.explode(y_title)
-                feas_data_df[y_title] = pd.to_numeric(
-                    feas_data_df[y_title], errors="coerce"
-                )
+                feas_data_df[y_title] = pd.to_numeric(feas_data_df[y_title], errors="coerce")
                 sns.violinplot(
                     x="Solvers",
                     y=y_title,

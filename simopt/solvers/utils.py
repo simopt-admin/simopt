@@ -184,9 +184,7 @@ def bfgs_hessian_approx(
             [get_fn_x(x) for _ in range(np.sum(bounds_non_zero))]
         )  # Simulate function evaluations
         hessian_diag[bounds_non_zero] = (
-            4
-            * (fn - 2 * fn_x + f_x_plus_h[bounds_non_zero])
-            / (steps[bounds_non_zero] ** 2)
+            4 * (fn - 2 * fn_x + f_x_plus_h[bounds_non_zero]) / (steps[bounds_non_zero] ** 2)
         )
 
     # Fill the diagonal of the Hessian matrix.
@@ -218,9 +216,7 @@ def bfgs_hessian_approx(
                 fn6 = get_fn_x(x6)
                 # Compute second order gradient.
                 hessian[i, j] = (
-                    2 * fn
-                    + (fn5 - f_i_minus_h - f_j_minus_k)
-                    + (fn6 - f_i_plus_h - f_j_plus_k)
+                    2 * fn + (fn5 - f_i_minus_h - f_j_minus_k) + (fn6 - f_i_plus_h - f_j_plus_k)
                 ) / (2 * h * k)
             # When x on boundary, y not.
             elif bounds_check[j] == 0:
@@ -236,9 +232,7 @@ def bfgs_hessian_approx(
                 fn6 = get_fn_x(x6)
                 # Compute second order gradient.
                 hessian[i, j] = (
-                    (fn5 - f_j_minus_k - fn6 + f_j_plus_k)
-                    / (2 * h * k)
-                    * bounds_check[i]
+                    (fn5 - f_j_minus_k - fn6 + f_j_plus_k) / (2 * h * k) * bounds_check[i]
                 )
             # When y on boundary, x not.
             elif bounds_check[i] == 0:
@@ -254,9 +248,7 @@ def bfgs_hessian_approx(
                 fn6 = get_fn_x(x6)
                 # Compute second order gradient.
                 hessian[i, j] = (
-                    (fn5 - f_i_minus_h - fn6 + f_i_plus_h)
-                    / (2 * h * k)
-                    * bounds_check[j]
+                    (fn5 - f_i_minus_h - fn6 + f_i_plus_h) / (2 * h * k) * bounds_check[j]
                 )
             # If only using one side
             else:
@@ -266,9 +258,7 @@ def bfgs_hessian_approx(
                 fd_ix = f_i_minus_h if bounds_check[i] == -1 else f_i_plus_h
                 fd_jx = f_j_minus_k if bounds_check[j] == -1 else f_j_plus_k
                 fn5 = get_fn_x(x5)
-                hessian[i, j] = (
-                    ((fn + fn5) - (fd_jx + fd_ix)) / (h * k) * bounds_check[j]
-                )
+                hessian[i, j] = ((fn + fn5) - (fd_jx + fd_ix)) / (h * k) * bounds_check[j]
             # Since we're only computing the upper half the matrix, we
             # need to copy the value to the lower triangle.
             hessian[j, i] = hessian[i, j]

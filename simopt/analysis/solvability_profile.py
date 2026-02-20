@@ -144,9 +144,7 @@ def plot(
 
     if result.ci is not None:
         ci = result.ci
-        logger.debug(
-            "data", data=[df["budget"], df["value"], ci["budget"], ci["lb"], ci["ub"]]
-        )
+        logger.debug("data", data=[df["budget"], df["value"], ci["budget"], ci["lb"], ci["ub"]])
         plot_ci(ax, ci, color=color)
     else:
         logger.debug("data", data=np.array([df["budget"], df["value"]]))

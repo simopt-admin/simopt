@@ -128,16 +128,12 @@ class ProblemSolver:
             self.solver = solver
         else:  # Method 1
             if solver_name is None:
-                error_msg = (
-                    "Solver name must be provided if solver object is not provided."
-                )
+                error_msg = "Solver name must be provided if solver object is not provided."
                 raise ValueError(error_msg)
             if solver_name not in solver_directory:
                 error_msg = "Solver name not found in solver directory."
                 raise ValueError(error_msg)
-            self.solver = solver_directory[solver_name](
-                fixed_factors=solver_fixed_factors
-            )
+            self.solver = solver_directory[solver_name](fixed_factors=solver_fixed_factors)
         # Rename solver if necessary.
         if solver_rename is not None:
             if solver_rename == "":
@@ -150,9 +146,7 @@ class ProblemSolver:
             self.problem = problem
         else:  # Method #1
             if problem_name is None:
-                error_msg = (
-                    "Problem name must be provided if problem object is not provided."
-                )
+                error_msg = "Problem name must be provided if problem object is not provided."
                 raise ValueError(error_msg)
             if problem_name not in problem_directory:
                 error_msg = "Problem name not found in problem directory."
@@ -214,16 +208,10 @@ class ProblemSolver:
         # make a string builder
         error_messages = []
         # Check number of objectives.
-        if (
-            self.solver.objective_type == ObjectiveType.SINGLE
-            and self.problem.n_objectives > 1
-        ):
+        if self.solver.objective_type == ObjectiveType.SINGLE and self.problem.n_objectives > 1:
             error_message = "Solver cannot solve a multi-objective problem"
             error_messages.append(error_message)
-        elif (
-            self.solver.objective_type == ObjectiveType.MULTI
-            and self.problem.n_objectives == 1
-        ):
+        elif self.solver.objective_type == ObjectiveType.MULTI and self.problem.n_objectives == 1:
             error_message = "Solver cannot solve a single-objective problem"
             error_messages.append(error_message)
         # Check constraint types.
@@ -266,8 +254,7 @@ class ProblemSolver:
         ):
             problem_type = self.problem.variable_type.name.lower()
             error_message = (
-                "Solver is for discrete variables, "
-                f"but problem variables are {problem_type}."
+                f"Solver is for discrete variables, but problem variables are {problem_type}."
             )
             error_messages.append(error_message)
         elif (
@@ -276,15 +263,12 @@ class ProblemSolver:
         ):
             problem_type = self.problem.variable_type.name.lower()
             error_message = (
-                "Solver is for continuous variables, "
-                f"but problem variables are {problem_type}."
+                f"Solver is for continuous variables, but problem variables are {problem_type}."
             )
             error_messages.append(error_message)
         # Check for existence of gradient estimates.
         if self.solver.gradient_needed and not self.problem.gradient_available:
-            error_message = (
-                "Solver requires gradient estimates but problem does not have them."
-            )
+            error_message = "Solver requires gradient estimates but problem does not have them."
             error_messages.append(error_message)
         # Strip trailing newline character.
         return "\n".join(error_messages)
@@ -306,9 +290,7 @@ class ProblemSolver:
             ValueError: If `n_macroreps` is not positive.
         """
         start = time.time()
-        df, elapsed_times = run_solver.run_solver(
-            self.solver, self.problem, n_macroreps, n_jobs
-        )
+        df, elapsed_times = run_solver.run_solver(self.solver, self.problem, n_macroreps, n_jobs)
         elapsed = time.time() - start
         logging.info(f"Finished running {n_macroreps} mreps in {elapsed:.3f} seconds.")
 
@@ -365,17 +347,14 @@ class ProblemSolver:
         )
         elapsed = time.time() - start
         logging.info(
-            f"Finished running {self.n_macroreps} postreplications in "
-            f"{elapsed:.3f} seconds."
+            f"Finished running {self.n_macroreps} postreplications in {elapsed:.3f} seconds."
         )
 
         # Set up attributes to maintain compatibility with the old API.
         self.all_post_replicates = post_replicate._to_list_reps(df, "objective")
         self.all_est_objectives = post_replicate._to_list(df, "objective")
         if self._has_stochastic_constraints():
-            self.all_stoch_constraints = post_replicate._to_list_reps(
-                df, "stochastic_constraints"
-            )
+            self.all_stoch_constraints = post_replicate._to_list_reps(df, "stochastic_constraints")
             self.all_est_lhs = post_replicate._to_list(df, "stochastic_constraints")
         self.timings = elapsed_times
 
@@ -435,15 +414,13 @@ class ProblemSolver:
         feasibility_two_sided: bool = True,
     ) -> tuple[list[float], list[float]]:
         """Bootstraps terminal objective and feasibility scores."""
-        bootstrap_objective_curves, bootstrap_feasibility_curves = (
-            self.bootstrap_sample(
-                bootstrap_rng,
-                False,
-                feasibility_score_method,
-                feasibility_norm_degree,
-                feasibility_two_sided,
-                True,
-            )
+        bootstrap_objective_curves, bootstrap_feasibility_curves = self.bootstrap_sample(
+            bootstrap_rng,
+            False,
+            feasibility_score_method,
+            feasibility_norm_degree,
+            feasibility_two_sided,
+            True,
         )
 
         return (
@@ -540,8 +517,7 @@ class ProblemSolver:
             # If results have been postreplicated, list the number of post-replications.
             if self.has_postreplicated:
                 file.write(
-                    f"{self.n_postreps} postreplications were run "
-                    "at each recommended solution.\n\n"
+                    f"{self.n_postreps} postreplications were run at each recommended solution.\n\n"
                 )
             # If post-normalized, state initial solution (x0) and
             # proxy optimal solution (x_star) and how many replications
@@ -550,8 +526,7 @@ class ProblemSolver:
                 init_sol = tuple([round(x, 4) for x in self.x0])
                 est_obj = round(np.mean(self.x0_postreps), 4)
                 file.write(
-                    f"The initial solution is {init_sol}. "
-                    f"Its estimated objective is {est_obj}.\n"
+                    f"The initial solution is {init_sol}. Its estimated objective is {est_obj}.\n"
                 )
                 if self.xstar is None:
                     file.write(
@@ -567,8 +542,7 @@ class ProblemSolver:
                         f"Its estimated objective is {est_obj}.\n"
                     )
                 file.write(
-                    f"{self.n_postreps_init_opt} postreplications were taken "
-                    "at x0 and x_star.\n\n"
+                    f"{self.n_postreps_init_opt} postreplications were taken at x0 and x_star.\n\n"
                 )
             # Display recommended solution at each budget value for
             # each macroreplication.

@@ -76,9 +76,7 @@ class ASTRODFConfig(SolverConfig):
             description="trust-region radius decrease rate after failed iteration",
         ),
     ]
-    lambda_min: Annotated[
-        int, Field(default=5, gt=2, description="minimum sample size")
-    ]
+    lambda_min: Annotated[int, Field(default=5, gt=2, description="minimum sample size")]
     easy_solve: Annotated[
         bool,
         Field(
@@ -193,9 +191,7 @@ class ASTRODF(Solver):
         arr[v_no] = 1.0
         return arr
 
-    def get_rotated_basis(
-        self, first_basis: np.ndarray, rotate_index: np.ndarray
-    ) -> np.ndarray:
+    def get_rotated_basis(self, first_basis: np.ndarray, rotate_index: np.ndarray) -> np.ndarray:
         """Generate the basis (rotated coordinate).
 
         The first vector comes from the visited design points (origin basis)
@@ -234,7 +230,7 @@ class ASTRODF(Solver):
 
         Returns:
             np.ndarray: The evaluated model value as a NumPy array.
-        """  # noqa: E501
+        """
         xk_arr = np.array(x_k).flatten()
         x_val = np.hstack(([1], xk_arr, xk_arr**2))
         return np.matmul(x_val, q).item()
@@ -262,14 +258,10 @@ class ASTRODF(Solver):
             kappa = 1
 
         # compute sample size
-        raw_sample_size = pilot_run * max(
-            1.0, sig2 / (kappa**2 * delta**self.delta_power)
-        )
+        raw_sample_size = pilot_run * max(1.0, sig2 / (kappa**2 * delta**self.delta_power))
         return ceil(raw_sample_size)
 
-    def select_interpolation_points(
-        self, delta_k: float, f_index: int
-    ) -> tuple[list, list]:
+    def select_interpolation_points(self, delta_k: float, f_index: int) -> tuple[list, list]:
         """Select interpolation points for the local model.
 
         Args:
@@ -288,13 +280,7 @@ class ASTRODF(Solver):
         # the trust region, use the coordinate basis
         if (
             not self.reuse_points
-            or (
-                norm(
-                    np.array(self.incumbent_x)
-                    - np.array(self.visited_pts_list[f_index].x)
-                )
-                == 0
-            )
+            or (norm(np.array(self.incumbent_x) - np.array(self.visited_pts_list[f_index].x)) == 0)
             or self.iteration_count == 1
         ):
             # Construct the interpolation set
@@ -383,9 +369,7 @@ class ASTRODF(Solver):
                 else:
                     rhs_for_kappa = solution.objectives_mean
                 kappa = (
-                    rhs_for_kappa
-                    * np.sqrt(pilot_run)
-                    / (delta_k ** (self.delta_power / 2))
+                    rhs_for_kappa * np.sqrt(pilot_run) / (delta_k ** (self.delta_power / 2))
                 ).item()
 
             # Set k to the right kappa
@@ -492,8 +476,7 @@ class ASTRODF(Solver):
                     i == 1
                     and self.reuse_points
                     and norm(
-                        np.array(self.incumbent_x)
-                        - np.array(self.visited_pts_list[f_index].x)
+                        np.array(self.incumbent_x) - np.array(self.visited_pts_list[f_index].x)
                     )
                     != 0
                 ):
@@ -664,9 +647,7 @@ class ASTRODF(Solver):
 
         return y_var
 
-    def update_hessian(
-        self, candidate_solution: Solution, grad: np.ndarray, s: np.ndarray
-    ) -> None:
+    def update_hessian(self, candidate_solution: Solution, grad: np.ndarray, s: np.ndarray) -> None:
         """Performs Hessian update if gradients are enabled."""
         epsilon = 1e-15
         if not hasattr(self, "hessian_skip_count"):
@@ -683,8 +664,7 @@ class ASTRODF(Solver):
             logging.debug(message)
             if self.hessian_skip_count == 10:
                 message = (
-                    "Hessian update skipped 10 consecutive times. "
-                    "Check optimization stability."
+                    "Hessian update skipped 10 consecutive times. Check optimization stability."
                 )
                 logging.info(message)
             # If Hessian updates fail too often, the current approximation may
@@ -699,9 +679,7 @@ class ASTRODF(Solver):
             #     self.hessian_skip_count = 0
 
         candidate_grad = (
-            -1
-            * self.problem.minmax[0]
-            * candidate_solution.objectives_gradients_mean[0]
+            -1 * self.problem.minmax[0] * candidate_solution.objectives_gradients_mean[0]
         )
         y_k = candidate_grad - grad
         y_ks = y_k @ s
@@ -739,9 +717,7 @@ class ASTRODF(Solver):
             - 1
         )
         if self.iteration_count == 1:
-            self.incumbent_solution = self.create_new_solution(
-                self.incumbent_x, self.problem
-            )
+            self.incumbent_solution = self.create_new_solution(self.incumbent_x, self.problem)
             self.visited_pts_list.append(self.incumbent_solution)
 
             self.perform_adaptive_sampling(
@@ -755,9 +731,7 @@ class ASTRODF(Solver):
         # Since incument was only evaluated with the sample size of previous incumbent,
         # here we compute its adaptive sample size
         elif self.factors["crn_across_solns"]:
-            self.perform_adaptive_sampling(
-                self.incumbent_solution, pilot_run, self.delta_k
-            )
+            self.perform_adaptive_sampling(self.incumbent_solution, pilot_run, self.delta_k)
 
         # use Taylor expansion if gradient available
         if self.enable_gradient:
@@ -898,16 +872,12 @@ class ASTRODF(Solver):
                 # zero (zero mean typically indicates negligible uncertainty)
                 if candidate_solution.objectives_mean[0] == 0:
                     logging.debug(
-                        "Candidate solution objectives_mean is zero, "
-                        "skipping variance check."
+                        "Candidate solution objectives_mean is zero, skipping variance check."
                     )
                 else:
                     high_variance = (
                         candidate_solution.objectives_var[0]
-                        / (
-                            candidate_solution.n_reps
-                            * candidate_solution.objectives_mean[0] ** 2
-                        )
+                        / (candidate_solution.n_reps * candidate_solution.objectives_mean[0] ** 2)
                     ) > 0.75
 
             if condition_met or high_variance:
@@ -968,8 +938,7 @@ class ASTRODF(Solver):
 
         # Generate dummy solutions to estimate a reasonable maximum radius
         dummy_solns = [
-            self.problem.get_random_solution(rng)
-            for _ in range(1000 * self.problem.dim)
+            self.problem.get_random_solution(rng) for _ in range(1000 * self.problem.dim)
         ]
 
         # Range for each dimension is calculated and compared with box constraints
@@ -1000,14 +969,10 @@ class ASTRODF(Solver):
         else:
             self.incumbent_x = tuple(self.problem.get_random_solution(rng))
 
-        self.incumbent_solution = self.create_new_solution(
-            self.incumbent_x, self.problem
-        )
+        self.incumbent_solution = self.create_new_solution(self.incumbent_x, self.problem)
         self.h_k = np.identity(self.problem.dim)
 
-        self.enable_gradient = (
-            self.problem.gradient_available and self.factors["use_gradients"]
-        )
+        self.enable_gradient = self.problem.gradient_available and self.factors["use_gradients"]
 
         if self.factors["crn_across_solns"]:
             self.delta_power = 0 if self.enable_gradient else 2

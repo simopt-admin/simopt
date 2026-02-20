@@ -60,22 +60,14 @@ def _aggregate(
     beta: float,
     normalize: bool,
 ) -> pd.DataFrame:
-    data = [
-        _solvability(data, plot_type, solve_tolerance, beta, normalize)
-        for data in inputs
-    ]
+    data = [_solvability(data, plot_type, solve_tolerance, beta, normalize) for data in inputs]
     return mean(data)
 
 
 def _difference(lhs: pd.DataFrame, rhs: pd.DataFrame) -> pd.DataFrame:
     lhs = lhs.rename(columns={"value": "lhs"})
     rhs = rhs.rename(columns={"value": "rhs"})
-    df = (
-        pd.merge(lhs, rhs, on="budget", how="outer")
-        .sort_values("budget")
-        .ffill()
-        .fillna(0.0)
-    )
+    df = pd.merge(lhs, rhs, on="budget", how="outer").sort_values("budget").ffill().fillna(0.0)
     return df.assign(value=df["lhs"] - df["rhs"])[["budget", "value"]]
 
 
@@ -102,9 +94,7 @@ def _analyze_solver(
         problem_level_bootstraps = problem_bootstraps(
             solver_inputs,
             n_bootstraps,
-            lambda data: _solvability(
-                data, plot_type, solve_tolerance, beta, normalize
-            ),
+            lambda data: _solvability(data, plot_type, solve_tolerance, beta, normalize),
             crn_options,
         )
         return solver_bootstraps(problem_level_bootstraps, n_bootstraps)
@@ -184,9 +174,7 @@ def plot(
     )
     if result.ci is not None:
         ci = result.ci
-        logger.debug(
-            "data", data=[df["budget"], df["value"], ci["budget"], ci["lb"], ci["ub"]]
-        )
+        logger.debug("data", data=[df["budget"], df["value"], ci["budget"], ci["lb"], ci["ub"]])
         plot_ci(ax, ci, color=color)
     else:
         logger.debug("data", data=np.array([df["budget"], df["value"]]))

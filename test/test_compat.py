@@ -49,9 +49,7 @@ def test_convert_matches_new_api_result():
         ),
         # TODO: we are currently hardcoding the CRN options to True, False, True
         # because the values are not stored in the pickle file
-        crn_options=CrnOptions(
-            across_budget=True, across_macroreps=False, across_x0_xstar=True
-        ),
+        crn_options=CrnOptions(across_budget=True, across_macroreps=False, across_x0_xstar=True),
         n_jobs=1,
     )[0]
 

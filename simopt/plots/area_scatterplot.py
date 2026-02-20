@@ -89,9 +89,7 @@ def plot_area_scatterplots(
             problem_name=problem_set_name,
             plot_title=plot_title,
         )
-        solver_names = [
-            solver_experiments[0].solver.name for solver_experiments in experiments
-        ]
+        solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curve_handles = []
         # TODO: Build up capability to print max half-width.
         # if print_max_hw:
@@ -105,10 +103,7 @@ def plot_area_scatterplots(
                     solver_idx % len(marker_list)
                 ]  # Cycle through list of marker types.
                 # Plot mean and standard deviation of area under progress curve.
-                areas = [
-                    curve.compute_area_under_curve()
-                    for curve in experiment.progress_curves
-                ]
+                areas = [curve.compute_area_under_curve() for curve in experiment.progress_curves]
                 mean_estimator = float(np.mean(areas))
                 std_dev_estimator = float(np.std(areas, ddof=1))
                 if plot_conf_ints:
@@ -120,15 +115,13 @@ def plot_area_scatterplots(
                         estimator=mean_estimator,
                         normalize=True,
                     )
-                    std_dev_bs_conf_int_lb, std_dev_bs_conf_int_ub = (
-                        bootstrap_procedure(
-                            experiments=[[experiment]],
-                            n_bootstraps=n_bootstraps,
-                            conf_level=conf_level,
-                            plot_type=PlotType.AREA_STD_DEV,
-                            estimator=std_dev_estimator,
-                            normalize=True,
-                        )
+                    std_dev_bs_conf_int_lb, std_dev_bs_conf_int_ub = bootstrap_procedure(
+                        experiments=[[experiment]],
+                        n_bootstraps=n_bootstraps,
+                        conf_level=conf_level,
+                        plot_type=PlotType.AREA_STD_DEV,
+                        estimator=std_dev_estimator,
+                        normalize=True,
                     )
                     logger.debug(
                         "data",
@@ -154,8 +147,7 @@ def plot_area_scatterplots(
                         std_dev_bs_conf_int_ub, (Curve)
                     ):
                         error_msg = (
-                            "Standard deviation confidence intervals should "
-                            "be scalar values."
+                            "Standard deviation confidence intervals should be scalar values."
                         )
                         raise ValueError(error_msg)
                     x_err = [
@@ -230,10 +222,7 @@ def plot_area_scatterplots(
             for problem_idx in range(n_problems):
                 experiment = experiments[solver_idx][problem_idx]
                 # Plot mean and standard deviation of area under progress curve.
-                areas = [
-                    curve.compute_area_under_curve()
-                    for curve in experiment.progress_curves
-                ]
+                areas = [curve.compute_area_under_curve() for curve in experiment.progress_curves]
                 mean_estimator = float(np.mean(areas))
                 std_dev_estimator = float(np.std(areas, ddof=1))
                 if plot_conf_ints:
@@ -245,15 +234,13 @@ def plot_area_scatterplots(
                         estimator=mean_estimator,
                         normalize=True,
                     )
-                    std_dev_bs_conf_int_lb, std_dev_bs_conf_int_ub = (
-                        bootstrap_procedure(
-                            experiments=[[experiment]],
-                            n_bootstraps=n_bootstraps,
-                            conf_level=conf_level,
-                            plot_type=PlotType.AREA_STD_DEV,
-                            estimator=std_dev_estimator,
-                            normalize=True,
-                        )
+                    std_dev_bs_conf_int_lb, std_dev_bs_conf_int_ub = bootstrap_procedure(
+                        experiments=[[experiment]],
+                        n_bootstraps=n_bootstraps,
+                        conf_level=conf_level,
+                        plot_type=PlotType.AREA_STD_DEV,
+                        estimator=std_dev_estimator,
+                        normalize=True,
                     )
                     logger.debug(
                         "data",
@@ -279,8 +266,7 @@ def plot_area_scatterplots(
                         std_dev_bs_conf_int_ub, (Curve)
                     ):
                         error_msg = (
-                            "Standard deviation confidence intervals should "
-                            "be scalar values."
+                            "Standard deviation confidence intervals should be scalar values."
                         )
                         raise ValueError(error_msg)
                     x_err = [

@@ -131,8 +131,7 @@ class DualSourcingConfig(BaseModel):
         # Cross-validation: check lead time and cost constraints
         if (self.lead_exp > self.lead_reg) or (self.cost_exp < self.cost_reg):
             raise ValueError(
-                "lead_exp must be less than lead_reg and cost_exp must be greater than "
-                "cost_reg"
+                "lead_exp must be less than lead_reg and cost_exp must be greater than cost_reg"
             )
 
         return self

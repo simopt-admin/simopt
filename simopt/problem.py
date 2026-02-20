@@ -230,9 +230,7 @@ class Problem(ABC):
             return False
         if type(self) is type(other) and self.factors == other.factors:
             # Check if non-decision-variable factors of models are the same.
-            non_decision_factors = (
-                set(self.model.factors.keys()) - self.model_decision_factors
-            )
+            non_decision_factors = set(self.model.factors.keys()) - self.model_decision_factors
             for factor in non_decision_factors:
                 if self.model.factors[factor] != other.model.factors[factor]:
                     return False
@@ -245,9 +243,7 @@ class Problem(ABC):
         Returns:
             int: Hash value of the solver.
         """
-        non_decision_factors = (
-            set(self.model.factors.keys()) - self.model_decision_factors
-        )
+        non_decision_factors = set(self.model.factors.keys()) - self.model_decision_factors
         return hash(
             (
                 self.name,
@@ -351,9 +347,7 @@ class Problem(ABC):
         # Check box constraints.
         return all(
             lb <= x_i <= ub
-            for x_i, lb, ub in zip(
-                x, self.lower_bounds, self.upper_bounds, strict=False
-            )
+            for x_i, lb, ub in zip(x, self.lower_bounds, self.upper_bounds, strict=False)
         )
 
     @abstractmethod
@@ -670,9 +664,7 @@ class Solution:
 
         # Convert responses and gradients to objectives and gradients and add
         # to those of deterministic components of objectives.
-        self._objectives.append(
-            np.array([objective.value() for objective in objectives])
-        )
+        self._objectives.append(np.array([objective.value() for objective in objectives]))
         self._objectives_array = None
 
         gradients = []

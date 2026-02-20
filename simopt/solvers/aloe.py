@@ -100,9 +100,7 @@ class ALOE(Solver):
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = self.create_new_solution(
-            problem.factors["initial_solution"], problem
-        )
+        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
         self.recommended_solns.append(new_solution)
         self.intermediate_budgets.append(self.budget.used)
 
@@ -115,31 +113,25 @@ class ALOE(Solver):
             new_x = np.array(new_solution.x, dtype=float)
 
             # Check variable bounds
-            forward = np.isclose(
-                new_x, lower_bound, atol=self.factors["sensitivity"]
-            ).astype(np.int64)
-            backward = np.isclose(
-                new_x, upper_bound, atol=self.factors["sensitivity"]
-            ).astype(np.int64)
+            forward = np.isclose(new_x, lower_bound, atol=self.factors["sensitivity"]).astype(
+                np.int64
+            )
+            backward = np.isclose(new_x, upper_bound, atol=self.factors["sensitivity"]).astype(
+                np.int64
+            )
             bounds_check = forward - backward
 
             if problem.gradient_available:
                 grad = -problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
-                finite_diff_budget = (
-                    2 * problem.dim - np.count_nonzero(bounds_check)
-                ) * r
+                finite_diff_budget = (2 * problem.dim - np.count_nonzero(bounds_check)) * r
                 self.budget.request(int(finite_diff_budget))
                 grad = finite_diff(self, new_solution, bounds_check, problem, alpha, r)
 
                 while np.all(grad == 0):
-                    finite_diff_budget = (
-                        2 * problem.dim - np.count_nonzero(bounds_check)
-                    ) * r
+                    finite_diff_budget = (2 * problem.dim - np.count_nonzero(bounds_check)) * r
                     self.budget.request(int(finite_diff_budget))
-                    grad = finite_diff(
-                        self, new_solution, bounds_check, problem, alpha, r
-                    )
+                    grad = finite_diff(self, new_solution, bounds_check, problem, alpha, r)
                     r = int(self.factors["lambda"] * r)  # Update sample size
 
             # Compute candidate solution and apply box constraints (vectorized).

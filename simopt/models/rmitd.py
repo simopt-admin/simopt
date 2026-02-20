@@ -105,13 +105,10 @@ class RMITDConfig(BaseModel):
         if len(self.prices) != self.time_horizon:
             raise ValueError("The length of prices must be equal to time_horizon.")
         if len(self.demand_means) != self.time_horizon:
-            raise ValueError(
-                "The length of demand_means must be equal to time_horizon."
-            )
+            raise ValueError("The length of demand_means must be equal to time_horizon.")
         if len(self.reservation_qtys) != self.time_horizon - 1:
             raise ValueError(
-                "The length of reservation_qtys must be equal to the time_horizon "
-                "minus 1."
+                "The length of reservation_qtys must be equal to the time_horizon minus 1."
             )
 
         if self.initial_inventory < self.reservation_qtys[0]:
@@ -125,8 +122,7 @@ class RMITDConfig(BaseModel):
             for idx in range(self.time_horizon - 2)
         ):
             raise ValueError(
-                "Each value in reservation_qtys must be greater than the next value "
-                "in the list."
+                "Each value in reservation_qtys must be greater than the next value in the list."
             )
 
         if not np.isclose(self.gamma_shape * self.gamma_scale, 1):
@@ -181,9 +177,7 @@ class DemandInputModel(InputModel):
             alpha=gamma_shape,
             beta=1.0 / gamma_scale,
         )
-        y_demand = np.array(
-            [self.y_rng.expovariate(1) for _ in range(len(demand_means))]
-        )
+        y_demand = np.array([self.y_rng.expovariate(1) for _ in range(len(demand_means))])
         return demand_means * x_demand * y_demand
 
 
@@ -248,9 +242,7 @@ class RMITD(Model):
         revenue = 0.0
 
         # Compute revenue for each period.
-        for reservation, demand, price in zip(
-            reservations, list(demand_vec), prices, strict=False
-        ):
+        for reservation, demand, price in zip(reservations, list(demand_vec), prices, strict=False):
             available = max(remaining_inventory - reservation, 0)
             sell = min(available, demand)
             remaining_inventory -= sell

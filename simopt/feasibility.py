@@ -3,9 +3,7 @@
 import numpy as np
 
 
-def feasibility_score(
-    lhs: np.ndarray, method: str, norm_degree: int, two_sided: bool
-) -> float:
+def feasibility_score(lhs: np.ndarray, method: str, norm_degree: int, two_sided: bool) -> float:
     """Compute feasibility score for a given set of constraints."""
     if lhs.size == 0:
         return 0.0

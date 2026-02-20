@@ -160,8 +160,7 @@ def make_full_metaexperiment(
         raise Exception(error_msg)
     # Create the missing experiments
     created_experiments = [
-        ProblemSolver(solver=solver, problem=problem)
-        for solver, problem in missing_experiments
+        ProblemSolver(solver=solver, problem=problem) for solver, problem in missing_experiments
     ]
     # Create 2D list to hold all experiments.
     full_experiments: list[list[ProblemSolver | None]] = [
@@ -329,9 +328,7 @@ def create_design(
     if len(cross_design_factors) > 0:
         # Create combination of categorical factor options.
         cross_factor_names = list(cross_design_factors.keys())
-        combinations = itertools.product(
-            *(cross_design_factors[opt] for opt in cross_factor_names)
-        )
+        combinations = itertools.product(*(cross_design_factors[opt] for opt in cross_factor_names))
 
         new_design_table = pd.DataFrame()  # Temp empty value.
         for combination in combinations:

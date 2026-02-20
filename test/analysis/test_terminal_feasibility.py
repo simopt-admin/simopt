@@ -131,8 +131,7 @@ def test_terminal_feasibility_different_problem_experiments(
     desired = capture_log_data(
         plot_terminal_feasibility,
         experiments=[
-            [experiment]
-            for experiment in different_problem_experiments_stochastic_constraints
+            [experiment] for experiment in different_problem_experiments_stochastic_constraints
         ],
         plot_type=PlotType.FEASIBILITY_SCATTER,
         score_type="norm",
@@ -153,8 +152,7 @@ def test_terminal_feasibility_different_problem_experiments(
     )
 
     analysis_inputs = [
-        convert(experiment)
-        for experiment in different_problem_experiments_stochastic_constraints
+        convert(experiment) for experiment in different_problem_experiments_stochastic_constraints
     ]
     analysis_results = analyze_many(
         analysis_inputs,

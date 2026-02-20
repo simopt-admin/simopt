@@ -12,16 +12,12 @@ import simopt.solvers
 from simopt.base import Model, Problem, Solver
 
 
-def load_models_and_problems() -> tuple[
-    dict[str, type[Model]], dict[str, type[Problem]]
-]:
+def load_models_and_problems() -> tuple[dict[str, type[Model]], dict[str, type[Problem]]]:
     """Dynamically load models and problems from simopt.models."""
     models = {}
     problems = {}
 
-    for _, modname, _ in pkgutil.iter_modules(
-        simopt.models.__path__, simopt.models.__name__ + "."
-    ):
+    for _, modname, _ in pkgutil.iter_modules(simopt.models.__path__, simopt.models.__name__ + "."):
         mod = importlib.import_module(modname)
         for attr_name in dir(mod):
             attr = getattr(mod, attr_name)
@@ -44,11 +40,7 @@ def load_solvers() -> dict[str, type[Solver]]:
         mod = importlib.import_module(modname)
         for attr_name in dir(mod):
             attr = getattr(mod, attr_name)
-            if (
-                isinstance(attr, type)
-                and issubclass(attr, Solver)
-                and attr is not Solver
-            ):
+            if isinstance(attr, type) and issubclass(attr, Solver) and attr is not Solver:
                 solvers[attr.class_name_abbr] = attr
 
     return solvers

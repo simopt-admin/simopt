@@ -48,9 +48,7 @@ class Curve:
         """Number of points in the curve."""
         return self.__n_points
 
-    def __init__(
-        self, x_vals: Sequence[int | float], y_vals: Sequence[int | float]
-    ) -> None:
+    def __init__(self, x_vals: Sequence[int | float], y_vals: Sequence[int | float]) -> None:
         """Initialize a curve with x- and y-values.
 
         Args:
@@ -65,9 +63,7 @@ class Curve:
         try:
             # Ensure x_vals and y_vals have the same length before conversion
             if len(x_vals) != len(y_vals):
-                error_msg = (
-                    f"Length of x ({len(x_vals)}) and y ({len(y_vals)}) must be equal."
-                )
+                error_msg = f"Length of x ({len(x_vals)}) and y ({len(y_vals)}) must be equal."
                 raise ValueError(error_msg)
 
             # Convert to immutable tuples only after validation
@@ -133,13 +129,8 @@ class Curve:
         Returns:
             float: Area under the curve.
         """
-        x_diffs = (
-            x_next - x
-            for x, x_next in zip(self.x_vals[:-1], self.x_vals[1:], strict=False)
-        )
-        area_contributions = (
-            y * dx for y, dx in zip(self.y_vals[:-1], x_diffs, strict=False)
-        )
+        x_diffs = (x_next - x for x, x_next in zip(self.x_vals[:-1], self.x_vals[1:], strict=False))
+        area_contributions = (y * dx for y, dx in zip(self.y_vals[:-1], x_diffs, strict=False))
 
         return sum(area_contributions)
 
@@ -208,9 +199,7 @@ class Curve:
         try:
             # Ensure curve_type is a valid Enum member
             if not isinstance(curve_type, CurveType):
-                error_msg = (
-                    f"Invalid curve type: {curve_type}. Must be a member of CurveType."
-                )
+                error_msg = f"Invalid curve type: {curve_type}. Must be a member of CurveType."
                 raise ValueError(error_msg)
 
             linestyle, linewidth = curve_type.style

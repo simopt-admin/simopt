@@ -69,9 +69,7 @@ class MM1QueueConfig(BaseModel):
         int,
         Field(
             default=50,
-            description=(
-                "number of people from which to calculate the average sojourn time"
-            ),
+            description=("number of people from which to calculate the average sojourn time"),
             ge=1,
         ),
     ]
@@ -258,8 +256,7 @@ class MM1Queue(Model):
             "frac_cust_wait": fraction_wait,
         }
         gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
+            response_key: dict.fromkeys(self.specifications, np.nan) for response_key in responses
         }
         gradients["avg_sojourn_time"]["mu"] = float(grad_mean_sojourn_time_mu)
         gradients["avg_sojourn_time"]["lambda"] = float(grad_mean_sojourn_time_lambda)

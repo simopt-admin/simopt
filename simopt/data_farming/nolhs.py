@@ -112,8 +112,7 @@ class NOLHS(DesignType):
         for stack_idx in range(self._num_stacks):
             for i, dp in enumerate(design):
                 scaled_dp = [
-                    self._scalers[k].scale_value(x)
-                    for k, x in enumerate(dp[: self._design_size])
+                    self._scalers[k].scale_value(x) for k, x in enumerate(dp[: self._design_size])
                 ]
 
                 # TODO: revisit why this is needed

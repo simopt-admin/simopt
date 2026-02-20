@@ -336,9 +336,7 @@ class FacilitySizingTotalCost(Problem):
                 deterministic=-self.factors["epsilon"],
             )
         ]
-        return RepResult(
-            objectives=objectives, stochastic_constraints=stochastic_constraints
-        )
+        return RepResult(objectives=objectives, stochastic_constraints=stochastic_constraints)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         cov_matrix = np.diag([x**2 for x in self.factors["initial_solution"]])
@@ -397,8 +395,7 @@ class FacilitySizingMaxService(Problem):
     def check_deterministic_constraints(self, x: tuple) -> bool:
         # Check budget constraint
         budget_feasible = (
-            np.dot(self.factors["installation_costs"], x)
-            <= self.factors["installation_budget"]
+            np.dot(self.factors["installation_costs"], x) <= self.factors["installation_budget"]
         )
         if not budget_feasible:
             return False

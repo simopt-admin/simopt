@@ -123,12 +123,8 @@ def test_progress_curve(
     sscont_plot_dir: Path,
 ) -> None:
     output = sscont_plot_dir / "progress_curve.png"
-    first_results, first_experiments = _first_problem_slice(
-        sscont_results, sscont_experiments
-    )
-    figs_axes = ProgressCurve(agg="mean", normalize=False).plot(
-        first_results, first_experiments
-    )
+    first_results, first_experiments = _first_problem_slice(sscont_results, sscont_experiments)
+    figs_axes = ProgressCurve(agg="mean", normalize=False).plot(first_results, first_experiments)
     _save_figure(figs_axes, output)
     assert output.exists()
     assert output.stat().st_size > 0
@@ -140,9 +136,7 @@ def test_terminal_progress(
     sscont_plot_dir: Path,
 ) -> None:
     output = sscont_plot_dir / "terminal_progress.png"
-    first_results, first_experiments = _first_problem_slice(
-        sscont_results, sscont_experiments
-    )
+    first_results, first_experiments = _first_problem_slice(sscont_results, sscont_experiments)
     figs_axes = TerminalProgress(normalize=True).plot(first_results, first_experiments)
     _save_figure(figs_axes, output)
     assert output.exists()

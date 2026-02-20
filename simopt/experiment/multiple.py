@@ -75,9 +75,7 @@ class ProblemsSolvers:
         return self.__all_solver_fixed_factors
 
     @all_solver_fixed_factors.setter
-    def all_solver_fixed_factors(
-        self, all_solver_fixed_factors: dict[str, dict]
-    ) -> None:
+    def all_solver_fixed_factors(self, all_solver_fixed_factors: dict[str, dict]) -> None:
         self.__all_solver_fixed_factors = all_solver_fixed_factors
 
     @property
@@ -86,9 +84,7 @@ class ProblemsSolvers:
         return self.__all_problem_fixed_factors
 
     @all_problem_fixed_factors.setter
-    def all_problem_fixed_factors(
-        self, all_problem_fixed_factors: dict[str, dict]
-    ) -> None:
+    def all_problem_fixed_factors(self, all_problem_fixed_factors: dict[str, dict]) -> None:
         self.__all_problem_fixed_factors = all_problem_fixed_factors
 
     @property
@@ -200,9 +196,7 @@ class ProblemsSolvers:
 
         if experiments is not None:  # Method #3
             self.experiments = experiments
-            self.solvers = [
-                experiments[idx][0].solver for idx in range(len(experiments))
-            ]
+            self.solvers = [experiments[idx][0].solver for idx in range(len(experiments))]
             self.problems = [experiment.problem for experiment in experiments[0]]
             self.solver_names = [solver.name for solver in self.solvers]
             self.problem_names = [problem.name for problem in self.problems]
@@ -398,12 +392,9 @@ class ProblemsSolvers:
                     solver_experiments.append(next_experiment)
                 self.experiments.append(solver_experiments)
                 self.solvers = [
-                    self.experiments[idx][0].solver
-                    for idx in range(len(self.experiments))
+                    self.experiments[idx][0].solver for idx in range(len(self.experiments))
                 ]
-                self.problems = [
-                    experiment.problem for experiment in self.experiments[0]
-                ]
+                self.problems = [experiment.problem for experiment in self.experiments[0]]
         # Initialize file path.
         if file_name_path is None:
             solver_names_string = ""
@@ -430,14 +421,11 @@ class ProblemsSolvers:
         errors = []
         for solver_idx in range(self.n_solvers):
             for problem_idx in range(self.n_problems):
-                new_error_str = self.experiments[solver_idx][
-                    problem_idx
-                ].check_compatibility()
+                new_error_str = self.experiments[solver_idx][problem_idx].check_compatibility()
                 if len(new_error_str) > 0:
                     new_msg = (
                         f"For solver {self.solver_names[solver_idx]} "
-                        f"and problem {self.problem_names[problem_idx]}... "
-                        + new_error_str
+                        f"and problem {self.problem_names[problem_idx]}... " + new_error_str
                     )
                     errors.append(new_msg)
         return "\n".join(errors)
@@ -465,9 +453,7 @@ class ProblemsSolvers:
                 if not experiment.has_run:
                     # TODO: check if this should be prob on solv instead?
                     s_on_p = f"{experiment.solver.name} on {experiment.problem.name}"
-                    logging.debug(
-                        f"Running {n_macroreps} macro-replications of {s_on_p}."
-                    )
+                    logging.debug(f"Running {n_macroreps} macro-replications of {s_on_p}.")
                     experiment.run(n_macroreps)
         # Save ProblemsSolvers object to .pickle file.
         self.record_group_experiment_results()
@@ -503,15 +489,11 @@ class ProblemsSolvers:
                 if not experiment.has_postreplicated:
                     s_on_p = f"{experiment.solver.name} on {experiment.problem.name}"
                     logging.debug(f"Post-processing {s_on_p}.")
-                    experiment.post_replicate(
-                        n_postreps, crn_across_budget, crn_across_macroreps
-                    )
+                    experiment.post_replicate(n_postreps, crn_across_budget, crn_across_macroreps)
         # Save ProblemsSolvers object to .pickle file.
         self.record_group_experiment_results()
 
-    def post_normalize(
-        self, n_postreps_init_opt: int, crn_across_init_opt: bool = True
-    ) -> None:
+    def post_normalize(self, n_postreps_init_opt: int, crn_across_init_opt: bool = True) -> None:
         """Builds objective and progress curves for all experiment collections.
 
         Args:
@@ -530,8 +512,7 @@ class ProblemsSolvers:
 
         for problem_idx in range(self.n_problems):
             experiments_same_problem = [
-                self.experiments[solver_idx][problem_idx]
-                for solver_idx in range(self.n_solvers)
+                self.experiments[solver_idx][problem_idx] for solver_idx in range(self.n_solvers)
             ]
             post_normalize(
                 experiments=experiments_same_problem,
@@ -547,11 +528,7 @@ class ProblemsSolvers:
         Returns:
             bool: Whether all experiments have been postreplicated
         """
-        return all(
-            experiment.has_postreplicated
-            for row in self.experiments
-            for experiment in row
-        )
+        return all(experiment.has_postreplicated for row in self.experiments for experiment in row)
 
     def check_postnormalize(self) -> bool:
         """Checks whether all experiments have been postnormalized.
@@ -559,11 +536,7 @@ class ProblemsSolvers:
         Returns:
             bool: Whether all experiments have been postnormalized.
         """
-        return all(
-            experiment.has_postnormalized
-            for row in self.experiments
-            for experiment in row
-        )
+        return all(experiment.has_postnormalized for row in self.experiments for experiment in row)
 
     def record_group_experiment_results(self) -> None:
         """Saves a ProblemsSolvers object to a .pickle file in the outputs directory."""
@@ -621,9 +594,7 @@ class ProblemsSolvers:
             file.write("-" * seperator_len)
             # Write the name of pickle files for each Problem-Solver pair if created.
             if self.create_pair_pickles:
-                file.write(
-                    "\nThe .pickle files for the associated Problem-Solver pairs are:\n"
-                )
+                file.write("\nThe .pickle files for the associated Problem-Solver pairs are:\n")
                 for solver_group in self.experiments:
                     for experiment in solver_group:
                         file_name = experiment.file_name_path.name
@@ -778,17 +749,13 @@ class ProblemsSolvers:
                         [
                             progress_curve.compute_crossing_time(threshold=solve_tol),
                             int(
-                                progress_curve.compute_crossing_time(
-                                    threshold=solve_tol
-                                )
+                                progress_curve.compute_crossing_time(threshold=solve_tol)
                                 < float("inf")
                             ),
                         ]
                         for solve_tol in solve_tols
                     ]
-                    solve_time_values = list(
-                        itertools.chain.from_iterable(solve_time_values)
-                    )
+                    solve_time_values = list(itertools.chain.from_iterable(solve_time_values))
                     statistics_list = [
                         progress_curve.y_vals[-1],
                         progress_curve.compute_area_under_curve(),
@@ -796,9 +763,7 @@ class ProblemsSolvers:
                     ]
                     init_sol = tuple([round(x, 4) for x in experiment.x0])
                     int_obj = experiment.x0_postreps[mrep]
-                    opt_sol = tuple(
-                        [round(x, 4) for x in experiment.all_recommended_xs[mrep][-1]]
-                    )
+                    opt_sol = tuple([round(x, 4) for x in experiment.all_recommended_xs[mrep][-1]])
                     opt_obj = experiment.all_est_objectives[mrep][-1]
                     solution_list = [init_sol, int_obj, opt_sol, opt_obj]
                     print_list = [

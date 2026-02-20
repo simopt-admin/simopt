@@ -61,13 +61,10 @@ def _set_up_rngs(solver: Solver, problem: Problem, mrep: int) -> None:
     solver.rng_list = solver_rngs
 
 
-def _run_mrep(
-    solver: Solver, problem: Problem, mrep: int
-) -> tuple[pd.DataFrame, float]:
+def _run_mrep(solver: Solver, problem: Problem, mrep: int) -> tuple[pd.DataFrame, float]:
     """Run one macroreplication of the solver on the problem."""
     logging.debug(
-        f"Macroreplication {mrep}: "
-        f"starting solver {solver.name} on problem {problem.name}."
+        f"Macroreplication {mrep}: starting solver {solver.name} on problem {problem.name}."
     )
 
     # Set up RNGs
@@ -116,13 +113,11 @@ def run_solver(
     # so macroreps can share instances safely without deepcopy.
     if n_jobs == 1:
         results: list[tuple] = [
-            _run_mrep(deepcopy(solver), deepcopy(problem), i)
-            for i in range(n_macroreps)
+            _run_mrep(deepcopy(solver), deepcopy(problem), i) for i in range(n_macroreps)
         ]
     else:
         results: list[tuple] = Parallel(n_jobs=n_jobs)(
-            delayed(_run_mrep)(deepcopy(solver), deepcopy(problem), i)
-            for i in range(n_macroreps)
+            delayed(_run_mrep)(deepcopy(solver), deepcopy(problem), i) for i in range(n_macroreps)
         )
 
     dfs = []

@@ -32,9 +32,7 @@ class TerminalScatterResult:
         return np.array([self.mean, self.std])
 
 
-def analyze(
-    analysis_input: AnalysisInput, /, *, normalize: bool = True
-) -> TerminalScatterResult:
+def analyze(analysis_input: AnalysisInput, /, *, normalize: bool = True) -> TerminalScatterResult:
     """Analyze the terminal results for a scatterplot.
 
     Args:
@@ -74,9 +72,7 @@ def plot(
         The created plot collection.
     """
     logger.debug("data", data=result.to_numpy())
-    return ax.scatter(
-        x=result.mean, y=result.std, color=color, marker=marker, label=label
-    )
+    return ax.scatter(x=result.mean, y=result.std, color=color, marker=marker, label=label)
 
 
 def analyze_many(
@@ -86,10 +82,7 @@ def analyze_many(
     normalize: bool = True,
 ) -> list[TerminalScatterResult]:
     """Analyze terminal scatterplots for multiple experiments on the same problem."""
-    return [
-        analyze(analysis_input, normalize=normalize)
-        for analysis_input in analysis_inputs
-    ]
+    return [analyze(analysis_input, normalize=normalize) for analysis_input in analysis_inputs]
 
 
 def plot_many(

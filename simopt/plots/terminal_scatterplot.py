@@ -64,9 +64,7 @@ def plot_terminal_scatterplots(
             problem_name=problem_set_name,
             plot_title=plot_title,
         )
-        solver_names = [
-            solver_experiments[0].solver.name for solver_experiments in experiments
-        ]
+        solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curve_handles = []
         handle = None
         for solver_idx in range(n_solvers):

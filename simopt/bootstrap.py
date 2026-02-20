@@ -43,9 +43,7 @@ def bootstrap_sample_all(
     n_solvers = len(experiments)
     n_problems = len(experiments[0])
     bootstrap_curves = [[[] for _ in range(n_problems)] for _ in range(n_solvers)]
-    bootstrap_feasibility_curves = [
-        [[] for _ in range(n_problems)] for _ in range(n_solvers)
-    ]
+    bootstrap_feasibility_curves = [[[] for _ in range(n_problems)] for _ in range(n_solvers)]
     # Obtain a bootstrap sample from each experiment.
     for solver_idx in range(n_solvers):
         for problem_idx in range(n_problems):
@@ -132,9 +130,7 @@ def bootstrap_procedure(
         PlotType.QUANTILE_FEASIBILITY_PROGRESS,
     ]
     if plot_type not in acceptable_plot_types:
-        error_msg = (
-            f"Plot type must be one of {acceptable_plot_types}.\nReceived: {plot_type}"
-        )
+        error_msg = f"Plot type must be one of {acceptable_plot_types}.\nReceived: {plot_type}"
         raise ValueError(error_msg)
 
     # Create random number generator for bootstrap sampling.
@@ -170,14 +166,10 @@ def bootstrap_procedure(
         PlotType.SOLVE_TIME_QUANTILE,
     ]:
         if estimator is None:
-            error_msg = (
-                "Estimator must be provided for functional that returns a scalar."
-            )
+            error_msg = "Estimator must be provided for functional that returns a scalar."
             raise ValueError(error_msg)
         if isinstance(estimator, Curve):
-            error_msg = (
-                "Estimator must be a scalar for functional that returns a scalar."
-            )
+            error_msg = "Estimator must be a scalar for functional that returns a scalar."
             raise ValueError(error_msg)
         # Functional returns a scalar.
         lb, ub = compute_bootstrap_conf_int(
@@ -189,26 +181,18 @@ def bootstrap_procedure(
         return lb, ub
     # Functional returns a curve.
     unique_budget_list = list(
-        np.unique(
-            [budget for curve in bootstrap_replications for budget in curve.x_vals]
-        )
+        np.unique([budget for curve in bootstrap_replications for budget in curve.x_vals])
     )
     bs_conf_int_lower_bound_list: list[np.ndarray] = []
     bs_conf_int_upper_bound_list: list[np.ndarray] = []
     for budget in unique_budget_list:
         budget_float = float(budget)
-        bootstrap_subreplications = [
-            curve.lookup(budget_float) for curve in bootstrap_replications
-        ]
+        bootstrap_subreplications = [curve.lookup(budget_float) for curve in bootstrap_replications]
         if estimator is None:
-            error_msg = (
-                "Estimator must be provided for functional that returns a curve."
-            )
+            error_msg = "Estimator must be provided for functional that returns a curve."
             raise ValueError(error_msg)
         if isinstance(estimator, (int, float)):
-            error_msg = (
-                "Estimator must be a Curve object for functional that returns a curve."
-            )
+            error_msg = "Estimator must be a Curve object for functional that returns a curve."
             raise ValueError(error_msg)
         sub_estimator = estimator.lookup(budget_float)
         bs_conf_int_lower_bound, bs_conf_int_upper_bound = compute_bootstrap_conf_int(
@@ -282,9 +266,7 @@ def functional_of_curves(
 
     dispatch = {
         PlotType.MEAN: lambda: curve_utils.mean_of_curves(single_curves),
-        PlotType.QUANTILE: lambda: curve_utils.quantile_of_curves(
-            single_curves, beta=beta
-        ),
+        PlotType.QUANTILE: lambda: curve_utils.quantile_of_curves(single_curves, beta=beta),
         PlotType.AREA_MEAN: lambda: float(
             np.mean([c.compute_area_under_curve() for c in single_curves])
         ),
@@ -312,49 +294,35 @@ def functional_of_curves(
                 for curves in solver_1_curves
             ]
         ),
-        PlotType.DIFFERENCE_OF_CDF_SOLVABILITY: lambda: (
-            curve_utils.difference_of_curves(
-                curve_utils.mean_of_curves(
-                    [
-                        curve_utils.cdf_of_curves_crossing_times(
-                            curves, threshold=solve_tol
-                        )
-                        for curves in solver_1_curves
-                    ]
-                ),
-                curve_utils.mean_of_curves(
-                    [
-                        curve_utils.cdf_of_curves_crossing_times(
-                            curves, threshold=solve_tol
-                        )
-                        for curves in solver_2_curves  # type: ignore
-                    ]
-                ),
-            )
+        PlotType.DIFFERENCE_OF_CDF_SOLVABILITY: lambda: curve_utils.difference_of_curves(
+            curve_utils.mean_of_curves(
+                [
+                    curve_utils.cdf_of_curves_crossing_times(curves, threshold=solve_tol)
+                    for curves in solver_1_curves
+                ]
+            ),
+            curve_utils.mean_of_curves(
+                [
+                    curve_utils.cdf_of_curves_crossing_times(curves, threshold=solve_tol)
+                    for curves in solver_2_curves  # type: ignore
+                ]
+            ),
         ),
-        PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY: lambda: (
-            curve_utils.difference_of_curves(
-                curve_utils.mean_of_curves(
-                    [
-                        curve_utils.quantile_cross_jump(
-                            curves, threshold=solve_tol, beta=beta
-                        )
-                        for curves in solver_1_curves
-                    ]
-                ),
-                curve_utils.mean_of_curves(
-                    [
-                        curve_utils.quantile_cross_jump(
-                            curves, threshold=solve_tol, beta=beta
-                        )
-                        for curves in solver_2_curves  # type: ignore
-                    ]
-                ),
-            )
+        PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY: lambda: curve_utils.difference_of_curves(
+            curve_utils.mean_of_curves(
+                [
+                    curve_utils.quantile_cross_jump(curves, threshold=solve_tol, beta=beta)
+                    for curves in solver_1_curves
+                ]
+            ),
+            curve_utils.mean_of_curves(
+                [
+                    curve_utils.quantile_cross_jump(curves, threshold=solve_tol, beta=beta)
+                    for curves in solver_2_curves  # type: ignore
+                ]
+            ),
         ),
-        PlotType.MEAN_FEASIBILITY_PROGRESS: lambda: curve_utils.mean_of_curves(
-            single_curves
-        ),
+        PlotType.MEAN_FEASIBILITY_PROGRESS: lambda: curve_utils.mean_of_curves(single_curves),
         PlotType.QUANTILE_FEASIBILITY_PROGRESS: lambda: curve_utils.quantile_of_curves(
             single_curves, beta=beta
         ),
@@ -515,9 +483,9 @@ def bootstrap_sample(
             for budget in range(len(problem_solver.all_intermediate_budgets[mrep])):
                 if has_stochastic_constraints:
                     est_lhs.append(
-                        problem_solver.all_stoch_constraints[mrep][budget][
-                            bs_postrep_idxs
-                        ].mean(axis=0)
+                        problem_solver.all_stoch_constraints[mrep][budget][bs_postrep_idxs].mean(
+                            axis=0
+                        )
                     )
                 else:
                     est_lhs.append(np.array([]))
@@ -525,10 +493,7 @@ def bootstrap_sample(
                 if problem_solver.all_recommended_xs[mrep][budget] == problem_solver.x0:
                     est_objectives.append(bs_initial_obj_val)
                 # ...else if solution is x*...
-                elif (
-                    problem_solver.all_recommended_xs[mrep][budget]
-                    == problem_solver.xstar
-                ):
+                elif problem_solver.all_recommended_xs[mrep][budget] == problem_solver.xstar:
                     est_objectives.append(bs_optimal_obj_val)
                 # ... else solution other than x0 or x*.
                 else:
@@ -536,9 +501,7 @@ def bootstrap_sample(
                     est_objectives.append(
                         np.mean(
                             [
-                                problem_solver.all_post_replicates[mrep][budget][
-                                    postrep
-                                ]
+                                problem_solver.all_post_replicates[mrep][budget][postrep]
                                 for postrep in bs_postrep_idxs
                             ]
                         )
@@ -591,9 +554,9 @@ def bootstrap_sample(
                 )
                 if has_stochastic_constraints:
                     est_lhs.append(
-                        problem_solver.all_stoch_constraints[mrep][budget][
-                            bs_postrep_idxs
-                        ].mean(axis=0)
+                        problem_solver.all_stoch_constraints[mrep][budget][bs_postrep_idxs].mean(
+                            axis=0
+                        )
                     )
                 else:
                     est_lhs.append(np.array([]))
@@ -602,10 +565,7 @@ def bootstrap_sample(
                 if problem_solver.all_recommended_xs[mrep][budget] == problem_solver.x0:
                     est_objectives.append(bs_initial_obj_val)
                 # ...else if solution is x*...
-                elif (
-                    problem_solver.all_recommended_xs[mrep][budget]
-                    == problem_solver.xstar
-                ):
+                elif problem_solver.all_recommended_xs[mrep][budget] == problem_solver.xstar:
                     est_objectives.append(bs_optimal_obj_val)
                 # ... else solution other than x0 or x*.
                 else:
@@ -613,9 +573,7 @@ def bootstrap_sample(
                     est_objectives.append(
                         np.mean(
                             [
-                                problem_solver.all_post_replicates[mrep][budget][
-                                    postrep
-                                ]
+                                problem_solver.all_post_replicates[mrep][budget][postrep]
                                 for postrep in bs_postrep_idxs
                             ]
                         )

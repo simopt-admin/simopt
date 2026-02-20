@@ -27,9 +27,7 @@ class TerminalProgressResult:
     normalize: bool
 
 
-def analyze(
-    analysis_input: AnalysisInput, /, *, normalize: bool = True
-) -> TerminalProgressResult:
+def analyze(analysis_input: AnalysisInput, /, *, normalize: bool = True) -> TerminalProgressResult:
     """Analyze the terminal progress.
 
     Args:
@@ -81,10 +79,7 @@ def analyze_many(
     normalize: bool = True,
 ) -> list[TerminalProgressResult]:
     """Analyze terminal progress for multiple experiments on the same problem."""
-    return [
-        analyze(analysis_input, normalize=normalize)
-        for analysis_input in analysis_inputs
-    ]
+    return [analyze(analysis_input, normalize=normalize) for analysis_input in analysis_inputs]
 
 
 def plot_many(
@@ -106,9 +101,7 @@ def plot_many(
         data = np.asarray(result.data, dtype=float)
         logger.debug("data", data=data)
         for value in data:
-            records.append(
-                {"Solver": experiment.solver.name, "Objective": float(value)}
-            )
+            records.append({"Solver": experiment.solver.name, "Objective": float(value)})
     plot_distribution(ax, records, "Solver", "Objective", plot_type)
 
     return fig, ax

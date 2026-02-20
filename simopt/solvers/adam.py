@@ -90,9 +90,7 @@ class ADAM(Solver):
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = self.create_new_solution(
-            problem.factors["initial_solution"], problem
-        )
+        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
         self.recommended_solns.append(new_solution)
         self.intermediate_budgets.append(self.budget.used)
 
@@ -125,9 +123,7 @@ class ADAM(Solver):
             else:
                 # Use finite difference to estimate gradient if IPA gradient is
                 # not available.
-                finite_diff_budget = (
-                    2 * problem.dim - np.count_nonzero(bounds_check)
-                ) * r
+                finite_diff_budget = (2 * problem.dim - np.count_nonzero(bounds_check)) * r
                 self.budget.request(int(finite_diff_budget))
                 grad = finite_diff(
                     solver=self,

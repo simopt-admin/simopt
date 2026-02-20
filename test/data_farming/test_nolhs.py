@@ -96,9 +96,7 @@ class TestNOLHS(unittest.TestCase):
             else:
                 # Add values from subsequent stacks, skipping midrange
                 expected_stack_vals.extend(
-                    val
-                    for val_idx, val in enumerate(current_stack)
-                    if val_idx != midrange
+                    val for val_idx, val in enumerate(current_stack) if val_idx != midrange
                 )
 
             # Generate the design
@@ -136,7 +134,5 @@ class TestNOLHS(unittest.TestCase):
                 expected_value = round((stack[i] - 1) / 16, num_decs)
                 self.assertEqual(design[0], expected_value)
                 # Make sure value has correct number of decimal places
-                decimal_part = (
-                    str(design[0]).split(".")[1] if "." in str(design[0]) else ""
-                )
+                decimal_part = str(design[0]).split(".")[1] if "." in str(design[0]) else ""
                 self.assertLessEqual(len(decimal_part), num_decs)

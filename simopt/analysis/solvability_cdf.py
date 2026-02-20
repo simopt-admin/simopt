@@ -46,13 +46,7 @@ def _estimator(analysis_input: AnalysisInput, solve_tolerance: float) -> pd.Data
     n = df[group_column].nunique()
 
     first_hit = solved.groupby(group_column)["budget"].min().reset_index()
-    counts = (
-        first_hit.groupby("budget")[group_column]
-        .size()
-        .rename("cdf")
-        .to_frame()
-        .sort_index()
-    )
+    counts = first_hit.groupby("budget")[group_column].size().rename("cdf").to_frame().sort_index()
     counts["cdf"] = counts["cdf"].cumsum() / n
 
     budget_points = [0.0, *counts.index, 1.0]
@@ -124,9 +118,7 @@ def plot(
 
     if result.ci is not None:
         ci = result.ci
-        logger.debug(
-            "data", data=[df["budget"], df["cdf"], ci["budget"], ci["lb"], ci["ub"]]
-        )
+        logger.debug("data", data=[df["budget"], df["cdf"], ci["budget"], ci["lb"], ci["ub"]])
         plot_ci(ax, ci, color=color)
 
     return handle

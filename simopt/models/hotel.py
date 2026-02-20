@@ -143,13 +143,7 @@ class HotelConfig(BaseModel):
         list[int],
         Field(
             default_factory=lambda: (
-                [27] * 14
-                + [51] * 12
-                + [75] * 10
-                + [99] * 8
-                + [123] * 6
-                + [144] * 4
-                + [168] * 2
+                [27] * 14 + [51] * 12 + [75] * 10 + [99] * 8 + [123] * 6 + [144] * 4 + [168] * 2
             ),
             description=(
                 "time after which orders of each product no longer arrive "
@@ -161,9 +155,7 @@ class HotelConfig(BaseModel):
         int,
         Field(
             default=168,
-            description=(
-                "hours before t=0 to start running (e.g. 168 means start at time -168)"
-            ),
+            description=("hours before t=0 to start running (e.g. 168 means start at time -168)"),
             gt=0,
         ),
     ]
@@ -201,8 +193,7 @@ class HotelConfig(BaseModel):
         for i in list(self.booking_limits):
             if i <= 0 or i > self.num_rooms:
                 raise ValueError(
-                    "All elements in booking_limits must be greater than 0 and less "
-                    "than num_rooms."
+                    "All elements in booking_limits must be greater than 0 and less than num_rooms."
                 )
 
     @model_validator(mode="after")
@@ -224,9 +215,7 @@ class HotelConfig(BaseModel):
         np_array = np.array(self.product_incidence)
         _, n = np_array.shape
         if n != self.num_products:
-            raise ValueError(
-                "The number of elements in product_incidence must equal num_products."
-            )
+            raise ValueError("The number of elements in product_incidence must equal num_products.")
 
         return self
 
@@ -323,9 +312,7 @@ class Hotel(Model):
         conflicts = (product_incidence.T @ product_incidence) >= 1
 
         # Min-heap for tracking next arrival events (arrival_time, product_idx)
-        heap = [
-            (arrival[i], i) for i in range(num_products) if arrival[i] <= time_limit[i]
-        ]
+        heap = [(arrival[i], i) for i in range(num_products) if arrival[i] <= time_limit[i]]
         heapq.heapify(heap)
 
         while heap:
@@ -404,8 +391,5 @@ class HotelRevenue(Problem):
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         return tuple(
-            [
-                rand_sol_rng.randint(0, self.model.factors["num_rooms"])
-                for _ in range(self.dim)
-            ]
+            [rand_sol_rng.randint(0, self.model.factors["num_rooms"]) for _ in range(self.dim)]
         )

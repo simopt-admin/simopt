@@ -141,8 +141,7 @@ def test_feasibility_progress_different_problem_experiments(
     desired = capture_log_data(
         plot_feasibility_progress,
         experiments=[
-            [experiment]
-            for experiment in different_problem_experiments_stochastic_constraints
+            [experiment] for experiment in different_problem_experiments_stochastic_constraints
         ],
         plot_type=PlotType.MEAN_FEASIBILITY_PROGRESS,
         score_type="inf_norm",
@@ -163,8 +162,7 @@ def test_feasibility_progress_different_problem_experiments(
     )
 
     analysis_inputs = [
-        convert(experiment)
-        for experiment in different_problem_experiments_stochastic_constraints
+        convert(experiment) for experiment in different_problem_experiments_stochastic_constraints
     ]
     analysis_results = analyze_many(
         analysis_inputs,

@@ -229,8 +229,7 @@ class CntNV(Model):
             "stockout": stockout,
         }
         gradients = {
-            response_key: dict.fromkeys(self.specifications, np.nan)
-            for response_key in responses
+            response_key: dict.fromkeys(self.specifications, np.nan) for response_key in responses
         }
         gradients["profit"]["order_quantity"] = grad_profit_order_quantity
         return responses, gradients

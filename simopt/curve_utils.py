@@ -38,9 +38,7 @@ def mean_of_curves(curves: Iterable[Curve]) -> Curve:
         unique_x_vals = sorted({x_val for curve in curves for x_val in curve.x_vals})
 
         # Compute pointwise means using generator expressions
-        mean_y_vals = [
-            mean(curve.lookup(x_val) for curve in curves) for x_val in unique_x_vals
-        ]
+        mean_y_vals = [mean(curve.lookup(x_val) for curve in curves) for x_val in unique_x_vals]
 
         return Curve(x_vals=unique_x_vals, y_vals=mean_y_vals)
 
@@ -124,9 +122,7 @@ def cdf_of_curves_crossing_times(curves: Iterable[Curve], threshold: float) -> C
         n_curves = len(crossing_times)
         sorted_crossings = sorted(crossing_times)
 
-        cdf_y_vals = [
-            bisect_right(sorted_crossings, x) / n_curves for x in unique_x_vals
-        ]
+        cdf_y_vals = [bisect_right(sorted_crossings, x) / n_curves for x in unique_x_vals]
 
         return Curve(x_vals=unique_x_vals, y_vals=cdf_y_vals)
 
@@ -140,9 +136,7 @@ def cdf_of_curves_crossing_times(curves: Iterable[Curve], threshold: float) -> C
         raise TypeError(error_msg) from e
 
 
-def quantile_cross_jump(
-    curves: Iterable[Curve], threshold: float, beta: float
-) -> Curve:
+def quantile_cross_jump(curves: Iterable[Curve], threshold: float, beta: float) -> Curve:
     """Compute a curve with a jump at the quantile of the crossing times.
 
     The curve is piecewise-constant with a single jump located at the specified quantile
@@ -164,9 +158,7 @@ def quantile_cross_jump(
 
     try:
         # Compute crossing times once
-        crossing_times = [
-            curve.compute_crossing_time(threshold=threshold) for curve in curves
-        ]
+        crossing_times = [curve.compute_crossing_time(threshold=threshold) for curve in curves]
 
         # Convert beta into an index (assuming n=100 quantiles)
         quantile_idx = int(beta * 99)

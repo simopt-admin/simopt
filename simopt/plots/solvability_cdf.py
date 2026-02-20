@@ -148,9 +148,7 @@ def plot_solvability_cdfs(
             loc=legend_loc,
         )
         if print_max_hw:
-            report_max_halfwidth(
-                curve_pairs=curve_pairs, normalize=True, conf_level=conf_level
-            )
+            report_max_halfwidth(curve_pairs=curve_pairs, normalize=True, conf_level=conf_level)
         file_list.append(
             save_plot(
                 solver_name="SOLVER SET",
@@ -209,9 +207,7 @@ def plot_solvability_cdfs(
                     if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
                         bs_conf_int_ub_curve, (int, float)
                     ):
-                        error_msg = (
-                            "Max halfwidth is not available for scalar estimators."
-                        )
+                        error_msg = "Max halfwidth is not available for scalar estimators."
                         raise ValueError(error_msg)
                     report_max_halfwidth(
                         curve_pairs=[[bs_conf_int_lb_curve, bs_conf_int_ub_curve]],

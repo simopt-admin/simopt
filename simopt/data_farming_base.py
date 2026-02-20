@@ -138,9 +138,7 @@ class DesignPoint:
             if self.n_reps == 0:
                 self.responses = {response_key: [] for response_key in responses}
                 self.gradients = {
-                    response_key: {
-                        factor_key: [] for factor_key in gradients[response_key]
-                    }
+                    response_key: {factor_key: [] for factor_key in gradients[response_key]}
                     for response_key in gradients
                 }
             # Append responses and gradients.
@@ -148,9 +146,7 @@ class DesignPoint:
                 self.responses[key].append(responses[key])
             for outerkey in self.gradients:
                 for innerkey in self.gradients[outerkey]:
-                    self.gradients[outerkey][innerkey].append(
-                        gradients[outerkey][innerkey]
-                    )
+                    self.gradients[outerkey][innerkey].append(gradients[outerkey][innerkey])
             self.n_reps += 1
             # Advance rngs to start of next subsubstream.
             for rng in self.rng_list:
@@ -193,7 +189,7 @@ class DataFarmingExperiment:
         Raises:
             ValueError: If `model_name` is invalid or `design_type` is unsupported.
             FileNotFoundError: If any specified file path does not exist.
-        """  # noqa: E501
+        """
         if model_fixed_factors is None:
             model_fixed_factors = {}
 
@@ -253,8 +249,7 @@ class DataFarmingExperiment:
                     design_path = design_path.with_suffix(".csv")
             if not design_path.exists():
                 raise FileNotFoundError(
-                    f"Path to design ({design_path}) "
-                    "was provided but cannot be located."
+                    f"Path to design ({design_path}) was provided but cannot be located."
                 )
         # If neither is provided, raise an error.
         else:
@@ -346,9 +341,7 @@ class DataFarmingExperiment:
 
         # Setup random number generators for model.
         # Use stream 0 for all runs; start with substreams 0, 1, ..., model.n_rngs-1.
-        main_rng_list = [
-            MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(self.model.n_rngs)
-        ]
+        main_rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(self.model.n_rngs)]
         # All design points will share the same random number generator objects.
         # Simulate n_reps replications from each design point.
         for design_pt in self.design:
@@ -387,9 +380,7 @@ class DataFarmingExperiment:
             if overwrite:
                 csv_file_name.unlink()
             else:
-                error_msg = (
-                    f"{csv_file_name} already exists. Set overwrite=True to overwrite."
-                )
+                error_msg = f"{csv_file_name} already exists. Set overwrite=True to overwrite."
                 raise FileExistsError(error_msg)
 
         # Write results to csv file.
@@ -403,9 +394,7 @@ class DataFarmingExperiment:
             # Print headers.
             model_factor_names = list(self.model.specifications.keys())
             response_names = list(self.design[0].responses.keys())
-            csv_writer.writerow(
-                ["DesignPt#", *model_factor_names, "MacroRep#", *response_names]
-            )
+            csv_writer.writerow(["DesignPt#", *model_factor_names, "MacroRep#", *response_names])
             for designpt_index in range(self.n_design_pts):
                 designpt = self.design[designpt_index]
                 # Parse list of model factors.
@@ -416,8 +405,7 @@ class DataFarmingExperiment:
                 for mrep in range(designpt.n_reps):
                     # Parse list of responses.
                     response_list = [
-                        designpt.responses[response_name][mrep]
-                        for response_name in response_names
+                        designpt.responses[response_name][mrep] for response_name in response_names
                     ]
                     print_list = [
                         designpt_index,

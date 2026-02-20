@@ -77,13 +77,9 @@ def validate_problems(problems: list[dict]) -> list[Problem]:
     return [to_problem(problem) for problem in problems]
 
 
-def create_matrix(
-    solvers: list[Solver], problems: list[Problem]
-) -> list[ProblemSolver]:
+def create_matrix(solvers: list[Solver], problems: list[Problem]) -> list[ProblemSolver]:
     return [
-        ProblemSolver(solver=solver, problem=problem)
-        for solver in solvers
-        for problem in problems
+        ProblemSolver(solver=solver, problem=problem) for solver in solvers for problem in problems
     ]
 
 
@@ -119,9 +115,7 @@ def _mean(
 
     budget = float(df_mean["budget"].max())
     df_mean["normalized_budget"] = df_mean["budget"] / budget
-    df_mean["normalized_objective"] = (
-        df_mean["objective"] - optimal_objective
-    ) / initial_gap
+    df_mean["normalized_objective"] = (df_mean["objective"] - optimal_objective) / initial_gap
 
     return budget, df_mean
 

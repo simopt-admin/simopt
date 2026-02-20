@@ -30,9 +30,7 @@ class NetworkConfig(BaseModel):
         list[float],
         Field(
             default_factory=lambda: [0.1] * NUM_NETWORKS,
-            description=(
-                "probability that a message will go through a particular network i"
-            ),
+            description=("probability that a message will go through a particular network i"),
         ),
     ]
     cost_process: Annotated[
@@ -47,8 +45,7 @@ class NetworkConfig(BaseModel):
         Field(
             default_factory=lambda: [0.005] * NUM_NETWORKS,
             description=(
-                "cost for the length of time a message spends in a network i per "
-                "each unit of time"
+                "cost for the length of time a message spends in a network i per each unit of time"
             ),
         ),
     ]
@@ -56,27 +53,21 @@ class NetworkConfig(BaseModel):
         list[float],
         Field(
             default_factory=lambda: [x + 1 for x in range(NUM_NETWORKS)],
-            description=(
-                "mode time of transit for network i following a triangular distribution"
-            ),
+            description=("mode time of transit for network i following a triangular distribution"),
         ),
     ]
     lower_limits_transit_time: Annotated[
         list[float],
         Field(
             default_factory=lambda: [0.5 + x for x in range(NUM_NETWORKS)],
-            description=(
-                "lower limits for the triangular distribution for the transit time"
-            ),
+            description=("lower limits for the triangular distribution for the transit time"),
         ),
     ]
     upper_limits_transit_time: Annotated[
         list[float],
         Field(
             default_factory=lambda: [1.5 + x for x in range(NUM_NETWORKS)],
-            description=(
-                "upper limits for the triangular distribution for the transit time"
-            ),
+            description=("upper limits for the triangular distribution for the transit time"),
         ),
     ]
     arrival_rate: Annotated[
@@ -126,21 +117,15 @@ class NetworkConfig(BaseModel):
 
     def _check_mode_transit_time(self) -> None:
         if any(transit_time_i <= 0 for transit_time_i in self.mode_transit_time):
-            raise ValueError(
-                "All elements in mode_transit_time must be greater than 0."
-            )
+            raise ValueError("All elements in mode_transit_time must be greater than 0.")
 
     def _check_lower_limits_transit_time(self) -> None:
         if any(lower_i <= 0 for lower_i in self.lower_limits_transit_time):
-            raise ValueError(
-                "All elements in lower_limits_transit_time must be greater than 0."
-            )
+            raise ValueError("All elements in lower_limits_transit_time must be greater than 0.")
 
     def _check_upper_limits_transit_time(self) -> None:
         if any(upper_i <= 0 for upper_i in self.upper_limits_transit_time):
-            raise ValueError(
-                "All elements in upper_limits_transit_time must be greater than 0."
-            )
+            raise ValueError("All elements in upper_limits_transit_time must be greater than 0.")
 
     @model_validator(mode="after")
     def _validate_model(self) -> Self:
@@ -160,13 +145,9 @@ class NetworkConfig(BaseModel):
         if len(self.mode_transit_time) != self.n_networks:
             raise ValueError("The length of mode_transit_time must equal n_networks.")
         if len(self.lower_limits_transit_time) != self.n_networks:
-            raise ValueError(
-                "The length of lower_limits_transit_time must equal n_networks."
-            )
+            raise ValueError("The length of lower_limits_transit_time must equal n_networks.")
         if len(self.upper_limits_transit_time) != self.n_networks:
-            raise ValueError(
-                "The length of upper_limits_transit_time must equal n_networks."
-            )
+            raise ValueError("The length of upper_limits_transit_time must equal n_networks.")
 
         if any(
             self.mode_transit_time[i] < self.lower_limits_transit_time[i]
@@ -276,9 +257,7 @@ class Network(Model):
 
         # Generate all interarrival, network routes, and service times before the
         # simulation run.
-        arrival_times = [
-            self.arrival_model.random(arrival_rate) for _ in range(total_arrivals)
-        ]
+        arrival_times = [self.arrival_model.random(arrival_rate) for _ in range(total_arrivals)]
         network_routes = self.route_model.random(
             list(range(n_networks)),
             weights=process_prob,
@@ -337,18 +316,14 @@ class Network(Model):
 
         # Vectorized cost computations after SOJ is known
         message_mat[:, Col.PROC_COST] = np.array(cost_process)[routes]
-        message_mat[:, Col.TIME_COST] = (
-            np.array(cost_time)[routes] * message_mat[:, Col.SOJ]
-        )
+        message_mat[:, Col.TIME_COST] = np.array(cost_time)[routes] * message_mat[:, Col.SOJ]
         message_mat[:, Col.TOTAL_COST] = (
             message_mat[:, Col.PROC_COST] + message_mat[:, Col.TIME_COST]
         )
 
         routes = message_mat[:, Col.ROUTE].astype(int)
         message_mat[:, Col.PROC_COST] = np.array(cost_process)[routes]
-        message_mat[:, Col.TIME_COST] = (
-            np.array(cost_time)[routes] * message_mat[:, Col.SOJ]
-        )
+        message_mat[:, Col.TIME_COST] = np.array(cost_time)[routes] * message_mat[:, Col.SOJ]
         message_mat[:, Col.TOTAL_COST] = (
             message_mat[:, Col.PROC_COST] + message_mat[:, Col.TIME_COST]
         )

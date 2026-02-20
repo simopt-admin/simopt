@@ -96,9 +96,7 @@ class TableAllocationConfig(BaseModel):
 
     def _check_num_tables(self) -> None:
         if any(x < 0 for x in self.num_tables):
-            raise ValueError(
-                "Each element in num_tables must be greater than or equal to 0."
-            )
+            raise ValueError("Each element in num_tables must be greater than or equal to 0.")
 
     @model_validator(mode="after")
     def _validate_model(self) -> Self:
@@ -109,22 +107,16 @@ class TableAllocationConfig(BaseModel):
         self._check_num_tables()
 
         if len(self.num_tables) != len(self.table_cap):
-            raise ValueError(
-                "The length of num_tables must be equal to the length of table_cap."
-            )
+            raise ValueError("The length of num_tables must be equal to the length of table_cap.")
         if len(self.lambda_) != max(self.table_cap):
-            raise ValueError(
-                "The length of lamda must be equal to the maximum value in table_cap."
-            )
+            raise ValueError("The length of lamda must be equal to the maximum value in table_cap.")
         if len(self.lambda_) != len(self.service_time_means):
             raise ValueError(
-                "The length of lambda must be equal to the length of "
-                "service_time_means."
+                "The length of lambda must be equal to the length of service_time_means."
             )
         if len(self.service_time_means) != len(self.table_revenue):
             raise ValueError(
-                "The length of service_time_means must be equal to the length of "
-                "table_revenue."
+                "The length of service_time_means must be equal to the length of table_revenue."
             )
         return self
 
@@ -287,9 +279,7 @@ class TableAllocation(Model):
             # Mark group as seated.
             found[n] = 1
             # Sample service time.
-            service_time = self.service_time_model.random(
-                1 / service_time_means[group_size - 1]
-            )
+            service_time = self.service_time_model.random(1 / service_time_means[group_size - 1])
             # Update table availability.
             table_avail[k, j] += service_time
             # Update revenue.
@@ -362,8 +352,6 @@ class TableAllocationMaxRev(Problem):
             ):
                 num_tables[table] += 1
                 allocated += self.model.factors["table_cap"][table]
-            elif self.model.factors["table_cap"][0] > (
-                self.model.factors["capacity"] - allocated
-            ):
+            elif self.model.factors["table_cap"][0] > (self.model.factors["capacity"] - allocated):
                 break
         return tuple(num_tables)

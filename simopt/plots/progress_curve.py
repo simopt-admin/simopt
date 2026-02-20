@@ -125,13 +125,9 @@ def plot_progress_curves(
             elif plot_type == PlotType.QUANTILE:
                 # Plot estimated beta-quantile progress curve.
                 if normalize:
-                    estimator = curve_utils.quantile_of_curves(
-                        experiment.progress_curves, beta
-                    )
+                    estimator = curve_utils.quantile_of_curves(experiment.progress_curves, beta)
                 else:
-                    estimator = curve_utils.quantile_of_curves(
-                        experiment.objective_curves, beta
-                    )
+                    estimator = curve_utils.quantile_of_curves(experiment.objective_curves, beta)
                 handle = estimator.plot(color_str=color_str)
             else:
                 error_msg = f"'{plot_type.value}' is not implemented."
@@ -226,13 +222,9 @@ def plot_progress_curves(
             else:  # Must be quantile.
                 # Plot estimated beta-quantile progress curve.
                 if normalize:
-                    estimator = curve_utils.quantile_of_curves(
-                        experiment.progress_curves, beta
-                    )
+                    estimator = curve_utils.quantile_of_curves(experiment.progress_curves, beta)
                 else:
-                    estimator = curve_utils.quantile_of_curves(
-                        experiment.objective_curves, beta
-                    )
+                    estimator = curve_utils.quantile_of_curves(experiment.objective_curves, beta)
                 estimator.plot()
             if (plot_conf_ints or print_max_hw) and plot_type != PlotType.ALL:
                 # Note: "experiments" needs to be a list of list of ProblemSolvers.
@@ -259,9 +251,7 @@ def plot_progress_curves(
                     if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
                         bs_conf_int_ub_curve, (int, float)
                     ):
-                        error_msg = (
-                            "Max halfwidth is not available for scalar estimators."
-                        )
+                        error_msg = "Max halfwidth is not available for scalar estimators."
                         raise ValueError(error_msg)
                     report_max_halfwidth(
                         curve_pairs=[[bs_conf_int_lb_curve, bs_conf_int_ub_curve]],

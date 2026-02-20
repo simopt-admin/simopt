@@ -139,9 +139,7 @@ class STRONG(Solver):
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = self.create_new_solution(
-            problem.factors["initial_solution"], problem
-        )
+        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
 
         self.budget.request(n0)
         problem.simulate(new_solution, n0)
@@ -159,12 +157,12 @@ class STRONG(Solver):
         while True:
             new_x = np.array(new_solution.x)
             # Check variable bounds.
-            forward = np.isclose(
-                new_x, lower_bound, atol=self.factors["sensitivity"]
-            ).astype(np.int32)
-            backward = np.isclose(
-                new_x, upper_bound, atol=self.factors["sensitivity"]
-            ).astype(np.int32)
+            forward = np.isclose(new_x, lower_bound, atol=self.factors["sensitivity"]).astype(
+                np.int32
+            )
+            backward = np.isclose(new_x, upper_bound, atol=self.factors["sensitivity"]).astype(
+                np.int32
+            )
             # bounds_check:
             #   1 stands for forward, -1 stands for backward, 0 means central diff.
             bounds_check = forward - backward
@@ -197,9 +195,7 @@ class STRONG(Solver):
                 # Cauchy reduction.
                 hessian = np.zeros((problem.dim, problem.dim))
                 candidate_x = self.cauchy_point(grad, hessian, new_x, problem)
-                candidate_solution = self.create_new_solution(
-                    tuple(candidate_x), problem
-                )
+                candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
 
                 # Step 3: Compute the ratio.
                 # Use n_r simulated observations to estimate g_new.
@@ -276,9 +272,7 @@ class STRONG(Solver):
                         self.factors["delta_T"],
                         n_r,
                     )
-                    hessian = bfgs_hessian_approx(
-                        self, new_solution, bounds_check, problem, n_r
-                    )
+                    hessian = bfgs_hessian_approx(self, new_solution, bounds_check, problem, n_r)
                     self.budget.request(num_evals * n_r)
                     num_generated_grads += 1
                     if num_generated_grads > 2:
@@ -296,9 +290,7 @@ class STRONG(Solver):
                     new_x,
                     problem,
                 )
-                candidate_solution = self.create_new_solution(
-                    tuple(candidate_x), problem
-                )
+                candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
                 # Step 3: Compute the ratio.
                 # Use r simulated observations to estimate g(x_start\).
                 problem.simulate(candidate_solution, n_r)
@@ -358,9 +350,7 @@ class STRONG(Solver):
                         try_solution = self.create_new_solution(tuple(try_x), problem)
 
                         # Step 3.
-                        counter_ceiling = np.ceil(
-                            sub_counter ** self.factors["lambda_2"]
-                        )
+                        counter_ceiling = np.ceil(sub_counter ** self.factors["lambda_2"])
                         counter_lower_ceiling = np.ceil(
                             (sub_counter - 1) ** self.factors["lambda_2"]
                         )
@@ -378,16 +368,11 @@ class STRONG(Solver):
                         dummy = neg_minmax * dummy_solution.objectives_mean
                         # Update g_old.
                         g_b_old = (
-                            g_b_old * (n_r + counter_lower_ceiling)
-                            + ceiling_diff * dummy
+                            g_b_old * (n_r + counter_lower_ceiling) + ceiling_diff * dummy
                         ) / mreps
 
                         x_diff = try_x - new_x
-                        rr_new = (
-                            g_b_old
-                            + (x_diff @ g_var)
-                            + 0.5 * ((x_diff @ h_var) @ x_diff)
-                        )
+                        rr_new = g_b_old + (x_diff @ g_var) + 0.5 * ((x_diff @ h_var) @ x_diff)
 
                         rr_old = g_b_old
                         # Set rho to the ratio.
@@ -491,15 +476,11 @@ class STRONG(Solver):
         min_step = 1.0
         pos_mask = current_step > 0
         if np.any(pos_mask):
-            step_diff = (upper_bound_arr[pos_mask] - new_x[pos_mask]) / current_step[
-                pos_mask
-            ]
+            step_diff = (upper_bound_arr[pos_mask] - new_x[pos_mask]) / current_step[pos_mask]
             min_step = min(min_step, float(np.min(step_diff).item()))
         neg_mask = current_step < 0
         if np.any(neg_mask):
-            step_diff = (lower_bound_arr[neg_mask] - new_x[neg_mask]) / current_step[
-                neg_mask
-            ]
+            step_diff = (lower_bound_arr[neg_mask] - new_x[neg_mask]) / current_step[neg_mask]
             min_step = min(min_step, float(np.min(step_diff).item()))
         # Calculate the modified x.
         return new_x + min_step * current_step

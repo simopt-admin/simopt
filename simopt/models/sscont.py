@@ -209,9 +209,7 @@ class SSCont(Model):
         periods = n_days + warmup
         # Generate exponential random demands.
         inv_demand_mean = 1 / demand_mean
-        demands = np.array(
-            [self.demand_model.random(inv_demand_mean) for _ in range(periods)]
-        )
+        demands = np.array([self.demand_model.random(inv_demand_mean) for _ in range(periods)])
         # Initialize starting and ending inventories for each period.
         start_inv = np.zeros(periods)
         start_inv[0] = fac_s  # Start with s units at period 0.
@@ -245,9 +243,7 @@ class SSCont(Model):
 
                 # Track future outstanding orders
                 if next_day < periods:
-                    orders_outstanding[next_day : min(delivery_day, periods)] += (
-                        order_qty
-                    )
+                    orders_outstanding[next_day : min(delivery_day, periods)] += order_qty
 
             if next_day < periods:
                 start_inv[next_day] = end_inv[day] + orders_received[next_day]
@@ -266,9 +262,7 @@ class SSCont(Model):
         variable_costs = variable_cost * orders_post_warmup
         avg_order_costs = np.mean(fixed_costs + variable_costs)
 
-        avg_holding_costs = np.mean(
-            holding_cost * inv_post_warmup * pos_inv_post_warmup_mask
-        )
+        avg_holding_costs = np.mean(holding_cost * inv_post_warmup * pos_inv_post_warmup_mask)
         demands_post_warmup = demands[warmup:]
         demand_start_inv_diff = demands_post_warmup - start_inv[warmup:]
 

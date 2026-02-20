@@ -75,9 +75,7 @@ class FCSAConfig(SolverConfig):
     ]
     normalize_grads: Annotated[
         bool,
-        Field(
-            default=True, description="normalize gradients used for search direction?"
-        ),
+        Field(default=True, description="normalize gradients used for search direction?"),
     ]
     feas_const: Annotated[
         float,
@@ -123,9 +121,7 @@ class FCSA(Solver):
         problem.simulate(solution, r)
         return -problem.minmax[0] * solution.objectives_mean[0]
 
-    def _finite_difference(
-        self, problem: Problem, x: np.ndarray, h: float, r: int
-    ) -> np.ndarray:
+    def _finite_difference(self, problem: Problem, x: np.ndarray, h: float, r: int) -> np.ndarray:
         d = len(x)
 
         grad = np.zeros(d)
@@ -142,9 +138,7 @@ class FCSA(Solver):
 
         return grad
 
-    def _objective_grad(
-        self, problem: Problem, solution: Solution, normalize: bool
-    ) -> np.ndarray:
+    def _objective_grad(self, problem: Problem, solution: Solution, normalize: bool) -> np.ndarray:
         if problem.gradient_available:
             grad = -problem.minmax[0] * solution.objectives_gradients_mean[0]
         else:
@@ -183,9 +177,7 @@ class FCSA(Solver):
 
     def _direction_csa_n(self, solution: Solution) -> np.ndarray:
         normalize = self.factors["normalize_grads"]
-        _, violated_grads = self._violated_constraint_values_and_grads(
-            solution, normalize
-        )
+        _, violated_grads = self._violated_constraint_values_and_grads(solution, normalize)
 
         # LP formulation
         direction = cp.Variable(violated_grads.shape[1])
@@ -228,9 +220,7 @@ class FCSA(Solver):
         assert direction.value is not None
         return -direction.value
 
-    def _direction_no_violation(
-        self, problem: Problem, solution: Solution
-    ) -> np.ndarray:
+    def _direction_no_violation(self, problem: Problem, solution: Solution) -> np.ndarray:
         normalize = self.factors["normalize_grads"]
         return self._objective_grad(problem, solution, normalize)
 
@@ -284,9 +274,7 @@ class FCSA(Solver):
         assert z.value is not None
         return z.value
 
-    def _new_solution_found(
-        self, problem: Problem, x: tuple, check_feasibility: bool
-    ) -> Solution:
+    def _new_solution_found(self, problem: Problem, x: tuple, check_feasibility: bool) -> Solution:
         r = self.factors["r"]
         solution = self.create_new_solution(x, problem)
         self.budget.request(r)

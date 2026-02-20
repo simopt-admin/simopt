@@ -46,9 +46,7 @@ def _check_experiment(
 
     # Check if experiments have common number of macroreps.
     if experiment.n_macroreps != ref_experiment.n_macroreps:
-        raise RuntimeError(
-            "At least two experiments have different numbers of macro-replications."
-        )
+        raise RuntimeError("At least two experiments have different numbers of macro-replications.")
 
     # Check if experiments have common number of post-replications.
     if experiment.n_postreps != ref_experiment.n_postreps:
@@ -93,9 +91,7 @@ def _set_up_rngs(problem: Problem) -> list[MRG32k3a]:
     ]
 
 
-def _simulate(
-    problem: Problem, x: tuple, rngs: list[MRG32k3a], n_reps: int
-) -> np.ndarray:
+def _simulate(problem: Problem, x: tuple, rngs: list[MRG32k3a], n_reps: int) -> np.ndarray:
     """Simulate a solution x.
 
     Args:
@@ -162,9 +158,7 @@ def _best_with_feasibility(
     """
     df = (
         df.groupby(["experiment", "mrep", "step"])
-        .agg(
-            {"objective": "mean", "stochastic_constraints": "mean", "solution": "first"}
-        )
+        .agg({"objective": "mean", "stochastic_constraints": "mean", "solution": "first"})
         .reset_index()
     )
     df = MeanReplicateSchema.validate(df)
@@ -181,9 +175,7 @@ def _best_with_feasibility(
     df.loc[:, "objective"] *= sense
 
     if len(df) == 0:
-        raise RuntimeError(
-            "No feasible solutions found for which to estimate proxy for x*."
-        )
+        raise RuntimeError("No feasible solutions found for which to estimate proxy for x*.")
 
     best_index = df["objective"].idxmax()
     xstar = df.loc[best_index, "solution"]
@@ -259,9 +251,7 @@ def _get_xstar_and_sample(
     # x* is known...
     if problem.optimal_solution is not None:
         logging.info("Finding f(x*) using coded x*.")
-        return problem.optimal_solution, _simulate(
-            problem, problem.optimal_solution, rngs, n_reps
-        )
+        return problem.optimal_solution, _simulate(problem, problem.optimal_solution, rngs, n_reps)
 
     # If nothing is known, estimate x* empirically as estimated best solution
     # found by any solver on any macroreplication.
@@ -340,9 +330,7 @@ def _get_curves(
 
         normalized_budget = budget / total_budget
         normalized_objective = (objective - optimal_objective) / initial_gap
-        progress_curves.append(
-            Curve(normalized_budget.tolist(), normalized_objective.tolist())
-        )
+        progress_curves.append(Curve(normalized_budget.tolist(), normalized_objective.tolist()))
 
     return objective_curves, progress_curves
 
@@ -399,9 +387,7 @@ def _to_df(experiments: list[ProblemSolver]) -> pd.DataFrame:
         solution = _from_list(experiment.all_recommended_xs, "solution")
         objective = _from_list(experiment.all_est_objectives, "objective")
         budget = _from_list(experiment.all_intermediate_budgets, "budget")
-        stochastic_constraints = _from_list(
-            experiment.all_est_lhs, "stochastic_constraints"
-        )
+        stochastic_constraints = _from_list(experiment.all_est_lhs, "stochastic_constraints")
         if stochastic_constraints.empty:
             stochastic_constraints = pd.DataFrame(
                 {

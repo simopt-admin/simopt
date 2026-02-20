@@ -27,9 +27,7 @@ def _build_solver_history_df(experiment: ProblemSolver) -> pd.DataFrame:
 
 
 def _build_post_replicate_df(experiment: ProblemSolver) -> pd.DataFrame:
-    objective = post_replicate._from_list_reps(
-        experiment.all_post_replicates, "objective"
-    )
+    objective = post_replicate._from_list_reps(experiment.all_post_replicates, "objective")
 
     if experiment.problem.n_stochastic_constraints > 0:
         stochastic_constraints = post_replicate._from_list_reps(
@@ -57,9 +55,7 @@ def convert(experiment: ProblemSolver) -> AnalysisInput:
     solver_history_df = _build_solver_history_df(experiment)
     post_replicate_df = _build_post_replicate_df(experiment)
 
-    full_df = solver_history_df.merge(
-        post_replicate_df, on=["experiment", "mrep", "step"]
-    )
+    full_df = solver_history_df.merge(post_replicate_df, on=["experiment", "mrep", "step"])
     full_df = full_df.set_index(["experiment", "mrep", "step", "rep"])
     # Slice to remove experiment index level (there's only one experiment)
     full_df = full_df.loc[0]

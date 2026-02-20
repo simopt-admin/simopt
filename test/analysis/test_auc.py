@@ -122,9 +122,7 @@ def test_auc_different_problem_experiments(different_problem_experiments):
         problem_set_name="PROBLEM_SET",
     )
 
-    analysis_inputs = [
-        convert(experiment) for experiment in different_problem_experiments
-    ]
+    analysis_inputs = [convert(experiment) for experiment in different_problem_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         ci_options,
@@ -132,9 +130,7 @@ def test_auc_different_problem_experiments(different_problem_experiments):
         normalize=True,
     )
 
-    actual = capture_log_data(
-        plot_many, analysis_results, different_problem_experiments
-    )
+    actual = capture_log_data(plot_many, analysis_results, different_problem_experiments)
 
     assert len(actual) == len(desired)
     for a, d in zip(actual, desired, strict=True):

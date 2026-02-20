@@ -64,8 +64,7 @@ class AmusementParkConfig(BaseModel):
         Field(
             default_factory=lambda: [2] * NUM_ATTRACTIONS,
             description=(
-                "The shape parameter of the Erlang distribution for each "
-                "attraction duration."
+                "The shape parameter of the Erlang distribution for each attraction duration."
             ),
         ),
     ]
@@ -74,8 +73,7 @@ class AmusementParkConfig(BaseModel):
         Field(
             default_factory=lambda: [1 / 9] * NUM_ATTRACTIONS,
             description=(
-                "The rate parameter of the Erlang distribution for each attraction "
-                "duration."
+                "The rate parameter of the Erlang distribution for each attraction duration."
             ),
         ),
     ]
@@ -94,8 +92,7 @@ class AmusementParkConfig(BaseModel):
         Field(
             default_factory=lambda: [0.2] * NUM_ATTRACTIONS,
             description=(
-                "The probability that a tourist will depart the park after "
-                "visiting an attraction."
+                "The probability that a tourist will depart the park after visiting an attraction."
             ),
         ),
     ]
@@ -136,17 +133,14 @@ class AmusementParkConfig(BaseModel):
     def _check_depart_probabilities(self) -> None:
         if len(self.depart_probabilities) != self.number_attractions:
             raise ValueError(
-                "The number of departure probabilities must match the number of "
-                "attractions."
+                "The number of departure probabilities must match the number of attractions."
             )
         if not all(0 <= prob <= 1 for prob in self.depart_probabilities):
             raise ValueError("All departure probabilities must be between 0 and 1.")
 
     def _check_arrival_gammas(self) -> None:
         if len(self.arrival_gammas) != self.number_attractions:
-            raise ValueError(
-                "The number of arrivals must match the number of attractions."
-            )
+            raise ValueError("The number of arrivals must match the number of attractions.")
         if not all(gamma >= 0 for gamma in self.arrival_gammas):
             raise ValueError("All arrival gammas must be non-negative.")
 
@@ -193,8 +187,7 @@ class AmusementParkConfig(BaseModel):
         """
         if len(self.erlang_shape) != self.number_attractions:
             raise ValueError(
-                "The number of attractions must equal the number of Erlang shape "
-                "parameters."
+                "The number of attractions must equal the number of Erlang shape parameters."
             )
         if not all(gamma >= 0 for gamma in self.erlang_shape):
             raise ValueError("All Erlang shape parameters must be non-negative.")
@@ -212,9 +205,7 @@ class AmusementParkConfig(BaseModel):
             ValueError: If the number of scale parameters is incorrect.
         """
         if len(self.erlang_scale) != self.number_attractions:
-            raise ValueError(
-                "The number of attractions must equal the number of Erlang scales."
-            )
+            raise ValueError("The number of attractions must equal the number of Erlang scales.")
         if not all(gamma >= 0 for gamma in self.erlang_scale):
             raise ValueError("All Erlang scale parameters must be non-negative.")
 
@@ -229,8 +220,7 @@ class AmusementParkConfig(BaseModel):
 
         if sum(self.queue_capacities) > self.park_capacity:
             raise ValueError(
-                "The sum of the queue capacities must be less than or equal to the "
-                "park capacity"
+                "The sum of the queue capacities must be less than or equal to the park capacity"
             )
         return self
 
@@ -343,9 +333,7 @@ class AmusementPark(Model):
         erlang_shape: list[int] = self.factors["erlang_shape"]
         erlang_scale: list[float] = self.factors["erlang_scale"]
         queue_capacities: list[int] = self.factors["queue_capacities"]
-        transition_probabilities: list[list[float]] = self.factors[
-            "transition_probabilities"
-        ]
+        transition_probabilities: list[list[float]] = self.factors["transition_probabilities"]
         depart_probabilities: list[float] = self.factors["depart_probabilities"]
 
         # initialize list of attractions to be selected upon arrival.
@@ -415,10 +403,7 @@ class AmusementPark(Model):
                     set_completion(attraction_selection, completion_time)
                 # If unavailable, check if current queue is less than capacity.
                 # If queue is not full, join queue.
-                elif (
-                    queues[attraction_selection]
-                    < queue_capacities[attraction_selection]
-                ):
+                elif queues[attraction_selection] < queue_capacities[attraction_selection]:
                     queues[attraction_selection] += 1
                 # If queue is full, leave park + 1.
                 else:

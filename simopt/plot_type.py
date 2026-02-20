@@ -37,7 +37,6 @@ class PlotType(Enum):
         if name in inv_plot_type:
             return inv_plot_type[name]
         error_msg = (
-            f"Unknown plot type: {label} ({name}). "
-            f"Must be one of {[pt.value for pt in PlotType]}."
+            f"Unknown plot type: {label} ({name}). Must be one of {[pt.value for pt in PlotType]}."
         )
         raise ValueError(error_msg)

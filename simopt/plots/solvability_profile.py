@@ -136,9 +136,7 @@ def plot_solvability_profiles(
             error_msg = f"Plot type {plot_type} is not supported."
             raise ValueError(error_msg)
         curve_pairs = []
-        solver_names = [
-            solver_experiments[0].solver.name for solver_experiments in experiments
-        ]
+        solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curves = []
         solver_curve_handles = []
         for solver_idx in range(n_solvers):
@@ -209,10 +207,7 @@ def plot_solvability_profiles(
                     if print_max_hw:
                         curve_pairs.append([bs_conf_int_lb_curve, bs_conf_int_ub_curve])
 
-                if (
-                    bs_conf_int_lb_curve is not None
-                    and bs_conf_int_ub_curve is not None
-                ):
+                if bs_conf_int_lb_curve is not None and bs_conf_int_ub_curve is not None:
                     logger.debug(
                         "data",
                         data=[
@@ -282,9 +277,7 @@ def plot_solvability_profiles(
             PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
         ]:
             if ref_solver is None:
-                error_msg = (
-                    "Reference solver must be specified for difference profiles."
-                )
+                error_msg = "Reference solver must be specified for difference profiles."
                 raise ValueError(error_msg)
             non_ref_solvers = [
                 solver_name for solver_name in solver_names if solver_name != ref_solver
@@ -301,25 +294,23 @@ def plot_solvability_profiles(
                     bs_conf_int_lb_curve = None
                     bs_conf_int_ub_curve = None
                     if plot_conf_ints or print_max_hw:
-                        bs_conf_int_lb_curve, bs_conf_int_ub_curve = (
-                            bootstrap_procedure(
-                                experiments=[
-                                    experiments[solver_idx],
-                                    experiments[ref_solver_idx],
-                                ],
-                                n_bootstraps=n_bootstraps,
-                                conf_level=conf_level,
-                                plot_type=plot_type,  # type: ignore
-                                solve_tol=solve_tol,
-                                beta=beta,
-                                estimator=diff_solver_curve,
-                                normalize=True,
-                            )
+                        bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
+                            experiments=[
+                                experiments[solver_idx],
+                                experiments[ref_solver_idx],
+                            ],
+                            n_bootstraps=n_bootstraps,
+                            conf_level=conf_level,
+                            plot_type=plot_type,  # type: ignore
+                            solve_tol=solve_tol,
+                            beta=beta,
+                            estimator=diff_solver_curve,
+                            normalize=True,
                         )
                         if plot_conf_ints:
-                            if isinstance(
-                                bs_conf_int_lb_curve, (int, float)
-                            ) or isinstance(bs_conf_int_ub_curve, (int, float)):
+                            if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
+                                bs_conf_int_ub_curve, (int, float)
+                            ):
                                 error_msg = (
                                     "Bootstrap confidence intervals are not available "
                                     "for scalar estimators."
@@ -331,14 +322,9 @@ def plot_solvability_profiles(
                                 color_str=color_str,
                             )
                         if print_max_hw:
-                            curve_pairs.append(
-                                [bs_conf_int_lb_curve, bs_conf_int_ub_curve]
-                            )
+                            curve_pairs.append([bs_conf_int_lb_curve, bs_conf_int_ub_curve])
 
-                    if (
-                        bs_conf_int_lb_curve is not None
-                        and bs_conf_int_ub_curve is not None
-                    ):
+                    if bs_conf_int_lb_curve is not None and bs_conf_int_ub_curve is not None:
                         logger.debug(
                             "data",
                             data=[
@@ -352,9 +338,7 @@ def plot_solvability_profiles(
                     else:
                         logger.debug(
                             "data",
-                            data=np.array(
-                                [diff_solver_curve.x_vals, diff_solver_curve.y_vals]
-                            ),
+                            data=np.array([diff_solver_curve.x_vals, diff_solver_curve.y_vals]),
                         )
 
             offset_labels = [
@@ -402,9 +386,7 @@ def plot_solvability_profiles(
             error_msg = f"Plot type {plot_type} is not supported."
             raise ValueError(error_msg)
     else:
-        solver_names = [
-            solver_experiments[0].solver.name for solver_experiments in experiments
-        ]
+        solver_names = [solver_experiments[0].solver.name for solver_experiments in experiments]
         solver_curves = []
         for solver_idx in range(n_solvers):
             solver_sub_curves = []
@@ -482,16 +464,12 @@ def plot_solvability_profiles(
                                 "for scalar estimators."
                             )
                             raise ValueError(error_msg)
-                        plot_bootstrap_conf_ints(
-                            bs_conf_int_lb_curve, bs_conf_int_ub_curve
-                        )
+                        plot_bootstrap_conf_ints(bs_conf_int_lb_curve, bs_conf_int_ub_curve)
                     if print_max_hw:
                         if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
                             bs_conf_int_ub_curve, (int, float)
                         ):
-                            error_msg = (
-                                "Max halfwidth is not available for scalar estimators."
-                            )
+                            error_msg = "Max halfwidth is not available for scalar estimators."
                             raise ValueError(error_msg)
                         report_max_halfwidth(
                             curve_pairs=[[bs_conf_int_lb_curve, bs_conf_int_ub_curve]],
@@ -499,10 +477,7 @@ def plot_solvability_profiles(
                             conf_level=conf_level,
                         )
 
-                if (
-                    bs_conf_int_lb_curve is not None
-                    and bs_conf_int_ub_curve is not None
-                ):
+                if bs_conf_int_lb_curve is not None and bs_conf_int_ub_curve is not None:
                     logger.debug(
                         "data",
                         data=[
@@ -548,9 +523,7 @@ def plot_solvability_profiles(
             PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
         ]:
             if ref_solver is None:
-                error_msg = (
-                    "Reference solver must be specified for difference profiles."
-                )
+                error_msg = "Reference solver must be specified for difference profiles."
                 raise ValueError(error_msg)
             non_ref_solvers = [
                 solver_name for solver_name in solver_names if solver_name != ref_solver
@@ -584,55 +557,43 @@ def plot_solvability_profiles(
                     bs_conf_int_lb_curve = None
                     bs_conf_int_ub_curve = None
                     if plot_conf_ints or print_max_hw:
-                        bs_conf_int_lb_curve, bs_conf_int_ub_curve = (
-                            bootstrap_procedure(
-                                experiments=[
-                                    experiments[solver_idx],
-                                    experiments[ref_solver_idx],
-                                ],
-                                n_bootstraps=n_bootstraps,
-                                conf_level=conf_level,
-                                plot_type=plot_type,
-                                solve_tol=solve_tol,
-                                beta=beta,
-                                estimator=diff_solver_curve,
-                                normalize=True,
-                            )
+                        bs_conf_int_lb_curve, bs_conf_int_ub_curve = bootstrap_procedure(
+                            experiments=[
+                                experiments[solver_idx],
+                                experiments[ref_solver_idx],
+                            ],
+                            n_bootstraps=n_bootstraps,
+                            conf_level=conf_level,
+                            plot_type=plot_type,
+                            solve_tol=solve_tol,
+                            beta=beta,
+                            estimator=diff_solver_curve,
+                            normalize=True,
                         )
                         if plot_conf_ints:
-                            if isinstance(
-                                bs_conf_int_lb_curve, (int, float)
-                            ) or isinstance(bs_conf_int_ub_curve, (int, float)):
+                            if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
+                                bs_conf_int_ub_curve, (int, float)
+                            ):
                                 error_msg = (
                                     "Bootstrap confidence intervals are not available "
                                     "for scalar estimators."
                                 )
                                 raise ValueError(error_msg)
-                            plot_bootstrap_conf_ints(
-                                bs_conf_int_lb_curve, bs_conf_int_ub_curve
-                            )
+                            plot_bootstrap_conf_ints(bs_conf_int_lb_curve, bs_conf_int_ub_curve)
                         if print_max_hw:
-                            if isinstance(
-                                bs_conf_int_lb_curve, (int, float)
-                            ) or isinstance(bs_conf_int_ub_curve, (int, float)):
-                                error_msg = (
-                                    "Max halfwidth is not available for "
-                                    "scalar estimators."
-                                )
+                            if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
+                                bs_conf_int_ub_curve, (int, float)
+                            ):
+                                error_msg = "Max halfwidth is not available for scalar estimators."
                                 raise ValueError(error_msg)
                             report_max_halfwidth(
-                                curve_pairs=[
-                                    [bs_conf_int_lb_curve, bs_conf_int_ub_curve]
-                                ],
+                                curve_pairs=[[bs_conf_int_lb_curve, bs_conf_int_ub_curve]],
                                 normalize=True,
                                 conf_level=conf_level,
                                 difference=True,
                             )
 
-                    if (
-                        bs_conf_int_lb_curve is not None
-                        and bs_conf_int_ub_curve is not None
-                    ):
+                    if bs_conf_int_lb_curve is not None and bs_conf_int_ub_curve is not None:
                         logger.debug(
                             "data",
                             data=[
@@ -646,9 +607,7 @@ def plot_solvability_profiles(
                     else:
                         logger.debug(
                             "data",
-                            data=np.array(
-                                [diff_solver_curve.x_vals, diff_solver_curve.y_vals]
-                            ),
+                            data=np.array([diff_solver_curve.x_vals, diff_solver_curve.y_vals]),
                         )
 
                     if plot_type == PlotType.DIFFERENCE_OF_CDF_SOLVABILITY:

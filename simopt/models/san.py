@@ -66,9 +66,7 @@ class SANConfig(BaseModel):
         ),
     ]
 
-    def __dfs(
-        self, graph: dict[int, set], start: int, visited: set | None = None
-    ) -> set:
+    def __dfs(self, graph: dict[int, set], start: int, visited: set | None = None) -> set:
         if visited is None:
             visited = set()
         visited.add(start)
@@ -101,9 +99,7 @@ class SANConfig(BaseModel):
         self._check_arcs()
         self._check_arc_means()
         if len(self.arc_means) != len(self.arcs):
-            raise ValueError(
-                "The length of arc_means must be equal to the length of arcs."
-            )
+            raise ValueError("The length of arc_means must be equal to the length of arcs.")
         return self
 
 
@@ -180,9 +176,7 @@ class SAN(Model):
 
         self.time_model = Exp()
 
-    def __dfs(
-        self, graph: dict[int, set], start: int, visited: set | None = None
-    ) -> set:
+    def __dfs(self, graph: dict[int, set], start: int, visited: set | None = None) -> set:
         if visited is None:
             visited = set()
         visited.add(start)
@@ -233,9 +227,7 @@ class SAN(Model):
                     queue.append(v)
 
         # Arc lengths
-        arc_length = {
-            arc: self.time_model.random(1 / arc_means[i]) for i, arc in enumerate(arcs)
-        }
+        arc_length = {arc: self.time_model.random(1 / arc_means[i]) for i, arc in enumerate(arcs)}
 
         # Longest path
         path_length = np.zeros(num_nodes)
@@ -278,8 +270,7 @@ class SAN(Model):
         }
         gradients = {
             response_key: {
-                factor_key: np.zeros(len(self.specifications))
-                for factor_key in self.specifications
+                factor_key: np.zeros(len(self.specifications)) for factor_key in self.specifications
             }
             for response_key in responses
         }
@@ -331,8 +322,7 @@ class SANLongestPath(Problem):
                 stochastic=responses["longest_path_length"],
                 stochastic_gradients=gradients["longest_path_length"]["arc_means"],
                 deterministic=np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
-                deterministic_gradients=-np.array(self.factors["arc_costs"])
-                / (np.array(x) ** 2),
+                deterministic_gradients=-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
             )
         ]
         return RepResult(objectives=objectives)
@@ -341,9 +331,7 @@ class SANLongestPath(Problem):
         return all(x_i >= 0 for x_i in x)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        return tuple(
-            [rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)]
-        )
+        return tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
 
 
 class SANLongestPathStochasticConfig(BaseModel):
@@ -445,8 +433,7 @@ class SANLongestPathStochastic(Problem):
                 stochastic=responses["longest_path_length"],
                 stochastic_gradients=gradients["longest_path_length"]["arc_means"],
                 deterministic=np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
-                deterministic_gradients=-np.array(self.factors["arc_costs"])
-                / (np.array(x) ** 2),
+                deterministic_gradients=-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
             )
         ]
 
@@ -482,6 +469,4 @@ class SANLongestPathStochastic(Problem):
         return all(x_i >= 0 for x_i in x)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        return tuple(
-            [rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)]
-        )
+        return tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])

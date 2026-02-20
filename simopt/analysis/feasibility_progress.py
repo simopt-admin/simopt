@@ -105,9 +105,7 @@ def analyze(
         raise ValueError("agg must be 'all', 'mean', or 'quantile'.")
 
     if agg != "all" and two_sided:
-        raise ValueError(
-            "mean and quantile plots not supported for two sided feasibility ."
-        )
+        raise ValueError("mean and quantile plots not supported for two sided feasibility .")
 
     df_mean = analysis_input.mean_df
     df_mean = _append_feasibility_score(df_mean, score_type, norm_degree, two_sided)
@@ -159,18 +157,14 @@ def plot(
     if result.agg == "all":
         handle = None
         for _, group in df.groupby("mrep"):
-            handle = plot_step(
-                ax, group["budget"], group["value"], linewidth=2, color=color
-            )
+            handle = plot_step(ax, group["budget"], group["value"], linewidth=2, color=color)
         if handle is None:
             raise ValueError("no feasibility progress groups found for plotting.")
     else:
         handle = plot_step(ax, df["budget"], df["value"], linewidth=2, color=color)
 
         if "lb" in df.columns and "ub" in df.columns:
-            logger.debug(
-                "data", data=np.array([df["budget"], df["value"], df["lb"], df["ub"]])
-            )
+            logger.debug("data", data=np.array([df["budget"], df["value"], df["lb"], df["ub"]]))
             plot_ci(ax, df, color=color)
 
     if plot_zero:

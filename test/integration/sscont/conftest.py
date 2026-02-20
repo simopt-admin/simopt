@@ -92,9 +92,7 @@ def sscont_experiments(dataset: str) -> list[ProblemSolver]:
     ]
 
     experiments = [
-        ProblemSolver(solver=solver, problem=problem)
-        for problem in problems
-        for solver in solvers
+        ProblemSolver(solver=solver, problem=problem) for problem in problems for solver in solvers
     ]
     if dataset == "fast":
         return experiments[:FAST_EXPERIMENT_COUNT]

@@ -157,9 +157,7 @@ def analyze(
         bootstrap_fn=_bootstrap,
     )
 
-    result_df = pd.DataFrame(
-        {"objective": objectives, "feasibility": feasibility_scores}
-    )
+    result_df = pd.DataFrame({"objective": objectives, "feasibility": feasibility_scores})
     if ci is not None:
         result_df = pd.concat([result_df.reset_index(drop=True), ci], axis=1)
 
@@ -202,9 +200,7 @@ def plot(
         ]
         logger.debug(
             "data",
-            data=np.array(
-                [objectives, feasibility_scores, x_err[0], x_err[1], y_err[0], y_err[1]]
-            ),
+            data=np.array([objectives, feasibility_scores, x_err[0], x_err[1], y_err[0], y_err[1]]),
         )
         return ax.errorbar(
             x=objectives,
@@ -283,9 +279,7 @@ def plot_many(
                 )
         plot_distribution(ax, records, "Solver", "Feasibility Score", "violin")
     else:
-        for i, (experiment, result) in enumerate(
-            zip(experiments, results, strict=True)
-        ):
+        for i, (experiment, result) in enumerate(zip(experiments, results, strict=True)):
             color = colors[i % len(colors)]
             marker = markers[i % len(markers)]
             label = f"{experiment.solver.name} | {experiment.problem.name}"

@@ -88,9 +88,7 @@ class DynamNewsConfig(BaseModel):
             raise ValueError("The length of c_utility must be equal to num_prod.")
 
     def _check_init_level(self) -> None:
-        if any(np.array(self.init_level) < 0) or (
-            len(self.init_level) != self.num_prod
-        ):
+        if any(np.array(self.init_level) < 0) or (len(self.init_level) != self.num_prod):
             raise ValueError(
                 "The length of init_level must be equal to num_prod and every element "
                 "in init_level must be greater than or equal to zero."
@@ -120,8 +118,7 @@ class DynamNewsConfig(BaseModel):
         # Cross-validation: check price > cost constraint
         if any(np.subtract(self.price, self.cost) < 0):
             raise ValueError(
-                "Each element in price must be greater than its corresponding element "
-                "in cost."
+                "Each element in price must be greater than its corresponding element in cost."
             )
 
         return self
@@ -172,8 +169,7 @@ class Utility(InputModel):
         gumbel_mu = -mu * np.euler_gamma
         gumbel_beta = mu
         gumbel_flat = [
-            self._gumbelvariate(gumbel_mu, gumbel_beta)
-            for _ in range(num_customer * num_prod)
+            self._gumbelvariate(gumbel_mu, gumbel_beta) for _ in range(num_customer * num_prod)
         ]
         gumbel = np.reshape(gumbel_flat, (num_customer, num_prod))
 

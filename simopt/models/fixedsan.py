@@ -218,8 +218,7 @@ class FixedSAN(Model):
         responses = {"longest_path_length": longest_path}
         gradients = {
             response_key: {
-                factor_key: np.zeros(len(self.specifications))
-                for factor_key in self.specifications
+                factor_key: np.zeros(len(self.specifications)) for factor_key in self.specifications
             }
             for response_key in responses
         }
@@ -232,9 +231,7 @@ class FixedSANLongestPath(Problem):
     """Base class to implement simulation-optimization problems."""
 
     class_name_abbr: ClassVar[str] = "FIXEDSAN-1"
-    class_name: ClassVar[str] = (
-        "Min Mean Longest Path for Fixed Stochastic Activity Network"
-    )
+    class_name: ClassVar[str] = "Min Mean Longest Path for Fixed Stochastic Activity Network"
     config_class: ClassVar[type[BaseModel]] = FixedSANLongestPathConfig
     model_class: ClassVar[type[Model]] = FixedSAN
     n_objectives: ClassVar[int] = 1
@@ -279,8 +276,7 @@ class FixedSANLongestPath(Problem):
                 stochastic=responses["longest_path_length"],
                 stochastic_gradients=gradients["longest_path_length"]["arc_means"],
                 deterministic=np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
-                deterministic_gradients=-np.array(self.factors["arc_costs"])
-                / (np.array(x) ** 2),
+                deterministic_gradients=-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
             )
         ]
         return RepResult(objectives=objectives)
@@ -289,6 +285,4 @@ class FixedSANLongestPath(Problem):
         return all(x_i >= 0 for x_i in x)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        return tuple(
-            [rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)]
-        )
+        return tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])

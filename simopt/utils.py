@@ -83,9 +83,7 @@ def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> float:
     # If it's close to 0, return a non-zero value
     # Use the sign of the original value to help determine the new value
     new_value = copysign(epsilon, value)
-    warning_msg = (
-        f"{name} is {value}. Setting to {new_value} to avoid division by zero."
-    )
+    warning_msg = f"{name} is {value}. Setting to {new_value} to avoid division by zero."
     logging.warning(warning_msg)
     return new_value
 
@@ -129,9 +127,7 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
     if isinstance(data, dict):
         data = list(data.items())
     # Calculate the maximum length of each column
-    data_widths = [
-        max(len(str(item)) for item in col) for col in zip(*data, strict=False)
-    ]
+    data_widths = [max(len(str(item)) for item in col) for col in zip(*data, strict=False)]
     header_widths = [len(header) for header in headers]
     max_widths = [
         max(header_width, col_width)
@@ -195,9 +191,7 @@ def print_table(name: str, headers: list[str], data: list[tuple] | dict) -> None
     rows = []
     for row in data:
         row_str = f" {pipe} ".join(
-            f"{item!s:>{width}}"
-            if isinstance(item, (int, float))
-            else f"{item!s:<{width}}"
+            f"{item!s:>{width}}" if isinstance(item, (int, float)) else f"{item!s:<{width}}"
             for item, width in zip(row, max_widths, strict=False)
         )
         rows.append(row_str)
@@ -231,9 +225,7 @@ def get_specifications(config_class: type[BaseModel]) -> dict[str, dict]:
 
         # `field.default` can be missing when `default_factory` is used
         default = (
-            field.default
-            if field.default is not PydanticUndefined
-            else field.default_factory()
+            field.default if field.default is not PydanticUndefined else field.default_factory()
         )
 
         # Handle data type like list[int]
@@ -247,10 +239,7 @@ def get_specifications(config_class: type[BaseModel]) -> dict[str, dict]:
         data["datatype"] = datatype
         data["default"] = default
 
-        if (
-            field.json_schema_extra is not None
-            and "isDatafarmable" in field.json_schema_extra
-        ):
+        if field.json_schema_extra is not None and "isDatafarmable" in field.json_schema_extra:
             data["isDatafarmable"] = field.json_schema_extra["isDatafarmable"]
 
         name = field.alias or name

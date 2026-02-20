@@ -109,9 +109,7 @@ def test_solvability_profile_same_problem_experiments(same_problem_experiments):
         normalize=True,
     )
 
-    actual = capture_log_data(
-        plot_many, analysis_results, same_problem_experiments, "cdf"
-    )
+    actual = capture_log_data(plot_many, analysis_results, same_problem_experiments, "cdf")
 
     assert len(actual) == len(desired)
     for a1, d1 in zip(actual, desired, strict=True):
@@ -155,9 +153,7 @@ def test_solvability_profile_different_problem_experiments(
         problem_set_name="PROBLEM_SET",
     )
 
-    analysis_inputs = [
-        convert(experiment) for experiment in different_problem_experiments
-    ]
+    analysis_inputs = [convert(experiment) for experiment in different_problem_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         different_problem_experiments,
@@ -168,9 +164,7 @@ def test_solvability_profile_different_problem_experiments(
         normalize=True,
     )
 
-    actual = capture_log_data(
-        plot_many, analysis_results, different_problem_experiments, "cdf"
-    )
+    actual = capture_log_data(plot_many, analysis_results, different_problem_experiments, "cdf")
 
     assert len(actual) == len(desired)
     for a1, d1 in zip(actual, desired, strict=True):

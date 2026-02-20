@@ -35,40 +35,26 @@ def load_arguments() -> tuple[str, list[str], list[str], str, int, int]:
         type=str,
         default="all",
         help=(
-            "Methods to run "
-            "(`run`, `post_replicate`, `post_normalize`, or `all`) "
-            "[default: all]"
+            "Methods to run (`run`, `post_replicate`, `post_normalize`, or `all`) [default: all]"
         ),
     )
     parser.add_argument(
         "--problems",
         type=str,
         default="all",
-        help=(
-            "Abbreviated names of problems to run "
-            "(comma-separated or `all`) "
-            "[default: all]"
-        ),
+        help=("Abbreviated names of problems to run (comma-separated or `all`) [default: all]"),
     )
     parser.add_argument(
         "--solvers",
         type=str,
         default="all",
-        help=(
-            "Abbreviated names of solvers to run "
-            "(comma-separated or `all`) "
-            "[default: all]"
-        ),
+        help=("Abbreviated names of solvers to run (comma-separated or `all`) [default: all]"),
     )
     parser.add_argument(
         "--log",
         type=str,
         default="INFO",
-        help=(
-            "Logging level "
-            "(`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`) "
-            "[default: INFO]"
-        ),
+        help=("Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`) [default: INFO]"),
     )
     parser.add_argument(
         "--num_macroreps",
@@ -214,9 +200,7 @@ def run_partials(
         logging.info(f"Experimenting with {solver_name} on {problem_name}.")
 
         elapsed = time_function(part_func)
-        logging.info(
-            f"Elapsed time for {solver_name} on {problem_name}: {elapsed:.2f}s"
-        )
+        logging.info(f"Elapsed time for {solver_name} on {problem_name}: {elapsed:.2f}s")
 
         runtime_tuple = (
             problem_name,

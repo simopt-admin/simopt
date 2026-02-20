@@ -108,8 +108,7 @@ class Scaler:
         """
         if not (self.original_min <= value <= self.original_max):
             raise ValueError(
-                f"Value {value} is out of bounds "
-                f"({self.original_min}, {self.original_max})"
+                f"Value {value} is out of bounds ({self.original_min}, {self.original_max})"
             )
         new_value = self.scaled_min + (self.scale * (value - self.original_min))
         rounded_val = round(new_value, self.precision)

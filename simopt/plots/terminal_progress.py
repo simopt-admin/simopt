@@ -104,9 +104,7 @@ def plot_terminal_progress(
                     for _ in terminal_data[exp_idx]
                 ],
                 "Terminal": [
-                    td
-                    for exp_idx in range(n_experiments)
-                    for td in terminal_data[exp_idx]
+                    td for exp_idx in range(n_experiments) for td in terminal_data[exp_idx]
                 ],
             }
 
@@ -142,10 +140,7 @@ def plot_terminal_progress(
                 normalize=normalize,
                 budget=experiment.problem.factors["budget"],
             )
-            if normalize:
-                curves = experiment.progress_curves
-            else:
-                curves = experiment.objective_curves
+            curves = experiment.progress_curves if normalize else experiment.objective_curves
             terminal_data = [curve.y_vals[-1] for curve in curves]
             logger.debug("data", data=np.array(terminal_data))
             if plot_type == PlotType.BOX:

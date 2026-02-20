@@ -113,9 +113,7 @@ class EloInputModel(InputModel):
 
     rng: Random | None = None
 
-    def random(
-        self, mean: float, std: float, min_rating: float, max_rating: float
-    ) -> float:
+    def random(self, mean: float, std: float, min_rating: float, max_rating: float) -> float:
         """Draw a truncated normal rating within [min_rating, max_rating]."""
         assert self.rng is not None
         while True:
@@ -180,14 +178,11 @@ class ChessMatchmaking(Model):
 
         # Generate Elo ratings (normal distribution).
         player_ratings = [
-            self.elo_model.random(elo_mean, elo_sd, elo_min, elo_max)
-            for _ in num_players_range
+            self.elo_model.random(elo_mean, elo_sd, elo_min, elo_max) for _ in num_players_range
         ]
 
         # Generate interarrival times (Poisson distribution).
-        interarrival_times = [
-            self.arrival_model.random(poisson_rate) for _ in num_players_range
-        ]
+        interarrival_times = [self.arrival_model.random(poisson_rate) for _ in num_players_range]
 
         # Initialize statistics.
         # Incoming players are initialized with a wait time of 0.

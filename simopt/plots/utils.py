@@ -125,9 +125,7 @@ def setup_plot(
             error_msg = "Beta must be specified for quantile solvability plot."
             raise ValueError(error_msg)
         if solve_tol is None:
-            error_msg = (
-                "Solve tolerance must be specified for quantile solvability plot."
-            )
+            error_msg = "Solve tolerance must be specified for quantile solvability plot."
             raise ValueError(error_msg)
         plt.ylabel("Fraction of Problems Solved", size=14)
         title = (
@@ -151,9 +149,7 @@ def setup_plot(
             error_msg = "Beta must be specified for quantile solvability plot."
             raise ValueError(error_msg)
         if solve_tol is None:
-            error_msg = (
-                "Solve tolerance must be specified for quantile solvability plot."
-            )
+            error_msg = "Solve tolerance must be specified for quantile solvability plot."
             raise ValueError(error_msg)
         plt.ylabel("Difference in Fraction of Problems Solved", size=14)
         title = (
@@ -315,10 +311,7 @@ def save_plot(
         plot_name = f"profile_cdf_{extra}_solve_times"
     elif plot_type == PlotType.QUANTILE_SOLVABILITY:
         if not (isinstance(extra, list) and len(extra) >= 2):
-            error_msg = (
-                "Extra must be a list of two floats for "
-                "'quantile_solvability' plot type."
-            )
+            error_msg = "Extra must be a list of two floats for 'quantile_solvability' plot type."
             raise ValueError(error_msg)
         extra_0 = float(extra[0])
         extra_1 = float(extra[1])
@@ -328,8 +321,7 @@ def save_plot(
     elif plot_type == PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY:
         if not (isinstance(extra, list) and len(extra) == 2):
             error_msg = (
-                "Extra must be a list of two floats for "
-                "'diff_quantile_solvability' plot type."
+                "Extra must be a list of two floats for 'diff_quantile_solvability' plot type."
             )
             raise ValueError(error_msg)
         extra_0 = float(extra[0])

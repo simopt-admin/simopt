@@ -158,9 +158,7 @@ class SPSA(Solver):
         c: float = max(np.sqrt(objective_var / self.factors["gavg"]), 1e-4)
 
         # Calculating the maximum expected number of loss evaluations per run.
-        num_evals = round(
-            (self.budget.total / self.factors["n_reps"]) * self.factors["eval_pct"]
-        )
+        num_evals = round((self.budget.total / self.factors["n_reps"]) * self.factors["eval_pct"])
         aalg = self.factors["iter_pct"] * num_evals / (2 * self.factors["gavg"])
         gbar = np.zeros((1, problem.dim))
 
@@ -183,9 +181,7 @@ class SPSA(Solver):
                     upper_bound,
                 )
                 thetaplus_sol = self.create_new_solution(tuple(theta_forward), problem)
-                thetaminus_sol = self.create_new_solution(
-                    tuple(theta_backward), problem
-                )
+                thetaminus_sol = self.create_new_solution(tuple(theta_backward), problem)
                 # Evaluate two points and update budget spent.
                 self.budget.request(2 * self.factors["n_reps"])
                 problem.simulate(thetaplus_sol, self.factors["n_reps"])
@@ -195,9 +191,7 @@ class SPSA(Solver):
                 # but is not essential here because of the absolute value taken.)
                 step_weight_net = step_weight_plus + step_weight_minus
                 step_weight_net = make_nonzero(step_weight_net, "net_step_weight")
-                theta_mean_diff = (
-                    thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
-                )
+                theta_mean_diff = thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
                 ghat += (neg_minmax * theta_mean_diff) / (step_weight_net * c * delta)
             gbar += np.abs(ghat / self.factors["gavg"])
 
@@ -250,9 +244,7 @@ class SPSA(Solver):
                 self.recommended_solns.append(theta_sol)
                 self.intermediate_budgets.append(self.budget.used)
             # Estimate gradient.
-            theta_mean_diff = (
-                thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
-            )
+            theta_mean_diff = thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
             ghat = (neg_minmax * theta_mean_diff * delta) / (step_weight_net * c)
             # Take step and check feasibility.
             theta_next = theta - (ak * ghat)

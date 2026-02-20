@@ -36,12 +36,8 @@ class NelderMeadConfig(SolverConfig):
             description="number of replications taken at each solution",
         ),
     ]
-    alpha: Annotated[
-        float, Field(default=1.0, gt=0, description="reflection coefficient > 0")
-    ]
-    gammap: Annotated[
-        float, Field(default=2.0, gt=1, description="expansion coefficient > 1")
-    ]
+    alpha: Annotated[float, Field(default=1.0, gt=0, description="reflection coefficient > 0")]
+    gammap: Annotated[float, Field(default=2.0, gt=1, description="expansion coefficient > 1")]
     betap: Annotated[
         float,
         Field(
@@ -99,16 +95,12 @@ class NelderMead(Solver):
 
         # Shrink variable bounds to avoid floating errors.
         if problem.lower_bounds and not np.all(np.isneginf(problem.lower_bounds)):
-            self.lower_bounds = (
-                np.array(problem.lower_bounds) + self.factors["sensitivity"]
-            )
+            self.lower_bounds = np.array(problem.lower_bounds) + self.factors["sensitivity"]
         else:
             self.lower_bounds = None
 
         if problem.upper_bounds and not np.all(np.isposinf(problem.upper_bounds)):
-            self.upper_bounds = (
-                np.array(problem.upper_bounds) - self.factors["sensitivity"]
-            )
+            self.upper_bounds = np.array(problem.upper_bounds) - self.factors["sensitivity"]
         else:
             self.upper_bounds = None
 
@@ -117,34 +109,24 @@ class NelderMead(Solver):
 
         if self.lower_bounds is None or self.upper_bounds is None:
             sol.extend(
-                self.create_new_solution(
-                    problem.get_random_solution(get_rand_soln_rng), problem
-                )
+                self.create_new_solution(problem.get_random_solution(get_rand_soln_rng), problem)
                 for _ in range(1, n_pts)
             )
         else:  # Restrict starting shape/location.
-            initial_solution = np.array(
-                problem.factors["initial_solution"], dtype=float
-            )
-            distances = (self.upper_bounds - self.lower_bounds) * self.factors[
-                "initial_spread"
-            ]
+            initial_solution = np.array(problem.factors["initial_solution"], dtype=float)
+            distances = (self.upper_bounds - self.lower_bounds) * self.factors["initial_spread"]
 
             # Generate new points
             new_pts = np.tile(initial_solution, (problem.dim, 1))
             new_pts[np.arange(problem.dim), np.arange(problem.dim)] += distances
 
             # Apply boundary conditions
-            out_of_bounds = (new_pts > self.upper_bounds) | (
-                new_pts < self.lower_bounds
-            )
+            out_of_bounds = (new_pts > self.upper_bounds) | (new_pts < self.lower_bounds)
             if np.any(out_of_bounds):
                 new_pts[out_of_bounds] -= 2 * distances
 
             # If still out of bounds, set to nearest bound
-            out_of_bounds = (new_pts > self.upper_bounds) | (
-                new_pts < self.lower_bounds
-            )
+            out_of_bounds = (new_pts > self.upper_bounds) | (new_pts < self.lower_bounds)
             if np.any(out_of_bounds):
                 new_pts[out_of_bounds] = np.where(
                     np.array(problem.minmax)[np.newaxis, :] == -1,
@@ -181,8 +163,7 @@ class NelderMead(Solver):
                     axis=0,
                 )
                 p_refl = np.array(
-                    (1 + self.factors["alpha"]) * p_cent
-                    - self.factors["alpha"] * p_high_x
+                    (1 + self.factors["alpha"]) * p_cent - self.factors["alpha"] * p_high_x
                 )
 
                 # Check if reflection point is within bounds.
@@ -315,9 +296,7 @@ class NelderMead(Solver):
                         p_new = self._check_const(p_new, p_low.x)
 
                         p_new = Solution(p_new, problem)
-                        p_new.attach_rngs(
-                            rng_list=self.solution_progenitor_rngs, copy=True
-                        )
+                        p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                         self.budget.request(r)
                         problem.simulate(p_new, r)
                         new_fn_val = inv_minmax * p_new.objectives_mean
@@ -340,9 +319,7 @@ class NelderMead(Solver):
                         self.intermediate_budgets.append(self.budget.used)
                         self.recommended_solns.append(sort_sol[0])
 
-    def _sort_and_end_update(
-        self, problem: Problem, sol: Iterable[Solution]
-    ) -> list[Solution]:
+    def _sort_and_end_update(self, problem: Problem, sol: Iterable[Solution]) -> list[Solution]:
         """Sort solutions by objective values, accounting for minimization/maximization.
 
         Args:
@@ -361,9 +338,7 @@ class NelderMead(Solver):
             reverse=True,
         )
 
-    def _check_const(
-        self, new_point: Iterable[float], reference_point: Iterable[float]
-    ) -> tuple:
+    def _check_const(self, new_point: Iterable[float], reference_point: Iterable[float]) -> tuple:
         """Adjust a point to ensure it remains within the specified bounds.
 
         Args:
@@ -388,9 +363,7 @@ class NelderMead(Solver):
             if np.any(mask):
                 tmin = min(
                     tmin,
-                    np.min(
-                        (self.upper_bounds[mask] - reference_point[mask]) / step[mask]
-                    ),
+                    np.min((self.upper_bounds[mask] - reference_point[mask]) / step[mask]),
                 )
 
         if self.lower_bounds is not None:
@@ -398,9 +371,7 @@ class NelderMead(Solver):
             if np.any(mask):
                 tmin = min(
                     tmin,
-                    np.min(
-                        (self.lower_bounds[mask] - reference_point[mask]) / step[mask]
-                    ),
+                    np.min((self.lower_bounds[mask] - reference_point[mask]) / step[mask]),
                 )
 
         # Compute the modified point

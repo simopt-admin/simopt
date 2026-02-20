@@ -23,13 +23,7 @@ def cdf(
     n = df["mrep"].nunique()
 
     first_hit = solved.groupby("mrep")["budget"].min().reset_index()
-    counts = (
-        first_hit.groupby("budget")["mrep"]
-        .size()
-        .rename("value")
-        .to_frame()
-        .sort_index()
-    )
+    counts = first_hit.groupby("budget")["mrep"].size().rename("value").to_frame().sort_index()
     counts["value"] = counts["value"].cumsum() / n
 
     budget_points = [0.0, *counts.index, 1.0]
@@ -83,13 +77,9 @@ def mean(curves: list[pd.DataFrame]) -> pd.DataFrame:
     )
     # TODO: aggfunc="max": if repeated budget rows occur in data, keep the highest
     # attained value. But this may not be necessary.
-    pivot = stacked.pivot_table(
-        index="budget", columns="curve_id", values="value", aggfunc="max"
-    )
+    pivot = stacked.pivot_table(index="budget", columns="curve_id", values="value", aggfunc="max")
     pivot = pivot.sort_index().ffill().fillna(0.0)
-    return pd.DataFrame(
-        {"budget": pivot.index.to_numpy(), "value": pivot.mean(axis=1).to_numpy()}
-    )
+    return pd.DataFrame({"budget": pivot.index.to_numpy(), "value": pivot.mean(axis=1).to_numpy()})
 
 
 def problem_bootstraps(
@@ -119,9 +109,7 @@ def solver_bootstraps(
     """Aggregate per-problem bootstraps into solver-level bootstrap curves."""
     solver_bootstraps = []
     for i in range(n_bootstraps):
-        bootstrap = [
-            problem_bootstraps_data[p][i] for p in range(len(problem_bootstraps_data))
-        ]
+        bootstrap = [problem_bootstraps_data[p][i] for p in range(len(problem_bootstraps_data))]
         solver_bootstraps.append(mean(bootstrap))
     return solver_bootstraps
 

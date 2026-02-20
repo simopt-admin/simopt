@@ -34,17 +34,13 @@ from simopt.solvers._dasso import _numpy_seed_from_mrg, build_lhs
 class DASSOConfig(SolverConfig):
     """Configuration for DASSO solver."""
 
-    sample_size: Annotated[
-        int, Field(default=10, gt=0, description="sample size per solution")
-    ]
+    sample_size: Annotated[int, Field(default=10, gt=0, description="sample size per solution")]
     n_points_for_estimation: Annotated[
         int,
         Field(
             default=10,
             gt=0,
-            description=(
-                "number of reference points to be used for parameter estimation"
-            ),
+            description=("number of reference points to be used for parameter estimation"),
         ),
     ]
     decomposition: Annotated[
@@ -60,9 +56,7 @@ class DASSOConfig(SolverConfig):
         for i, coord_ids1 in enumerate(coord_sets):
             for j, coord_ids2 in enumerate(coord_sets):
                 if i != j and not coord_ids1.isdisjoint(coord_ids2):
-                    raise ValueError(
-                        "Coordinate ids in the decomposition must be disjoint."
-                    )
+                    raise ValueError("Coordinate ids in the decomposition must be disjoint.")
         return self
 
 
@@ -113,7 +107,7 @@ class DASSO(Solver):
         """Create a NumPy generator derived from the solver RNG."""
         return np.random.default_rng(_numpy_seed_from_mrg(self._solver_rng()))
 
-    def solve(self, problem: Problem) -> None:  # noqa: D102
+    def solve(self, problem: Problem) -> None:
         run_state = _RunState()
         solver_rng = self._solver_rng()
 
@@ -136,15 +130,13 @@ class DASSO(Solver):
         mapping = self._Mapping(decomposition, lower_bounds, upper_bounds)
 
         # Parameter estimation.
-        theta_parameters, random_effect_variances, beta_0 = (
-            self._hyperparameter_estimation(run_state, problem, mapping, decomposition)
+        theta_parameters, random_effect_variances, beta_0 = self._hyperparameter_estimation(
+            run_state, problem, mapping, decomposition
         )
 
         # Identify the sample-best solution.
         best_solution_candidate_index = run_state.sample_means_vec_d.argmin()
-        self.recommended_solns.append(
-            run_state.design_points_actual[best_solution_candidate_index]
-        )
+        self.recommended_solns.append(run_state.design_points_actual[best_solution_candidate_index])
         self.intermediate_budgets.append(self.budget.used)
 
         # Group creation.
@@ -192,15 +184,11 @@ class DASSO(Solver):
 
             # Get vectors needed to compute CEI for solutions in D and find
             # Pareto-efficient points.
-            sample_means_vec_d_stand = (
-                run_state.sample_means_vec_d - beta_0
-            )  # \bar{Y}_D - beta_0
+            sample_means_vec_d_stand = run_state.sample_means_vec_d - beta_0  # \bar{Y}_D - beta_0
             cond_var_of_diff_vec_d = np.zeros(
                 num_design_points
             )  # v(x) + v(x_best) - 2 * c(x_best, x) for x in D
-            cond_mean_of_diff_vec_d = np.zeros(
-                num_design_points
-            )  # m(x_best) - m(x) for x in D
+            cond_mean_of_diff_vec_d = np.zeros(num_design_points)  # m(x_best) - m(x) for x in D
 
             covariance_matrix_d = cov_mat_dd + np.diag(
                 run_state.noise_cov_mat_diagonals
@@ -225,12 +213,8 @@ class DASSO(Solver):
                 cond_mean_of_diff_vec_d += comp_d["mean"]
 
             # Calculate CEI for design points.
-            cond_std_of_diff_vec_d = np.sqrt(
-                cond_var_of_diff_vec_d
-            )  # sqrt{v(x_best, x)}
-            sample_best_index = run_state.design_point_indices.index(
-                sample_best_solution_index
-            )
+            cond_std_of_diff_vec_d = np.sqrt(cond_var_of_diff_vec_d)  # sqrt{v(x_best, x)}
+            sample_best_index = run_state.design_point_indices.index(sample_best_solution_index)
             cond_std_of_diff_vec_d[sample_best_index] = np.inf
 
             stand_mean_of_diff_vec_d = (
@@ -238,9 +222,7 @@ class DASSO(Solver):
             )  # [m(x_best) - m(x)] / sqrt{v(x_best, x)}
             cei_values_d = cond_mean_of_diff_vec_d * ndtr(
                 stand_mean_of_diff_vec_d
-            ) + cond_std_of_diff_vec_d * self._standard_normal_pdf(
-                stand_mean_of_diff_vec_d
-            )
+            ) + cond_std_of_diff_vec_d * self._standard_normal_pdf(stand_mean_of_diff_vec_d)
             cei_values_d[sample_best_index] = 0
             max_cei_index_d = np.argmax(cei_values_d)
 
@@ -264,17 +246,13 @@ class DASSO(Solver):
                 )
 
             # Calculate CEI for Pareto frontier.
-            cond_std_of_diff_vec_f = np.sqrt(
-                cond_var_of_diff_vec_f
-            )  # sqrt{v(x_best, x)}
+            cond_std_of_diff_vec_f = np.sqrt(cond_var_of_diff_vec_f)  # sqrt{v(x_best, x)}
             stand_mean_of_diff_vec_f = (
                 cond_mean_of_diff_vec_f / cond_std_of_diff_vec_f
             )  # [m(x_best) - m(x)] / sqrt{v(x_best, x)}
             cei_values_f = cond_mean_of_diff_vec_f * ndtr(
                 stand_mean_of_diff_vec_f
-            ) + cond_std_of_diff_vec_f * self._standard_normal_pdf(
-                stand_mean_of_diff_vec_f
-            )
+            ) + cond_std_of_diff_vec_f * self._standard_normal_pdf(stand_mean_of_diff_vec_f)
 
             max_cei_index_f = np.argmax(cei_values_f)
 
@@ -285,9 +263,7 @@ class DASSO(Solver):
                 max_cei_solution = run_state.design_point_indices[max_cei_index_d]
 
                 best_non_g_comp = tuple(
-                    mapping.get_low_dim_comp_ind_from_sol_index(
-                        max_cei_solution, group.coord_ids
-                    )
+                    mapping.get_low_dim_comp_ind_from_sol_index(max_cei_solution, group.coord_ids)
                     if group_index != random_effect_group_index
                     else None
                     for group_index, group in enumerate(groups)
@@ -302,17 +278,12 @@ class DASSO(Solver):
 
             # Find the restricted set.
             non_g_comp_as_tuple = {
-                group.coord_ids: comp
-                for group, comp in zip(groups, best_non_g_comp, strict=True)
+                group.coord_ids: comp for group, comp in zip(groups, best_non_g_comp, strict=True)
             }
-            restricted_set = mapping.get_solution_indices_from_non_g_component(
-                non_g_comp_as_tuple
-            )
+            restricted_set = mapping.get_solution_indices_from_non_g_component(non_g_comp_as_tuple)
 
             # Simulate the sample best solution.
-            self._record_simulations(
-                run_state, [sample_best_solution_index], problem, mapping
-            )
+            self._record_simulations(run_state, [sample_best_solution_index], problem, mapping)
 
             # Simulate a solution from the restricted set if it does not have any
             # solution that has been simulated.
@@ -345,16 +316,12 @@ class DASSO(Solver):
             noise_prec_mat = np.diag(
                 1 / run_state.noise_cov_mat_diagonals[design_point_indices_slice]
             )
-            noise_cov_mat = np.diag(
-                run_state.noise_cov_mat_diagonals[design_point_indices_slice]
-            )
+            noise_cov_mat = np.diag(run_state.noise_cov_mat_diagonals[design_point_indices_slice])
 
             # Conditional precision matrix: \bar{Q}
             low_dim_comp_u = low_dim_comp_indices_reordered[:num_u]
             low_dim_comp_d = low_dim_comp_indices_reordered[num_u:]
-            uu, ud, du, dd = group_g.get_precision_matrix_components(
-                low_dim_comp_u, low_dim_comp_d
-            )
+            uu, ud, du, dd = group_g.get_precision_matrix_components(low_dim_comp_u, low_dim_comp_d)
 
             q_bar = np.vstack(
                 [
@@ -377,9 +344,7 @@ class DASSO(Solver):
                 cov_mat = 1 / np.array(schur_complement_mat) + noise_cov_mat
             else:
                 cov_mat = (
-                    np.linalg.solve(
-                        schur_complement_mat.toarray(), np.eye(len(low_dim_comp_d))
-                    )
+                    np.linalg.solve(schur_complement_mat.toarray(), np.eye(len(low_dim_comp_d)))
                     + noise_cov_mat
                 )
 
@@ -387,9 +352,7 @@ class DASSO(Solver):
             part1 = (
                 1 / sum(np.linalg.solve(cov_mat, ones_vec)) * ones_vec
             )  # (1_D * Sigma^-1 * 1_D^T)^-1 * 1_D^T
-            part2 = np.linalg.solve(
-                cov_mat, sample_means_vec_d_slice
-            )  # Sigma^-1 * \bar{Y}_D
+            part2 = np.linalg.solve(cov_mat, sample_means_vec_d_slice)  # Sigma^-1 * \bar{Y}_D
             beta = part1 @ part2
 
             comp_d = noise_prec_mat @ (sample_means_vec_d_slice - beta)
@@ -409,9 +372,7 @@ class DASSO(Solver):
             cond_mean_of_diff_vec = cond_mean_vec[sample_best_index] - cond_mean_vec
             # Conditional variance of difference Y(x_best) - Y(x): v(x_best, x)
             # = v(x_best) + v(x) - 2 * c(x_best, x)
-            cond_var_of_diff_vec = (
-                cond_var_vec + cond_var_vec[sample_best_index] - 2 * cond_cov_vec
-            )
+            cond_var_of_diff_vec = cond_var_vec + cond_var_vec[sample_best_index] - 2 * cond_cov_vec
             cond_std_of_diff_vec = np.sqrt(cond_var_of_diff_vec)  # sqrt{v(x_best, x)}
             cond_std_of_diff_vec[sample_best_index] = np.inf
 
@@ -433,9 +394,7 @@ class DASSO(Solver):
 
             # Simulate sample-best solution of the restricted set.
             sample_best_solution_restricted = reordered_solutions[sample_best_index]
-            self._record_simulations(
-                run_state, [sample_best_solution_restricted], problem, mapping
-            )
+            self._record_simulations(run_state, [sample_best_solution_restricted], problem, mapping)
 
             # Identify the sample best solution.
             best_solution_candidate_index = run_state.sample_means_vec_d.argmin()
@@ -447,9 +406,7 @@ class DASSO(Solver):
     class _Mapping:
         """Map between solutions and coordinates."""
 
-        def __init__(
-            self, decomposition: list, lower_bounds: tuple, upper_bounds: tuple
-        ) -> None:
+        def __init__(self, decomposition: list, lower_bounds: tuple, upper_bounds: tuple) -> None:
             """Initialize a _Mapping object.
 
             Create a mapping between solutions and coordinates.
@@ -462,9 +419,7 @@ class DASSO(Solver):
             # Initialize the attributes.
             self._actual_values = [
                 {i: lower_bound + i for i in range(upper_bound - lower_bound + 1)}
-                for lower_bound, upper_bound in zip(
-                    lower_bounds, upper_bounds, strict=True
-                )
+                for lower_bound, upper_bound in zip(lower_bounds, upper_bounds, strict=True)
             ]
 
             self._actual_values_reverse = [
@@ -473,15 +428,12 @@ class DASSO(Solver):
 
             num_point_in_coord = [len(values) for values in self._actual_values]
             self.num_points_in_group = {
-                coord_ids: math.prod(
-                    [num_point_in_coord[coord_id] for coord_id in coord_ids]
-                )
+                coord_ids: math.prod([num_point_in_coord[coord_id] for coord_id in coord_ids])
                 for coord_ids in decomposition
             }
 
             self._index_multipliers = [
-                math.prod(num_point_in_coord[i + 1 :])
-                for i in range(len(num_point_in_coord))
+                math.prod(num_point_in_coord[i + 1 :]) for i in range(len(num_point_in_coord))
             ]
 
             self._index_multipliers_group = {}
@@ -515,9 +467,7 @@ class DASSO(Solver):
                 index_multipliers = self._index_multipliers_group[coord_ids]
                 neighbors_indices = []
                 for low_dim_comp_ind in range(self.num_points_in_group[coord_ids]):
-                    comp = self._get_low_dim_comp_from_index(
-                        low_dim_comp_ind, coord_ids
-                    )
+                    comp = self._get_low_dim_comp_from_index(low_dim_comp_ind, coord_ids)
                     neighbors = {
                         0: [low_dim_comp_ind]
                     }  # the neighbors in 0-th dimension, i.e., itself
@@ -571,14 +521,10 @@ class DASSO(Solver):
             )
             return sum(
                 multiplier * coord_value
-                for multiplier, coord_value in zip(
-                    self._index_multipliers, solution, strict=True
-                )
+                for multiplier, coord_value in zip(self._index_multipliers, solution, strict=True)
             )
 
-        def get_low_dim_comp_ind_from_sol_index(
-            self, solution_index: int, coord_ids: tuple
-        ) -> int:
+        def get_low_dim_comp_ind_from_sol_index(self, solution_index: int, coord_ids: tuple) -> int:
             """Find the lower dimensional component index for the given group.
 
             Use the provided solution index.
@@ -595,9 +541,7 @@ class DASSO(Solver):
             low_dim_comp = [solution[coord_id] for coord_id in coord_ids]
             return sum(
                 multiplier * coord_value
-                for multiplier, coord_value in zip(
-                    index_multipliers, low_dim_comp, strict=True
-                )
+                for multiplier, coord_value in zip(index_multipliers, low_dim_comp, strict=True)
             )
 
         def _get_low_dim_comp_from_index(
@@ -621,9 +565,7 @@ class DASSO(Solver):
                 lower_dimensional_component_index -= multiplier * coord_value
             return tuple(low_dim_comp)
 
-        def get_actual_values_of_solution_from_index(
-            self, solution_index: int
-        ) -> tuple:
+        def get_actual_values_of_solution_from_index(self, solution_index: int) -> tuple:
             """Find the solution with its actual values for the given solution index.
 
             Args:
@@ -635,13 +577,10 @@ class DASSO(Solver):
             """
             solution = self._get_solution_from_index(solution_index)
             return tuple(
-                self._actual_values[coord_id][ind]
-                for coord_id, ind in enumerate(solution)
+                self._actual_values[coord_id][ind] for coord_id, ind in enumerate(solution)
             )
 
-        def get_solution_indices_from_non_g_component(
-            self, non_g_component: dict
-        ) -> list:
+        def get_solution_indices_from_non_g_component(self, non_g_component: dict) -> list:
             """Find the solution indices with the given non-g component.
 
             Args:
@@ -654,12 +593,8 @@ class DASSO(Solver):
             solution: list[int | None] = [None for _ in range(len(self._actual_values))]
             for coord_ids, low_dim_comp_index in non_g_component.items():
                 if low_dim_comp_index is not None:
-                    low_dim_comp = self._get_low_dim_comp_from_index(
-                        low_dim_comp_index, coord_ids
-                    )
-                    for coord_id, coord_comp in zip(
-                        coord_ids, low_dim_comp, strict=True
-                    ):
+                    low_dim_comp = self._get_low_dim_comp_from_index(low_dim_comp_index, coord_ids)
+                    for coord_id, coord_comp in zip(coord_ids, low_dim_comp, strict=True):
                         solution[coord_id] = coord_comp
 
             solution_indices = []
@@ -668,15 +603,11 @@ class DASSO(Solver):
                 for coord_ids, low_dim_comp_index in non_g_component.items()
                 if low_dim_comp_index is None
             )
-            for low_dim_comp_index in range(
-                self.num_points_in_group[coord_ids_random_effect]
-            ):
+            for low_dim_comp_index in range(self.num_points_in_group[coord_ids_random_effect]):
                 low_dim_comp = self._get_low_dim_comp_from_index(
                     low_dim_comp_index, coord_ids_random_effect
                 )
-                for coord_id, coord_comp in zip(
-                    coord_ids_random_effect, low_dim_comp, strict=True
-                ):
+                for coord_id, coord_comp in zip(coord_ids_random_effect, low_dim_comp, strict=True):
                     solution[coord_id] = coord_comp
 
                 solution_index = 0
@@ -765,9 +696,7 @@ class DASSO(Solver):
                     design_points.append(paired_point)
 
         # Prepare difference matrices B^(rho)'s for construction as (row, column, data).
-        diff_mat_construction_each_group = {
-            coord_ids: [] for coord_ids in decomposition
-        }
+        diff_mat_construction_each_group = {coord_ids: [] for coord_ids in decomposition}
         for ref_point_id, (ref_point, paired_points) in enumerate(
             paired_points_with_each_ref_point.items()
         ):
@@ -793,9 +722,7 @@ class DASSO(Solver):
             diff_matrices[coord_ids] = diff_mat
 
         # Parameter estimation.
-        design_point_indices = [
-            mapping.get_solution_index(sol) for sol in design_points
-        ]
+        design_point_indices = [mapping.get_solution_index(sol) for sol in design_points]
         self._record_simulations(run_state, design_point_indices, problem, mapping)
 
         # Estimate hyperparameters for each group.
@@ -830,9 +757,7 @@ class DASSO(Solver):
         part1 = (
             1 / sum(np.linalg.solve(cov_sum, ones_vec)) * ones_vec
         )  # (1_D * Sigma^-1 * 1_D^T)^-1 * 1_D^T
-        part2 = np.linalg.solve(
-            cov_sum, run_state.sample_means_vec_d
-        )  # Sigma^-1 * \bar{Y}_D
+        part2 = np.linalg.solve(cov_sum, run_state.sample_means_vec_d)  # Sigma^-1 * \bar{Y}_D
         beta_0 = part1 @ part2
 
         return theta_parameters, random_effect_variances, beta_0
@@ -861,9 +786,7 @@ class DASSO(Solver):
         noise_cov_mat_diff_diagonals = np.abs(diff_mat) @ noise_cov_diagonals  # type: ignore
 
         sample_mean_differences = diff_mat @ sample_means_vec  # B * \bar{Y}
-        diff_for_sigma_g = (
-            sample_mean_differences.transpose() ** 2 - noise_cov_mat_diff_diagonals
-        )
+        diff_for_sigma_g = sample_mean_differences.transpose() ** 2 - noise_cov_mat_diff_diagonals
         sigma_g_upper_bound = np.max(diff_for_sigma_g) / 2
         if sigma_g_upper_bound < 1e-6:  # a small number
             random_effect_variance = 1e-6
@@ -875,21 +798,15 @@ class DASSO(Solver):
                 sigma_g: float,
             ) -> float:
                 """Calculate the negative log likelihood value."""
-                cov_mat_b_inverse_diagonals = 1 / (
-                    2 * sigma_g + noise_cov_mat_diff_diagonals
-                )
+                cov_mat_b_inverse_diagonals = 1 / (2 * sigma_g + noise_cov_mat_diff_diagonals)
                 if math.prod(cov_mat_b_inverse_diagonals) <= 1e-1000:
                     first_part = -math.inf
                 else:
                     first_part = math.log(
                         math.prod(cov_mat_b_inverse_diagonals)
                     )  # log | (Sigma^(rho)_B)^-1 |
-                second_part = sum(
-                    sample_mean_differences**2 * cov_mat_b_inverse_diagonals
-                )
-                return -(
-                    first_part - second_part
-                )  # negative likelihood (1/2 is ignored)
+                second_part = sum(sample_mean_differences**2 * cov_mat_b_inverse_diagonals)
+                return -(first_part - second_part)  # negative likelihood (1/2 is ignored)
 
             res = optimize.minimize(
                 _negative_log_likelihood_function_random_effect,
@@ -951,12 +868,10 @@ class DASSO(Solver):
         num_d = len(low_dim_comp_indices_d)
 
         mapping_d = {
-            low_dim_comp_ind: ind
-            for ind, low_dim_comp_ind in enumerate(low_dim_comp_indices_d)
+            low_dim_comp_ind: ind for ind, low_dim_comp_ind in enumerate(low_dim_comp_indices_d)
         }
         mapping_u = {
-            low_dim_comp_ind: ind
-            for ind, low_dim_comp_ind in enumerate(low_dim_comp_indices_u)
+            low_dim_comp_ind: ind for ind, low_dim_comp_ind in enumerate(low_dim_comp_indices_u)
         }
 
         rows_uu, columns_uu, dimension_ids_uu = [], [], []
@@ -1011,10 +926,7 @@ class DASSO(Solver):
         candidates = candidates[:30]
         # Make the sum of candidate parameters less than 0.5
         feasible_candidates = np.array(
-            [
-                solver_rng.uniform(0, 0.5) * candidate / sum(candidate)
-                for candidate in candidates
-            ]
+            [solver_rng.uniform(0, 0.5) * candidate / sum(candidate) for candidate in candidates]
         )
 
         # Find the best candidate
@@ -1031,26 +943,14 @@ class DASSO(Solver):
             Returns:
                 np.ndarray: The covariance matrix component for design points.
             """
-            data_uu = [
-                precision_matrix_parameters[dim_id] for dim_id in dimension_ids_uu
-            ]
-            data_ud = [
-                precision_matrix_parameters[dim_id] for dim_id in dimension_ids_ud
-            ]
-            data_dd = [
-                precision_matrix_parameters[dim_id] for dim_id in dimension_ids_dd
-            ]
+            data_uu = [precision_matrix_parameters[dim_id] for dim_id in dimension_ids_uu]
+            data_ud = [precision_matrix_parameters[dim_id] for dim_id in dimension_ids_ud]
+            data_dd = [precision_matrix_parameters[dim_id] for dim_id in dimension_ids_dd]
 
-            uu = sparse.coo_matrix(
-                (data_uu, (rows_uu, columns_uu)), shape=(num_u, num_u)
-            ).tocsc()
-            ud = sparse.coo_matrix(
-                (data_ud, (rows_ud, columns_ud)), shape=(num_u, num_d)
-            ).tocsc()
+            uu = sparse.coo_matrix((data_uu, (rows_uu, columns_uu)), shape=(num_u, num_u)).tocsc()
+            ud = sparse.coo_matrix((data_ud, (rows_ud, columns_ud)), shape=(num_u, num_d)).tocsc()
             du = ud.transpose().tocsc()
-            dd = sparse.coo_matrix(
-                (data_dd, (rows_dd, columns_dd)), shape=(num_d, num_d)
-            ).tocsc()
+            dd = sparse.coo_matrix((data_dd, (rows_dd, columns_dd)), shape=(num_d, num_d)).tocsc()
 
             schur_complement_mat = dd - du @ sparse.linalg.spsolve(uu, ud)
 
@@ -1059,9 +959,7 @@ class DASSO(Solver):
         objectives = {}
         for other_thetas in feasible_candidates:
             # Construct the components of precision matrix with theta_0 = 1
-            prec_mat_inv_dd = _get_covariance_matrix_dd(
-                [1] + [-theta for theta in other_thetas]
-            )
+            prec_mat_inv_dd = _get_covariance_matrix_dd([1] + [-theta for theta in other_thetas])
             # theta_0 B^(rho) T^(rho)_DD Sigma^(rho)_DD [B^(rho) T^(rho)_DD]^T
             cov_mat_temp = diff_tf_mat_d @ prec_mat_inv_dd @ diff_tf_mat_d.transpose()
 
@@ -1069,18 +967,14 @@ class DASSO(Solver):
                 theta_0: float, cov_mat_temp: np.ndarray = cov_mat_temp
             ) -> float:
                 """Calculate the negative log likelihood value."""
-                cov_mat_b = (
-                    cov_mat_temp / float(theta_0) + noise_cov_mat_diff
-                )  # Sigma^(rho)_B
+                cov_mat_b = cov_mat_temp / float(theta_0) + noise_cov_mat_diff  # Sigma^(rho)_B
 
                 # log | sigma_c^-1 | = - log | sigma_c |
                 first_part = -np.prod(np.linalg.slogdet(cov_mat_b))
                 second_part = sample_mean_differences.transpose() @ np.linalg.solve(
                     cov_mat_b, sample_mean_differences
                 )
-                return -(
-                    first_part - second_part
-                )  # negative likelihood (1/2 is ignored)
+                return -(first_part - second_part)  # negative likelihood (1/2 is ignored)
 
             res = optimize.minimize(
                 _negative_log_likelihood_function,
@@ -1089,17 +983,13 @@ class DASSO(Solver):
                 bounds=[(1e-6, None)],
                 options={"maxiter": 50},
             )
-            objectives[(res.x[0], *(-res.x[0] * theta for theta in other_thetas))] = (
-                res.fun
-            )
+            objectives[(res.x[0], *(-res.x[0] * theta for theta in other_thetas))] = res.fun
 
         # Get the hyperparameters with the lowest negative log likelihood value
         prec_mat_parameters = list(min(objectives, key=objectives.__getitem__))
 
         cov_mat_dd = _get_covariance_matrix_dd(prec_mat_parameters)
-        transformed_cov_mat_dd = (
-            rearranged_tf_mat_d @ cov_mat_dd @ rearranged_tf_mat_d.transpose()
-        )
+        transformed_cov_mat_dd = rearranged_tf_mat_d @ cov_mat_dd @ rearranged_tf_mat_d.transpose()
 
         return prec_mat_parameters, transformed_cov_mat_dd
 
@@ -1184,19 +1074,14 @@ class DASSO(Solver):
                 self._Q_uu_inv = np.linalg.solve(prec_mat_uu.toarray(), np.eye(num_u))
                 self._Q_uu_inv_times_Q_ud = self._Q_uu_inv @ prec_mat_ud
 
-                schur_complement_mat = (
-                    prec_mat_dd
-                    - prec_mat_du @ sparse.linalg.spsolve(prec_mat_uu, prec_mat_ud)
+                schur_complement_mat = prec_mat_dd - prec_mat_du @ sparse.linalg.spsolve(
+                    prec_mat_uu, prec_mat_ud
                 )
-                self._cov_mat_dd = np.linalg.solve(
-                    schur_complement_mat.toarray(), np.eye(num_d)
-                )
+                self._cov_mat_dd = np.linalg.solve(schur_complement_mat.toarray(), np.eye(num_d))
 
             if len(new_solution_indices) > 0:
                 low_dim_comp_indices = [
-                    self._mapping.get_low_dim_comp_ind_from_sol_index(
-                        sol_ind, self.coord_ids
-                    )
+                    self._mapping.get_low_dim_comp_ind_from_sol_index(sol_ind, self.coord_ids)
                     for sol_ind in self._sol_indices_d
                 ]
 
@@ -1204,10 +1089,7 @@ class DASSO(Solver):
                 num_low_dim_comp_d = len(self._low_dim_comp_indices_d)
 
                 rows = list(range(num_solutions_d))
-                columns = [
-                    self._low_dim_comp_indices_d.index(ind)
-                    for ind in low_dim_comp_indices
-                ]
+                columns = [self._low_dim_comp_indices_d.index(ind) for ind in low_dim_comp_indices]
                 data = [1] * num_solutions_d
                 self._rearranged_tf_mat_d = sparse.coo_matrix(
                     (data, (rows, columns)), shape=(num_solutions_d, num_low_dim_comp_d)
@@ -1249,55 +1131,38 @@ class DASSO(Solver):
                 t_rho_d = self._rearranged_tf_mat_d.toarray()
 
                 # Lower dimensional component of the sample-best solution
-                low_dim_comp_sample_best = (
-                    self._mapping.get_low_dim_comp_ind_from_sol_index(
-                        sample_best_solution_index, self.coord_ids
-                    )
+                low_dim_comp_sample_best = self._mapping.get_low_dim_comp_ind_from_sol_index(
+                    sample_best_solution_index, self.coord_ids
                 )
-                best_ind = self._low_dim_comp_indices_reordered.index(
-                    low_dim_comp_sample_best
-                )
+                best_ind = self._low_dim_comp_indices_reordered.index(low_dim_comp_sample_best)
 
                 # S^(rho): Schur complement = cond_cov_mat_dd
                 cov_mat_d_inv_tr = covariance_matrix_inv_d @ t_rho_d
                 cov_mat_d_inv_tr_tr = t_rho_d.transpose() @ cov_mat_d_inv_tr
-                tmp = (
-                    np.linalg.solve(self._cov_mat_dd, np.eye(num_d))
-                    - cov_mat_d_inv_tr_tr
-                )
+                tmp = np.linalg.solve(self._cov_mat_dd, np.eye(num_d)) - cov_mat_d_inv_tr_tr
                 e_rho = covariance_matrix_inv_d + cov_mat_d_inv_tr @ np.linalg.solve(
                     tmp, cov_mat_d_inv_tr.transpose()
                 )
-                s_rho = (
-                    self._cov_mat_dd
-                    - self._cov_mat_dd @ cov_mat_d_inv_tr_tr @ self._cov_mat_dd
-                )
+                s_rho = self._cov_mat_dd - self._cov_mat_dd @ cov_mat_d_inv_tr_tr @ self._cov_mat_dd
 
                 cond_cov_mat_ud = -self._Q_uu_inv_times_Q_ud @ s_rho
                 cond_cov_mat_uu = (
-                    self._Q_uu_inv
-                    - self._Q_uu_inv_times_Q_ud @ cond_cov_mat_ud.transpose()
+                    self._Q_uu_inv - self._Q_uu_inv_times_Q_ud @ cond_cov_mat_ud.transpose()
                 )
 
                 # alculate the conditional variance and covariance.
-                cond_var_vec = np.concatenate(
-                    (cond_cov_mat_uu.diagonal(), s_rho.diagonal())
-                )
+                cond_var_vec = np.concatenate((cond_cov_mat_uu.diagonal(), s_rho.diagonal()))
                 cond_cov_vec = np.concatenate(
                     (cond_cov_mat_ud[:, best_ind - num_u], s_rho[:, best_ind - num_u])
                 )
 
                 # Calculate the conditional mean vector.
                 tmp_vec = t_rho_d.transpose() @ e_rho @ sample_means_vec_d_stand
-                cond_mean_vec = np.concatenate(
-                    (cond_cov_mat_ud @ tmp_vec, s_rho @ tmp_vec)
-                )
+                cond_mean_vec = np.concatenate((cond_cov_mat_ud @ tmp_vec, s_rho @ tmp_vec))
 
                 # Conditional distribution components of the differences for each
                 # lower dimensional component.
-                cond_var_of_diff_vec = (
-                    cond_var_vec[best_ind] + cond_var_vec - 2 * cond_cov_vec
-                )
+                cond_var_of_diff_vec = cond_var_vec[best_ind] + cond_var_vec - 2 * cond_cov_vec
                 cond_mean_of_diff_vec = cond_mean_vec[best_ind] - cond_mean_vec
 
                 # Conditional distribution components of the differences for solution in
@@ -1306,8 +1171,7 @@ class DASSO(Solver):
                     t_rho_d @ cond_var_of_diff_vec[-len(self._low_dim_comp_indices_d) :]
                 )
                 cond_mean_of_diff_vec_d = (
-                    t_rho_d
-                    @ cond_mean_of_diff_vec[-len(self._low_dim_comp_indices_d) :]
+                    t_rho_d @ cond_mean_of_diff_vec[-len(self._low_dim_comp_indices_d) :]
                 )
 
                 # Pareto frontier as indices of the Pareto-efficient lower dimensional
@@ -1315,34 +1179,21 @@ class DASSO(Solver):
                 num_points = len(cond_mean_of_diff_vec)
                 pareto_frontier_indices = np.arange(num_points)
 
-                next_point_index = (
-                    0  # Next index in the efficient_points array to search for
-                )
+                next_point_index = 0  # Next index in the efficient_points array to search for
                 while next_point_index < len(cond_mean_of_diff_vec):
                     nondominated_point_mask = ~(
-                        (
-                            cond_mean_of_diff_vec
-                            < cond_mean_of_diff_vec[next_point_index]
-                        )
-                        * (
-                            cond_var_of_diff_vec
-                            < cond_var_of_diff_vec[next_point_index]
-                        )
+                        (cond_mean_of_diff_vec < cond_mean_of_diff_vec[next_point_index])
+                        * (cond_var_of_diff_vec < cond_var_of_diff_vec[next_point_index])
                     )
                     pareto_frontier_indices = pareto_frontier_indices[
                         nondominated_point_mask
                     ]  # Remove dominated points
-                    cond_mean_of_diff_vec = cond_mean_of_diff_vec[
-                        nondominated_point_mask
-                    ]
+                    cond_mean_of_diff_vec = cond_mean_of_diff_vec[nondominated_point_mask]
                     cond_var_of_diff_vec = cond_var_of_diff_vec[nondominated_point_mask]
-                    next_point_index = (
-                        np.sum(nondominated_point_mask[:next_point_index]) + 1
-                    )
+                    next_point_index = np.sum(nondominated_point_mask[:next_point_index]) + 1
 
                 pareto_points = [
-                    self._low_dim_comp_indices_reordered[ind]
-                    for ind in pareto_frontier_indices
+                    self._low_dim_comp_indices_reordered[ind] for ind in pareto_frontier_indices
                 ]
                 cond_dist_of_diff_comp_f = {
                     "indices": pareto_points,
@@ -1357,10 +1208,7 @@ class DASSO(Solver):
                 sigma_eye_d = self.random_effect_variance * eye_d
 
                 # S^(g): Schur complement
-                s_g = (
-                    sigma_eye_d
-                    - self.random_effect_variance**2 * covariance_matrix_inv_d
-                )
+                s_g = sigma_eye_d - self.random_effect_variance**2 * covariance_matrix_inv_d
 
                 best_ind = self._sol_indices_d.index(sample_best_solution_index)
 
@@ -1408,12 +1256,8 @@ class DASSO(Solver):
             """
             neighbors_indices = self._mapping.neighbors_indices_in_group[self.coord_ids]
 
-            mapping_d = {
-                component_ind: ind for ind, component_ind in enumerate(indices_d)
-            }
-            mapping_u = {
-                component_ind: ind for ind, component_ind in enumerate(indices_u)
-            }
+            mapping_d = {component_ind: ind for ind, component_ind in enumerate(indices_d)}
+            mapping_u = {component_ind: ind for ind, component_ind in enumerate(indices_u)}
 
             rows_uu, columns_uu, data_uu = [], [], []
             rows_ud, columns_ud, data_ud = [], [], []
@@ -1500,17 +1344,13 @@ class DASSO(Solver):
                     solution.objectives_var[0] / solution.n_reps
                 )
             else:
-                x_actual = mapping.get_actual_values_of_solution_from_index(
-                    solution_index
-                )
+                x_actual = mapping.get_actual_values_of_solution_from_index(solution_index)
                 solution = self.create_new_solution(x_actual, problem)
                 problem.simulate(solution, sample_size)
                 additional_sample_means_vec_d += [
                     solution.objectives_mean[0] * problem.minmax[0] * (-1)
                 ]  # minimization problem
-                additional_noise_cov_mat_diagonals += [
-                    solution.objectives_var[0] / solution.n_reps
-                ]
+                additional_noise_cov_mat_diagonals += [solution.objectives_var[0] / solution.n_reps]
                 run_state.design_point_indices.append(solution_index)
                 run_state.design_points_actual.append(solution)
 

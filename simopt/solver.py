@@ -73,9 +73,7 @@ class Budget:
 class SolverConfig(BaseModel):
     """Base class for solver configuration."""
 
-    crn_across_solns: Annotated[
-        bool, Field(default=True, description="use CRN across solutions?")
-    ]
+    crn_across_solns: Annotated[bool, Field(default=True, description="use CRN across solutions?")]
 
 
 class Solver(ABC):

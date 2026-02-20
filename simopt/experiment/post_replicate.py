@@ -12,9 +12,7 @@ from simopt.problem import Problem, Solution
 from .data import SolverHistorySchema
 
 
-def _set_up_rngs(
-    problem: Problem, mrep: int, crn_across_macroreps: bool
-) -> list[MRG32k3a]:
+def _set_up_rngs(problem: Problem, mrep: int, crn_across_macroreps: bool) -> list[MRG32k3a]:
     """Set up RNGs for the macroreplication."""
     if crn_across_macroreps:
         # Use the same RNGs for all macroreps.

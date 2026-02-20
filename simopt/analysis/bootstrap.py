@@ -65,22 +65,14 @@ def _bootstrap_mrep(
     n_preps = objectives.shape[1]
 
     use_special_indices = crn_across_budget and not crn_across_macroreps
-    special_indices = (
-        rng.choices(range(n_preps), k=n_preps) if use_special_indices else None
-    )
+    special_indices = rng.choices(range(n_preps), k=n_preps) if use_special_indices else None
 
     data = []
     for i in range(n_steps):
-        indices = (
-            special_indices
-            if use_special_indices
-            else rng.choices(range(n_preps), k=n_preps)
-        )
+        indices = special_indices if use_special_indices else rng.choices(range(n_preps), k=n_preps)
 
         bootstrap_objective = float(np.mean(objectives[i, indices]))
-        bootstrap_stochastic_constraints = np.mean(
-            stochastic_constraints[i, indices], axis=0
-        )
+        bootstrap_stochastic_constraints = np.mean(stochastic_constraints[i, indices], axis=0)
 
         datum = {
             "step": i,
@@ -116,9 +108,9 @@ def _transform_bootstrap_data(
         solutions = df_mrep["solution"].to_numpy().reshape(n_steps, n_preps)[:, 0]
         objectives = df_mrep["objective"].to_numpy().reshape(n_steps, n_preps)
         stochastic_constraint_dim = len(df_mrep["stochastic_constraints"].iloc[0])
-        stochastic_constraints = np.vstack(
-            df_mrep["stochastic_constraints"].to_numpy()
-        ).reshape(n_steps, n_preps, stochastic_constraint_dim)
+        stochastic_constraints = np.vstack(df_mrep["stochastic_constraints"].to_numpy()).reshape(
+            n_steps, n_preps, stochastic_constraint_dim
+        )
         data.append(
             {
                 "budget": budgets,
@@ -174,9 +166,7 @@ def _bootstrap_sample(
 def _get_n_preps(df: pd.DataFrame) -> int:
     values = df.reset_index().groupby(["mrep", "step"])["rep"].max().add(1).unique()
     if len(values) > 1:
-        raise ValueError(
-            "number of post replication is not consistent across macroreps and steps."
-        )
+        raise ValueError("number of post replication is not consistent across macroreps and steps.")
     return int(values[0])
 
 

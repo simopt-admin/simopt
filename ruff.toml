@@ -1,5 +1,5 @@
 # ruff.toml
-line-length = 88
+line-length = 100
 exclude = [
     "simopt/gui/*",
     "notebooks/*",

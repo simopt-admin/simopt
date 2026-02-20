@@ -131,9 +131,7 @@ def plot(
     if result.agg == "all":
         handle = None
         for _, group in df.groupby("mrep"):
-            handle = plot_step(
-                ax, group["budget"], group["value"], linewidth=2, color=color
-            )
+            handle = plot_step(ax, group["budget"], group["value"], linewidth=2, color=color)
         if handle is None:
             raise ValueError("no progress curve created.")
         return handle
@@ -141,9 +139,7 @@ def plot(
     handle = plot_step(ax, df["budget"], df["value"], linewidth=2, color=color)
 
     if "lb" in df.columns and "ub" in df.columns:
-        logger.debug(
-            "data", data=np.array([df["budget"], df["value"], df["lb"], df["ub"]])
-        )
+        logger.debug("data", data=np.array([df["budget"], df["value"], df["lb"], df["ub"]]))
 
         plot_ci(ax, df, color=color)
 

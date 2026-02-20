@@ -111,11 +111,7 @@ def plot_feasibility_progress(
         file_name = "inf_norm"
     elif score_type == "norm":
         file_name = f"{norm_degree}_norm"
-    extra = (
-        [file_name, beta]
-        if plot_type == PlotType.QUANTILE_FEASIBILITY_PROGRESS
-        else file_name
-    )
+    extra = [file_name, beta] if plot_type == PlotType.QUANTILE_FEASIBILITY_PROGRESS else file_name
 
     # check feasibility score compatibility
     if plot_type != PlotType.ALL_FEASIBILITY_PROGRESS and two_sided:
@@ -123,9 +119,7 @@ def plot_feasibility_progress(
             "Mean and quantile plots not supported for two sided feasibility scores."
         )
 
-    for problem_idx in range(
-        n_problems
-    ):  # must create new plot for every different problem
+    for problem_idx in range(n_problems):  # must create new plot for every different problem
         if all_in_one:
             ref_experiment = experiments[0][problem_idx]
             setup_plot(
@@ -154,17 +148,11 @@ def plot_feasibility_progress(
                         curve.plot(color_str=color_str)
                 elif plot_type == PlotType.MEAN_FEASIBILITY_PROGRESS:
                     # Plot estimated mean progress curve.
-                    estimator = curve_utils.mean_of_curves(
-                        experiment.feasibility_curves
-                    )
+                    estimator = curve_utils.mean_of_curves(experiment.feasibility_curves)
                     handle = estimator.plot(color_str=color_str)
-                elif (
-                    plot_type == PlotType.QUANTILE_FEASIBILITY_PROGRESS
-                ):  # Must be quantile.
+                elif plot_type == PlotType.QUANTILE_FEASIBILITY_PROGRESS:  # Must be quantile.
                     # Plot estimated beta-quantile progress curve.
-                    estimator = curve_utils.quantile_of_curves(
-                        experiment.feasibility_curves, beta
-                    )
+                    estimator = curve_utils.quantile_of_curves(experiment.feasibility_curves, beta)
                     handle = estimator.plot(color_str=color_str)
                 if (
                     plot_conf_ints or print_max_hw
@@ -259,14 +247,10 @@ def plot_feasibility_progress(
                     for curve in experiment.feasibility_curves:
                         curve.plot()
                 elif plot_type == PlotType.MEAN_FEASIBILITY_PROGRESS:
-                    estimator = curve_utils.mean_of_curves(
-                        experiment.feasibility_curves
-                    )
+                    estimator = curve_utils.mean_of_curves(experiment.feasibility_curves)
                     estimator.plot()
                 elif plot_type == PlotType.QUANTILE_FEASIBILITY_PROGRESS:
-                    estimator = curve_utils.quantile_of_curves(
-                        experiment.feasibility_curves, beta
-                    )
+                    estimator = curve_utils.quantile_of_curves(experiment.feasibility_curves, beta)
                     estimator.plot()
                 if plot_zero:
                     plt.axhline(y=0, color="red", linestyle="--", linewidth=0.75)

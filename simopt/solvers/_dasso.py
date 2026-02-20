@@ -81,10 +81,7 @@ def build_lhs(
         if len(factor_level_ranges[key]) != 2:
             factor_level_ranges[key][1] = factor_level_ranges[key][-1]
             factor_level_ranges[key] = factor_level_ranges[key][:2]
-            print(
-                f"{key} had more than two levels. "
-                "Assigning the end point to the high level."
-            )
+            print(f"{key} had more than two levels. Assigning the end point to the high level.")
 
     factor_count = len(factor_level_ranges)
     factor_lists = []
