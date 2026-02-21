@@ -19,7 +19,7 @@ from simopt.base import (
     SolverConfig,
     VariableType,
 )
-from simopt.solvers.utils import finite_diff
+from simopt.solvers.utils import fd
 
 
 class ADAMConfig(SolverConfig):
@@ -109,12 +109,9 @@ class ADAM(Solver):
             # Update timestep.
             t += 1
             # Check variable bounds.
-            forward = np.isclose(
-                new_solution.x, lower_bound, atol=self.factors["sensitivity"]
-            ).astype(int)
-            backward = np.isclose(
-                new_solution.x, upper_bound, atol=self.factors["sensitivity"]
-            ).astype(int)
+            x = np.array(new_solution.x, dtype=float)
+            forward = np.isclose(x, lower_bound, atol=self.factors["sensitivity"]).astype(int)
+            backward = np.isclose(x, upper_bound, atol=self.factors["sensitivity"]).astype(int)
             # 1 stands for forward, -1 stands for backward, 0 means central diff.
             bounds_check = np.subtract(forward, backward)
             if problem.gradient_available:
@@ -125,13 +122,23 @@ class ADAM(Solver):
                 # not available.
                 finite_diff_budget = (2 * problem.dim - np.count_nonzero(bounds_check)) * r
                 self.budget.request(int(finite_diff_budget))
-                grad = finite_diff(
-                    solver=self,
-                    new_solution=new_solution,
-                    bounds_check=bounds_check,
-                    problem=problem,
-                    stepsize=self.factors["alpha"],
-                    r=self.factors["r"],
+
+                def fn(x: np.ndarray) -> float:
+                    candidate_solution = self.create_new_solution(tuple(x), problem)
+                    problem.simulate_up_to([candidate_solution], r)
+                    value = -problem.minmax[0] * candidate_solution.objectives_mean
+                    return float(value[0])
+
+                fn_value = float((-problem.minmax[0] * new_solution.objectives_mean)[0])
+
+                grad = fd(
+                    fn,
+                    x,
+                    self.factors["alpha"],
+                    fn_value,
+                    bounds_check,
+                    lower_bound,
+                    upper_bound,
                 )
 
             # Update biased first moment estimate.
@@ -143,8 +150,7 @@ class ADAM(Solver):
             # Compute bias-corrected second raw moment estimate.
             vhat = v / (1 - beta_2**t)
             # Update new_x (vectorized) and apply box constraints
-            new_x = new_solution.x - alpha * mhat / (np.sqrt(vhat) + epsilon)
-            new_x = np.clip(new_x, lower_bound, upper_bound)
+            new_x = np.clip(x - alpha * mhat / (np.sqrt(vhat) + epsilon), lower_bound, upper_bound)
 
             # Create new solution based on new x
             new_solution = self.create_new_solution(tuple(new_x), problem)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 
 import numpy as np
 
@@ -36,20 +36,42 @@ def finite_diff(
     Returns:
         np.ndarray: The approximated gradient of the function at the given solution.
     """
-    lower_bound = problem.lower_bounds
-    upper_bound = problem.upper_bounds
-    fn = -1 * problem.minmax[0] * new_solution.objectives_mean
-    new_x = np.array(new_solution.x, dtype=float)
+
+    def fn(x: np.ndarray) -> float:
+        candidate_solution = solver.create_new_solution(tuple(x), problem)
+        problem.simulate_up_to([candidate_solution], r)
+        value = -problem.minmax[0] * candidate_solution.objectives_mean
+        return float(value[0] if isinstance(value, np.ndarray) else value)
+
+    x = np.array(new_solution.x, dtype=float)
+    fn_value = float((-problem.minmax[0] * new_solution.objectives_mean)[0])
+    lower_bound = np.array(problem.lower_bounds, dtype=float)
+    upper_bound = np.array(problem.upper_bounds, dtype=float)
+
+    return fd(fn, x, stepsize, fn_value, bounds_check, lower_bound, upper_bound)
+
+
+def fd_old(
+    x: np.ndarray,
+    fn: float,
+    bounds_check: np.ndarray,
+    lower_bound: np.ndarray,
+    upper_bound: np.ndarray,
+    stepsize: float,
+    eval_fn: Callable[[np.ndarray], float],
+) -> np.ndarray:
+    """Compute a finite-difference gradient from NumPy arrays and an evaluator."""
+    dim = x.size
     # Store values for each dimension.
-    function_diff = np.zeros((problem.dim, 3))
+    function_diff = np.zeros((dim, 3))
 
     # Compute step sizes
-    step_forward = np.minimum(stepsize, upper_bound - new_x)
-    step_backward = np.minimum(stepsize, new_x - lower_bound)
+    step_forward = np.minimum(stepsize, upper_bound - x)
+    step_backward = np.minimum(stepsize, x - lower_bound)
 
     # Create perturbed variables
-    x1 = np.tile(new_x, (problem.dim, 1))
-    x2 = np.tile(new_x, (problem.dim, 1))
+    x1 = np.tile(x, (dim, 1))
+    x2 = np.tile(x, (dim, 1))
 
     central_mask = bounds_check == 0
     forward_mask = bounds_check == 1
@@ -63,8 +85,8 @@ def finite_diff(
     )
 
     # Apply step updates
-    np.fill_diagonal(x1, new_x + function_diff[:, 2])
-    np.fill_diagonal(x2, new_x - function_diff[:, 2])
+    np.fill_diagonal(x1, x + function_diff[:, 2])
+    np.fill_diagonal(x2, x - function_diff[:, 2])
 
     # Identify indices where x1 and x2 solutions are needed
     x1_indices = np.where(bounds_check != -1)[0]
@@ -72,30 +94,75 @@ def finite_diff(
 
     # Simulate only required solutions
     for i in x1_indices:
-        x1_solution = solver.create_new_solution(tuple(x1[i]), problem)
-        problem.simulate_up_to([x1_solution], r)
-        fn1 = -problem.minmax[0] * x1_solution.objectives_mean
-        function_diff[i, 0] = fn1[0] if isinstance(fn1, np.ndarray) else fn1
+        function_diff[i, 0] = eval_fn(x1[i])
 
     for i in x2_indices:
-        x2_solution = solver.create_new_solution(tuple(x2[i]), problem)
-        problem.simulate_up_to([x2_solution], r)
-        fn2 = -problem.minmax[0] * x2_solution.objectives_mean
-        function_diff[i, 1] = fn2[0] if isinstance(fn2, np.ndarray) else fn2
+        function_diff[i, 1] = eval_fn(x2[i])
 
     # Compute gradient
     fn_divisor = function_diff[:, 2].copy()
     fn_divisor[central_mask] *= 2
 
-    fn_diff = np.zeros(problem.dim)
+    fn_diff = np.zeros(dim)
     if np.any(central_mask):
-        fn_diff[central_mask] = function_diff[:, 0] - function_diff[:, 1]
+        fn_diff[central_mask] = function_diff[central_mask, 0] - function_diff[central_mask, 1]
     if np.any(forward_mask):
         fn_diff[forward_mask] = function_diff[forward_mask, 0] - fn
     if np.any(backward_mask):
         fn_diff[backward_mask] = fn - function_diff[backward_mask, 1]
 
     return fn_diff / fn_divisor
+
+
+def fd(
+    fn: Callable[[np.ndarray], float],
+    x: np.ndarray,
+    step: float,
+    fn_value: float,
+    modes: np.ndarray,
+    lower_bound: np.ndarray,
+    upper_bound: np.ndarray,
+) -> np.ndarray:
+    """Compute a finite-difference gradient from NumPy arrays and an evaluator."""
+    x = x.astype(float)
+    lower_bound = lower_bound.astype(float)
+    upper_bound = upper_bound.astype(float)
+    dim = x.size
+
+    grad = np.zeros(dim)
+    for i in range(dim):
+        step_forward = min(step, upper_bound[i] - x[i])
+        step_backward = min(step, x[i] - lower_bound[i])
+        # mode 0: central difference
+        # mode 1: forward difference
+        # mode -1: backward difference
+        mode = modes[i]
+
+        if mode == 0:
+            h = min(step_forward, step_backward)
+            if h <= 0:
+                continue
+            x_plus = x.copy()
+            x_minus = x.copy()
+            x_plus[i] += h
+            x_minus[i] -= h
+            grad[i] = (fn(x_plus) - fn(x_minus)) / (2 * h)
+        elif mode == 1:
+            h = step_forward
+            if h <= 0:
+                continue
+            x_plus = x.copy()
+            x_plus[i] += h
+            grad[i] = (fn(x_plus) - fn_value) / h
+        else:
+            h = step_backward
+            if h <= 0:
+                continue
+            x_minus = x.copy()
+            x_minus[i] -= h
+            grad[i] = (fn_value - fn(x_minus)) / h
+
+    return grad
 
 
 def bfgs_hessian_approx(

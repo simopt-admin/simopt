@@ -23,7 +23,7 @@ from simopt.base import (
     SolverConfig,
     VariableType,
 )
-from simopt.solvers.utils import bfgs_hessian_approx, finite_diff
+from simopt.solvers.utils import bfgs_hessian_approx, fd
 from simopt.utils import make_nonzero
 
 
@@ -167,6 +167,14 @@ class STRONG(Solver):
             #   1 stands for forward, -1 stands for backward, 0 means central diff.
             bounds_check = forward - backward
 
+            def fn(x: np.ndarray, reps: int) -> float:
+                candidate_solution = self.create_new_solution(tuple(x), problem)
+                problem.simulate_up_to([candidate_solution], reps)
+                value = neg_minmax * candidate_solution.objectives_mean
+                return float(value[0])
+
+            fn_value = float((neg_minmax * new_solution.objectives_mean)[0])
+
             # Stage I.
             if delta_t > delta_threshold:
                 # Step 1: Build the linear model.
@@ -174,13 +182,14 @@ class STRONG(Solver):
                 # Generate a new gradient and Hessian matrix.
                 num_generated_grads = 0
                 while True:
-                    grad = finite_diff(
-                        self,
-                        new_solution,
-                        bounds_check,
-                        problem,
+                    grad = fd(
+                        lambda x, reps=n_r: fn(x, reps),
+                        new_x,
                         self.factors["delta_T"],
-                        n_r,
+                        fn_value,
+                        bounds_check,
+                        lower_bound,
+                        upper_bound,
                     )
                     self.budget.request(num_evals * n_r)
                     num_generated_grads += 1
@@ -264,13 +273,14 @@ class STRONG(Solver):
                 # Step 1: Build the quadratic model.
                 num_generated_grads = 0
                 while True:
-                    grad = finite_diff(
-                        self,
-                        new_solution,
-                        bounds_check,
-                        problem,
+                    grad = fd(
+                        lambda x, reps=n_r: fn(x, reps),
+                        new_x,
                         self.factors["delta_T"],
-                        n_r,
+                        fn_value,
+                        bounds_check,
+                        lower_bound,
+                        upper_bound,
                     )
                     hessian = bfgs_hessian_approx(self, new_solution, bounds_check, problem, n_r)
                     self.budget.request(num_evals * n_r)
@@ -323,13 +333,14 @@ class STRONG(Solver):
                         # A while loop to prevent zero gradient
                         while True:
                             n_r_loop = (sub_counter + 1) * n_r
-                            g_var = finite_diff(
-                                self,
-                                new_solution,
-                                bounds_check,
-                                problem,
+                            g_var = fd(
+                                lambda x, reps=n_r_loop: fn(x, reps),
+                                new_x,
                                 self.factors["delta_T"],
-                                n_r_loop,
+                                fn_value,
+                                bounds_check,
+                                lower_bound,
+                                upper_bound,
                             )
                             h_var = bfgs_hessian_approx(
                                 self, new_solution, bounds_check, problem, n_r_loop

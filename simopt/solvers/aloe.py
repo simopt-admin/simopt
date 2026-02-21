@@ -21,7 +21,7 @@ from simopt.base import (
     SolverConfig,
     VariableType,
 )
-from simopt.solvers.utils import finite_diff
+from simopt.solvers.utils import fd
 
 
 class ALOEConfig(SolverConfig):
@@ -124,14 +124,39 @@ class ALOE(Solver):
             if problem.gradient_available:
                 grad = -problem.minmax[0] * new_solution.objectives_gradients_mean[0]
             else:
+
+                def fn(x: np.ndarray, reps: int) -> float:
+                    candidate_solution = self.create_new_solution(tuple(x), problem)
+                    problem.simulate_up_to([candidate_solution], reps)
+                    value = -problem.minmax[0] * candidate_solution.objectives_mean
+                    return float(value[0])
+
+                fn_value = float((-problem.minmax[0] * new_solution.objectives_mean)[0])
+
                 finite_diff_budget = (2 * problem.dim - np.count_nonzero(bounds_check)) * r
                 self.budget.request(int(finite_diff_budget))
-                grad = finite_diff(self, new_solution, bounds_check, problem, alpha, r)
+                grad = fd(
+                    lambda x, reps=r: fn(x, reps),
+                    new_x,
+                    alpha,
+                    fn_value,
+                    bounds_check,
+                    lower_bound,
+                    upper_bound,
+                )
 
                 while np.all(grad == 0):
                     finite_diff_budget = (2 * problem.dim - np.count_nonzero(bounds_check)) * r
                     self.budget.request(int(finite_diff_budget))
-                    grad = finite_diff(self, new_solution, bounds_check, problem, alpha, r)
+                    grad = fd(
+                        lambda x, reps=r: fn(x, reps),
+                        new_x,
+                        alpha,
+                        fn_value,
+                        bounds_check,
+                        lower_bound,
+                        upper_bound,
+                    )
                     r = int(self.factors["lambda"] * r)  # Update sample size
 
             # Compute candidate solution and apply box constraints (vectorized).
