@@ -125,7 +125,7 @@ class ADAM(Solver):
 
                 def fn(x: np.ndarray) -> float:
                     candidate_solution = self.create_new_solution(tuple(x), problem)
-                    problem.simulate_up_to([candidate_solution], r)
+                    problem.simulate(candidate_solution, r)
                     value = -problem.minmax[0] * candidate_solution.objectives_mean
                     return float(value[0])
 

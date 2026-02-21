@@ -412,24 +412,6 @@ class Problem(ABC):
             for rng in solution.rng_list:
                 rng.advance_subsubstream()
 
-    def simulate_up_to(self, solutions: list["Solution"], n_reps: int) -> None:
-        """Simulate a list of solutions up to a given number of replications.
-
-        Args:
-            solutions (list[Solution]): List of Solution objects to simulate.
-            n_reps (int): Common number of replications to simulate each solution up to.
-
-        Raises:
-            TypeError: If `solutions` is not a list of Solution objects or if `n_reps`
-                is not an integer.
-            ValueError: If `n_reps` is less than or equal to 0.
-        """
-        for solution in solutions:
-            # If more replications needed, take them.
-            if solution.n_reps < n_reps:
-                n_reps_to_take = n_reps - solution.n_reps
-                self.simulate(solution=solution, num_macroreps=n_reps_to_take)
-
 
 class Solution:
     """Base class for solutions in simulation-optimization problems.

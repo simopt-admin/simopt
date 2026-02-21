@@ -169,7 +169,7 @@ class STRONG(Solver):
 
             def fn(x: np.ndarray, reps: int) -> float:
                 candidate_solution = self.create_new_solution(tuple(x), problem)
-                problem.simulate_up_to([candidate_solution], reps)
+                problem.simulate(candidate_solution, reps)
                 value = neg_minmax * candidate_solution.objectives_mean
                 return float(value[0])
 
