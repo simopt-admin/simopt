@@ -120,11 +120,9 @@ class ADAM(Solver):
             else:
                 # Use finite difference to estimate gradient if IPA gradient is
                 # not available.
-                finite_diff_budget = (2 * problem.dim - np.count_nonzero(bounds_check)) * r
-                self.budget.request(int(finite_diff_budget))
-
                 def fn(x: np.ndarray) -> float:
                     candidate_solution = self.create_new_solution(tuple(x), problem)
+                    self.budget.request(r)
                     problem.simulate(candidate_solution, r)
                     value = -problem.minmax[0] * candidate_solution.objectives_mean
                     return float(value[0])

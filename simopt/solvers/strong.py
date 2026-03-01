@@ -8,7 +8,6 @@ A detailed description of the solver can be found
 
 from __future__ import annotations
 
-import math
 from typing import Annotated, ClassVar, Self
 
 import numpy as np
@@ -148,11 +147,8 @@ class STRONG(Solver):
         self.recommended_solns.append(new_solution)
         self.intermediate_budgets.append(self.budget.used)
 
-        # Precompute factorials
-        factorials = np.array([math.factorial(i) for i in range(1, problem.dim + 1)])
         # Precompute other variables
         neg_minmax = -problem.minmax[0]
-        dim_sq = problem.dim**2
 
         while True:
             new_x = np.array(new_solution.x)
@@ -169,6 +165,7 @@ class STRONG(Solver):
 
             def fn(x: np.ndarray, reps: int) -> float:
                 candidate_solution = self.create_new_solution(tuple(x), problem)
+                self.budget.request(reps)
                 problem.simulate(candidate_solution, reps)
                 value = neg_minmax * candidate_solution.objectives_mean
                 return float(value[0])
@@ -178,7 +175,6 @@ class STRONG(Solver):
             # Stage I.
             if delta_t > delta_threshold:
                 # Step 1: Build the linear model.
-                num_evals = 2 * problem.dim - np.sum(bounds_check != 0)
                 # Generate a new gradient and Hessian matrix.
                 num_generated_grads = 0
                 while True:
@@ -191,7 +187,6 @@ class STRONG(Solver):
                         lower_bound,
                         upper_bound,
                     )
-                    self.budget.request(num_evals * n_r)
                     num_generated_grads += 1
                     if num_generated_grads > 2:
                         # Update n_r and counter after each loop.
@@ -259,17 +254,6 @@ class STRONG(Solver):
             # Stage II.
             # When trust region size is very small, use the quadratic design.
             else:
-                n_onbound = np.sum(bounds_check != 0)
-                if n_onbound <= 1:
-                    num_evals = dim_sq
-                else:
-                    # TODO: Check the formula, it seems to be dividing an
-                    # integer by a tuple.
-                    num_evals = (
-                        dim_sq
-                        + problem.dim
-                        - factorials[n_onbound] / (2, factorials[n_onbound - 2])
-                    )
                 # Step 1: Build the quadratic model.
                 num_generated_grads = 0
                 while True:
@@ -283,7 +267,6 @@ class STRONG(Solver):
                         upper_bound,
                     )
                     hessian = bfgs_hessian_approx(self, new_solution, bounds_check, problem, n_r)
-                    self.budget.request(num_evals * n_r)
                     num_generated_grads += 1
                     if num_generated_grads > 2:
                         # Update n_r and counter after each loop.
@@ -345,7 +328,6 @@ class STRONG(Solver):
                             h_var = bfgs_hessian_approx(
                                 self, new_solution, bounds_check, problem, n_r_loop
                             )
-                            self.budget.request(num_evals * n_r_loop)
                             num_generated_grads += 1
                             if num_generated_grads > 2:
                                 # Update n_r and counter after each loop.

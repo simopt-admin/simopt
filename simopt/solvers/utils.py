@@ -39,6 +39,7 @@ def finite_diff(
 
     def fn(x: np.ndarray) -> float:
         candidate_solution = solver.create_new_solution(tuple(x), problem)
+        solver.budget.request(r)
         problem.simulate(candidate_solution, r)
         value = -problem.minmax[0] * candidate_solution.objectives_mean
         return float(value[0] if isinstance(value, np.ndarray) else value)
@@ -220,6 +221,7 @@ def bfgs_hessian_approx(
     def get_fn_x(x: Iterable) -> float:
         """Helper to simulate the function at a given x."""
         x_solution = solver.create_new_solution(tuple(x), problem)
+        solver.budget.request(r)
         problem.simulate(x_solution, r)
         return (neg_minmax * x_solution.objectives_mean)[0]
 

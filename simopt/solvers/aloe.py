@@ -127,14 +127,13 @@ class ALOE(Solver):
 
                 def fn(x: np.ndarray, reps: int) -> float:
                     candidate_solution = self.create_new_solution(tuple(x), problem)
+                    self.budget.request(reps)
                     problem.simulate(candidate_solution, reps)
                     value = -problem.minmax[0] * candidate_solution.objectives_mean
                     return float(value[0])
 
                 fn_value = float((-problem.minmax[0] * new_solution.objectives_mean)[0])
 
-                finite_diff_budget = (2 * problem.dim - np.count_nonzero(bounds_check)) * r
-                self.budget.request(int(finite_diff_budget))
                 grad = fd(
                     lambda x, reps=r: fn(x, reps),
                     new_x,
@@ -146,8 +145,6 @@ class ALOE(Solver):
                 )
 
                 while np.all(grad == 0):
-                    finite_diff_budget = (2 * problem.dim - np.count_nonzero(bounds_check)) * r
-                    self.budget.request(int(finite_diff_budget))
                     grad = fd(
                         lambda x, reps=r: fn(x, reps),
                         new_x,
