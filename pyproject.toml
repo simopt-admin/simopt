@@ -36,7 +36,6 @@ dependencies = [
     "boltons>=25.0.0",
     "colorama>=0.4.6",
     "cvxpy>=1.7.3",
-    "doepy>=0.0.1",
     "joblib>=1.5.2",
     "matplotlib>=3.10.7",
     "mrg32k3a[rust]>=2.0.0",
@@ -44,6 +43,7 @@ dependencies = [
     "pandas>=2.3.3",
     "pillow>=12.0.0",
     "pydantic>=2.12.3",
+    "pydoe>=0.9.7",
     "scipy>=1.16.3",
     "seaborn>=0.13.2",
 ]

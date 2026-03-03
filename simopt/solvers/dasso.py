@@ -13,7 +13,6 @@ from dataclasses import dataclass, field
 from typing import Annotated, ClassVar, Self
 
 import numpy as np
-from doepy import doe_functions
 from pydantic import Field, model_validator
 from scipy import optimize, sparse
 from scipy.special import (
@@ -29,6 +28,7 @@ from simopt.base import (
     SolverConfig,
     VariableType,
 )
+from simopt.solvers._dasso import build_lhs
 
 
 class DASSOConfig(SolverConfig):
@@ -710,12 +710,7 @@ class DASSO(Solver):
         # Create the reference points.
         bounds = {i: [lower_bound[i], upper_bound[i]] for i in range(dim)}
         ref_points = (
-            doe_functions.build_lhs(bounds, n_init)
-            .round()
-            .astype(int)
-            .apply(tuple, axis=1)
-            .unique()
-            .tolist()
+            build_lhs(bounds, n_init).round().astype(int).apply(tuple, axis=1).unique().tolist()
         )
 
         # For each reference point and each group, find a point to pair with the
