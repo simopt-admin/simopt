@@ -54,7 +54,7 @@ def _post_replicate_solution(
     # Attach RNGs for postreplications.
     # If CRN is used across budgets, then we should use a copy rather
     # than passing in the original RNGs.
-    solution = Solution(x, problem)
+    solution = Solution(x)
     if crn_across_budget:
         solution.attach_rngs(rngs, copy=True)
     else:

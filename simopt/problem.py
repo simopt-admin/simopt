@@ -397,7 +397,7 @@ class Problem(ABC):
         # commented out. Under development.
 
         # Set the decision factors of the model.
-        self.model.factors.update(solution.decision_factors)
+        self.model.factors.update(self.vector_to_factor_dict(solution.x))
         for _ in range(num_macroreps):
             # Generate one replication at x.
             self.model.before_replicate(solution.rng_list)
@@ -576,16 +576,14 @@ class Solution:
     #     ]
     # )
 
-    def __init__(self, x: tuple, problem: Problem) -> None:
+    def __init__(self, x: tuple) -> None:
         """Initialize a solution object.
 
         Args:
             x (tuple): Vector of decision variables.
-            problem (Problem): Problem to which `x` is a solution.
         """
         super().__init__()
         self.x = x
-        self.decision_factors = problem.vector_to_factor_dict(x)
         # self.n_reps = 0
 
         self._objectives = []

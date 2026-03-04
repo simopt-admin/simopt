@@ -103,7 +103,7 @@ def _simulate(problem: Problem, x: tuple, rngs: list[MRG32k3a], n_reps: int) -> 
     Returns:
         A list of objective values (first objective only).
     """
-    solution = Solution(x, problem)
+    solution = Solution(x)
     solution.attach_rngs(rngs, copy=False)
     # TODO: the naming of `num_macroreps` is wrong. It should be number of replications.
     problem.simulate(solution, n_reps)

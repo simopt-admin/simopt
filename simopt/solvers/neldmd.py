@@ -177,7 +177,7 @@ class NelderMead(Solver):
                         + (1 - self.factors["delta"]) * sol_0_x
                     )
                     p_new = self._check_const(p_new, sol_0_x)
-                    p_new = Solution(p_new, problem)
+                    p_new = Solution(p_new)
                     p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                     self.budget.request(r)
                     problem.simulate(p_new, r)
@@ -193,7 +193,7 @@ class NelderMead(Solver):
 
             # Evaluate reflected point.
             p_refl = tuple(p_refl.tolist())
-            p_refl = Solution(p_refl, problem)
+            p_refl = Solution(p_refl)
             p_refl.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
             self.budget.request(r)
             problem.simulate(p_refl, r)
@@ -226,7 +226,7 @@ class NelderMead(Solver):
                 p_exp = self._check_const(p_exp, p_refl.x)
 
                 # Evaluate expansion point.
-                p_exp = Solution(p_exp, problem)
+                p_exp = Solution(p_exp)
                 p_exp.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 self.budget.request(r)
                 problem.simulate(p_exp, r)
@@ -261,7 +261,7 @@ class NelderMead(Solver):
                 p_cont = self._check_const(p_cont, p_cont2.x)
 
                 # Evaluate contraction point.
-                p_cont = Solution(p_cont, problem)
+                p_cont = Solution(p_cont)
                 p_cont.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                 self.budget.request(r)
                 problem.simulate(p_cont, r)
@@ -295,7 +295,7 @@ class NelderMead(Solver):
                         )
                         p_new = self._check_const(p_new, p_low.x)
 
-                        p_new = Solution(p_new, problem)
+                        p_new = Solution(p_new)
                         p_new.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
                         self.budget.request(r)
                         problem.simulate(p_new, r)
