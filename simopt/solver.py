@@ -2,6 +2,7 @@
 
 import contextlib
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from typing import Annotated, ClassVar
 
 import pandas as pd
@@ -234,8 +235,9 @@ class Solver(ABC):
             Solution: New solution object for the given decision variables and problem.
         """
         # Create new solution with attached rngs.
-        new_solution = Solution(x)
-        new_solution.attach_rngs(rng_list=self.solution_progenitor_rngs, copy=True)
+        new_solution = Solution(
+            x=x, rng_list=[deepcopy(rng) for rng in self.solution_progenitor_rngs]
+        )
         # Manipulate progenitor rngs to prepare for next new solution.
         if not self.config.crn_across_solns:  # If CRN are not used ...
             # ...advance each rng to start of the substream

@@ -54,8 +54,7 @@ sys.path.append(str(Path.cwd().parent))
 # x = (,)
 # Look at the Problem class definition to identify the decision variables.
 # x will be a tuple consisting of the decision variables.
-# The following line does not need to be changed.
-# mysolution = Solution(x, myproblem)
+# `mysolution` is created below after `rng_list` is defined.
 # Working example for CntNVMaxProfit problem.
 # -----------------------------------------------
 from simopt.models.cntnv import CntNVMaxProfit
@@ -73,20 +72,18 @@ x = (3,)
 # fixed_factors = {"epsilon": 0.1}
 # myproblem = FacilitySizingTotalCost(fixed_factors=fixed_factors)
 # x = (200, 200, 200)
-# mysolution = Solution(x, myproblem)
+# mysolution = Solution(x, rng_list)
 # -----------------------------------------------
 
 num_macroreps = 10
 
 # %%
-# Create and attach rngs to solution
+# Create solution with RNGs
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import Solution
 
 rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(myproblem.model.n_rngs)]
-mysolution = Solution(x, myproblem)
-
-mysolution.attach_rngs(rng_list, copy=False)
+mysolution = Solution(x, rng_list)
 
 # %%
 # Simulate a fixed number of replications at the solution x.

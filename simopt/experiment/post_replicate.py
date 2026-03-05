@@ -1,6 +1,7 @@
 """Functions for performing independent evaluations of solutions."""
 
 import time
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -51,14 +52,9 @@ def _post_replicate_solution(
         pd.DataFrame: A DataFrame containing the results of the post-replications,
             including objective values and stochastic constraints.
     """
-    # Attach RNGs for postreplications.
-    # If CRN is used across budgets, then we should use a copy rather
-    # than passing in the original RNGs.
-    solution = Solution(x)
-    if crn_across_budget:
-        solution.attach_rngs(rngs, copy=True)
-    else:
-        solution.attach_rngs(rngs, copy=False)
+    # If CRN is used across budgets, use copied RNGs so state is unchanged.
+    rng_list = [deepcopy(rng) for rng in rngs] if crn_across_budget else rngs
+    solution = Solution(x, rng_list)
     problem.simulate(solution, num_macroreps=n_postreps)
 
     data = {

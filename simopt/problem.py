@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from copy import deepcopy
 from typing import ClassVar
 
 import numpy as np
@@ -576,14 +575,16 @@ class Solution:
     #     ]
     # )
 
-    def __init__(self, x: tuple) -> None:
+    def __init__(self, x: tuple, rng_list: list[MRG32k3a]) -> None:
         """Initialize a solution object.
 
         Args:
             x (tuple): Vector of decision variables.
+            rng_list (list[MRG32k3a]): List of RNGs used to run simulation replications.
         """
         super().__init__()
         self.x = x
+        self.rng_list = rng_list
         # self.n_reps = 0
 
         self._objectives = []
@@ -619,19 +620,6 @@ class Solution:
         if self._stoch_constraints_array is None:
             self._stoch_constraints_array = np.array(self._stoch_constraints)
         return self._stoch_constraints_array
-
-    def attach_rngs(self, rng_list: list[MRG32k3a], copy: bool = True) -> None:
-        """Attach a list of random-number generators to the solution.
-
-        Args:
-            rng_list (list[MRG32k3a]): List of RNGs used to run simulation replications.
-            copy (bool, optional): If True (default), copies the RNGs before attaching
-                them. If False, attaches the original RNG objects directly.
-        """
-        if copy:
-            self.rng_list = [deepcopy(rng) for rng in rng_list]
-        else:
-            self.rng_list = rng_list
 
     def add_replicate_result(self, result: RepResult) -> None:
         """Add a replicate result to the solution.
