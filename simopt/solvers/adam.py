@@ -46,6 +46,7 @@ class ADAMConfig(SolverConfig):
         float,
         Field(
             default=0.999,
+            ge=0,
             lt=1,
             description="exponential decay rate for the second-moment estimates",
         ),
