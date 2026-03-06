@@ -2,9 +2,11 @@ import numpy as np
 import pandas as pd
 from pydoe import lhs
 
-# =================================================================================================
-# Function for constructing a DataFrame from a matrix with floating point numbers between 0 and 1
-# =================================================================================================
+from mrg32k3a.mrg32k3a import MRG32k3a
+
+# ================================================================================
+# Function for constructing a DataFrame from a matrix with floats between 0 and 1
+# ================================================================================
 
 
 def construct_df_from_random_matrix(
@@ -37,6 +39,14 @@ def construct_df_from_random_matrix(
     return pd.DataFrame(data=empty)
 
 
+def _numpy_seed_from_mrg(rng: MRG32k3a) -> int:
+    """Build a NumPy seed from MRG draws."""
+    seed = 0
+    for _ in range(3):
+        seed = (seed << 53) | int(rng.random() * (1 << 53))
+    return seed
+
+
 # ====================================================================================
 # Function for building simple Latin Hypercube from a dictionary of process variables
 # ====================================================================================
@@ -46,6 +56,7 @@ def build_lhs(
     factor_level_ranges: dict[int | str, list[int | float]],
     num_samples: int | None = None,
     prob_distribution: str | None = None,
+    rng: MRG32k3a | None = None,
 ) -> pd.DataFrame:
     """
     Builds a Latin Hypercube design dataframe from a dictionary of factor/level ranges.
@@ -70,7 +81,10 @@ def build_lhs(
         if len(factor_level_ranges[key]) != 2:
             factor_level_ranges[key][1] = factor_level_ranges[key][-1]
             factor_level_ranges[key] = factor_level_ranges[key][:2]
-            print(f"{key} had more than two levels. Assigning the end point to the high level.")
+            print(
+                f"{key} had more than two levels. "
+                "Assigning the end point to the high level."
+            )
 
     factor_count = len(factor_level_ranges)
     factor_lists = []
@@ -81,7 +95,8 @@ def build_lhs(
     for key in factor_level_ranges:
         factor_lists.append(factor_level_ranges[key])
 
-    x = lhs(n=factor_count, samples=num_samples)
+    seed = np.random.default_rng(_numpy_seed_from_mrg(rng)) if rng is not None else None
+    x = lhs(n=factor_count, samples=num_samples, seed=seed)
     factor_lists = np.array(factor_lists)
 
     df = construct_df_from_random_matrix(x, factor_lists)

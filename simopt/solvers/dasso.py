@@ -8,7 +8,6 @@ integer lattice.
 from __future__ import annotations
 
 import math
-import random
 from dataclasses import dataclass, field
 from typing import Annotated, ClassVar, Self
 
@@ -20,6 +19,7 @@ from scipy.special import (
 )  # cumulative distribution of the standard normal distribution
 from scipy.stats import qmc
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import (
     ConstraintType,
     ObjectiveType,
@@ -28,7 +28,7 @@ from simopt.base import (
     SolverConfig,
     VariableType,
 )
-from simopt.solvers._dasso import build_lhs
+from simopt.solvers._dasso import _numpy_seed_from_mrg, build_lhs
 
 
 class DASSOConfig(SolverConfig):
@@ -102,8 +102,20 @@ class DASSO(Solver):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
+    def _solver_rng(self) -> MRG32k3a:
+        """Return the RNG used for solver-internal randomness."""
+        if len(self.rng_list) < 3:
+            error_msg = "DASSO requires an internal RNG before solve() is called."
+            raise RuntimeError(error_msg)
+        return self.rng_list[2]
+
+    def _numpy_rng(self) -> np.random.Generator:
+        """Create a NumPy generator derived from the solver RNG."""
+        return np.random.default_rng(_numpy_seed_from_mrg(self._solver_rng()))
+
     def solve(self, problem: Problem) -> None:  # noqa: D102
         run_state = _RunState()
+        solver_rng = self._solver_rng()
 
         # Problem specifications.
         dim = problem.dim
@@ -157,7 +169,7 @@ class DASSO(Solver):
 
             # -- Dice Stage --
             # Update random effect group.
-            random_effect_group_index = np.random.choice(list(range(len(groups))))
+            random_effect_group_index = solver_rng.randrange(len(groups))
 
             # Calculate the covariance matrix corresponding to design points, Sigma_DD
             num_design_points = len(run_state.design_point_indices)
@@ -305,7 +317,7 @@ class DASSO(Solver):
             # Simulate a solution from the restricted set if it does not have any
             # solution that has been simulated.
             if not any(sol in run_state.design_point_indices for sol in restricted_set):
-                solution_index = np.random.choice(restricted_set)
+                solution_index = solver_rng.choice(restricted_set)
                 self._record_simulations(run_state, [solution_index], problem, mapping)
                 for group in groups:
                     group.add_design_points([solution_index])
@@ -706,11 +718,17 @@ class DASSO(Solver):
 
         # Default values.
         n_init: int = self.factors["n_points_for_estimation"]
+        solver_rng = self._solver_rng()
 
         # Create the reference points.
         bounds = {i: [lower_bound[i], upper_bound[i]] for i in range(dim)}
         ref_points = (
-            build_lhs(bounds, n_init).round().astype(int).apply(tuple, axis=1).unique().tolist()
+            build_lhs(bounds, n_init, rng=solver_rng)
+            .round()
+            .astype(int)
+            .apply(tuple, axis=1)
+            .unique()
+            .tolist()
         )
 
         # For each reference point and each group, find a point to pair with the
@@ -728,7 +746,7 @@ class DASSO(Solver):
                     elif ind == bounds[coord_id][1]:  # equal to the largest index value
                         paired_point += (ind - 1,)
                     else:  # randomly +1 or -1
-                        paired_point += (ind + 2 * (random.random() < 0.5) - 1,)
+                        paired_point += (ind + 2 * (solver_rng.random() < 0.5) - 1,)
                 paired_points_ind[coord_ids] = paired_point
             paired_points_with_each_ref_point[ref_point] = paired_points_ind
 
@@ -980,14 +998,18 @@ class DASSO(Solver):
         diff_tf_mat_d = diff_mat @ rearranged_tf_mat_d  # B^(rho) T^(rho)_DD
 
         # Generate Sobol points to create a feasible candidate parameters.
-        sampler = qmc.Sobol(len(coordinate_ids))
+        solver_rng = self._solver_rng()
+        sampler = qmc.Sobol(len(coordinate_ids), rng=self._numpy_rng())
         candidates = sampler.random(2**12)  # without theta_0, all non-negative
 
         # Restrict the set of candidates for efficiency.
         candidates = candidates[:30]
         # Make the sum of candidate parameters less than 0.5
-        feasible_candidates = np.apply_along_axis(
-            lambda x: np.random.uniform(0, 0.5) * x / sum(x), 1, candidates
+        feasible_candidates = np.array(
+            [
+                solver_rng.uniform(0, 0.5) * candidate / sum(candidate)
+                for candidate in candidates
+            ]
         )
 
         # Find the best candidate
