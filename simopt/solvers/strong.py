@@ -286,8 +286,8 @@ class STRONG(Solver):
                 candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
                 # Step 3: Compute the ratio.
                 # Use r simulated observations to estimate g(x_start\).
-                problem.simulate(candidate_solution, n_r)
                 self.budget.request(n_r)
+                problem.simulate(candidate_solution, n_r)
                 # Find the old objective value and the new objective value.
                 g_old = neg_minmax * new_solution.objectives_mean
                 g_new = neg_minmax * candidate_solution.objectives_mean
@@ -351,12 +351,12 @@ class STRONG(Solver):
                         ceiling_diff = int(counter_ceiling - counter_lower_ceiling)
                         mreps = int(n_r + counter_ceiling)
 
-                        problem.simulate(try_solution, mreps)
                         self.budget.request(mreps)
+                        problem.simulate(try_solution, mreps)
                         g_b_new = neg_minmax * try_solution.objectives_mean
                         dummy_solution = new_solution
-                        problem.simulate(dummy_solution, ceiling_diff)
                         self.budget.request(ceiling_diff)
+                        problem.simulate(dummy_solution, ceiling_diff)
 
                         dummy = neg_minmax * dummy_solution.objectives_mean
                         # Update g_old.
