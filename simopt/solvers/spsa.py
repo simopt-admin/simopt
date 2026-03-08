@@ -149,8 +149,7 @@ class SPSA(Solver):
         self.intermediate_budgets.append(self.budget.used)
 
         # Simulate initial solution.
-        self.budget.request(self.factors["n_reps"])
-        problem.simulate(theta_sol, self.factors["n_reps"])
+        theta_sol = self.evaluate(theta_sol, problem, self.factors["n_reps"])
 
         # Determine initial value for the parameters c, a, and A (Aalg)
         # (according to Section III.B of Spall (1998)).
@@ -183,9 +182,8 @@ class SPSA(Solver):
                 thetaplus_sol = self.create_new_solution(tuple(theta_forward), problem)
                 thetaminus_sol = self.create_new_solution(tuple(theta_backward), problem)
                 # Evaluate two points and update budget spent.
-                self.budget.request(2 * self.factors["n_reps"])
-                problem.simulate(thetaplus_sol, self.factors["n_reps"])
-                problem.simulate(thetaminus_sol, self.factors["n_reps"])
+                thetaplus_sol = self.evaluate(thetaplus_sol, problem, self.factors["n_reps"])
+                thetaminus_sol = self.evaluate(thetaminus_sol, problem, self.factors["n_reps"])
                 # Estimate gradient.
                 # (-minmax is needed to cast this as a minimization problem,
                 # but is not essential here because of the absolute value taken.)
@@ -223,9 +221,8 @@ class SPSA(Solver):
             thetaplus_sol = self.create_new_solution(tuple(theta_forward), problem)
             thetaminus_sol = self.create_new_solution(tuple(theta_backward), problem)
             # Evaluate two points and update budget spent.
-            self.budget.request(2 * self.factors["n_reps"])
-            problem.simulate(thetaplus_sol, self.factors["n_reps"])
-            problem.simulate(thetaminus_sol, self.factors["n_reps"])
+            thetaplus_sol = self.evaluate(thetaplus_sol, problem, self.factors["n_reps"])
+            thetaminus_sol = self.evaluate(thetaminus_sol, problem, self.factors["n_reps"])
             # Estimate current solution's objective funtion value by weighted average.
             mean_minus = thetaplus_sol.objectives_mean * step_weight_minus
             mean_plus = thetaminus_sol.objectives_mean * step_weight_plus

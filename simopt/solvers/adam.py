@@ -94,9 +94,7 @@ class ADAM(Solver):
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
         self.recommended_solns.append(new_solution)
         self.intermediate_budgets.append(self.budget.used)
-
-        self.budget.request(r)
-        problem.simulate(new_solution, r)
+        new_solution = self.evaluate(new_solution, problem, r)
 
         best_solution = new_solution
 
@@ -122,9 +120,7 @@ class ADAM(Solver):
                 # Use finite difference to estimate gradient if IPA gradient is
                 # not available.
                 def fn(x: np.ndarray) -> float:
-                    candidate_solution = self.create_new_solution(tuple(x), problem)
-                    self.budget.request(r)
-                    problem.simulate(candidate_solution, r)
+                    candidate_solution = self.evaluate(tuple(x), problem, r)
                     value = -problem.minmax[0] * candidate_solution.objectives_mean
                     return float(value[0])
 
@@ -152,10 +148,8 @@ class ADAM(Solver):
             new_x = np.clip(x - alpha * mhat / (np.sqrt(vhat) + epsilon), lower_bound, upper_bound)
 
             # Create new solution based on new x
-            new_solution = self.create_new_solution(tuple(new_x), problem)
+            new_solution = self.evaluate(tuple(new_x), problem, r)
             # Use r simulated observations to estimate the objective value.
-            self.budget.request(r)
-            problem.simulate(new_solution, r)
 
             if (new_solution.objectives_mean > best_solution.objectives_mean) ^ (
                 problem.minmax[0] < 0

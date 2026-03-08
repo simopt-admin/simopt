@@ -1336,8 +1336,7 @@ class DASSO(Solver):
             if solution_index in run_state.design_point_indices:
                 array_index = run_state.design_point_indices.index(solution_index)
                 solution = run_state.design_points_actual[array_index]
-                self.budget.request(sample_size)
-                problem.simulate(solution, sample_size)
+                solution = self.evaluate(solution, problem, sample_size)
                 run_state.sample_means_vec_d[array_index] = (
                     solution.objectives_mean[0] * problem.minmax[0] * (-1)
                 )  # minimization problem
@@ -1346,9 +1345,7 @@ class DASSO(Solver):
                 )
             else:
                 x_actual = mapping.get_actual_values_of_solution_from_index(solution_index)
-                solution = self.create_new_solution(x_actual, problem)
-                self.budget.request(sample_size)
-                problem.simulate(solution, sample_size)
+                solution = self.evaluate(x_actual, problem, sample_size)
                 additional_sample_means_vec_d += [
                     solution.objectives_mean[0] * problem.minmax[0] * (-1)
                 ]  # minimization problem

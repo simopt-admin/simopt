@@ -351,8 +351,7 @@ class ASTRODF(Solver):
 
         # Initial Simulation (only if needed)
         if solution.n_reps == 0:
-            self.budget.request(pilot_run)
-            self.problem.simulate(solution, pilot_run)
+            solution = self.evaluate(solution, self.problem, pilot_run)
             sample_size = pilot_run
 
         while True:
@@ -391,8 +390,7 @@ class ASTRODF(Solver):
                 break
 
             # Perform additional simulation
-            self.budget.request(1)
-            self.problem.simulate(solution, 1)
+            solution = self.evaluate(solution, self.problem, 1)
             sample_size += 1
 
     def construct_model(
@@ -484,10 +482,8 @@ class ASTRODF(Solver):
                 # Otherwise, create/initialize a new solution and use that
                 else:
                     decision_vars = tuple(var_y[i][0])
-                    new_solution = self.create_new_solution(decision_vars, self.problem)
+                    new_solution = self.evaluate(decision_vars, self.problem, pilot_run)
                     self.visited_pts_list.append(new_solution)
-                    self.budget.request(pilot_run)
-                    self.problem.simulate(new_solution, pilot_run)
                     adapt_soln = new_solution
 
                 # Don't perform adaptive sampling on x_0
@@ -832,8 +828,7 @@ class ASTRODF(Solver):
         # incumbent solution
         if self.factors["crn_across_solns"]:
             num_sims = self.incumbent_solution.n_reps
-            self.budget.request(num_sims)
-            self.problem.simulate(candidate_solution, num_sims)
+            candidate_solution = self.evaluate(candidate_solution, self.problem, num_sims)
         else:
             self.perform_adaptive_sampling(candidate_solution, pilot_run, self.delta_k)
 

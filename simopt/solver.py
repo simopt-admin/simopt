@@ -246,3 +246,11 @@ class Solver(ABC):
                 for _ in range(problem.model.n_rngs):
                     rng.advance_substream()
         return new_solution
+
+    def evaluate(self, x: Solution | tuple, problem: Problem, n_reps: int = 1) -> Solution:
+        """Evaluate a solution by simulating it and returning the updated solution object."""
+        if isinstance(x, tuple):
+            x = self.create_new_solution(x, problem)
+        self.budget.request(n_reps)
+        problem.simulate(x, n_reps)
+        return x

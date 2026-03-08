@@ -138,10 +138,7 @@ class STRONG(Solver):
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-
-        self.budget.request(n0)
-        problem.simulate(new_solution, n0)
+        new_solution = self.evaluate(problem.factors["initial_solution"], problem, n0)
 
         best_solution = new_solution
         self.recommended_solns.append(new_solution)
@@ -164,9 +161,7 @@ class STRONG(Solver):
             bounds_check = forward - backward
 
             def fn(x: np.ndarray, reps: int) -> float:
-                candidate_solution = self.create_new_solution(tuple(x), problem)
-                self.budget.request(reps)
-                problem.simulate(candidate_solution, reps)
+                candidate_solution = self.evaluate(tuple(x), problem, reps)
                 value = neg_minmax * candidate_solution.objectives_mean
                 return float(value[0])
 
@@ -199,12 +194,10 @@ class STRONG(Solver):
                 # Cauchy reduction.
                 hessian = np.zeros((problem.dim, problem.dim))
                 candidate_x = self.cauchy_point(grad, hessian, new_x, problem)
-                candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+                candidate_solution = self.evaluate(tuple(candidate_x), problem, n_r)
 
                 # Step 3: Compute the ratio.
                 # Use n_r simulated observations to estimate g_new.
-                self.budget.request(n_r)
-                problem.simulate(candidate_solution, n_r)
                 # Find the old objective value and the new objective value.
                 g_old = neg_minmax * new_solution.objectives_mean
                 g_new = neg_minmax * candidate_solution.objectives_mean
@@ -283,11 +276,9 @@ class STRONG(Solver):
                     new_x,
                     problem,
                 )
-                candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
+                candidate_solution = self.evaluate(tuple(candidate_x), problem, n_r)
                 # Step 3: Compute the ratio.
                 # Use r simulated observations to estimate g(x_start\).
-                self.budget.request(n_r)
-                problem.simulate(candidate_solution, n_r)
                 # Find the old objective value and the new objective value.
                 g_old = neg_minmax * new_solution.objectives_mean
                 g_new = neg_minmax * candidate_solution.objectives_mean
@@ -340,7 +331,6 @@ class STRONG(Solver):
                         # Step 2: determine the new inner solution based on the
                         # accumulated design matrix X.
                         try_x = self.cauchy_point(g_var, h_var, new_x, problem)
-                        try_solution = self.create_new_solution(tuple(try_x), problem)
 
                         # Step 3.
                         counter_ceiling = np.ceil(sub_counter ** self.factors["lambda_2"])
@@ -351,12 +341,10 @@ class STRONG(Solver):
                         ceiling_diff = int(counter_ceiling - counter_lower_ceiling)
                         mreps = int(n_r + counter_ceiling)
 
-                        self.budget.request(mreps)
-                        problem.simulate(try_solution, mreps)
+                        try_solution = self.evaluate(tuple(try_x), problem, mreps)
                         g_b_new = neg_minmax * try_solution.objectives_mean
                         dummy_solution = new_solution
-                        self.budget.request(ceiling_diff)
-                        problem.simulate(dummy_solution, ceiling_diff)
+                        dummy_solution = self.evaluate(dummy_solution, problem, ceiling_diff)
 
                         dummy = neg_minmax * dummy_solution.objectives_mean
                         # Update g_old.

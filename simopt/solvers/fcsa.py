@@ -116,9 +116,7 @@ class FCSA(Solver):
         return mult if self.factors["step_type"] == "const" else 1 / (mult * (k + 1))
 
     def _objective_at(self, problem: Problem, x: np.ndarray, r: int) -> float:
-        solution = self.create_new_solution(tuple(x), problem)
-        self.budget.request(r)
-        problem.simulate(solution, r)
+        solution = self.evaluate(tuple(x), problem, r)
         return -problem.minmax[0] * solution.objectives_mean[0]
 
     def _finite_difference(self, problem: Problem, x: np.ndarray, h: float, r: int) -> np.ndarray:
@@ -276,9 +274,7 @@ class FCSA(Solver):
 
     def _new_solution_found(self, problem: Problem, x: tuple, check_feasibility: bool) -> Solution:
         r = self.factors["r"]
-        solution = self.create_new_solution(x, problem)
-        self.budget.request(r)
-        problem.simulate(solution, r)
+        solution = self.evaluate(x, problem, r)
 
         report_all_solutions = self.factors["report_all_solns"]
 

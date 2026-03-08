@@ -61,8 +61,7 @@ class RandomSearch(Solver):
         # Sequentially generate random solutions and simulate them.
         while True:
             # Request budget first, then simulate new solution.
-            self.budget.request(sample_size)
-            problem.simulate(new_solution, sample_size)
+            new_solution = self.evaluate(new_solution, problem, sample_size)
 
             # Check for improvement relative to incumbent best solution.
             # Also check for feasibility w.r.t. stochastic constraints.

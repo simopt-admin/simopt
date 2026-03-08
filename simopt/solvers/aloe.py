@@ -103,9 +103,7 @@ class ALOE(Solver):
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
         self.recommended_solns.append(new_solution)
         self.intermediate_budgets.append(self.budget.used)
-
-        self.budget.request(r)
-        problem.simulate(new_solution, r)
+        new_solution = self.evaluate(new_solution, problem, r)
 
         best_solution = new_solution
 
@@ -126,9 +124,7 @@ class ALOE(Solver):
             else:
 
                 def fn(x: np.ndarray, reps: int) -> float:
-                    candidate_solution = self.create_new_solution(tuple(x), problem)
-                    self.budget.request(reps)
-                    problem.simulate(candidate_solution, reps)
+                    candidate_solution = self.evaluate(tuple(x), problem, reps)
                     value = -problem.minmax[0] * candidate_solution.objectives_mean
                     return float(value[0])
 
@@ -158,10 +154,7 @@ class ALOE(Solver):
 
             # Compute candidate solution and apply box constraints (vectorized).
             candidate_x = np.clip(new_x - alpha * grad, lower_bound, upper_bound)
-            candidate_solution = self.create_new_solution(tuple(candidate_x), problem)
-
-            self.budget.request(r)
-            problem.simulate(candidate_solution, r)
+            candidate_solution = self.evaluate(tuple(candidate_x), problem, r)
 
             # Check modified Armijo condition
             if (-problem.minmax[0] * candidate_solution.objectives_mean) <= (

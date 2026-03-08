@@ -141,8 +141,7 @@ class NelderMead(Solver):
         # Start Solving.
         # Evaluate solutions in initial structure.
         for solution in sol:
-            self.budget.request(r)
-            problem.simulate(solution, r)
+            self.evaluate(solution, problem, r)
 
         # Record initial solution data.
         # FIXME: I think this might be wrong
@@ -177,9 +176,7 @@ class NelderMead(Solver):
                         + (1 - self.factors["delta"]) * sol_0_x
                     )
                     p_new = self._check_const(p_new, sol_0_x)
-                    p_new = self.create_new_solution(tuple(p_new), problem)
-                    self.budget.request(r)
-                    problem.simulate(p_new, r)
+                    p_new = self.evaluate(tuple(p_new), problem, r)
 
                     # Update sort_sol.
                     sort_sol[i] = p_new  # p_new replaces pi.
@@ -191,10 +188,7 @@ class NelderMead(Solver):
                 )
 
             # Evaluate reflected point.
-            p_refl = tuple(p_refl.tolist())
-            p_refl = self.create_new_solution(p_refl, problem)
-            self.budget.request(r)
-            problem.simulate(p_refl, r)
+            p_refl = self.evaluate(tuple(p_refl.tolist()), problem, r)
             np_minmax = np.array(problem.minmax)
             refl_fn_val = np_minmax * -p_refl.objectives_mean
 
@@ -224,9 +218,7 @@ class NelderMead(Solver):
                 p_exp = self._check_const(p_exp, p_refl.x)
 
                 # Evaluate expansion point.
-                p_exp = self.create_new_solution(tuple(p_exp), problem)
-                self.budget.request(r)
-                problem.simulate(p_exp, r)
+                p_exp = self.evaluate(tuple(p_exp), problem, r)
                 exp_fn_val = inv_minmax * p_exp.objectives_mean
 
                 # Check if expansion point is an improvement relative to simplex.
@@ -258,9 +250,7 @@ class NelderMead(Solver):
                 p_cont = self._check_const(p_cont, p_cont2.x)
 
                 # Evaluate contraction point.
-                p_cont = self.create_new_solution(tuple(p_cont), problem)
-                self.budget.request(r)
-                problem.simulate(p_cont, r)
+                p_cont = self.evaluate(tuple(p_cont), problem, r)
                 cont_fn_val = inv_minmax * p_cont.objectives_mean
 
                 # Accept contraction.
@@ -291,9 +281,7 @@ class NelderMead(Solver):
                         )
                         p_new = self._check_const(p_new, p_low.x)
 
-                        p_new = self.create_new_solution(tuple(p_new), problem)
-                        self.budget.request(r)
-                        problem.simulate(p_new, r)
+                        p_new = self.evaluate(tuple(p_new), problem, r)
                         new_fn_val = inv_minmax * p_new.objectives_mean
 
                         # Check for new best.
