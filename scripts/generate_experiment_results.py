@@ -108,6 +108,10 @@ def create_test(problem_name: str, solver_name: str) -> None:
 def main() -> None:
     """Create test cases for all compatible problem-solver pairs."""
     skip_problems = {"ERM-EXAMPLE-1"}
+    skip_pairs = {
+        ("DUALSOURCING-1", "DASSO"),
+        ("HOTEL-1", "DASSO"),
+    }
     # Create a list of compatible problem-solver pairs
     compatible_pairs = [
         (problem_name, solver_name)
@@ -134,6 +138,9 @@ def main() -> None:
             print(_color_text(f"Test for {pair} already exists", Fore.GREEN))
             continue
         if problem_name in skip_problems:
+            print(_color_text(f"Skipping test for {pair}", Fore.YELLOW))
+            continue
+        if pair in skip_pairs:
             print(_color_text(f"Skipping test for {pair}", Fore.YELLOW))
             continue
         # If file doesn't exist, create it
