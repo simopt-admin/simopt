@@ -651,7 +651,7 @@ class DASSO(Solver):
             Returns:
                 list: The solution indices with the given non-g component.
             """
-            solution = [None for _ in range(len(self._actual_values))]
+            solution: list[int | None] = [None for _ in range(len(self._actual_values))]
             for coord_ids, low_dim_comp_index in non_g_component.items():
                 if low_dim_comp_index is not None:
                     low_dim_comp = self._get_low_dim_comp_from_index(
@@ -679,12 +679,15 @@ class DASSO(Solver):
                 ):
                     solution[coord_id] = coord_comp
 
-                solution_index = sum(
-                    multiplier * coord_value
-                    for multiplier, coord_value in zip(
-                        self._index_multipliers, solution, strict=True
-                    )
-                )
+                solution_index = 0
+                for multiplier, coord_value in zip(
+                    self._index_multipliers, solution, strict=True
+                ):
+                    if coord_value is None:
+                        raise RuntimeError(
+                            "Decomposition did not cover every coordinate."
+                        )
+                    solution_index += multiplier * coord_value
                 solution_indices.append(solution_index)
 
             return solution_indices
@@ -712,8 +715,8 @@ class DASSO(Solver):
             float: The estimated location parameter.
         """
         # Problem specifications.
-        lower_bound = np.array(problem.lower_bounds)
-        upper_bound = np.array(problem.upper_bounds)
+        lower_bound: list[int | float] = list(problem.lower_bounds)
+        upper_bound: list[int | float] = list(problem.upper_bounds)
         dim = len(lower_bound)
 
         # Default values.
@@ -721,7 +724,9 @@ class DASSO(Solver):
         solver_rng = self._solver_rng()
 
         # Create the reference points.
-        bounds = {i: [lower_bound[i], upper_bound[i]] for i in range(dim)}
+        bounds: dict[int | str, list[int | float]] = {
+            i: [lower_bound[i], upper_bound[i]] for i in range(dim)
+        }
         ref_points = (
             build_lhs(bounds, n_init, rng=solver_rng)
             .round()
