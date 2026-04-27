@@ -192,8 +192,7 @@ class NelderMead(Solver):
                 sol_0_x = np.array(sort_sol[0].x)  # pyrefly: ignore
                 for i in range(1, len(sort_sol)):
                     p_new = (
-                        self.factors["delta"]
-                        * np.array(sort_sol[i].x)  # pyrefly: ignore
+                        self.factors["delta"] * np.array(sort_sol[i].x)  # pyrefly: ignore
                         + (1 - self.factors["delta"]) * sol_0_x
                     )
                     p_new = self._check_const(p_new, sol_0_x)
