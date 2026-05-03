@@ -234,6 +234,7 @@ The core development team currently consists of
 - [**Sara Shashaani**](https://shashaani.wordpress.ncsu.edu) (North Carolina State University)
 - [**Shane Henderson**](https://people.orie.cornell.edu/shane/) (Cornell University)
 - [**Cen Wang**](https://cenwangumass.github.io/) (Texas A&M University)
+- [**Emily Liu**](https://github.com/eyl48) (Cornell University)
 
 Previous maintainer:
 
