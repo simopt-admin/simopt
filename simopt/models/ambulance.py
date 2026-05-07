@@ -311,6 +311,8 @@ class Ambulance(Model):
                 if queued_calls:
                     # dispatch first queued call
                     qevent = queued_calls.pop(0)
+                    ambs[i, 2] = BUSY  # mark ambulance as busy again
+
                     travel = np.sum(np.abs(ambs[i, 0:2] - qevent[2:4])) / amb_speed
                     queue_delay = current_time - qevent[0]
                     total_response_time += travel + queue_delay
