@@ -416,7 +416,7 @@ class AmbulanceMinAvgResponse(Problem):
 
     @override
     def check_deterministic_constraints(self, _x: tuple) -> bool:
-        return all(0 <= xi <= 20 for xi in _x)
+        return len(_x) == self.dim and all(0 <= xi <= 20 for xi in _x)
 
     @override
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
