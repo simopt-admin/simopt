@@ -77,6 +77,15 @@ class AmbulanceConfig(BaseModel):
         if not all(0 <= loc <= 20 for loc in self.variable_locs):
             raise ValueError("All variable_locs must be between 0 and 20.")
 
+        for factor_name, beta_params in (
+            ("call_loc_beta_x", self.call_loc_beta_x),
+            ("call_loc_beta_y", self.call_loc_beta_y),
+        ):
+            if not all(param > 0 for param in beta_params):
+                raise ValueError(
+                    f"All parameters in {factor_name} must be greater than 0."
+                )
+
         return self
 
 
