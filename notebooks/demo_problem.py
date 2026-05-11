@@ -62,7 +62,7 @@ from simopt.models.cntnv import CntNVMaxProfit
 
 fixed_factors = {"initial_solution": (2,), "budget": 500}
 myproblem = CntNVMaxProfit(fixed_factors=fixed_factors)
-x = (3,)
+x = (1,)
 
 # -----------------------------------------------
 
@@ -76,7 +76,7 @@ x = (3,)
 # mysolution = Solution(x, myproblem)
 # -----------------------------------------------
 
-num_macroreps = 10
+num_macroreps = 1500
 
 # %%
 # Create and attach rngs to solution
