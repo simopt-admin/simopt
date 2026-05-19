@@ -72,7 +72,7 @@ class ExperimentRequest(BaseModel):
 # BASE_DIR points to the repository root for existing result-file storage.
 WEB_DIR = Path(__file__).resolve().parent
 BASE_DIR = WEB_DIR.parent.parent
-RESULTS_DIR = BASE_DIR / "svelte-app" / "results"
+RESULTS_DIR = BASE_DIR / "simopt-web" / "results"
 STATIC_DIR = WEB_DIR / "static"
 
 # ── FastAPI app setup ──
