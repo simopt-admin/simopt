@@ -73,7 +73,8 @@ class ExperimentRequest(BaseModel):
 WEB_DIR = Path(__file__).resolve().parent
 BASE_DIR = WEB_DIR.parent.parent
 RESULTS_DIR = BASE_DIR / "simopt-web" / "results"
-STATIC_DIR = WEB_DIR / "static"
+DIST_DIR = WEB_DIR / "dist"
+STATIC_DIR = DIST_DIR / "assets"
 
 # ── FastAPI app setup ──
 app = FastAPI(title="SimOpt API")
@@ -99,7 +100,7 @@ except Exception:
 @app.get("/")
 def serve_frontend():
     """Serve the main frontend HTML page."""
-    return FileResponse(str(STATIC_DIR / "index.html"))
+    return FileResponse(str(DIST_DIR / "index.html"))
 
 
 @app.get("/results/{run_id}/experiment.log")
@@ -139,7 +140,7 @@ def serve_result(run_id: str):
 # because FastAPI processes explicit routes before static mounts.
 RESULTS_DIR.mkdir(exist_ok=True)
 app.mount("/results", StaticFiles(directory=str(RESULTS_DIR)), name="results")
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.mount("/assets", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 # ── Name mappings ──
