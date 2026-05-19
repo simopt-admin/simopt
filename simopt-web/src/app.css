@@ -24,7 +24,7 @@ a:hover {
 
 body {
   margin: 0;
-  display: block;       /* no flex centering */
+  display: block; /* no flex centering */
   min-width: 320px;
   min-height: 100vh;
   background-color: #ffffff;
@@ -36,10 +36,10 @@ h1 {
 }
 
 #app {
-  margin: 0;            /* no auto centering */
-  padding: 0;      /* some spacing around content */
-  text-align: left;     /* left-align all content */
-  max-width: none;      /* allow full width */
+  margin: 0; /* no auto centering */
+  padding: 0; /* some spacing around content */
+  text-align: left; /* left-align all content */
+  max-width: none; /* allow full width */
 }
 
 button {
@@ -52,7 +52,9 @@ button {
   background-color: #2563eb; /* blue buttons */
   color: #fff;
   cursor: pointer;
-  transition: background-color 0.25s, border-color 0.25s;
+  transition:
+    background-color 0.25s,
+    border-color 0.25s;
 }
 
 button:hover {
