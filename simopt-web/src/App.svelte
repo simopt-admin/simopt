@@ -1,22 +1,35 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
+  import type {
+    Compatibility,
+    EditMode,
+    FixedSchema,
+    FormValues,
+    Page,
+    Param,
+    ParamsResponse,
+    PlotSummaryEntry,
+    SchemaParam,
+    SummaryEntry,
+    SummaryKind,
+  } from './types';
 
-  let currentPage = "Simulator";
-  const navigate = (p) => (currentPage = p);
+  let currentPage: Page = "Simulator";
+  const navigate = (p: Page) => (currentPage = p);
 
-  let allSolvers = [];
-  let allProblems = [];
+  let allSolvers: string[] = [];
+  let allProblems: string[] = [];
 
   let selectedSolverName = "";     // blank by default
   let selectedProblemName = "";    // blank by default
-  let solverParams = [];           // [{name, description, default, value}]
-  let problemParams = [];
+  let solverParams: Param[] = [];           // [{name, description, default, value}]
+  let problemParams: Param[] = [];
 
-  let summarySolvers = [];         // [{name, params:[...], expanded?:bool}]
-  let summaryProblems = [];
+  let summarySolvers: SummaryEntry[] = [];         // [{name, params:[...], expanded?:bool}]
+  let summaryProblems: SummaryEntry[] = [];
 
   // { kind: 'solver'|'problem', index: number } | null
-  let editMode = null;
+  let editMode: EditMode | null = null;
 
   let macroreps = 10;
   let showPostProcess = false;
@@ -24,36 +37,68 @@
   let savePickle = false;
 
   let showConfirm = false;
-  let confirmKind = null;      // 'solver' | 'problem'
-  let confirmIndex = null;
+  let confirmKind: SummaryKind | null = null;
+  let confirmIndex: number | null = null;
 
-  let allPlots = [];
+  function clickIsOnBackdrop(event: MouseEvent): boolean {
+    return event.target === event.currentTarget;
+  }
+
+  function keydownIsBackdropDismiss(event: KeyboardEvent): boolean {
+    return event.target === event.currentTarget && (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ');
+  }
+
+  function onConfirmBackdropClick(event: MouseEvent): void {
+    if (clickIsOnBackdrop(event)) closeConfirm();
+  }
+
+  function onConfirmBackdropKeydown(event: KeyboardEvent): void {
+    if (!keydownIsBackdropDismiss(event)) return;
+    event.preventDefault();
+    closeConfirm();
+  }
+
+  function onCompatBackdropClick(event: MouseEvent): void {
+    if (clickIsOnBackdrop(event)) closeCompatModal();
+  }
+
+  function onCompatBackdropKeydown(event: KeyboardEvent): void {
+    if (!keydownIsBackdropDismiss(event)) return;
+    event.preventDefault();
+    closeCompatModal();
+  }
+
+  let allPlots: string[] = [];
   let selectedPlotName = "";
-  let plotParams = []; // [{name, description, default, value}]
-  let selectedPlotSolvers = []; // Array of solver names selected for this plot
-  let selectedPlotProblems = []; // Array of problem names selected for this plot
+  let plotParams: Param[] = []; // [{name, description, default, value}]
+  let selectedPlotSolvers: string[] = []; // Array of solver names selected for this plot
+  let selectedPlotProblems: string[] = []; // Array of problem names selected for this plot
 
-  let lastRunId = null;
+  let lastRunId: string | null = null;
 
-  function toDisplayString(val) {
+  function toDisplayString(val: unknown): string {
     if (val === null || val === undefined) return "";
     if (typeof val === "string") return val;
     try { return JSON.stringify(val); } catch { return String(val); }
   }
 
-  async function fetchPlotParams(name) {
+  function inputValue(event: Event): string {
+    return (event.currentTarget as HTMLInputElement | HTMLSelectElement).value;
+  }
+
+  async function fetchPlotParams(name: string): Promise<Param[]> {
     if (!name) return [];
     const res = await fetch(`http://localhost:8000/plot_params/${encodeURIComponent(name)}`);
-    const data = await res.json();
+    const data: ParamsResponse = await res.json();
     return (data.parameters || []).map(p => ({
-      name: p.name,
+      name: p.name ?? "",
       description: p.description || "",
       default: p.default,
       value: toDisplayString(p.default),
     }));
   }
 
-  async function onPlotChange(name) {
+  async function onPlotChange(name: string): Promise<void> {
     selectedPlotName = name;
     editMode = null;
     plotParams = name ? await fetchPlotParams(name) : [];
@@ -61,45 +106,45 @@
     selectedPlotProblems = [];
   }
 
-  function deepCopyParams(arr) {
+  function deepCopyParams(arr: Param[]): Param[] {
     return (arr || []).map(p => ({ ...p }));
   }
 
-  function abbrev(name) {
+  function abbrev(name: string): string {
     if (!name) return "";
     const clean = String(name).replace(/[^A-Za-z0-9]/g, "");
     return clean.slice(-4).toUpperCase();   // last 4 chars
   }
 
-  async function fetchSolverParams(name) {
+  async function fetchSolverParams(name: string): Promise<Param[]> {
     if (!name) return [];
     const res = await fetch(`http://localhost:8000/solver_params/${encodeURIComponent(name)}`);
-    const data = await res.json();
+    const data: ParamsResponse = await res.json();
     return (data.parameters || []).map(p => ({
-      name: p.name,
+      name: p.name ?? "",
       description: p.description || "",
       default: p.default,
       value: toDisplayString(p.default)
     }));
   }
 
-  async function fetchProblemParams(name) {
+  async function fetchProblemParams(name: string): Promise<Param[]> {
     if (!name) return [];
     const res = await fetch(`http://localhost:8000/problem_params/${encodeURIComponent(name)}`);
-    const data = await res.json();
+    const data: ParamsResponse = await res.json();
     return (data.parameters || []).map(p => ({
-      name: p.name,
+      name: p.name ?? "",
       description: p.description || "",
       default: p.default,
       value: toDisplayString(p.default)
     }));
   }
 
-  async function onSolverChange(name) {
+  async function onSolverChange(name: string): Promise<void> {
     selectedSolverName = name;
     solverParams = name ? await fetchSolverParams(name) : [];
   }
-  async function onProblemChange(name) {
+  async function onProblemChange(name: string): Promise<void> {
     selectedProblemName = name;
     problemParams = name ? await fetchProblemParams(name) : [];
   }
@@ -135,10 +180,10 @@
     }
   }
 
-  const removeSummarySolver = (i) => (summarySolvers = summarySolvers.filter((_, idx) => idx !== i));
-  const removeSummaryProblem = (i) => (summaryProblems = summaryProblems.filter((_, idx) => idx !== i));
+  const removeSummarySolver = (i: number) => (summarySolvers = summarySolvers.filter((_, idx) => idx !== i));
+  const removeSummaryProblem = (i: number) => (summaryProblems = summaryProblems.filter((_, idx) => idx !== i));
 
-  let summaryPlots = []; // [{ name, params:[{name, description, default, value}], solvers:[], problems:[], expanded?:bool }]
+  let summaryPlots: PlotSummaryEntry[] = []; // [{ name, params:[{name, description, default, value}], solvers:[], problems:[], expanded?:bool }]
 
   function resetPlotEditor() {
     selectedPlotName = "";
@@ -167,10 +212,10 @@
     }
   }
 
-  const removeSummaryPlot = (i) =>
+  const removeSummaryPlot = (i: number) =>
     (summaryPlots = summaryPlots.filter((_, idx) => idx !== i));
 
-  function requestEdit(kind, index) {
+  function requestEdit(kind: SummaryKind, index: number) {
     const occupied = (kind === 'solver'  && selectedSolverName) ||
                      (kind === 'problem' && selectedProblemName) ||
                      (kind === 'plot' && selectedPlotName);
@@ -197,13 +242,13 @@
   }
 
   // --- Post-replicate / Post-normalize fixed forms ---
-  let prSchema = { params: [] };      // fetched schema for post-replicate
-  let pnSchema = { params: [] };      // fetched schema for post-normalize
-  let prValues = {};                  // current values bound to the form
-  let pnValues = {};                  // current values bound to the form
+  let prSchema: FixedSchema = { params: [] };      // fetched schema for post-replicate
+  let pnSchema: FixedSchema = { params: [] };      // fetched schema for post-normalize
+  let prValues: FormValues = {};                  // current values bound to the form
+  let pnValues: FormValues = {};                  // current values bound to the form
 
-  function initValuesFromSchema(schema, target) {
-    const t = {};
+  function initValuesFromSchema(schema: FixedSchema, target: FormValues): FormValues {
+    const t: FormValues = {};
     for (const p of schema.params || []) t[p.name] = p.default;
     return Object.assign(target, t);
   }
@@ -223,7 +268,7 @@
     } catch (e) { console.error("postnormalize_schema", e); }
   }
 
-  async function startEdit(kind, index) {
+  async function startEdit(kind: SummaryKind, index: number): Promise<void> {
     if (kind === 'solver') {
       const s = summarySolvers[index];
       selectedSolverName = s.name;
@@ -248,7 +293,7 @@
     }
   }
 
-  async function runExperiment() {
+  async function runExperiment(): Promise<void> {
     // Validate that we have at least one solver and problem
     if (summarySolvers.length === 0) {
       alert("Please add at least one solver before running the experiment.");
@@ -260,7 +305,7 @@
     }
 
     // Parse parameter values (handle JSON strings)
-    const parseValue = (val) => {
+    const parseValue = (val: unknown): unknown => {
       if (val === null || val === undefined || val === "") return null;
       
       // If it's already not a string, return as-is
@@ -286,7 +331,7 @@
       problems: summaryProblems.map(p => ({
         name: p.name,
         rename: p.name,
-        fixed_factors: p.params.reduce((acc, param) => {
+        fixed_factors: p.params.reduce<Record<string, unknown>>((acc, param) => {
           const parsed = parseValue(param.value);
           if (parsed !== null) acc[param.name] = parsed;
           return acc;
@@ -296,7 +341,7 @@
       solvers: summarySolvers.map(s => ({
         name: s.name,
         rename: s.name,
-        fixed_factors: s.params.reduce((acc, param) => {
+        fixed_factors: s.params.reduce<Record<string, unknown>>((acc, param) => {
           const parsed = parseValue(param.value);
           if (parsed !== null) acc[param.name] = parsed;
           return acc;
@@ -304,7 +349,7 @@
       })),
       plots: summaryPlots.map(pl => ({
         plot_type: pl.name,
-        params: pl.params.reduce((acc, param) => {
+        params: pl.params.reduce<Record<string, unknown>>((acc, param) => {
           const parsed = parseValue(param.value);
           if (parsed !== null) acc[param.name] = parsed;
           return acc;
@@ -326,14 +371,14 @@
         return;
       }
 
-      const data = await res.json();
+      const data: { id: string } = await res.json();
       lastRunId = data.id;
       
       // Open results page in new window
       window.open(`/results/${data.id}/index.html`, '_blank');
     } catch (error) {
       console.error("Error running experiment:", error);
-      alert("Failed to start experiment: " + error.message);
+      alert("Failed to start experiment: " + (error instanceof Error ? error.message : String(error)));
     }
   }
 
@@ -341,17 +386,19 @@
     await loadPostFixedForms();
     try {
       const sRes = await fetch('http://localhost:8000/solvers');
-      allSolvers = (await sRes.json()).solvers || [];
+      const data: { solvers?: string[] } = await sRes.json();
+      allSolvers = data.solvers || [];
     } catch (e) { console.error('Failed to fetch solvers', e); }
 
     try {
       const pRes = await fetch('http://localhost:8000/problems');
-      allProblems = (await pRes.json()).problems || [];
+      const data: { problems?: string[] } = await pRes.json();
+      allProblems = data.problems || [];
     } catch (e) { console.error('Failed to fetch problems', e); }
 
     try {
       const r = await fetch('http://localhost:8000/plots');
-      const data = await r.json();
+      const data: { plots?: string[] } = await r.json();
       allPlots = data.plots || [];
     } catch (e) {
       console.error('Failed to fetch plots:', e);
@@ -368,8 +415,8 @@
     showCompatModal = false;
   }
 
-  let compatibility = {};
-  async function checkCompatibility() {
+  let compatibility: Compatibility = {};
+  async function checkCompatibility(_solvers: SummaryEntry[], _problems: SummaryEntry[]): Promise<void> {
     if (summarySolvers.length === 0 || summaryProblems.length === 0) {
       compatibility = {};
       return;
@@ -384,7 +431,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
+      const data: { compatibility?: Compatibility } = await res.json();
       compatibility = data.compatibility || {};
     } catch (e) {
       console.error("Error checking compatibility:", e);
@@ -439,9 +486,27 @@
   </div>
   <div class="nav-right">
     <ul>
-      <li class={currentPage === "Simulator" ? "active" : ""} on:click={() => navigate("Simulator")}>Simulator</li>
-      <li class={currentPage === "User Guide" ? "active" : ""} on:click={() => navigate("User Guide")}>User Guide</li>
-      <li class={currentPage === "About Us" ? "active" : ""} on:click={() => navigate("About Us")}>About Us</li>
+      <li>
+        <a
+          href="#simulator"
+          class:active={currentPage === "Simulator"}
+          on:click|preventDefault={() => navigate("Simulator")}
+        >Simulator</a>
+      </li>
+      <li>
+        <a
+          href="#user-guide"
+          class:active={currentPage === "User Guide"}
+          on:click|preventDefault={() => navigate("User Guide")}
+        >User Guide</a>
+      </li>
+      <li>
+        <a
+          href="#about-us"
+          class:active={currentPage === "About Us"}
+          on:click|preventDefault={() => navigate("About Us")}
+        >About Us</a>
+      </li>
     </ul>
   </div>
 </nav>
@@ -466,7 +531,7 @@
           {/if}
 
           <div class="block-header">
-            <select bind:value={selectedSolverName} on:change={(e) => onSolverChange(e.target.value)}>
+            <select bind:value={selectedSolverName} on:change={(e) => onSolverChange(inputValue(e))}>
               <option value="">— Select a Solver —</option>
               {#each allSolvers as option}
                 <option value={option}>{option}</option>
@@ -491,7 +556,7 @@
                     {#if typeof param.default === 'boolean'}
                         <select
                             value={param.value}
-                            on:change={(e) => { solverParams[idx].value = e.target.value; solverParams = [...solverParams]; }}
+                            on:change={(e) => { solverParams[idx].value = inputValue(e); solverParams = [...solverParams]; }}
                         >
                             <option value="true">True</option>
                             <option value="false">False</option>
@@ -500,7 +565,7 @@
                         <input
                             type="text"
                             bind:value={param.value}
-                            on:input={(e) => (solverParams[idx].value = e.target.value)}
+                            on:input={(e) => (solverParams[idx].value = inputValue(e))}
                         />
                     {/if}
                 </label>
@@ -558,7 +623,7 @@
           {/if}
 
           <div class="block-header">
-            <select bind:value={selectedPlotName} on:change={(e) => onPlotChange(e.target.value)}>
+            <select bind:value={selectedPlotName} on:change={(e) => onPlotChange(inputValue(e))}>
               <option value="">— Select a Plot —</option>
               {#each allPlots as plot}
                 <option value={plot}>{plot}</option>
@@ -583,7 +648,7 @@
                     {#if p.name === 'ref_solver'}
                         <select
                             value={p.value}
-                            on:change={(e) => { plotParams[i].value = e.target.value; plotParams = [...plotParams]; }}
+                            on:change={(e) => { plotParams[i].value = inputValue(e); plotParams = [...plotParams]; }}
                         >
                             <option value="">— None —</option>
                             {#each summarySolvers as solver}
@@ -593,7 +658,7 @@
                     {:else if typeof p.default === 'boolean'}
                         <select
                             value={p.value}
-                            on:change={(e) => { plotParams[i].value = e.target.value; plotParams = [...plotParams]; }}
+                            on:change={(e) => { plotParams[i].value = inputValue(e); plotParams = [...plotParams]; }}
                         >
                             <option value="true">True</option>
                             <option value="false">False</option>
@@ -602,7 +667,7 @@
                         <input
                             type="text"
                             bind:value={p.value}
-                            on:input={(e) => (plotParams[i].value = e.target.value)}
+                            on:input={(e) => (plotParams[i].value = inputValue(e))}
                         />
                     {/if}
                 </label>
@@ -667,7 +732,7 @@
           {/if}
 
           <div class="block-header">
-            <select bind:value={selectedProblemName} on:change={(e) => onProblemChange(e.target.value)}>
+            <select bind:value={selectedProblemName} on:change={(e) => onProblemChange(inputValue(e))}>
               <option value="">— Select a Problem —</option>
               {#each allProblems as option}
                 <option value={option}>{option}</option>
@@ -692,7 +757,7 @@
                     {#if typeof param.default === 'boolean'}
                         <select
                             value={param.value}
-                            on:change={(e) => { problemParams[idx].value = e.target.value; problemParams = [...problemParams]; }}
+                            on:change={(e) => { problemParams[idx].value = inputValue(e); problemParams = [...problemParams]; }}
                         >
                             <option value="true">True</option>
                             <option value="false">False</option>
@@ -701,7 +766,7 @@
                         <input
                             type="text"
                             bind:value={param.value}
-                            on:input={(e) => (problemParams[idx].value = e.target.value)}
+                            on:input={(e) => (problemParams[idx].value = inputValue(e))}
                         />
                     {/if}
                 </label>
@@ -766,7 +831,12 @@
                   <span class="pill-text">{s.name}</span>
                   <span class="pill-right">
                     <span class="pill-chevron">{s.expanded ? "▼" : "▶"}</span>
-                    <span class="pill-close" title="Remove" on:click|stopPropagation={() => removeSummarySolver(i)}>×</span>
+                    <a
+                      href="#remove-solver"
+                      class="pill-close"
+                      title="Remove"
+                      on:click|preventDefault|stopPropagation={() => removeSummarySolver(i)}
+                    >×</a>
                   </span>
                 </button>
                 {#if s.expanded}
@@ -795,7 +865,12 @@
                   <span class="pill-text">{p.name}</span>
                   <span class="pill-right">
                     <span class="pill-chevron">{p.expanded ? "▼" : "▶"}</span>
-                    <span class="pill-close" title="Remove" on:click|stopPropagation={() => removeSummaryProblem(i)}>×</span>
+                    <a
+                      href="#remove-problem"
+                      class="pill-close"
+                      title="Remove"
+                      on:click|preventDefault|stopPropagation={() => removeSummaryProblem(i)}
+                    >×</a>
                   </span>
                 </button>
                 {#if p.expanded}
@@ -828,11 +903,12 @@
                   <span class="pill-text">{pl.name}</span>
                   <span class="pill-right">
                     <span class="pill-chevron">{pl.expanded ? "▼" : "▶"}</span>
-                    <span
+                    <a
+                      href="#remove-plot"
                       class="pill-close"
                       title="Remove"
-                      on:click|stopPropagation={() => removeSummaryPlot(i)}
-                    >×</span>
+                      on:click|preventDefault|stopPropagation={() => removeSummaryPlot(i)}
+                    >×</a>
                   </span>
                 </button>
 
@@ -870,10 +946,10 @@
               <div class="compat-progress" aria-label="Compatibility summary">
                 <div
                   class="compat-bar"
-                  role="img"
+                  role="progressbar"
                   aria-valuemin="0"
                   aria-valuemax="100"
-                  aria-valuenow={redPct}
+                  aria-valuenow={greenPct}
                   aria-label={`${greenPct}% compatible, ${redPct}% incompatible`}
                 >
                   <div class="bar-green" style="width:{greenPct}%;"></div>
@@ -904,9 +980,16 @@
 
     <!-- === Modals (unchanged) === -->
     {#if showConfirm}
-      <div class="modal-backdrop" on:click={closeConfirm}>
-        <div class="modal" on:click|stopPropagation>
-          <h3>Replace current editor?</h3>
+      <div
+        class="modal-backdrop"
+        role="button"
+        tabindex="-1"
+        aria-label="Close confirmation dialog"
+        on:click={onConfirmBackdropClick}
+        on:keydown={onConfirmBackdropKeydown}
+      >
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" tabindex="-1">
+          <h3 id="confirm-dialog-title">Replace current editor?</h3>
           <p>You already have a {confirmKind === 'solver' ? 'solver' : confirmKind === 'problem' ? 'problem' : 'plot'} open in the editor. If you continue, the current selection and any unsaved parameter changes will be replaced.</p>
           <div class="modal-actions">
             <button class="btn" on:click={closeConfirm}>Cancel</button>
@@ -917,9 +1000,16 @@
     {/if}
 
     {#if showCompatModal}
-      <div class="modal-backdrop" on:click={closeCompatModal}>
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Compatibility matrix" on:click|stopPropagation>
-          <h3 style="margin-top:0">Solver–Problem Compatibility</h3>
+      <div
+        class="modal-backdrop"
+        role="button"
+        tabindex="-1"
+        aria-label="Close compatibility matrix"
+        on:click={onCompatBackdropClick}
+        on:keydown={onCompatBackdropKeydown}
+      >
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="compat-dialog-title" tabindex="-1">
+          <h3 id="compat-dialog-title" style="margin-top:0">Solver–Problem Compatibility</h3>
           <table class="compatibility-table compact" aria-label="Solver–Problem compatibility matrix">
             <thead>
               <tr>
@@ -955,7 +1045,7 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-  body, main, input, button, select, label {
+  :global(body), main, input, button, select, label {
     font-family: 'Inter', sans-serif;
     font-size: 15px;
   }
@@ -994,14 +1084,15 @@
     list-style: none;
   }
 
-  .nav-right li {
+  .nav-right a {
     cursor: pointer;
     font-weight: 500;
     color: #374151;
     white-space: nowrap;
+    text-decoration: none;
   }
 
-  .nav-right li.active {
+  .nav-right a.active {
     color: #0f172a;
     border-bottom: 2px solid #14b8a6;
   }
@@ -1028,8 +1119,6 @@
     margin-bottom: 1.5rem;
     align-items: start;
   }
-
-  .row-3col > .card { align-self: start; min-width: 0; }
 
   /* Right column stacks Summary + Compatibility */
   .right-column {
@@ -1106,23 +1195,11 @@
     margin-bottom: 1.5rem;
   }
 
-  .solver-block, .problem-block { margin-bottom: 1rem; width: 100%; overflow-x: hidden; }
-
   .block-header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
-
-  .remove-btn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2rem;
-    line-height: 1;
-    color: #6b7280;
-  }
-  .remove-btn:hover { color: #111827; }
 
   /* === INPUTS & SELECTS === */
   select,
@@ -1187,16 +1264,6 @@
     cursor: pointer;
   }
 
-  .cta {
-    background-color: #2563eb;
-    color: white;
-    font-weight: 600;
-    padding: 0.75rem 2rem;
-    border: none;
-    font-size: 16px;
-  }
-  .cta:hover { background-color: #1e40af; }
-
   .secondary-outline {
     background: white;
     border: 1px solid #2563eb;
@@ -1209,9 +1276,6 @@
   .button-row { display: flex; justify-content: flex-start; margin: 1rem 0; }
 
   /* === DROPDOWN SECTIONS === */
-  .dropdown-row { margin-top: 2rem; display: flex; gap: 1.5rem; }
-  .dropdown-container { flex: 1; }
-
   .dropdown {
     background: #d0e2ff;
     color: #1e3a8a;
@@ -1423,6 +1487,7 @@
     border: 1px solid #e5e7eb;
     color: #6b7280;
     cursor: pointer;
+    text-decoration: none;
   }
   .pill-close:hover { background: #f9fafb; color: #111827; border-color: #d1d5db; }
 
@@ -1469,24 +1534,6 @@
 
   /* --- Compatibility progress bar --- */
   .compat-progress { margin-bottom: 0.6rem; }
-
-  .compat-progress-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 0.35rem;
-  }
-
-  .compat-progress-title {
-    font-weight: 600;
-    color: #0f172a;
-    font-size: 0.95rem;
-  }
-
-  .compat-progress-numbers {
-    font-size: 0.9rem;
-    color: #374151;
-  }
 
   .compat-bar {
     display: flex;            /* lays green and red side-by-side */
