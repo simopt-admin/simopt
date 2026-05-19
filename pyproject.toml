@@ -10,6 +10,7 @@ exclude = ["build*"]
 
 [tool.setuptools.package-data]
 "simopt.data_farming" = ["*.npz"]
+"simopt.web" = ["dist/*", "dist/**/*"]
 
 [tool.uv.sources]
 simopt-extensions = { git = "https://github.com/cenwangumass/simopt-extensions", rev = "b40a9c8" }
