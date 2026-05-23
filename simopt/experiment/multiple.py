@@ -713,7 +713,7 @@ class ProblemsSolvers:
         log_dir = EXPERIMENT_DIR / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
 
-        file_path = log_dir / f"{csv_filename}.csv"
+        file_path = log_dir / f"{csv_filename}.tsv"
         with file_path.open(mode="w", newline="") as output_file:
             csv_writer = csv.writer(
                 output_file,

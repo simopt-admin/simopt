@@ -485,3 +485,110 @@ class SANLongestPathStochastic(Problem):
         return tuple(
             [rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)]
         )
+class SANLongestPathCostConstConfig(BaseModel):
+    """Configuration model for SAN Longest Path Problem.
+
+    Min Mean Longest Path for Stochastic Activity Network
+    simulation-optimization problem.
+    """
+
+    initial_solution: Annotated[
+        tuple[float, ...],
+        Field(
+            default_factory=lambda: (8,) * NUM_ARCS,
+            description="initial solution",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=10000,
+            description="max # of replications for a solver to take",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+    arc_costs: Annotated[
+        tuple[float, ...],
+        Field(
+            default_factory=lambda: (1,) * NUM_ARCS,
+            description="Cost associated to each arc.",
+        ),
+    ]
+    total_cost: Annotated[
+        float,
+        Field(
+            default_factory=100.0,
+            description="Total cost allowed to be spent reducing arc means.",
+        ),
+    ]
+
+    def _check_arc_costs(self) -> None:
+        if len(self.arc_costs) != NUM_ARCS:
+            raise ValueError(f"arc_costs must be of length {NUM_ARCS}.")
+
+        positive = True
+        for x in list(self.arc_costs):
+            positive = positive and (x > 0)
+        if not positive:
+            raise ValueError("All elements in arc_costs must be greater than 0.")
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        self._check_arc_costs()
+        return self
+    
+class SANLongestPathCostConst(Problem):
+    """Base class to implement simulation-optimization problems."""
+
+    class_name_abbr: ClassVar[str] = "SAN-3"
+    class_name: ClassVar[str] = "Min Mean Longest Path for Stochastic Activity Network with Cost Constraint"
+    config_class: ClassVar[type[BaseModel]] = SANLongestPathCostConstConfig
+    model_class: ClassVar[type[Model]] = SAN
+    n_objectives: ClassVar[int] = 1
+    n_stochastic_constraints: ClassVar[int] = 0
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
+    constraint_type: ClassVar[ConstraintType] = ConstraintType.DETERMINISTIC
+    variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
+    gradient_available: ClassVar[bool] = False
+    optimal_value: ClassVar[float | None] = None
+    optimal_solution: tuple | None = None
+    model_default_factors: ClassVar[dict] = {}
+    model_decision_factors: ClassVar[set[str]] = {"arc_means"}
+
+    @property
+    def dim(self) -> int:  # noqa: D102
+        return len(self.model.factors["arcs"])
+
+    @property
+    def lower_bounds(self) -> tuple:  # noqa: D102
+        return (1e-2,) * self.dim
+
+    @property
+    def upper_bounds(self) -> tuple:  # noqa: D102
+        return (np.inf,) * self.dim
+
+    def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
+        return {"arc_means": vector[:]}
+
+    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
+        return factor_dict["arc_means"]
+
+    def replicate(self, x: tuple) -> RepResult:  # noqa: D102
+        responses, gradients = self.model.replicate()
+        objectives = [
+            Objective(
+                stochastic=responses["longest_path_length"],
+                stochastic_gradients=gradients["longest_path_length"]["arc_means"],
+                deterministic=0
+            )
+        ]
+        return RepResult(objectives=objectives)
+
+    def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
+        return all(x_i >= 0 for x_i in x)
+
+    def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
+        return tuple(
+            [rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)]
+        )

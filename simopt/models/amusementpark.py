@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math as math
+import numpy as np
 from typing import Annotated, ClassVar, Final, Self, cast
 
 from pydantic import BaseModel, Field, model_validator
@@ -538,6 +539,14 @@ class AmusementParkMinDepart(Problem):
             return False
         # Check if sum of queue capacities is less than park capacity.
         return sum(x) <= self.model.factors["park_capacity"]
+    
+    # get lhs value of deterministic constraints
+    def get_deterministic_constraints(self, x:tuple) -> tuple:
+        return (sum(x) - self.model.factors["park_capacity"])
+    
+    #return jacobian of deterministic constraints
+    def get_deterministic_constraints_gradients(self,  x:tuple) -> tuple:
+        return (np.ones((1, self.dim)))
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         num_elements: int = self.model.factors["number_attractions"]
