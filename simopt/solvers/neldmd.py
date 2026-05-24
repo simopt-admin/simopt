@@ -138,15 +138,14 @@ class NelderMead(Solver):
 
         r = self.factors["r"]  # For increasing replications.
 
+        # Record initial solution data.
+        self.log(sol[0])
+
         # Start Solving.
         # Evaluate solutions in initial structure.
         for solution in sol:
             self.evaluate(solution, problem, r)
 
-        # Record initial solution data.
-        # FIXME: I think this might be wrong
-        self.intermediate_budgets.append(0)
-        self.recommended_solns.append(sol[0])
         # Sort solutions by obj function estimate.
         sort_sol = self._sort_and_end_update(problem, sol)
 
@@ -233,8 +232,7 @@ class NelderMead(Solver):
                 )
 
                 # Record data if within budget.
-                self.intermediate_budgets.append(self.budget.used)
-                self.recommended_solns.append(p_exp if exp_fn_val < fn_low else p_refl)
+                self.log(p_exp if exp_fn_val < fn_low else p_refl)
 
             # Check if accept contraction or shrink.
             elif refl_fn_val > fn_sec:
@@ -266,8 +264,7 @@ class NelderMead(Solver):
                     # Check if contraction point is new best.
                     if cont_fn_val < fn_low:
                         # Record data from contraction point (new best).
-                        self.intermediate_budgets.append(self.budget.used)
-                        self.recommended_solns.append(p_cont)
+                        self.log(p_cont)
                 # Contraction fails -> simplex shrinks by delta with p_low fixed.
                 else:
                     # Set pre-loop variables
@@ -299,8 +296,7 @@ class NelderMead(Solver):
 
                     # Record data if there is a new best solution in the contraction.
                     if is_new_best:
-                        self.intermediate_budgets.append(self.budget.used)
-                        self.recommended_solns.append(sort_sol[0])
+                        self.log(sort_sol[0])
 
     def _sort_and_end_update(self, problem: Problem, sol: Iterable[Solution]) -> list[Solution]:
         """Sort solutions by objective values, accounting for minimization/maximization.

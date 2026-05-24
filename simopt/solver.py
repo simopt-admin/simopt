@@ -126,8 +126,8 @@ class Solver(ABC):
         self.rng_list: list[MRG32k3a] = []
         self.solution_progenitor_rngs: list[MRG32k3a] = []
 
-        self.recommended_solns = []
-        self.intermediate_budgets = []
+        self.recommended_solns: list[Solution] = []
+        self.intermediate_budgets: list[int] = []
 
     def __eq__(self, other: object) -> bool:
         """Check if two solvers are equivalent.
@@ -254,3 +254,10 @@ class Solver(ABC):
         self.budget.request(n_reps)
         problem.simulate(x, n_reps)
         return x
+
+    def log(self, x: tuple | Solution) -> None:
+        """Record a recommended solution and the budget where it was observed."""
+        if isinstance(x, tuple):
+            x = Solution(x, [])
+        self.recommended_solns.append(x)
+        self.intermediate_budgets.append(self.budget.used)

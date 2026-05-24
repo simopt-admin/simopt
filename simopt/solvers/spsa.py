@@ -145,8 +145,7 @@ class SPSA(Solver):
         # Start at initial solution and record as best.
         theta = problem.factors["initial_solution"]
         theta_sol = self.create_new_solution(tuple(theta), problem)
-        self.recommended_solns.append(theta_sol)
-        self.intermediate_budgets.append(self.budget.used)
+        self.log(theta_sol)
 
         # Simulate initial solution.
         theta_sol = self.evaluate(theta_sol, problem, self.factors["n_reps"])
@@ -238,8 +237,7 @@ class SPSA(Solver):
             if solution_value < best_solution_value:
                 best_solution_value = solution_value
                 # Record data from the new best solution.
-                self.recommended_solns.append(theta_sol)
-                self.intermediate_budgets.append(self.budget.used)
+                self.log(theta_sol)
             # Estimate gradient.
             theta_mean_diff = thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
             ghat = (neg_minmax * theta_mean_diff * delta) / (step_weight_net * c)

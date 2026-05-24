@@ -299,8 +299,7 @@ class FCSA(Solver):
             or not self._feasible_found
             or feasible_found_and_improved
         ):
-            self.recommended_solns.append(solution)
-            self.intermediate_budgets.append(self.budget.used)
+            self.log(solution)
             self._best_solution = solution
 
         return solution

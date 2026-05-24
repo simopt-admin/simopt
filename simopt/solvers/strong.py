@@ -141,8 +141,7 @@ class STRONG(Solver):
         new_solution = self.evaluate(problem.factors["initial_solution"], problem, n0)
 
         best_solution = new_solution
-        self.recommended_solns.append(new_solution)
-        self.intermediate_budgets.append(self.budget.used)
+        self.log(new_solution)
 
         # Precompute other variables
         neg_minmax = -problem.minmax[0]
@@ -227,8 +226,7 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        self.recommended_solns.append(new_solution)
-                        self.intermediate_budgets.append(self.budget.used)
+                        self.log(new_solution)
                 else:
                     # The center point moves to the new solution and the trust
                     # region enlarges.
@@ -240,8 +238,7 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        self.recommended_solns.append(new_solution)
-                        self.intermediate_budgets.append(self.budget.used)
+                        self.log(new_solution)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
 
             # Stage II.
@@ -385,8 +382,7 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        self.recommended_solns.append(new_solution)
-                        self.intermediate_budgets.append(self.budget.used)
+                        self.log(new_solution)
                 else:
                     # The center point moves to the new solution and the trust
                     # region enlarges.
@@ -399,8 +395,7 @@ class STRONG(Solver):
                         > problem.minmax * best_solution.objectives_mean
                     ):
                         best_solution = new_solution
-                        self.recommended_solns.append(new_solution)
-                        self.intermediate_budgets.append(self.budget.used)
+                        self.log(new_solution)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
 
     def cauchy_point(

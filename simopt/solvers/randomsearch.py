@@ -51,8 +51,7 @@ class RandomSearch(Solver):
         new_x = problem.factors["initial_solution"]
         new_solution = self.create_new_solution(new_x, problem)
         best_solution = new_solution
-        self.recommended_solns.append(new_solution)
-        self.intermediate_budgets.append(self.budget.used)
+        self.log(new_solution)
 
         # Prepare other variables in the loop.
         sample_size = self.factors["sample_size"]
@@ -71,8 +70,7 @@ class RandomSearch(Solver):
             ):
                 # If better, record incumbent solution as best.
                 best_solution = new_solution
-                self.recommended_solns.append(new_solution)
-                self.intermediate_budgets.append(self.budget.used)
+                self.log(new_solution)
 
             # Identify new solution to simulate for next iteration.
             new_x = problem.get_random_solution(find_next_soln_rng)

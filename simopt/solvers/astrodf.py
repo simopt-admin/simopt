@@ -722,8 +722,7 @@ class ASTRODF(Solver):
                 self.delta_k,
                 compute_kappa=True,
             )
-            self.recommended_solns.append(self.incumbent_solution)
-            self.intermediate_budgets.append(self.budget.used)
+            self.log(self.incumbent_solution)
         # Since incument was only evaluated with the sample size of previous incumbent,
         # here we compute its adaptive sample size
         elif self.factors["crn_across_solns"]:
@@ -899,8 +898,7 @@ class ASTRODF(Solver):
         if successful:
             self.incumbent_x = candidate_x
             self.incumbent_solution = candidate_solution
-            self.recommended_solns.append(candidate_solution)
-            self.intermediate_budgets.append(self.budget.used)
+            self.log(candidate_solution)
             self.delta_k = min(self.delta_k, self.delta_max)
 
             # very successful: expand

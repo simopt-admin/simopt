@@ -136,8 +136,7 @@ class DASSO(Solver):
 
         # Identify the sample-best solution.
         best_solution_candidate_index = run_state.sample_means_vec_d.argmin()
-        self.recommended_solns.append(run_state.design_points_actual[best_solution_candidate_index])
-        self.intermediate_budgets.append(self.budget.used)
+        self.log(run_state.design_points_actual[best_solution_candidate_index])
 
         # Group creation.
         groups = [
@@ -398,10 +397,7 @@ class DASSO(Solver):
 
             # Identify the sample best solution.
             best_solution_candidate_index = run_state.sample_means_vec_d.argmin()
-            self.recommended_solns.append(
-                run_state.design_points_actual[best_solution_candidate_index]
-            )
-            self.intermediate_budgets.append(self.budget.used)
+            self.log(run_state.design_points_actual[best_solution_candidate_index])
 
     class _Mapping:
         """Map between solutions and coordinates."""

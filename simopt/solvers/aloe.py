@@ -101,8 +101,7 @@ class ALOE(Solver):
 
         # Start with the initial solution.
         new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-        self.recommended_solns.append(new_solution)
-        self.intermediate_budgets.append(self.budget.used)
+        self.log(new_solution)
         new_solution = self.evaluate(new_solution, problem, r)
 
         best_solution = new_solution
@@ -172,5 +171,4 @@ class ALOE(Solver):
                 > problem.minmax[0] * best_solution.objectives_mean
             ):
                 best_solution = new_solution
-                self.recommended_solns.append(new_solution)
-                self.intermediate_budgets.append(self.budget.used)
+                self.log(new_solution)
