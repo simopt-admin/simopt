@@ -12,6 +12,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import simopt.directory as directory
 from simopt.experiment_base import ProblemSolver, post_normalize
+from tools.common import expected_results_filename
 
 init(autoreset=True)
 
@@ -96,9 +97,7 @@ def create_test(problem_name: str, solver_name: str) -> None:
     }
 
     # Define the directory and output file
-    file_problem_name = "".join(e for e in problem_name if e.isalnum())
-    file_solver_name = "".join(e for e in solver_name if e.isalnum())
-    results_filename = f"{file_problem_name}_{file_solver_name}.pickle.zst"
+    results_filename = expected_results_filename(problem_name, solver_name)
     results_filepath = EXPECTED_RESULTS_DIR / results_filename
     # Write the results to the file
     with zstd.open(results_filepath, "wb") as f:
@@ -130,9 +129,7 @@ def main() -> None:
         problem_name = pair[0]
         solver_name = pair[1]
         # Generate the expected filenames
-        file_problem_name = "".join(e for e in problem_name if e.isalnum())
-        file_solver_name = "".join(e for e in solver_name if e.isalnum())
-        results_filename = f"{file_problem_name}_{file_solver_name}.pickle.zst"
+        results_filename = expected_results_filename(problem_name, solver_name)
         # If file exists, skip it
         if results_filename in existing_results:
             print(_color_text(f"Test for {pair} already exists", Fore.GREEN))

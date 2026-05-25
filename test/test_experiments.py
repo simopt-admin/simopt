@@ -15,6 +15,8 @@ from experiment_test_core import (  # noqa: F401
     ExperimentTestMixin,
 )
 
+from tools.common import is_result_file_for_current_machine, require_current_machine_result_file
+
 EXPECTED_RESULTS_DIR = Path(__file__).parent / "expected_results"
 
 # Build a mapping of class names to file paths
@@ -28,6 +30,9 @@ def _filename_to_classname(file: str) -> str:
 
 
 for yaml_path in EXPECTED_RESULTS_DIR.glob("*.pickle.zst"):
+    require_current_machine_result_file(yaml_path)
+    if not is_result_file_for_current_machine(yaml_path):
+        continue
     class_name = _filename_to_classname(yaml_path.name)
     _FILE_CLASS_MAP[class_name] = yaml_path.resolve()  # store full path
 
