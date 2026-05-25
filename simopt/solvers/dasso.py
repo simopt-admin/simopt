@@ -611,13 +611,9 @@ class DASSO(Solver):
                     solution[coord_id] = coord_comp
 
                 solution_index = 0
-                for multiplier, coord_value in zip(
-                    self._index_multipliers, solution, strict=True
-                ):
+                for multiplier, coord_value in zip(self._index_multipliers, solution, strict=True):
                     if coord_value is None:
-                        raise RuntimeError(
-                            "Decomposition did not cover every coordinate."
-                        )
+                        raise RuntimeError("Decomposition did not cover every coordinate.")
                     solution_index += multiplier * coord_value
                 solution_indices.append(solution_index)
 

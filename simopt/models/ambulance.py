@@ -26,9 +26,7 @@ BUSY = 1
 class AmbulanceConfig(BaseModel):
     """Configuration for the Ambulance simulation model."""
 
-    fixed_base_count: Annotated[
-        int, Field(default=3, ge=0, description="Number of fixed bases")
-    ]
+    fixed_base_count: Annotated[int, Field(default=3, ge=0, description="Number of fixed bases")]
     variable_base_count: Annotated[
         int, Field(default=2, gt=0, description="Number of variable bases")
     ]
@@ -61,16 +59,14 @@ class AmbulanceConfig(BaseModel):
         expected_fixed_len = 2 * self.fixed_base_count
         if len(self.fixed_locs) != expected_fixed_len:
             raise ValueError(
-                f"The length of fixed_locs must be {expected_fixed_len} "
-                f"(2 * fixed_base_count)."
+                f"The length of fixed_locs must be {expected_fixed_len} (2 * fixed_base_count)."
             )
 
         # Check variable locations length
         expected_var_len = 2 * self.variable_base_count
         if len(self.variable_locs) != expected_var_len:
             raise ValueError(
-                f"The length of variable_locs must be {expected_var_len} "
-                f"(2 * variable_base_count)."
+                f"The length of variable_locs must be {expected_var_len} (2 * variable_base_count)."
             )
 
         # Check variable locations bounds (Simulatable check)
@@ -82,9 +78,7 @@ class AmbulanceConfig(BaseModel):
             ("call_loc_beta_y", self.call_loc_beta_y),
         ):
             if not all(param > 0 for param in beta_params):
-                raise ValueError(
-                    f"All parameters in {factor_name} must be greater than 0."
-                )
+                raise ValueError(f"All parameters in {factor_name} must be greater than 0.")
 
         return self
 
@@ -142,7 +136,7 @@ class Ambulance(Model):
         self.beta_x_model = Beta()
         self.beta_y_model = Beta()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
+    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         # Assign RNGs to input models
         # RNG 0 -> Arrival Times
         self.arrival_time_model.set_rng(rng_list[0])
@@ -171,8 +165,7 @@ class Ambulance(Model):
             [fixed_locs[2 * i], fixed_locs[2 * i + 1]] for i in range(fixed_base_count)
         ]
         variable_bases = [
-            [variable_locs[2 * i], variable_locs[2 * i + 1]]
-            for i in range(variable_base_count)
+            [variable_locs[2 * i], variable_locs[2 * i + 1]] for i in range(variable_base_count)
         ]
 
         bases = fixed_base_positions + variable_bases
@@ -185,9 +178,7 @@ class Ambulance(Model):
         # est travel time for an ambulance to reach a call
         est_travel_time = 10.0  # Should be close to
         mean_scene_time = 10.0
-        mean_interval = (
-            (2 * est_travel_time + mean_scene_time) / n_ambulances / utilization
-        )
+        mean_interval = (2 * est_travel_time + mean_scene_time) / n_ambulances / utilization
         sim_length = 60 * 24.0 * 1  # Simulate 1 day
 
         # Ensure RNGs are available
@@ -350,9 +341,7 @@ class Ambulance(Model):
             grad_avg = np.full((variable_base_count, 2), float("nan"))
 
         responses = {"avg_response_time": avg_time}
-        gradients = {
-            "avg_response_time": {"variable_locs": grad_avg.flatten().tolist()}
-        }
+        gradients = {"avg_response_time": {"variable_locs": grad_avg.flatten().tolist()}}
         return responses, gradients
 
 
@@ -406,7 +395,7 @@ class AmbulanceMinAvgResponse(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["variable_locs"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
+    def replicate(self, _x: tuple) -> RepResult:
         # 1. Run the simulation
         responses, gradients = self.model.replicate()
 
