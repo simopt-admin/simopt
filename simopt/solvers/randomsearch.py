@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-import numpy as np
 from pydantic import Field
 
 from simopt.base import (
@@ -65,7 +64,7 @@ class RandomSearch(Solver):
             # Check for improvement relative to incumbent best solution.
             # Also check for feasibility w.r.t. stochastic constraints.
             mean_diff = new_solution.objectives_mean - best_solution.objectives_mean
-            if all(np.array(problem.minmax) * mean_diff > 0) and all(
+            if all(mean_diff < 0) and all(
                 new_solution.stoch_constraints_mean[idx] <= 0 for idx in stoch_constraint_range
             ):
                 # If better, record incumbent solution as best.

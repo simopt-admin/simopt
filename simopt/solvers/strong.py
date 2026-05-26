@@ -143,9 +143,6 @@ class STRONG(Solver):
         best_solution = new_solution
         self.log(new_solution)
 
-        # Precompute other variables
-        neg_minmax = -problem.minmax[0]
-
         while True:
             new_x = np.array(new_solution.x)
             # Check variable bounds.
@@ -161,10 +158,10 @@ class STRONG(Solver):
 
             def fn(x: np.ndarray, reps: int) -> float:
                 candidate_solution = self.evaluate(tuple(x), problem, reps)
-                value = neg_minmax * candidate_solution.objectives_mean
+                value = candidate_solution.objectives_mean
                 return float(value[0])
 
-            fn_value = float((neg_minmax * new_solution.objectives_mean)[0])
+            fn_value = float(new_solution.objectives_mean[0])
 
             # Stage I.
             if delta_t > delta_threshold:
@@ -198,8 +195,8 @@ class STRONG(Solver):
                 # Step 3: Compute the ratio.
                 # Use n_r simulated observations to estimate g_new.
                 # Find the old objective value and the new objective value.
-                g_old = neg_minmax * new_solution.objectives_mean
-                g_new = neg_minmax * candidate_solution.objectives_mean
+                g_old = new_solution.objectives_mean
+                g_new = candidate_solution.objectives_mean
                 g_diff = g_old - g_new
                 # Construct the polynomial.
                 x_diff = candidate_x - new_x
@@ -221,10 +218,7 @@ class STRONG(Solver):
                     # region remains.
                     new_solution = candidate_solution
                     # Update incumbent best solution.
-                    if (
-                        problem.minmax * new_solution.objectives_mean
-                        > problem.minmax * best_solution.objectives_mean
-                    ):
+                    if new_solution.objectives_mean < best_solution.objectives_mean:
                         best_solution = new_solution
                         self.log(new_solution)
                 else:
@@ -233,10 +227,7 @@ class STRONG(Solver):
                     delta_t = gamma_2 * delta_t
                     new_solution = candidate_solution
                     # Update incumbent best solution.
-                    if (
-                        problem.minmax * new_solution.objectives_mean
-                        > problem.minmax * best_solution.objectives_mean
-                    ):
+                    if new_solution.objectives_mean < best_solution.objectives_mean:
                         best_solution = new_solution
                         self.log(new_solution)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
@@ -277,8 +268,8 @@ class STRONG(Solver):
                 # Step 3: Compute the ratio.
                 # Use r simulated observations to estimate g(x_start\).
                 # Find the old objective value and the new objective value.
-                g_old = neg_minmax * new_solution.objectives_mean
-                g_new = neg_minmax * candidate_solution.objectives_mean
+                g_old = new_solution.objectives_mean
+                g_new = candidate_solution.objectives_mean
                 g_diff = g_old - g_new
                 # Construct the polynomial.
                 x_diff = candidate_x - new_x
@@ -339,11 +330,11 @@ class STRONG(Solver):
                         mreps = int(n_r + counter_ceiling)
 
                         try_solution = self.evaluate(tuple(try_x), problem, mreps)
-                        g_b_new = neg_minmax * try_solution.objectives_mean
+                        g_b_new = try_solution.objectives_mean
                         dummy_solution = new_solution
                         dummy_solution = self.evaluate(dummy_solution, problem, ceiling_diff)
 
-                        dummy = neg_minmax * dummy_solution.objectives_mean
+                        dummy = dummy_solution.objectives_mean
                         # Update g_old.
                         g_b_old = (
                             g_b_old * (n_r + counter_lower_ceiling) + ceiling_diff * dummy
@@ -377,10 +368,7 @@ class STRONG(Solver):
                         sub_counter += 1
                     new_solution = result_solution
                     # Update incumbent best solution.
-                    if (
-                        problem.minmax * new_solution.objectives_mean
-                        > problem.minmax * best_solution.objectives_mean
-                    ):
+                    if new_solution.objectives_mean < best_solution.objectives_mean:
                         best_solution = new_solution
                         self.log(new_solution)
                 else:
@@ -390,10 +378,7 @@ class STRONG(Solver):
                         delta_t = gamma_2 * delta_t
                     new_solution = candidate_solution
                     # Update incumbent best solution.
-                    if (
-                        problem.minmax * new_solution.objectives_mean
-                        > problem.minmax * best_solution.objectives_mean
-                    ):
+                    if new_solution.objectives_mean < best_solution.objectives_mean:
                         best_solution = new_solution
                         self.log(new_solution)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))

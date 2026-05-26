@@ -1329,18 +1329,14 @@ class DASSO(Solver):
                 array_index = run_state.design_point_indices.index(solution_index)
                 solution = run_state.design_points_actual[array_index]
                 solution = self.evaluate(solution, problem, sample_size)
-                run_state.sample_means_vec_d[array_index] = (
-                    solution.objectives_mean[0] * problem.minmax[0] * (-1)
-                )  # minimization problem
+                run_state.sample_means_vec_d[array_index] = solution.objectives_mean[0]
                 run_state.noise_cov_mat_diagonals[array_index] = (
                     solution.objectives_var[0] / solution.n_reps
                 )
             else:
                 x_actual = mapping.get_actual_values_of_solution_from_index(solution_index)
                 solution = self.evaluate(x_actual, problem, sample_size)
-                additional_sample_means_vec_d += [
-                    solution.objectives_mean[0] * problem.minmax[0] * (-1)
-                ]  # minimization problem
+                additional_sample_means_vec_d += [solution.objectives_mean[0]]
                 additional_noise_cov_mat_diagonals += [solution.objectives_var[0] / solution.n_reps]
                 run_state.design_point_indices.append(solution_index)
                 run_state.design_points_actual.append(solution)

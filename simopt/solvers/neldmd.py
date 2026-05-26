@@ -128,11 +128,7 @@ class NelderMead(Solver):
             # If still out of bounds, set to nearest bound
             out_of_bounds = (new_pts > self.upper_bounds) | (new_pts < self.lower_bounds)
             if np.any(out_of_bounds):
-                new_pts[out_of_bounds] = np.where(
-                    np.array(problem.minmax)[np.newaxis, :] == -1,
-                    self.lower_bounds,
-                    self.upper_bounds,
-                )
+                new_pts = np.clip(new_pts, self.lower_bounds, self.upper_bounds)
 
             sol.extend(self.create_new_solution(pt, problem) for pt in new_pts)
 
@@ -147,9 +143,8 @@ class NelderMead(Solver):
             self.evaluate(solution, problem, r)
 
         # Sort solutions by obj function estimate.
-        sort_sol = self._sort_and_end_update(problem, sol)
+        sort_sol = self._sort_and_end_update(sol)
 
-        # Maximization problem is converted to minimization by using minmax.
         while True:
             # Shrink towards best if out of bounds.
             while True:
@@ -181,32 +176,24 @@ class NelderMead(Solver):
                     sort_sol[i] = p_new  # p_new replaces pi.
 
                 # Sort & end updating.
-                sort_sol = self._sort_and_end_update(
-                    problem,
-                    sort_sol,  # pyrefly: ignore
-                )
+                sort_sol = self._sort_and_end_update(sort_sol)  # pyrefly: ignore
 
             # Evaluate reflected point.
             p_refl = self.evaluate(tuple(p_refl.tolist()), problem, r)
-            np_minmax = np.array(problem.minmax)
-            refl_fn_val = np_minmax * -p_refl.objectives_mean
+            refl_fn_val = p_refl.objectives_mean
 
             # Track best, worst, and second worst points.
             p_low = sort_sol[0]  # Current best pt. # pyrefly: ignore
-            inv_minmax = np_minmax * -1
-            fn_low = inv_minmax * sort_sol[0].objectives_mean  # pyrefly: ignore
-            fn_sec = inv_minmax * sort_sol[-2].objectives_mean  # pyrefly: ignore
-            fn_high = inv_minmax * sort_sol[-1].objectives_mean  # pyrefly: ignore
+            fn_low = sort_sol[0].objectives_mean  # pyrefly: ignore
+            fn_sec = sort_sol[-2].objectives_mean  # pyrefly: ignore
+            fn_high = sort_sol[-1].objectives_mean  # pyrefly: ignore
 
             # Check if accept reflection.
             if fn_low <= refl_fn_val and refl_fn_val <= fn_sec:
                 # The new point replaces the previous worst.
                 sort_sol[-1] = p_refl  # pyrefly: ignore
                 # Sort & end updating.
-                sort_sol = self._sort_and_end_update(
-                    problem,
-                    sort_sol,  # pyrefly: ignore
-                )
+                sort_sol = self._sort_and_end_update(sort_sol)  # pyrefly: ignore
                 # Best solution remains the same, so no reporting.
 
             # Check if accept expansion (of reflection in the same direction).
@@ -218,7 +205,7 @@ class NelderMead(Solver):
 
                 # Evaluate expansion point.
                 p_exp = self.evaluate(tuple(p_exp), problem, r)
-                exp_fn_val = inv_minmax * p_exp.objectives_mean
+                exp_fn_val = p_exp.objectives_mean
 
                 # Check if expansion point is an improvement relative to simplex.
                 sort_sol[-1] = (  # pyrefly: ignore
@@ -226,10 +213,7 @@ class NelderMead(Solver):
                 )
 
                 # Sort & end updating.
-                sort_sol = self._sort_and_end_update(
-                    problem,
-                    sort_sol,  # pyrefly: ignore
-                )
+                sort_sol = self._sort_and_end_update(sort_sol)  # pyrefly: ignore
 
                 # Record data if within budget.
                 self.log(p_exp if exp_fn_val < fn_low else p_refl)
@@ -249,17 +233,14 @@ class NelderMead(Solver):
 
                 # Evaluate contraction point.
                 p_cont = self.evaluate(tuple(p_cont), problem, r)
-                cont_fn_val = inv_minmax * p_cont.objectives_mean
+                cont_fn_val = p_cont.objectives_mean
 
                 # Accept contraction.
                 if cont_fn_val <= fn_high:
                     sort_sol[-1] = p_cont  # p_cont replaces p_high. # pyrefly: ignore
 
                     # Sort & end updating.
-                    sort_sol = self._sort_and_end_update(
-                        problem,
-                        sort_sol,  # pyrefly: ignore
-                    )
+                    sort_sol = self._sort_and_end_update(sort_sol)  # pyrefly: ignore
 
                     # Check if contraction point is new best.
                     if cont_fn_val < fn_low:
@@ -279,7 +260,7 @@ class NelderMead(Solver):
                         p_new = self._check_const(p_new, p_low.x)
 
                         p_new = self.evaluate(tuple(p_new), problem, r)
-                        new_fn_val = inv_minmax * p_new.objectives_mean
+                        new_fn_val = p_new.objectives_mean
 
                         # Check for new best.
                         if new_fn_val <= fn_low:
@@ -289,33 +270,23 @@ class NelderMead(Solver):
                         sort_sol[i] = p_new  # p_new replaces pi.
 
                     # Sort & end updating.
-                    sort_sol = self._sort_and_end_update(
-                        problem,
-                        sort_sol,  # pyrefly: ignore
-                    )
+                    sort_sol = self._sort_and_end_update(sort_sol)  # pyrefly: ignore
 
                     # Record data if there is a new best solution in the contraction.
                     if is_new_best:
                         self.log(sort_sol[0])
 
-    def _sort_and_end_update(self, problem: Problem, sol: Iterable[Solution]) -> list[Solution]:
-        """Sort solutions by objective values, accounting for minimization/maximization.
+    def _sort_and_end_update(self, sol: Iterable[Solution]) -> list[Solution]:
+        """Sort solutions by objective values.
 
         Args:
-            problem (Problem): The simulation-optimization problem defining the
-                objective direction (minimize or maximize).
             sol (Iterable[Solution]): An iterable of solutions to be sorted.
 
         Returns:
             list[Solution]: A list of solutions sorted according to their
                 objective values.
         """
-        minmax_array = np.array(problem.minmax)
-        return sorted(
-            sol,
-            key=lambda s: np.dot(minmax_array, s.objectives_mean),
-            reverse=True,
-        )
+        return sorted(sol, key=lambda s: s.objectives_mean[0])
 
     def _check_const(self, new_point: Iterable[float], reference_point: Iterable[float]) -> tuple:
         """Adjust a point to ensure it remains within the specified bounds.

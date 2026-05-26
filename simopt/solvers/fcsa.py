@@ -117,7 +117,7 @@ class FCSA(Solver):
 
     def _objective_at(self, problem: Problem, x: np.ndarray, r: int) -> float:
         solution = self.evaluate(tuple(x), problem, r)
-        return -problem.minmax[0] * solution.objectives_mean[0]
+        return solution.objectives_mean[0]
 
     def _finite_difference(self, problem: Problem, x: np.ndarray, h: float, r: int) -> np.ndarray:
         d = len(x)
@@ -138,7 +138,7 @@ class FCSA(Solver):
 
     def _objective_grad(self, problem: Problem, solution: Solution, normalize: bool) -> np.ndarray:
         if problem.gradient_available:
-            grad = -problem.minmax[0] * solution.objectives_gradients_mean[0]
+            grad = solution.objectives_gradients_mean[0]
         else:
             h = self.factors["h"]
             r = self.factors["r"]
@@ -287,10 +287,7 @@ class FCSA(Solver):
             feasible_found_and_improved = (
                 not is_violated
                 and self._best_solution is not None
-                and (
-                    problem.minmax[0] * solution.objectives_mean
-                    < problem.minmax[0] * self._best_solution.objectives_mean
-                )
+                and solution.objectives_mean < self._best_solution.objectives_mean
             )
 
         if (

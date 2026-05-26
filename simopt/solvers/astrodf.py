@@ -491,7 +491,7 @@ class ASTRODF(Solver):
                     self.perform_adaptive_sampling(adapt_soln, pilot_run, delta_k)
 
                 # Append the function estimate to the list
-                fval.append(-1 * self.problem.minmax[0] * adapt_soln.objectives_mean)
+                fval.append(adapt_soln.objectives_mean)
                 interpolation_solns.append(adapt_soln)
 
             # construct the model and obtain the model coefficients
@@ -674,9 +674,7 @@ class ASTRODF(Solver):
             #     self.h_k = np.identity(self.problem.dim)
             #     self.hessian_skip_count = 0
 
-        candidate_grad = (
-            -1 * self.problem.minmax[0] * candidate_solution.objectives_gradients_mean[0]
-        )
+        candidate_grad = candidate_solution.objectives_gradients_mean[0]
         y_k = candidate_grad - grad
         y_ks = y_k @ s
 
@@ -702,7 +700,6 @@ class ASTRODF(Solver):
         radius, and save the data
         """
         self.iteration_count += 1
-        neg_minmax = -self.problem.minmax[0]
 
         # determine power of delta in adaptive sampling rule
         pilot_run = ceil(
@@ -732,10 +729,9 @@ class ASTRODF(Solver):
         if self.enable_gradient:
             fval = (
                 np.ones(2 * self.problem.dim + 1)
-                * neg_minmax
                 * self.incumbent_solution.objectives_mean
             )
-            grad = neg_minmax * self.incumbent_solution.objectives_gradients_mean[0]
+            grad = self.incumbent_solution.objectives_gradients_mean[0]
             hessian = self.h_k
             # Set empty variables to get rid of typing warnings
             q = np.array([])
@@ -838,7 +834,7 @@ class ASTRODF(Solver):
         #     final_ob = fval[0]
         # else:
         # calculate success ratio
-        fval_tilde = neg_minmax * candidate_solution.objectives_mean
+        fval_tilde = candidate_solution.objectives_mean
         # replace the candidate x if the interpolation set has lower objective function
         # value and with sufficient reduction (pattern search)
         # also if the candidate solution's variance is high that could be caused by

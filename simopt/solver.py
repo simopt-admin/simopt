@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Annotated, ClassVar
 
+import numpy as np
 import pandas as pd
 from boltons.typeutils import classproperty
 from pydantic import BaseModel, Field
@@ -251,8 +252,18 @@ class Solver(ABC):
         """Evaluate a solution by simulating it and returning the updated solution object."""
         if isinstance(x, tuple):
             x = self.create_new_solution(x, problem)
+        start_n_reps = x.n_reps
         self.budget.request(n_reps)
         problem.simulate(x, n_reps)
+        objective_factors = -np.array(problem.minmax)
+        if not np.all(objective_factors == 1):
+            for idx in range(start_n_reps, x.n_reps):
+                x._objectives[idx] = objective_factors * x._objectives[idx]
+                x._objectives_gradients[idx] = (
+                    objective_factors[:, np.newaxis] * x._objectives_gradients[idx]
+                )
+            x._objectives_array = None
+            x._objectives_gradients_array = None
         return x
 
     def log(self, x: tuple | Solution) -> None:
