@@ -119,15 +119,15 @@ class ALOE(Solver):
             bounds_check = forward - backward
 
             if problem.gradient_available:
-                grad = -problem.minmax[0] * new_solution.objectives_gradients_mean[0]
+                grad = new_solution.objectives_gradients_mean[0]
             else:
 
                 def fn(x: np.ndarray, reps: int) -> float:
                     candidate_solution = self.evaluate(tuple(x), problem, reps)
-                    value = -problem.minmax[0] * candidate_solution.objectives_mean
+                    value = candidate_solution.objectives_mean
                     return float(value[0])
 
-                fn_value = float((-problem.minmax[0] * new_solution.objectives_mean)[0])
+                fn_value = float(new_solution.objectives_mean[0])
 
                 grad = fd(
                     lambda x, reps=r: fn(x, reps),
@@ -156,8 +156,8 @@ class ALOE(Solver):
             candidate_solution = self.evaluate(tuple(candidate_x), problem, r)
 
             # Check modified Armijo condition
-            if (-problem.minmax[0] * candidate_solution.objectives_mean) <= (
-                -problem.minmax[0] * new_solution.objectives_mean
+            if candidate_solution.objectives_mean <= (
+                new_solution.objectives_mean
                 - alpha * theta * np.linalg.norm(grad) ** 2
                 + 2 * epsilon_f
             ):
@@ -166,9 +166,6 @@ class ALOE(Solver):
             else:
                 alpha = gamma * alpha
 
-            if (
-                problem.minmax[0] * new_solution.objectives_mean
-                > problem.minmax[0] * best_solution.objectives_mean
-            ):
+            if new_solution.objectives_mean < best_solution.objectives_mean:
                 best_solution = new_solution
                 self.log(new_solution)

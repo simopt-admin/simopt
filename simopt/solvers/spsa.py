@@ -137,8 +137,6 @@ class SPSA(Solver):
         return np.array(self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim))
 
     def solve(self, problem: Problem) -> None:
-        # -minmax is needed to cast this as a minimization problem
-        neg_minmax = -np.array(problem.minmax)
         lower_bound = np.array(problem.lower_bounds)
         upper_bound = np.array(problem.upper_bounds)
 
@@ -184,12 +182,10 @@ class SPSA(Solver):
                 thetaplus_sol = self.evaluate(thetaplus_sol, problem, self.factors["n_reps"])
                 thetaminus_sol = self.evaluate(thetaminus_sol, problem, self.factors["n_reps"])
                 # Estimate gradient.
-                # (-minmax is needed to cast this as a minimization problem,
-                # but is not essential here because of the absolute value taken.)
                 step_weight_net = step_weight_plus + step_weight_minus
                 step_weight_net = make_nonzero(step_weight_net, "net_step_weight")
                 theta_mean_diff = thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
-                ghat += (neg_minmax * theta_mean_diff) / (step_weight_net * c * delta)
+                ghat += theta_mean_diff / (step_weight_net * c * delta)
             gbar += np.abs(ghat / self.factors["gavg"])
 
         a_leftside = self.factors["step"] * ((aalg + 1) ** self.factors["alpha"])
@@ -228,7 +224,7 @@ class SPSA(Solver):
             mean_net = mean_minus + mean_plus
             step_weight_net = step_weight_plus + step_weight_minus
             step_weight_net = make_nonzero(step_weight_net, "net_step_weight")
-            solution_value = float((mean_net / step_weight_net) * neg_minmax)
+            solution_value = float((mean_net / step_weight_net)[0])
             if best_solution_value is None:
                 # Record data from the initial solution.
                 best_solution_value = solution_value
@@ -240,7 +236,7 @@ class SPSA(Solver):
                 self.log(theta_sol)
             # Estimate gradient.
             theta_mean_diff = thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
-            ghat = (neg_minmax * theta_mean_diff * delta) / (step_weight_net * c)
+            ghat = (theta_mean_diff * delta) / (step_weight_net * c)
             # Take step and check feasibility.
             theta_next = theta - (ak * ghat)
             theta, _ = _check_cons(theta_next, theta, lower_bound, upper_bound)

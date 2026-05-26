@@ -114,16 +114,16 @@ class ADAM(Solver):
             bounds_check = np.subtract(forward, backward)
             if problem.gradient_available:
                 # Use IPA gradient if available.
-                grad = -problem.minmax[0] * new_solution.objectives_gradients_mean[0]
+                grad = new_solution.objectives_gradients_mean[0]
             else:
                 # Use finite difference to estimate gradient if IPA gradient is
                 # not available.
                 def fn(x: np.ndarray) -> float:
                     candidate_solution = self.evaluate(tuple(x), problem, r)
-                    value = -problem.minmax[0] * candidate_solution.objectives_mean
+                    value = candidate_solution.objectives_mean
                     return float(value[0])
 
-                fn_value = float((-problem.minmax[0] * new_solution.objectives_mean)[0])
+                fn_value = float(new_solution.objectives_mean[0])
 
                 grad = fd(
                     fn,
@@ -150,8 +150,6 @@ class ADAM(Solver):
             new_solution = self.evaluate(tuple(new_x), problem, r)
             # Use r simulated observations to estimate the objective value.
 
-            if (new_solution.objectives_mean > best_solution.objectives_mean) ^ (
-                problem.minmax[0] < 0
-            ):
+            if new_solution.objectives_mean < best_solution.objectives_mean:
                 best_solution = new_solution
                 self.log(new_solution)

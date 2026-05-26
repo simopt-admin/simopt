@@ -39,11 +39,11 @@ def finite_diff(
 
     def fn(x: np.ndarray) -> float:
         candidate_solution = solver.evaluate(tuple(x), problem, r)
-        value = -problem.minmax[0] * candidate_solution.objectives_mean
+        value = candidate_solution.objectives_mean
         return float(value[0] if isinstance(value, np.ndarray) else value)
 
     x = np.array(new_solution.x, dtype=float)
-    fn_value = float((-problem.minmax[0] * new_solution.objectives_mean)[0])
+    fn_value = float(new_solution.objectives_mean[0])
     lower_bound = np.array(problem.lower_bounds, dtype=float)
     upper_bound = np.array(problem.upper_bounds, dtype=float)
 
@@ -186,8 +186,7 @@ def bfgs_hessian_approx(
     Returns:
         np.ndarray: Hessian approximation (updated via BFGS).
     """
-    neg_minmax = -np.array(problem.minmax)
-    fn = (neg_minmax * new_solution.objectives_mean)[0]
+    fn = new_solution.objectives_mean[0]
     new_x = np.array(new_solution.x, dtype=float)
 
     # Initialize step sizes.
@@ -219,7 +218,7 @@ def bfgs_hessian_approx(
     def get_fn_x(x: Iterable) -> float:
         """Helper to simulate the function at a given x."""
         x_solution = solver.evaluate(tuple(x), problem, r)
-        return (neg_minmax * x_solution.objectives_mean)[0]
+        return x_solution.objectives_mean[0]
 
     # Compute function values
     f_x_minus_h = np.zeros(problem.dim)  # f(x - h)
