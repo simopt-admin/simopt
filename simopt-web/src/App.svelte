@@ -9,7 +9,6 @@
     Param,
     ParamsResponse,
     PlotSummaryEntry,
-    SchemaParam,
     SummaryEntry,
     SummaryKind,
   } from './types';
@@ -34,7 +33,6 @@
   let macroreps = 10;
   let showPostProcess = false;
   let showPostNormalize = false;
-  let savePickle = false;
 
   let showConfirm = false;
   let confirmKind: SummaryKind | null = null;
@@ -416,14 +414,14 @@
   }
 
   let compatibility: Compatibility = {};
-  async function checkCompatibility(_solvers: SummaryEntry[], _problems: SummaryEntry[]): Promise<void> {
-    if (summarySolvers.length === 0 || summaryProblems.length === 0) {
+  async function checkCompatibility(solvers: SummaryEntry[], problems: SummaryEntry[]): Promise<void> {
+    if (solvers.length === 0 || problems.length === 0) {
       compatibility = {};
       return;
     }
     const payload = {
-      solvers: summarySolvers.map(s => s.name),
-      problems: summaryProblems.map(p => p.name)
+      solvers: solvers.map(s => s.name),
+      problems: problems.map(p => p.name)
     };
     try {
       const res = await fetch("http://localhost:8000/check_compatibility", {
@@ -446,8 +444,9 @@
       Object.values(row || {}).some(cell => cell && cell.compatible === false)
     );
   
-  let greenCount = 0, redCount = 0, totalCompatCells = 0;
-  let greenPct = 0, redPct = 0;
+  let totalCompatCells: number;
+  let greenPct: number;
+  let redPct: number;
 
   $: {
     let g = 0, r = 0;
@@ -463,8 +462,6 @@
         }
       }
     }
-    greenCount = g;
-    redCount = r;
     totalCompatCells = g + r;
 
     if (totalCompatCells > 0) {
@@ -533,7 +530,7 @@
           <div class="block-header">
             <select bind:value={selectedSolverName} on:change={(e) => onSolverChange(inputValue(e))}>
               <option value="">— Select a Solver —</option>
-              {#each allSolvers as option}
+              {#each allSolvers as option (option)}
                 <option value={option}>{option}</option>
               {/each}
             </select>
@@ -542,7 +539,7 @@
           {#if selectedSolverName}
             <div class="param-box">
               <p class="param-title">Solver Parameters</p>
-              {#each solverParams as param, idx}
+              {#each solverParams as param, idx (param.name)}
                 <label>
                     <div style="display:flex;align-items:center;gap:0.4rem;">
                         <span>{param.name}</span>
@@ -585,7 +582,7 @@
               <div class="param-box">
                 <p class="param-title">Options for Post-replication</p>
 
-                {#each prSchema.params as p}
+                {#each prSchema.params as p (p.name)}
                   <label>
                     <span>{p.label}</span>
 
@@ -625,7 +622,7 @@
           <div class="block-header">
             <select bind:value={selectedPlotName} on:change={(e) => onPlotChange(inputValue(e))}>
               <option value="">— Select a Plot —</option>
-              {#each allPlots as plot}
+              {#each allPlots as plot (plot)}
                 <option value={plot}>{plot}</option>
               {/each}
             </select>
@@ -634,7 +631,7 @@
           {#if plotParams.length}
             <div class="param-box" style="margin-top:.5rem;">
               <p class="param-title">Plot Parameters ({selectedPlotName})</p>
-              {#each plotParams as p, i}
+              {#each plotParams as p, i (p.name)}
                 <label>
                     <div style="display:flex;align-items:center;gap:0.4rem;">
                         <span>{p.name}</span>
@@ -651,7 +648,7 @@
                             on:change={(e) => { plotParams[i].value = inputValue(e); plotParams = [...plotParams]; }}
                         >
                             <option value="">— None —</option>
-                            {#each summarySolvers as solver}
+                            {#each summarySolvers as solver (solver.name)}
                                 <option value={solver.name}>{solver.name}</option>
                             {/each}
                         </select>
@@ -681,7 +678,7 @@
               {#if summarySolvers.length === 0}
                 <p style="color:#6b7280;font-size:0.9rem;margin-top:0.25rem;">No solvers added yet</p>
               {:else}
-                {#each summarySolvers as solver}
+                {#each summarySolvers as solver (solver.name)}
                   <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
                     <input
                       type="checkbox"
@@ -699,7 +696,7 @@
               {#if summaryProblems.length === 0}
                 <p style="color:#6b7280;font-size:0.9rem;margin-top:0.25rem;">No problems added yet</p>
               {:else}
-                {#each summaryProblems as problem}
+                {#each summaryProblems as problem (problem.name)}
                   <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
                     <input
                       type="checkbox"
@@ -734,7 +731,7 @@
           <div class="block-header">
             <select bind:value={selectedProblemName} on:change={(e) => onProblemChange(inputValue(e))}>
               <option value="">— Select a Problem —</option>
-              {#each allProblems as option}
+              {#each allProblems as option (option)}
                 <option value={option}>{option}</option>
               {/each}
             </select>
@@ -743,7 +740,7 @@
           {#if selectedProblemName}
             <div class="param-box">
               <p class="param-title">Problem Parameters</p>
-              {#each problemParams as param, idx}
+              {#each problemParams as param, idx (param.name)}
                 <label>
                     <div style="display:flex;align-items:center;gap:0.4rem;">
                         <span>{param.name}</span>
@@ -786,7 +783,7 @@
               <div class="param-box">
                 <p class="param-title">Options for Post-normalize</p>
 
-                {#each pnSchema.params as p}
+                {#each pnSchema.params as p (p.name)}
                   <label>
                     <span>{p.label}</span>
 
@@ -821,7 +818,7 @@
             {#if summarySolvers.length === 0}
               <p style="color:#6b7280;">No solvers added.</p>
             {/if}
-            {#each summarySolvers as s, i}
+            {#each summarySolvers as s, i (`${s.name}-${i}`)}
               <div class="summary-item">
                 <button
                   class="summary-toggle pill"
@@ -841,7 +838,7 @@
                 </button>
                 {#if s.expanded}
                   <ul class="param-list" style="margin:.5rem 0;">
-                    {#each s.params as p}<li><strong>{p.name}:</strong> {p.value ?? p.default ?? ""}</li>{/each}
+                    {#each s.params as p (p.name)}<li><strong>{p.name}:</strong> {p.value ?? p.default ?? ""}</li>{/each}
                   </ul>
                   <button class="secondary-outline" on:click={() => requestEdit('solver', i)}>Edit</button>
                 {/if}
@@ -855,7 +852,7 @@
             {#if summaryProblems.length === 0}
               <p style="color:#6b7280;">No problems added.</p>
             {/if}
-            {#each summaryProblems as p, i}
+            {#each summaryProblems as p, i (`${p.name}-${i}`)}
               <div class="summary-item">
                 <button
                   class="summary-toggle pill"
@@ -875,7 +872,7 @@
                 </button>
                 {#if p.expanded}
                   <ul class="param-list" style="margin:.5rem 0;">
-                    {#each p.params as q}<li><strong>{q.name}:</strong> {q.value ?? q.default ?? ""}</li>{/each}
+                    {#each p.params as q (q.name)}<li><strong>{q.name}:</strong> {q.value ?? q.default ?? ""}</li>{/each}
                   </ul>
                   <button class="secondary-outline" on:click={() => requestEdit('problem', i)}>Edit</button>
                 {/if}
@@ -890,7 +887,7 @@
               <p style="color:#6b7280;">No plots added.</p>
             {/if}
 
-            {#each summaryPlots as pl, i}
+            {#each summaryPlots as pl, i (`${pl.name}-${i}`)}
               <div class="summary-item">
                 <button
                   class="summary-toggle pill"
@@ -915,7 +912,7 @@
                 {#if pl.expanded}
                   {#if pl.params && pl.params.length}
                       <ul class="param-list" style="margin:.5rem 0;">
-                          {#each pl.params as p}
+                          {#each pl.params as p (p.name)}
                               <li><strong>{p.name}:</strong> {p.value ?? p.default ?? ""}</li>
                           {/each}
                       </ul>
@@ -1014,16 +1011,16 @@
             <thead>
               <tr>
                 <th scope="col">S \ P</th>
-                {#each summaryProblems as p}
+                {#each summaryProblems as p (p.name)}
                   <th scope="col" title={p.name}>{abbrev(p.name)}</th>
                 {/each}
               </tr>
             </thead>
             <tbody>
-              {#each summarySolvers as s}
+              {#each summarySolvers as s (s.name)}
                 <tr>
                   <th class="solver-name" scope="row" title={s.name}>{abbrev(s.name)}</th>
-                  {#each summaryProblems as p}
+                  {#each summaryProblems as p (p.name)}
                     <td
                       class={compatibility[s.name]?.[p.name] ? (compatibility[s.name][p.name].compatible ? 'compat-cell ok' : 'compat-cell bad') : 'compat-cell neutral'}
                       title={compatibility[s.name]?.[p.name] && !compatibility[s.name][p.name].compatible && compatibility[s.name][p.name].message ? `${s.name} × ${p.name}: ${compatibility[s.name][p.name].message}` : ''}
