@@ -287,10 +287,7 @@ class FCSA(Solver):
             feasible_found_and_improved = (
                 not is_violated
                 and self._best_solution is not None
-                and (
-                    problem.minmax[0] * solution.objectives_mean
-                    < problem.minmax[0] * self._best_solution.objectives_mean
-                )
+                and solution.objectives_mean < self._best_solution.objectives_mean
             )
 
         if (
