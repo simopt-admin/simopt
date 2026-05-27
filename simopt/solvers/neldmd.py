@@ -128,11 +128,7 @@ class NelderMead(Solver):
             # If still out of bounds, set to nearest bound
             out_of_bounds = (new_pts > self.upper_bounds) | (new_pts < self.lower_bounds)
             if np.any(out_of_bounds):
-                new_pts[out_of_bounds] = np.where(
-                    np.array(problem.minmax)[np.newaxis, :] == -1,
-                    self.lower_bounds,
-                    self.upper_bounds,
-                )
+                new_pts = np.clip(new_pts, self.lower_bounds, self.upper_bounds)
 
             sol.extend(self.create_new_solution(pt, problem) for pt in new_pts)
 
