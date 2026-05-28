@@ -1,1 +1,1 @@
-machine_specific_experiments = ["ASTRODF"]
+machine_specific_experiments = ["ASTRODF", "DASSO"]
