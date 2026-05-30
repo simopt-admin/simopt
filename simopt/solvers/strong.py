@@ -16,6 +16,7 @@ from pydantic import Field, model_validator
 
 from simopt.base import (
     ConstraintType,
+    Context,
     ObjectiveType,
     Problem,
     Solver,
@@ -121,7 +122,7 @@ class STRONG(Solver):
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem, ctx: Context) -> None:
         # Default values.
         n0: int = self.factors["n0"]
         n_r: int = self.factors["n_r"]
@@ -138,10 +139,10 @@ class STRONG(Solver):
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = self.evaluate(problem.factors["initial_solution"], problem, n0)
+        new_solution = ctx.evaluate(problem.factors["initial_solution"], n0)
 
         best_solution = new_solution
-        self.log(new_solution)
+        ctx.log(new_solution)
 
         while True:
             new_x = np.array(new_solution.x)
@@ -157,7 +158,7 @@ class STRONG(Solver):
             bounds_check = forward - backward
 
             def fn(x: np.ndarray, reps: int) -> float:
-                candidate_solution = self.evaluate(tuple(x), problem, reps)
+                candidate_solution = ctx.evaluate(tuple(x), reps)
                 value = candidate_solution.objectives_mean
                 return float(value[0])
 
@@ -190,7 +191,7 @@ class STRONG(Solver):
                 # Cauchy reduction.
                 hessian = np.zeros((problem.dim, problem.dim))
                 candidate_x = self.cauchy_point(grad, hessian, new_x, problem)
-                candidate_solution = self.evaluate(tuple(candidate_x), problem, n_r)
+                candidate_solution = ctx.evaluate(tuple(candidate_x), n_r)
 
                 # Step 3: Compute the ratio.
                 # Use n_r simulated observations to estimate g_new.
@@ -220,7 +221,7 @@ class STRONG(Solver):
                     # Update incumbent best solution.
                     if new_solution.objectives_mean < best_solution.objectives_mean:
                         best_solution = new_solution
-                        self.log(new_solution)
+                        ctx.log(new_solution)
                 else:
                     # The center point moves to the new solution and the trust
                     # region enlarges.
@@ -229,7 +230,7 @@ class STRONG(Solver):
                     # Update incumbent best solution.
                     if new_solution.objectives_mean < best_solution.objectives_mean:
                         best_solution = new_solution
-                        self.log(new_solution)
+                        ctx.log(new_solution)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
 
             # Stage II.
@@ -247,13 +248,15 @@ class STRONG(Solver):
                         lower_bound,
                         upper_bound,
                     )
-                    hessian = bfgs_hessian_approx(self, new_solution, bounds_check, problem, n_r)
+                    hessian = bfgs_hessian_approx(
+                        self, ctx, new_solution, bounds_check, problem, n_r
+                    )
                     num_generated_grads += 1
                     if num_generated_grads > 2:
                         # Update n_r and counter after each loop.
                         n_r *= lam
                     # Accept any non-zero gradient, or exit if the budget is exceeded.
-                    if norm(grad) != 0 or self.budget.remaining <= 0:
+                    if norm(grad) != 0 or ctx.budget.remaining <= 0:
                         break
 
                 # Step 2: Solve the subproblem.
@@ -264,7 +267,7 @@ class STRONG(Solver):
                     new_x,
                     problem,
                 )
-                candidate_solution = self.evaluate(tuple(candidate_x), problem, n_r)
+                candidate_solution = ctx.evaluate(tuple(candidate_x), n_r)
                 # Step 3: Compute the ratio.
                 # Use r simulated observations to estimate g(x_start\).
                 # Find the old objective value and the new objective value.
@@ -290,7 +293,7 @@ class STRONG(Solver):
                     result_x = new_x
 
                     while np.sum(result_x != new_x) == 0:
-                        if self.budget.remaining <= 0:
+                        if ctx.budget.remaining <= 0:
                             break
                         # A while loop to prevent zero gradient
                         while True:
@@ -305,7 +308,7 @@ class STRONG(Solver):
                                 upper_bound,
                             )
                             h_var = bfgs_hessian_approx(
-                                self, new_solution, bounds_check, problem, n_r_loop
+                                self, ctx, new_solution, bounds_check, problem, n_r_loop
                             )
                             num_generated_grads += 1
                             if num_generated_grads > 2:
@@ -313,7 +316,7 @@ class STRONG(Solver):
                                 n_r *= lam
                             # Accept any non-zero gradient, or exit if the budget
                             # is exceeded.
-                            if norm(grad) != 0 or self.budget.remaining <= 0:
+                            if norm(grad) != 0 or ctx.budget.remaining <= 0:
                                 break
 
                         # Step 2: determine the new inner solution based on the
@@ -329,10 +332,10 @@ class STRONG(Solver):
                         ceiling_diff = int(counter_ceiling - counter_lower_ceiling)
                         mreps = int(n_r + counter_ceiling)
 
-                        try_solution = self.evaluate(tuple(try_x), problem, mreps)
+                        try_solution = ctx.evaluate(tuple(try_x), mreps)
                         g_b_new = try_solution.objectives_mean
                         dummy_solution = new_solution
-                        dummy_solution = self.evaluate(dummy_solution, problem, ceiling_diff)
+                        dummy_solution = ctx.evaluate(dummy_solution, ceiling_diff)
 
                         dummy = dummy_solution.objectives_mean
                         # Update g_old.
@@ -370,7 +373,7 @@ class STRONG(Solver):
                     # Update incumbent best solution.
                     if new_solution.objectives_mean < best_solution.objectives_mean:
                         best_solution = new_solution
-                        self.log(new_solution)
+                        ctx.log(new_solution)
                 else:
                     # The center point moves to the new solution and the trust
                     # region enlarges.
@@ -380,7 +383,7 @@ class STRONG(Solver):
                     # Update incumbent best solution.
                     if new_solution.objectives_mean < best_solution.objectives_mean:
                         best_solution = new_solution
-                        self.log(new_solution)
+                        ctx.log(new_solution)
                 n_r = int(np.ceil(self.factors["lambda_2"] * n_r))
 
     def cauchy_point(

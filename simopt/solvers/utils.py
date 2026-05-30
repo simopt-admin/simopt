@@ -7,6 +7,7 @@ from collections.abc import Callable, Iterable
 import numpy as np
 
 from simopt.base import (
+    Context,
     Problem,
     Solution,
     Solver,
@@ -14,7 +15,7 @@ from simopt.base import (
 
 
 def finite_diff(
-    solver: Solver,
+    ctx: Context,
     new_solution: Solution,
     bounds_check: np.ndarray,
     problem: Problem,
@@ -24,7 +25,7 @@ def finite_diff(
     """Compute the finite difference approximation of the gradient for a solution.
 
     Args:
-        solver (Solver): The solver instance used to create new solutions.
+        ctx (Context): Runtime services for the current run.
         new_solution (Solution): The current solution to perturb.
         bounds_check (np.ndarray): Array indicating which perturbation method to
             use per dimension.
@@ -38,7 +39,7 @@ def finite_diff(
     """
 
     def fn(x: np.ndarray) -> float:
-        candidate_solution = solver.evaluate(tuple(x), problem, r)
+        candidate_solution = ctx.evaluate(tuple(x), r)
         value = candidate_solution.objectives_mean
         return float(value[0] if isinstance(value, np.ndarray) else value)
 
@@ -166,6 +167,7 @@ def fd(
 
 def bfgs_hessian_approx(
     solver: Solver,
+    ctx: Context,
     new_solution: Solution,
     bounds_check: np.ndarray,
     problem: Problem,
@@ -177,6 +179,7 @@ def bfgs_hessian_approx(
 
     Args:
         solver (Solver): The solver instance used to create new solutions.
+        ctx (Context): Runtime services for the current run.
         new_solution (Solution): The solution at which derivatives are computed.
         bounds_check (np.ndarray): Boolean mask indicating which variables are
             within bounds and eligible for perturbation.
@@ -217,7 +220,7 @@ def bfgs_hessian_approx(
 
     def get_fn_x(x: Iterable) -> float:
         """Helper to simulate the function at a given x."""
-        x_solution = solver.evaluate(tuple(x), problem, r)
+        x_solution = ctx.evaluate(tuple(x), r)
         return x_solution.objectives_mean[0]
 
     # Compute function values

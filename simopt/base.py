@@ -14,4 +14,4 @@ from simopt.problem_types import (  # noqa: F401
     ObjectiveType,
     VariableType,
 )
-from simopt.solver import Solver, SolverConfig  # noqa: F401
+from simopt.solver import Context, Solver, SolverConfig  # noqa: F401

@@ -13,6 +13,7 @@ from pydantic import Field
 
 from simopt.base import (
     ConstraintType,
+    Context,
     ObjectiveType,
     Problem,
     Solver,
@@ -78,7 +79,7 @@ class ADAM(Solver):
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem, ctx: Context) -> None:
         # Default values.
         r: int = self.factors["r"]
         beta_1: float = self.factors["beta_1"]
@@ -91,9 +92,9 @@ class ADAM(Solver):
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-        self.log(new_solution)
-        new_solution = self.evaluate(new_solution, problem, r)
+        new_solution = ctx.create_new_solution(problem.factors["initial_solution"])
+        ctx.log(new_solution)
+        new_solution = ctx.evaluate(new_solution, r)
 
         best_solution = new_solution
 
@@ -119,7 +120,7 @@ class ADAM(Solver):
                 # Use finite difference to estimate gradient if IPA gradient is
                 # not available.
                 def fn(x: np.ndarray) -> float:
-                    candidate_solution = self.evaluate(tuple(x), problem, r)
+                    candidate_solution = ctx.evaluate(tuple(x), r)
                     value = candidate_solution.objectives_mean
                     return float(value[0])
 
@@ -147,9 +148,9 @@ class ADAM(Solver):
             new_x = np.clip(x - alpha * mhat / (np.sqrt(vhat) + epsilon), lower_bound, upper_bound)
 
             # Create new solution based on new x
-            new_solution = self.evaluate(tuple(new_x), problem, r)
+            new_solution = ctx.evaluate(tuple(new_x), r)
             # Use r simulated observations to estimate the objective value.
 
             if new_solution.objectives_mean < best_solution.objectives_mean:
                 best_solution = new_solution
-                self.log(new_solution)
+                ctx.log(new_solution)

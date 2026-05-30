@@ -13,6 +13,7 @@ from pydantic import Field
 
 from simopt.base import (
     ConstraintType,
+    Context,
     ObjectiveType,
     Problem,
     Solution,
@@ -115,34 +116,40 @@ class FCSA(Solver):
         mult = self.factors["step_mult"]
         return mult if self.factors["step_type"] == "const" else 1 / (mult * (k + 1))
 
-    def _objective_at(self, problem: Problem, x: np.ndarray, r: int) -> float:
-        solution = self.evaluate(tuple(x), problem, r)
+    def _objective_at(self, ctx: Context, x: np.ndarray, r: int) -> float:
+        solution = ctx.evaluate(tuple(x), r)
         return solution.objectives_mean[0]
 
-    def _finite_difference(self, problem: Problem, x: np.ndarray, h: float, r: int) -> np.ndarray:
+    def _finite_difference(self, ctx: Context, x: np.ndarray, h: float, r: int) -> np.ndarray:
         d = len(x)
 
         grad = np.zeros(d)
         for i in range(d):
             x1 = x.copy()
             x1[i] += h / 2
-            f1 = self._objective_at(problem, x1, r)
+            f1 = self._objective_at(ctx, x1, r)
 
             x2 = x.copy()
             x2[i] -= h / 2
-            f2 = self._objective_at(problem, x2, r)
+            f2 = self._objective_at(ctx, x2, r)
 
             grad[i] = (f1 - f2) / h
 
         return grad
 
-    def _objective_grad(self, problem: Problem, solution: Solution, normalize: bool) -> np.ndarray:
+    def _objective_grad(
+        self,
+        problem: Problem,
+        ctx: Context,
+        solution: Solution,
+        normalize: bool,
+    ) -> np.ndarray:
         if problem.gradient_available:
             grad = solution.objectives_gradients_mean[0]
         else:
             h = self.factors["h"]
             r = self.factors["r"]
-            grad = self._finite_difference(problem, np.array(solution.x), h, r)
+            grad = self._finite_difference(ctx, np.array(solution.x), h, r)
         if normalize:
             norm = np.linalg.norm(grad)
             if norm == 0:
@@ -191,10 +198,10 @@ class FCSA(Solver):
         assert direction.value is not None
         return -direction.value
 
-    def _direction_fcsa(self, problem: Problem, solution: Solution) -> np.ndarray:
+    def _direction_fcsa(self, problem: Problem, ctx: Context, solution: Solution) -> np.ndarray:
         normalize = self.factors["normalize_grads"]
 
-        obj_grad = self._objective_grad(problem, solution, normalize)
+        obj_grad = self._objective_grad(problem, ctx, solution, normalize)
         violated_values, violated_grads = self._violated_constraint_values_and_grads(
             solution, normalize
         )
@@ -218,24 +225,26 @@ class FCSA(Solver):
         assert direction.value is not None
         return -direction.value
 
-    def _direction_no_violation(self, problem: Problem, solution: Solution) -> np.ndarray:
+    def _direction_no_violation(
+        self, problem: Problem, ctx: Context, solution: Solution
+    ) -> np.ndarray:
         normalize = self.factors["normalize_grads"]
-        return self._objective_grad(problem, solution, normalize)
+        return self._objective_grad(problem, ctx, solution, normalize)
 
-    def _direction(self, solution: Solution, problem: Problem) -> np.ndarray:
+    def _direction(self, solution: Solution, problem: Problem, ctx: Context) -> np.ndarray:
         method = self.factors["search_direction"]
 
         violated_values = solution.stoch_constraints_mean
         is_violated = bool(np.max(violated_values) > self.factors["tolerance"])
 
         if not is_violated:
-            return self._direction_no_violation(problem, solution)
+            return self._direction_no_violation(problem, ctx, solution)
         if method == "CSA":
             return self._direction_csa(solution)
         if method == "CSA-N":
             return self._direction_csa_n(solution)
         if method == "FCSA":
-            return self._direction_fcsa(problem, solution)
+            return self._direction_fcsa(problem, ctx, solution)
 
         raise ValueError(f"unknown search direction method: {method}")
 
@@ -272,9 +281,14 @@ class FCSA(Solver):
         assert z.value is not None
         return z.value
 
-    def _new_solution_found(self, problem: Problem, x: tuple, check_feasibility: bool) -> Solution:
+    def _new_solution_found(
+        self,
+        ctx: Context,
+        x: tuple,
+        check_feasibility: bool,
+    ) -> Solution:
         r = self.factors["r"]
-        solution = self.evaluate(x, problem, r)
+        solution = ctx.evaluate(x, r)
 
         report_all_solutions = self.factors["report_all_solns"]
 
@@ -296,12 +310,12 @@ class FCSA(Solver):
             or not self._feasible_found
             or feasible_found_and_improved
         ):
-            self.log(solution)
+            ctx.log(solution)
             self._best_solution = solution
 
         return solution
 
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem, ctx: Context) -> None:
         assert problem.n_stochastic_constraints > 0
 
         lower = np.array(problem.lower_bounds)
@@ -318,12 +332,12 @@ class FCSA(Solver):
 
         # Start with the initial solution.
         x = problem.factors["initial_solution"]
-        solution = self._new_solution_found(problem, x, False)
+        solution = self._new_solution_found(ctx, x, False)
 
         k = 0
         while True:
             step = self._step_fn(k)
-            direction = self._direction(solution, problem)
+            direction = self._direction(solution, problem, ctx)
             x = self._prox_fn(
                 step * direction,
                 np.array(solution.x),
@@ -334,5 +348,5 @@ class FCSA(Solver):
                 eq_lhs,
                 eq_rhs,
             )
-            solution = self._new_solution_found(problem, tuple(x), True)
+            solution = self._new_solution_found(ctx, tuple(x), True)
             k += 1

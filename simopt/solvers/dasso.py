@@ -22,6 +22,7 @@ from scipy.stats import qmc
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import (
     ConstraintType,
+    Context,
     ObjectiveType,
     Problem,
     Solver,
@@ -107,7 +108,7 @@ class DASSO(Solver):
         """Create a NumPy generator derived from the solver RNG."""
         return np.random.default_rng(_numpy_seed_from_mrg(self._solver_rng()))
 
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem, ctx: Context) -> None:
         run_state = _RunState()
         solver_rng = self._solver_rng()
 
@@ -131,12 +132,12 @@ class DASSO(Solver):
 
         # Parameter estimation.
         theta_parameters, random_effect_variances, beta_0 = self._hyperparameter_estimation(
-            run_state, problem, mapping, decomposition
+            run_state, problem, ctx, mapping, decomposition
         )
 
         # Identify the sample-best solution.
         best_solution_candidate_index = run_state.sample_means_vec_d.argmin()
-        self.log(run_state.design_points_actual[best_solution_candidate_index])
+        ctx.log(run_state.design_points_actual[best_solution_candidate_index])
 
         # Group creation.
         groups = [
@@ -282,13 +283,13 @@ class DASSO(Solver):
             restricted_set = mapping.get_solution_indices_from_non_g_component(non_g_comp_as_tuple)
 
             # Simulate the sample best solution.
-            self._record_simulations(run_state, [sample_best_solution_index], problem, mapping)
+            self._record_simulations(run_state, [sample_best_solution_index], problem, ctx, mapping)
 
             # Simulate a solution from the restricted set if it does not have any
             # solution that has been simulated.
             if not any(sol in run_state.design_point_indices for sol in restricted_set):
                 solution_index = solver_rng.choice(restricted_set)
-                self._record_simulations(run_state, [solution_index], problem, mapping)
+                self._record_simulations(run_state, [solution_index], problem, ctx, mapping)
                 for group in groups:
                     group.add_design_points([solution_index])
 
@@ -389,15 +390,17 @@ class DASSO(Solver):
             if max_cei_solution not in run_state.design_point_indices:
                 for group in groups:
                     group.add_design_points([max_cei_solution])
-            self._record_simulations(run_state, [max_cei_solution], problem, mapping)
+            self._record_simulations(run_state, [max_cei_solution], problem, ctx, mapping)
 
             # Simulate sample-best solution of the restricted set.
             sample_best_solution_restricted = reordered_solutions[sample_best_index]
-            self._record_simulations(run_state, [sample_best_solution_restricted], problem, mapping)
+            self._record_simulations(
+                run_state, [sample_best_solution_restricted], problem, ctx, mapping
+            )
 
             # Identify the sample best solution.
             best_solution_candidate_index = run_state.sample_means_vec_d.argmin()
-            self.log(run_state.design_points_actual[best_solution_candidate_index])
+            ctx.log(run_state.design_points_actual[best_solution_candidate_index])
 
     class _Mapping:
         """Map between solutions and coordinates."""
@@ -619,6 +622,7 @@ class DASSO(Solver):
         self,
         run_state: _RunState,
         problem: Problem,
+        ctx: Context,
         mapping: DASSO._Mapping,
         decomposition: list,
     ) -> tuple[dict, dict, float]:
@@ -628,6 +632,7 @@ class DASSO(Solver):
             run_state (_RunState): Run-scoped storage for design point data.
             problem (Problem): The problem instance providing bounds and function
                 evaluations.
+            ctx (Context): Runtime services for the current run.
             mapping (DASSO._Mapping): The mapping instance providing mapping between
                 solutions and coordinates.
             decomposition (list): Coordinates for each group.
@@ -715,7 +720,7 @@ class DASSO(Solver):
 
         # Parameter estimation.
         design_point_indices = [mapping.get_solution_index(sol) for sol in design_points]
-        self._record_simulations(run_state, design_point_indices, problem, mapping)
+        self._record_simulations(run_state, design_point_indices, problem, ctx, mapping)
 
         # Estimate hyperparameters for each group.
         random_effect_variances = {}
@@ -1309,6 +1314,7 @@ class DASSO(Solver):
         run_state: _RunState,
         solution_indices: list[int],
         problem: Problem,
+        ctx: Context,
         mapping: DASSO._Mapping,
     ) -> None:
         """Record the simulation results.
@@ -1318,6 +1324,7 @@ class DASSO(Solver):
             solution_indices (list[int]): The solution indices to be simulated.
             problem (Problem): The problem instance providing bounds and function
                 evaluations.
+            ctx (Context): Runtime services for the current run.
             mapping (DASSO._Mapping): The mapping instance providing mapping between
                 solutions and coordinates.
         """
@@ -1328,14 +1335,14 @@ class DASSO(Solver):
             if solution_index in run_state.design_point_indices:
                 array_index = run_state.design_point_indices.index(solution_index)
                 solution = run_state.design_points_actual[array_index]
-                solution = self.evaluate(solution, problem, sample_size)
+                solution = ctx.evaluate(solution, sample_size)
                 run_state.sample_means_vec_d[array_index] = solution.objectives_mean[0]
                 run_state.noise_cov_mat_diagonals[array_index] = (
                     solution.objectives_var[0] / solution.n_reps
                 )
             else:
                 x_actual = mapping.get_actual_values_of_solution_from_index(solution_index)
-                solution = self.evaluate(x_actual, problem, sample_size)
+                solution = ctx.evaluate(x_actual, sample_size)
                 additional_sample_means_vec_d += [solution.objectives_mean[0]]
                 additional_noise_cov_mat_diagonals += [solution.objectives_var[0] / solution.n_reps]
                 run_state.design_point_indices.append(solution_index)

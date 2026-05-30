@@ -15,6 +15,7 @@ from pydantic import Field
 
 from simopt.base import (
     ConstraintType,
+    Context,
     ObjectiveType,
     Problem,
     Solver,
@@ -86,7 +87,7 @@ class ALOE(Solver):
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem, ctx: Context) -> None:
         # Default values.
         r = self.factors["r"]
         theta = self.factors["theta"]
@@ -100,9 +101,9 @@ class ALOE(Solver):
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = self.create_new_solution(problem.factors["initial_solution"], problem)
-        self.log(new_solution)
-        new_solution = self.evaluate(new_solution, problem, r)
+        new_solution = ctx.create_new_solution(problem.factors["initial_solution"])
+        ctx.log(new_solution)
+        new_solution = ctx.evaluate(new_solution, r)
 
         best_solution = new_solution
 
@@ -123,7 +124,7 @@ class ALOE(Solver):
             else:
 
                 def fn(x: np.ndarray, reps: int) -> float:
-                    candidate_solution = self.evaluate(tuple(x), problem, reps)
+                    candidate_solution = ctx.evaluate(tuple(x), reps)
                     value = candidate_solution.objectives_mean
                     return float(value[0])
 
@@ -153,7 +154,7 @@ class ALOE(Solver):
 
             # Compute candidate solution and apply box constraints (vectorized).
             candidate_x = np.clip(new_x - alpha * grad, lower_bound, upper_bound)
-            candidate_solution = self.evaluate(tuple(candidate_x), problem, r)
+            candidate_solution = ctx.evaluate(tuple(candidate_x), r)
 
             # Check modified Armijo condition
             if candidate_solution.objectives_mean <= (
@@ -168,4 +169,4 @@ class ALOE(Solver):
 
             if new_solution.objectives_mean < best_solution.objectives_mean:
                 best_solution = new_solution
-                self.log(new_solution)
+                ctx.log(new_solution)

@@ -13,6 +13,7 @@ from pydantic import Field
 
 from simopt.base import (
     ConstraintType,
+    Context,
     ObjectiveType,
     Problem,
     Solver,
@@ -43,14 +44,14 @@ class RandomSearch(Solver):
     variable_type: ClassVar[VariableType] = VariableType.MIXED
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem, ctx: Context) -> None:
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         # Start at initial solution and record as best.
         new_x = problem.factors["initial_solution"]
-        new_solution = self.create_new_solution(new_x, problem)
+        new_solution = ctx.create_new_solution(new_x)
         best_solution = new_solution
-        self.log(new_solution)
+        ctx.log(new_solution)
 
         # Prepare other variables in the loop.
         sample_size = self.factors["sample_size"]
@@ -59,7 +60,7 @@ class RandomSearch(Solver):
         # Sequentially generate random solutions and simulate them.
         while True:
             # Request budget first, then simulate new solution.
-            new_solution = self.evaluate(new_solution, problem, sample_size)
+            new_solution = ctx.evaluate(new_solution, sample_size)
 
             # Check for improvement relative to incumbent best solution.
             # Also check for feasibility w.r.t. stochastic constraints.
@@ -69,8 +70,8 @@ class RandomSearch(Solver):
             ):
                 # If better, record incumbent solution as best.
                 best_solution = new_solution
-                self.log(new_solution)
+                ctx.log(new_solution)
 
             # Identify new solution to simulate for next iteration.
             new_x = problem.get_random_solution(find_next_soln_rng)
-            new_solution = self.create_new_solution(new_x, problem)
+            new_solution = ctx.create_new_solution(new_x)

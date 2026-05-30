@@ -21,8 +21,8 @@ class BudgetExhaustedError(Exception):
 
     This exception is thrown by :class:`Budget` when a call to
     :meth:`Budget.request` asks for more replications than remain in the
-    available budget. It is caught in :meth:`Solver.run` to stop the
-    macroreplication cleanly once the budget is exhausted.
+    available budget. It is caught in solver runs to stop the macroreplication
+    cleanly once the budget is exhausted.
     """
 
 
@@ -32,7 +32,7 @@ class Budget:
     A ``Budget`` instance is attached to each solver run and measures the number of
     simulation replications consumed. Solvers should call :meth:`request` before
     taking replications. If the request would exceed ``total``, a
-    :class:`BudgetExhaustedException` is raised. This provides a consistent way for
+    :class:`BudgetExhaustedError` is raised. This provides a consistent way for
     solvers to terminate exactly at the specified budget.
 
     Args:
@@ -54,7 +54,7 @@ class Budget:
             amount (int): Number of replications to consume.
 
         Raises:
-            BudgetExhaustedException: If ``amount`` would cause usage to exceed
+            BudgetExhaustedError: If ``amount`` would cause usage to exceed
                 :attr:`total`.
         """
         if self._used + amount > self.total:
@@ -70,6 +70,75 @@ class Budget:
     def remaining(self) -> int:
         """Number of replications still available (``total - used``)."""
         return self.total - self._used
+
+
+class Context:
+    """Owns runtime services needed while executing one solver macroreplication."""
+
+    def __init__(
+        self,
+        problem: Problem,
+        total_budget: int,
+        solution_progenitor_rngs: list[MRG32k3a],
+        crn_across_solns: bool,
+    ) -> None:
+        """Initialize the runtime context."""
+        self.problem = problem
+        self.budget = Budget(total_budget)
+        self.solution_progenitor_rngs = solution_progenitor_rngs
+        self.crn_across_solns = crn_across_solns
+        self.recommended_solns: list[Solution] = []
+        self.intermediate_budgets: list[int] = []
+
+    def create_new_solution(self, x: tuple) -> Solution:
+        """Create a new solution object with attached simulation RNGs."""
+        # Create new solution with attached rngs.
+        new_solution = Solution(
+            x=x, rng_list=[deepcopy(rng) for rng in self.solution_progenitor_rngs]
+        )
+        # Manipulate progenitor rngs to prepare for next new solution.
+        if not self.crn_across_solns:
+            # ...advance each rng to start of the substream
+            # substream = current substream + # of model RNGs.
+            for rng in self.solution_progenitor_rngs:
+                for _ in range(self.problem.model.n_rngs):
+                    rng.advance_substream()
+        return new_solution
+
+    def evaluate(self, x: Solution | tuple, n_reps: int = 1) -> Solution:
+        """Evaluate a solution by simulating it and returning the updated object."""
+        if isinstance(x, tuple):
+            x = self.create_new_solution(x)
+        start_reps = x.n_reps
+        self.budget.request(n_reps)
+        self.problem.simulate(x, n_reps)
+        factor = -np.array(self.problem.minmax)
+        if not np.all(factor == 1):
+            for i in range(start_reps, x.n_reps):
+                x._objectives[i] = factor * x._objectives[i]
+                x._objectives_gradients[i] = factor[:, np.newaxis] * x._objectives_gradients[i]
+            x._objectives_array = None
+            x._objectives_gradients_array = None
+        return x
+
+    def log(self, x: tuple | Solution) -> None:
+        """Record a recommended solution and the budget where it was observed."""
+        if isinstance(x, tuple):
+            x = Solution(x, [])
+        self.recommended_solns.append(x)
+        self.intermediate_budgets.append(self.budget.used)
+
+    def history(self) -> pd.DataFrame:
+        """Build a solver-history dataframe from recorded recommendations."""
+        df = pd.DataFrame(
+            {
+                "step": range(len(self.recommended_solns)),
+                "budget": self.intermediate_budgets,
+                "solution": self.recommended_solns,
+            }
+        )
+        df["solution"] = df["solution"].apply(lambda solution: solution.x)
+        return df
 
 
 class SolverConfig(BaseModel):
@@ -127,9 +196,6 @@ class Solver(ABC):
         self.rng_list: list[MRG32k3a] = []
         self.solution_progenitor_rngs: list[MRG32k3a] = []
 
-        self.recommended_solns: list[Solution] = []
-        self.intermediate_budgets: list[int] = []
-
     def __eq__(self, other: object) -> bool:
         """Check if two solvers are equivalent.
 
@@ -181,17 +247,12 @@ class Solver(ABC):
         self.rng_list = rng_list
 
     @abstractmethod
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem, ctx: Context) -> None:
         """Run a single macroreplication of a solver on a problem.
 
         Args:
             problem (Problem): Simulation-optimization problem to solve.
-
-        Returns:
-            tuple:
-                - list [Solution]: List of solutions recommended throughout the budget.
-                - list [int]: List of intermediate budgets when recommended solutions
-                    change.
+            ctx (Context): Runtime services for the current run.
         """
         raise NotImplementedError
 
@@ -202,71 +263,15 @@ class Solver(ABC):
             problem (Problem): The problem to solve.
 
         Returns:
-            tuple[list[Solution], list[int]]: A tuple containing a list of solutions
-            and a list of intermediate budgets.
+            pd.DataFrame: Solver history containing recommended solutions and budgets.
         """
-        self.budget = Budget(problem.factors["budget"])
+        ctx = Context(
+            problem=problem,
+            total_budget=problem.factors["budget"],
+            solution_progenitor_rngs=self.solution_progenitor_rngs,
+            crn_across_solns=self.config.crn_across_solns,
+        )
         with contextlib.suppress(BudgetExhaustedError):
-            self.solve(problem)
+            self.solve(problem, ctx)
 
-        recommended_solns = self.recommended_solns
-        intermediate_budgets = self.intermediate_budgets
-        self.recommended_solns = []
-        self.intermediate_budgets = []
-
-        df = pd.DataFrame(
-            {
-                "step": range(len(recommended_solns)),
-                "budget": intermediate_budgets,
-                "solution": recommended_solns,
-            }
-        )
-        df["solution"] = df["solution"].apply(lambda solution: solution.x)
-
-        return df
-
-    def create_new_solution(self, x: tuple, problem: Problem) -> Solution:
-        """Create a new solution object with attached RNGs.
-
-        Args:
-            x (tuple): A vector of decision variables.
-            problem (Problem): The problem instance associated with the solution.
-
-        Returns:
-            Solution: New solution object for the given decision variables and problem.
-        """
-        # Create new solution with attached rngs.
-        new_solution = Solution(
-            x=x, rng_list=[deepcopy(rng) for rng in self.solution_progenitor_rngs]
-        )
-        # Manipulate progenitor rngs to prepare for next new solution.
-        if not self.config.crn_across_solns:  # If CRN are not used ...
-            # ...advance each rng to start of the substream
-            # substream = current substream + # of model RNGs.
-            for rng in self.solution_progenitor_rngs:
-                for _ in range(problem.model.n_rngs):
-                    rng.advance_substream()
-        return new_solution
-
-    def evaluate(self, x: Solution | tuple, problem: Problem, n_reps: int = 1) -> Solution:
-        """Evaluate a solution by simulating it and returning the updated solution object."""
-        if isinstance(x, tuple):
-            x = self.create_new_solution(x, problem)
-        start_reps = x.n_reps
-        self.budget.request(n_reps)
-        problem.simulate(x, n_reps)
-        factor = -np.array(problem.minmax)
-        if not np.all(factor == 1):
-            for i in range(start_reps, x.n_reps):
-                x._objectives[i] = factor * x._objectives[i]
-                x._objectives_gradients[i] = factor[:, np.newaxis] * x._objectives_gradients[i]
-            x._objectives_array = None
-            x._objectives_gradients_array = None
-        return x
-
-    def log(self, x: tuple | Solution) -> None:
-        """Record a recommended solution and the budget where it was observed."""
-        if isinstance(x, tuple):
-            x = Solution(x, [])
-        self.recommended_solns.append(x)
-        self.intermediate_budgets.append(self.budget.used)
+        return ctx.history()

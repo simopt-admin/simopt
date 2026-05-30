@@ -16,6 +16,7 @@ from pydantic import Field
 
 from simopt.base import (
     ConstraintType,
+    Context,
     ObjectiveType,
     Problem,
     Solution,
@@ -83,13 +84,13 @@ class NelderMead(Solver):
     gradient_needed: ClassVar[bool] = False
 
     # FIXME: fix typing on `sort_sol`
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem, ctx: Context) -> None:
         # Designate random number generator for random sampling.
         get_rand_soln_rng = self.rng_list[1]
         n_pts = problem.dim + 1
 
         # Check for sufficiently large budget.
-        if self.budget.total < self.factors["r"] * n_pts:
+        if ctx.budget.total < self.factors["r"] * n_pts:
             err_msg = "Budget is too small for a good quality run of Nelder-Mead."
             raise ValueError(err_msg)
 
@@ -105,11 +106,11 @@ class NelderMead(Solver):
             self.upper_bounds = None
 
         # Initial dim + 1 points.
-        sol = [self.create_new_solution(problem.factors["initial_solution"], problem)]
+        sol = [ctx.create_new_solution(problem.factors["initial_solution"])]
 
         if self.lower_bounds is None or self.upper_bounds is None:
             sol.extend(
-                self.create_new_solution(problem.get_random_solution(get_rand_soln_rng), problem)
+                ctx.create_new_solution(problem.get_random_solution(get_rand_soln_rng))
                 for _ in range(1, n_pts)
             )
         else:  # Restrict starting shape/location.
@@ -130,17 +131,17 @@ class NelderMead(Solver):
             if np.any(out_of_bounds):
                 new_pts = np.clip(new_pts, self.lower_bounds, self.upper_bounds)
 
-            sol.extend(self.create_new_solution(pt, problem) for pt in new_pts)
+            sol.extend(ctx.create_new_solution(pt) for pt in new_pts)
 
         r = self.factors["r"]  # For increasing replications.
 
         # Record initial solution data.
-        self.log(sol[0])
+        ctx.log(sol[0])
 
         # Start Solving.
         # Evaluate solutions in initial structure.
         for solution in sol:
-            self.evaluate(solution, problem, r)
+            ctx.evaluate(solution, r)
 
         # Sort solutions by obj function estimate.
         sort_sol = self._sort_and_end_update(sol)
@@ -170,7 +171,7 @@ class NelderMead(Solver):
                         + (1 - self.factors["delta"]) * sol_0_x
                     )
                     p_new = self._check_const(p_new, sol_0_x)
-                    p_new = self.evaluate(tuple(p_new), problem, r)
+                    p_new = ctx.evaluate(tuple(p_new), r)
 
                     # Update sort_sol.
                     sort_sol[i] = p_new  # p_new replaces pi.
@@ -179,7 +180,7 @@ class NelderMead(Solver):
                 sort_sol = self._sort_and_end_update(sort_sol)  # pyrefly: ignore
 
             # Evaluate reflected point.
-            p_refl = self.evaluate(tuple(p_refl.tolist()), problem, r)
+            p_refl = ctx.evaluate(tuple(p_refl.tolist()), r)
             refl_fn_val = p_refl.objectives_mean
 
             # Track best, worst, and second worst points.
@@ -204,7 +205,7 @@ class NelderMead(Solver):
                 p_exp = self._check_const(p_exp, p_refl.x)
 
                 # Evaluate expansion point.
-                p_exp = self.evaluate(tuple(p_exp), problem, r)
+                p_exp = ctx.evaluate(tuple(p_exp), r)
                 exp_fn_val = p_exp.objectives_mean
 
                 # Check if expansion point is an improvement relative to simplex.
@@ -216,7 +217,7 @@ class NelderMead(Solver):
                 sort_sol = self._sort_and_end_update(sort_sol)  # pyrefly: ignore
 
                 # Record data if within budget.
-                self.log(p_exp if exp_fn_val < fn_low else p_refl)
+                ctx.log(p_exp if exp_fn_val < fn_low else p_refl)
 
             # Check if accept contraction or shrink.
             elif refl_fn_val > fn_sec:
@@ -232,7 +233,7 @@ class NelderMead(Solver):
                 p_cont = self._check_const(p_cont, p_cont2.x)
 
                 # Evaluate contraction point.
-                p_cont = self.evaluate(tuple(p_cont), problem, r)
+                p_cont = ctx.evaluate(tuple(p_cont), r)
                 cont_fn_val = p_cont.objectives_mean
 
                 # Accept contraction.
@@ -245,7 +246,7 @@ class NelderMead(Solver):
                     # Check if contraction point is new best.
                     if cont_fn_val < fn_low:
                         # Record data from contraction point (new best).
-                        self.log(p_cont)
+                        ctx.log(p_cont)
                 # Contraction fails -> simplex shrinks by delta with p_low fixed.
                 else:
                     # Set pre-loop variables
@@ -259,7 +260,7 @@ class NelderMead(Solver):
                         )
                         p_new = self._check_const(p_new, p_low.x)
 
-                        p_new = self.evaluate(tuple(p_new), problem, r)
+                        p_new = ctx.evaluate(tuple(p_new), r)
                         new_fn_val = p_new.objectives_mean
 
                         # Check for new best.
@@ -274,7 +275,7 @@ class NelderMead(Solver):
 
                     # Record data if there is a new best solution in the contraction.
                     if is_new_best:
-                        self.log(sort_sol[0])
+                        ctx.log(sort_sol[0])
 
     def _sort_and_end_update(self, sol: Iterable[Solution]) -> list[Solution]:
         """Sort solutions by objective values.

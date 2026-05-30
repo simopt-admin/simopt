@@ -36,6 +36,7 @@ from scipy.optimize import NonlinearConstraint, OptimizeResult, minimize
 
 from simopt.base import (
     ConstraintType,
+    Context,
     ObjectiveType,
     Problem,
     Solution,
@@ -332,6 +333,7 @@ class ASTRODF(Solver):
 
     def perform_adaptive_sampling(
         self,
+        ctx: Context,
         solution: Solution,
         pilot_run: int,
         delta_k: float,
@@ -340,6 +342,7 @@ class ASTRODF(Solver):
         """Perform adaptive sampling on a solution until the stopping condition is met.
 
         Args:
+            ctx (Context): Runtime services for this solver run.
             solution (Solution): The solution object being sampled.
             pilot_run (int): The number of initial pilot runs.
             delta_k (float): The current trust-region radius.
@@ -347,11 +350,11 @@ class ASTRODF(Solver):
                 the first iteration).
         """
         sample_size = solution.n_reps if solution.n_reps > 0 else pilot_run
-        lambda_max = self.budget.remaining
+        lambda_max = ctx.budget.remaining
 
         # Initial Simulation (only if needed)
         if solution.n_reps == 0:
-            solution = self.evaluate(solution, self.problem, pilot_run)
+            solution = ctx.evaluate(solution, pilot_run)
             sample_size = pilot_run
 
         while True:
@@ -384,17 +387,18 @@ class ASTRODF(Solver):
             stopping = self.get_stopping_time(pilot_run, sig2, delta_k, k)
 
             # Stop if conditions are met
-            if sample_size >= min(stopping, lambda_max) or self.budget.remaining <= 0:
+            if sample_size >= min(stopping, lambda_max) or ctx.budget.remaining <= 0:
                 if compute_kappa:
                     self.kappa = kappa  # Update kappa only if needed
                 break
 
             # Perform additional simulation
-            solution = self.evaluate(solution, self.problem, 1)
+            solution = ctx.evaluate(solution, 1)
             sample_size += 1
 
     def construct_model(
         self,
+        ctx: Context,
     ) -> tuple[
         list[float],
         list,
@@ -409,6 +413,9 @@ class ASTRODF(Solver):
         point x_k reconstruct with new points in a shrunk trust-region if the model
         fails the criticality condition the criticality condition keeps the model
         gradient norm and the trust-region size in lock-step
+
+        Args:
+            ctx (Context): Runtime services for this solver run.
         """
         # Make sure we have our global variables initialized
         if self.delta_k is None:
@@ -428,7 +435,7 @@ class ASTRODF(Solver):
         # skip_criticality = True  # self.factors["skip_criticality"]
         # Problem and solver factors
 
-        lambda_max = self.budget.remaining
+        lambda_max = ctx.budget.remaining
         # lambda_max = budget / (15 * sqrt(problem.dim))
         pilot_run = ceil(
             max(
@@ -482,13 +489,13 @@ class ASTRODF(Solver):
                 # Otherwise, create/initialize a new solution and use that
                 else:
                     decision_vars = tuple(var_y[i][0])
-                    new_solution = self.evaluate(decision_vars, self.problem, pilot_run)
+                    new_solution = ctx.evaluate(decision_vars, pilot_run)
                     self.visited_pts_list.append(new_solution)
                     adapt_soln = new_solution
 
                 # Don't perform adaptive sampling on x_0
                 if not (i == 0 and self.iteration_count == 0):
-                    self.perform_adaptive_sampling(adapt_soln, pilot_run, delta_k)
+                    self.perform_adaptive_sampling(ctx, adapt_soln, pilot_run, delta_k)
 
                 # Append the function estimate to the list
                 fval.append(adapt_soln.objectives_mean)
@@ -693,11 +700,14 @@ class ASTRODF(Solver):
         # Reset counter on successful update
         self.hessian_skip_count = 0
 
-    def iterate(self) -> None:
+    def iterate(self, ctx: Context) -> None:
         """Run one iteration of the ASTRO-DF algorithm.
 
         Build and solve a local model, update the current incumbent and trust-region
         radius, and save the data
+
+        Args:
+            ctx (Context): Runtime services for this solver run.
         """
         self.iteration_count += 1
 
@@ -705,25 +715,26 @@ class ASTRODF(Solver):
         pilot_run = ceil(
             max(
                 self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
-                min(0.5 * self.problem.dim, self.budget.total),
+                min(0.5 * self.problem.dim, ctx.budget.total),
             )
             - 1
         )
         if self.iteration_count == 1:
-            self.incumbent_solution = self.create_new_solution(self.incumbent_x, self.problem)
+            self.incumbent_solution = ctx.create_new_solution(self.incumbent_x)
             self.visited_pts_list.append(self.incumbent_solution)
 
             self.perform_adaptive_sampling(
+                ctx,
                 self.incumbent_solution,
                 pilot_run,
                 self.delta_k,
                 compute_kappa=True,
             )
-            self.log(self.incumbent_solution)
+            ctx.log(self.incumbent_solution)
         # Since incument was only evaluated with the sample size of previous incumbent,
         # here we compute its adaptive sample size
         elif self.factors["crn_across_solns"]:
-            self.perform_adaptive_sampling(self.incumbent_solution, pilot_run, self.delta_k)
+            self.perform_adaptive_sampling(ctx, self.incumbent_solution, pilot_run, self.delta_k)
 
         # use Taylor expansion if gradient available
         if self.enable_gradient:
@@ -743,7 +754,7 @@ class ASTRODF(Solver):
                 grad,
                 hessian,
                 interpolation_solns,
-            ) = self.construct_model()
+            ) = self.construct_model(ctx)
 
         # solve the local model (subproblem)
         if self.easy_solve:
@@ -813,16 +824,16 @@ class ASTRODF(Solver):
 
         # Store the solution (and function estimate at it) to the subproblem as a
         # candidate for the next iterate
-        candidate_solution = self.create_new_solution(candidate_x, self.problem)
+        candidate_solution = ctx.create_new_solution(candidate_x)
         self.visited_pts_list.append(candidate_solution)
 
         # if we use crn, then the candidate solution has the same sample size as the
         # incumbent solution
         if self.factors["crn_across_solns"]:
             num_sims = self.incumbent_solution.n_reps
-            candidate_solution = self.evaluate(candidate_solution, self.problem, num_sims)
+            candidate_solution = ctx.evaluate(candidate_solution, num_sims)
         else:
-            self.perform_adaptive_sampling(candidate_solution, pilot_run, self.delta_k)
+            self.perform_adaptive_sampling(ctx, candidate_solution, pilot_run, self.delta_k)
 
         # TODO: make sure the solution whose estimated objevtive is abrupted bc of
         # budget is not added to the list of recommended solutions, unless the error
@@ -891,7 +902,7 @@ class ASTRODF(Solver):
         if successful:
             self.incumbent_x = candidate_x
             self.incumbent_solution = candidate_solution
-            self.log(candidate_solution)
+            ctx.log(candidate_solution)
             self.delta_k = min(self.delta_k, self.delta_max)
 
             # very successful: expand
@@ -908,7 +919,7 @@ class ASTRODF(Solver):
         # delta_k = min(kappa * norm(grad), self.delta_max)
         # logging.debug("norm of grad "+str(norm(grad)))
 
-    def _initialize_solving(self) -> None:
+    def _initialize_solving(self, ctx: Context) -> None:
         """Setup the solver for the first iteration."""
         self.eta_1: float = self.factors["eta_1"]
         self.eta_2: float = self.factors["eta_2"]
@@ -917,7 +928,6 @@ class ASTRODF(Solver):
         self.easy_solve: bool = self.factors["easy_solve"]
         self.reuse_points: bool = self.factors["reuse_points"]
         self.lambda_min: int = self.factors["lambda_min"]
-        # self.lambda_max = self.budget
 
         # Designate random number generator for random sampling
         rng = self.rng_list[1]
@@ -955,7 +965,7 @@ class ASTRODF(Solver):
         else:
             self.incumbent_x = tuple(self.problem.get_random_solution(rng))
 
-        self.incumbent_solution = self.create_new_solution(self.incumbent_x, self.problem)
+        self.incumbent_solution = ctx.create_new_solution(self.incumbent_x)
         self.h_k = np.identity(self.problem.dim)
 
         self.enable_gradient = self.problem.gradient_available and self.factors["use_gradients"]
@@ -968,17 +978,15 @@ class ASTRODF(Solver):
 
         # Reset iteration count and data storage
         self.iteration_count = 0
-        self.recommended_solns = []
-        self.intermediate_budgets = []
         self.visited_pts_list = []
         self.kappa = None
 
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem, ctx: Context) -> None:
         self.problem = problem
-        self._initialize_solving()
+        self._initialize_solving(ctx)
 
-        while self.budget.remaining > 0:
-            self.iterate()
+        while ctx.budget.remaining > 0:
+            self.iterate(ctx)
 
 
 def clamp_with_epsilon(

@@ -14,6 +14,7 @@ from pydantic import Field, model_validator
 
 from simopt.base import (
     ConstraintType,
+    Context,
     ObjectiveType,
     Problem,
     Solver,
@@ -136,17 +137,17 @@ class SPSA(Solver):
         """
         return np.array(self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim))
 
-    def solve(self, problem: Problem) -> None:
+    def solve(self, problem: Problem, ctx: Context) -> None:
         lower_bound = np.array(problem.lower_bounds)
         upper_bound = np.array(problem.upper_bounds)
 
         # Start at initial solution and record as best.
         theta = problem.factors["initial_solution"]
-        theta_sol = self.create_new_solution(tuple(theta), problem)
-        self.log(theta_sol)
+        theta_sol = ctx.create_new_solution(tuple(theta))
+        ctx.log(theta_sol)
 
         # Simulate initial solution.
-        theta_sol = self.evaluate(theta_sol, problem, self.factors["n_reps"])
+        theta_sol = ctx.evaluate(theta_sol, self.factors["n_reps"])
 
         # Determine initial value for the parameters c, a, and A (Aalg)
         # (according to Section III.B of Spall (1998)).
@@ -154,7 +155,7 @@ class SPSA(Solver):
         c: float = max(np.sqrt(objective_var / self.factors["gavg"]), 1e-4)
 
         # Calculating the maximum expected number of loss evaluations per run.
-        num_evals = round((self.budget.total / self.factors["n_reps"]) * self.factors["eval_pct"])
+        num_evals = round((ctx.budget.total / self.factors["n_reps"]) * self.factors["eval_pct"])
         aalg = self.factors["iter_pct"] * num_evals / (2 * self.factors["gavg"])
         gbar = np.zeros((1, problem.dim))
 
@@ -176,11 +177,11 @@ class SPSA(Solver):
                     lower_bound,
                     upper_bound,
                 )
-                thetaplus_sol = self.create_new_solution(tuple(theta_forward), problem)
-                thetaminus_sol = self.create_new_solution(tuple(theta_backward), problem)
+                thetaplus_sol = ctx.create_new_solution(tuple(theta_forward))
+                thetaminus_sol = ctx.create_new_solution(tuple(theta_backward))
                 # Evaluate two points and update budget spent.
-                thetaplus_sol = self.evaluate(thetaplus_sol, problem, self.factors["n_reps"])
-                thetaminus_sol = self.evaluate(thetaminus_sol, problem, self.factors["n_reps"])
+                thetaplus_sol = ctx.evaluate(thetaplus_sol, self.factors["n_reps"])
+                thetaminus_sol = ctx.evaluate(thetaminus_sol, self.factors["n_reps"])
                 # Estimate gradient.
                 step_weight_net = step_weight_plus + step_weight_minus
                 step_weight_net = make_nonzero(step_weight_net, "net_step_weight")
@@ -213,11 +214,11 @@ class SPSA(Solver):
             theta_backward, step_weight_minus = _check_cons(
                 theta_backward, theta, lower_bound, upper_bound
             )
-            thetaplus_sol = self.create_new_solution(tuple(theta_forward), problem)
-            thetaminus_sol = self.create_new_solution(tuple(theta_backward), problem)
+            thetaplus_sol = ctx.create_new_solution(tuple(theta_forward))
+            thetaminus_sol = ctx.create_new_solution(tuple(theta_backward))
             # Evaluate two points and update budget spent.
-            thetaplus_sol = self.evaluate(thetaplus_sol, problem, self.factors["n_reps"])
-            thetaminus_sol = self.evaluate(thetaminus_sol, problem, self.factors["n_reps"])
+            thetaplus_sol = ctx.evaluate(thetaplus_sol, self.factors["n_reps"])
+            thetaminus_sol = ctx.evaluate(thetaminus_sol, self.factors["n_reps"])
             # Estimate current solution's objective funtion value by weighted average.
             mean_minus = thetaplus_sol.objectives_mean * step_weight_minus
             mean_plus = thetaminus_sol.objectives_mean * step_weight_plus
@@ -233,14 +234,14 @@ class SPSA(Solver):
             if solution_value < best_solution_value:
                 best_solution_value = solution_value
                 # Record data from the new best solution.
-                self.log(theta_sol)
+                ctx.log(theta_sol)
             # Estimate gradient.
             theta_mean_diff = thetaplus_sol.objectives_mean - thetaminus_sol.objectives_mean
             ghat = (theta_mean_diff * delta) / (step_weight_net * c)
             # Take step and check feasibility.
             theta_next = theta - (ak * ghat)
             theta, _ = _check_cons(theta_next, theta, lower_bound, upper_bound)
-            theta_sol = self.create_new_solution(tuple(theta), problem)
+            theta_sol = ctx.create_new_solution(tuple(theta))
 
 
 def _check_cons(
