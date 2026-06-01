@@ -727,10 +727,7 @@ class ASTRODF(Solver):
 
         # use Taylor expansion if gradient available
         if self.enable_gradient:
-            fval = (
-                np.ones(2 * self.problem.dim + 1)
-                * self.incumbent_solution.objectives_mean
-            )
+            fval = np.ones(2 * self.problem.dim + 1) * self.incumbent_solution.objectives_mean
             grad = self.incumbent_solution.objectives_gradients_mean[0]
             hessian = self.h_k
             # Set empty variables to get rid of typing warnings
