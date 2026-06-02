@@ -283,13 +283,13 @@ class DASSO(Solver):
             restricted_set = mapping.get_solution_indices_from_non_g_component(non_g_comp_as_tuple)
 
             # Simulate the sample best solution.
-            self._record_simulations(run_state, [sample_best_solution_index], problem, ctx, mapping)
+            self._record_simulations(run_state, [sample_best_solution_index], ctx, mapping)
 
             # Simulate a solution from the restricted set if it does not have any
             # solution that has been simulated.
             if not any(sol in run_state.design_point_indices for sol in restricted_set):
                 solution_index = solver_rng.choice(restricted_set)
-                self._record_simulations(run_state, [solution_index], problem, ctx, mapping)
+                self._record_simulations(run_state, [solution_index], ctx, mapping)
                 for group in groups:
                     group.add_design_points([solution_index])
 
@@ -390,13 +390,11 @@ class DASSO(Solver):
             if max_cei_solution not in run_state.design_point_indices:
                 for group in groups:
                     group.add_design_points([max_cei_solution])
-            self._record_simulations(run_state, [max_cei_solution], problem, ctx, mapping)
+            self._record_simulations(run_state, [max_cei_solution], ctx, mapping)
 
             # Simulate sample-best solution of the restricted set.
             sample_best_solution_restricted = reordered_solutions[sample_best_index]
-            self._record_simulations(
-                run_state, [sample_best_solution_restricted], problem, ctx, mapping
-            )
+            self._record_simulations(run_state, [sample_best_solution_restricted], ctx, mapping)
 
             # Identify the sample best solution.
             best_solution_candidate_index = run_state.sample_means_vec_d.argmin()
@@ -720,7 +718,7 @@ class DASSO(Solver):
 
         # Parameter estimation.
         design_point_indices = [mapping.get_solution_index(sol) for sol in design_points]
-        self._record_simulations(run_state, design_point_indices, problem, ctx, mapping)
+        self._record_simulations(run_state, design_point_indices, ctx, mapping)
 
         # Estimate hyperparameters for each group.
         random_effect_variances = {}
@@ -1313,7 +1311,6 @@ class DASSO(Solver):
         self,
         run_state: _RunState,
         solution_indices: list[int],
-        problem: Problem,
         ctx: Context,
         mapping: DASSO._Mapping,
     ) -> None:
@@ -1322,8 +1319,6 @@ class DASSO(Solver):
         Args:
             run_state (_RunState): Run-scoped storage for design point data.
             solution_indices (list[int]): The solution indices to be simulated.
-            problem (Problem): The problem instance providing bounds and function
-                evaluations.
             ctx (Context): Runtime services for the current run.
             mapping (DASSO._Mapping): The mapping instance providing mapping between
                 solutions and coordinates.
