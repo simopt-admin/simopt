@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use("Agg")  # Non-interactive backend
 import inspect
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any
 
 import matplotlib.pyplot as plt
 from fastapi import Body, FastAPI
@@ -38,14 +38,14 @@ from simopt.web.plots import (
 # These define the expected shape of incoming JSON payloads for each endpoint.
 class ProblemRequest(BaseModel):
     name: str
-    rename: Optional[str] = None
+    rename: str | None = None
     fixed_factors: dict[str, Any]
     model_fixed_factors: dict[str, Any] = {}
 
 
 class SolverRequest(BaseModel):
     name: str
-    rename: Optional[str] = None
+    rename: str | None = None
     fixed_factors: dict[str, Any]
 
 
@@ -88,12 +88,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load post-replicate and post-normalize defaults from SimOpt if available.
-try:
-    from simopt.experiment_base import POST_NORMALIZE_DEFAULTS, POST_REPLICATE_DEFAULTS
-except Exception:
-    POST_REPLICATE_DEFAULTS = {}
-    POST_NORMALIZE_DEFAULTS = {}
+POST_REPLICATE_DEFAULTS = getattr(eb, "POST_REPLICATE_DEFAULTS", {})
+POST_NORMALIZE_DEFAULTS = getattr(eb, "POST_NORMALIZE_DEFAULTS", {})
 
 
 # ── Static file serving ──
@@ -152,9 +148,7 @@ def create_name_mappings():
     for abbr_name in solver_directory:
         solver_cls = solver_directory[abbr_name]
         full_name = getattr(solver_cls, "class_name", abbr_name)
-        display_name = (
-            f"{abbr_name} ({full_name})" if full_name != abbr_name else abbr_name
-        )
+        display_name = f"{abbr_name} ({full_name})" if full_name != abbr_name else abbr_name
         solver_abbr_to_full[abbr_name] = display_name
         solver_full_to_abbr[display_name] = abbr_name
 
@@ -164,9 +158,7 @@ def create_name_mappings():
     for abbr_name in problem_directory:
         problem_cls = problem_directory[abbr_name]
         full_name = getattr(problem_cls, "class_name", abbr_name)
-        display_name = (
-            f"{abbr_name} ({full_name})" if full_name != abbr_name else abbr_name
-        )
+        display_name = f"{abbr_name} ({full_name})" if full_name != abbr_name else abbr_name
         problem_abbr_to_full[abbr_name] = display_name
         problem_full_to_abbr[display_name] = abbr_name
 
@@ -336,9 +328,7 @@ def get_problem_params(problem_name: str):
             sig = inspect.signature(problem_cls)
             if "model" in sig.parameters:
                 model_default = sig.parameters["model"].default
-                model_config_cls = getattr(
-                    model_default.__class__, "config_class", None
-                )
+                model_config_cls = getattr(model_default.__class__, "config_class", None)
                 params += extract_params_from_config(model_config_cls)
         except Exception:
             pass
@@ -353,9 +343,7 @@ def get_plot_params(plot_name: str):
     if name in ["ALL", "MEAN", "QUANTILE"]:
         return {"parameters": extract_params_from_config(PlotProgressCurvesConfig)}
     if name in ["VIOLIN", "BOX"]:
-        return {
-            "parameters": extract_params_from_config(PlotTerminalProgressCurvesConfig)
-        }
+        return {"parameters": extract_params_from_config(PlotTerminalProgressCurvesConfig)}
     if name in [
         "CDF_SOLVABILITY",
         "QUANTILE_SOLVABILITY",
@@ -368,9 +356,7 @@ def get_plot_params(plot_name: str):
     if name == "SOLVE_TIME_CDF":
         return {"parameters": extract_params_from_config(PlotSolvabilityCDFConfig)}
     if name == "TERMINAL_SCATTER":
-        return {
-            "parameters": extract_params_from_config(PlotTerminalScatterplotsConfig)
-        }
+        return {"parameters": extract_params_from_config(PlotTerminalScatterplotsConfig)}
     return {"parameters": []}
 
 
@@ -392,9 +378,7 @@ def check_compatibility(payload: dict):
         compatibility[display_name] = {}
 
         for prob_display_name in problems:
-            prob_abbr_name = PROBLEM_FULL_TO_ABBR.get(
-                prob_display_name, prob_display_name
-            )
+            prob_abbr_name = PROBLEM_FULL_TO_ABBR.get(prob_display_name, prob_display_name)
             problem_cls = problem_directory.get(prob_abbr_name)
             if not problem_cls:
                 continue
@@ -465,9 +449,7 @@ def _check_rerun_logic(payload: dict) -> bool:
     solvers_match = saved["solvers"] == new_solvers
     params_match = saved["experiment_params"] == new_params
 
-    print(
-        f"check_rerun: problems={problems_match}, solvers={solvers_match}, params={params_match}"
-    )
+    print(f"check_rerun: problems={problems_match}, solvers={solvers_match}, params={params_match}")
     if not problems_match:
         print(f"  saved problems: {saved['problems']}")
         print(f"  new problems:   {new_problems}")
@@ -495,7 +477,6 @@ def generate_plots(
 ):
     """Shared plot generation logic used by both run_experiment_async and run_plots_only."""
     from simopt.experiment_base import (
-        PlotType,
         plot_area_scatterplots,
         plot_progress_curves,
         plot_solvability_cdfs,
@@ -503,6 +484,7 @@ def generate_plots(
         plot_terminal_progress,
         plot_terminal_scatterplots,
     )
+    from simopt.plot_type import PlotType
 
     plot_files = []
 
@@ -516,9 +498,7 @@ def generate_plots(
         if plot_solvers:
             plot_solver_abbrs = [SOLVER_FULL_TO_ABBR.get(s, s) for s in plot_solvers]
             orig_solver_indices = [
-                i
-                for i, s in enumerate(solvers_config)
-                if s["name"] in plot_solver_abbrs
+                i for i, s in enumerate(solvers_config) if s["name"] in plot_solver_abbrs
             ]
             solver_exp_indices = [solver_idx_map[i] for i in orig_solver_indices]
         else:
@@ -527,9 +507,7 @@ def generate_plots(
         if plot_problems:
             plot_problem_abbrs = [PROBLEM_FULL_TO_ABBR.get(p, p) for p in plot_problems]
             orig_problem_indices = [
-                i
-                for i, p in enumerate(problems_config)
-                if p["name"] in plot_problem_abbrs
+                i for i, p in enumerate(problems_config) if p["name"] in plot_problem_abbrs
             ]
             problem_exp_indices = [problem_idx_map[i] for i in orig_problem_indices]
         else:
@@ -589,9 +567,7 @@ def generate_plots(
                     all_in_one = plot_params.get("all_in_one", True)
 
                     # Determine which PlotType to use
-                    plot_type_enum = (
-                        PlotType.VIOLIN if plot_type_name == "VIOLIN" else PlotType.BOX
-                    )
+                    plot_type_enum = PlotType.VIOLIN if plot_type_name == "VIOLIN" else PlotType.BOX
 
                     plot_terminal_progress(
                         [
@@ -620,9 +596,7 @@ def generate_plots(
         elif plot_type_name in ["AREA", "AREA_MEAN", "AREA_STD_DEV"]:
             # Generate area scatterplots for each problem
             if len(problem_exp_indices) < 2:
-                print(
-                    f"Warning: {plot_type_name} requires multiple problems. Skipping."
-                )
+                print(f"Warning: {plot_type_name} requires multiple problems. Skipping.")
                 continue
             try:
                 print(f"Generating {plot_type_name} plot...")
@@ -641,7 +615,7 @@ def generate_plots(
                     "AREA_MEAN": PlotType.AREA_MEAN,
                     "AREA_STD_DEV": PlotType.AREA_STD_DEV,
                 }
-                plot_type_enum = plot_type_map.get(plot_type_name)
+                plot_type_enum = plot_type_map[plot_type_name]
 
                 filtered_experiments = [
                     [
@@ -680,9 +654,7 @@ def generate_plots(
         ]:
             # Solvability profiles require multiple problems
             if len(problem_exp_indices) < 2:
-                print(
-                    f"Warning: {plot_type_name} requires multiple problems. Skipping."
-                )
+                print(f"Warning: {plot_type_name} requires multiple problems. Skipping.")
                 continue
             try:
                 print(f"Generating {plot_type_name} plot...")
@@ -691,9 +663,7 @@ def generate_plots(
                 all_in_one = plot_params.get("all_in_one", True)
                 n_bootstraps = plot_params.get("n_bootstraps", 100)
                 conf_level = plot_params.get("conf_level", 0.95)
-                plot_conf_ints = plot_params.get(
-                    "plot_conf_ints", False
-                )  # Disabled by default
+                plot_conf_ints = plot_params.get("plot_conf_ints", False)  # Disabled by default
                 print_max_hw = plot_params.get("print_max_hw", False)
                 solve_tol = plot_params.get("solve_tol", 0.1)
                 beta = plot_params.get("beta", 0.5)
@@ -707,7 +677,7 @@ def generate_plots(
                     "DIFFERENCE_OF_CDF_SOLVABILITY": PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
                     "DIFFERENCE_OF_QUANTILE_SOLVABILITY": PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
                 }
-                plot_type_enum = plot_type_map.get(plot_type_name)
+                plot_type_enum = plot_type_map[plot_type_name]
 
                 filtered_experiments = [
                     [
@@ -849,9 +819,7 @@ def setup_print_capture(log_file):
                 line = line.strip()
                 if line:
                     entry = {
-                        "time": __import__("datetime")
-                        .datetime.now()
-                        .strftime("%H:%M:%S"),
+                        "time": __import__("datetime").datetime.now().strftime("%H:%M:%S"),
                         "level": "INFO",
                         "msg": line,
                     }
@@ -950,9 +918,7 @@ def run_experiment_async(run_id: str, payload: dict):
             plot_problems = plot_cfg.get("problems")
 
             if plot_solvers:
-                plot_solver_abbrs = [
-                    SOLVER_FULL_TO_ABBR.get(s, s) for s in plot_solvers
-                ]
+                plot_solver_abbrs = [SOLVER_FULL_TO_ABBR.get(s, s) for s in plot_solvers]
                 for i, s in enumerate(solvers_config):
                     if s["name"] in plot_solver_abbrs:
                         needed_solver_indices.add(i)
@@ -960,9 +926,7 @@ def run_experiment_async(run_id: str, payload: dict):
                 needed_solver_indices.update(range(len(solvers_config)))
 
             if plot_problems:
-                plot_problem_abbrs = [
-                    PROBLEM_FULL_TO_ABBR.get(p, p) for p in plot_problems
-                ]
+                plot_problem_abbrs = [PROBLEM_FULL_TO_ABBR.get(p, p) for p in plot_problems]
                 for i, p in enumerate(problems_config):
                     if p["name"] in plot_problem_abbrs:
                         needed_problem_indices.add(i)
@@ -1092,7 +1056,7 @@ def run_experiment_async(run_id: str, payload: dict):
 def update_status(
     folder: Path,
     status: str,
-    plot_files: Optional[list[str]] = None,
+    plot_files: list[str] | None = None,
 ):
     """Update the results page with current status and plots."""
     run_id = folder.name
@@ -1127,7 +1091,9 @@ def update_status(
                 <span class="mini-label">{label}</span>
             </div>
             """
-            preview_data += f'"{plot_id}": {{"src": "/results/{run_id}/{plot_file}", "label": "{label}"}},'
+            preview_data += (
+                f'"{plot_id}": {{"src": "/results/{run_id}/{plot_file}", "label": "{label}"}},'
+            )
 
         plots_html = f"""
         <div id="plots-grid">{plot_cards}</div>
@@ -1673,13 +1639,9 @@ def run_plots_only(run_id: str, payload: dict):
 
         # Convert display names
         for solver_cfg in solvers_config:
-            solver_cfg["name"] = SOLVER_FULL_TO_ABBR.get(
-                solver_cfg["name"], solver_cfg["name"]
-            )
+            solver_cfg["name"] = SOLVER_FULL_TO_ABBR.get(solver_cfg["name"], solver_cfg["name"])
         for prob_cfg in problems_config:
-            prob_cfg["name"] = PROBLEM_FULL_TO_ABBR.get(
-                prob_cfg["name"], prob_cfg["name"]
-            )
+            prob_cfg["name"] = PROBLEM_FULL_TO_ABBR.get(prob_cfg["name"], prob_cfg["name"])
 
         plot_files = generate_plots(
             plots_config=plots_config,
@@ -1723,6 +1685,8 @@ def run_experiment(payload: Annotated[dict[str, Any], Body()]):
         thread.start()
     else:
         run_id = payload.get("last_run_id")
+        if not isinstance(run_id, str):
+            return {"error": "Missing last_run_id for plot-only run"}
         folder = RESULTS_DIR / run_id
         print(f"Skipping rerun, generating plots only for {run_id}")
         thread = threading.Thread(target=run_plots_only, args=(run_id, payload))
@@ -1736,7 +1700,5 @@ def run_experiment(payload: Annotated[dict[str, Any], Body()]):
 def get_results(experiment_id: str):
     """Get results for an experiment."""
     path = Path(f"svelte-app/results/{experiment_id}")
-    images = [
-        f"svelte-app/results/{experiment_id}/{p.name}" for p in path.glob("*.png")
-    ]
+    images = [f"svelte-app/results/{experiment_id}/{p.name}" for p in path.glob("*.png")]
     return {"images": images}

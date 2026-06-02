@@ -1,19 +1,28 @@
-import re
-from playwright.sync_api import Playwright, sync_playwright, expect
+"""Browser smoke script for the SimOpt web UI."""
+
+# ruff: noqa: RUF001
+
+from importlib import import_module
+from typing import Any
 
 
-def run(playwright: Playwright) -> None:
+def run(playwright: Any) -> None:  # noqa: ANN401
+    """Run recorded browser interactions against the local web UI."""
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
 
-    #Test 1: Check all plot functionality
+    # Test 1: Check all plot functionality
     page.goto("http://localhost:5173/")
     page.get_by_role("combobox").first.select_option("ADAM")
     page.get_by_role("button", name="+ Add Solver").click()
-    page.get_by_role("combobox").nth(2).select_option("CNTNEWS-1 (Max Profit for Continuous Newsvendor)")
+    page.get_by_role("combobox").nth(2).select_option(
+        "CNTNEWS-1 (Max Profit for Continuous Newsvendor)"
+    )
     page.get_by_role("button", name="+ Add Problem").click()
-    page.get_by_role("combobox").nth(2).select_option("SAN-1 (Min Mean Longest Path for Stochastic Activity Network)")
+    page.get_by_role("combobox").nth(2).select_option(
+        "SAN-1 (Min Mean Longest Path for Stochastic Activity Network)"
+    )
     page.get_by_role("button", name="+ Add Problem").click()
     page.get_by_role("combobox").nth(1).select_option("ALL")
     page.get_by_role("button", name="+ Add Plot").click()
@@ -46,7 +55,7 @@ def run(playwright: Playwright) -> None:
     page1 = page1_info.value
     page1.goto("http://localhost:5173/results/20260412_182438/index.html")
 
-    #Test 2: Edit a solver
+    # Test 2: Edit a solver
     page.goto("http://localhost:5173/")
     page.get_by_role("combobox").first.select_option("ADAM")
     page.get_by_role("button", name="+ Add Solver").click()
@@ -59,7 +68,7 @@ def run(playwright: Playwright) -> None:
     page.get_by_role("button", name="Apply Changes").click()
     page.get_by_role("button", name="ADAM ▶ ×").click()
 
-    #Test 3: Replace a solver in edit panel with one from summary panel
+    # Test 3: Replace a solver in edit panel with one from summary panel
     page.goto("http://localhost:5173/")
     page.get_by_role("combobox").first.select_option("ASTRODF (ASTRO-DF)")
     page.get_by_role("button", name="+ Add Solver").click()
@@ -68,7 +77,7 @@ def run(playwright: Playwright) -> None:
     page.get_by_role("button", name="Edit").click()
     page.get_by_role("button", name="Replace").click()
 
-    #Test 4: Cancel replacement of solver in edit panel with one from summary panel
+    # Test 4: Cancel replacement of solver in edit panel with one from summary panel
     page.goto("http://localhost:5173/")
     page.get_by_role("combobox").first.select_option("ALOE")
     page.get_by_role("button", name="+ Add Solver").click()
@@ -77,26 +86,32 @@ def run(playwright: Playwright) -> None:
     page.get_by_role("button", name="Edit").click()
     page.get_by_role("button", name="Cancel").click()
 
-    #Test 5: Partial plot (run plot for only select problems)
+    # Test 5: Partial plot (run plot for only select problems)
     page.goto("http://localhost:5173/")
     page.get_by_role("combobox").first.select_option("ADAM")
     page.get_by_role("button", name="+ Add Solver").click()
-    page.get_by_role("combobox").nth(2).select_option("SAN-1 (Min Mean Longest Path for Stochastic Activity Network)")
+    page.get_by_role("combobox").nth(2).select_option(
+        "SAN-1 (Min Mean Longest Path for Stochastic Activity Network)"
+    )
     page.get_by_role("button", name="+ Add Problem").click()
-    page.get_by_role("combobox").nth(2).select_option("CNTNEWS-1 (Max Profit for Continuous Newsvendor)")
+    page.get_by_role("combobox").nth(2).select_option(
+        "CNTNEWS-1 (Max Profit for Continuous Newsvendor)"
+    )
     page.get_by_role("button", name="+ Add Problem").click()
     page.get_by_role("combobox").nth(1).select_option("MEAN")
     page.get_by_role("checkbox", name="CNTNEWS-1 (Max Profit for").check()
     page.get_by_role("button", name="+ Add Plot").click()
     with page.expect_popup() as page2_info:
         page.get_by_role("button", name="Run Experiment").click()
-    page2 = page2_info.value
+    _ = page2_info.value
 
-    #Test 6: Check output log functionality
+    # Test 6: Check output log functionality
     page.goto("http://localhost:5173/")
     page.get_by_role("combobox").first.select_option("ADAM")
     page.get_by_role("button", name="+ Add Solver").click()
-    page.get_by_role("combobox").nth(2).select_option("SAN-1 (Min Mean Longest Path for Stochastic Activity Network)")
+    page.get_by_role("combobox").nth(2).select_option(
+        "SAN-1 (Min Mean Longest Path for Stochastic Activity Network)"
+    )
     page.get_by_role("button", name="+ Add Problem").click()
     page.get_by_role("combobox").nth(1).select_option("MEAN")
     page.get_by_role("button", name="+ Add Plot").click()
@@ -105,11 +120,13 @@ def run(playwright: Playwright) -> None:
     page3 = page3_info.value
     page3.get_by_text("Output Log ▼ Auto-scroll: ON").click()
 
-    #Test 7: Check that experiment does not rerun when only plot is added
+    # Test 7: Check that experiment does not rerun when only plot is added
     page.goto("http://localhost:5173/")
     page.get_by_role("combobox").first.select_option("ADAM")
     page.get_by_role("button", name="+ Add Solver").click()
-    page.get_by_role("combobox").nth(2).select_option("SAN-1 (Min Mean Longest Path for Stochastic Activity Network)")
+    page.get_by_role("combobox").nth(2).select_option(
+        "SAN-1 (Min Mean Longest Path for Stochastic Activity Network)"
+    )
     page.get_by_role("button", name="+ Add Problem").click()
     page.get_by_role("combobox").nth(1).select_option("MEAN")
     page.get_by_role("button", name="+ Add Plot").click()
@@ -121,14 +138,13 @@ def run(playwright: Playwright) -> None:
     page.get_by_role("button", name="+ Add Plot").click()
     with page.expect_popup() as page6_info:
         page.get_by_role("button", name="Run Experiment").click()
-    page6 = page6_info.value
+    _ = page6_info.value
 
     # ---------------------
     context.close()
     browser.close()
 
 
-with sync_playwright() as playwright:
+sync_api = import_module("playwright.sync_api")
+with sync_api.sync_playwright() as playwright:
     run(playwright)
-
-

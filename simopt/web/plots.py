@@ -1,6 +1,6 @@
 """Plot configuration models for the SimOpt web API."""
 
-from typing import Annotated, Optional
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
@@ -22,9 +22,7 @@ class PlotProgressCurvesConfig(BaseModel):
         float,
         Field(
             default=0.50,
-            description=(
-                "Quantile level to plot (0 < beta < 1). Used for QUANTILE plots."
-            ),
+            description=("Quantile level to plot (0 < beta < 1). Used for QUANTILE plots."),
             gt=0.0,
             lt=1.0,
         ),
@@ -82,7 +80,7 @@ class PlotProgressCurvesConfig(BaseModel):
     ]
 
     plot_title: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description="Custom plot title (used only if all_in_one=True).",
@@ -90,7 +88,7 @@ class PlotProgressCurvesConfig(BaseModel):
     ]
 
     legend_loc: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description='Legend location (e.g., "best", "lower right").',
@@ -130,9 +128,7 @@ class PlotSolvabilityCDFConfig(BaseModel):
         float,
         Field(
             default=0.1,
-            description=(
-                "Optimality gap that defines when a problem is considered solved"
-            ),
+            description=("Optimality gap that defines when a problem is considered solved"),
             gt=0.0,
             le=1.0,
         ),
@@ -182,7 +178,7 @@ class PlotSolvabilityCDFConfig(BaseModel):
     ]
 
     plot_title: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description="Custom plot title (used only if all_in_one=True).",
@@ -190,7 +186,7 @@ class PlotSolvabilityCDFConfig(BaseModel):
     ]
 
     legend_loc: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description='Legend location (e.g., "best", "lower right").',
@@ -270,7 +266,7 @@ class PlotAreaScatterplotsConfig(BaseModel):
     ]
 
     plot_title: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description="Custom plot title (used only if all_in_one=True).",
@@ -370,9 +366,7 @@ class PlotSolvabilityProfilesConfig(BaseModel):
         float,
         Field(
             default=0.1,
-            description=(
-                "Optimality gap that defines when a problem is considered solved"
-            ),
+            description=("Optimality gap that defines when a problem is considered solved"),
             gt=0.0,
             le=1.0,
         ),
@@ -389,7 +383,7 @@ class PlotSolvabilityProfilesConfig(BaseModel):
     ]
 
     ref_solver: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description="Reference solver for difference plots.",
@@ -397,7 +391,7 @@ class PlotSolvabilityProfilesConfig(BaseModel):
     ]
 
     plot_title: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description="Custom plot title (used only if all_in_one=True).",
@@ -405,7 +399,7 @@ class PlotSolvabilityProfilesConfig(BaseModel):
     ]
 
     legend_loc: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description='Legend location (e.g., "best", "lower right").',
@@ -475,7 +469,7 @@ class PlotTerminalProgressCurvesConfig(BaseModel):
     ]
 
     plot_title: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description="Custom plot title (used only if all_in_one=True).",
@@ -528,7 +522,7 @@ class PlotTerminalScatterplotsConfig(BaseModel):
     ]
 
     plot_title: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description="Custom plot title (used only if all_in_one=True).",
@@ -536,7 +530,7 @@ class PlotTerminalScatterplotsConfig(BaseModel):
     ]
 
     legend_loc: Annotated[
-        Optional[str],
+        str | None,
         Field(
             default=None,
             description='Legend location (e.g., "best", "lower right").',
