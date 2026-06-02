@@ -106,11 +106,11 @@ class NelderMead(Solver):
             self.upper_bounds = None
 
         # Initial dim + 1 points.
-        sol = [ctx.create_new_solution(problem.factors["initial_solution"])]
+        sol = [ctx.evaluate(problem.factors["initial_solution"], 0)]
 
         if self.lower_bounds is None or self.upper_bounds is None:
             sol.extend(
-                ctx.create_new_solution(problem.get_random_solution(get_rand_soln_rng))
+                ctx.evaluate(problem.get_random_solution(get_rand_soln_rng), 0)
                 for _ in range(1, n_pts)
             )
         else:  # Restrict starting shape/location.
@@ -131,7 +131,7 @@ class NelderMead(Solver):
             if np.any(out_of_bounds):
                 new_pts = np.clip(new_pts, self.lower_bounds, self.upper_bounds)
 
-            sol.extend(ctx.create_new_solution(pt) for pt in new_pts)
+            sol.extend(ctx.evaluate(pt, 0) for pt in new_pts)
 
         r = self.factors["r"]  # For increasing replications.
 

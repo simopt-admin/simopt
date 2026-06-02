@@ -720,7 +720,7 @@ class ASTRODF(Solver):
             - 1
         )
         if self.iteration_count == 1:
-            self.incumbent_solution = ctx.create_new_solution(self.incumbent_x)
+            self.incumbent_solution = ctx.evaluate(self.incumbent_x, 0)
             self.visited_pts_list.append(self.incumbent_solution)
 
             self.perform_adaptive_sampling(
@@ -824,7 +824,7 @@ class ASTRODF(Solver):
 
         # Store the solution (and function estimate at it) to the subproblem as a
         # candidate for the next iterate
-        candidate_solution = ctx.create_new_solution(candidate_x)
+        candidate_solution = ctx.evaluate(candidate_x, 0)
         self.visited_pts_list.append(candidate_solution)
 
         # if we use crn, then the candidate solution has the same sample size as the
@@ -965,7 +965,7 @@ class ASTRODF(Solver):
         else:
             self.incumbent_x = tuple(self.problem.get_random_solution(rng))
 
-        self.incumbent_solution = ctx.create_new_solution(self.incumbent_x)
+        self.incumbent_solution = ctx.evaluate(self.incumbent_x, 0)
         self.h_k = np.identity(self.problem.dim)
 
         self.enable_gradient = self.problem.gradient_available and self.factors["use_gradients"]

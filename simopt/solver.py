@@ -90,25 +90,18 @@ class Context:
         self.recommended_solns: list[Solution] = []
         self.intermediate_budgets: list[int] = []
 
-    def create_new_solution(self, x: tuple) -> Solution:
-        """Create a new solution object with attached simulation RNGs."""
-        # Create new solution with attached rngs.
-        new_solution = Solution(
-            x=x, rng_list=[deepcopy(rng) for rng in self.solution_progenitor_rngs]
-        )
-        # Manipulate progenitor rngs to prepare for next new solution.
-        if not self.crn_across_solns:
-            # ...advance each rng to start of the substream
-            # substream = current substream + # of model RNGs.
-            for rng in self.solution_progenitor_rngs:
-                for _ in range(self.problem.model.n_rngs):
-                    rng.advance_substream()
-        return new_solution
-
     def evaluate(self, x: Solution | tuple, n_reps: int = 1) -> Solution:
         """Evaluate a solution by simulating it and returning the updated object."""
-        if isinstance(x, tuple):
-            x = self.create_new_solution(x)
+        if not isinstance(x, Solution):
+            # Create new solution with attached rngs.
+            x = Solution(x=x, rng_list=[deepcopy(rng) for rng in self.solution_progenitor_rngs])
+            # Manipulate progenitor rngs to prepare for next new solution.
+            if not self.crn_across_solns:
+                # ...advance each rng to start of the substream
+                # substream = current substream + # of model RNGs.
+                for rng in self.solution_progenitor_rngs:
+                    for _ in range(self.problem.model.n_rngs):
+                        rng.advance_substream()
         start_reps = x.n_reps
         self.budget.request(n_reps)
         self.problem.simulate(x, n_reps)

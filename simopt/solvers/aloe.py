@@ -101,7 +101,7 @@ class ALOE(Solver):
         upper_bound = np.array(problem.upper_bounds)
 
         # Start with the initial solution.
-        new_solution = ctx.create_new_solution(problem.factors["initial_solution"])
+        new_solution = ctx.evaluate(problem.factors["initial_solution"], 0)
         ctx.log(new_solution)
         new_solution = ctx.evaluate(new_solution, r)
 

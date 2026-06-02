@@ -143,7 +143,7 @@ class SPSA(Solver):
 
         # Start at initial solution and record as best.
         theta = problem.factors["initial_solution"]
-        theta_sol = ctx.create_new_solution(tuple(theta))
+        theta_sol = ctx.evaluate(tuple(theta), 0)
         ctx.log(theta_sol)
 
         # Simulate initial solution.
@@ -177,8 +177,8 @@ class SPSA(Solver):
                     lower_bound,
                     upper_bound,
                 )
-                thetaplus_sol = ctx.create_new_solution(tuple(theta_forward))
-                thetaminus_sol = ctx.create_new_solution(tuple(theta_backward))
+                thetaplus_sol = ctx.evaluate(tuple(theta_forward), 0)
+                thetaminus_sol = ctx.evaluate(tuple(theta_backward), 0)
                 # Evaluate two points and update budget spent.
                 thetaplus_sol = ctx.evaluate(thetaplus_sol, self.factors["n_reps"])
                 thetaminus_sol = ctx.evaluate(thetaminus_sol, self.factors["n_reps"])
@@ -214,8 +214,8 @@ class SPSA(Solver):
             theta_backward, step_weight_minus = _check_cons(
                 theta_backward, theta, lower_bound, upper_bound
             )
-            thetaplus_sol = ctx.create_new_solution(tuple(theta_forward))
-            thetaminus_sol = ctx.create_new_solution(tuple(theta_backward))
+            thetaplus_sol = ctx.evaluate(tuple(theta_forward), 0)
+            thetaminus_sol = ctx.evaluate(tuple(theta_backward), 0)
             # Evaluate two points and update budget spent.
             thetaplus_sol = ctx.evaluate(thetaplus_sol, self.factors["n_reps"])
             thetaminus_sol = ctx.evaluate(thetaminus_sol, self.factors["n_reps"])
@@ -241,7 +241,7 @@ class SPSA(Solver):
             # Take step and check feasibility.
             theta_next = theta - (ak * ghat)
             theta, _ = _check_cons(theta_next, theta, lower_bound, upper_bound)
-            theta_sol = ctx.create_new_solution(tuple(theta))
+            theta_sol = ctx.evaluate(tuple(theta), 0)
 
 
 def _check_cons(

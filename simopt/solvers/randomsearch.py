@@ -49,7 +49,7 @@ class RandomSearch(Solver):
         find_next_soln_rng = self.rng_list[1]
         # Start at initial solution and record as best.
         new_x = problem.factors["initial_solution"]
-        new_solution = ctx.create_new_solution(new_x)
+        new_solution = ctx.evaluate(new_x, 0)
         best_solution = new_solution
         ctx.log(new_solution)
 
@@ -74,4 +74,4 @@ class RandomSearch(Solver):
 
             # Identify new solution to simulate for next iteration.
             new_x = problem.get_random_solution(find_next_soln_rng)
-            new_solution = ctx.create_new_solution(new_x)
+            new_solution = ctx.evaluate(new_x, 0)
