@@ -1,6 +1,5 @@
 """Base classes for simulation optimization solvers."""
 
-import contextlib
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Annotated, ClassVar
@@ -248,23 +247,3 @@ class Solver(ABC):
             ctx (Context): Runtime services for the current run.
         """
         raise NotImplementedError
-
-    def run(self, problem: Problem) -> pd.DataFrame:
-        """Run the solver on a problem.
-
-        Args:
-            problem (Problem): The problem to solve.
-
-        Returns:
-            pd.DataFrame: Solver history containing recommended solutions and budgets.
-        """
-        ctx = Context(
-            problem=problem,
-            total_budget=problem.factors["budget"],
-            solution_progenitor_rngs=self.solution_progenitor_rngs,
-            crn_across_solns=self.config.crn_across_solns,
-        )
-        with contextlib.suppress(BudgetExhaustedError):
-            self.solve(problem, ctx)
-
-        return ctx.history()

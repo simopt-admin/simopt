@@ -1,5 +1,6 @@
 """Functions for running solvers and collecting their outputs."""
 
+import contextlib
 import logging
 import time
 from copy import deepcopy
@@ -9,7 +10,7 @@ from joblib import Parallel, delayed
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.problem import Problem
-from simopt.solver import Solver
+from simopt.solver import BudgetExhaustedError, Context, Solver
 
 
 def _trim(df: pd.DataFrame, budget: int) -> pd.DataFrame:
@@ -61,6 +62,19 @@ def _set_up_rngs(solver: Solver, problem: Problem, mrep: int) -> None:
     solver.rng_list = solver_rngs
 
 
+def _run_solver(solver: Solver, problem: Problem) -> pd.DataFrame:
+    ctx = Context(
+        problem=problem,
+        total_budget=problem.factors["budget"],
+        solution_progenitor_rngs=solver.solution_progenitor_rngs,
+        crn_across_solns=solver.config.crn_across_solns,
+    )
+    with contextlib.suppress(BudgetExhaustedError):
+        solver.solve(problem, ctx)
+
+    return ctx.history()
+
+
 def _run_mrep(solver: Solver, problem: Problem, mrep: int) -> tuple[pd.DataFrame, float]:
     """Run one macroreplication of the solver on the problem."""
     logging.debug(
@@ -72,7 +86,7 @@ def _run_mrep(solver: Solver, problem: Problem, mrep: int) -> tuple[pd.DataFrame
 
     # Run solver
     start = time.perf_counter()
-    df = solver.run(problem)
+    df = _run_solver(solver, problem)
     elapsed = time.perf_counter() - start
     logging.debug(
         f"Macroreplication {mrep}: "
