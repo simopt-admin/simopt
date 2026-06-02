@@ -10,6 +10,7 @@ exclude = ["build*"]
 
 [tool.setuptools.package-data]
 "simopt.data_farming" = ["*.npz"]
+"simopt.web" = ["dist/*", "dist/**/*"]
 
 [tool.uv.sources]
 simopt-extensions = { git = "https://github.com/cenwangumass/simopt-extensions", rev = "b40a9c8" }
@@ -36,6 +37,7 @@ dependencies = [
     "boltons>=25.0.0",
     "colorama>=0.4.6",
     "cvxpy>=1.7.3",
+    "fastapi[standard]>=0.128.8",
     "joblib>=1.5.2",
     "matplotlib>=3.10.7",
     "mrg32k3a[rust]>=2.0.0",
@@ -64,6 +66,9 @@ notebooks = ["ipykernel>=7.1.0"]
 ext = [
     "simopt-extensions",
 ]
+
+[project.scripts]
+simopt = "simopt.cli:main"
 
 [project.urls]
 "Homepage" = "https://github.com/simopt-admin/simopt"

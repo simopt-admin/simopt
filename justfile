@@ -8,3 +8,7 @@ bump version:
     sed -i 's/^version: .*/version: {{ version }}/' CITATION.cff && \
     sed -i 's/^version = .*/version = "{{ version }}"/' pyproject.toml && \
     sed -i 's/^release = .*/release = "{{ version }}"/' docs/source/conf.py
+
+build:
+    cd simopt-web && npm run build
+    uv build
