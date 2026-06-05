@@ -32,7 +32,7 @@ from typing import Annotated, ClassVar, Self
 import numpy as np
 from numpy.linalg import LinAlgError, inv, norm, pinv
 from pydantic import Field, model_validator
-from scipy.optimize import NonlinearConstraint, OptimizeResult, minimize, LinearConstraint
+from scipy.optimize import NonlinearConstraint, OptimizeResult, minimize, LinearConstraint, lsq_linear
 from scipy.linalg import null_space
 
 from simopt.base import (
@@ -798,6 +798,23 @@ class SQPASTRODF(Solver):
         self.h_k += np.outer(y_k, y_k) * r_k - np.outer(h_s_k, h_s_k) / s_h_s_k
         # Reset counter on successful update
         self.hessian_skip_count = 0
+        
+    def estimate_lagrange_mult(self, A, grad) -> np.array():
+        """
+        Compute estimited lagrange multipliers for constraints.
+        
+        A = jacobian of equality constraints
+        grad = objective gradient
+
+        """
+        
+        # lambda unbounded bc right now only equality constraints
+        
+        lam, res, rank, svals = np.linalg.lstsq(A.T, grad)
+        
+        return lam
+        
+        
 
     def iterate(self) -> None:
         """Run one iteration of the ASTRO-DF algorithm.
@@ -865,9 +882,6 @@ class SQPASTRODF(Solver):
                 interpolation_solns,
             ) = self.construct_model()
         
-        # get lhs and Jacobian of constraints for current solution
-        c = self.problem.get_deterministic_constraints(self.incumbent_x)
-        A = self.problem.get_deterministic_constraints_gradients(self.incumbent_x)
         
         # remove easy solve
         
@@ -907,6 +921,19 @@ class SQPASTRODF(Solver):
         #     # if norm(incumbent_x - candidate_x) > 0:
         #     #     logging.debug("incumbent_x " + str(incumbent_x))
         #     #     logging.debug("candidate_x " + str(candidate_x))
+        
+        # get lhs and Jacobian of constraints for current solution
+        c = self.problem.get_deterministic_constraints(self.incumbent_x)
+        A = self.problem.get_deterministic_constraints_gradients(self.incumbent_x)
+        c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
+        
+        # create hessian diagonal matrix
+        H = np.diag(hessian)
+        
+        # estimate hessian of the lagrangian
+        lam = self.estimate_lagrange_mult(A, grad)
+        for i in range(len(lam)):
+            H += lam[i]*c_hess[i]
         
         
         # This is where we need new normal and tangent step 
@@ -1075,11 +1102,11 @@ class SQPASTRODF(Solver):
             merit_reduction = fval[0] - fval_tilde + self.sigma*(norm(c)-norm(candidate_c))
         rho = 0 if merit_model_reduction <= 0 else merit_reduction / merit_model_reduction
 
-        
-        successful = rho >= self.eta_1 
         # check crit measure
         A_N = null_space(A)
         crit_measure =norm(c) +norm(A_N.T @ grad) >= self.mu*self.delta_k
+        successful = rho >= self.eta_1 and crit_measure
+        
         # successful: accept
         if successful:
             self.incumbent_x = candidate_x
@@ -1089,7 +1116,7 @@ class SQPASTRODF(Solver):
             self.delta_k = min(self.delta_k, self.delta_max)
 
             # very successful: expand
-            if rho >= self.eta_2 and crit_measure:
+            if rho >= self.eta_2:
                 self.delta_k = min(self.gamma_1 * self.delta_k, self.delta_max)
 
             if self.enable_gradient:

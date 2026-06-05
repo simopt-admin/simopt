@@ -547,6 +547,8 @@ class AmusementParkMinDepart(Problem):
     #return jacobian of deterministic constraints
     def get_deterministic_constraints_gradients(self,  x:tuple) -> tuple:
         return (np.ones((1, self.dim)))
+    def get_deterministic_constraints_hessian(self, x:tuple) -> np.array():
+        return np.zeros((1, self.dim, self.dim))
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         num_elements: int = self.model.factors["number_attractions"]
