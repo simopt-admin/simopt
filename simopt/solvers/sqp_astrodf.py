@@ -167,7 +167,7 @@ class SQPASTRODFConfig(SolverConfig):
     sigma_min: Annotated[
         float,
         Field(
-            default=.01,
+            default=1.0,
             description="initial penalty parameter",
         ),
     
@@ -176,8 +176,8 @@ class SQPASTRODFConfig(SolverConfig):
     sigma_b_max: Annotated[
         float,
         Field(
-            default=100,
-            description="maximum allowable sigma_b used to increase pentalty parameter",
+            default=0.01,
+            description="smallest amound sigma can increase by",
         ),
     
     
@@ -1077,8 +1077,8 @@ class SQPASTRODF(Solver):
         sig_c_ratio = -1*q_n_reduction*m_t_reduction / ((1-self.nu)*m_n_reduction)
        
         # for now set all sigma b to max, can turn this into a sequence later
-        #sigma_c = max(self.sigma_b_max, sig_c_ratio)
-        sigma_c = sig_c_ratio # for now leave out sigma b
+        sigma_c = max(self.sigma_b_max, sig_c_ratio)
+        #sigma_c = sig_c_ratio # for now leave out sigma b
         #set sigma 
         if sigma_c > self.sigma:
             self.sigma = max(sigma_c, self.tau_1*self.sigma, self.sigma+ self.tau_2)

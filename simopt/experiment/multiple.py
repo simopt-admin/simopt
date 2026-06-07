@@ -713,11 +713,11 @@ class ProblemsSolvers:
         log_dir = EXPERIMENT_DIR / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
 
-        file_path = log_dir / f"{csv_filename}.tsv"
+        file_path = log_dir / f"{csv_filename}.csv"
         with file_path.open(mode="w", newline="") as output_file:
             csv_writer = csv.writer(
                 output_file,
-                delimiter="\t",
+                delimiter=",",
                 quotechar='"',
                 quoting=csv.QUOTE_MINIMAL,
             )
@@ -734,6 +734,7 @@ class ProblemsSolvers:
                 for solve_tol in solve_tols
             ]
             solve_time_headers = list(itertools.chain.from_iterable(solve_time_headers))
+            #Temporarily update to show constraint values 
             # Print headers.
             csv_writer.writerow(
                 [
@@ -751,6 +752,7 @@ class ProblemsSolvers:
                     "Initial Objective Function Value",
                     "Optimal Solution",
                     "Optimal Objective Function Value",
+                    "Optimal Constraint LHS Value"
                 ]
             )
             # Compute performance metrics.
@@ -811,5 +813,6 @@ class ProblemsSolvers:
                         mrep,
                         *statistics_list,
                         *solution_list,
+                        experiment.problem.get_deterministic_constraints(opt_sol)
                     ]
                     csv_writer.writerow(print_list)
