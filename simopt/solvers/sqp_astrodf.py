@@ -182,6 +182,24 @@ class SQPASTRODFConfig(SolverConfig):
     
     
     ]
+    sigma_b_increase: Annotated[
+        float,
+        Field(
+            default=0.01,
+            description="multiple to increase sigma_b by each iteration, sigma_b_k = sigma_min + sigma_b_incrase*k",
+        ),
+    
+    
+    ]
+    feas_tol: Annotated[
+        float,
+        Field(
+            default=10e-4,
+            description="Solve to specified feasibility tolerance",
+        ),
+    
+    
+    ]
     
     
 
@@ -928,7 +946,7 @@ class SQPASTRODF(Solver):
         c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
         
         # create hessian diagonal matrix
-        H = np.diag(hessian)
+        H = 2*np.diag(hessian)
         
         # estimate hessian of the lagrangian
         lam = self.estimate_lagrange_mult(A, grad)
@@ -938,7 +956,7 @@ class SQPASTRODF(Solver):
         
         # This is where we need new normal and tangent step 
         # only determine normal step if current solution is infeasible
-        if norm(c) == 0: # set to tolerance later
+        if norm(c) <= self.feas_tol : 
             s_normal = np.zeros(self.problem.dim)
         else:
         
@@ -959,11 +977,10 @@ class SQPASTRODF(Solver):
                 constraints=tr_normal,
             )
             s_normal = solve_normal_subproblem.x        
-        # create hessian diagonal matrix
-        H = np.diag(hessian)
+
         # Determine tangent step
         def tangent_subproblem(s_tangent: np.ndarray) -> float:
-            res = (grad + H @ s_normal) @ s_tangent + (s_tangent @ H @ s_tangent)
+            res = (grad + H @ s_normal) @ s_tangent + 0.5*(s_tangent @ H @ s_tangent)
             return float(res)
         
         # get norm of tangent step
@@ -1071,13 +1088,14 @@ class SQPASTRODF(Solver):
         
         # update penalty parameter
         # compute reduction in normal model 
-        m_n_reduction = norm(c) -norm(A @ s_normal)     
+        m_n_reduction = norm(c) -norm(A @ s_normal + c)     
         m_t_reduction = -1*(grad + H @ s_normal) @ s_tangent - .5*(s_tangent @ H @ s_tangent)
         q_n_reduction = -1*(grad @ s_normal) - .5*(s_normal @ H @ s_normal)
         sig_c_ratio = -1*q_n_reduction*m_t_reduction / ((1-self.nu)*m_n_reduction)
        
-        # for now set all sigma b to max, can turn this into a sequence later
-        sigma_c = max(self.sigma_b_max, sig_c_ratio)
+        # set sigma b and c
+        sigma_b = max(self.sigma_min + self.sigma_b_increase*self.iteration_count, self.sigma_b_max)
+        sigma_c = max(sigma_b, sig_c_ratio)
         #sigma_c = sig_c_ratio # for now leave out sigma b
         #set sigma 
         if sigma_c > self.sigma:
@@ -1087,7 +1105,7 @@ class SQPASTRODF(Solver):
         # need to update success ratio to include constraints
         candidate_x_arr = np.array(candidate_x)
         incumbent_x_arr = np.array(self.incumbent_x)
-        s = np.array(s_normal + s_tangent)
+        s = s_normal + s_tangent
         # do not enable gradients for now
         if self.enable_gradient:
             model_reduction = -np.dot(s, grad) - 0.5 * np.dot(np.dot(s, H), s)
@@ -1104,8 +1122,8 @@ class SQPASTRODF(Solver):
 
         # check crit measure
         A_N = null_space(A)
-        crit_measure =norm(c) +norm(A_N.T @ grad) >= self.mu*self.delta_k
-        successful = rho >= self.eta_1 and crit_measure
+        crit_ok =norm(c) +norm(A_N.T @ grad) >= self.mu*self.delta_k
+        successful = rho >= self.eta_1 and crit_ok
         
         # successful: accept
         if successful:
@@ -1146,6 +1164,8 @@ class SQPASTRODF(Solver):
         self.tau_2 : int = self.factors["tau_2"]
         self.sigma_min : int = self.factors["sigma_min"]
         self.sigma_b_max : int = self.factors["sigma_b_max"]
+        self.sigma_b_increase : float = self.factors["sigma_b_increase"]
+        self.feas_tol : float = self.factors["feas_tol"]
         # self.lambda_max = self.budget
 
         # Designate random number generator for random sampling
