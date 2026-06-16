@@ -33,6 +33,7 @@ def plot_feasibility_progress(
     legend_loc: str | None = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
+    deterministic: bool = False,
 ) -> list[str]:
     """Plot feasibility over solver progress.
 
@@ -102,10 +103,13 @@ def plot_feasibility_progress(
     n_problems = len(experiments[0])
 
     # set up extra for file name
-    if score_type == "inf_norm":
-        file_name = "inf_norm"
-    elif score_type == "norm":
-        file_name = f"{norm_degree}_norm"
+    if not deterministic:
+        if score_type == "inf_norm":
+            file_name = "inf_norm"
+        elif score_type == "norm":
+            file_name = f"{norm_degree}_norm"
+    else:
+        file_name = "det_feas"
     extra = (
         [file_name, beta]
         if plot_type == PlotType.QUANTILE_FEASIBILITY_PROGRESS
@@ -139,14 +143,22 @@ def plot_feasibility_progress(
             solver_names = []
             for exp_idx in range(n_solvers):
                 experiment = experiments[exp_idx][problem_idx]
-                experiment.feasibility_score_history(score_type, norm_degree, two_sided)
+                if not deterministic:
+                    experiment.feasibility_score_history(score_type, norm_degree, two_sided)
+                else:
+                    experiment.det_feasibility_history()
                 color_str = "C" + str(exp_idx)
                 estimator = None
                 solver_names.append(experiment.solver.name)
                 if plot_type == PlotType.ALL_FEASIBILITY_PROGRESS:
-                    handle = experiment.feasibility_curves[0].plot(color_str=color_str)
-                    for curve in experiment.feasibility_curves[1:]:
-                        curve.plot(color_str=color_str)
+                    if not deterministic:
+                        handle = experiment.feasibility_curves[0].plot(color_str=color_str)
+                        for curve in experiment.feasibility_curves[1:]:
+                            curve.plot(color_str=color_str)
+                    else: # put deterministic lhs here
+                        handle = experiment.det_feasibility_curves[0].plot(color_str=color_str)
+                        for curve in experiment.det_feasibility_curves[1:]:
+                            curve.plot(color_str=color_str)
                 elif plot_type == PlotType.MEAN_FEASIBILITY_PROGRESS:
                     # Plot estimated mean progress curve.
                     estimator = curve_utils.mean_of_curves(
@@ -299,3 +311,4 @@ def plot_feasibility_progress(
                 )
 
     return file_list
+

@@ -32,9 +32,9 @@ class COBYLA(Solver):
     Take a fixed number of replications at each solution.
     """
 
-    name: str = "COBYLA"
+    name: str = "COBQLA"
     config_class: ClassVar[type[SolverConfig]] = COBYLAConfig
-    class_name_abbr: ClassVar[str] = "COBYLA"
+    class_name_abbr: ClassVar[str] = "COBYQA"
     class_name: ClassVar[str] = "Constrained Optimization by Linear Approximation"
     objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
     constraint_type: ClassVar[ConstraintType] = ConstraintType.DETERMINISTIC
@@ -56,8 +56,6 @@ class COBYLA(Solver):
         new_solution = self.create_new_solution(int_x, self.problem)
         self.recommended_solns.append(new_solution)
         self.intermediate_budgets.append(self.budget.used)
-        print('int:', int_x)
-        
 
     def solve(self, problem: Problem) -> None:  # noqa: D102
         # Designate random number generator for random sampling.
@@ -87,7 +85,7 @@ class COBYLA(Solver):
             ub = np.zeros(m)
             )
         bounds = Bounds(problem.lower_bounds, problem.upper_bounds)
-        print('test')
+
 
         # Sequentially generate random solutions and simulate them.
         #while True:

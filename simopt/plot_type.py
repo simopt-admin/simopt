@@ -27,6 +27,9 @@ class PlotType(Enum):
     ALL_FEASIBILITY_PROGRESS = "all_feasibility_progress"
     MEAN_FEASIBILITY_PROGRESS = "mean_feasibility_progress"
     QUANTILE_FEASIBILITY_PROGRESS = "quantile_feasibility_progress"
+    DETERMINISTIC_FEASIBILITY_PROGRESS = "deterministic_feasibility_progress",
+    DETERMINISTIC_FEASIBILITY_SCATTER = "deterministic_feasibility_scatter",
+    DETERMINISTIC_FEASIBILITY_VIOLIN = "deterministic_feasibility_violin",
 
     @staticmethod
     def from_str(label: str) -> Self:

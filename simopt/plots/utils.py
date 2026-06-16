@@ -23,6 +23,7 @@ def setup_plot(
     feasibility_norm_degree: int = 1,
     solve_tol: float | None = None,
     plot_title: str | None = None,
+    det_feasibility_type: Literal["value", "norm", "stationary"] = "value"
 ) -> None:
     """Create a new figure, add labels to the plot, and reformat axes.
 
@@ -73,6 +74,8 @@ def setup_plot(
         PlotType.ALL_FEASIBILITY_PROGRESS,
         PlotType.MEAN_FEASIBILITY_PROGRESS,
         PlotType.QUANTILE_FEASIBILITY_PROGRESS,
+        PlotType.DETERMINISTIC_FEASIBILITY_PROGRESS,
+        PlotType.DETERMINISTIC_FEASIBILITY_SCATTER
     }
     # Set up axes and axis labels.
     if plot_type not in feasibility_plots:
@@ -249,6 +252,24 @@ def setup_plot(
             f"{solver_name} on {problem_name} \n "
             f"{round(beta, 2)} Quantile Feasibility Progress Curves"
         )
+    elif plot_type == PlotType.DETERMINISTIC_FEASIBILITY_PROGRESS:
+        if budget is not None:
+            plt.xlim((0, budget))
+        title = f"{solver_name} on {problem_name} \n Feasibility Progress"
+        plt.xlabel("Budget", size=14)
+        if det_feasibility_type == "value":
+            ylabel = "LHS Value of Constraint"
+        plt.ylabel(ylabel, size=14)
+        plt.tick_params(axis="both", which="major", labelsize=12)
+        
+    elif plot_type == PlotType.DETERMINISTIC_FEASIBILITY_SCATTER:
+        title = f"{solver_name} on {problem_name} \n Terminal Objective vs Feasibility"
+        plt.xlabel("Terminal Objective", size=14)
+        if det_feasibility_type == "value":
+            ylabel = "LHS Value of Constraint"
+        plt.ylabel(ylabel, size=14)
+        plt.tick_params(axis="both", which="major", labelsize=12)
+        
     else:
         error_msg = f"'{plot_type}' is not implemented."
         raise NotImplementedError(error_msg)
@@ -353,6 +374,10 @@ def save_plot(
         plot_name = f"mean_feasibility_progress_{extra}"
     elif plot_type == PlotType.QUANTILE_FEASIBILITY_PROGRESS:
         plot_name = f"{extra[1]}_quantile_feasibility_progress_{extra[0]}"
+    elif plot_type == PlotType.DETERMINISTIC_FEASIBILITY_PROGRESS:
+        plot_name = "det_feasibility_progress"
+    elif plot_type == PlotType.DETERMINISTIC_FEASIBILITY_SCATTER:
+        plot_name = "det_feasibility_scatter"
     else:
         raise NotImplementedError(f"'{plot_type}' is not implemented.")
 

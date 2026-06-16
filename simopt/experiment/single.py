@@ -27,6 +27,8 @@ from simopt.experiment import run_solver
 from simopt.feasibility import feasibility_score_history
 from simopt.utils import resolve_file_path
 
+from numpy.linalg import LinAlgError, inv, norm, pinv
+from scipy.linalg import null_space
 # Workaround for AutoAPI
 model_directory = directory.model_directory
 problem_directory = directory.problem_directory
@@ -760,6 +762,48 @@ class ProblemSolver:
                         feasibility_norm_degree,
                         feasibility_two_sided,
                     ),
+                )
+            )
+    def det_feasibility_history(
+        self,
+        method: Literal["value", "norm"] = "value",
+        norm_degree: int = 1,
+    ) -> None:
+        """Compute feasibility history."""
+
+        self.det_feasibility_curves = []
+
+        for mrep in range(self.n_macroreps):
+            mrep_feas = []
+            for sol in self.all_recommended_xs[mrep]:
+                mrep_feas.append(self.problem.get_deterministic_constraints(tuple(sol)))
+            self.det_feasibility_curves.append(
+                Curve(
+                    x_vals=self.all_intermediate_budgets[mrep],
+                    y_vals=mrep_feas,
+                )
+            )
+    
+    def det_stationarity_history(
+        self,
+        method: Literal["value", "norm"] = "value",
+        norm_degree: int = 1,
+    ) -> None:
+        """Compute feasibility history."""
+
+        self.stationarity_curves = []
+
+        for mrep in range(self.n_macroreps):
+            mrep_stat = []
+            for sol in self.all_recommended_xs[mrep]:
+                feas = self.problem.get_deterministic_constraints(tuple(sol))
+                grad = self.problem.get_deterministic_constraints_gradients(tuple(sol))
+                grad_null = null_space(grad)
+                mrep_stat.append(norm(grad_null.T @ grad) + norm(feas))   
+            self.stationarity_curves.append(
+                Curve(
+                    x_vals=self.all_intermediate_budgets[mrep],
+                    y_vals=mrep_stat,
                 )
             )
 

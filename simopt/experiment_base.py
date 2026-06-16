@@ -27,7 +27,9 @@ from simopt.plots import (
     plot_solvability_profiles,  # noqa: F401
     plot_terminal_feasibility,  # noqa: F401
     plot_terminal_progress,  # noqa: F401
-    plot_terminal_scatterplots,  # noqa: F401
+    plot_terminal_scatterplots, 
+    plot_det_feasibility,# noqa: F401
+    plot_det_terminal_feasibility
 )
 from simopt.utils import resolve_file_path
 

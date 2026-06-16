@@ -35,3 +35,4 @@ def feasibility_score_history(
     for lhs in history:
         scores.append(feasibility_score(lhs, method, norm_degree, two_sided))
     return scores
+

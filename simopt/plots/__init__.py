@@ -8,6 +8,8 @@ from .solvability_profile import plot_solvability_profiles
 from .terminal_feasibility import plot_terminal_feasibility
 from .terminal_progress import plot_terminal_progress
 from .terminal_scatterplot import plot_terminal_scatterplots
+from .det_feasibility_progress import plot_det_feasibility
+from .det_terminal_feasibility import plot_det_terminal_feasibility
 
 __all__ = [
     "plot_area_scatterplots",
@@ -18,4 +20,6 @@ __all__ = [
     "plot_terminal_feasibility",
     "plot_terminal_progress",
     "plot_terminal_scatterplots",
+    "plot_deterministic_progress",
+    "plot_terminal_deterministic_feasibility"
 ]
