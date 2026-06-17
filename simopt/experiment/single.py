@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 from joblib import Parallel, delayed
 
+from numpy.linalg import LinAlgError, inv, norm, pinv
+
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import (
@@ -766,8 +768,8 @@ class ProblemSolver:
             )
     def det_feasibility_history(
         self,
-        method: Literal["value", "norm"] = "value",
-        norm_degree: int = 1,
+        method: Literal["value", "norm", "objective"] = "value",
+        obj_const: float = 1e6,
     ) -> None:
         """Compute feasibility history."""
 
@@ -777,10 +779,16 @@ class ProblemSolver:
             mrep_feas = []
             for sol in self.all_recommended_xs[mrep]:
                 mrep_feas.append(self.problem.get_deterministic_constraints(tuple(sol)))
+            if method == "value":
+                curve_data = mrep_feas
+            elif method == "objective":
+                curve_data = [obj + obj_const*norm(feas) for obj, feas in zip(self.objective_curves[mrep].y_vals, mrep_feas)]
+            elif method == "norm":
+                curve_data = [norm(feas) for feas in mrep_feas]                
             self.det_feasibility_curves.append(
                 Curve(
                     x_vals=self.all_intermediate_budgets[mrep],
-                    y_vals=mrep_feas,
+                    y_vals=curve_data,
                 )
             )
     

@@ -24,7 +24,9 @@ def plot_det_terminal_feasibility(
     experiments: list[list[ProblemSolver]],
     plot_type = PlotType.DETERMINISTIC_FEASIBILITY_SCATTER,
     plot_zero: bool = True,
-    plot_optimal: bool = True,
+    plot_optimal: bool = False,
+    score_type: str = "value",
+    obj_const: float = 100.0,
     all_in_one: bool = True,
     n_bootstraps: int = 100,
     conf_level: float = 0.95,
@@ -117,6 +119,7 @@ def plot_det_terminal_feasibility(
                     problem_name=ref_experiment.problem.name,
                     plot_title=plot_title,
                     normalize=False,
+                    feasibility_score_method=score_type
                 )
                 solver_names = [
                     solver_experiments[0].solver.name
@@ -131,7 +134,12 @@ def plot_det_terminal_feasibility(
                         solver_idx % len(marker_list)
                     ]  # Cycle through list of marker types.
                     # Compute terminal feasibility scores
-                    experiment.det_feasibility_history()  # gives list of feasibility scores for each macrorep
+                    if score_type == "value":
+                        experiment.det_feasibility_history()  # gives list of feasibility scores for each macrorep
+                    elif score_type == "objective":
+                        experiment.det_feasibility_history(method = "objective", obj_const = obj_const)
+                    elif score_type == "norm":
+                        experiment.det_feasibility_history(method = "norm")
                     term_feas_score = [
                         curve.y_vals[-1] for curve in experiment.det_feasibility_curves
                     ]
@@ -166,12 +174,7 @@ def plot_det_terminal_feasibility(
                             np.abs(np.array(terminals) - np.array(obj_conf_int_lb)),
                             np.abs(np.array(obj_conf_int_ub) - np.array(terminals)),
                         ]
-                        print("solver:", experiment.solver.name)
-                        print("n det feasibility curves:", len(experiment.det_feasibility_curves))
-                        print("n objective curves:", len(experiment.objective_curves))
-                        print("term_feas_score:", term_feas_score)
-                        print("terminals:", terminals)
-                            
+
                         handle = plt.errorbar(
                             x=terminals,
                             y=term_feas_score,

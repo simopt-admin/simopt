@@ -257,16 +257,24 @@ def setup_plot(
             plt.xlim((0, budget))
         title = f"{solver_name} on {problem_name} \n Feasibility Progress"
         plt.xlabel("Budget", size=14)
-        if det_feasibility_type == "value":
-            ylabel = "LHS Value of Constraint"
+        if feasibility_score_method == "value":
+            ylabel = "c(x)"
+        elif feasibility_score_method == "objective":
+            ylabel = "f(x) + $\sigma\| c(x)\|$"
+        elif feasibility_score_method == "norm":
+            ylabel = "$\| c(x)\|$"
         plt.ylabel(ylabel, size=14)
         plt.tick_params(axis="both", which="major", labelsize=12)
         
     elif plot_type == PlotType.DETERMINISTIC_FEASIBILITY_SCATTER:
         title = f"{solver_name} on {problem_name} \n Terminal Objective vs Feasibility"
         plt.xlabel("Terminal Objective", size=14)
-        if det_feasibility_type == "value":
-            ylabel = "LHS Value of Constraint"
+        if feasibility_score_method == "value":
+            ylabel = "c(x)"
+        elif feasibility_score_method == "objective":
+            ylabel = "f(x) + $\sigma\| c(x)\|$"
+        elif feasibility_score_method == "norm":
+            ylabel = "$\| c(x)\|$"
         plt.ylabel(ylabel, size=14)
         plt.tick_params(axis="both", which="major", labelsize=12)
         
