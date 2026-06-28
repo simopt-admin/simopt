@@ -770,6 +770,7 @@ class ProblemSolver:
         self,
         method: Literal["value", "norm", "objective"] = "value",
         obj_const: float = 1e6,
+        feas_tol: float = 10e-2,
     ) -> None:
         """Compute feasibility history."""
 
@@ -782,7 +783,13 @@ class ProblemSolver:
             if method == "value":
                 curve_data = mrep_feas
             elif method == "objective":
-                curve_data = [obj + obj_const*norm(feas) for obj, feas in zip(self.objective_curves[mrep].y_vals, mrep_feas)]
+                mrep_filter = []
+                for i in range(len(mrep_feas)):
+                    if mrep_feas[i] <= feas_tol:
+                        mrep_filter.append(0)
+                    else:
+                        mrep_filter.append(mrep_feas[i])
+                curve_data = [obj + obj_const*norm(feas) for obj, feas in zip(self.objective_curves[mrep].y_vals, mrep_filter)]
             elif method == "norm":
                 curve_data = [norm(feas) for feas in mrep_feas]                
             self.det_feasibility_curves.append(

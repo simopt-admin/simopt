@@ -23,6 +23,9 @@ class COBYLAConfig(SolverConfig):
     sample_size: Annotated[
         int, Field(default=10, gt=0, description="sample size per solution")
     ]
+    feas_tol: Annotated[
+        float, Field(default=1e-8, gt=0, description="sample size per solution")
+    ]
 
 
 class COBYLA(Solver):
@@ -58,6 +61,7 @@ class COBYLA(Solver):
         self.intermediate_budgets.append(self.budget.used)
 
     def solve(self, problem: Problem) -> None:  # noqa: D102
+        feas_tol = self.factors["feas_tol"]
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         self.problem = problem
@@ -95,7 +99,7 @@ class COBYLA(Solver):
                        method = "COBYQA", 
                        constraints = [c], 
                        bounds = bounds,
-                       options={"maxfev": maxfev},
+                       options={"maxfev": maxfev,"feasibility_tol": feas_tol},
                        callback= self.callback)
         # new_x = res.x
         # print(new_x)

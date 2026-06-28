@@ -139,7 +139,7 @@ class SANLongestPathConfig(BaseModel):
     ]
 
     def _check_arc_costs(self) -> None:
-        if len(self.arc_costs) != NUM_ARCS:
+        if len(self.arc_costs) != self.model.arcs:
             raise ValueError(f"arc_costs must be of length {NUM_ARCS}.")
 
         positive = True
@@ -518,13 +518,13 @@ class SANLongestPathCostConstConfig(BaseModel):
     total_cost: Annotated[
         float,
         Field(
-            default=2.0,
+            default=5.0,
             description="Total cost allowed to be spent reducing arc means.",
         ),
     ]
 
     def _check_arc_costs(self) -> None:
-        if len(self.arc_costs) != NUM_ARCS:
+        if len(self.arc_costs) != len(self.initial_solution):
             raise ValueError(f"arc_costs must be of length {NUM_ARCS}.")
 
         positive = True

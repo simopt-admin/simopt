@@ -122,7 +122,7 @@ class SQPASTRODFConfig(SolverConfig):
     a_normal: Annotated[
         float,
         Field(
-            default=0.8,
+            default=0.5,
             description="portion of the trust-region dedicated to the normal step",
         ),
     
@@ -131,7 +131,7 @@ class SQPASTRODFConfig(SolverConfig):
     a_tangent: Annotated[
         float,
         Field(
-            default=0.8,
+            default=0.5,
             description="portion of the trust-region dedicated to the tangent step",
         ),
     
@@ -194,19 +194,40 @@ class SQPASTRODFConfig(SolverConfig):
     feas_tol: Annotated[
         float,
         Field(
-            default=10e-4,
+            default=1e-8,
             description="Solve to specified feasibility tolerance",
         ),
     
     
+    ]
+    delta_0: Annotated[
+        float,
+        Field(
+            default=1,
+            description="Initial trust-region radius",
+        ),
+    ]
+    delta_max: Annotated[
+        float,
+        Field(
+            default=100,
+            description="Maximum allowed trust-region radius",
+        ),
+    ]
+    sampling_method: Annotated[
+        str,
+        Field(
+            default="adaptive",
+            description="Maximum allowed trust-region radius",
+        ),
     ]
     
     
 
     @model_validator(mode="after")
     def _validate_eta_2_greater_than_eta_1(self) -> Self:
-        if self.eta_2 <= self.eta_1:
-            raise ValueError("Eta 2 must be greater than Eta 1.")
+        if self.eta_2 < self.eta_1:
+            raise ValueError("Eta 2 must be greater than or equal to Eta 1.")
         return self
 
 
@@ -358,7 +379,7 @@ class SQPASTRODF(Solver):
 
         # compute sample size
         raw_sample_size = pilot_run * max(
-            1.0, sig2 / (kappa**2 * delta**self.delta_power)
+            1.0, max(sig2,1) / (kappa**2 * delta**self.delta_power)
         )
         return ceil(raw_sample_size)
 
@@ -457,54 +478,65 @@ class SQPASTRODF(Solver):
         """
         sample_size = solution.n_reps if solution.n_reps > 0 else pilot_run
         lambda_max = self.budget.remaining
+        
+        
+        # run a fixed number of replications at each interpolation point
+        if self.sampling_method != "adaptive":
+            if solution.n_reps < self.lambda_min:
+                more_reps = self.lambda_min - solution.n_reps 
+                self.budget.request(more_reps)
+                self.problem.simulate(solution, more_reps)
+        
+        else:
+            
 
-        # Initial Simulation (only if needed)
-        if solution.n_reps == 0:
-            self.budget.request(pilot_run)
-            self.problem.simulate(solution, pilot_run)
-            sample_size = pilot_run
-
-        while True:
-            # Compute variance
-            sig2 = solution.objectives_var[0]
-            if self.delta_power == 0:
-                sig2 = max(sig2, np.trace(solution.objectives_gradients_var))
-
-            # Compute stopping condition
-            kappa: float | None = None
-            if compute_kappa:
-                if self.enable_gradient:
-                    rhs_for_kappa = norm(solution.objectives_gradients_mean[0])
-                else:
-                    rhs_for_kappa = solution.objectives_mean
-                kappa = (
-                    rhs_for_kappa
-                    * np.sqrt(pilot_run)
-                    / (delta_k ** (self.delta_power / 2))
-                ).item()
-
-            # Set k to the right kappa
-            if kappa is not None:
-                k = kappa
-            elif self.kappa is not None:
-                k = self.kappa
-            else:
-                # TODO: figure out if we need to raise an error instead
-                logging.warning("kappa is not set. Using default value of 0.")
-                k = 0
-            # Compute stopping time
-            stopping = self.get_stopping_time(pilot_run, sig2, delta_k, k)
-
-            # Stop if conditions are met
-            if sample_size >= min(stopping, lambda_max) or self.budget.remaining <= 0:
+            # Initial Simulation (only if needed)
+            if solution.n_reps == 0:
+                self.budget.request(pilot_run)
+                self.problem.simulate(solution, pilot_run)
+                sample_size = pilot_run
+    
+            while True:
+                # Compute variance
+                sig2 = solution.objectives_var[0]
+                if self.delta_power == 0:
+                    sig2 = max(sig2, np.trace(solution.objectives_gradients_var))
+    
+                # Compute stopping condition
+                kappa: float | None = None
                 if compute_kappa:
-                    self.kappa = kappa  # Update kappa only if needed
-                break
-
-            # Perform additional simulation
-            self.budget.request(1)
-            self.problem.simulate(solution, 1)
-            sample_size += 1
+                    if self.enable_gradient:
+                        rhs_for_kappa = norm(solution.objectives_gradients_mean[0])
+                    else:
+                        rhs_for_kappa = solution.objectives_mean
+                    kappa = (
+                        rhs_for_kappa
+                        * np.sqrt(pilot_run)
+                        / (delta_k ** (self.delta_power / 2))
+                    ).item()
+    
+                # Set k to the right kappa
+                if kappa is not None:
+                    k = kappa
+                elif self.kappa is not None:
+                    k = self.kappa
+                else:
+                    # TODO: figure out if we need to raise an error instead
+                    logging.warning("kappa is not set. Using default value of 0.")
+                    k = 0
+                # Compute stopping time
+                stopping = self.get_stopping_time(pilot_run, sig2, delta_k, k)
+    
+                # Stop if conditions are met
+                if sample_size >= min(stopping, lambda_max) or self.budget.remaining <= 0:
+                    if compute_kappa:
+                        self.kappa = kappa  # Update kappa only if needed
+                    break
+    
+                # Perform additional simulation
+                self.budget.request(1)
+                self.problem.simulate(solution, 1)
+                sample_size += 1
 
     def construct_model(
         self,
@@ -543,13 +575,16 @@ class SQPASTRODF(Solver):
 
         lambda_max = self.budget.remaining
         # lambda_max = budget / (15 * sqrt(problem.dim))
-        pilot_run = ceil(
-            max(
-                self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
-                min(0.5 * self.problem.dim, lambda_max),
+        if self.sampling_method == "adaptive":
+            pilot_run = ceil(
+                max(
+                    self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
+                    min(0.5 * self.problem.dim, lambda_max),
+                )
+                - 1
             )
-            - 1
-        )
+        else:
+            pilot_run = self.lambda_min
 
         delta = self.delta_k
         model_iterations: int = 0
@@ -607,13 +642,13 @@ class SQPASTRODF(Solver):
                     self.perform_adaptive_sampling(adapt_soln, pilot_run, delta_k)
 
                 # Append the function estimate to the list
-                fval.append(-1 * self.problem.minmax[0] * adapt_soln.objectives_mean)
+                obj_mean = float(np.asarray(adapt_soln.objectives_mean).reshape(-1)[0])
+                fval.append(-self.problem.minmax[0] * obj_mean)
                 interpolation_solns.append(adapt_soln)
 
             # construct the model and obtain the model coefficients
             q, grad, hessian = self.get_model_coefficients(var_z, fval, self.problem)
-
-            # why are we checking criticality here and not at successful/unsucessful? 
+ 
             norm_grad = norm(grad)
             if delta_k <= mu * norm_grad or norm_grad == 0:
                 break
@@ -844,13 +879,16 @@ class SQPASTRODF(Solver):
         neg_minmax = -self.problem.minmax[0]
 
         # determine power of delta in adaptive sampling rule
-        pilot_run = ceil(
-            max(
-                self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
-                min(0.5 * self.problem.dim, self.budget.total),
+        if self.sampling_method == "adaptive":
+            pilot_run = ceil(
+                max(
+                    self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
+                    min(0.5 * self.problem.dim, self.budget.total),
+                )
+                - 1
             )
-            - 1
-        )
+        else: 
+            pilot_run = self.lambda_min
         if self.iteration_count == 1:
             self.incumbent_solution = self.create_new_solution(
                 self.incumbent_x, self.problem
@@ -945,20 +983,26 @@ class SQPASTRODF(Solver):
         A = self.problem.get_deterministic_constraints_gradients(self.incumbent_x)
         c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
         
+        # convert any inf or -inf to numbers
+        np.nan_to_num(hessian, copy = False)
+        
+        
         # create hessian diagonal matrix
         H = 2*np.diag(hessian)
         
         # estimate hessian of the lagrangian
         lam = self.estimate_lagrange_mult(A, grad)
         for i in range(len(lam)):
-            H += lam[i]*c_hess[i]
+            H -= lam[i]*c_hess[i]
         
         
         # This is where we need new normal and tangent step 
         # only determine normal step if current solution is infeasible
         if norm(c) <= self.feas_tol : 
             s_normal = np.zeros(self.problem.dim)
+            a_tangent = 1 # allow tangent step to use entire trust region
         else:
+            a_tangent = self.a_tangent
         
             # Determine normal step
             def normal_subproblem(s_normal: np.ndarray) -> float:
@@ -980,7 +1024,7 @@ class SQPASTRODF(Solver):
 
         # Determine tangent step
         def tangent_subproblem(s_tangent: np.ndarray) -> float:
-            res = (grad + H @ s_normal) @ s_tangent + 0.5*(s_tangent @ H @ s_tangent)
+            res = (grad + H @ s_normal).T @ s_tangent + 0.5*(s_tangent.T @ H @ s_tangent)
             return float(res)
         
         # get norm of tangent step
@@ -988,7 +1032,7 @@ class SQPASTRODF(Solver):
             return float(norm(s_tangent))
         
         # constrain step by trust region
-        tr_tangent = NonlinearConstraint(norm_s_tangent, 0, self.delta_k*self.a_tangent)
+        tr_tangent = NonlinearConstraint(norm_s_tangent, 0, self.delta_k*a_tangent)
         
         #Linear constraint
         linc = LinearConstraint(A, np.zeros(A.shape[0]), np.zeros(A.shape[0]))
@@ -1001,9 +1045,9 @@ class SQPASTRODF(Solver):
             constraints=[tr_tangent,linc],
         )
         s_tangent = solve_tangent_subproblem.x
-        
+
         # set new candidate solution 
-        candidate_x = self.incumbent_x + s_normal + s_tangent
+        candidate_x = np.asarray(self.incumbent_x, dtype=float) + s_normal + s_tangent
 
         # logging.debug("problem.lower_bounds "+str(problem.lower_bounds))
         # handle the box constraints
@@ -1078,6 +1122,7 @@ class SQPASTRODF(Solver):
                     ) > 0.75
 
             if condition_met or high_variance:
+ 
                 fval_tilde = min_fval
                 min_idx = np.argmin(fval)
                 candidate_x = y_var[min_idx][0]
@@ -1091,16 +1136,20 @@ class SQPASTRODF(Solver):
         m_n_reduction = norm(c) -norm(A @ s_normal + c)     
         m_t_reduction = -1*(grad + H @ s_normal) @ s_tangent - .5*(s_tangent @ H @ s_tangent)
         q_n_reduction = -1*(grad @ s_normal) - .5*(s_normal @ H @ s_normal)
-        sig_c_ratio = -1*q_n_reduction*m_t_reduction / ((1-self.nu)*m_n_reduction)
+        sig_c_ratio = -1*(q_n_reduction+m_t_reduction) / ((1-self.nu)*m_n_reduction)
        
         # set sigma b and c
         sigma_b = max(self.sigma_min + self.sigma_b_increase*self.iteration_count, self.sigma_b_max)
         sigma_c = max(sigma_b, sig_c_ratio)
         #sigma_c = sig_c_ratio # for now leave out sigma b
-        #set sigma 
-        if sigma_c > self.sigma:
-            self.sigma = max(sigma_c, self.tau_1*self.sigma, self.sigma+ self.tau_2)
+        #set sigma
         
+        # update penalty parameter based on solving method
+        if self.sampling_method != "IBO":
+            if sigma_c > self.sigma:
+                self.sigma = max(sigma_c, self.tau_1*self.sigma, self.sigma+ self.tau_2)
+        else:
+            self.sigma = max(self.sigma, norm(lam))
         # compute the success ratio rho
         # need to update success ratio to include constraints
         candidate_x_arr = np.array(candidate_x)
@@ -1122,7 +1171,10 @@ class SQPASTRODF(Solver):
 
         # check crit measure
         A_N = null_space(A)
-        crit_ok =norm(c) +norm(A_N.T @ grad) >= self.mu*self.delta_k
+        if self.sampling_method != "IBO":
+            crit_ok =norm(c) +norm(A_N.T @ grad) >= self.mu*self.delta_k
+        else:
+            crit_ok = True
         successful = rho >= self.eta_1 and crit_ok
         
         # successful: accept
@@ -1166,6 +1218,11 @@ class SQPASTRODF(Solver):
         self.sigma_b_max : int = self.factors["sigma_b_max"]
         self.sigma_b_increase : float = self.factors["sigma_b_increase"]
         self.feas_tol : float = self.factors["feas_tol"]
+        self.sampling_method : str = self.factors["sampling_method"]
+        if self.factors["delta_0"] is not None:
+            self.delta_k : float = self.factors["delta_0"]
+        if self.factors["delta_max"] is not None:
+            self.delta_max : float = self.factors["delta_max"]
         # self.lambda_max = self.budget
 
         # Designate random number generator for random sampling
@@ -1184,20 +1241,21 @@ class SQPASTRODF(Solver):
         #     self.factors["delta_max"],
         #     problem.upper_bounds[0] - problem.lower_bounds[0]
         # )
-        delta_max_candidates: list[float | int] = []
-        for i in range(self.problem.dim):
-            sol_values = [sol[i] for sol in dummy_solns]
-            min_soln, max_soln = min(sol_values), max(sol_values)
-            bound_range = self.problem.upper_bounds[i] - self.problem.lower_bounds[i]
-            delta_max_candidates.append(min(max_soln - min_soln, bound_range))
-
-        # TODO: update this so that it could be used for problems with decision
-        # variables at varying scales!
-        self.delta_max = max(delta_max_candidates)
-        # logging.debug("delta_max  " + str(self.delta_max))
-
-        # Initialize trust-region radius
-        self.delta_k = 10 ** (ceil(log(self.delta_max * 2, 10) - 1) / self.problem.dim)
+        if self.factors["delta_0"]is None:
+            delta_max_candidates: list[float | int] = []
+            for i in range(self.problem.dim):
+                sol_values = [sol[i] for sol in dummy_solns]
+                min_soln, max_soln = min(sol_values), max(sol_values)
+                bound_range = self.problem.upper_bounds[i] - self.problem.lower_bounds[i]
+                delta_max_candidates.append(min(max_soln - min_soln, bound_range))
+    
+            # TODO: update this so that it could be used for problems with decision
+            # variables at varying scales!
+            self.delta_max = max(delta_max_candidates)
+            # logging.debug("delta_max  " + str(self.delta_max))
+    
+            # Initialize trust-region radius
+            self.delta_k = 10 ** (ceil(log(self.delta_max * 2, 10) - 1) / self.problem.dim)
         # logging.debug("initial delta " + str(self.delta_k))
 
         if "initial_solution" in self.problem.factors:

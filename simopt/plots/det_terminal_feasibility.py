@@ -26,7 +26,9 @@ def plot_det_terminal_feasibility(
     plot_zero: bool = True,
     plot_optimal: bool = False,
     score_type: str = "value",
+    feas_tol: float = 10e-2,
     obj_const: float = 100.0,
+    log_scale: bool = False,
     all_in_one: bool = True,
     n_bootstraps: int = 100,
     conf_level: float = 0.95,
@@ -135,11 +137,11 @@ def plot_det_terminal_feasibility(
                     ]  # Cycle through list of marker types.
                     # Compute terminal feasibility scores
                     if score_type == "value":
-                        experiment.det_feasibility_history()  # gives list of feasibility scores for each macrorep
+                        experiment.det_feasibility_history(feas_tol = feas_tol)  # gives list of feasibility scores for each macrorep
                     elif score_type == "objective":
-                        experiment.det_feasibility_history(method = "objective", obj_const = obj_const)
+                        experiment.det_feasibility_history(method = "objective", obj_const = obj_const, feas_tol = feas_tol)
                     elif score_type == "norm":
-                        experiment.det_feasibility_history(method = "norm")
+                        experiment.det_feasibility_history(method = "norm", feas_tol = feas_tol)
                     term_feas_score = [
                         curve.y_vals[-1] for curve in experiment.det_feasibility_curves
                     ]
@@ -184,6 +186,7 @@ def plot_det_terminal_feasibility(
                             elinewidth=1,
                             linestyle="none",
                         )
+                        
                     else:  # do not plot conf int
                         handle = plt.scatter(
                             x=terminals,
@@ -206,6 +209,9 @@ def plot_det_terminal_feasibility(
                         linestyle="--",
                         linewidth=0.75,
                     )
+                if log_scale:
+                    plt.yscale("log")
+                    #plt.ylim(bottom=0.001)
                 file_list.append(
                     save_plot(
                         solver_name=solver_set_name,
