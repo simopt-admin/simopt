@@ -221,13 +221,6 @@ class SQPASTRODFConfig(SolverConfig):
             description="Maximum allowed trust-region radius",
         ),
     ]
-    epsilon: Annotated[
-        float,
-        Field(
-            default=1e-8,
-            description="fraction to boundary measure for barrier problem",
-        ),
-    ]
     
     
 
@@ -875,89 +868,7 @@ class SQPASTRODF(Solver):
         return lam
         
         
-    def solve_normal_step(self):
-        
-        # set up normal equation based on problem type
-        if self.problem_type == "eq_only":
-            
-            # only determine normal step if current solution is infeasible
-            if norm(self.c_eq) <= self.feas_tol : 
-                s_normal = np.zeros(self.problem.dim)
-                a_tangent = 1 # allow tangent step to use entire trust region
-            else:
-                a_tangent = self.a_tangent
-            
-                # Determine normal step
-                def normal_subproblem(s_normal: np.ndarray) -> float:
-                    res: np.array =  self.A_eq @ s_normal + self.c_eq
-                    return float(norm(res))
-                # get norm of normal step
-                def norm_s_normal(s_normal: np.ndarray) -> float:
-                    return float(norm(s_normal))
-                # constrain step by trust region
-                tr_normal = NonlinearConstraint(norm_s_normal, 0, self.delta_k*self.a_normal)
-                # solve for normal step
-                solve_normal_subproblem: OptimizeResult = minimize(  
-                    normal_subproblem,
-                    np.zeros(self.problem.dim),
-                    #method="trust-constr",
-                    constraints=tr_normal,
-                )
-                s_normal = solve_normal_subproblem.x 
-                
-                return s_normal
-                
-        if self.problem_type == "ineq_only":
-            V = np.diag(self.incumbent_v)
-            # change relevent lists to arrays
-            c = np.array(self.c_ineq)
-            v = np.array(self.incumbent_v)
-            A = self.A_ineq
-            # get total dimension of problem
-            n_x = len(self.incumbent_x)
-            n_v = len(self.incumbent_v)
-            dim = n_x + n_v
-            # only determine normal step if current solution is infeasible
-            if norm(c + v) <= self.feas_tol : 
-                s_normal = np.zeros(dim)
-            
-            else:
-                
-                # Determine normal step
-                def normal_subproblem(s_normal: np.ndarray) -> float:
-                    res: np.array =  A @ s_normal[:n_x] + V @ s_normal[n_x:] + c + v
-                    return float(norm(res))
-                # get norm of normal step
-                def norm_s_normal(s_normal: np.ndarray) -> float:
-                    return float(norm(s_normal))
-                # constrain step by trust region
-                tr_normal = NonlinearConstraint(norm_s_normal, 0, self.delta_k*self.a_normal)
-                #fraction to boundary constraint for slack variables
-                E_v = np.hstack([
-                    np.zeros((n_v, n_x)),
-                    np.eye(n_v),
-                    ])
-                ftb = LinearConstraint(E_v, self.epsilon*np.ones(n_v), np.inf)
-                # solve for normal step
-                solve_normal_subproblem: OptimizeResult = minimize( 
-                    normal_subproblem,
-                    np.zeros(dim),
-                    #method="trust-constr",
-                    constraints=[tr_normal, ftb],
-                )
-                s_normal_rescale = solve_normal_subproblem.x 
-                s_normal_v = V @ s_normal_rescale[n_x:]
-                s_normal = np.concatenate(s_normal_rescale[:n_x], s_normal_v)
-                
-                return s_normal
-            
-            
-        
-        if self.problem_type == "both":
-            pass
-            
-            
-        
+
     def iterate(self) -> None:
         """Run one iteration of the ASTRO-DF algorithm.
 
@@ -995,28 +906,6 @@ class SQPASTRODF(Solver):
             
             # if first iteration set current sigma to min
             self.sigma = self.sigma_min
-            
-            # determine optimization type
-            if self.problem.get_deterministic_equality_constraints(self.incumbent_x) == None:
-                if self.problem.get_deterministic_inequality_constraints(self.incumbent_x) == None:
-                    self.problem_type = "unconstrained"
-                else:
-                    self.problem_type = "ineq_only"
-            elif self.problem.get_deterministic_inequality_constraints(self.incumbent_x) == None:
-                self.problem_type = "eq_only"
-            else:
-                self.problem_type = "both"
-            
-            if self.problem_type in ("ineq_only", "both"):
-                # for now hard code intial slack variables
-                self.incumbent_v = [1]* len(self.problem.get_deterministic_inequality_constraints(self.incumbent_x))
-                
-                # set barrier parameter
-                self.theta = self.delta_0
-            else: 
-                self.incumbent_v = None
-                self.theta = None
-            
             
         # Since incument was only evaluated with the sample size of previous incumbent,
         # here we compute its adaptive sample size
@@ -1090,10 +979,8 @@ class SQPASTRODF(Solver):
         #     #     logging.debug("candidate_x " + str(candidate_x))
         
         # get lhs and Jacobian of constraints for current solution
-        self.c_eq = self.problem.get_deterministic_equality_constraints(self.incumbent_x)
-        self.c_ineq = self.problem.get_deterministic_inequality_constraints(self.incumbent_x)
-        self.A_eq = self.problem.get_deterministic_equality_constraints_gradients(self.incumbent_x)
-        self.A_ineq = self.problem.get_deterministic_inequality_constraints_gradients(self.incumbent_x)
+        c = self.problem.get_deterministic_constraints(self.incumbent_x)
+        A = self.problem.get_deterministic_constraints_gradients(self.incumbent_x)
         c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
         
         # convert any inf or -inf to numbers
@@ -1130,7 +1017,7 @@ class SQPASTRODF(Solver):
             solve_normal_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
                 normal_subproblem,
                 np.zeros(self.problem.dim),
-                #method="trust-constr",
+                method="trust-constr",
                 constraints=tr_normal,
             )
             s_normal = solve_normal_subproblem.x        
@@ -1154,7 +1041,7 @@ class SQPASTRODF(Solver):
         solve_tangent_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
             tangent_subproblem,
             np.zeros(self.problem.dim),
-            #method="trust-constr",
+            method="trust-constr",
             constraints=[tr_tangent,linc],
         )
         s_tangent = solve_tangent_subproblem.x
@@ -1332,7 +1219,6 @@ class SQPASTRODF(Solver):
         self.sigma_b_increase : float = self.factors["sigma_b_increase"]
         self.feas_tol : float = self.factors["feas_tol"]
         self.sampling_method : str = self.factors["sampling_method"]
-        self.epsilon : str = self.factors["epsilon"]
         if self.factors["delta_0"] is not None:
             self.delta_k : float = self.factors["delta_0"]
         if self.factors["delta_max"] is not None:
