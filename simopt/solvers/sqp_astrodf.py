@@ -879,17 +879,15 @@ class SQPASTRODF(Solver):
         
         # set up normal equation based on problem type
         if self.problem_type == "eq_only":
-            
+            c = np.array(self.c_eq)
+            A = self.A_eq
             # only determine normal step if current solution is infeasible
-            if norm(self.c_eq) <= self.feas_tol : 
+            if norm(c) <= self.feas_tol : 
                 s_normal = np.zeros(self.problem.dim)
-                a_tangent = 1 # allow tangent step to use entire trust region
             else:
-                a_tangent = self.a_tangent
-            
                 # Determine normal step
                 def normal_subproblem(s_normal: np.ndarray) -> float:
-                    res: np.array =  self.A_eq @ s_normal + self.c_eq
+                    res: np.array =  A @ s_normal + c
                     return float(norm(res))
                 # get norm of normal step
                 def norm_s_normal(s_normal: np.ndarray) -> float:
@@ -904,10 +902,9 @@ class SQPASTRODF(Solver):
                     constraints=tr_normal,
                 )
                 s_normal = solve_normal_subproblem.x 
-                
                 return s_normal
                 
-        if self.problem_type == "ineq_only":
+        elif self.problem_type == "ineq_only":
             V = np.diag(self.incumbent_v)
             # change relevent lists to arrays
             c = np.array(self.c_ineq)
@@ -919,10 +916,8 @@ class SQPASTRODF(Solver):
             dim = n_x + n_v
             # only determine normal step if current solution is infeasible
             if norm(c + v) <= self.feas_tol : 
-                s_normal = np.zeros(dim)
-            
+                s_normal = np.zeros(dim)   
             else:
-                
                 # Determine normal step
                 def normal_subproblem(s_normal: np.ndarray) -> float:
                     res: np.array =  A @ s_normal[:n_x] + V @ s_normal[n_x:] + c + v
@@ -955,6 +950,95 @@ class SQPASTRODF(Solver):
         
         if self.problem_type == "both":
             pass
+        
+    def solve_tangent_step(self, grad, hessian, s_normal):
+        
+        # if normal step = 0, allow tangent full trust region
+        if np.norm(s_normal) == 0:
+            a_tangent = 1.0 
+        else:
+            a_tangent = self.a_tangent
+        # create hessian diagonal matrix
+        H = 2*np.diag(hessian)
+            
+        if self.problem_type == "eq_only":
+
+            # set relevent variables
+            A = self.A_eq
+            c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
+           
+            # estimate hessian of the lagrangian for equality-only problem
+            lam = self.estimate_lagrange_mult(A, grad)
+            for i in range(len(lam)):
+                H -= lam[i]*c_hess[i] 
+            # Determine tangent step
+            def tangent_subproblem(s_tangent: np.ndarray) -> float:
+                res = (grad + H @ s_normal).T @ s_tangent + 0.5*(s_tangent.T @ H @ s_tangent)
+                return float(res)
+            
+            # get norm of tangent step
+            def norm_s_tangent(s_tangent: np.ndarray) -> float:
+                return float(norm(s_tangent))
+            
+            # constrain step by trust region
+            tr_tangent = NonlinearConstraint(norm_s_tangent, 0, self.delta_k*a_tangent)
+            
+            #Linear constraint
+            linc = LinearConstraint(A, np.zeros(A.shape[0]), np.zeros(A.shape[0]))
+            
+            # solve for tangent step
+            solve_tangent_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
+                tangent_subproblem,
+                np.zeros(self.problem.dim),
+                #method="trust-constr",
+                constraints=[tr_tangent,linc],
+            )
+            s_tangent = solve_tangent_subproblem.x
+            return s_tangent
+        
+        elif self.problem_type == "ineq_only":
+
+            # set relevent variables
+            A = self.A_ineq
+            c_v_zip = [c_i + v_i for c_i, v_i in zip(self.c_ineq, self.incumbent_v)]
+            c_hess = self.problem.get_deterministic_constraints_hessian(c_v_zip)
+           
+            # estimate hessian of the lagrangian for equality-only problem
+            lam = self.estimate_lagrange_mult(A, grad)
+            # subtract constraint component from hessian
+            for i in range(len(lam)):
+                H -= lam[i]*c_hess[i]
+            # subtract barrier component from hessian
+            H_barrier = self.theta*sum(1/(v**2) for v in self.incumbent_v)
+            
+            H = H - H_barrier
+                
+            # Determine tangent step
+            def tangent_subproblem(s_tangent: np.ndarray) -> float:
+                res = (grad + H @ s_normal).T @ s_tangent + 0.5*(s_tangent.T @ H @ s_tangent)
+                return float(res)
+            
+            # get norm of tangent step
+            def norm_s_tangent(s_tangent: np.ndarray) -> float:
+                return float(norm(s_tangent))
+            
+            # constrain step by trust region
+            tr_tangent = NonlinearConstraint(norm_s_tangent, 0, self.delta_k*a_tangent)
+            
+            #Linear constraint
+            linc = LinearConstraint(A, np.zeros(A.shape[0]), np.zeros(A.shape[0]))
+            
+            # solve for tangent step
+            solve_tangent_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
+                tangent_subproblem,
+                np.zeros(self.problem.dim),
+                #method="trust-constr",
+                constraints=[tr_tangent,linc],
+            )
+            s_tangent = solve_tangent_subproblem.x
+            return s_tangent
+            
+            
             
             
         
