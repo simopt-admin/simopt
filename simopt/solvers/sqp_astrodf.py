@@ -859,20 +859,60 @@ class SQPASTRODF(Solver):
         # Reset counter on successful update
         self.hessian_skip_count = 0
         
-    def estimate_lagrange_mult(self, A, grad) -> np.array():
+    def estimate_lagrange_mult(self, grad, A_eq = None, A_ineq =None, c_ineq = None) -> np.array():
         """
         Compute estimited lagrange multipliers for constraints.
         
-        A = jacobian of equality constraints
+        A _eq= jacobian of equality constraints
+        A_ineq = jacobian of inequality constraints
         grad = objective gradient
+        
+        Returns: vector of Lagrange mulitpliers ordered with equality constraints first followed by inequality constraints
 
         """
         
-        # lambda unbounded bc right now only equality constraints
-        
-        lam, res, rank, svals = np.linalg.lstsq(A.T, grad)
-        
-        return lam
+        #build problem based on constraint type
+        if self.problem_type == "eq_only":
+            res = lsq_linear(A_eq.T, -1*grad)
+            return res.x
+        else: #inequaltiy constraints present
+            A = []
+            lb = []
+            ub = []
+            n_eq = 0
+            # add equaltiy constraints if present
+            if self.problem_type == "both": 
+                A.append(A_eq.T)
+                n_eq = A_eq.shape[0]
+                lb.extend([-np.inf]*n_eq)
+                ub.extend([np.inf]*n_eq)
+
+            #determine if constraint is active
+            active = c_ineq >= self.feas_tol
+            A_active = A_ineq[active]
+            
+            n_active = A_active.shape[0] #get number of active inequality constraints
+            #add jacobian of active constraints and bounds to problem
+            if n_active > 0:
+                A.append(A_active.T)
+                lb.extend([0.0]*n_active)
+                ub.extend([np.inf]*n_active)
+            # if no constraints are active all multipliers are 0
+            if self.problem_type == "ineq_only" and n_active ==0 :
+                return np.zeros(A_ineq.shape[0])
+            
+            #convert A to matrix
+            A_lsq = np.hstack(A)
+            res = lsq_linear(A_lsq, -1*grad, bounds=(np.array(lb),np.array(ub)))
+            
+            #build lambda vector
+            lam = np.zeros(n_eq + A_ineq.shape[0]) #initialize lamda vector
+            lam[:n_eq] = res.x[:n_eq] # add equality result
+            if n_active > 0:
+                lam[n_eq:][active] = res.x[n_eq:] # add active inequality constraints leaving inactive 0
+                
+            return lam
+
         
         
     def solve_normal_step(self):
@@ -1002,6 +1042,11 @@ class SQPASTRODF(Solver):
             A = self.A_ineq
             c_v_zip = [c_i + v_i for c_i, v_i in zip(self.c_ineq, self.incumbent_v)]
             c_hess = self.problem.get_deterministic_constraints_hessian(c_v_zip)
+            V = np.diag(self.incumbent_v)
+            # get total dimension of problem
+            n_x = len(self.incumbent_x)
+            n_v = len(self.incumbent_v)
+            dim = n_x + n_v
            
             # estimate hessian of the lagrangian for equality-only problem
             lam = self.estimate_lagrange_mult(A, grad)
@@ -1010,12 +1055,19 @@ class SQPASTRODF(Solver):
                 H -= lam[i]*c_hess[i]
             # subtract barrier component from hessian
             H_barrier = self.theta*sum(1/(v**2) for v in self.incumbent_v)
-            
             H = H - H_barrier
-                
+            
+            # construct objective terms
+            grad_term = np.concatenate(grad, -1*self.theta*np.ones(n_v))
+            hess_term = np.block([
+                [H, np.zeros((H.shape[0], n_v))],
+                [np.zeros((n_v, H.shape[1])), self.theta * np.eye(n_v)]
+                ])
+            R = np.hstack([A, V])
+   
             # Determine tangent step
             def tangent_subproblem(s_tangent: np.ndarray) -> float:
-                res = (grad + H @ s_normal).T @ s_tangent + 0.5*(s_tangent.T @ H @ s_tangent)
+                res = (grad_term + hess_term @ s_normal).T @ s_tangent + 0.5*(s_tangent.T @ hess_term @ s_tangent)
                 return float(res)
             
             # get norm of tangent step
@@ -1026,14 +1078,20 @@ class SQPASTRODF(Solver):
             tr_tangent = NonlinearConstraint(norm_s_tangent, 0, self.delta_k*a_tangent)
             
             #Linear constraint
-            linc = LinearConstraint(A, np.zeros(A.shape[0]), np.zeros(A.shape[0]))
+            linc = LinearConstraint(R, np.zeros(A.shape[0]), np.zeros(A.shape[0]))
+            #fraction to boundary constraint for slack variables
+            E_v = np.hstack([
+                np.zeros((n_v, n_x)),
+                np.eye(n_v),
+                ])
+            ftb = LinearConstraint(E_v, self.epsilon*np.ones(n_v) - s_normal[n_x:], np.inf)
             
             # solve for tangent step
             solve_tangent_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
                 tangent_subproblem,
                 np.zeros(self.problem.dim),
                 #method="trust-constr",
-                constraints=[tr_tangent,linc],
+                constraints=[tr_tangent,linc, ftb],
             )
             s_tangent = solve_tangent_subproblem.x
             return s_tangent
