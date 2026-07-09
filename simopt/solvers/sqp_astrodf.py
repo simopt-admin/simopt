@@ -934,7 +934,8 @@ class SQPASTRODF(Solver):
                     return float(norm(s_normal))
                 # constrain step by trust region
                 tr_normal = NonlinearConstraint(norm_s_normal, 0, self.delta_k*self.a_normal)
-                # solve for normal step
+
+                
                 solve_normal_subproblem: OptimizeResult = minimize(  
                     normal_subproblem,
                     np.zeros(self.problem.dim),
@@ -988,29 +989,24 @@ class SQPASTRODF(Solver):
             
             
         
-        if self.problem_type == "both":
+        else: #both equality and inequaltiy constraints
             pass
         
-    def solve_tangent_step(self, grad, hessian, s_normal):
+    def solve_tangent_step(self, grad, H, s_normal):
         
         # if normal step = 0, allow tangent full trust region
         if np.norm(s_normal) == 0:
             a_tangent = 1.0 
         else:
             a_tangent = self.a_tangent
-        # create hessian diagonal matrix
-        H = 2*np.diag(hessian)
             
         if self.problem_type == "eq_only":
 
             # set relevent variables
             A = self.A_eq
             c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
+            dim = self.problem.dim
            
-            # estimate hessian of the lagrangian for equality-only problem
-            lam = self.estimate_lagrange_mult(A, grad)
-            for i in range(len(lam)):
-                H -= lam[i]*c_hess[i] 
             # Determine tangent step
             def tangent_subproblem(s_tangent: np.ndarray) -> float:
                 res = (grad + H @ s_normal).T @ s_tangent + 0.5*(s_tangent.T @ H @ s_tangent)
@@ -1043,13 +1039,14 @@ class SQPASTRODF(Solver):
             c_v_zip = [c_i + v_i for c_i, v_i in zip(self.c_ineq, self.incumbent_v)]
             c_hess = self.problem.get_deterministic_constraints_hessian(c_v_zip)
             V = np.diag(self.incumbent_v)
+            c = np.array(self.c_ineq)
             # get total dimension of problem
             n_x = len(self.incumbent_x)
             n_v = len(self.incumbent_v)
             dim = n_x + n_v
            
             # estimate hessian of the lagrangian for equality-only problem
-            lam = self.estimate_lagrange_mult(A, grad)
+            lam = self.estimate_lagrange_mult(grad, A_ineq = A, c_ineq = c)
             # subtract constraint component from hessian
             for i in range(len(lam)):
                 H -= lam[i]*c_hess[i]
@@ -1093,11 +1090,54 @@ class SQPASTRODF(Solver):
                 #method="trust-constr",
                 constraints=[tr_tangent,linc, ftb],
             )
-            s_tangent = solve_tangent_subproblem.x
+            s_tangent_rescale = solve_tangent_subproblem.x 
+            s_tangent_v = V @ s_tangent_rescale[n_x:]
+            s_tangent = np.concatenate(s_tangent_rescale[:n_x], s_tangent_v)
             return s_tangent
             
+        else: # both equality and inequality constraints
+            pass
             
+
             
+    def create_lagrange_hessian(self, hessian, grad):
+        '''
+        
+
+        Returns
+        -------
+        Hessian matrix w/ corresponding Lagrange corrections based on constraint type.
+
+        '''
+        # create hessian diagonal matrix
+        H = 2*np.diag(hessian)
+        
+        if self.problem_type == "eq_only":
+            c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
+            # estimate hessian of the lagrangian for equality-only problem
+            lam = self.estimate_lagrange_mult (grad, A_eq = self.A_eq)
+            for i in range(len(lam)):
+                H -= lam[i]*c_hess[i] 
+                
+            return H
+                
+        else:
+            if self.problem_type == "ineq_only":
+                c_v_zip = [c_i + v_i for c_i, v_i in zip(self.c_ineq, self.incumbent_v)]
+                c_hess = self.problem.get_deterministic_constraints_hessian(c_v_zip)
+                # estimate hessian of the lagrangian for equality-only problem
+                lam = self.estimate_lagrange_mult(grad, A_ineq = self.A_ineq, c_ineq = self.c_ineq)
+            else: #problem has both inequality and equality constraints
+                pass
+            
+        
+            # subtract constraint component from hessian
+            for i in range(len(lam)):
+                H -= lam[i]*c_hess[i]
+            # subtract barrier component from hessian
+            H_barrier = self.theta*sum(1/(v**2) for v in self.incumbent_v)
+            H = H - H_barrier
+        
             
         
     def iterate(self) -> None:
@@ -1236,19 +1276,10 @@ class SQPASTRODF(Solver):
         self.c_ineq = self.problem.get_deterministic_inequality_constraints(self.incumbent_x)
         self.A_eq = self.problem.get_deterministic_equality_constraints_gradients(self.incumbent_x)
         self.A_ineq = self.problem.get_deterministic_inequality_constraints_gradients(self.incumbent_x)
-        c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
         
         # convert any inf or -inf to numbers
         np.nan_to_num(hessian, copy = False)
-        
-        
-        # create hessian diagonal matrix
-        H = 2*np.diag(hessian)
-        
-        # estimate hessian of the lagrangian
-        lam = self.estimate_lagrange_mult(A, grad)
-        for i in range(len(lam)):
-            H -= lam[i]*c_hess[i]
+
         
         
         # This is where we need new normal and tangent step 
@@ -1275,6 +1306,7 @@ class SQPASTRODF(Solver):
                 #method="trust-constr",
                 constraints=tr_normal,
             )
+            
             s_normal = solve_normal_subproblem.x        
 
         # Determine tangent step
