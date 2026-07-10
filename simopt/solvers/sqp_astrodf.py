@@ -1021,7 +1021,7 @@ class SQPASTRODF(Solver):
             v = np.array(self.incumbent_v)
             J = self.A_ineq
             # construct objective terms
-            self.grad_term = np.concatenate(grad, -1*self.theta*np.ones(self.n_v))
+            self.grad_term = np.concatenate((grad, -1*self.theta*np.ones(self.n_v)))
             # save W to be used later
             self.W = np.block([
                 [H, np.zeros((H.shape[0], self.n_v))],
@@ -1031,8 +1031,7 @@ class SQPASTRODF(Solver):
                 # if equalities present add eq jacobian
                 A = self.A_eq
                 m = A.shape[0]
-                n = J.shape[0]
-                R_top = np.hstack((A, np.zeros((m, n))))
+                R_top = np.hstack((A, np.zeros((m, self.n_v))))
                 R_bottom = np.hstack((J, self.V))
                 self.R = np.vstack((R_top, R_bottom)) # save R to be used in tangent step
                 self.feas = np.hstack((np.array(self.c_eq), np.array(self.c_ineq) + v))
@@ -1124,6 +1123,9 @@ class SQPASTRODF(Solver):
             
             # if first iteration set current sigma to min
             self.sigma = self.sigma_min
+        
+            # set barrier parameter (only used in inequality constrained problems)
+            self.theta = self.delta_0
             
             # determine optimization type
             if self.problem.get_deterministic_equality_constraints(self.incumbent_x) == None:
@@ -1139,9 +1141,6 @@ class SQPASTRODF(Solver):
             if self.problem_type in ("ineq_only", "both"):
                 # for now hard code intial slack variables
                 self.incumbent_v = [1]* len(self.problem.get_deterministic_inequality_constraints(self.incumbent_x))
-                
-                # set barrier parameter
-                self.theta = self.delta_0
                 
                 # set problem dimensions
                 self.n_x = len(self.incumbent_x)
@@ -1428,6 +1427,7 @@ class SQPASTRODF(Solver):
             self.recommended_solns.append(candidate_solution)
             self.intermediate_budgets.append(self.budget.used)
             self.delta_k = min(self.delta_k, self.delta_max)
+            
 
             # very successful: expand
             if rho >= self.eta_2:
@@ -1438,7 +1438,11 @@ class SQPASTRODF(Solver):
 
         elif not successful:
             self.delta_k = min(self.gamma_2 * self.delta_k, self.delta_max)
-
+        
+        #update theta (only used for inequaltiy constrained problem)
+        if self.delta_k < self.theta:
+            self.theta = self.delta_k
+        
         # TODO: unified TR management
         # delta_k = min(kappa * norm(grad), self.delta_max)
         # logging.debug("norm of grad "+str(norm(grad)))
