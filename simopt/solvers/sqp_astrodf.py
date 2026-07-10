@@ -1240,7 +1240,7 @@ class SQPASTRODF(Solver):
         # compute normal step
         s_normal, s_normal_rescale = self.solve_normal_step()
         # compute tangent step
-        s_tangent, s_tangent_rescale = self.solve_tangent_step(s_normal)
+        s_tangent, s_tangent_rescale = self.solve_tangent_step(s_normal_rescale)
         # set composite step
         s = s_normal + s_tangent
         # set rescaled composite step (used to compute model improvements)
