@@ -10,6 +10,7 @@ from typing import ParamSpec, Protocol, TypeVar
 
 P = ParamSpec("P")
 R = TypeVar("R", covariant=True)
+T = TypeVar("T")
 
 
 class InputModel(Protocol[P, R]):
@@ -75,7 +76,7 @@ class Gamma(InputModel):
 class WeightedChoice(InputModel):
     """Discrete weighted choice wrapper."""
 
-    def random(self, population: Sequence[object], weights: Sequence[float]) -> object:
+    def random(self, population: Sequence[T], weights: Sequence[float]) -> T:
         """Sample an element from ``population`` according to ``weights``.
 
         Args:
@@ -83,7 +84,7 @@ class WeightedChoice(InputModel):
             weights (Sequence[float]): Nonnegative weights for each item.
 
         Returns:
-            Any: A randomly selected element from ``population``.
+            T: A randomly selected element from ``population``.
         """
         # Calculate cumulative weights
         cum_weights = list(itertools.accumulate(weights))
