@@ -21,7 +21,7 @@ from simopt.base import (
     StochasticConstraint,
     VariableType,
 )
-from simopt.input_models import InputModel, Poisson
+from simopt.input_models import Exp, InputModel
 
 MEAN_ELO: Final[int] = 1200
 MAX_ALLOWABLE_DIFF: Final[int] = 150
@@ -149,7 +149,7 @@ class ChessMatchmaking(Model):
         super().__init__(fixed_factors)
 
         self.elo_model = EloInputModel()
-        self.arrival_model = Poisson()
+        self.arrival_model = Exp()
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.elo_model.set_rng(rng_list[0])
@@ -183,7 +183,7 @@ class ChessMatchmaking(Model):
             self.elo_model.random(elo_mean, elo_sd, elo_min, elo_max) for _ in num_players_range
         ]
 
-        # Generate interarrival times (Poisson distribution).
+        # Generate exponential interarrival times for the Poisson arrival process.
         interarrival_times = [self.arrival_model.random(poisson_rate) for _ in num_players_range]
 
         # Initialize statistics.
