@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from enum import IntEnum
 from typing import Annotated, ClassVar
 
 import numpy as np
+import simpy
 from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -198,36 +200,25 @@ class MM1Queue(Model):
         cust_mat = np.zeros((total, 10))
         cust_mat[:, Col.ARR] = np.cumsum(arrival_times)
         cust_mat[:, Col.SVC] = service_times
-        # Input entries for first customer's queueing experience.
-        first_cust = cust_mat[0]
-        first_cust[Col.DONE] = first_cust[Col.ARR] + first_cust[Col.SVC]
-        first_cust[Col.SOJ] = first_cust[Col.SVC]
-        # first_cust[Col.WAIT] = 0
-        # cfirst_cust[Col.IN_SYS] = 0
-        first_cust[Col.G_SOJ_MU] = -first_cust[Col.SVC] / mu_floor
-        # first_cust[Col.G_WAIT_MU] = 0
-        # first_cust[Col.G_SOJ_LAM] = 0
-        # first_cust[Col.G_WAIT_LAM] = 0
-        # Fill in entries for remaining customers' experiences.
-        for i in range(1, total):
-            # Views into the customer matrix.
-            # NOT copies, so be careful!
+
+        env = simpy.Environment()
+        server = simpy.Resource(env, capacity=1)
+
+        def customer(i: int) -> Generator[simpy.Event, object, None]:
             curr_cust = cust_mat[i]
-            prev_cust = cust_mat[i - 1]
-
             arrival = curr_cust[Col.ARR]
-            prev_departure = prev_cust[Col.DONE]
-
-            # Completion time
-            curr_cust[Col.DONE] = max(arrival, prev_departure) + curr_cust[Col.SVC]
-            # Sojourn and waiting times
-            curr_cust[Col.SOJ] = curr_cust[Col.DONE] - arrival
-            curr_cust[Col.WAIT] = curr_cust[Col.SOJ] - curr_cust[Col.SVC]
+            yield env.timeout(arrival)
 
             # Number in system at arrival
-            lookback = int(prev_cust[Col.IN_SYS]) + 1
-            arrivals_in_window = cust_mat[i - lookback : i, Col.DONE]
-            curr_cust[Col.IN_SYS] = np.count_nonzero(arrivals_in_window > arrival)
+            curr_cust[Col.IN_SYS] = server.count + len(server.queue)
+
+            with server.request() as request:
+                yield request
+                yield env.timeout(curr_cust[Col.SVC])
+
+            curr_cust[Col.DONE] = env.now
+            curr_cust[Col.SOJ] = curr_cust[Col.DONE] - arrival
+            curr_cust[Col.WAIT] = curr_cust[Col.SOJ] - curr_cust[Col.SVC]
 
             # Gradients w.r.t mu
             n_in_sys = int(curr_cust[Col.IN_SYS])
@@ -238,6 +229,10 @@ class MM1Queue(Model):
             # Gradients w.r.t lambda
             # cust_mat[i, 8] = 0.0
             # cust_mat[i, 9] = 0.0
+
+        for i in range(total):
+            env.process(customer(i))
+        env.run()
         cust_mat_warmup = cust_mat[warmup:]
         # Compute average sojourn time and its gradient.
         mean_sojourn_time = np.mean(cust_mat_warmup[:, Col.SOJ])
