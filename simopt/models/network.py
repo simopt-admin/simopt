@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from enum import IntEnum
 from random import Random
 from typing import Annotated, ClassVar, Final, Self
 
 import numpy as np
+import simpy
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -288,31 +290,32 @@ class Network(Model):
         message_mat[:, Col.ARR] = np.cumsum(arrival_times)
         message_mat[:, Col.ROUTE] = network_routes
         message_mat[:, Col.SVC] = service_times
-        # Fill in entries for remaining messages' metrics.
-        # Create a list recording the index of the last customer sent to each network.
-        # Starting with -1, indicating no one is in line.
+        # Fill in entries for messages' metrics.
         routes = message_mat[:, Col.ROUTE].astype(int)
         arrival = message_mat[:, Col.ARR]
         service = message_mat[:, Col.SVC]
 
-        # Initialize completion time tracking per network
-        last_in_line = [-1] * n_networks
+        env = simpy.Environment()
+        networks = [simpy.Resource(env, capacity=1) for _ in range(n_networks)]
 
-        for i in range(total_arrivals):
+        def message(i: int) -> Generator[simpy.Event, object, None]:
             net = routes[i]
             arr_i = arrival[i]
             svc_i = service[i]
-
-            if last_in_line[net] == -1:
-                done = arr_i + svc_i
-            else:
-                done = max(arr_i, message_mat[last_in_line[net], Col.DONE]) + svc_i
-
             curr_message = message_mat[i]
-            curr_message[Col.DONE] = done
-            curr_message[Col.SOJ] = done - arr_i
-            curr_message[Col.WAIT] = curr_message[Col.SOJ] - svc_i
-            last_in_line[net] = i
+
+            yield env.timeout(arr_i)
+            with networks[net].request() as request:
+                yield request
+                curr_message[Col.WAIT] = env.now - arr_i
+                yield env.timeout(svc_i)
+
+            curr_message[Col.DONE] = env.now
+            curr_message[Col.SOJ] = curr_message[Col.DONE] - arr_i
+
+        for i in range(total_arrivals):
+            env.process(message(i))
+        env.run()
 
         # Vectorized cost computations after SOJ is known
         message_mat[:, Col.PROC_COST] = np.array(cost_process)[routes]
@@ -321,12 +324,6 @@ class Network(Model):
             message_mat[:, Col.PROC_COST] + message_mat[:, Col.TIME_COST]
         )
 
-        routes = message_mat[:, Col.ROUTE].astype(int)
-        message_mat[:, Col.PROC_COST] = np.array(cost_process)[routes]
-        message_mat[:, Col.TIME_COST] = np.array(cost_time)[routes] * message_mat[:, Col.SOJ]
-        message_mat[:, Col.TOTAL_COST] = (
-            message_mat[:, Col.PROC_COST] + message_mat[:, Col.TIME_COST]
-        )
         # Compute total costs for the simulation run.
         total_cost = np.sum(message_mat[:, Col.TOTAL_COST])
         responses = {"total_cost": total_cost}
