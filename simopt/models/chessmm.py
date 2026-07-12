@@ -196,30 +196,35 @@ class ChessMatchmaking(Model):
 
         def player_arrivals() -> Generator[simpy.Event, object, None]:
             nonlocal total_diff
-            for interarrival_time, player_rating in zip(
-                interarrival_times, player_ratings, strict=False
+            for player_idx, (interarrival_time, player_rating) in enumerate(
+                zip(interarrival_times, player_ratings, strict=False)
             ):
                 yield env.timeout(interarrival_time)
 
                 # Try to match the player
-                for i, waiting_rating in enumerate(waiting_players.items):
+                for waiting_player in waiting_players.items:
+                    waiting_rating = waiting_player[0]
                     diff = abs(player_rating - waiting_rating)
                     if diff <= allowable_diff:
                         total_diff += diff
                         elo_diffs.append(diff)
-                        yield waiting_players.get(
-                            lambda rating, incoming_rating=player_rating: (
-                                abs(incoming_rating - rating) <= allowable_diff
+                        matched_player = yield waiting_players.get(
+                            lambda player, incoming_rating=player_rating: (
+                                abs(incoming_rating - player[0]) <= allowable_diff
                             )
                         )
+                        wait_times[matched_player[1]] = env.now - matched_player[2]
                         break
-                    wait_times[i] += interarrival_time
                 # If break did not execute, then the player was not matched.
                 else:
-                    yield waiting_players.put(player_rating)
+                    yield waiting_players.put((player_rating, player_idx, env.now))
 
         env.process(player_arrivals())
         env.run()
+
+        # Players still in the pool have waited through the end of the replication.
+        for _, player_idx, arrival_time in waiting_players.items:
+            wait_times[player_idx] = env.now - arrival_time
 
         # If there weren't any matches, the elo_diffs list will be empty.
         avg_diff = np.mean(elo_diffs) if elo_diffs else np.nan
