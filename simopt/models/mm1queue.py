@@ -220,12 +220,6 @@ class MM1Queue(Model):
             curr_cust[Col.SOJ] = curr_cust[Col.DONE] - arrival
             curr_cust[Col.WAIT] = curr_cust[Col.SOJ] - curr_cust[Col.SVC]
 
-            # Gradients w.r.t mu
-            n_in_sys = int(curr_cust[Col.IN_SYS])
-            grad_range = cust_mat[i - n_in_sys : i + 1, Col.SVC]
-            curr_cust[Col.G_SOJ_MU] = -np.sum(grad_range) / mu_floor
-            curr_cust[Col.G_WAIT_MU] = -np.sum(grad_range[:-1]) / mu_floor
-
             # Gradients w.r.t lambda
             # cust_mat[i, 8] = 0.0
             # cust_mat[i, 9] = 0.0
@@ -233,6 +227,26 @@ class MM1Queue(Model):
         for i in range(total):
             env.process(customer(i))
         env.run()
+
+        # Calculate IPA gradients with respect to mu. A customer's completion-time
+        # gradient carries through the entire busy period, including customers who
+        # have already departed. Below the service-rate floor, the simulated service
+        # times do not depend on mu; at the floor, use the zero-valued left derivative.
+        if mu > epsilon:
+            prev_done_grad_mu = 0.0
+            for i in range(total):
+                arrival = cust_mat[i, Col.ARR]
+                service = cust_mat[i, Col.SVC]
+                busy = i > 0 and cust_mat[i - 1, Col.DONE] > arrival
+
+                grad_wait_mu = prev_done_grad_mu if busy else 0.0
+                grad_service_mu = -service / mu
+                grad_sojourn_mu = grad_wait_mu + grad_service_mu
+
+                cust_mat[i, Col.G_WAIT_MU] = grad_wait_mu
+                cust_mat[i, Col.G_SOJ_MU] = grad_sojourn_mu
+                prev_done_grad_mu = grad_sojourn_mu
+
         cust_mat_warmup = cust_mat[warmup:]
         # Compute average sojourn time and its gradient.
         mean_sojourn_time = np.mean(cust_mat_warmup[:, Col.SOJ])
