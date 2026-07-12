@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from random import Random
 from typing import Annotated, ClassVar, Final
 
 import numpy as np
+import simpy
 from pydantic import BaseModel, Field
 from scipy import special
 
@@ -187,26 +189,37 @@ class ChessMatchmaking(Model):
         # Initialize statistics.
         # Incoming players are initialized with a wait time of 0.
         wait_times = np.zeros(num_players)
-        waiting_players = []
+        env = simpy.Environment()
+        waiting_players = simpy.FilterStore(env, capacity=num_players)
         total_diff = 0  # TODO: make this do something
         elo_diffs = []
 
-        # Simulate arrival and matching and players.
-        for interarrival_time, player_rating in zip(
-            interarrival_times, player_ratings, strict=False
-        ):
-            # Try to match the player
-            for i, waiting_rating in enumerate(waiting_players):
-                diff = abs(player_rating - waiting_rating)
-                if diff <= allowable_diff:
-                    total_diff += diff
-                    elo_diffs.append(diff)
-                    waiting_players.pop(i)
-                    break
-                wait_times[i] += interarrival_time
-            # If break did not execute, then the player was not matched.
-            else:
-                waiting_players.append(player_rating)
+        def player_arrivals() -> Generator[simpy.Event, object, None]:
+            nonlocal total_diff
+            for interarrival_time, player_rating in zip(
+                interarrival_times, player_ratings, strict=False
+            ):
+                yield env.timeout(interarrival_time)
+
+                # Try to match the player
+                for i, waiting_rating in enumerate(waiting_players.items):
+                    diff = abs(player_rating - waiting_rating)
+                    if diff <= allowable_diff:
+                        total_diff += diff
+                        elo_diffs.append(diff)
+                        yield waiting_players.get(
+                            lambda rating, incoming_rating=player_rating: (
+                                abs(incoming_rating - rating) <= allowable_diff
+                            )
+                        )
+                        break
+                    wait_times[i] += interarrival_time
+                # If break did not execute, then the player was not matched.
+                else:
+                    yield waiting_players.put(player_rating)
+
+        env.process(player_arrivals())
+        env.run()
 
         # If there weren't any matches, the elo_diffs list will be empty.
         avg_diff = np.mean(elo_diffs) if elo_diffs else np.nan
