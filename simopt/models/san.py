@@ -537,6 +537,59 @@ class SANLongestPathCostConstConfig(BaseModel):
     def _validate_model(self) -> Self:
         self._check_arc_costs()
         return self
+
+class SANLongestPathCostConstIneqConfig(BaseModel):
+    """Configuration model for SAN Longest Path Problem.
+
+    Min Mean Longest Path for Stochastic Activity Network
+    simulation-optimization problem.
+    """
+
+    initial_solution: Annotated[
+        tuple[float, ...],
+        Field(
+            default_factory=lambda: (8,) * NUM_ARCS,
+            description="initial solution",
+        ),
+    ]
+    budget: Annotated[
+        int,
+        Field(
+            default=10000,
+            description="max # of replications for a solver to take",
+            gt=0,
+            json_schema_extra={"isDatafarmable": False},
+        ),
+    ]
+    arc_costs: Annotated[
+        tuple[float, ...],
+        Field(
+            default_factory=lambda: (1,) * NUM_ARCS,
+            description="Cost associated to each arc.",
+        ),
+    ]
+    total_cost: Annotated[
+        float,
+        Field(
+            default=5.0,
+            description="Total cost allowed to be spent reducing arc means.",
+        ),
+    ]
+
+    def _check_arc_costs(self) -> None:
+        if len(self.arc_costs) != len(self.initial_solution):
+            raise ValueError(f"arc_costs must be of length {NUM_ARCS}.")
+
+        positive = True
+        for x in list(self.arc_costs):
+            positive = positive and (x > 0)
+        if not positive:
+            raise ValueError("All elements in arc_costs must be greater than 0.")
+
+    @model_validator(mode="after")
+    def _validate_model(self) -> Self:
+        self._check_arc_costs()
+        return self
     
 class SANLongestPathCostConst(Problem):
     """Base class to implement simulation-optimization problems."""
@@ -594,12 +647,23 @@ class SANLongestPathCostConst(Problem):
         x_array = np.array(x)
         cost = cost_array/x_array
         return (sum(cost) - self.factors["total_cost"])
+    # get lhs value of deterministic constraints (must transform constraints to <= form)
+    def get_deterministic_inequality_constraints(self, x:tuple) -> tuple:
+        cost_array = np.array(self.factors["arc_costs"])
+        x_array = np.array(x)
+        cost = cost_array/x_array
+        return None
+    #return jacobian of deterministic inequality constraints
+    def get_deterministic_inequality_constraints_gradients(self,  x:tuple) -> tuple:
+        return None
     
     #return jacobian of deterministic constraints
-    def get_deterministic_constraints_gradients(self,  x:tuple) -> tuple:
+    def get_deterministic_equality_constraints_gradients(self,  x:tuple) -> tuple:
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
         return (-1*cost_array/x_array**2).reshape(1,self.dim)
+
+    # provide constraint hessian in order of equality constraints and then inequality constraints
     def get_deterministic_constraints_hessian(self, x:tuple) -> np.array():
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
@@ -612,12 +676,12 @@ class SANLongestPathCostConst(Problem):
             [rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)]
         )
 
-class SANLongestPathCostConst(Problem):
+class SANLongestPathCostConstIneq(Problem):
     """Base class to implement simulation-optimization problems."""
 
     class_name_abbr: ClassVar[str] = "SAN-4"
     class_name: ClassVar[str] = "Min Mean Longest Path for Stochastic Activity Network with Cost Constraint"
-    config_class: ClassVar[type[BaseModel]] = SANLongestPathCostConstConfig
+    config_class: ClassVar[type[BaseModel]] = SANLongestPathCostConstIneqConfig
     model_class: ClassVar[type[Model]] = SAN
     n_objectives: ClassVar[int] = 1
     n_stochastic_constraints: ClassVar[int] = 0
@@ -673,8 +737,11 @@ class SANLongestPathCostConst(Problem):
         cost = cost_array/x_array
         return (sum(cost) - self.factors["total_cost"])
     
-    #return jacobian of deterministic constraints
-    def get_deterministic_constraints_gradients(self,  x:tuple) -> tuple:
+    #return jacobian of deterministic equality constraints
+    def get_deterministic_equality_constraints_gradients(self,  x:tuple) -> tuple:
+        return None
+    #return jacobian of deterministic inequality constraints
+    def get_deterministic_inequality_constraints_gradients(self,  x:tuple) -> tuple:
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
         return (-1*cost_array/x_array**2).reshape(1,self.dim)

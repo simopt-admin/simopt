@@ -920,6 +920,7 @@ class SQPASTRODF(Solver):
         # only determine normal step if current solution is infeasible
         if norm(self.feas) <= self.feas_tol : 
             s_normal = np.zeros(self.dim)
+            s_normal_rescale = s_normal
         else:
             # Determine normal step
             def normal_subproblem(s_normal: np.ndarray) -> float:
@@ -956,11 +957,11 @@ class SQPASTRODF(Solver):
                 s_normal_rescale = solve_normal_subproblem.x 
                 s_normal_v = self.V @ s_normal_rescale[self.n_x:]
                 s_normal = np.concatenate((s_normal_rescale[:self.n_x], s_normal_v))
-            return s_normal, s_normal_rescale
+        return s_normal, s_normal_rescale
                
     def solve_tangent_step(self, s_normal):
         # if normal step = 0, allow tangent full trust region
-        if np.norm(s_normal) == 0:
+        if norm(s_normal) == 0:
             a_tangent = 1.0 
         else:
             a_tangent = self.a_tangent
@@ -1015,7 +1016,7 @@ class SQPASTRODF(Solver):
             self.grad_term = grad
             self.W = H
             self.V = None
-            self.crit_measure = norm(self.feas) + norm(null_space(self.R) @ grad)
+            self.crit_measure = norm(self.feas) + norm(null_space(self.R).T @ grad)
         else:
             self.V = np.diag(self.incumbent_v)
             v = np.array(self.incumbent_v)
@@ -1107,6 +1108,7 @@ class SQPASTRODF(Solver):
         else: 
             pilot_run = self.lambda_min
         if self.iteration_count == 1:
+            
             self.incumbent_solution = self.create_new_solution(
                 self.incumbent_x, self.problem
             )
@@ -1125,7 +1127,7 @@ class SQPASTRODF(Solver):
             self.sigma = self.sigma_min
         
             # set barrier parameter (only used in inequality constrained problems)
-            self.theta = self.delta_0
+            self.theta = self.delta_k
             
             # determine optimization type
             if self.problem.get_deterministic_equality_constraints(self.incumbent_x) == None:
@@ -1140,7 +1142,7 @@ class SQPASTRODF(Solver):
             
             if self.problem_type in ("ineq_only", "both"):
                 # for now hard code intial slack variables
-                self.incumbent_v = [1]* len(self.problem.get_deterministic_inequality_constraints(self.incumbent_x))
+                self.incumbent_v = [1]* len(np.atleast_1d(self.problem.get_deterministic_inequality_constraints(self.incumbent_x)))
                 
                 # set problem dimensions
                 self.n_x = len(self.incumbent_x)
@@ -1148,7 +1150,6 @@ class SQPASTRODF(Solver):
                 self.dim = self.n_x + self.n_v
             else: 
                 self.incumbent_v = None
-                self.theta = None
                 self.n_x = len(self.incumbent_x)
                 self.n_v = None
                 self.dim = self.n_x
@@ -1234,7 +1235,7 @@ class SQPASTRODF(Solver):
         # convert any inf or -inf to numbers
         np.nan_to_num(hessian, copy = False)      
         # get hessian matrix w/ lagrange updates and lagrange mulitpliers
-        H, lam = self.create_lagrange_hessian(grad, hessian) 
+        H, lam = self.create_lagrange_hessian(hessian, grad) 
         # build problem matrices
         self.build_problem(grad, H)
         # compute normal step
@@ -1353,8 +1354,8 @@ class SQPASTRODF(Solver):
                 barrier_reduction = self.theta*(np.sum(s_normal_v_rescale) - 0.5* s_normal_v_rescale @ s_normal_v_rescale)
             sig_numerator =-1* (q_n_reduction + barrier_reduction) 
             sig_c_ratio = sig_numerator / ((1-self.nu)*m_n_reduction)
-        # set sigma b and c
-        sigma_b = max(self.sigma_min + self.sigma_b_increase*self.iteration_count, self.sigma_b_max)
+        # set sigma b to be norm of lagrange multipliers
+        sigma_b = norm(lam)
         sigma_c = max(sigma_b, sig_c_ratio)
         
         # update penalty parameter based on solving method
@@ -1362,7 +1363,7 @@ class SQPASTRODF(Solver):
             if sigma_c > self.sigma:
                 self.sigma = max(sigma_c, self.tau_1*self.sigma, self.sigma+ self.tau_2)
         else:
-            self.sigma = max(self.sigma, norm(lam))
+            self.sigma = max(self.sigma, sigma_b)
         # compute the success ratio rho
         # need to update success ratio to include constraints
         # candidate_x_arr = np.array(candidate_x)
@@ -1380,7 +1381,7 @@ class SQPASTRODF(Solver):
         #     # compute merit model reduction
             
         # predicted reduction in merit model
-        pred_merit_reduction = self.grad_term @ s_rescale + 0.5*s_rescale @ self.W @ s_rescale + self.sigma(m_n_reduction)
+        pred_merit_reduction = -1*self.grad_term @ s_rescale - 0.5*s_rescale @ self.W @ s_rescale + self.sigma*(m_n_reduction)
         # actual reduction in objective
         obj_reduction = fval[0] - fval_tilde
         if self.problem_type == "eq_only":
@@ -1388,7 +1389,7 @@ class SQPASTRODF(Solver):
             actual_barrier_reduction = 0
         else: # problem has inequality constraints
             # extract candidate slack variables
-            actual_barrier_reduction = self.theta* (np.sum(np.log(candidate_v) - np.log(self.incumbent_v)))          
+            actual_barrier_reduction = -1*self.theta* (np.sum(np.log(candidate_v) - np.log(self.incumbent_v)))          
             if self.problem_type == "ineq_only":
                 c_ineq_tilde = np.array(self.problem.get_deterministic_inequality_constraints(candidate_x))
                 # extract candidate slack variables
@@ -1401,7 +1402,7 @@ class SQPASTRODF(Solver):
         # actual reduction in feasibility 
         feas_reduction = self.sigma*( norm(self.feas) - norm(feas_tilde))
         # actual merit reduction
-        actual_merit_reduction = obj_reduction - actual_barrier_reduction - feas_reduction
+        actual_merit_reduction = obj_reduction + actual_barrier_reduction + feas_reduction
             
             
             

@@ -236,8 +236,8 @@ class SQPASTRODF(Solver):
 
     name: str = "SQPASTRODF"
     config_class: ClassVar[type[SolverConfig]] = SQPASTRODFConfig
-    class_name_abbr: ClassVar[str] = "SQPASTRODF"
-    class_name: ClassVar[str] = "SQP-ASTRO-DF"
+    class_name_abbr: ClassVar[str] = "SQPASTRODFWSC"
+    class_name: ClassVar[str] = "SQP-ASTRO-DF-WSC"
     objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
     constraint_type: ClassVar[ConstraintType] = ConstraintType.DETERMINISTIC
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
