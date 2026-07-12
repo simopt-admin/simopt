@@ -178,14 +178,6 @@ class ChessMatchmaking(Model):
         allowable_diff = self.factors["allowable_diff"]
         poisson_rate = self.factors["poisson_rate"]
 
-        # Generate Elo ratings (normal distribution).
-        player_ratings = [
-            self.elo_model.random(elo_mean, elo_sd, elo_min, elo_max) for _ in num_players_range
-        ]
-
-        # Generate exponential interarrival times for the Poisson arrival process.
-        interarrival_times = [self.arrival_model.random(poisson_rate) for _ in num_players_range]
-
         # Initialize statistics.
         # Incoming players are initialized with a wait time of 0.
         wait_times = np.zeros(num_players)
@@ -196,9 +188,10 @@ class ChessMatchmaking(Model):
 
         def player_arrivals() -> Generator[simpy.Event, object, None]:
             nonlocal total_diff
-            for player_idx, (interarrival_time, player_rating) in enumerate(
-                zip(interarrival_times, player_ratings, strict=False)
-            ):
+            for player_idx in num_players_range:
+                # Generate the player's Elo rating and interarrival time.
+                player_rating = self.elo_model.random(elo_mean, elo_sd, elo_min, elo_max)
+                interarrival_time = self.arrival_model.random(poisson_rate)
                 yield env.timeout(interarrival_time)
 
                 # Try to match the player
