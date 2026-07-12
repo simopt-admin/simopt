@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import heapq
+from collections.abc import Generator
 from typing import Annotated, ClassVar, Self
 
 import numpy as np
+import simpy
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -304,35 +305,33 @@ class Hotel(Model):
             ]
         )
 
-        # Initialize arrival times
-        arrival = [-time_before + arr_time[i, 0] for i in range(num_products)]
-        a_idx = np.ones(num_products, dtype=int)  # Next interarrival index
-
         # Precompute resource conflict matrix (bool)
         conflicts = (product_incidence.T @ product_incidence) >= 1
 
-        # Min-heap for tracking next arrival events (arrival_time, product_idx)
-        heap = [(arrival[i], i) for i in range(num_products) if arrival[i] <= time_limit[i]]
-        heapq.heapify(heap)
+        env = simpy.Environment(initial_time=-time_before)
+        booking_inventory = [
+            simpy.Container(env, capacity=max(1, limit), init=limit) for limit in booking_limits
+        ]
 
-        while heap:
-            current_time, product_idx = heapq.heappop(heap)
-            if current_time > run_length:
-                break
-            if booking_limits[product_idx] > 0:
-                rate = rack_rate if product_idx % 2 == 0 else discount_rate
-                total_revenue += rate * np.sum(product_incidence[:, product_idx])
-                for i in range(num_products):
-                    if conflicts[product_idx, i] and booking_limits[i] > 0:
-                        booking_limits[i] -= 1
+        def booking_stream(product_idx: int) -> Generator[simpy.Event, object, None]:
+            nonlocal total_revenue
+            for interarrival_time in arr_time[product_idx]:
+                next_time = env.now + interarrival_time
+                if next_time > time_limit[product_idx] or next_time > run_length:
+                    return
+                yield env.timeout(interarrival_time)
 
-            # Schedule next arrival for this product
-            next_idx = a_idx[product_idx]
-            if next_idx < arr_bound:
-                next_time = current_time + arr_time[product_idx, next_idx]
-                a_idx[product_idx] += 1
-                if next_time <= time_limit[product_idx]:
-                    heapq.heappush(heap, (next_time, product_idx))
+                if booking_inventory[product_idx].level > 0:
+                    rate = rack_rate if product_idx % 2 == 0 else discount_rate
+                    total_revenue += rate * np.sum(product_incidence[:, product_idx])
+                    for i in range(num_products):
+                        inventory = booking_inventory[i]
+                        if conflicts[product_idx, i] and inventory.level > 0:
+                            inventory.get(1)
+
+        for product_idx in range(num_products):
+            env.process(booking_stream(product_idx))
+        env.run()
 
         # Compose responses and gradients.
         responses = {"revenue": total_revenue}
