@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from random import Random
-from typing import Annotated, ClassVar, Final
+from typing import Annotated, ClassVar, Final, cast
 
 import numpy as np
 import simpy
@@ -201,10 +201,15 @@ class ChessMatchmaking(Model):
                     if diff <= allowable_diff:
                         total_diff += diff
                         elo_diffs.append(diff)
-                        matched_player = yield waiting_players.get(
-                            lambda player, incoming_rating=player_rating: (
-                                abs(incoming_rating - player[0]) <= allowable_diff
-                            )
+                        matched_player = cast(
+                            tuple[float, int, float],
+                            (
+                                yield waiting_players.get(
+                                    lambda player, incoming_rating=player_rating: (
+                                        abs(incoming_rating - player[0]) <= allowable_diff
+                                    )
+                                )
+                            ),
                         )
                         wait_times[matched_player[1]] = env.now - matched_player[2]
                         break
