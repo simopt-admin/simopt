@@ -221,8 +221,6 @@ class TableAllocation(Model):
             [simpy.Resource(env, capacity=1) for _ in range(num_tables[k])]
             for k in range(len(num_tables))
         ]
-        # (i,j) is the time that jth table of size i becomes available.
-        table_avail = np.zeros((4, max(num_tables)))
 
         def group(n: int) -> Generator[simpy.Event, object, None]:
             nonlocal total_rev
@@ -244,7 +242,7 @@ class TableAllocation(Model):
                     (k, j)
                     for k in range(table_size_idx, len(num_tables))
                     for j, table in enumerate(tables[k])
-                    if table.count == 0 and table_avail[k, j] < env.now
+                    if table.count == 0
                 ),
                 None,
             )
@@ -260,11 +258,10 @@ class TableAllocation(Model):
                 service_time = self.service_time_model.random(
                     1 / service_time_means[group_size - 1]
                 )
-                # Update table availability.
-                table_avail[k, j] += service_time
                 # Update revenue.
                 total_rev += table_revenue[group_size - 1]
-                yield env.timeout(max(0, table_avail[k, j] - env.now))
+                # Hold the table for the full sampled service duration.
+                yield env.timeout(service_time)
 
         # Pass through all arrivals of groups to the restaurants.
         for n in range(n_arrivals):
