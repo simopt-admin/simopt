@@ -224,7 +224,7 @@ class SQPASTRODFConfig(SolverConfig):
     epsilon: Annotated[
         float,
         Field(
-            default=1e-8,
+            default=0.5,
             description="fraction to boundary measure for barrier problem",
         ),
     ]
@@ -983,7 +983,7 @@ class SQPASTRODF(Solver):
                 np.zeros((self.n_v, self.n_x)),
                 np.eye(self.n_v),
                 ])
-            ftb = LinearConstraint(E_v, self.epsilon*np.ones(self.n_v) - s_normal[self.n_x:], np.inf)
+            ftb = LinearConstraint(E_v, -1*self.epsilon*np.ones(self.n_v) - s_normal[self.n_x:], np.inf)
             const = [tr_tangent,linc,ftb]
         # solve for tangent step
         solve_tangent_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
@@ -998,7 +998,7 @@ class SQPASTRODF(Solver):
         else:
             s_tangent_rescale = solve_tangent_subproblem.x 
             s_tangent_v = self.V @ s_tangent_rescale[self.n_x:]
-            s_tangent = np.concatenate(s_tangent_rescale[:self.n_x], s_tangent_v)
+            s_tangent = np.concatenate((s_tangent_rescale[:self.n_x], s_tangent_v))
         return s_tangent, s_tangent_rescale
 
     def build_problem(self, grad, H):
@@ -1028,6 +1028,7 @@ class SQPASTRODF(Solver):
                 [H, np.zeros((H.shape[0], self.n_v))],
                 [np.zeros((self.n_v, H.shape[1])), self.theta * np.eye(self.n_v)]
                 ])
+        
             if self.problem_type == 'both':
                 # if equalities present add eq jacobian
                 A = self.A_eq
@@ -1042,7 +1043,7 @@ class SQPASTRODF(Solver):
             # construct crit measure for inequality problems
             P = np.eye(self.R.shape[1]) - np.linalg.pinv(self.R)@ self.R
             self.crit_measure = norm(P @ self.grad_term) + norm(self.feas)
-        
+            
         
         
     def create_lagrange_hessian(self, hessian, grad):
@@ -1056,9 +1057,8 @@ class SQPASTRODF(Solver):
         '''
         # create hessian diagonal matrix
         H = 2*np.diag(hessian)
-        
+        c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
         if self.problem_type == "eq_only":
-            c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
             # estimate hessian of the lagrangian for equality-only problem
             lam = self.estimate_lagrange_mult (grad, A_eq = self.A_eq)
             for i in range(len(lam)):
@@ -1068,21 +1068,14 @@ class SQPASTRODF(Solver):
                 
         else: #problem has inequality constraints
             # add slack variables to inequality constraints
-            c_v_zip = [c_i + v_i for c_i, v_i in zip(self.c_ineq, self.incumbent_v)]
             if self.problem_type == "ineq_only":
-                c_hess = self.problem.get_deterministic_constraints_hessian(c_v_zip)
                 # estimate hessian of the lagrangian for equality-only problem
                 lam = self.estimate_lagrange_mult(grad, A_ineq = self.A_ineq, c_ineq = self.c_ineq)
             else: #problem has both inequality and equality constraints
-                c = self.c_eq + c_v_zip
-                c_hess = self.problem.get_deterministic_constraints_hessian(c)
                 lam = self.estimate_lagrange_mult(grad,A_eq = self.A_eq, A_ineq = self.A_ineq, c_ineq = self.c_ineq)
             # subtract constraint component from hessian
             for i in range(len(lam)):
                 H -= lam[i]*c_hess[i]
-            # subtract barrier component from hessian
-            H_barrier = self.theta*sum(1/(v**2) for v in self.incumbent_v)
-            H = H - H_barrier
             return H, lam
     
         
@@ -1127,8 +1120,8 @@ class SQPASTRODF(Solver):
             self.sigma = self.sigma_min
         
             # set barrier parameter (only used in inequality constrained problems)
+            #self.theta = min(1e-2, self.delta_k)
             self.theta = self.delta_k
-            
             # determine optimization type
             if self.problem.get_deterministic_equality_constraints(self.incumbent_x) == None:
                 if self.problem.get_deterministic_inequality_constraints(self.incumbent_x) == None:
@@ -1139,21 +1132,18 @@ class SQPASTRODF(Solver):
                 self.problem_type = "eq_only"
             else:
                 self.problem_type = "both"
-            
+
             if self.problem_type in ("ineq_only", "both"):
-                # for now hard code intial slack variables
-                self.incumbent_v = [1]* len(np.atleast_1d(self.problem.get_deterministic_inequality_constraints(self.incumbent_x)))
-                
+               
                 # set problem dimensions
                 self.n_x = len(self.incumbent_x)
-                self.n_v = len(self.incumbent_v)
+                self.n_v = len(np.atleast_1d(self.problem.get_deterministic_inequality_constraints(self.incumbent_x)))
                 self.dim = self.n_x + self.n_v
             else: 
-                self.incumbent_v = None
                 self.n_x = len(self.incumbent_x)
                 self.n_v = None
                 self.dim = self.n_x
-            
+
             
         # Since incument was only evaluated with the sample size of previous incumbent,
         # here we compute its adaptive sample size
@@ -1227,15 +1217,25 @@ class SQPASTRODF(Solver):
         #     #     logging.debug("candidate_x " + str(candidate_x))
         
         # get lhs and Jacobian of constraints for current solution
-        self.c_eq = self.problem.get_deterministic_equality_constraints(self.incumbent_x)
-        self.c_ineq = self.problem.get_deterministic_inequality_constraints(self.incumbent_x)
-        self.A_eq = self.problem.get_deterministic_equality_constraints_gradients(self.incumbent_x)
+        self.c_eq =  np.atleast_1d(self.problem.get_deterministic_equality_constraints(self.incumbent_x))
+        self.c_ineq = np.atleast_1d(self.problem.get_deterministic_inequality_constraints(self.incumbent_x))
+        self.A_eq = np.atleast_1d(self.problem.get_deterministic_equality_constraints_gradients(self.incumbent_x))
         self.A_ineq = self.problem.get_deterministic_inequality_constraints_gradients(self.incumbent_x)
         
+        # intialize slack variables for first iteration
+        if self.iteration_count == 1: 
+            if self.problem_type in ("ineq_only", "both"):
+                # just use feas tol as small constant to avoid another parameter
+                self.incumbent_v = np.maximum(-self.c_ineq, self.epsilon * np.ones(self.n_v))
+            else: 
+                self.incumbent_v = None
+
         # convert any inf or -inf to numbers
         np.nan_to_num(hessian, copy = False)      
         # get hessian matrix w/ lagrange updates and lagrange mulitpliers
         H, lam = self.create_lagrange_hessian(hessian, grad) 
+        #temp remove lagrange updates to hessian
+        #H = 2*np.diag(hessian)
         # build problem matrices
         self.build_problem(grad, H)
         # compute normal step
@@ -1302,39 +1302,41 @@ class SQPASTRODF(Solver):
         #     )
         # )
         # logging.debug("fval[0] - min(fval) " + str(fval[0] - min(fval)))
+        
+        #Disable pattern search for now
 
-        if not self.enable_gradient:
-            min_fval = min(fval)
-            sufficient_reduction = (fval[0] - min_fval) >= self.factors[
-                "ps_sufficient_reduction"
-            ] * self.delta_k**2
+        # if not self.enable_gradient:
+        #     min_fval = min(fval)
+        #     sufficient_reduction = (fval[0] - min_fval) >= self.factors[
+        #         "ps_sufficient_reduction"
+        #     ] * self.delta_k**2
 
-            condition_met = min_fval < fval_tilde and sufficient_reduction
+        #     condition_met = min_fval < fval_tilde and sufficient_reduction
 
-            high_variance = False
-            if not condition_met:
-                # Treat variance as low if mean is zero to avoid division by
-                # zero (zero mean typically indicates negligible uncertainty)
-                if candidate_solution.objectives_mean[0] == 0:
-                    logging.debug(
-                        "Candidate solution objectives_mean is zero, "
-                        "skipping variance check."
-                    )
-                else:
-                    high_variance = (
-                        candidate_solution.objectives_var[0]
-                        / (
-                            candidate_solution.n_reps
-                            * candidate_solution.objectives_mean[0] ** 2
-                        )
-                    ) > 0.75
+        #     high_variance = False
+        #     if not condition_met:
+        #         # Treat variance as low if mean is zero to avoid division by
+        #         # zero (zero mean typically indicates negligible uncertainty)
+        #         if candidate_solution.objectives_mean[0] == 0:
+        #             logging.debug(
+        #                 "Candidate solution objectives_mean is zero, "
+        #                 "skipping variance check."
+        #             )
+        #         else:
+        #             high_variance = (
+        #                 candidate_solution.objectives_var[0]
+        #                 / (
+        #                     candidate_solution.n_reps
+        #                     * candidate_solution.objectives_mean[0] ** 2
+        #                 )
+        #             ) > 0.75
 
-            if condition_met or high_variance:
+        #     if condition_met or high_variance:
  
-                fval_tilde = min_fval
-                min_idx = np.argmin(fval)
-                candidate_x = y_var[min_idx][0]
-                candidate_solution = interpolation_solns[min_idx]
+        #         fval_tilde = min_fval
+        #         min_idx = np.argmin(fval)
+        #         candidate_x = y_var[min_idx][0]
+        #         candidate_solution = interpolation_solns[min_idx]
         
         # reduction in normal model
         m_n_reduction = norm(self.feas) -norm(self.R @ s_normal_rescale + self.feas)   
@@ -1346,7 +1348,8 @@ class SQPASTRODF(Solver):
             sig_c_ratio = 0 # can use any value of sigma
         else:
             # objective improvement after normal step
-            q_n_reduction = -1*grad @ s_normal - 0.5* s_normal @ H @ s_normal
+            s_normal_x = s_normal[:self.n_x]
+            q_n_reduction = -1*grad @ s_normal_x - 0.5* s_normal_x @ H @ s_normal_x
             if self.problem_type == "eq_only":
                 barrier_reduction = 0 
             else:
@@ -1385,11 +1388,11 @@ class SQPASTRODF(Solver):
         # actual reduction in objective
         obj_reduction = fval[0] - fval_tilde
         if self.problem_type == "eq_only":
-            feas_tilde = np.array(self.problem.get_deterministic_equality_constraints(candidate_x))
+            feas_tilde = np.atleast_1d(self.problem.get_deterministic_equality_constraints(candidate_x))
             actual_barrier_reduction = 0
         else: # problem has inequality constraints
             # extract candidate slack variables
-            actual_barrier_reduction = -1*self.theta* (np.sum(np.log(candidate_v) - np.log(self.incumbent_v)))          
+            actual_barrier_reduction = -1*self.theta* (np.sum(np.log(self.incumbent_v) - np.log(candidate_v)))          
             if self.problem_type == "ineq_only":
                 c_ineq_tilde = np.array(self.problem.get_deterministic_inequality_constraints(candidate_x))
                 # extract candidate slack variables
@@ -1411,6 +1414,11 @@ class SQPASTRODF(Solver):
         
         # get trust region ratio
         rho = 0 if pred_merit_reduction <= 0 else actual_merit_reduction / pred_merit_reduction
+        
+        # print("s_normal:", s_normal_rescale)
+        # print("s_tangent:", s_tangent_rescale)
+        # print("s:", s_rescale )
+        # print("candidate:", candidate_x)
 
         # check crit measure
         if self.sampling_method != "IBO":
@@ -1441,8 +1449,13 @@ class SQPASTRODF(Solver):
             self.delta_k = min(self.gamma_2 * self.delta_k, self.delta_max)
         
         #update theta (only used for inequaltiy constrained problem)
+        #force theta decrease for now
+        #self.theta = 0.5*self.theta
+
+        # have theta decrease with delta
         if self.delta_k < self.theta:
             self.theta = self.delta_k
+        #print("successful:", successful)
         
         # TODO: unified TR management
         # delta_k = min(kappa * norm(grad), self.delta_max)

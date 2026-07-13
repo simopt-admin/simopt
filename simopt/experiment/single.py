@@ -775,11 +775,18 @@ class ProblemSolver:
         """Compute feasibility history."""
 
         self.det_feasibility_curves = []
-
         for mrep in range(self.n_macroreps):
             mrep_feas = []
             for sol in self.all_recommended_xs[mrep]:
-                mrep_feas.append(self.problem.get_deterministic_constraints(tuple(sol)))
+                c_eq = self.problem.get_deterministic_equality_constraints(tuple(sol))
+                c_ineq = self.problem.get_deterministic_inequality_constraints(tuple(sol))
+                if c_ineq == None:
+                    feas = c_eq
+                elif c_eq == None:
+                    feas = c_ineq
+                else:
+                    feas = c_eq + c_ineq    
+                mrep_feas.append(feas)
             if method == "value":
                 curve_data = mrep_feas
             elif method == "objective":
