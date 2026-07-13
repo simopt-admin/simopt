@@ -51,8 +51,10 @@ class COBYLA(Solver):
         self.problem.simulate(new_solution, sample_size)
         return float(new_solution.objectives_mean[0])
     
-    def get_constraints(self, x):
-        return np.asarray(self.problem.get_deterministic_constraints(tuple(x)), dtype=float)
+    def get_equality_constraints(self, x):
+        return np.asarray(self.problem.get_deterministic_equality_constraints(tuple(x)), dtype=float)
+    def get_inequality_constraints(self, x):
+        return np.asarray(self.problem.get_deterministic_inequality_constraints(tuple(x)), dtype=float)
     
     def callback(self, res):
         int_x = tuple(res)
@@ -79,15 +81,27 @@ class COBYLA(Solver):
         #sample_size = self.factors["sample_size"]
         #stoch_constraint_range = range(problem.n_stochastic_constraints)
         
-        #determine number of constraints
-        m = len(np.atleast_1d(self.problem.get_deterministic_constraints(tuple(new_x))))
+        c = []
         
         #get constraints
-        c = NonlinearConstraint(
-            self.get_constraints,
-            lb = np.zeros(m),
-            ub = np.zeros(m)
-            )
+        if self.problem.get_deterministic_equality_constraints(tuple(new_x)) != None:
+            n_eq = len(np.atleast_1d(self.problem.get_deterministic_equality_constraints(tuple(new_x))))
+            c_eq = NonlinearConstraint(
+                self.get_equality_constraints,
+                lb = np.zeros(n_eq),
+                ub = np.zeros(n_eq)
+                )
+            c.append(c_eq)
+        if self.problem.get_deterministic_inequality_constraints(tuple(new_x)) != None:
+            n_ineq = len(np.atleast_1d(self.problem.get_deterministic_inequality_constraints(tuple(new_x))))
+            c_ineq = NonlinearConstraint(
+                self.get_inequality_constraints,
+                lb = -np.inf,
+                ub = np.zeros(n_ineq)
+                )
+            c.append(c_ineq)
+            
+            
         bounds = Bounds(problem.lower_bounds, problem.upper_bounds)
 
 
@@ -97,7 +111,7 @@ class COBYLA(Solver):
         res = minimize(self.simulate, 
                        x0,
                        method = "COBYQA", 
-                       constraints = [c], 
+                       constraints = c, 
                        bounds = bounds,
                        options={"maxfev": maxfev,"feasibility_tol": feas_tol},
                        callback= self.callback)

@@ -167,7 +167,7 @@ class SQPASTRODFConfig(SolverConfig):
     sigma_min: Annotated[
         float,
         Field(
-            default=1.0,
+            default=10.0,
             description="initial penalty parameter",
         ),
     
@@ -176,8 +176,8 @@ class SQPASTRODFConfig(SolverConfig):
     sigma_b_max: Annotated[
         float,
         Field(
-            default=0.01,
-            description="smallest amound sigma can increase by",
+            default=1e8,
+            description="upper bound on simga_b",
         ),
     
     
