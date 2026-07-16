@@ -155,7 +155,7 @@ class TableAllocation(Model):
     class_name_abbr: ClassVar[str] = "TABLEALLOCATION"
     class_name: ClassVar[str] = "Restaurant Table Allocation"
     config_class: ClassVar[type[BaseModel]] = TableAllocationConfig
-    n_rngs: ClassVar[int] = 3
+    n_rngs: ClassVar[int] = 4
     n_responses: ClassVar[int] = 2
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -175,9 +175,9 @@ class TableAllocation(Model):
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.arrival_time_model.set_rng(rng_list[0])
-        self.arrival_number_model.set_rng(rng_list[0])
-        self.group_size_model.set_rng(rng_list[1])
-        self.service_time_model.set_rng(rng_list[2])
+        self.arrival_number_model.set_rng(rng_list[1])
+        self.group_size_model.set_rng(rng_list[2])
+        self.service_time_model.set_rng(rng_list[3])
 
     def replicate(self) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.

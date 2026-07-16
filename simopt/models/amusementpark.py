@@ -264,7 +264,7 @@ class AmusementPark(Model):
     class_name_abbr: ClassVar[str] = "AMUSEMENTPARK"
     class_name: ClassVar[str] = "Amusement Park"
     config_class: ClassVar[type[BaseModel]] = AmusementParkConfig
-    n_rngs: ClassVar[int] = 3
+    n_rngs: ClassVar[int] = 4
     n_responses: ClassVar[int] = 4
 
     def __init__(self, fixed_factors: dict | None = None) -> None:
@@ -281,10 +281,10 @@ class AmusementPark(Model):
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.arrival_model.set_rng(rng_list[0])
-        self.attraction_model.set_rng(rng_list[0])
-        self.destination_model.set_rng(rng_list[1])
+        self.attraction_model.set_rng(rng_list[1])
+        self.destination_model.set_rng(rng_list[2])
         for service in self.service_models:
-            service.set_rng(rng_list[2])
+            service.set_rng(rng_list[3])
 
     def replicate(self) -> tuple[dict[str, float | list[float]], dict]:
         """Simulate a single replication using current model factors.
