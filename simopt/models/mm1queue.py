@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from enum import IntEnum
 from typing import Annotated, ClassVar
 
 import numpy as np
+import simpy
 from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -198,46 +200,53 @@ class MM1Queue(Model):
         cust_mat = np.zeros((total, 10))
         cust_mat[:, Col.ARR] = np.cumsum(arrival_times)
         cust_mat[:, Col.SVC] = service_times
-        # Input entries for first customer's queueing experience.
-        first_cust = cust_mat[0]
-        first_cust[Col.DONE] = first_cust[Col.ARR] + first_cust[Col.SVC]
-        first_cust[Col.SOJ] = first_cust[Col.SVC]
-        # first_cust[Col.WAIT] = 0
-        # cfirst_cust[Col.IN_SYS] = 0
-        first_cust[Col.G_SOJ_MU] = -first_cust[Col.SVC] / mu_floor
-        # first_cust[Col.G_WAIT_MU] = 0
-        # first_cust[Col.G_SOJ_LAM] = 0
-        # first_cust[Col.G_WAIT_LAM] = 0
-        # Fill in entries for remaining customers' experiences.
-        for i in range(1, total):
-            # Views into the customer matrix.
-            # NOT copies, so be careful!
+
+        env = simpy.Environment()
+        server = simpy.Resource(env, capacity=1)
+
+        def customer(i: int) -> Generator[simpy.Event, object, None]:
             curr_cust = cust_mat[i]
-            prev_cust = cust_mat[i - 1]
-
             arrival = curr_cust[Col.ARR]
-            prev_departure = prev_cust[Col.DONE]
-
-            # Completion time
-            curr_cust[Col.DONE] = max(arrival, prev_departure) + curr_cust[Col.SVC]
-            # Sojourn and waiting times
-            curr_cust[Col.SOJ] = curr_cust[Col.DONE] - arrival
-            curr_cust[Col.WAIT] = curr_cust[Col.SOJ] - curr_cust[Col.SVC]
+            yield env.timeout(arrival)
 
             # Number in system at arrival
-            lookback = int(prev_cust[Col.IN_SYS]) + 1
-            arrivals_in_window = cust_mat[i - lookback : i, Col.DONE]
-            curr_cust[Col.IN_SYS] = np.count_nonzero(arrivals_in_window > arrival)
+            curr_cust[Col.IN_SYS] = server.count + len(server.queue)
 
-            # Gradients w.r.t mu
-            n_in_sys = int(curr_cust[Col.IN_SYS])
-            grad_range = cust_mat[i - n_in_sys : i + 1, Col.SVC]
-            curr_cust[Col.G_SOJ_MU] = -np.sum(grad_range) / mu_floor
-            curr_cust[Col.G_WAIT_MU] = -np.sum(grad_range[:-1]) / mu_floor
+            with server.request() as request:
+                yield request
+                yield env.timeout(curr_cust[Col.SVC])
+
+            curr_cust[Col.DONE] = env.now
+            curr_cust[Col.SOJ] = curr_cust[Col.DONE] - arrival
+            curr_cust[Col.WAIT] = curr_cust[Col.SOJ] - curr_cust[Col.SVC]
 
             # Gradients w.r.t lambda
             # cust_mat[i, 8] = 0.0
             # cust_mat[i, 9] = 0.0
+
+        for i in range(total):
+            env.process(customer(i))
+        env.run()
+
+        # Calculate IPA gradients with respect to mu. A customer's completion-time
+        # gradient carries through the entire busy period, including customers who
+        # have already departed. Below the service-rate floor, the simulated service
+        # times do not depend on mu; at the floor, use the zero-valued left derivative.
+        if mu > epsilon:
+            prev_done_grad_mu = 0.0
+            for i in range(total):
+                arrival = cust_mat[i, Col.ARR]
+                service = cust_mat[i, Col.SVC]
+                busy = i > 0 and cust_mat[i - 1, Col.DONE] > arrival
+
+                grad_wait_mu = prev_done_grad_mu if busy else 0.0
+                grad_service_mu = -service / mu
+                grad_sojourn_mu = grad_wait_mu + grad_service_mu
+
+                cust_mat[i, Col.G_WAIT_MU] = grad_wait_mu
+                cust_mat[i, Col.G_SOJ_MU] = grad_sojourn_mu
+                prev_done_grad_mu = grad_sojourn_mu
+
         cust_mat_warmup = cust_mat[warmup:]
         # Compute average sojourn time and its gradient.
         mean_sojourn_time = np.mean(cust_mat_warmup[:, Col.SOJ])

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Self
+from collections.abc import Generator
+from typing import Annotated, ClassVar, Self, cast
 
 import numpy as np
+import simpy
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -18,9 +20,6 @@ from simopt.base import (
 )
 from simopt.input_models import Beta, Exp
 from simopt.utils import override
-
-AVAILABLE = 0
-BUSY = 1
 
 
 class AmbulanceConfig(BaseModel):
@@ -189,46 +188,6 @@ class Ambulance(Model):
         beta_x_model = self.beta_x_model
         beta_y_model = self.beta_y_model
 
-        def next_arrival(curr: float) -> list:
-            """Generate the next arrival event.
-
-            - Arrival inter-time: exponential.
-            - Call location (x, y): drawn from scaled Beta distributions.
-            """
-            # Draw Beta-based coordinates in [0, SQUARE_WIDTH]
-            x_coord = beta_x_model.random(alpha_x, beta_x) * sqaure_width
-            y_coord = beta_y_model.random(alpha_y, beta_y) * sqaure_width
-
-            # Generate times using Exp input model
-            interarrival_time = arrival_time_model.random(1.0 / mean_interval)
-            service_time = scene_time_model.random(1.0 / mean_scene_time)
-
-            return [
-                curr + interarrival_time,  # interarrival time
-                1,  # event type: arrival
-                x_coord,  # x from Beta
-                y_coord,  # y from Beta
-                service_time,  # scene time
-            ]
-
-        # ------------------------------
-        # Event list:
-        # For type 0: end: [time, 0, 0, 0, 0]
-        # For type 1: arrival: [time, 1, x_coord, y_coord, service_time]
-        # For type 2: service completion: [time, 2, assigned_amb_index, 0, 0]
-        # ------------------------------
-        event_list = []
-        current_time = 0.0
-
-        # Schedule termination and first arrival
-        event_list.append([sim_length, 0, 0, 0, 0])
-        event_list.append(next_arrival(0))
-
-        # Ambulance state: [x, y, status]
-        ambs = np.array([[bx, by, AVAILABLE] for bx, by in bases])
-        queued_calls = []
-        active_calls = 0
-
         total_response_time = 0.0
         num_calls = 0
         grad_total = np.zeros((variable_base_count, 2))
@@ -237,101 +196,71 @@ class Ambulance(Model):
         # carry is used if the next call for this ambulance has to wait
         carry_next = np.zeros((variable_base_count, 2))
 
-        # ------------------------------
-        # Main event loop
-        # ------------------------------
-        while event_list:
-            event_list.sort(key=lambda e: e[0])
-            event = event_list.pop(0)
-            current_time = event[0]
-            etype = event[1]
+        env = simpy.Environment()
+        available_ambulances = simpy.FilterStore(env, capacity=n_ambulances)
+        for i in range(n_ambulances):
+            available_ambulances.put(i)
 
-            if etype == 0:
-                # End
-                break
+        def call(
+            arrival_time: float,
+            x_coord: float,
+            y_coord: float,
+            service_time: float,
+        ) -> Generator[simpy.Event, object, None]:
+            nonlocal num_calls, total_response_time
+            queued = not available_ambulances.items
 
-            if etype == 1:
-                # Arrival
-                active_calls += 1
-                if active_calls > len(bases):
-                    queued_calls.append(event)
+            if queued:
+                i = cast(int, (yield available_ambulances.get()))
+            else:
+                times = [
+                    (
+                        np.sum(np.abs(np.array(bases[i]) - [x_coord, y_coord])) / amb_speed
+                        if i in available_ambulances.items
+                        else float("inf")
+                    )
+                    for i in range(n_ambulances)
+                ]
+                i = int(np.argmin(times))
+                yield available_ambulances.get(lambda ambulance: ambulance == i)
+
+            travel = np.sum(np.abs(np.array(bases[i]) - [x_coord, y_coord])) / amb_speed
+            queue_delay = env.now - arrival_time
+            total_response_time += travel + queue_delay
+            num_calls += 1
+
+            if (
+                i >= variable_base_start_index
+                and i - variable_base_start_index < variable_base_count
+            ):
+                j = i - variable_base_start_index
+                dx = np.sign(bases[i][0] - x_coord) / amb_speed
+                dy = np.sign(bases[i][1] - y_coord) / amb_speed
+                dd = np.array([dx, dy])
+                if queued:
+                    grad_total[j] += carry_next[j] + dd
+                    carry_next[j] = carry_next[j] + 2.0 * dd
                 else:
-                    # Find nearest available ambulance
-                    times = [
-                        (
-                            np.sum(np.abs(amb[:2] - event[2:4])) / amb_speed
-                            if amb[2] == AVAILABLE
-                            else float("inf")
-                        )
-                        for amb in ambs
-                    ]
-                    i = int(np.argmin(times))
-                    ambs[i, 2] = BUSY
-                    response_time = times[i]
-                    total_response_time += response_time
-                    num_calls += 1
+                    grad_total[j] += dd
+                    carry_next[j] = 2.0 * dd
 
-                    # Gradient update
-                    # no waiting: Response time (R) = Driving time (D)
-                    if (
-                        i >= variable_base_start_index
-                        and i - variable_base_start_index < variable_base_count
-                    ):
-                        j = i - variable_base_start_index
-                        # Compute travel gradient dD wrt base position
-                        dx = np.sign(ambs[i, 0] - event[2]) / amb_speed
-                        dy = np.sign(ambs[i, 1] - event[3]) / amb_speed
-                        dd = np.array([dx, dy])
-                        # No waiting time
-                        grad_total[j] += dd
-                        # Set carry for next potential queued call for this ambulance
-                        # dW(i)+2dD(i) = 0 + 2dD
-                        carry_next[j] = 2.0 * dd
+            yield env.timeout(2 * travel)
+            yield env.timeout(service_time)
+            yield available_ambulances.put(i)
 
-                    done_time = current_time + 2 * response_time + event[4]
-                    event_list.append([done_time, 2, i, 0, 0])
+        def call_arrivals() -> Generator[simpy.Event, object, None]:
+            while True:
+                # Draw Beta-based coordinates in [0, SQUARE_WIDTH]
+                x_coord = beta_x_model.random(alpha_x, beta_x) * sqaure_width
+                y_coord = beta_y_model.random(alpha_y, beta_y) * sqaure_width
+                interarrival_time = arrival_time_model.random(1.0 / mean_interval)
+                service_time = scene_time_model.random(1.0 / mean_scene_time)
 
-                event_list.append(next_arrival(current_time))
+                yield env.timeout(interarrival_time)
+                env.process(call(env.now, x_coord, y_coord, service_time))
 
-            elif etype == 2:
-                # service completion
-                i = int(event[2])
-                ambs[i, 2] = AVAILABLE
-                active_calls -= 1
-
-                if queued_calls:
-                    # dispatch first queued call
-                    qevent = queued_calls.pop(0)
-                    ambs[i, 2] = BUSY  # mark ambulance as busy again
-
-                    travel = np.sum(np.abs(ambs[i, 0:2] - qevent[2:4])) / amb_speed
-                    queue_delay = current_time - qevent[0]
-                    total_response_time += travel + queue_delay
-                    num_calls += 1
-
-                    # Gradient update (queued: R = W + D)
-                    # If ambulance is from a variable base:
-                    if (
-                        i >= variable_base_start_index
-                        and i - variable_base_start_index < variable_base_count
-                    ):
-                        j = i - variable_base_start_index
-                        # Compute travel gradient dD wrt base position
-                        dx = np.sign(ambs[i, 0] - qevent[2]) / amb_speed
-                        dy = np.sign(ambs[i, 1] - qevent[3]) / amb_speed
-                        dd = np.array([dx, dy])
-                        # For queued calls:
-                        # Response time (R) = Waiting time (W) + Driving time (D)
-                        grad_total[j] += carry_next[j] + dd
-                        # Update carry for the next call assigned to this ambulance
-                        # new carry = old carry + 2 * dD
-                        carry_next[j] = carry_next[j] + 2.0 * dd
-
-                    done_time = current_time + 2 * travel + qevent[4]
-                    event_list.append([done_time, 2, i, 0, 0])
-
-                # if no queue, we do not need to change carry_next here
-                # the next non-queued arrival will overwrite it with 2*dD
+        env.process(call_arrivals())
+        env.run(until=sim_length)
 
         if num_calls:
             avg_time = total_response_time / num_calls

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from random import Random
-from typing import Annotated, ClassVar, Final
+from typing import Annotated, ClassVar, Final, cast
 
 import numpy as np
+import simpy
 from pydantic import BaseModel, Field
 from scipy import special
 
@@ -19,7 +21,7 @@ from simopt.base import (
     StochasticConstraint,
     VariableType,
 )
-from simopt.input_models import InputModel, Poisson
+from simopt.input_models import Exp, InputModel
 
 MEAN_ELO: Final[int] = 1200
 MAX_ALLOWABLE_DIFF: Final[int] = 150
@@ -147,7 +149,7 @@ class ChessMatchmaking(Model):
         super().__init__(fixed_factors)
 
         self.elo_model = EloInputModel()
-        self.arrival_model = Poisson()
+        self.arrival_model = Exp()
 
     def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
         self.elo_model.set_rng(rng_list[0])
@@ -176,37 +178,51 @@ class ChessMatchmaking(Model):
         allowable_diff = self.factors["allowable_diff"]
         poisson_rate = self.factors["poisson_rate"]
 
-        # Generate Elo ratings (normal distribution).
-        player_ratings = [
-            self.elo_model.random(elo_mean, elo_sd, elo_min, elo_max) for _ in num_players_range
-        ]
-
-        # Generate interarrival times (Poisson distribution).
-        interarrival_times = [self.arrival_model.random(poisson_rate) for _ in num_players_range]
-
         # Initialize statistics.
         # Incoming players are initialized with a wait time of 0.
         wait_times = np.zeros(num_players)
-        waiting_players = []
+        env = simpy.Environment()
+        waiting_players = simpy.FilterStore(env, capacity=num_players)
         total_diff = 0  # TODO: make this do something
         elo_diffs = []
 
-        # Simulate arrival and matching and players.
-        for interarrival_time, player_rating in zip(
-            interarrival_times, player_ratings, strict=False
-        ):
-            # Try to match the player
-            for i, waiting_rating in enumerate(waiting_players):
-                diff = abs(player_rating - waiting_rating)
-                if diff <= allowable_diff:
-                    total_diff += diff
-                    elo_diffs.append(diff)
-                    waiting_players.pop(i)
-                    break
-                wait_times[i] += interarrival_time
-            # If break did not execute, then the player was not matched.
-            else:
-                waiting_players.append(player_rating)
+        def player_arrivals() -> Generator[simpy.Event, object, None]:
+            nonlocal total_diff
+            for player_idx in num_players_range:
+                # Generate the player's Elo rating and interarrival time.
+                player_rating = self.elo_model.random(elo_mean, elo_sd, elo_min, elo_max)
+                interarrival_time = self.arrival_model.random(poisson_rate)
+                yield env.timeout(interarrival_time)
+
+                # Try to match the player
+                for waiting_player in waiting_players.items:
+                    waiting_rating = waiting_player[0]
+                    diff = abs(player_rating - waiting_rating)
+                    if diff <= allowable_diff:
+                        total_diff += diff
+                        elo_diffs.append(diff)
+                        matched_player = cast(
+                            tuple[float, int, float],
+                            (
+                                yield waiting_players.get(
+                                    lambda player, incoming_rating=player_rating: (
+                                        abs(incoming_rating - player[0]) <= allowable_diff
+                                    )
+                                )
+                            ),
+                        )
+                        wait_times[matched_player[1]] = env.now - matched_player[2]
+                        break
+                # If break did not execute, then the player was not matched.
+                else:
+                    yield waiting_players.put((player_rating, player_idx, env.now))
+
+        env.process(player_arrivals())
+        env.run()
+
+        # Players still in the pool have waited through the end of the replication.
+        for _, player_idx, arrival_time in waiting_players.items:
+            wait_times[player_idx] = env.now - arrival_time
 
         # If there weren't any matches, the elo_diffs list will be empty.
         avg_diff = np.mean(elo_diffs) if elo_diffs else np.nan

@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import bisect
-import itertools
-from collections.abc import Sequence
-from typing import Annotated, ClassVar, Self, cast
+from collections.abc import Generator
+from typing import Annotated, ClassVar, Self
 
 import numpy as np
+import simpy
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -196,31 +195,6 @@ class TableAllocation(Model):
                     each response.
         """
 
-        def fast_weighted_choice(
-            population: Sequence[int], weights: Sequence[float], rng: MRG32k3a
-        ) -> int:
-            """Select a single element from a population based on weights.
-
-            Designed to be faster than `random.choices()` when only one element
-            is needed.
-
-            Args:
-                population (Sequence[int]): The population to select from.
-                weights (Sequence[float]): The weights for each element in the
-                    population.
-                rng (MRG32k3a): The random number generator to use for selection.
-
-            Returns:
-                int: The selected element from the population.
-            """
-            # Calculate cumulative weights
-            cum_weights = list(itertools.accumulate(weights))
-            # Generate a value somewhere between 0 and the sum of weights
-            x = rng.random() * cum_weights[-1]
-            # Find the index of the first cumulative weight that is >= x
-            # Return the corresponding element from the population
-            return population[bisect.bisect(cum_weights, x)]
-
         num_tables = self.factors["num_tables"]
         # TODO: figure out how floats are getting into the num_tables list
         num_tables = [int(n) for n in num_tables]
@@ -232,9 +206,6 @@ class TableAllocation(Model):
         table_revenue = self.factors["table_revenue"]
         # Track total revenue.
         total_rev = 0
-        # Track table availability.
-        # (i,j) is the time that jth table of size i becomes available.
-        table_avail = np.zeros((4, max(num_tables)))
         # Generate total number of arrivals in the period
         n_arrivals = self.arrival_number_model.random(round(n_hours * sum(f_lambda)))
         # Generate arrival times in minutes
@@ -245,15 +216,19 @@ class TableAllocation(Model):
         found = np.zeros(n_arrivals)
         # Precompute options for group sizes.
         group_size_options = list(range(1, max_table_cap + 1))
-        # Pass through all arrivals of groups to the restaurants.
-        for n in range(n_arrivals):
+        env = simpy.Environment()
+        tables = [
+            [simpy.Resource(env, capacity=1) for _ in range(num_tables[k])]
+            for k in range(len(num_tables))
+        ]
+
+        def group(n: int) -> Generator[simpy.Event, object, None]:
+            nonlocal total_rev
+            yield env.timeout(arrival_times[n])
+
             # Determine group size.
-            group_size = cast(
-                int,
-                self.group_size_model.random(
-                    population=group_size_options,
-                    weights=f_lambda,
-                ),
+            group_size = self.group_size_model.random(
+                population=group_size_options, weights=f_lambda
             )
 
             # Find smallest table size to start search.
@@ -262,28 +237,36 @@ class TableAllocation(Model):
                 table_size_idx += 1
 
             # Find smallest available table.
-            def find_table(table_size_idx: int, n: int) -> tuple[int, int] | None:
-                for k in range(table_size_idx, len(num_tables)):
-                    for j in range(num_tables[k]):
-                        # Check if table is currently available.
-                        if table_avail[k, j] < arrival_times[n]:
-                            return k, j
-                # Return None if no table is available.
-                return None
-
-            result = find_table(table_size_idx, n)
+            result = next(
+                (
+                    (k, j)
+                    for k in range(table_size_idx, len(num_tables))
+                    for j, table in enumerate(tables[k])
+                    if table.count == 0
+                ),
+                None,
+            )
             # If no table is available, move on to next group.
             if result is None:
-                continue
+                return
             k, j = result
-            # Mark group as seated.
-            found[n] = 1
-            # Sample service time.
-            service_time = self.service_time_model.random(1 / service_time_means[group_size - 1])
-            # Update table availability.
-            table_avail[k, j] += service_time
-            # Update revenue.
-            total_rev += table_revenue[group_size - 1]
+            with tables[k][j].request() as request:
+                yield request
+                # Mark group as seated.
+                found[n] = 1
+                # Sample service time.
+                service_time = self.service_time_model.random(
+                    1 / service_time_means[group_size - 1]
+                )
+                # Update revenue.
+                total_rev += table_revenue[group_size - 1]
+                # Hold the table for the full sampled service duration.
+                yield env.timeout(service_time)
+
+        # Pass through all arrivals of groups to the restaurants.
+        for n in range(n_arrivals):
+            env.process(group(n))
+        env.run()
         # Calculate responses from simulation data.
         responses = {
             "total_revenue": total_rev,

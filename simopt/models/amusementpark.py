@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import math as math
-from typing import Annotated, ClassVar, Final, Self, cast
+from collections.abc import Generator
+from typing import Annotated, ClassVar, Final, Self
 
+import simpy
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -18,8 +19,6 @@ from simopt.base import (
 )
 from simopt.input_models import Exp, Gamma, WeightedChoice
 from simopt.models._ext import patch_model
-
-INF = float("inf")
 
 # Default values for the model
 PARK_CAPACITY: Final[int] = 350
@@ -304,28 +303,6 @@ class AmusementPark(Model):
                 - dict: Gradients of the performance measures with respect to model factors.
         """  # noqa: E501
 
-        def set_completion(i: int, new_time: float) -> None:
-            """Set the completion time for an attraction.
-
-            Updates the minimum completion time and index if necessary.
-            This function doesn't offer much (if any) performance gain with small
-            numbers of attractions, but with larger numbers it is significantly faster.
-
-            Args:
-                i (int): The index of the attraction.
-                new_time (float): The new completion time for the attraction.
-            """
-            nonlocal min_completion_time, min_completion_index
-            completion_times[i] = new_time
-
-            if new_time < min_completion_time:
-                min_completion_time = new_time
-                min_completion_index = i
-            elif i == min_completion_index:
-                # Grab the min index and time with one scanning pass
-                min_completion_time = min(completion_times)
-                min_completion_index = completion_times.index(min_completion_time)
-
         # Keep local copies of factors to prevent excessive lookups
         num_attractions: int = self.factors["number_attractions"]
         arrival_gammas: list[int] = self.factors["arrival_gammas"]
@@ -340,12 +317,6 @@ class AmusementPark(Model):
         attraction_range = range(num_attractions)
         destination_range = range(num_attractions + 1)
         depart_idx = destination_range[-1]
-        # initialize lists of each attraction's next completion time
-        completion_times: list[float] = [INF] * num_attractions
-        min_completion_time = INF
-        min_completion_index = -1
-        # initialize actual queues.
-        queues: list[int] = [0] * num_attractions
 
         # create external arrival probabilities for each attraction.
         arrival_prob_sum: float = float(sum(arrival_gammas))
@@ -353,113 +324,90 @@ class AmusementPark(Model):
             arrival_gammas[i] / arrival_prob_sum for i in attraction_range
         ]
 
-        # Initiate clock variables for statistics tracking and event handling.
-        clock: float = 0.0
-        previous_clock: float = 0.0
-        next_arrival = self.arrival_model.random(arrival_prob_sum)
-
         # Initialize quantities to track:
         total_visitors: int = 0
         total_departed: int = 0
         # initialize time average and utilization quantities.
-        in_system: int = 0
         time_average: float = 0.0
         cumulative_util: list[float] = [0.0] * num_attractions
+        previous_clock: float = 0.0
 
-        # Run simulation over time horizon.
-        while clock < time_open:
-            # Count number of tourists on attractions and in queues.
-            riders: int = 0
-            delta_time: float = clock - previous_clock
+        env = simpy.Environment()
+        queues = [simpy.Store(env, capacity=max(1, queue_capacities[i])) for i in attraction_range]
+        busy = [False] * num_attractions
+
+        def update_statistics() -> None:
+            nonlocal previous_clock, time_average
+            delta_time = env.now - previous_clock
             for i in attraction_range:
-                if not math.isinf(completion_times[i]):
-                    riders += 1
+                if busy[i]:
                     cumulative_util[i] += delta_time
-            in_system = sum(queues) + riders
-            time_average += in_system * (delta_time)
+            in_system = sum(len(queue.items) for queue in queues) + sum(busy)
+            time_average += in_system * delta_time
+            previous_clock = env.now
 
-            previous_clock = clock
-            if next_arrival < min_completion_time:
-                # Next event is external tourist arrival.
-                total_visitors += 1
-                # Select attraction.
-                attraction_selection = cast(
-                    int,
-                    self.attraction_model.random(
-                        attraction_range,
-                        arrival_probabilities,
-                    ),
-                )
-                # Check if attraction is currently available.
-                # If available, arrive at that attraction. Otherwise check queue.
-                if math.isinf(completion_times[attraction_selection]):
-                    # Generate completion time if attraction available.
-                    completion_time = next_arrival + self.service_models[
-                        attraction_selection
-                    ].random(
-                        alpha=erlang_shape[attraction_selection],
-                        beta=erlang_scale[attraction_selection],
-                    )
-                    set_completion(attraction_selection, completion_time)
-                # If unavailable, check if current queue is less than capacity.
-                # If queue is not full, join queue.
-                elif queues[attraction_selection] < queue_capacities[attraction_selection]:
-                    queues[attraction_selection] += 1
-                # If queue is full, leave park + 1.
-                else:
-                    total_departed += 1
-                # Use superposition of Poisson processes to generate next arrival time.
-                next_arrival += self.arrival_model.random(arrival_prob_sum)
+        def admit(attraction: int) -> None:
+            nonlocal total_departed
+            if not busy[attraction]:
+                busy[attraction] = True
+                queues[attraction].put(None)
+            elif len(queues[attraction].items) < queue_capacities[attraction]:
+                queues[attraction].put(None)
             else:
-                # Next event is the completion of an attraction.
-                # Identify finished attraction.
-                finished_attraction = completion_times.index(min_completion_time)
-                # Check if there is a queue for that attraction.
-                # If so then start new completion time and subtract 1 from queue.
-                alpha = erlang_shape[finished_attraction]
-                beta = erlang_scale[finished_attraction]
-                if queues[finished_attraction] > 0:
-                    completion_time = min_completion_time + self.service_models[
-                        finished_attraction
-                    ].random(
-                        alpha=alpha,
-                        beta=beta,
-                    )
-                    set_completion(finished_attraction, completion_time)
-                    queues[finished_attraction] -= 1
-                else:  # If attraction queue is empty, set next completion to infinity.
-                    set_completion(finished_attraction, INF)
-                # Check if that person will leave the park.
-                next_destination = cast(
-                    int,
-                    self.destination_model.random(
+                total_departed += 1
+
+        def attraction_server(
+            finished_attraction: int,
+        ) -> Generator[simpy.Event, object, None]:
+            while True:
+                yield queues[finished_attraction].get()
+                service_time = self.service_models[finished_attraction].random(
+                    alpha=erlang_shape[finished_attraction],
+                    beta=erlang_scale[finished_attraction],
+                )
+                while True:
+                    yield env.timeout(service_time)
+                    update_statistics()
+
+                    has_queued_visitor = bool(queues[finished_attraction].items)
+                    if has_queued_visitor:
+                        yield queues[finished_attraction].get()
+                        service_time = self.service_models[finished_attraction].random(
+                            alpha=erlang_shape[finished_attraction],
+                            beta=erlang_scale[finished_attraction],
+                        )
+                    else:
+                        busy[finished_attraction] = False
+
+                    next_destination = self.destination_model.random(
                         destination_range,
                         transition_probabilities[finished_attraction]
                         + [depart_probabilities[finished_attraction]],
-                    ),
-                )
+                    )
+                    if next_destination != depart_idx:
+                        admit(next_destination)
 
-                # Check if tourist leaves park.
-                if next_destination != depart_idx:
-                    # Check if attraction is currently available.
-                    # If available, arrive at that attraction. Otherwise check queue.
-                    if math.isinf(completion_times[next_destination]):
-                        # Generate completion time if attraction available.
-                        completion_time = min_completion_time + self.service_models[
-                            next_destination
-                        ].random(alpha, beta)
-                        set_completion(next_destination, completion_time)
-                    # If unavailable, check if current queue is less than capacity.
-                    # If queue is not full, join queue.
-                    elif queues[next_destination] < queue_capacities[next_destination]:
-                        queues[next_destination] += 1
-                    # If queue is full, leave park + 1.
-                    else:
-                        total_departed += 1
-            # End of while loop.
-            # Check if any attractions are available.
-            clock = min(next_arrival, min_completion_time)
-        # End of simulation.
+                    if not has_queued_visitor:
+                        break
+
+        def external_arrivals() -> Generator[simpy.Event, object, None]:
+            nonlocal total_visitors
+            while True:
+                interarrival_time = self.arrival_model.random(arrival_prob_sum)
+                yield env.timeout(interarrival_time)
+                update_statistics()
+                total_visitors += 1
+
+                attraction_selection = self.attraction_model.random(
+                    attraction_range, arrival_probabilities
+                )
+                admit(attraction_selection)
+
+        for i in attraction_range:
+            env.process(attraction_server(i))
+        env.process(external_arrivals())
+        env.run(until=time_open)
+        update_statistics()
 
         # Calculate overall percent utilization calculation for each attraction.
         cumulative_util = [cumulative_util[i] / time_open for i in attraction_range]
