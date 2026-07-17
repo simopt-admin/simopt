@@ -214,7 +214,6 @@ class Problem(ABC):
         self.model = self.model_class(model_factors)
 
         self.rng_list: list[MRG32k3a] = []
-        self.before_replicate_override = None
 
     def __eq__(self, other: object) -> bool:
         """Check if two problems are equivalent.
@@ -363,23 +362,13 @@ class Problem(ABC):
         """
         raise NotImplementedError
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: B027
-        """Hook executed before each simulation replication.
-
-        Subclasses can override this to perform per-replication setup such as
-        using the same RNG for different input models.
-
-        Args:
-            rng_list (list[MRG32k3a]): RNGs used for this replication.
-        """
-        pass
-
     @abstractmethod
-    def replicate(self, x: tuple, /) -> RepResult:
+    def replicate(self, x: tuple, rngs: list[MRG32k3a], /) -> RepResult:
         """Replicate the problem for a given solution.
 
         Args:
             x (tuple): The solution to evaluate.
+            rngs (list[MRG32k3a]): RNGs used to drive the simulation.
         """
         raise NotImplementedError
 
@@ -399,12 +388,7 @@ class Problem(ABC):
         self.model.factors.update(self.vector_to_factor_dict(solution.x))
         for _ in range(num_macroreps):
             # Generate one replication at x.
-            self.model.before_replicate(solution.rng_list)
-            self.before_replicate(solution.rng_list)
-            if self.before_replicate_override is not None:
-                self.before_replicate_override(self.model, solution.rng_list)
-
-            result = self.replicate(solution.x)
+            result = self.replicate(solution.x, solution.rng_list)
             solution.add_replicate_result(result)
 
             # Advance rngs to start of next subsubstream.

@@ -173,17 +173,11 @@ class TableAllocation(Model):
         self.group_size_model = WeightedChoice()
         self.service_time_model = Exp()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.arrival_time_model.set_rng(rng_list[0])
-        self.arrival_number_model.set_rng(rng_list[1])
-        self.group_size_model.set_rng(rng_list[2])
-        self.service_time_model.set_rng(rng_list[3])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -207,10 +201,10 @@ class TableAllocation(Model):
         # Track total revenue.
         total_rev = 0
         # Generate total number of arrivals in the period
-        n_arrivals = self.arrival_number_model.random(round(n_hours * sum(f_lambda)))
+        n_arrivals = self.arrival_number_model.random(rngs[1], round(n_hours * sum(f_lambda)))
         # Generate arrival times in minutes
         arrival_times = 60 * np.sort(
-            [self.arrival_time_model.random(0, n_hours) for _ in range(n_arrivals)]
+            [self.arrival_time_model.random(rngs[0], 0, n_hours) for _ in range(n_arrivals)]
         )
         # Track seating rate
         found = np.zeros(n_arrivals)
@@ -228,7 +222,7 @@ class TableAllocation(Model):
 
             # Determine group size.
             group_size = self.group_size_model.random(
-                population=group_size_options, weights=f_lambda
+                rngs[2], population=group_size_options, weights=f_lambda
             )
 
             # Find smallest table size to start search.
@@ -256,7 +250,7 @@ class TableAllocation(Model):
                 found[n] = 1
                 # Sample service time.
                 service_time = self.service_time_model.random(
-                    1 / service_time_means[group_size - 1]
+                    rngs[3], 1 / service_time_means[group_size - 1]
                 )
                 # Update revenue.
                 total_rev += table_revenue[group_size - 1]
@@ -311,8 +305,8 @@ class TableAllocationMaxRev(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["num_tables"],)
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["total_revenue"])]
         return RepResult(objectives=objectives)
 

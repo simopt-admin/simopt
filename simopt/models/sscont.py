@@ -167,15 +167,11 @@ class SSCont(Model):
         self.demand_model = Exp()
         self.lead_model = Poisson()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.demand_model.set_rng(rng_list[0])
-        self.lead_model.set_rng(rng_list[1])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -209,7 +205,9 @@ class SSCont(Model):
         periods = n_days + warmup
         # Generate exponential random demands.
         inv_demand_mean = 1 / demand_mean
-        demands = np.array([self.demand_model.random(inv_demand_mean) for _ in range(periods)])
+        demands = np.array(
+            [self.demand_model.random(rngs[0], inv_demand_mean) for _ in range(periods)]
+        )
         # Initialize starting and ending inventories for each period.
         start_inv = np.zeros(periods)
         start_inv[0] = fac_s  # Start with s units at period 0.
@@ -235,7 +233,7 @@ class SSCont(Model):
                 order_qty = fac_S - inv_pos[day]
                 orders_placed[day] = order_qty
 
-                lead = self.lead_model.random(lead_mean)
+                lead = self.lead_model.random(rngs[1], lead_mean)
                 delivery_day = next_day + lead
 
                 if delivery_day < periods:
@@ -335,8 +333,8 @@ class SSContMinCost(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [
             Objective(
                 stochastic=(

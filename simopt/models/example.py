@@ -82,10 +82,7 @@ class ExampleModel(Model):
         super().__init__(fixed_factors)
         self.noise_model = Normal()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.noise_model.set_rng(rng_list[0])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate a deterministic function f(x) with stochastic noise.
 
         Returns:
@@ -96,7 +93,7 @@ class ExampleModel(Model):
                     each response.
         """
         x = np.array(self.factors["x"])
-        fn_eval_at_x = np.linalg.norm(x) ** 2 + self.noise_model.random()
+        fn_eval_at_x = np.linalg.norm(x) ** 2 + self.noise_model.random(rngs[0])
 
         # Compose responses and gradients.
         responses = {"est_f(x)": fn_eval_at_x}
@@ -148,8 +145,8 @@ class ExampleProblem(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["x"])
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, gradients = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(rngs)
         objectives = [
             Objective(
                 stochastic=responses["est_f(x)"],
@@ -228,14 +225,11 @@ class Example2Model(Model):
         super().__init__(fixed_factors)
         self.noise_model = Normal()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.noise_model.set_rng(rng_list[0])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate a quadratic function f(x) with stochastic noise."""
         x = np.array(self.factors["x"])
         target = np.array([1, 2, 3, 4])
-        fn_eval_at_x = np.sum((x - target) ** 2) + self.noise_model.random()
+        fn_eval_at_x = np.sum((x - target) ** 2) + self.noise_model.random(rngs[0])
 
         responses = {"est_f(x)": fn_eval_at_x}
         return responses, {}
@@ -283,8 +277,8 @@ class Example2Problem(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["x"])
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["est_f(x)"])]
         return RepResult(objectives=objectives)
 

@@ -135,18 +135,7 @@ class Ambulance(Model):
         self.beta_x_model = Beta()
         self.beta_y_model = Beta()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        # Assign RNGs to input models
-        # RNG 0 -> Arrival Times
-        self.arrival_time_model.set_rng(rng_list[0])
-        # RNG 1 -> Scene Times
-        self.scene_time_model.set_rng(rng_list[1])
-        # RNG 2 -> X coordinates
-        self.beta_x_model.set_rng(rng_list[2])
-        # RNG 3 -> Y coordinates
-        self.beta_y_model.set_rng(rng_list[3])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Run one replication of the ambulance dispatch simulation."""
         # ------------------------------
         # Setup base locations and system parameters
@@ -251,10 +240,10 @@ class Ambulance(Model):
         def call_arrivals() -> Generator[simpy.Event, object, None]:
             while True:
                 # Draw Beta-based coordinates in [0, SQUARE_WIDTH]
-                x_coord = beta_x_model.random(alpha_x, beta_x) * sqaure_width
-                y_coord = beta_y_model.random(alpha_y, beta_y) * sqaure_width
-                interarrival_time = arrival_time_model.random(1.0 / mean_interval)
-                service_time = scene_time_model.random(1.0 / mean_scene_time)
+                x_coord = beta_x_model.random(rngs[2], alpha_x, beta_x) * sqaure_width
+                y_coord = beta_y_model.random(rngs[3], alpha_y, beta_y) * sqaure_width
+                interarrival_time = arrival_time_model.random(rngs[0], 1.0 / mean_interval)
+                service_time = scene_time_model.random(rngs[1], 1.0 / mean_scene_time)
 
                 yield env.timeout(interarrival_time)
                 env.process(call(env.now, x_coord, y_coord, service_time))
@@ -324,9 +313,9 @@ class AmbulanceMinAvgResponse(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["variable_locs"])
 
-    def replicate(self, _x: tuple) -> RepResult:
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         # 1. Run the simulation
-        responses, gradients = self.model.replicate()
+        responses, gradients = self.model.replicate(rngs)
 
         # 2. Construct the Objective
         # Since this problem has no deterministic cost component,

@@ -134,14 +134,11 @@ class FixedSAN(Model):
 
         self.time_model = Exp()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.time_model.set_rng(rng_list[0])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -164,7 +161,7 @@ class FixedSAN(Model):
         # Generate arc lengths.
         nodes = np.zeros(num_nodes)
         time_deriv = np.zeros((num_nodes, num_arcs))
-        arcs = [self.time_model.random(1 / x) for x in thetas]
+        arcs = [self.time_model.random(rngs[0], 1 / x) for x in thetas]
 
         def get_time(prev_node_idx: int, arc_idx: int) -> float:
             return nodes[prev_node_idx] + arcs[arc_idx]
@@ -269,8 +266,8 @@ class FixedSANLongestPath(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["arc_means"])
 
-    def replicate(self, x: tuple) -> RepResult:
-        responses, gradients = self.model.replicate()
+    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(rngs)
         objectives = [
             Objective(
                 stochastic=responses["longest_path_length"],

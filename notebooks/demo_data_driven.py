@@ -35,16 +35,10 @@ from simopt.input_models import InputModel
 
 # %%
 class DemandInputModel(InputModel):
-    def set_rng(self, rng: random.Random) -> None:
-        self.rng = rng
-
-    def unset_rng(self) -> None:
-        self.rng = None
-
-    def random(self, burr_c: float, burr_k: float) -> float:
+    def random(self, rng: random.Random, burr_c: float, burr_k: float) -> float:
         mean = 10
         std = 0.5
-        return self.rng.normalvariate(mean, std)
+        return rng.normalvariate(mean, std)
 
 
 # %%
@@ -52,13 +46,7 @@ class FileInputModel(InputModel):
     def __init__(self, filename):
         self.data = np.load(filename)
 
-    def set_rng(self, rng: random.Random) -> None:
-        self.rng = rng
-
-    def unset_rng(self) -> None:
-        self.rng = None
-
-    def random(self, burr_c: float, burr_k: float) -> float:
+    def random(self, rng: random.Random, burr_c: float, burr_k: float) -> float:
         return np.random.choice(self.data, size=1, replace=True)[0]
 
 
@@ -67,10 +55,6 @@ class Experiment(ProblemSolver):
     def model_created(self, model):
         # model.demand_model = DemandInputModel()
         model.demand_model = FileInputModel("demand.npy")
-
-    def before_replicate(self, model, rng_list):
-        model.demand_model.set_rng(rng_list[0])
-
 
 # %%
 # Run 10 macroreplications of ASTRO-DF on the continuous newsvendor problem.

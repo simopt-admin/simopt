@@ -106,11 +106,7 @@ class ParameterEstimation(Model):
         self.y1_model = Gamma()
         self.y2_model = Gamma()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.y2_model.set_rng(rng_list[0])
-        self.y1_model.set_rng(rng_list[1])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Returns:
@@ -124,8 +120,8 @@ class ParameterEstimation(Model):
         x = self.factors["x"]
         # Generate y1 and y2 from specified gamma distributions using input models.
         # Outputs will be coupled when generating Y_j's.
-        y2 = self.y2_model.random(xstar[1], 1)
-        y1 = self.y1_model.random(xstar[0] * y2, 1)
+        y2 = self.y2_model.random(rngs[0], xstar[1], 1)
+        y1 = self.y1_model.random(rngs[1], xstar[0] * y2, 1)
         # Compute Log Likelihood
         loglik = (
             -y1
@@ -185,8 +181,8 @@ class ParamEstiMaxLogLik(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["x"])
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["loglik"])]
         return RepResult(objectives=objectives)
 

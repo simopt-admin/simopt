@@ -113,13 +113,12 @@ class ChessAvgDifferenceConfig(BaseModel):
 class EloInputModel(InputModel):
     """Input model for player Elo ratings."""
 
-    rng: Random | None = None
-
-    def random(self, mean: float, std: float, min_rating: float, max_rating: float) -> float:
+    def random(
+        self, rng: Random, mean: float, std: float, min_rating: float, max_rating: float
+    ) -> float:
         """Draw a truncated normal rating within [min_rating, max_rating]."""
-        assert self.rng is not None
         while True:
-            rating = self.rng.normalvariate(mean, std)
+            rating = rng.normalvariate(mean, std)
             if min_rating <= rating <= max_rating:
                 return rating
 
@@ -151,15 +150,11 @@ class ChessMatchmaking(Model):
         self.elo_model = EloInputModel()
         self.arrival_model = Exp()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.elo_model.set_rng(rng_list[0])
-        self.arrival_model.set_rng(rng_list[1])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): List of random number generators used to simulate
+            rngs (list[MRG32k3a]): List of random number generators used to simulate
                 the replication.
 
         Returns:
@@ -190,8 +185,8 @@ class ChessMatchmaking(Model):
             nonlocal total_diff
             for player_idx in num_players_range:
                 # Generate the player's Elo rating and interarrival time.
-                player_rating = self.elo_model.random(elo_mean, elo_sd, elo_min, elo_max)
-                interarrival_time = self.arrival_model.random(poisson_rate)
+                player_rating = self.elo_model.random(rngs[0], elo_mean, elo_sd, elo_min, elo_max)
+                interarrival_time = self.arrival_model.random(rngs[1], poisson_rate)
                 yield env.timeout(interarrival_time)
 
                 # Try to match the player
@@ -270,8 +265,8 @@ class ChessAvgDifference(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["allowable_diff"],)
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         return RepResult(
             objectives=[Objective(stochastic=responses["avg_diff"])],
             stochastic_constraints=[

@@ -294,15 +294,11 @@ class Contamination(Model):
         self.contam_model = Beta()
         self.restore_model = Beta()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.contam_model.set_rng(rng_list[0])
-        self.restore_model.set_rng(rng_list[1])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -323,15 +319,15 @@ class Contamination(Model):
 
         # Initialize levels with beta distribution.
         levels = np.zeros(stages)
-        levels[0] = self.restore_model.random(init_alpha, init_beta)
+        levels[0] = self.restore_model.random(rngs[1], init_alpha, init_beta)
 
         # Generate contamination and restoration values with beta distribution.
         rand_range = range(stages - 1)
         contamination_rates = [
-            self.contam_model.random(contam_alpha, contam_beta) for _ in rand_range
+            self.contam_model.random(rngs[0], contam_alpha, contam_beta) for _ in rand_range
         ]
         restoration_rates = [
-            self.restore_model.random(restore_alpha, restore_beta) for _ in rand_range
+            self.restore_model.random(rngs[1], restore_alpha, restore_beta) for _ in rand_range
         ]
 
         # Calculate contamination and restoration levels.
@@ -386,8 +382,8 @@ class ContaminationTotalCostDisc(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["prev_decision"])
 
-    def replicate(self, x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [
             Objective(
                 stochastic=0.0,
@@ -459,8 +455,8 @@ class ContaminationTotalCostCont(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["prev_decision"])
 
-    def replicate(self, x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         deterministic_cost = np.dot(self.factors["prev_cost"], x)
         objectives = [
             Objective(

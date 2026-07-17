@@ -198,11 +198,8 @@ class NetworkMinTotalCostConfig(BaseModel):
 class RouteInputModel(InputModel):
     """Input model for routing choices in the network."""
 
-    rng: Random | None = None
-
-    def random(self, choices: list[int], weights: list[float], k: int) -> list[int]:
-        assert self.rng is not None
-        return self.rng.choices(choices, weights, k=k)
+    def random(self, rng: Random, choices: list[int], weights: list[float], k: int) -> list[int]:
+        return rng.choices(choices, weights, k=k)
 
 
 class Network(Model):
@@ -227,16 +224,11 @@ class Network(Model):
         self.route_model = RouteInputModel()
         self.service_model = Triangular()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.arrival_model.set_rng(rng_list[0])
-        self.route_model.set_rng(rng_list[1])
-        self.service_model.set_rng(rng_list[2])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -259,14 +251,18 @@ class Network(Model):
 
         # Generate all interarrival, network routes, and service times before the
         # simulation run.
-        arrival_times = [self.arrival_model.random(arrival_rate) for _ in range(total_arrivals)]
+        arrival_times = [
+            self.arrival_model.random(rngs[0], arrival_rate) for _ in range(total_arrivals)
+        ]
         network_routes = self.route_model.random(
+            rngs[1],
             list(range(n_networks)),
             weights=process_prob,
             k=total_arrivals,
         )
         service_times = [
             self.service_model.random(
+                rngs[2],
                 low=lower_limits_transit_time[route],
                 high=upper_limits_transit_time[route],
                 mode=mode_transit_time[route],
@@ -366,8 +362,8 @@ class NetworkMinTotalCost(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["process_prob"])
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["total_cost"])]
         return RepResult(objectives=objectives)
 

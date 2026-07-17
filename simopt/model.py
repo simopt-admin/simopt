@@ -88,20 +88,11 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        """Prepare the model just before generating a replication.
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+        """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): RNGs used to drive the simulation.
-
-        Raises:
-            NotImplementedError: If the subclass does not implement this hook.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def replicate(self) -> tuple[dict, dict]:
-        """Simulate a single replication for the current model factors.
+            rngs (list[MRG32k3a]): RNGs used to drive the simulation.
 
         Returns:
             tuple:

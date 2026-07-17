@@ -279,18 +279,11 @@ class AmusementPark(Model):
         for _ in range(self.factors["number_attractions"]):
             self.service_models.append(Gamma())
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.arrival_model.set_rng(rng_list[0])
-        self.attraction_model.set_rng(rng_list[1])
-        self.destination_model.set_rng(rng_list[2])
-        for service in self.service_models:
-            service.set_rng(rng_list[3])
-
-    def replicate(self) -> tuple[dict[str, float | list[float]], dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict[str, float | list[float]], dict]:
         """Simulate a single replication using current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used during the
+            rngs (list[MRG32k3a]): Random number generators used during the
                 simulation.
 
         Returns:
@@ -362,6 +355,7 @@ class AmusementPark(Model):
             while True:
                 yield queues[finished_attraction].get()
                 service_time = self.service_models[finished_attraction].random(
+                    rngs[3],
                     alpha=erlang_shape[finished_attraction],
                     beta=erlang_scale[finished_attraction],
                 )
@@ -373,6 +367,7 @@ class AmusementPark(Model):
                     if has_queued_visitor:
                         yield queues[finished_attraction].get()
                         service_time = self.service_models[finished_attraction].random(
+                            rngs[3],
                             alpha=erlang_shape[finished_attraction],
                             beta=erlang_scale[finished_attraction],
                         )
@@ -380,6 +375,7 @@ class AmusementPark(Model):
                         busy[finished_attraction] = False
 
                     next_destination = self.destination_model.random(
+                        rngs[2],
                         destination_range,
                         transition_probabilities[finished_attraction]
                         + [depart_probabilities[finished_attraction]],
@@ -393,13 +389,13 @@ class AmusementPark(Model):
         def external_arrivals() -> Generator[simpy.Event, object, None]:
             nonlocal total_visitors
             while True:
-                interarrival_time = self.arrival_model.random(arrival_prob_sum)
+                interarrival_time = self.arrival_model.random(rngs[0], arrival_prob_sum)
                 yield env.timeout(interarrival_time)
                 update_statistics()
                 total_visitors += 1
 
                 attraction_selection = self.attraction_model.random(
-                    attraction_range, arrival_probabilities
+                    rngs[1], attraction_range, arrival_probabilities
                 )
                 admit(attraction_selection)
 
@@ -461,8 +457,8 @@ class AmusementParkMinDepart(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["queue_capacities"])
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         return RepResult(objectives=[Objective(stochastic=responses["total_departed"])])
 
     def check_deterministic_constraints(self, x: tuple) -> bool:

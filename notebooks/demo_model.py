@@ -60,8 +60,7 @@ rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(mymodel.n_rngs)]
 
 # %%
 # Run a single replication of the model.
-mymodel.before_replicate(rng_list)
-responses, gradients = mymodel.replicate()
+responses, gradients = mymodel.replicate(rng_list)
 print("\nFor a single replication:")
 print("\nResponses:")
 for key, value in responses.items():

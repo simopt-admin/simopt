@@ -158,26 +158,18 @@ class RMITDMaxRevenueConfig(BaseModel):
 class DemandInputModel(InputModel):
     """Input model for temporally dependent demand components."""
 
-    x_rng: MRG32k3a | None = None
-    y_rng: MRG32k3a | None = None
-
-    def set_rng(self, rng: list[MRG32k3a] | tuple[MRG32k3a, MRG32k3a]) -> None:  # type: ignore
-        self.x_rng = rng[0]
-        self.y_rng = rng[1]
-
-    def unset_rng(self) -> None:
-        self.x_rng = None
-        self.y_rng = None
-
     def random(
-        self, demand_means: np.ndarray, gamma_shape: float, gamma_scale: float
+        self,
+        rngs: list[MRG32k3a],
+        demand_means: np.ndarray,
+        gamma_shape: float,
+        gamma_scale: float,
     ) -> np.ndarray:
-        assert self.x_rng is not None and self.y_rng is not None
-        x_demand = self.x_rng.gammavariate(
+        x_demand = rngs[0].gammavariate(
             alpha=gamma_shape,
             beta=1.0 / gamma_scale,
         )
-        y_demand = np.array([self.y_rng.expovariate(1) for _ in range(len(demand_means))])
+        y_demand = np.array([rngs[1].expovariate(1) for _ in range(len(demand_means))])
         return demand_means * x_demand * y_demand
 
 
@@ -206,14 +198,11 @@ class RMITD(Model):
 
         self.demand_model = DemandInputModel()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.demand_model.set_rng(rng_list)
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -235,7 +224,7 @@ class RMITD(Model):
         #     alpha = k = gamma_shape
         #     beta = 1/theta = 1/gamma_scale
         reservations = [*reservation_qtys, 0]
-        demand_vec = self.demand_model.random(demand_means, gamma_shape, gamma_scale)
+        demand_vec = self.demand_model.random(rngs, demand_means, gamma_shape, gamma_scale)
 
         # Set initial inventory and revenue
         remaining_inventory = initial_inventory
@@ -300,8 +289,8 @@ class RMITDMaxRevenue(Problem):
             *tuple(factor_dict["reservation_qtys"]),
         )
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["revenue"])]
         return RepResult(objectives=objectives)
 

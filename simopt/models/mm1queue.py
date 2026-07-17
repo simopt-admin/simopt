@@ -139,15 +139,11 @@ class MM1Queue(Model):
         self.arrival_model = Exp()
         self.service_model = Exp()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.arrival_model.set_rng(rng_list[0])
-        self.service_model.set_rng(rng_list[1])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -170,8 +166,8 @@ class MM1Queue(Model):
         # Calculate total number of arrivals to simulate.
         total = warmup + people
         # Generate all interarrival and service times up front.
-        arrival_times = [self.arrival_model.random(f_lambda) for _ in range(total)]
-        service_times = [self.service_model.random(mu_floor) for _ in range(total)]
+        arrival_times = [self.arrival_model.random(rngs[0], f_lambda) for _ in range(total)]
+        service_times = [self.service_model.random(rngs[1], mu_floor) for _ in range(total)]
 
         # Create matrix storing times and metrics for each customer:
         #     column 0 : arrival time to queue;
@@ -310,8 +306,8 @@ class MM1MinMeanSojournTime(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["mu"],)
 
-    def replicate(self, x: tuple) -> RepResult:
-        responses, gradients = self.model.replicate()
+    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(rngs)
         objectives = [
             Objective(
                 stochastic=responses["avg_sojourn_time"],

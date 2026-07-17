@@ -152,14 +152,12 @@ class DynamNewsMaxProfitConfig(BaseModel):
 class Utility(InputModel):
     """Input model for customer utility sampling."""
 
-    rng: Random | None = None
-
-    def _gumbelvariate(self, mu: float, beta: float) -> float:
-        assert self.rng is not None
-        return mu - beta * math.log(-math.log(self.rng.random()))
+    def _gumbelvariate(self, rng: Random, mu: float, beta: float) -> float:
+        return mu - beta * math.log(-math.log(rng.random()))
 
     def random(
         self,
+        rng: Random,
         mu: float,
         num_customer: int,
         num_prod: int,
@@ -169,7 +167,7 @@ class Utility(InputModel):
         gumbel_mu = -mu * np.euler_gamma
         gumbel_beta = mu
         gumbel_flat = [
-            self._gumbelvariate(gumbel_mu, gumbel_beta) for _ in range(num_customer * num_prod)
+            self._gumbelvariate(rng, gumbel_mu, gumbel_beta) for _ in range(num_customer * num_prod)
         ]
         gumbel = np.reshape(gumbel_flat, (num_customer, num_prod))
 
@@ -206,14 +204,11 @@ class DynamNews(Model):
 
         self.utility_model = Utility()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.utility_model.set_rng(rng_list[0])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -235,6 +230,7 @@ class DynamNews(Model):
         cost: list = self.factors["cost"]
 
         utility = self.utility_model.random(
+            rngs[0],
             mu,
             num_customer,
             num_prod,
@@ -321,8 +317,8 @@ class DynamNewsMaxProfit(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["init_level"])
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["profit"])]
         return RepResult(objectives=objectives)
 

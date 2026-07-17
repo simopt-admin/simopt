@@ -185,14 +185,11 @@ class SAN(Model):
             self.__dfs(graph, next_point, visited)
         return visited
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.time_model.set_rng(rng_list[0])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -227,7 +224,9 @@ class SAN(Model):
                     queue.append(v)
 
         # Arc lengths
-        arc_length = {arc: self.time_model.random(1 / arc_means[i]) for i, arc in enumerate(arcs)}
+        arc_length = {
+            arc: self.time_model.random(rngs[0], 1 / arc_means[i]) for i, arc in enumerate(arcs)
+        }
 
         # Longest path
         path_length = np.zeros(num_nodes)
@@ -315,8 +314,8 @@ class SANLongestPath(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return factor_dict["arc_means"]
 
-    def replicate(self, x: tuple) -> RepResult:
-        responses, gradients = self.model.replicate()
+    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(rngs)
         objectives = [
             Objective(
                 stochastic=responses["longest_path_length"],
@@ -425,8 +424,8 @@ class SANLongestPathStochastic(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return factor_dict["arc_means"]
 
-    def replicate(self, x: tuple) -> RepResult:
-        responses, gradients = self.model.replicate()
+    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(rngs)
 
         objectives = [
             Objective(

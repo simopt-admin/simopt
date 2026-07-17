@@ -204,22 +204,20 @@ class FacilitySizingTotalCostConfig(BaseModel):
 class DemandInputModel(InputModel):
     """Input model for multivariate normal demand at facilities."""
 
-    rng: Random | None = None
-
     def _mvnormalvariate(
         self,
+        rng: Random,
         mean_vec: np.ndarray,
         cov: np.ndarray,
         factorized: bool = False,
     ) -> np.ndarray:
         chol = np.linalg.cholesky(cov) if not factorized else cov
-        assert self.rng is not None
-        observations = [self.rng.normalvariate(0, 1) for _ in range(len(cov))]
+        observations = [rng.normalvariate(0, 1) for _ in range(len(cov))]
         return np.dot(chol, observations).transpose() + mean_vec
 
-    def random(self, mean: np.ndarray, cov: np.ndarray) -> np.ndarray:
+    def random(self, rng: Random, mean: np.ndarray, cov: np.ndarray) -> np.ndarray:
         while True:
-            demand = np.array(self._mvnormalvariate(mean, cov))
+            demand = np.array(self._mvnormalvariate(rng, mean, cov))
             if np.all(demand >= 0):
                 return demand
 
@@ -249,14 +247,11 @@ class FacilitySize(Model):
 
         self.demand_model = DemandInputModel()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.demand_model.set_rng(rng_list[0])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication using the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators for the model to use
+            rngs (list[MRG32k3a]): Random number generators for the model to use
                 when simulating a replication.
 
         Returns:
@@ -271,7 +266,7 @@ class FacilitySize(Model):
         mean_vec = np.array(self.factors["mean_vec"])
         cov = np.array(self.factors["cov"])
         capacity = np.array(self.factors["capacity"])
-        demand = self.demand_model.random(mean_vec, cov)
+        demand = self.demand_model.random(rngs[0], mean_vec, cov)
         extra_demand = demand - capacity
         pos_excess_mask = extra_demand > 0
         n_fac_stockout = np.sum(pos_excess_mask).astype(int)
@@ -321,8 +316,8 @@ class FacilitySizingTotalCost(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["capacity"])
 
-    def replicate(self, x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [
             Objective(
                 stochastic=0.0,
@@ -386,8 +381,8 @@ class FacilitySizingMaxService(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["capacity"])
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         service_value = 1 - responses["stockout_flag"]
         objectives = [Objective(stochastic=service_value)]
         return RepResult(objectives=objectives)

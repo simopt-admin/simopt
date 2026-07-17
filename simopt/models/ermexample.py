@@ -66,13 +66,7 @@ class FileInputModel(InputModel):
     def __init__(self, filename):
         self.data = np.load(filename)
 
-    def set_rng(self, rng: random.Random) -> None:
-        self.rng = rng
-
-    def unset_rng(self) -> None:
-        self.rng = None
-
-    def random(self) -> float:
+    def random(self, rng: MRG32k3a) -> tuple[float, float]:
         n_rows = np.shape(self.data)[0]
         resample_idx = np.random.choice(n_rows, size=1, replace=True)
         resample_x = self.data[resample_idx, 0].item()
@@ -100,10 +94,8 @@ class ERMExampleModel(Model):
         super().__init__(fixed_factors)
         self.resample_model = FileInputModel("workshop/erm_data.npy")
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:  # noqa: D102
-        self.resample_model.set_rng(rng_list[0])
 
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate the squared error loss of a single observation.
 
         Returns:
@@ -114,7 +106,7 @@ class ERMExampleModel(Model):
                     each response.
         """
         beta0, beta1 = self.factors["beta"]
-        x, y = self.resample_model.random()
+        x, y = self.resample_model.random(rngs[0])
         sq_error_loss = (y - beta0 - beta1 * x) ** 2
         error_loss = y - beta0 - beta1 * x
         # gradients wrt beta0 and beta1
@@ -181,8 +173,8 @@ class ERMExampleProblem(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
         return tuple(factor_dict["beta"])
 
-    def replicate(self, _x: tuple) -> RepResult:  # noqa: D102
-        responses, gradients = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:  # noqa: D102
+        responses, gradients = self.model.replicate(rngs)
         objectives = [
             Objective(
                 stochastic=responses["sq_error_loss"],

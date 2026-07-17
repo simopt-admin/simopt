@@ -165,14 +165,11 @@ class DualSourcingMinCostConfig(BaseModel):
 class DemandInputModel(InputModel):
     """Input model for daily demand."""
 
-    rng: Random | None = None
-
-    def random(self, mu: float, sigma: float) -> int:
+    def random(self, rng: Random, mu: float, sigma: float) -> int:
         def round_and_clamp_non_neg(x: float | int) -> int:
             return round(max(0.0, float(x)))
 
-        assert self.rng is not None
-        return round_and_clamp_non_neg(self.rng.normalvariate(mu, sigma))
+        return round_and_clamp_non_neg(rng.normalvariate(mu, sigma))
 
 
 class DualSourcing(Model):
@@ -201,15 +198,11 @@ class DualSourcing(Model):
 
         self.demand_model = DemandInputModel()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        """Set the random number generator for the demand input model."""
-        self.demand_model.set_rng(rng_list[0])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -247,7 +240,7 @@ class DualSourcing(Model):
         orders_exp: list[int] = [0] * lead_exp
 
         # Generate demand.
-        demand = [self.demand_model.random(mu, st_dev) for _ in n_days_range]
+        demand = [self.demand_model.random(rngs[0], mu, st_dev) for _ in n_days_range]
 
         # Track total expenses.
         total_holding_cost = np.zeros(n_days)
@@ -335,8 +328,8 @@ class DualSourcingMinCost(Problem):
             factor_dict["order_level_reg"],
         )
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         return RepResult(
             objectives=[
                 Objective(

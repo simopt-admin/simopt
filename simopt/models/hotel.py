@@ -266,14 +266,11 @@ class Hotel(Model):
 
         self.arrival_model = Exp()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.arrival_model.set_rng(rng_list[0])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -300,7 +297,7 @@ class Hotel(Model):
         arr_bound = 10 * round(168 * sum(f_lambda))
         arr_time = np.array(
             [
-                [self.arrival_model.random(f_lambda[i]) for _ in range(arr_bound)]
+                [self.arrival_model.random(rngs[0], f_lambda[i]) for _ in range(arr_bound)]
                 for i in range(num_products)
             ]
         )
@@ -380,8 +377,8 @@ class HotelRevenue(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return tuple(factor_dict["booking_limits"])
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["revenue"])]
         return RepResult(objectives=objectives)
 

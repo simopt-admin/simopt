@@ -202,11 +202,8 @@ class IronOreMaxRevConfig(BaseModel):
 class MovementInputModel(InputModel):
     """Input model for mining movement and price shocks."""
 
-    rng: Random | None = None
-
-    def random(self, mean: float, std: float) -> float:
-        assert self.rng is not None
-        return self.rng.normalvariate(mean, std)
+    def random(self, rng: Random, mean: float, std: float) -> float:
+        return rng.normalvariate(mean, std)
 
 
 class IronOre(Model):
@@ -236,14 +233,11 @@ class IronOre(Model):
 
         self.movement_model = MovementInputModel()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.movement_model.set_rng(rng_list[0])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate
+            rngs (list[MRG32k3a]): Random number generators used to simulate
                 the replication.
 
         Returns:
@@ -301,7 +295,7 @@ class IronOre(Model):
             # === Price Update: mean-reverting random walk ===
             price_delta = mean_price - prev_price
             mean_move = copysign(sqrt(sqrt(abs(price_delta))), price_delta)
-            move = self.movement_model.random(mean_move, st_dev)
+            move = self.movement_model.random(rngs[0], mean_move, st_dev)
             price_today = max(min(prev_price + move, max_price), min_price)
             mkt_price[day] = price_today
 
@@ -395,8 +389,8 @@ class IronOreMaxRev(Problem):
             factor_dict["price_sell"],
         )
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["total_profit"])]
         return RepResult(objectives=objectives)
 
@@ -463,8 +457,8 @@ class IronOreMaxRevCnt(Problem):
             factor_dict["price_sell"],
         )
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, _ = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["total_profit"])]
         return RepResult(objectives=objectives)
 

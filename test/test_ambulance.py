@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.models.ambulance import Ambulance, AmbulanceMinAvgResponse
 
 
@@ -34,7 +35,8 @@ def test_queued_dispatch_keeps_ambulance_busy() -> None:
     model.beta_x_model = _SequenceInputModel([0, 1, 1, 1, 0])  # type: ignore
     model.beta_y_model = _SequenceInputModel([0, 1, 1, 1, 0])  # type: ignore
 
-    responses, _gradients = model.replicate()
+    rngs = [MRG32k3a(s_ss_sss_index=[0, i, 0]) for i in range(model.n_rngs)]
+    responses, _gradients = model.replicate(rngs)
 
     assert responses["avg_response_time"] == pytest.approx(10.25)
 

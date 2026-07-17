@@ -163,8 +163,6 @@ class ProblemSolver:
                 error_msg = "Problem rename cannot be an empty string."
                 raise ValueError(error_msg)
             self.problem.name = problem_rename
-        self.problem.before_replicate_override = self.before_replicate
-
         # Initialize file path.
         if not isinstance(file_name_path, Path):
             if file_name_path is None:
@@ -183,17 +181,6 @@ class ProblemSolver:
             model: The initialized model associated with the experiment's problem.
 
         This is a helper function to customize the experiment's input model.
-        """
-        pass
-
-    def before_replicate(self, model: Model, rng_list: list[MRG32k3a]) -> None:
-        """Hook executed immediately before each replication during an experiment.
-
-        Args:
-            model: The model about to be simulated.
-            rng_list: The list of RNGs used for the replication.
-
-        This is a helper function to customize behavior before each replication.
         """
         pass
 

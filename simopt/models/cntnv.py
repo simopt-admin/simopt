@@ -128,9 +128,7 @@ class CntNVMaxProfitConfig(BaseModel):
 class DemandInputModel(InputModel):
     """Input model for Burr Type XII demand."""
 
-    rng: Random | None = None
-
-    def random(self, burr_c: float, burr_k: float) -> float:
+    def random(self, rng: Random, burr_c: float, burr_k: float) -> float:
         # Generate random demand according to Burr Type XII distribution.
         # If U ~ Uniform(0,1) and the Burr Type XII has parameters c and k,
         #   X = ((1-U)**(-1/k) - 1)**(1/c) has the desired distribution.
@@ -139,8 +137,7 @@ class DemandInputModel(InputModel):
             """Return the nth root of x."""
             return x ** (1 / n)
 
-        assert self.rng is not None
-        u = self.rng.random()
+        u = rng.random()
         return nth_root(nth_root(1 - u, -burr_k) - 1, burr_c)
 
 
@@ -170,14 +167,11 @@ class CntNV(Model):
 
         self.demand_model = DemandInputModel()
 
-    def before_replicate(self, rng_list: list[MRG32k3a]) -> None:
-        self.demand_model.set_rng(rng_list[0])
-
-    def replicate(self) -> tuple[dict, dict]:
+    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            rng_list (list[MRG32k3a]): Random number generators used to simulate the
+            rngs (list[MRG32k3a]): Random number generators used to simulate the
                 replication.
 
         Returns:
@@ -195,7 +189,7 @@ class CntNV(Model):
         burr_k: float = self.factors["Burr_k"]
         burr_c: float = self.factors["Burr_c"]
         # Designate random number generator for demand variability.
-        demand = self.demand_model.random(burr_c, burr_k)
+        demand = self.demand_model.random(rngs[0], burr_c, burr_k)
 
         # Calculate units sold, as well as unsold/stockout
         units_sold = min(demand, ord_quant)
@@ -277,8 +271,8 @@ class CntNVMaxProfit(Problem):
     def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
         return (factor_dict["order_quantity"],)
 
-    def replicate(self, _x: tuple) -> RepResult:
-        responses, gradients = self.model.replicate()
+    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(rngs)
         return RepResult(
             objectives=[
                 Objective(
