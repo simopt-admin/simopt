@@ -29,6 +29,7 @@ def plot_det_terminal_feasibility(
     feas_tol: float = 10e-2,
     obj_const: float = 100.0,
     log_scale: bool = False,
+    sym_log: bool = False,
     all_in_one: bool = True,
     n_bootstraps: int = 100,
     conf_level: float = 0.95,
@@ -211,6 +212,9 @@ def plot_det_terminal_feasibility(
                     )
                 if log_scale:
                     plt.yscale("log")
+                if sym_log:
+                    plt.yscale("symlog", linthresh=1e-12)
+                    plt.ylim(bottom=0) 
                     #plt.ylim(bottom=0.001)
                 file_list.append(
                     save_plot(

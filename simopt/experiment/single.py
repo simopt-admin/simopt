@@ -783,9 +783,16 @@ class ProblemSolver:
                 if c_ineq == None:
                     feas = c_eq
                 elif c_eq == None:
-                    feas = c_ineq
+                    if method != "value":
+                        feas = np.maximum(c_ineq,0)
+                    else:
+                        feas = c_ineq
                 else:
-                    feas = c_eq + c_ineq    
+                    if method != "value":
+                        feas = np.maximum(c_ineq,0)
+                    else:
+                        ineq_feas = c_ineq
+                    feas = c_eq + ineq_feas  
                 mrep_feas.append(feas)
             if method == "value":
                 curve_data = mrep_feas
@@ -806,28 +813,7 @@ class ProblemSolver:
                 )
             )
     
-    def det_stationarity_history(
-        self,
-        method: Literal["value", "norm"] = "value",
-        norm_degree: int = 1,
-    ) -> None:
-        """Compute feasibility history."""
 
-        self.stationarity_curves = []
-
-        for mrep in range(self.n_macroreps):
-            mrep_stat = []
-            for sol in self.all_recommended_xs[mrep]:
-                feas = self.problem.get_deterministic_constraints(tuple(sol))
-                grad = self.problem.get_deterministic_constraints_gradients(tuple(sol))
-                grad_null = null_space(grad)
-                mrep_stat.append(norm(grad_null.T @ grad) + norm(feas))   
-            self.stationarity_curves.append(
-                Curve(
-                    x_vals=self.all_intermediate_budgets[mrep],
-                    y_vals=mrep_stat,
-                )
-            )
 
     def record_experiment_results(self, file_name: str) -> None:
         """Saves the ProblemSolver object to a .pickle file.

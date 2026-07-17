@@ -46,33 +46,53 @@ class COBYLA(Solver):
     
     def simulate(self, x):
         sample_size = self.factors["sample_size"]
+        x_arr = np.asarray(x, dtype=float)
+        x_tuple = tuple(x_arr)
+
         self.budget.request(sample_size)
-        new_solution = self.create_new_solution(x, self.problem)
-        self.problem.simulate(new_solution, sample_size)
-        return float(new_solution.objectives_mean[0])
+
+        solution = self.create_new_solution(x_tuple, self.problem)
+        self.problem.simulate(solution, sample_size)
+        
+        # save solution key for callback
+        key = self._x_key(x_arr)
+        self._evaluated_solutions[key] = solution
+
+        objective = float(solution.objectives_mean[0])
+        return -self.problem.minmax[0] * objective
     
     def get_equality_constraints(self, x):
-        return np.asarray(self.problem.get_deterministic_equality_constraints(tuple(x)), dtype=float)
+        return np.asarray(self.problem.get_deterministic_equality_constraints(tuple(x)), dtype=float).reshape(-1)
     def get_inequality_constraints(self, x):
-        return np.asarray(self.problem.get_deterministic_inequality_constraints(tuple(x)), dtype=float)
+        return np.asarray(self.problem.get_deterministic_inequality_constraints(tuple(x)), dtype=float).reshape(-1)
     
-    def callback(self, res):
-        int_x = tuple(res)
-        new_solution = self.create_new_solution(int_x, self.problem)
-        self.recommended_solns.append(new_solution)
-        self.intermediate_budgets.append(self.budget.used)
+    def _x_key(self, x):
+        return tuple(np.round(np.asarray(x, dtype=float), decimals=12))
+
+    def callback(self, xk):
+        key = self._x_key(xk)
+
+        solution = self._evaluated_solutions.get(key)
+        if solution is None:
+            return
+
+        if key != self._last_recommended_key:
+            self.recommended_solns.append(solution)
+            self.intermediate_budgets.append(self.budget.used)
+            self._last_recommended_key = key
 
     def solve(self, problem: Problem) -> None:  # noqa: D102
         feas_tol = self.factors["feas_tol"]
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         self.problem = problem
+        self._evaluated_solutions = {}
+        self._last_recommended_key = None
         # Start at initial solution and record as best.
         new_x = problem.factors["initial_solution"]
         new_solution = self.create_new_solution(new_x, problem)
+        
         best_solution = new_solution
-        self.recommended_solns.append(new_solution)
-        self.intermediate_budgets.append(self.budget.used)
         x0 = new_solution.x
         remaining_budget = problem.factors["budget"] - self.budget.used
         maxfev = int(remaining_budget//self.factors['sample_size'])

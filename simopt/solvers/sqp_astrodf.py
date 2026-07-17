@@ -1358,7 +1358,7 @@ class SQPASTRODF(Solver):
             sig_numerator =-1* (q_n_reduction + barrier_reduction) 
             sig_c_ratio = sig_numerator / ((1-self.nu)*m_n_reduction)
         # set sigma b to be norm of lagrange multipliers
-        sigma_b = norm(lam)
+        sigma_b = min(norm(lam), self.sigma_b_max)
         sigma_c = max(sigma_b, sig_c_ratio)
         
         # update penalty parameter based on solving method

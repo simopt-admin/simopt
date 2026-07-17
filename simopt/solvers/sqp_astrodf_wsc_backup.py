@@ -863,7 +863,7 @@ class SQPASTRODF(Solver):
         
         # lambda unbounded bc right now only equality constraints
         
-        lam, res, rank, svals = np.linalg.lstsq(A.T, grad)
+        lam, res, rank, svals = np.linalg.lstsq(A.T, -grad)
         
         return lam
         
@@ -1139,7 +1139,7 @@ class SQPASTRODF(Solver):
         sig_c_ratio = -1*(q_n_reduction+m_t_reduction) / ((1-self.nu)*m_n_reduction)
        
         # set sigma b and c
-        sigma_b = max(self.sigma_min + self.sigma_b_increase*self.iteration_count, self.sigma_b_max)
+        sigma_b = min(self.sigma_min + self.sigma_b_increase*self.iteration_count, self.sigma_b_max)
         sigma_c = max(sigma_b, sig_c_ratio)
         #sigma_c = sig_c_ratio # for now leave out sigma b
         #set sigma

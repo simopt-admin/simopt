@@ -22,6 +22,7 @@ def plot_det_feasibility(
     log_scale: bool = False,
     log_base: int = 10,
     feas_tol: float = 1e-8,
+    sym_log: bool = False,
     solver_set_name: str = "SOLVER_SET",
     plot_title: str | None = None,
     legend_loc: str | None = None,
@@ -74,6 +75,10 @@ def plot_det_feasibility(
                 solver_curve_handles.append(handle)
             if log_scale:
                 plt.yscale("log")
+            if sym_log:
+                plt.yscale("symlog", linthresh=1e-12)
+                plt.ylim(bottom=0) 
+
                 #plt.ylim(bottom=0.001)
             plt.legend(
                 handles=solver_curve_handles,
