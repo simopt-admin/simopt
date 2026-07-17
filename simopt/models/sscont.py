@@ -330,9 +330,6 @@ class SSContMinCost(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"s": vector[0], "S": vector[0] + vector[1]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return (factor_dict["s"], factor_dict["S"] - factor_dict["s"])
-
     def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, _ = self.model.replicate(rngs)
         objectives = [

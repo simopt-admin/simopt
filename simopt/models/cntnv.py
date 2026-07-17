@@ -268,9 +268,6 @@ class CntNVMaxProfit(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"order_quantity": vector[0]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return (factor_dict["order_quantity"],)
-
     def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, gradients = self.model.replicate(rngs)
         return RepResult(

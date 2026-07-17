@@ -322,12 +322,6 @@ class DualSourcingMinCost(Problem):
             "order_level_reg": vector[1],
         }
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return (
-            factor_dict["order_level_exp"],
-            factor_dict["order_level_reg"],
-        )
-
     def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, _ = self.model.replicate(rngs)
         return RepResult(

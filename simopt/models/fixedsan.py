@@ -263,9 +263,6 @@ class FixedSANLongestPath(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"arc_means": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return tuple(factor_dict["arc_means"])
-
     def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, gradients = self.model.replicate(rngs)
         objectives = [

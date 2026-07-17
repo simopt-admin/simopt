@@ -320,18 +320,6 @@ class Problem(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        """Convert a dictionary with factor keys to a vector of variables.
-
-        Args:
-            factor_dict (dict): Dictionary with factor keys and associated values.
-
-        Returns:
-            tuple: Vector of values associated with decision variables.
-        """
-        raise NotImplementedError
-
     def check_deterministic_constraints(self, x: tuple, /) -> bool:
         """Check if a solution `x` satisfies the problem's deterministic constraints.
 

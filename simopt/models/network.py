@@ -359,9 +359,6 @@ class NetworkMinTotalCost(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"process_prob": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return tuple(factor_dict["process_prob"])
-
     def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["total_cost"])]

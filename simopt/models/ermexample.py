@@ -170,9 +170,6 @@ class ERMExampleProblem(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"beta": vector[:]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:  # noqa: D102
-        return tuple(factor_dict["beta"])
-
     def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:  # noqa: D102
         responses, gradients = self.model.replicate(rngs)
         objectives = [

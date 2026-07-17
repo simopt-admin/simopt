@@ -262,9 +262,6 @@ class ChessAvgDifference(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"allowable_diff": vector[0]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return (factor_dict["allowable_diff"],)
-
     def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, _ = self.model.replicate(rngs)
         return RepResult(

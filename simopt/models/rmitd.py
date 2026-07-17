@@ -283,12 +283,6 @@ class RMITDMaxRevenue(Problem):
             "reservation_qtys": list(vector[0:]),
         }
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return (
-            factor_dict["initial_inventory"],
-            *tuple(factor_dict["reservation_qtys"]),
-        )
-
     def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["revenue"])]

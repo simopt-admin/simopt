@@ -303,9 +303,6 @@ class MM1MinMeanSojournTime(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"mu": vector[0]}
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return (factor_dict["mu"],)
-
     def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, gradients = self.model.replicate(rngs)
         objectives = [

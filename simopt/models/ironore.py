@@ -381,14 +381,6 @@ class IronOreMaxRev(Problem):
             "price_sell": vector[3],
         }
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return (
-            factor_dict["price_prod"],
-            factor_dict["inven_stop"],
-            factor_dict["price_stop"],
-            factor_dict["price_sell"],
-        )
-
     def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, _ = self.model.replicate(rngs)
         objectives = [Objective(stochastic=responses["total_profit"])]
@@ -449,13 +441,6 @@ class IronOreMaxRevCnt(Problem):
             "price_stop": vector[1],
             "price_sell": vector[2],
         }
-
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return (
-            factor_dict["price_prod"],
-            factor_dict["price_stop"],
-            factor_dict["price_sell"],
-        )
 
     def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, _ = self.model.replicate(rngs)

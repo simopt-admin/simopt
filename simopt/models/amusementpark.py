@@ -454,9 +454,6 @@ class AmusementParkMinDepart(Problem):
             "queue_capacities": vector[:],
         }
 
-    def factor_dict_to_vector(self, factor_dict: dict) -> tuple:
-        return tuple(factor_dict["queue_capacities"])
-
     def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
         responses, _ = self.model.replicate(rngs)
         return RepResult(objectives=[Objective(stochastic=responses["total_departed"])])
