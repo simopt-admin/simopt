@@ -44,8 +44,148 @@ from simopt.base import (
     SolverConfig,
     VariableType,
 )
+class InterpolationPoint:
+    """One point in the interpolation set: its position (relative to the
+    InterpolationSet's base_x) and the raw Solution object simulated there."""
+    def __init__(self, x_dist: np.ndarray, solution: Solution):
+        self.x_dist = x_dist      # position, relative to InterpolationSet.base_x
+        self.solution = solution    # raw Solution — no sign convention applied
 
+class InterpolationSet:
+    """
+    Persistent interpolation point set for ASTRO-DF's diagonal-Hessian local model.
+    Points are stored as displacements from `base_x` and survive across iterations;
+    only points flagged for replacement (Piece 4) are re-simulated.
 
+    Stores raw Solution objects — callers apply neg_minmax when reading
+    objective values, consistent with the rest of the solver.
+    """
+    def __init__(self, dim: int, base_x: np.ndarray, base_solution: Solution):
+        self.dim = dim
+        self.num_pts = 2 * dim + 1
+        self.base_x = base_x.copy()
+        # points[0] is always the current center point at construction time
+        self.points: list[InterpolationPoint] = [InterpolationPoint(np.zeros(dim), base_solution)]
+        self.kopt = 0  # index of best point (by raw objective, sign applied by caller)
+
+    def size(self) -> int:
+        return len(self.points)
+
+    def is_complete(self) -> bool:
+        return self.size() == self.num_pts
+
+    def xopt_dist(self) -> np.ndarray:
+        """Best point's displacement from base_x."""
+        return self.points[self.kopt].x_dist
+
+    def xopt_abs(self) -> np.ndarray:
+        """Best point's coordinates, in absolute (problem) space."""
+        return self.base_x + self.points[self.kopt].x_dist
+
+    def solution_at(self, k: int) -> Solution:
+        return self.points[k].solution
+
+    def raw_obj_mean(self, k: int) -> float:
+        """Raw (unsigned) objective mean at point k. Caller applies neg_minmax."""
+        return float(np.asarray(self.points[k].solution.objectives_mean).reshape(-1)[0])
+
+    def shift_base(self, new_base_x: np.ndarray) -> None:
+        """Recompute all stored displacements relative to a new base point."""
+        shift = new_base_x - self.base_x
+        for pt in self.points:
+            pt.x_dist = pt.x_dist - shift
+        self.base_x = new_base_x.copy()
+    
+    def reduce_to_trust_region(self, delta_k: float) -> None:
+        """Remove points whose displacement from base_x falls outside the trust region.
+            Only called when recenter_mode == 'reduce'."""
+        self.points = [pt for pt in self.points if norm(pt.x_dist) <= delta_k]        
+
+    def add_point(
+        self, x_dist: np.ndarray, solution: Solution, victim_idx: int | None = None
+    ) -> None:
+        """Insert a point. If below capacity, appends. If at capacity, evicts
+        a victim first. If victim_idx is supplied, evicts that index directly.
+        Otherwise falls back to the default distance-based _choose_exiting."""
+        if self.size() >= self.num_pts:
+            idx = victim_idx if victim_idx is not None else self._choose_exiting()
+            del self.points[idx]
+        self.points.append(InterpolationPoint(x_dist, solution))    
+        
+
+    
+    def _choose_exiting(self) -> int:
+        """Default eviction rule: farthest point from base_x.
+        Replace this method's body later with Lagrange-polynomial /
+        poisedness-based selection -- add_point's logic doesn't need to change."""
+        # find point largest distance from centerpoint to remove (evenually replace w/ polynomials)
+        dists = [norm(pt.x_dist) for pt in self.points]
+        return int(np.argmax(dists))
+
+    def recompute_kopt(self, neg_minmax: int) -> None:
+        """Caller supplies the sign convention of optimization problem"""
+        values = [neg_minmax * self.raw_obj_mean(k) for k in range(self.size())]
+        self.kopt = int(np.argmin(values))
+        
+    def recenter(
+        self,
+        new_base_x: np.ndarray,
+        new_incumbent_solution: Solution,
+        delta_k: float,
+        neg_minmax: int,
+        recenter_mode: str,
+    ) -> None:
+        """Recenter the set on a new incumbent: shift coordinates, optionally
+        drop out-of-radius points, insert the new incumbent, and refresh kopt.
+        This is the single entry point the solver calls on a successful step --
+        it exists so shift_base/reduce_to_trust_region/add_point/recompute_kopt
+        can't be sequenced inconsistently across call sites."""
+        self.shift_base(new_base_x)
+    
+        if recenter_mode == "reduce":
+            self.reduce_to_trust_region(delta_k)
+        elif recenter_mode != "shift":
+            raise ValueError(f"Unknown recenter_mode: {recenter_mode!r}")
+    
+        # New incumbent sits at displacement 0 from itself
+        self.add_point(np.zeros(self.dim), new_incumbent_solution)
+        self.recompute_kopt(neg_minmax)
+    def _coordinate_offset(self, slot_idx: int, delta_k: float) -> np.ndarray:
+        """Generate the displacement for interpolation slot `slot_idx` using plain
+        coordinate directions: slot 0 is the center (handled separately), odd slots
+        are +delta_k along axis i, even slots are -delta_k along axis i."""
+        axis = (slot_idx - 1) // 2
+        sign = 1.0 if (slot_idx - 1) % 2 == 0 else -1.0
+        offset = np.zeros(self.dim)
+        offset[axis] = sign * delta_k
+        return offset
+    
+    def missing_index_offsets(self, delta_k: float) -> list[np.ndarray]:
+        """Return displacement vectors for however many points are needed to
+        reach num_pts, using fixed coordinate-axis placement at the trust
+        region boundary. This is the fallback/init strategy for filling gaps --
+        distinct from future Lagrange-polynomial-based placement, which will
+        depend on the fitted model rather than a fixed slot pattern."""
+        num_missing = self.num_pts - self.size()
+        offsets = []
+        slot_idx = 1  # slot 0 is reserved for the center point, never generated here
+        while len(offsets) < num_missing:
+            offsets.append(self._coordinate_offset( slot_idx, delta_k))
+            slot_idx += 1
+        return offsets
+    
+    def design_matrix_inputs(self, neg_minmax: int) -> tuple[np.ndarray, np.ndarray]:
+        """Return (y_var, fval) in the same shape get_model_coefficients expects:
+        y_var[i] = displacement of point i from base_x, fval[i] = signed objective
+        mean at point i. Caller applies neg_minmax since the set stores raw Solutions."""
+        if not self.is_complete():
+            raise ValueError(
+                f"Cannot fit model: set has {self.size()} points, needs {self.num_pts}"
+            )
+        y_var = np.array([pt.x_dist for pt in self.points])
+        fval = np.array([neg_minmax * self.raw_obj_mean(k) for k in range(self.size())])
+        return y_var, fval
+        
 class SQPASTRODFConfig(SolverConfig):
     """Configuration for ASTRO-DF solver."""
 
@@ -228,6 +368,30 @@ class SQPASTRODFConfig(SolverConfig):
             description="fraction to boundary measure for barrier problem",
         ),
     ]
+    reuse_interpolation_set: Annotated[
+    bool,
+    Field(default=False,
+          description="maintain a persistent interpolation set across iterations, reusing all valid points instead of rebuilding from scratch each time"),
+]
+    recenter_mode: Annotated[
+    str,
+    Field(default="shift", 
+          description="how to recenter the persistent interpolation set on a new incumbent: 'shift' keeps all points (cheapest), 'reduce' discards points outside the new trust region (costlier, tighter geometry)"),
+]
+    use_lagrange_geometry: Annotated[
+    bool,
+    Field(
+        default=True,
+        description="after fitting, check point-set poisedness via Lagrange polynomials and replace the worst-poised point if it exceeds a threshold; only used when reuse_interpolation_set is True",
+    ),
+]
+    lagrange_poisedness_threshold: Annotated[
+        float,
+        Field(
+            default=10.0,
+            description="trigger a Lagrange-based point replacement when max |L_k(x)| exceeds this value (py-bobyqa-style default; a well-poised set keeps this near 1)",
+        ),
+]
     
     
 
@@ -315,6 +479,27 @@ class SQPASTRODF(Solver):
         arr = np.zeros(size)
         arr[v_no] = 1.0
         return arr
+
+    def _simulate_missing_indexes(self, delta_k: float, pilot_run: int) -> None:
+        """Generate, simulate, and insert points for any empty slots in
+        self.interp_set, using the fallback coordinate-offset strategy."""
+        offsets = self.interp_set.missing_index_offsets(delta_k)
+        for offset in offsets:
+            raw_x = self.interp_set.base_x + offset
+            # make sure x statisfies bound constraints
+            x = tuple(
+                clamp_with_epsilon(float(raw_x[i]), self.problem.lower_bounds[i], self.problem.upper_bounds[i])
+                for i in range(self.problem.dim)
+            )
+            # simulate solution at interpolation point
+            new_solution = self.create_new_solution(x, self.problem)
+            self.budget.request(pilot_run)
+            self.problem.simulate(new_solution, pilot_run)
+            self.perform_adaptive_sampling(new_solution, pilot_run, delta_k)
+    
+            actual_dist = np.array(x) - self.interp_set.base_x  # may differ from `offset` due to clamping
+            self.interp_set.add_point(actual_dist, new_solution)
+    
 
     def get_rotated_basis(
         self, first_basis: np.ndarray, rotate_index: np.ndarray
@@ -467,6 +652,156 @@ class SQPASTRODF(Solver):
 
         return var_y, var_z
 
+    def lagrange_polynomial_coeffs(self, matrix_inverse: np.ndarray, k: int) -> np.ndarray:
+        """Returns kth lagrange polynomial coefficient vector of current interpolation set"""
+        # slice uscaled matrix
+        return matrix_inverse[:, k]    
+
+    def _maximize_abs_lagrange_old(self, coeffs: np.ndarray, delta_k: float) -> tuple[np.ndarray, float]:
+        """Find the displacement x (within the trust-region ball and box constraints)
+        that maximizes |L(x)| for a Lagrange polynomial given by `coeffs - note this version has been replaced
+        with an approximate version that has much smaller runtime"""
+        dim = self.problem.dim
+    
+        def make_objective(sign: float):
+            # run lagrange coeffs through model at given x since lagrange poly matches structure of model 
+            def objective(x: np.ndarray) -> float:
+                return sign * self.evaluate_model(x, coeffs)
+            return objective
+    
+        def norm_x(x: np.ndarray) -> float:
+            return float(norm(x))
+    
+        tr_constraint = NonlinearConstraint(norm_x, 0, delta_k)
+        
+        # respect bound constraints to avoid breaking simulations
+        box_bounds = [
+            (
+                self.problem.lower_bounds[i] - self.interp_set.base_x[i],
+                self.problem.upper_bounds[i] - self.interp_set.base_x[i],
+            )
+            for i in range(dim)
+        ]
+    
+        best_x = None
+        best_abs_val = -np.inf
+        # find min and max of objective and take largest absolute value to avoid maximizing a norm
+        for sign in (1.0, -1.0):
+            result: OptimizeResult = minimize(
+                make_objective(sign),
+                np.zeros(dim),
+                bounds=box_bounds,
+                constraints=[tr_constraint],
+            )
+            abs_val = abs(self.evaluate_model(result.x, coeffs))
+            if abs_val > best_abs_val:
+                best_abs_val = abs_val
+                best_x = result.x
+    
+        return best_x, best_abs_val
+    
+    def _maximize_abs_lagrange(self, coeffs: np.ndarray, delta_k: float) -> tuple[np.ndarray, float]:
+        """Approximate maximizer of |L(x)| within the trust-region ball and box
+        constraints"""
+        dim = self.problem.dim
+        c = coeffs[0]
+        g = coeffs[1 : dim + 1]
+        h = coeffs[dim + 1 :]
+    
+        lower = self.problem.lower_bounds - self.interp_set.base_x
+        upper = self.problem.upper_bounds - self.interp_set.base_x
+        box_lo = np.maximum(lower, -delta_k)
+        box_hi = np.minimum(upper, delta_k)
+    
+        def solve_min(sign: float) -> np.ndarray:
+            gs = sign * g
+            hs = sign * h
+            x = np.zeros(dim)
+            for i in range(dim):
+                lo, hi = box_lo[i], box_hi[i]
+                if hs[i] > 0:
+                    t_star = -gs[i] / hs[i]
+                    x[i] = min(max(t_star, lo), hi)
+                elif hs[i] < 0:
+                    f_lo = gs[i] * lo + 0.5 * hs[i] * lo**2
+                    f_hi = gs[i] * hi + 0.5 * hs[i] * hi**2
+                    x[i] = lo if f_lo <= f_hi else hi
+                else:
+                    x[i] = lo if gs[i] > 0 else (hi if gs[i] < 0 else 0.0)
+    
+            # Bounding-box relaxation can violate the true ball -- project back.
+            # Safe for box feasibility too: every box interval contains 0, so
+            # scaling any feasible point toward 0 stays inside the (convex) box.
+            norm_x = norm(x)
+            if norm_x > delta_k and norm_x > 0:
+                x = x * (delta_k / norm_x)
+            return x
+
+        best_x = None
+        best_abs_val = -np.inf
+        for sign in (1.0, -1.0):
+            x_candidate = solve_min(sign)
+            abs_val = abs(self.evaluate_model(x_candidate, coeffs))
+            if abs_val > best_abs_val:
+                best_abs_val = abs_val
+                best_x = x_candidate
+
+        return best_x, best_abs_val
+
+    def _choose_exiting_lagrange(
+        self, matrix_inverse: np.ndarray, delta_k: float
+    ) -> tuple[int, np.ndarray, float]:
+        """Lagrange-poisedness-based eviction: for each point k currently in the
+        set, find the displacement that maximizes |L_k(x)| in the trust region.
+        The point with the largest such value is the worst-poised  -- return its index along with the
+        maximizing displacement and value"""
+        worst_idx = None
+        worst_x = None
+        worst_val = -np.inf
+        for k in range(self.interp_set.size()):
+            coeffs = self.lagrange_polynomial_coeffs(matrix_inverse, k)
+            x_max, max_abs_val = self._maximize_abs_lagrange(coeffs, delta_k)
+            if max_abs_val > worst_val:
+                worst_val = max_abs_val
+                worst_x = x_max
+                worst_idx = k
+            if worst_idx is None:
+                logging.warning(
+                    "Lagrange eviction scan found no valid candidate "
+                    "(all points returned nan) -- skipping geometry improvement this pass"
+                )
+                return None, None, -np.inf
+        return worst_idx, worst_x, worst_val
+    
+    def _replace_worst_point(
+            self,
+            victim_idx: int,
+            replacement_dist: np.ndarray,
+            delta_k: float,
+            pilot_run: int,) -> None:
+        """Lagrange-poisedness-based geometry improvement: find the worst-poised
+        point in the current set, simulate a replacement at the location that
+        most improves that point's poisedness, and swap it in."""
+    
+        raw_x = self.interp_set.base_x + replacement_dist
+        x = tuple(
+            clamp_with_epsilon(float(raw_x[i]), self.problem.lower_bounds[i], self.problem.upper_bounds[i])
+            for i in range(self.problem.dim)
+        )
+        
+        #simulate new point entering interpolationset
+        new_solution = self.create_new_solution(x, self.problem)
+        self.budget.request(pilot_run)
+        self.problem.simulate(new_solution, pilot_run)
+        self.perform_adaptive_sampling(new_solution, pilot_run, delta_k)
+    
+        actual_dist = np.array(x) - self.interp_set.base_x  # may differ from replacement_dist due to clamping
+        self.interp_set.add_point(actual_dist, new_solution, victim_idx=victim_idx)
+        
+        # victim_idx may have been kopt so recompute
+        neg_minmax = -self.problem.minmax[0]
+        self.interp_set.recompute_kopt(neg_minmax)
+
     def perform_adaptive_sampling(
         self,
         solution: Solution,
@@ -569,96 +904,100 @@ class SQPASTRODF(Solver):
             raise ValueError("incumbent_x should be initialized before use")
         if self.incumbent_solution is None:
             raise ValueError("incumbent_solution should be initialized before use")
+            
+        if self.reuse_interpolation_set: # new interpolation method that re-uses points
+            return self.construct_model_persistent() 
+        else: #old interpolation method
 
-        interpolation_solns = []
-
-        ## inner loop parameters
-        w = 0.85  # self.factors["w"]
-        mu = self.mu
-        beta = 10  # self.factors["beta"]
-        # criticality_threshold = 0.1  # self.factors["criticality_threshold"]
-        # skip_criticality = True  # self.factors["skip_criticality"]
-        # Problem and solver factors
-
-        lambda_max = self.budget.remaining
-        # lambda_max = budget / (15 * sqrt(problem.dim))
-        if self.sampling_method == "adaptive":
-            pilot_run = ceil(
-                max(
-                    self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
-                    min(0.5 * self.problem.dim, lambda_max),
-                )
-                - 1
-            )
-        else:
-            pilot_run = self.lambda_min
-
-        delta = self.delta_k
-        model_iterations: int = 0
-        while True:
-            delta_k = delta * w**model_iterations
-            model_iterations += 1
-
-            # Calculate the distance between the center point and other design points
-            distance_array: list[float] = []
-            for point in self.visited_pts_list:
-                dist_diff = np.array(point.x) - np.array(self.incumbent_x)
-                distance = norm(dist_diff) - delta_k
-                # If the design point is outside the trust region, we will not reuse it
-                # (distance = -big M)
-                dist_to_append = -delta_k * 10000 if distance > 0 else distance
-                distance_array.append(float(dist_to_append))
-
-            # Find the index of visited design points list for reusing points
-            # The reused point will be the farthest point from the center point among
-            # the design points within the trust region
-            f_index = distance_array.index(max(distance_array))
-
-            var_y, var_z = self.select_interpolation_points(delta_k, f_index)
-
-            # Evaluate the function estimate for the interpolation points
-            fval = []
-            double_dim = 2 * self.problem.dim + 1
-            for i in range(double_dim):
-                # If first iteration, reuse the incumbent solution
-                if i == 0:
-                    adapt_soln = self.incumbent_solution
-                # If the second iteration and we can reuse points, reuse the farthest
-                # point from the center point
-                elif (
-                    i == 1
-                    and self.reuse_points
-                    and norm(
-                        np.array(self.incumbent_x)
-                        - np.array(self.visited_pts_list[f_index].x)
+            interpolation_solns = []
+    
+            ## inner loop parameters
+            w = 0.85  # self.factors["w"]
+            mu = self.mu
+            beta = 10  # self.factors["beta"]
+            # criticality_threshold = 0.1  # self.factors["criticality_threshold"]
+            # skip_criticality = True  # self.factors["skip_criticality"]
+            # Problem and solver factors
+    
+            lambda_max = self.budget.remaining
+            # lambda_max = budget / (15 * sqrt(problem.dim))
+            if self.sampling_method == "adaptive":
+                pilot_run = ceil(
+                    max(
+                        self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
+                        min(0.5 * self.problem.dim, lambda_max),
                     )
-                    != 0
-                ):
-                    adapt_soln = self.visited_pts_list[f_index]
-                # Otherwise, create/initialize a new solution and use that
-                else:
-                    decision_vars = tuple(var_y[i][0])
-                    new_solution = self.create_new_solution(decision_vars, self.problem)
-                    self.visited_pts_list.append(new_solution)
-                    self.budget.request(pilot_run)
-                    self.problem.simulate(new_solution, pilot_run)
-                    adapt_soln = new_solution
-
-                # Don't perform adaptive sampling on x_0
-                if not (i == 0 and self.iteration_count == 0):
-                    self.perform_adaptive_sampling(adapt_soln, pilot_run, delta_k)
-
-                # Append the function estimate to the list
-                obj_mean = float(np.asarray(adapt_soln.objectives_mean).reshape(-1)[0])
-                fval.append(-self.problem.minmax[0] * obj_mean)
-                interpolation_solns.append(adapt_soln)
-
-            # construct the model and obtain the model coefficients
-            q, grad, hessian = self.get_model_coefficients(var_z, fval, self.problem)
- 
-            norm_grad = norm(grad)
-            if delta_k <= mu * norm_grad or norm_grad == 0:
-                break
+                    - 1
+                )
+            else:
+                pilot_run = self.lambda_min
+    
+            delta = self.delta_k
+            model_iterations: int = 0
+            while True:
+                delta_k = delta * w**model_iterations
+                model_iterations += 1
+    
+                # Calculate the distance between the center point and other design points
+                distance_array: list[float] = []
+                for point in self.visited_pts_list:
+                    dist_diff = np.array(point.x) - np.array(self.incumbent_x)
+                    distance = norm(dist_diff) - delta_k
+                    # If the design point is outside the trust region, we will not reuse it
+                    # (distance = -big M)
+                    dist_to_append = -delta_k * 10000 if distance > 0 else distance
+                    distance_array.append(float(dist_to_append))
+    
+                # Find the index of visited design points list for reusing points
+                # The reused point will be the farthest point from the center point among
+                # the design points within the trust region
+                f_index = distance_array.index(max(distance_array))
+    
+                var_y, var_z = self.select_interpolation_points(delta_k, f_index)
+    
+                # Evaluate the function estimate for the interpolation points
+                fval = []
+                double_dim = 2 * self.problem.dim + 1
+                for i in range(double_dim):
+                    # If first iteration, reuse the incumbent solution
+                    if i == 0:
+                        adapt_soln = self.incumbent_solution
+                    # If the second iteration and we can reuse points, reuse the farthest
+                    # point from the center point
+                    elif (
+                        i == 1
+                        and self.reuse_points
+                        and norm(
+                            np.array(self.incumbent_x)
+                            - np.array(self.visited_pts_list[f_index].x)
+                        )
+                        != 0
+                    ):
+                        adapt_soln = self.visited_pts_list[f_index]
+                    # Otherwise, create/initialize a new solution and use that
+                    else:
+                        decision_vars = tuple(var_y[i][0])
+                        new_solution = self.create_new_solution(decision_vars, self.problem)
+                        self.visited_pts_list.append(new_solution)
+                        self.budget.request(pilot_run)
+                        self.problem.simulate(new_solution, pilot_run)
+                        adapt_soln = new_solution
+    
+                    # Don't perform adaptive sampling on x_0
+                    if not (i == 0 and self.iteration_count == 0):
+                        self.perform_adaptive_sampling(adapt_soln, pilot_run, delta_k)
+    
+                    # Append the function estimate to the list
+                    obj_mean = float(np.asarray(adapt_soln.objectives_mean).reshape(-1)[0])
+                    fval.append(-self.problem.minmax[0] * obj_mean)
+                    interpolation_solns.append(adapt_soln)
+    
+                # construct the model and obtain the model coefficients
+                q, grad, hessian = self.get_model_coefficients(var_z, fval, self.problem)
+     
+                norm_grad = norm(grad)
+                if delta_k <= mu * norm_grad or norm_grad == 0:
+                    break
 
             # If a model gradient norm is zero, there is a possibility that the code
             # stuck in this while loop
@@ -679,7 +1018,74 @@ class SQPASTRODF(Solver):
             hessian,
             interpolation_solns,
         )
+    
+    # used for updated interpolation method
+    def construct_model_persistent(
+        self,
+    ) -> tuple[list[float], list, np.ndarray, np.ndarray, np.ndarray, list[Solution]]:
+        """Persistent-interpolation-set analogue of construct_model. Reuses
+        self.interp_set across iterations rather than rebuilding from scratch;
+        only refills/reduces points as needed for the current delta_k."""
+        if self.delta_k is None:
+            raise ValueError("delta_k should be initialized before use")
+        if self.incumbent_x is None:
+            raise ValueError("incumbent_x should be initialized before use")
+    
+        w = 0.85 #hard coded for now
+        beta = 10 #hard coded for now
+        mu = self.mu
+    
+        lambda_max = self.budget.remaining
+        if self.sampling_method == "adaptive":
+            pilot_run = ceil(
+                max(
+                    self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
+                    min(0.5 * self.problem.dim, lambda_max),
+                )
+                - 1
+            )
+        else:
+            pilot_run = self.lambda_min
+    
+        delta = self.delta_k
+        model_iterations = 0
+        while True:
+            delta_k = delta * w**model_iterations
+            model_iterations += 1
+    
+            # Model-criticality check on the *previous* fit's geometry happens
+            # after fitting below -- this pass first ensures the set matches delta_k.
+            if self.recenter_mode == "reduce":
+                self.interp_set.reduce_to_trust_region(delta_k)
+            self._simulate_missing_indexes(delta_k, pilot_run)
+    
+            inverse_mult, grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
+            
+            # update interpolation set if threshold for max lagrage poly is reached
+            if self.use_lagrange_geometry:
+                victim_idx, replacement_dist, worst_val = self._choose_exiting_lagrange(matrix_inverse, delta_k)
+                if worst_val > self.lagrange_poisedness_threshold:
+                    self._replace_worst_point(victim_idx, replacement_dist, delta_k, pilot_run)
+                    # re-fit model coefficients if set has been updated
+                    inverse_mult, grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
 
+    
+            model_criticality_gap = norm(grad)
+            if delta_k <= mu * model_criticality_gap or model_criticality_gap == 0:
+                break
+    
+        beta_n_grad = float(beta * model_criticality_gap)
+        self.delta_k = min(max(beta_n_grad, delta_k), delta)
+    
+        # Build fval/y_var in the shapes the rest of iterate() expects
+        neg_minmax = -self.problem.minmax[0]
+        y_var, fval_arr = self.interp_set.design_matrix_inputs(neg_minmax)
+        fval = list(fval_arr)
+        interpolation_solns = [self.interp_set.solution_at(k) for k in range(self.interp_set.size())]
+    
+        return fval, list(y_var), inverse_mult, grad, hessian, interpolation_solns
+    
+    # this method is for old trust region interpolation construction
     def get_model_coefficients(
         self, y_var: list, fval: list, problem: Problem
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -723,6 +1129,51 @@ class SQPASTRODF(Solver):
         hessian = inverse_mult[decision_var_idx:num_design_points].reshape(problem.dim)
 
         return inverse_mult, grad, hessian
+    
+    # this method is for new interpolation handling
+    def get_model_coefficients_persistent(self, delta_k: float) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Fit the diagonal-Hessian model from self.interp_set, mirroring
+        get_model_coefficients's math -- but conditioned by delta_k to avoid
+        the design matrix becoming ill-scaled as delta_k shrinks in the
+        criticality loop. Also returns the unscaled matrix_inverse, since its
+        columns give each point's Lagrange polynomial coefficients directly
+        (matrix_inverse @ e_k), needed for the future poisedness/eviction logic."""
+        neg_minmax = -self.problem.minmax[0]
+        y_var, fval = self.interp_set.design_matrix_inputs(neg_minmax)
+    
+        num_design_points = self.interp_set.num_pts
+        dim = self.problem.dim
+    
+        # Fit in rescaled coordinates s = y_var / delta_k for numerical conditioning
+        s = y_var / delta_k
+        m_var = np.array(
+            [
+                np.hstack(([1], np.ravel(s[i]), np.ravel(s[i]) ** 2))
+                for i in range(num_design_points)
+            ]
+        )
+    
+        try:
+            matrix_inverse_scaled = inv(m_var)
+        except LinAlgError:
+            matrix_inverse_scaled = pinv(m_var)
+    
+        # Unscale matrix_inverse row-wise: row 0 untouched, next `dim` rows /delta_k,
+        # remaining `dim` rows /delta_k**2 -- same transform Step 2 applies to `q`.
+        unscale_vec = np.concatenate((
+            [1.0],
+            np.full(dim, 1.0 / delta_k),
+            np.full(dim, 1.0 / delta_k**2),
+        ))
+        matrix_inverse = matrix_inverse_scaled * unscale_vec[:, np.newaxis]
+    
+        inverse_mult = matrix_inverse @ fval  # equivalent to unscaling q after the scaled fit
+    
+        decision_var_idx = dim + 1
+        grad = inverse_mult[1:decision_var_idx].reshape(dim)
+        hessian = inverse_mult[decision_var_idx:num_design_points].reshape(dim)
+    
+        return inverse_mult, grad, hessian, matrix_inverse
 
     def get_coordinate_basis_interpolation_points(
         self, x_k: tuple[int | float, ...], delta: float, problem: Problem
@@ -1116,6 +1567,14 @@ class SQPASTRODF(Solver):
             self.recommended_solns.append(self.incumbent_solution)
             self.intermediate_budgets.append(self.budget.used)
             
+            #initialize interpolation set
+            if self.reuse_interpolation_set:
+                self.interp_set = InterpolationSet(
+                    dim=self.problem.dim,
+                    base_x=np.array(self.incumbent_x, dtype=float),
+                    base_solution=self.incumbent_solution,
+                )
+            
             # if first iteration set current sigma to min
             self.sigma = self.sigma_min
         
@@ -1444,6 +1903,17 @@ class SQPASTRODF(Solver):
 
             if self.enable_gradient:
                 self.update_hessian(candidate_solution, grad, s)
+               
+            # update interpolation set on successful iterations
+            if self.reuse_interpolation_set:
+                neg_minmax = -self.problem.minmax[0]
+                self.interp_set.recenter(
+                    new_base_x=np.array(candidate_x, dtype=float),
+                    new_incumbent_solution=candidate_solution,
+                    delta_k=self.delta_k,
+                    neg_minmax=neg_minmax,
+                    recenter_mode=self.recenter_mode,
+                )
 
         elif not successful:
             self.delta_k = min(self.gamma_2 * self.delta_k, self.delta_max)
@@ -1482,6 +1952,10 @@ class SQPASTRODF(Solver):
         self.feas_tol : float = self.factors["feas_tol"]
         self.sampling_method : str = self.factors["sampling_method"]
         self.epsilon : str = self.factors["epsilon"]
+        self.reuse_interpolation_set: bool = self.factors["reuse_interpolation_set"]
+        self.recenter_mode: str = self.factors["recenter_mode"]
+        self.use_lagrange_geometry: bool = self.factors["use_lagrange_geometry"]
+        self.lagrange_poisedness_threshold: str = self.factors["lagrange_poisedness_threshold"]
         if self.factors["delta_0"] is not None:
             self.delta_k : float = self.factors["delta_0"]
         if self.factors["delta_max"] is not None:
@@ -1530,6 +2004,7 @@ class SQPASTRODF(Solver):
             self.incumbent_x, self.problem
         )
         self.h_k = np.identity(self.problem.dim)
+        
 
         self.enable_gradient = (
             self.problem.gradient_available and self.factors["use_gradients"]
