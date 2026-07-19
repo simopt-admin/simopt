@@ -135,19 +135,19 @@ class Ambulance(Model):
         self.beta_x_model = Beta()
         self.beta_y_model = Beta()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Run one replication of the ambulance dispatch simulation."""
         # ------------------------------
         # Setup base locations and system parameters
         # ------------------------------
-        fixed_base_count = self.factors["fixed_base_count"]
-        variable_base_count = self.factors["variable_base_count"]
-        fixed_locs = self.factors["fixed_locs"]
-        variable_locs = self.factors["variable_locs"]
+        fixed_base_count = factors["fixed_base_count"]
+        variable_base_count = factors["variable_base_count"]
+        fixed_locs = factors["fixed_locs"]
+        variable_locs = factors["variable_locs"]
 
         # Beta parameters
-        alpha_x, beta_x = self.factors["call_loc_beta_x"]
-        alpha_y, beta_y = self.factors["call_loc_beta_y"]
+        alpha_x, beta_x = factors["call_loc_beta_x"]
+        alpha_y, beta_y = factors["call_loc_beta_y"]
 
         fixed_base_positions = [
             [fixed_locs[2 * i], fixed_locs[2 * i + 1]] for i in range(fixed_base_count)
@@ -309,9 +309,10 @@ class AmbulanceMinAvgResponse(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"variable_locs": list(vector)}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
         # 1. Run the simulation
-        responses, gradients = self.model.replicate(rngs)
+        responses, gradients = self.model.replicate(model_factors, rngs)
 
         # 2. Construct the Objective
         # Since this problem has no deterministic cost component,

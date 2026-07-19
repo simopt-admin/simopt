@@ -19,6 +19,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import InputModel
+from simopt.utils import override
 
 NUM_PRODUCTS: Final[int] = 10
 
@@ -204,7 +205,7 @@ class DynamNews(Model):
 
         self.utility_model = Utility()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -221,13 +222,13 @@ class DynamNews(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        num_customer: int = self.factors["num_customer"]
-        num_prod: int = self.factors["num_prod"]
-        mu: float = self.factors["mu"]
-        init_level: list = self.factors["init_level"]
-        c_utility: list = self.factors["c_utility"]
-        price: list = self.factors["price"]
-        cost: list = self.factors["cost"]
+        num_customer: int = factors["num_customer"]
+        num_prod: int = factors["num_prod"]
+        mu: float = factors["mu"]
+        init_level: list = factors["init_level"]
+        c_utility: list = factors["c_utility"]
+        price: list = factors["price"]
+        cost: list = factors["cost"]
 
         utility = self.utility_model.random(
             rngs[0],
@@ -314,8 +315,9 @@ class DynamNewsMaxProfit(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"init_level": vector[:]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         objectives = [Objective(stochastic=responses["profit"])]
         return RepResult(objectives=objectives)
 

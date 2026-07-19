@@ -19,6 +19,7 @@ from simopt.base import (
 )
 from simopt.input_models import Exp, Gamma, WeightedChoice
 from simopt.models._ext import patch_model
+from simopt.utils import override
 
 # Default values for the model
 PARK_CAPACITY: Final[int] = 350
@@ -279,7 +280,9 @@ class AmusementPark(Model):
         for _ in range(self.factors["number_attractions"]):
             self.service_models.append(Gamma())
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict[str, float | list[float]], dict]:
+    def replicate(
+        self, factors: dict, rngs: list[MRG32k3a]
+    ) -> tuple[dict[str, float | list[float]], dict]:
         """Simulate a single replication using current model factors.
 
         Args:
@@ -297,14 +300,14 @@ class AmusementPark(Model):
         """  # noqa: E501
 
         # Keep local copies of factors to prevent excessive lookups
-        num_attractions: int = self.factors["number_attractions"]
-        arrival_gammas: list[int] = self.factors["arrival_gammas"]
-        time_open: float = self.factors["time_open"]
-        erlang_shape: list[int] = self.factors["erlang_shape"]
-        erlang_scale: list[float] = self.factors["erlang_scale"]
-        queue_capacities: list[int] = self.factors["queue_capacities"]
-        transition_probabilities: list[list[float]] = self.factors["transition_probabilities"]
-        depart_probabilities: list[float] = self.factors["depart_probabilities"]
+        num_attractions: int = factors["number_attractions"]
+        arrival_gammas: list[int] = factors["arrival_gammas"]
+        time_open: float = factors["time_open"]
+        erlang_shape: list[int] = factors["erlang_shape"]
+        erlang_scale: list[float] = factors["erlang_scale"]
+        queue_capacities: list[int] = factors["queue_capacities"]
+        transition_probabilities: list[list[float]] = factors["transition_probabilities"]
+        depart_probabilities: list[float] = factors["depart_probabilities"]
 
         # initialize list of attractions to be selected upon arrival.
         attraction_range = range(num_attractions)
@@ -454,8 +457,9 @@ class AmusementParkMinDepart(Problem):
             "queue_capacities": vector[:],
         }
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         return RepResult(objectives=[Objective(stochastic=responses["total_departed"])])
 
     def check_deterministic_constraints(self, x: tuple) -> bool:

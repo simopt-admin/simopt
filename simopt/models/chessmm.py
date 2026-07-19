@@ -22,6 +22,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp, InputModel
+from simopt.utils import override
 
 MEAN_ELO: Final[int] = 1200
 MAX_ALLOWABLE_DIFF: Final[int] = 150
@@ -150,7 +151,7 @@ class ChessMatchmaking(Model):
         self.elo_model = EloInputModel()
         self.arrival_model = Exp()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -165,13 +166,13 @@ class ChessMatchmaking(Model):
                 - dict[str, dict]: Gradient estimates for each response.
         """
         # Constants
-        num_players = self.factors["num_players"]
+        num_players = factors["num_players"]
         num_players_range = range(num_players)
-        elo_mean = self.factors["elo_mean"]
-        elo_sd = self.factors["elo_sd"]
+        elo_mean = factors["elo_mean"]
+        elo_sd = factors["elo_sd"]
         elo_min, elo_max = 0, 2400
-        allowable_diff = self.factors["allowable_diff"]
-        poisson_rate = self.factors["poisson_rate"]
+        allowable_diff = factors["allowable_diff"]
+        poisson_rate = factors["poisson_rate"]
 
         # Initialize statistics.
         # Incoming players are initialized with a wait time of 0.
@@ -262,8 +263,9 @@ class ChessAvgDifference(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"allowable_diff": vector[0]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         return RepResult(
             objectives=[Objective(stochastic=responses["avg_diff"])],
             stochastic_constraints=[

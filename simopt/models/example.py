@@ -21,6 +21,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Normal
+from simopt.utils import override
 
 
 class ExampleModelConfig(BaseModel):
@@ -82,7 +83,7 @@ class ExampleModel(Model):
         super().__init__(fixed_factors)
         self.noise_model = Normal()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate a deterministic function f(x) with stochastic noise.
 
         Returns:
@@ -92,7 +93,7 @@ class ExampleModel(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        x = np.array(self.factors["x"])
+        x = np.array(factors["x"])
         fn_eval_at_x = np.linalg.norm(x) ** 2 + self.noise_model.random(rngs[0])
 
         # Compose responses and gradients.
@@ -142,8 +143,9 @@ class ExampleProblem(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"x": vector[:]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(model_factors, rngs)
         objectives = [
             Objective(
                 stochastic=responses["est_f(x)"],
@@ -222,9 +224,9 @@ class Example2Model(Model):
         super().__init__(fixed_factors)
         self.noise_model = Normal()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate a quadratic function f(x) with stochastic noise."""
-        x = np.array(self.factors["x"])
+        x = np.array(factors["x"])
         target = np.array([1, 2, 3, 4])
         fn_eval_at_x = np.sum((x - target) ** 2) + self.noise_model.random(rngs[0])
 
@@ -271,8 +273,9 @@ class Example2Problem(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"x": vector[:]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         objectives = [Objective(stochastic=responses["est_f(x)"])]
         return RepResult(objectives=objectives)
 

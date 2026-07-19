@@ -19,6 +19,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp
+from simopt.utils import override
 
 NUM_ARCS: Final[int] = 13
 CONST_NODES: Final[list[int]] = [6, 8]
@@ -185,7 +186,7 @@ class SAN(Model):
             self.__dfs(graph, next_point, visited)
         return visited
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -199,9 +200,9 @@ class SAN(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        num_nodes: int = self.factors["num_nodes"]
-        arcs: list[tuple[int, int]] = self.factors["arcs"]
-        arc_means: tuple[int, ...] = self.factors["arc_means"]
+        num_nodes: int = factors["num_nodes"]
+        arcs: list[tuple[int, int]] = factors["arcs"]
+        arc_means: tuple[int, ...] = factors["arc_means"]
 
         # Topological sort.
         node_range = range(1, num_nodes + 1)
@@ -311,8 +312,10 @@ class SANLongestPath(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"arc_means": vector[:]}
 
-    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(model_factors, rngs)
+        x = tuple(model_factors["arc_means"])
         objectives = [
             Objective(
                 stochastic=responses["longest_path_length"],
@@ -418,8 +421,10 @@ class SANLongestPathStochastic(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"arc_means": vector[:]}
 
-    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(model_factors, rngs)
+        x = tuple(model_factors["arc_means"])
 
         objectives = [
             Objective(

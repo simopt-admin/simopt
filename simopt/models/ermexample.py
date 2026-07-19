@@ -21,6 +21,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import InputModel
+from simopt.utils import override
 
 
 class ERMExampleModelConfig(BaseModel):
@@ -95,7 +96,7 @@ class ERMExampleModel(Model):
         self.resample_model = FileInputModel("workshop/erm_data.npy")
 
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate the squared error loss of a single observation.
 
         Returns:
@@ -105,7 +106,7 @@ class ERMExampleModel(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        beta0, beta1 = self.factors["beta"]
+        beta0, beta1 = factors["beta"]
         x, y = self.resample_model.random(rngs[0])
         sq_error_loss = (y - beta0 - beta1 * x) ** 2
         error_loss = y - beta0 - beta1 * x
@@ -170,8 +171,9 @@ class ERMExampleProblem(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"beta": vector[:]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:  # noqa: D102
-        responses, gradients = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:  # noqa: D102
+        responses, gradients = self.model.replicate(model_factors, rngs)
         objectives = [
             Objective(
                 stochastic=responses["sq_error_loss"],

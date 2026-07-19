@@ -88,10 +88,11 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
+            factors (dict): Factors used for the replication.
             rngs (list[MRG32k3a]): RNGs used to drive the simulation.
 
         Returns:

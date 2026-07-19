@@ -19,6 +19,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import InputModel
+from simopt.utils import override
 
 NUM_FACILITIES: Final[int] = 3
 
@@ -247,7 +248,7 @@ class FacilitySize(Model):
 
         self.demand_model = DemandInputModel()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication using the current model factors.
 
         Args:
@@ -263,9 +264,9 @@ class FacilitySize(Model):
                     - "n_cut" (int): Total number of demand units that could not be satisfied.
                 - dict: Gradient estimates for each response.
         """  # noqa: E501
-        mean_vec = np.array(self.factors["mean_vec"])
-        cov = np.array(self.factors["cov"])
-        capacity = np.array(self.factors["capacity"])
+        mean_vec = np.array(factors["mean_vec"])
+        cov = np.array(factors["cov"])
+        capacity = np.array(factors["capacity"])
         demand = self.demand_model.random(rngs[0], mean_vec, cov)
         extra_demand = demand - capacity
         pos_excess_mask = extra_demand > 0
@@ -313,8 +314,10 @@ class FacilitySizingTotalCost(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"capacity": vector[:]}
 
-    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
+        x = tuple(model_factors["capacity"])
         objectives = [
             Objective(
                 stochastic=0.0,
@@ -375,8 +378,9 @@ class FacilitySizingMaxService(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"capacity": vector[:]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         service_value = 1 - responses["stockout_flag"]
         objectives = [Objective(stochastic=service_value)]
         return RepResult(objectives=objectives)

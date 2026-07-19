@@ -19,6 +19,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp, Poisson, Uniform, WeightedChoice
+from simopt.utils import override
 
 
 class TableAllocationConfig(BaseModel):
@@ -173,7 +174,7 @@ class TableAllocation(Model):
         self.group_size_model = WeightedChoice()
         self.service_time_model = Exp()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -189,15 +190,15 @@ class TableAllocation(Model):
                     each response.
         """
 
-        num_tables = self.factors["num_tables"]
+        num_tables = factors["num_tables"]
         # TODO: figure out how floats are getting into the num_tables list
         num_tables = [int(n) for n in num_tables]
-        n_hours = self.factors["n_hours"]
-        f_lambda = self.factors["lambda"]
-        table_cap = self.factors["table_cap"]
+        n_hours = factors["n_hours"]
+        f_lambda = factors["lambda"]
+        table_cap = factors["table_cap"]
         max_table_cap = max(table_cap)
-        service_time_means = self.factors["service_time_means"]
-        table_revenue = self.factors["table_revenue"]
+        service_time_means = factors["service_time_means"]
+        table_revenue = factors["table_revenue"]
         # Track total revenue.
         total_rev = 0
         # Generate total number of arrivals in the period
@@ -302,8 +303,9 @@ class TableAllocationMaxRev(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"num_tables": vector[:]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         objectives = [Objective(stochastic=responses["total_revenue"])]
         return RepResult(objectives=objectives)
 

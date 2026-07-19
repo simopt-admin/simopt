@@ -18,6 +18,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Gamma
+from simopt.utils import override
 
 
 class ParameterEstimationConfig(BaseModel):
@@ -106,7 +107,7 @@ class ParameterEstimation(Model):
         self.y1_model = Gamma()
         self.y2_model = Gamma()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Returns:
@@ -116,8 +117,8 @@ class ParameterEstimation(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        xstar = self.factors["xstar"]
-        x = self.factors["x"]
+        xstar = factors["xstar"]
+        x = factors["x"]
         # Generate y1 and y2 from specified gamma distributions using input models.
         # Outputs will be coupled when generating Y_j's.
         y2 = self.y2_model.random(rngs[0], xstar[1], 1)
@@ -178,8 +179,9 @@ class ParamEstiMaxLogLik(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"x": vector[:]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         objectives = [Objective(stochastic=responses["loglik"])]
         return RepResult(objectives=objectives)
 

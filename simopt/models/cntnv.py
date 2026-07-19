@@ -18,6 +18,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import InputModel
+from simopt.utils import override
 
 
 class CntNVConfig(BaseModel):
@@ -167,7 +168,7 @@ class CntNV(Model):
 
         self.demand_model = DemandInputModel()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -182,12 +183,12 @@ class CntNV(Model):
                     - "stockout": Whether there was unmet demand ("Y" or "N").
                 - gradients (dict): Gradient estimates for each response.
         """
-        ord_quant: float = self.factors["order_quantity"]
-        purch_price: float = self.factors["purchase_price"]
-        sales_price: float = self.factors["sales_price"]
-        salvage_price: float = self.factors["salvage_price"]
-        burr_k: float = self.factors["Burr_k"]
-        burr_c: float = self.factors["Burr_c"]
+        ord_quant: float = factors["order_quantity"]
+        purch_price: float = factors["purchase_price"]
+        sales_price: float = factors["sales_price"]
+        salvage_price: float = factors["salvage_price"]
+        burr_k: float = factors["Burr_k"]
+        burr_c: float = factors["Burr_c"]
         # Designate random number generator for demand variability.
         demand = self.demand_model.random(rngs[0], burr_c, burr_k)
 
@@ -268,8 +269,9 @@ class CntNVMaxProfit(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"order_quantity": vector[0]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(model_factors, rngs)
         return RepResult(
             objectives=[
                 Objective(

@@ -20,6 +20,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp
+from simopt.utils import override
 
 
 class MM1QueueConfig(BaseModel):
@@ -139,7 +140,7 @@ class MM1Queue(Model):
         self.arrival_model = Exp()
         self.service_model = Exp()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -155,11 +156,11 @@ class MM1Queue(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        mu: float = self.factors["mu"]
-        epsilon: float = self.factors["epsilon"]
-        warmup: int = self.factors["warmup"]
-        people: int = self.factors["people"]
-        f_lambda: float = self.factors["lambda"]
+        mu: float = factors["mu"]
+        epsilon: float = factors["epsilon"]
+        warmup: int = factors["warmup"]
+        people: int = factors["people"]
+        f_lambda: float = factors["lambda"]
         # Designate separate RNGs for interarrival and serivce times.
         # Set mu to be at least epsilon.
         mu_floor = max(mu, epsilon)
@@ -303,8 +304,10 @@ class MM1MinMeanSojournTime(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"mu": vector[0]}
 
-    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(model_factors, rngs)
+        x = (model_factors["mu"],)
         objectives = [
             Objective(
                 stochastic=responses["avg_sojourn_time"],

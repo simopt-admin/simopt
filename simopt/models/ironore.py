@@ -23,6 +23,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import InputModel
+from simopt.utils import override
 
 
 class IronOreConfig(BaseModel):
@@ -233,7 +234,7 @@ class IronOre(Model):
 
         self.movement_model = MovementInputModel()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -249,19 +250,19 @@ class IronOre(Model):
                 - gradients (dict): A dictionary of gradient estimates for each
                     response.
         """
-        n_days: int = self.factors["n_days"]
-        min_price: float = self.factors["min_price"]
-        mean_price: float = self.factors["mean_price"]
-        max_price: float = self.factors["max_price"]
-        st_dev: float = self.factors["st_dev"]
-        price_stop: float = self.factors["price_stop"]
-        inven_stop: int = self.factors["inven_stop"]
-        max_prod_perday: int = self.factors["max_prod_perday"]
-        capacity: int = self.factors["capacity"]
-        prod_cost: float = self.factors["prod_cost"]
-        price_prod: float = self.factors["price_prod"]
-        price_sell: float = self.factors["price_sell"]
-        holding_cost: float = self.factors["holding_cost"]
+        n_days: int = factors["n_days"]
+        min_price: float = factors["min_price"]
+        mean_price: float = factors["mean_price"]
+        max_price: float = factors["max_price"]
+        st_dev: float = factors["st_dev"]
+        price_stop: float = factors["price_stop"]
+        inven_stop: int = factors["inven_stop"]
+        max_prod_perday: int = factors["max_prod_perday"]
+        capacity: int = factors["capacity"]
+        prod_cost: float = factors["prod_cost"]
+        price_prod: float = factors["price_prod"]
+        price_sell: float = factors["price_sell"]
+        holding_cost: float = factors["holding_cost"]
         # Initialize quantities to track:
         #   - Market price in each period (Pt).
         #   - Starting stock in each period.
@@ -381,8 +382,9 @@ class IronOreMaxRev(Problem):
             "price_sell": vector[3],
         }
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         objectives = [Objective(stochastic=responses["total_profit"])]
         return RepResult(objectives=objectives)
 
@@ -442,8 +444,9 @@ class IronOreMaxRevCnt(Problem):
             "price_sell": vector[2],
         }
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         objectives = [Objective(stochastic=responses["total_profit"])]
         return RepResult(objectives=objectives)
 

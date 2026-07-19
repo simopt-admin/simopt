@@ -351,11 +351,11 @@ class Problem(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def replicate(self, x: tuple, rngs: list[MRG32k3a], /) -> RepResult:
-        """Replicate the problem for a given solution.
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a], /) -> RepResult:
+        """Replicate the problem for the supplied model factors.
 
         Args:
-            x (tuple): The solution to evaluate.
+            model_factors (dict): Complete model factors used for the replication.
             rngs (list[MRG32k3a]): RNGs used to drive the simulation.
         """
         raise NotImplementedError
@@ -372,11 +372,10 @@ class Problem(ABC):
         # Gradients of objective function and stochastic constraint LHSs are temporarily
         # commented out. Under development.
 
-        # Set the decision factors of the model.
-        self.model.factors.update(self.vector_to_factor_dict(solution.x))
+        model_factors = self.model.factors | self.vector_to_factor_dict(solution.x)
         for _ in range(num_macroreps):
-            # Generate one replication at x.
-            result = self.replicate(solution.x, solution.rng_list)
+            # Generate one replication with the solution's model factors.
+            result = self.replicate(model_factors, solution.rng_list)
             solution.add_replicate_result(result)
 
             # Advance rngs to start of next subsubstream.

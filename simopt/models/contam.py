@@ -18,6 +18,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Beta
+from simopt.utils import override
 
 NUM_STAGES: Final[int] = 5
 
@@ -294,7 +295,7 @@ class Contamination(Model):
         self.contam_model = Beta()
         self.restore_model = Beta()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -308,14 +309,14 @@ class Contamination(Model):
                 - gradients (dict): A dictionary of gradient estimates for each
                     response.
         """
-        stages: int = self.factors["stages"]
-        init_alpha: float = self.factors["initial_rate_alpha"]
-        init_beta: float = self.factors["initial_rate_beta"]
-        contam_alpha: float = self.factors["contam_rate_alpha"]
-        contam_beta: float = self.factors["contam_rate_beta"]
-        restore_alpha: float = self.factors["restore_rate_alpha"]
-        restore_beta: float = self.factors["restore_rate_beta"]
-        u: tuple = self.factors["prev_decision"]
+        stages: int = factors["stages"]
+        init_alpha: float = factors["initial_rate_alpha"]
+        init_beta: float = factors["initial_rate_beta"]
+        contam_alpha: float = factors["contam_rate_alpha"]
+        contam_beta: float = factors["contam_rate_beta"]
+        restore_alpha: float = factors["restore_rate_alpha"]
+        restore_beta: float = factors["restore_rate_beta"]
+        u: tuple = factors["prev_decision"]
 
         # Initialize levels with beta distribution.
         levels = np.zeros(stages)
@@ -379,8 +380,10 @@ class ContaminationTotalCostDisc(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"prev_decision": vector[:]}
 
-    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        x = tuple(model_factors["prev_decision"])
+        responses, _ = self.model.replicate(model_factors, rngs)
         objectives = [
             Objective(
                 stochastic=0.0,
@@ -449,8 +452,10 @@ class ContaminationTotalCostCont(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"prev_decision": vector[:]}
 
-    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        x = tuple(model_factors["prev_decision"])
+        responses, _ = self.model.replicate(model_factors, rngs)
         deterministic_cost = np.dot(self.factors["prev_cost"], x)
         objectives = [
             Objective(

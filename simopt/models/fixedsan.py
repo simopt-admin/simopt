@@ -17,6 +17,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp
+from simopt.utils import override
 
 # TODO: figure out if this should ever be anything other than 13
 NUM_ARCS: Final[int] = 13
@@ -134,7 +135,7 @@ class FixedSAN(Model):
 
         self.time_model = Exp()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -148,9 +149,9 @@ class FixedSAN(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        num_nodes: int = self.factors["num_nodes"]
-        num_arcs: int = self.factors["num_arcs"]
-        thetas = list(self.factors["arc_means"])
+        num_nodes: int = factors["num_nodes"]
+        num_arcs: int = factors["num_arcs"]
+        thetas = list(factors["arc_means"])
 
         # Make sure we're not going to index out of bounds.
         if num_nodes < 9 or num_arcs < 13:
@@ -263,8 +264,10 @@ class FixedSANLongestPath(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"arc_means": vector[:]}
 
-    def replicate(self, x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, gradients = self.model.replicate(model_factors, rngs)
+        x = tuple(model_factors["arc_means"])
         objectives = [
             Objective(
                 stochastic=responses["longest_path_length"],

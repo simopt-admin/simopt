@@ -19,6 +19,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp
+from simopt.utils import override
 
 
 def _double_up(values: list[float]) -> list[float]:
@@ -266,7 +267,7 @@ class Hotel(Model):
 
         self.arrival_model = Exp()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -280,15 +281,15 @@ class Hotel(Model):
                 - gradients (dict): A dictionary of gradient estimates for each
                     response.
         """
-        booking_limits = list(self.factors["booking_limits"])
-        product_incidence = np.array(self.factors["product_incidence"])
-        num_products: int = self.factors["num_products"]
-        time_before: int = self.factors["time_before"]
-        f_lambda = self.factors["lambda"]
-        run_length: int = self.factors["runlength"]
-        time_limit: list = self.factors["time_limit"]
-        rack_rate: int = self.factors["rack_rate"]
-        discount_rate: int = self.factors["discount_rate"]
+        booking_limits = list(factors["booking_limits"])
+        product_incidence = np.array(factors["product_incidence"])
+        num_products: int = factors["num_products"]
+        time_before: int = factors["time_before"]
+        f_lambda = factors["lambda"]
+        run_length: int = factors["runlength"]
+        time_limit: list = factors["time_limit"]
+        rack_rate: int = factors["rack_rate"]
+        discount_rate: int = factors["discount_rate"]
 
         # Designate separate random number generators.
         total_revenue = 0
@@ -374,8 +375,9 @@ class HotelRevenue(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"booking_limits": vector[:]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         objectives = [Objective(stochastic=responses["revenue"])]
         return RepResult(objectives=objectives)
 

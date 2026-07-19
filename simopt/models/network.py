@@ -21,6 +21,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Exp, InputModel, Triangular
+from simopt.utils import override
 
 NUM_NETWORKS: Final = 10
 
@@ -224,7 +225,7 @@ class Network(Model):
         self.route_model = RouteInputModel()
         self.service_model = Triangular()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -239,15 +240,15 @@ class Network(Model):
                     each response.
         """
         # Determine total number of arrivals to simulate.
-        total_arrivals = self.factors["n_messages"]
-        arrival_rate = self.factors["arrival_rate"]
-        n_networks = self.factors["n_networks"]
-        process_prob = self.factors["process_prob"]
-        lower_limits_transit_time = self.factors["lower_limits_transit_time"]
-        upper_limits_transit_time = self.factors["upper_limits_transit_time"]
-        mode_transit_time = self.factors["mode_transit_time"]
-        cost_process = self.factors["cost_process"]
-        cost_time = self.factors["cost_time"]
+        total_arrivals = factors["n_messages"]
+        arrival_rate = factors["arrival_rate"]
+        n_networks = factors["n_networks"]
+        process_prob = factors["process_prob"]
+        lower_limits_transit_time = factors["lower_limits_transit_time"]
+        upper_limits_transit_time = factors["upper_limits_transit_time"]
+        mode_transit_time = factors["mode_transit_time"]
+        cost_process = factors["cost_process"]
+        cost_time = factors["cost_time"]
 
         # Generate all interarrival, network routes, and service times before the
         # simulation run.
@@ -359,8 +360,9 @@ class NetworkMinTotalCost(Problem):
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"process_prob": vector[:]}
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         objectives = [Objective(stochastic=responses["total_cost"])]
         return RepResult(objectives=objectives)
 

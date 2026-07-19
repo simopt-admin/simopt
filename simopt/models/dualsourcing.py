@@ -18,6 +18,7 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import InputModel
+from simopt.utils import override
 
 
 class DualSourcingConfig(BaseModel):
@@ -198,7 +199,7 @@ class DualSourcing(Model):
 
         self.demand_model = DemandInputModel()
 
-    def replicate(self, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -217,19 +218,19 @@ class DualSourcing(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        n_days: int = self.factors["n_days"]
+        n_days: int = factors["n_days"]
         n_days_range = range(n_days)
-        lead_reg: int = self.factors["lead_reg"]
-        lead_exp: int = self.factors["lead_exp"]
-        order_level_reg: int = self.factors["order_level_reg"]
-        order_level_exp: int = self.factors["order_level_exp"]
-        mu: float = self.factors["mu"]
-        st_dev: float = self.factors["st_dev"]
-        initial_inv: int = self.factors["initial_inv"]
-        cost_exp: float = self.factors["cost_exp"]
-        cost_reg: float = self.factors["cost_reg"]
-        penalty_cost: float = self.factors["penalty_cost"]
-        holding_cost: float = self.factors["holding_cost"]
+        lead_reg: int = factors["lead_reg"]
+        lead_exp: int = factors["lead_exp"]
+        order_level_reg: int = factors["order_level_reg"]
+        order_level_exp: int = factors["order_level_exp"]
+        mu: float = factors["mu"]
+        st_dev: float = factors["st_dev"]
+        initial_inv: int = factors["initial_inv"]
+        cost_exp: float = factors["cost_exp"]
+        cost_reg: float = factors["cost_reg"]
+        penalty_cost: float = factors["penalty_cost"]
+        holding_cost: float = factors["holding_cost"]
 
         def round_and_clamp_non_neg(x: float | int) -> int:
             return round(max(0.0, float(x)))
@@ -322,8 +323,9 @@ class DualSourcingMinCost(Problem):
             "order_level_reg": vector[1],
         }
 
-    def replicate(self, _x: tuple, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(rngs)
+    @override
+    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
+        responses, _ = self.model.replicate(model_factors, rngs)
         return RepResult(
             objectives=[
                 Objective(

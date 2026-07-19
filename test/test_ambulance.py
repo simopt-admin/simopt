@@ -6,6 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt.base import Solution
 from simopt.models.ambulance import Ambulance, AmbulanceMinAvgResponse
 
 
@@ -27,7 +28,7 @@ def test_queued_dispatch_keeps_ambulance_busy() -> None:
             "fixed_base_count": 0,
             "variable_base_count": 2,
             "fixed_locs": [],
-            "variable_locs": [0, 0, 20, 20],
+            "variable_locs": [10, 10, 10, 10],
         }
     )
     model.arrival_time_model = _SequenceInputModel([0, 1, 1, 3, 2000])  # type: ignore
@@ -36,7 +37,8 @@ def test_queued_dispatch_keeps_ambulance_busy() -> None:
     model.beta_y_model = _SequenceInputModel([0, 1, 1, 1, 0])  # type: ignore
 
     rngs = [MRG32k3a(s_ss_sss_index=[0, i, 0]) for i in range(model.n_rngs)]
-    responses, _gradients = model.replicate(rngs)
+    factors = model.factors | {"variable_locs": [0, 0, 20, 20]}
+    responses, _gradients = model.replicate(factors, rngs)
 
     assert responses["avg_response_time"] == pytest.approx(10.25)
 
@@ -51,6 +53,19 @@ def test_deterministic_constraints_require_correct_dimension() -> None:
     assert not problem.check_deterministic_constraints((-1.0, 2.0, 3.0, 4.0))
     assert not problem.check_deterministic_constraints((1.0, 2.0, 3.0, 21.0))
     assert problem.check_deterministic_constraints((1.0, 2.0, 3.0, 4.0))
+
+
+def test_problem_passes_solution_as_model_factors() -> None:
+    """Problem simulation should not mutate the model's stored factors."""
+    problem = AmbulanceMinAvgResponse()
+    original_variable_locs = problem.model.factors["variable_locs"]
+    rngs = [MRG32k3a(s_ss_sss_index=[0, i, 0]) for i in range(problem.model.n_rngs)]
+    solution = Solution((0.0, 0.0, 20.0, 20.0), rngs)
+
+    problem.simulate(solution)
+
+    assert solution.n_reps == 1
+    assert problem.model.factors["variable_locs"] == original_variable_locs
 
 
 @pytest.mark.parametrize(
