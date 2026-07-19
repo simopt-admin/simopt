@@ -76,7 +76,7 @@ def plot_det_feasibility(
             if log_scale:
                 plt.yscale("log")
             if sym_log:
-                plt.yscale("symlog", linthresh=1e-12)
+                plt.yscale("symlog", linthresh=1e-8)
                 plt.ylim(bottom=0) 
 
                 #plt.ylim(bottom=0.001)
