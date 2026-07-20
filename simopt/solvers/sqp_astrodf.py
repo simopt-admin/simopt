@@ -108,19 +108,16 @@ class InterpolationSet:
         a victim first. If victim_idx is supplied, evicts that index directly.
         Otherwise falls back to the default distance-based _choose_exiting."""
         if self.size() >= self.num_pts:
-            idx = victim_idx if victim_idx is not None else self._choose_exiting()
+            idx = victim_idx if victim_idx is not None else self._choose_exiting_by_dist()
             del self.points[idx]
         self.points.append(InterpolationPoint(x_dist, solution))    
         
-
-    
-    def _choose_exiting(self) -> int:
-        """Default eviction rule: farthest point from base_x.
-        Replace this method's body later with Lagrange-polynomial /
-        poisedness-based selection -- add_point's logic doesn't need to change."""
-        # find point largest distance from centerpoint to remove (evenually replace w/ polynomials)
+    def _choose_exiting_by_dist(self) -> int:
+        ''' Chose exiting point by distance to centerpoint only'''
         dists = [norm(pt.x_dist) for pt in self.points]
         return int(np.argmax(dists))
+    
+    
 
     def recompute_kopt(self, neg_minmax: int) -> None:
         """Caller supplies the sign convention of optimization problem"""
@@ -134,6 +131,7 @@ class InterpolationSet:
         delta_k: float,
         neg_minmax: int,
         recenter_mode: str,
+        victim_idx: int | None = None
     ) -> None:
         """Recenter the set on a new incumbent: shift coordinates, optionally
         drop out-of-radius points, insert the new incumbent, and refresh kopt.
@@ -148,8 +146,9 @@ class InterpolationSet:
             raise ValueError(f"Unknown recenter_mode: {recenter_mode!r}")
     
         # New incumbent sits at displacement 0 from itself
-        self.add_point(np.zeros(self.dim), new_incumbent_solution)
-        self.recompute_kopt(neg_minmax)
+        self.add_point(np.zeros(self.dim), new_incumbent_solution, victim_idx = victim_idx)
+        self.recompute_kopt(neg_minmax) # kopt currently not used for anything, we use x_k for interopolation update
+        
     def _coordinate_offset(self, slot_idx: int, delta_k: float) -> np.ndarray:
         """Generate the displacement for interpolation slot `slot_idx` using plain
         coordinate directions: slot 0 is the center (handled separately), odd slots
@@ -389,6 +388,13 @@ class SQPASTRODFConfig(SolverConfig):
         float,
         Field(
             default=10.0,
+            description="trigger a Lagrange-based point replacement when max |L_k(x)| exceeds this value (py-bobyqa-style default; a well-poised set keeps this near 1)",
+        ),
+]
+    theta_decrease: Annotated[
+        float,
+        Field(
+            default=0.8,
             description="trigger a Lagrange-based point replacement when max |L_k(x)| exceeds this value (py-bobyqa-style default; a well-poised set keeps this near 1)",
         ),
 ]
@@ -652,6 +658,24 @@ class SQPASTRODF(Solver):
 
         return var_y, var_z
 
+    def _choose_exiting_at_step(self, matrix_inverse: np.ndarray, d: np.ndarray, delta_k: float) -> int:
+        """After adding x_k, choose point to remove from interpolation set"""
+        best_idx = None
+        best_scaden = None #scaled denominator
+        for k in range(self.interp_set.size()):
+            coeffs = self.lagrange_polynomial_coeffs(matrix_inverse, k)
+            den = self.evaluate_model(d, coeffs)
+    
+            point_dist = self.interp_set.points[k].x_dist
+            distsq = float(norm(point_dist) ** 2)
+            temp = max(1.0, (distsq / delta_k**2) ** 2)
+    
+            scaden = temp * abs(den)
+            if best_scaden is None or scaden > best_scaden:
+                best_scaden = scaden
+                best_idx = k
+        return best_idx
+
     def lagrange_polynomial_coeffs(self, matrix_inverse: np.ndarray, k: int) -> np.ndarray:
         """Returns kth lagrange polynomial coefficient vector of current interpolation set"""
         # slice uscaled matrix
@@ -747,6 +771,23 @@ class SQPASTRODF(Solver):
                 best_x = x_candidate
 
         return best_x, best_abs_val
+    
+    def _improve_geometry(self, matrix_inverse: np.ndarray, delta_k: float, pilot_run: int) -> None:
+        """If distance to farthest point exceeds threshold, replace with point intended to impove geometry"""
+        victim_idx = self.interp_set._choose_exiting_by_dist()
+        victim_dist = self.interp_set.points[victim_idx].x_dist
+        distsq = float(norm(victim_dist) ** 2)
+    
+        distsq_thresh = self.lagrange_poisedness_threshold * delta_k**2
+        if distsq <= distsq_thresh:
+            return False # farthest point still close enough -- nothing to do
+    
+        coeffs = self.lagrange_polynomial_coeffs(matrix_inverse, victim_idx)
+        replacement_dist, _ = self._maximize_abs_lagrange(coeffs, delta_k)
+    
+        self._replace_worst_point(victim_idx, replacement_dist, delta_k, pilot_run)
+        
+        return True
 
     def _choose_exiting_lagrange(
         self, matrix_inverse: np.ndarray, delta_k: float
@@ -801,6 +842,12 @@ class SQPASTRODF(Solver):
         # victim_idx may have been kopt so recompute
         neg_minmax = -self.problem.minmax[0]
         self.interp_set.recompute_kopt(neg_minmax)
+
+    def _simulate_surviving_points(self, delta_k: float, pilot_run: int) -> None:
+        """Re-run adaptive sampling on every point currently in the set."""
+        for k in range(self.interp_set.size()):
+            self.perform_adaptive_sampling(self.interp_set.solution_at(k), pilot_run, delta_k)
+
 
     def perform_adaptive_sampling(
         self,
@@ -993,7 +1040,7 @@ class SQPASTRODF(Solver):
                     interpolation_solns.append(adapt_soln)
     
                 # construct the model and obtain the model coefficients
-                q, grad, hessian = self.get_model_coefficients(var_z, fval, self.problem)
+                q, grad, hessian, matrix_inverse = self.get_model_coefficients(var_z, fval, self.problem)
      
                 norm_grad = norm(grad)
                 if delta_k <= mu * norm_grad or norm_grad == 0:
@@ -1017,6 +1064,7 @@ class SQPASTRODF(Solver):
             grad,
             hessian,
             interpolation_solns,
+            matrix_inverse
         )
     
     # used for updated interpolation method
@@ -1050,31 +1098,33 @@ class SQPASTRODF(Solver):
         delta = self.delta_k
         model_iterations = 0
         while True:
-            delta_k = delta * w**model_iterations
+            delta_k = delta * self.gamma_2**model_iterations
             model_iterations += 1
     
             # Model-criticality check on the *previous* fit's geometry happens
             # after fitting below -- this pass first ensures the set matches delta_k.
             if self.recenter_mode == "reduce":
                 self.interp_set.reduce_to_trust_region(delta_k)
+            
             self._simulate_missing_indexes(delta_k, pilot_run)
+            #self._simulate_surviving_points(delta_k, pilot_run)
     
             inverse_mult, grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
-            
+            # update diag hessian with lagrange and compute lagrange multipliers
+            H, self.lam = self.create_lagrange_hessian(hessian, grad) 
+            # build problem matrices
+            self.build_problem(grad, H)
             # update interpolation set if threshold for max lagrage poly is reached
             if self.use_lagrange_geometry:
-                victim_idx, replacement_dist, worst_val = self._choose_exiting_lagrange(matrix_inverse, delta_k)
-                if worst_val > self.lagrange_poisedness_threshold:
-                    self._replace_worst_point(victim_idx, replacement_dist, delta_k, pilot_run)
-                    # re-fit model coefficients if set has been updated
+                set_updated = self._improve_geometry(matrix_inverse, delta_k, pilot_run)
+                # re-fit model coefficients if set has been updated
+                if set_updated:
                     inverse_mult, grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
-
-    
-            model_criticality_gap = norm(grad)
-            if delta_k <= mu * model_criticality_gap or model_criticality_gap == 0:
+            # check criticality loop, if not satisfied build model again with smaller delta
+            if self.crit_measure >= self.mu*delta_k or self.crit_measure ==0:
                 break
-    
-        beta_n_grad = float(beta * model_criticality_gap)
+
+        beta_n_grad = float(beta * self.crit_measure)
         self.delta_k = min(max(beta_n_grad, delta_k), delta)
     
         # Build fval/y_var in the shapes the rest of iterate() expects
@@ -1083,7 +1133,7 @@ class SQPASTRODF(Solver):
         fval = list(fval_arr)
         interpolation_solns = [self.interp_set.solution_at(k) for k in range(self.interp_set.size())]
     
-        return fval, list(y_var), inverse_mult, grad, hessian, interpolation_solns
+        return fval, list(y_var), inverse_mult, grad, hessian, interpolation_solns, matrix_inverse
     
     # this method is for old trust region interpolation construction
     def get_model_coefficients(
@@ -1128,7 +1178,7 @@ class SQPASTRODF(Solver):
         grad = inverse_mult[1:decision_var_idx].reshape(problem.dim)
         hessian = inverse_mult[decision_var_idx:num_design_points].reshape(problem.dim)
 
-        return inverse_mult, grad, hessian
+        return inverse_mult, grad, hessian, matrix_inverse
     
     # this method is for new interpolation handling
     def get_model_coefficients_persistent(self, delta_k: float) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -1152,7 +1202,7 @@ class SQPASTRODF(Solver):
                 for i in range(num_design_points)
             ]
         )
-    
+        #print("m_var_cond",np.linalg.cond(m_var))
         try:
             matrix_inverse_scaled = inv(m_var)
         except LinAlgError:
@@ -1364,7 +1414,39 @@ class SQPASTRODF(Solver):
                 
             return lam
 
-        
+    def _cauchy_point_tangent(self, s_normal: np.ndarray, delta_hat: float) -> np.ndarray:
+        """Closed-form Cauchy-point fallback for the tangent step, used when second degree curvature is negligable"""
+        g = self.grad_term + self.W @ s_normal
+    
+        # Project g onto null(R) so the step satisfies R @ t = 0 by construction
+        gp = self.P @ g
+    
+        norm_gp = norm(gp)
+        if norm_gp == 0:
+            return np.zeros(len(g))
+    
+        curvature = gp @ self.W @ gp
+        if curvature <= 0:
+            tau = 1.0
+        else:
+            tau = min(1.0, norm_gp**3 / (delta_hat * curvature))
+    
+        t_c = -tau * (delta_hat / norm_gp) * gp
+    
+        # Respect fraction-to-boundary box on the slack block: t_s >= -eps*e - w_s.
+        # Origin (t=0) always satisfies this (w_s already respects its own bound
+        # from solve_normal_step), so radial scaling toward 0 stays feasible --
+        # same principle as the ball projection used elsewhere in this solver.
+        if self.problem_type != "eq_only":
+            lower = -self.epsilon * np.ones(self.n_v) - s_normal[self.n_x:]
+            t_c_s = t_c[self.n_x:]
+            alpha = 1.0
+            for i in range(self.n_v):
+                if t_c_s[i] < lower[i]:
+                    alpha = min(alpha, lower[i] / t_c_s[i])
+            t_c = alpha * t_c
+    
+        return t_c
         
     def solve_normal_step(self):
         
@@ -1398,7 +1480,7 @@ class SQPASTRODF(Solver):
                 normal_subproblem,
                 np.zeros(self.dim),
                 #method="trust-constr",
-                constraints=const,
+                constraints=const, 
             )
             # rescale normal step if necessary
             if self.problem_type == "eq_only":
@@ -1416,41 +1498,67 @@ class SQPASTRODF(Solver):
             a_tangent = 1.0 
         else:
             a_tangent = self.a_tangent
-        # Determine tangent step
-        def tangent_subproblem(s_tangent: np.ndarray) -> float:
-            res = (self.grad_term + self.W @ s_normal).T @ s_tangent + 0.5*(s_tangent.T @ self.W @ s_tangent)
-            return float(res) 
-        # get norm of tangent step
-        def norm_s_tangent(s_tangent: np.ndarray) -> float:
-            return float(norm(s_tangent))
-        # constrain step by trust region
-        tr_tangent = NonlinearConstraint(norm_s_tangent, 0, self.delta_k*a_tangent)
-        #Linear constraint
-        linc = LinearConstraint(self.R, np.zeros(self.R.shape[0]), np.zeros(self.R.shape[0]))    
-        if self.problem_type == "eq_only":
-            const = [tr_tangent,linc] 
-        else: # problem has inequaltiy constraints
-            E_v = np.hstack([
-                np.zeros((self.n_v, self.n_x)),
-                np.eye(self.n_v),
-                ])
-            ftb = LinearConstraint(E_v, -1*self.epsilon*np.ones(self.n_v) - s_normal[self.n_x:], np.inf)
-            const = [tr_tangent,linc,ftb]
-        # solve for tangent step
-        solve_tangent_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
-            tangent_subproblem,
-            np.zeros(self.dim),
-            #method="trust-constr",
-            constraints=const,
-        )
-        if self.problem_type == "eq_only":
-            s_tangent = solve_tangent_subproblem.x 
-            s_tangent_rescale = s_tangent #no rescale needed for eq only
+            
+        # check if there is relevent second degree curvature
+        curve = np.max(np.abs(np.diag(self.W))) if self.W.shape[0] > 0 else 0.0
+        check = True
+        #check = curve < self.feas_tol
+        if check: # no relevent curvature, peform Cauchy step
+            delta_hat = a_tangent*self.delta_k
+            s_tangent_rescale = self._cauchy_point_tangent(s_normal, delta_hat)
         else:
+            print(">>> ENTERED SLSQP/trust-constr BRANCH — check was False <<<")
+            # Determine tangent step
+            def tangent_subproblem(s_tangent: np.ndarray) -> float:
+                res = (self.grad_term + self.W @ s_normal).T @ s_tangent + 0.5*(s_tangent.T @ self.W @ s_tangent)
+                return float(res) 
+            # get norm of tangent step
+            def norm_s_tangent(s_tangent: np.ndarray) -> float:
+                return float(norm(s_tangent))
+            def tangent_subproblem_jac(s_tangent: np.ndarray) -> np.ndarray:
+                return self.grad_term + self.W @ s_normal + self.W @ s_tangent
+            
+            def tangent_subproblem_hess(s_tangent: np.ndarray) -> np.ndarray:
+                return self.W
+            # constrain step by trust region
+            tr_tangent = NonlinearConstraint(norm_s_tangent, 0, self.delta_k*a_tangent)
+            #Linear constraint
+            linc = LinearConstraint(self.R, np.zeros(self.R.shape[0]), np.zeros(self.R.shape[0]))    
+            if self.problem_type == "eq_only":
+                const = [tr_tangent,linc] 
+            else: # problem has inequaltiy constraints
+                E_v = np.hstack([
+                    np.zeros((self.n_v, self.n_x)),
+                    np.eye(self.n_v),
+                    ])
+                ftb = LinearConstraint(E_v, -1*self.epsilon*np.ones(self.n_v) - s_normal[self.n_x:], np.inf)
+                const = [tr_tangent,linc,ftb]
+            # solve for tangent step
+            solve_tangent_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
+                tangent_subproblem,
+                np.zeros(self.dim),
+                method="trust-constr",
+                constraints=const,
+                hess = tangent_subproblem_hess,
+                jac = tangent_subproblem_jac
+            )
             s_tangent_rescale = solve_tangent_subproblem.x 
+        if self.problem_type == "eq_only":
+            s_tangent = s_tangent_rescale #no rescale needed for eq only
+        else:
             s_tangent_v = self.V @ s_tangent_rescale[self.n_x:]
             s_tangent = np.concatenate((s_tangent_rescale[:self.n_x], s_tangent_v))
         return s_tangent, s_tangent_rescale
+
+    def get_constraint_info(self, x):
+        """Return lhs value of equality and inequality constraints as well as Jacobians of x (tuple of decision values)"""
+        c_eq =  np.atleast_1d(self.problem.get_deterministic_equality_constraints(x))
+        c_ineq = np.atleast_1d(self.problem.get_deterministic_inequality_constraints(x))
+        A_eq = np.atleast_1d(self.problem.get_deterministic_equality_constraints_gradients(x))
+        A_ineq = self.problem.get_deterministic_inequality_constraints_gradients(x)
+        
+        return c_eq, c_ineq, A_eq, A_ineq
+
 
     def build_problem(self, grad, H):
         '''
@@ -1461,6 +1569,9 @@ class SQPASTRODF(Solver):
         None.
 
         '''
+        
+        self.H = H
+        
         if self.problem_type == "eq_only":
             self.feas = np.array(self.c_eq)
             self.R = self.A_eq
@@ -1492,8 +1603,8 @@ class SQPASTRODF(Solver):
                 self.R = np.hstack([J, self.V])
                 self.feas = np.array(self.c_ineq) + v
             # construct crit measure for inequality problems
-            P = np.eye(self.R.shape[1]) - np.linalg.pinv(self.R)@ self.R
-            self.crit_measure = norm(P @ self.grad_term) + norm(self.feas)
+            self.P = np.eye(self.R.shape[1]) - np.linalg.pinv(self.R)@ self.R
+            self.crit_measure = norm(self.P @ self.grad_term) + norm(self.feas)
             
         
         
@@ -1506,6 +1617,8 @@ class SQPASTRODF(Solver):
         Hessian matrix w/ corresponding Lagrange corrections based on constraint type and vector of lagrange multipliers.
 
         '''
+        # convert inf or nan t0 num
+        #np.nan_to_num(hessian, copy = False) 
         # create hessian diagonal matrix
         H = 2*np.diag(hessian)
         c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
@@ -1580,7 +1693,8 @@ class SQPASTRODF(Solver):
         
             # set barrier parameter (only used in inequality constrained problems)
             #self.theta = min(1e-2, self.delta_k)
-            self.theta = self.delta_k
+            self.theta = self.delta_k #set theta to starting delta
+            self.theta_0 = self.delta_k
             # determine optimization type
             if self.problem.get_deterministic_equality_constraints(self.incumbent_x) == None:
                 if self.problem.get_deterministic_inequality_constraints(self.incumbent_x) == None:
@@ -1610,7 +1724,17 @@ class SQPASTRODF(Solver):
             self.perform_adaptive_sampling(
                 self.incumbent_solution, pilot_run, self.delta_k
             )
-
+        
+        # get constraint info for current solution
+        self.c_eq, self.c_ineq, self.A_eq, self.A_ineq = self.get_constraint_info(self.incumbent_x)
+        #intialize slack variables
+        if self.iteration_count == 1: 
+            if self.problem_type in ("ineq_only", "both"):
+                # just use feas tol as small constant to avoid another parameter
+                self.incumbent_v = np.maximum(-self.c_ineq, self.epsilon * np.ones(self.n_v))
+            else: 
+                self.incumbent_v = None
+        
         # use Taylor expansion if gradient available
         if self.enable_gradient:
             fval = (
@@ -1633,6 +1757,7 @@ class SQPASTRODF(Solver):
                 grad,
                 hessian,
                 interpolation_solns,
+                matrix_inverse
             ) = self.construct_model()
         
         
@@ -1676,10 +1801,10 @@ class SQPASTRODF(Solver):
         #     #     logging.debug("candidate_x " + str(candidate_x))
         
         # get lhs and Jacobian of constraints for current solution
-        self.c_eq =  np.atleast_1d(self.problem.get_deterministic_equality_constraints(self.incumbent_x))
-        self.c_ineq = np.atleast_1d(self.problem.get_deterministic_inequality_constraints(self.incumbent_x))
-        self.A_eq = np.atleast_1d(self.problem.get_deterministic_equality_constraints_gradients(self.incumbent_x))
-        self.A_ineq = self.problem.get_deterministic_inequality_constraints_gradients(self.incumbent_x)
+        # self.c_eq =  np.atleast_1d(self.problem.get_deterministic_equality_constraints(self.incumbent_x))
+        # self.c_ineq = np.atleast_1d(self.problem.get_deterministic_inequality_constraints(self.incumbent_x))
+        # self.A_eq = np.atleast_1d(self.problem.get_deterministic_equality_constraints_gradients(self.incumbent_x))
+        # self.A_ineq = self.problem.get_deterministic_inequality_constraints_gradients(self.incumbent_x)
         
         # intialize slack variables for first iteration
         if self.iteration_count == 1: 
@@ -1692,11 +1817,11 @@ class SQPASTRODF(Solver):
         # convert any inf or -inf to numbers
         np.nan_to_num(hessian, copy = False)      
         # get hessian matrix w/ lagrange updates and lagrange mulitpliers
-        H, lam = self.create_lagrange_hessian(hessian, grad) 
+        #H, lam = self.create_lagrange_hessian(hessian, grad) 
         #temp remove lagrange updates to hessian
         #H = 2*np.diag(hessian)
         # build problem matrices
-        self.build_problem(grad, H)
+        #self.build_problem(grad, H)
         # compute normal step
         s_normal, s_normal_rescale = self.solve_normal_step()
         # compute tangent step
@@ -1808,7 +1933,7 @@ class SQPASTRODF(Solver):
         else:
             # objective improvement after normal step
             s_normal_x = s_normal[:self.n_x]
-            q_n_reduction = -1*grad @ s_normal_x - 0.5* s_normal_x @ H @ s_normal_x
+            q_n_reduction = -1*grad @ s_normal_x - 0.5* s_normal_x @ self.H @ s_normal_x
             if self.problem_type == "eq_only":
                 barrier_reduction = 0 
             else:
@@ -1817,7 +1942,7 @@ class SQPASTRODF(Solver):
             sig_numerator =-1* (q_n_reduction + barrier_reduction) 
             sig_c_ratio = sig_numerator / ((1-self.nu)*m_n_reduction)
         # set sigma b to be norm of lagrange multipliers
-        sigma_b = min(norm(lam), self.sigma_b_max)
+        sigma_b = min(norm(self.lam), self.sigma_b_max)
         sigma_c = max(sigma_b, sig_c_ratio)
         
         # update penalty parameter based on solving method
@@ -1851,7 +1976,16 @@ class SQPASTRODF(Solver):
             actual_barrier_reduction = 0
         else: # problem has inequality constraints
             # extract candidate slack variables
-            actual_barrier_reduction = -1*self.theta* (np.sum(np.log(self.incumbent_v) - np.log(candidate_v)))          
+            if candidate_v[0] <= 0:
+                print("curve", np.max(np.abs(np.diag(self.W))) if self.W.shape[0] > 0 else 0.0)
+                print("incum v", self.incumbent_v)
+                print("candidate", candidate_v)
+                print("n_rescale", s_normal_rescale)
+                print("t_rescale", s_tangent_rescale)
+            if norm(candidate_v) <= 1e-12: # slack variables essentially 0
+                actual_barrier_reduction = 0
+            else:
+                actual_barrier_reduction = -1*self.theta* (np.sum(np.log(self.incumbent_v) - np.log(candidate_v)))          
             if self.problem_type == "ineq_only":
                 c_ineq_tilde = np.array(self.problem.get_deterministic_inequality_constraints(candidate_x))
                 # extract candidate slack variables
@@ -1880,12 +2014,12 @@ class SQPASTRODF(Solver):
         # print("candidate:", candidate_x)
 
         # check crit measure
-        if self.sampling_method != "IBO":
-            crit_ok = self.crit_measure >= self.mu*self.delta_k
-        else:
-            crit_ok = True
-        successful = rho >= self.eta_1 and crit_ok
-        
+        # if self.sampling_method != "IBO":
+        #     crit_ok = self.crit_measure >= self.mu*self.delta_k
+        # else:
+        #     crit_ok = True
+        successful = rho >= self.eta_1
+        #print("delta", self.delta_k)
         # successful: accept
         if successful:
             self.incumbent_x = candidate_x
@@ -1907,12 +2041,15 @@ class SQPASTRODF(Solver):
             # update interpolation set on successful iterations
             if self.reuse_interpolation_set:
                 neg_minmax = -self.problem.minmax[0]
+                d = np.array(candidate_x, dtype=float) - self.interp_set.base_x
+                victim_idx = self._choose_exiting_at_step(matrix_inverse, d, self.delta_k)
                 self.interp_set.recenter(
                     new_base_x=np.array(candidate_x, dtype=float),
                     new_incumbent_solution=candidate_solution,
                     delta_k=self.delta_k,
                     neg_minmax=neg_minmax,
                     recenter_mode=self.recenter_mode,
+                    victim_idx=victim_idx
                 )
 
         elif not successful:
@@ -1920,11 +2057,11 @@ class SQPASTRODF(Solver):
         
         #update theta (only used for inequaltiy constrained problem)
         #force theta decrease for now
-        #self.theta = 0.5*self.theta
+        self.theta = self.theta_decrease*self.theta
 
-        # have theta decrease with delta
-        if self.delta_k < self.theta:
-            self.theta = self.delta_k
+        # # have theta decrease with delta
+        # if self.delta_k < self.theta:
+        #     self.theta = self.delta_k
         #print("successful:", successful)
         
         # TODO: unified TR management
@@ -1956,6 +2093,7 @@ class SQPASTRODF(Solver):
         self.recenter_mode: str = self.factors["recenter_mode"]
         self.use_lagrange_geometry: bool = self.factors["use_lagrange_geometry"]
         self.lagrange_poisedness_threshold: str = self.factors["lagrange_poisedness_threshold"]
+        self.theta_decrease : float = self.factors["theta_decrease"]
         if self.factors["delta_0"] is not None:
             self.delta_k : float = self.factors["delta_0"]
         if self.factors["delta_max"] is not None:
