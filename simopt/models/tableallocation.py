@@ -10,12 +10,11 @@ import simpy
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import Exp, Poisson, Uniform, WeightedChoice
@@ -288,26 +287,28 @@ class TableAllocationMaxRev(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"num_tables"}
 
-    @property
-    def dim(self) -> int:
-        return 4
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        num_tables = problem.add_integer_vector(
+            lb=0,
+            ub=np.inf,
+            shape=(len(self.model.factors["table_cap"]),),
+            initial=tuple(self.factors["initial_solution"]),
+        )
+        allocated_capacity = sum(
+            table_capacity * table_count
+            for table_capacity, table_count in zip(
+                self.model.factors["table_cap"], num_tables, strict=True
+            )
+        )
+        problem.add_linear_constraint(allocated_capacity <= self.model.factors["capacity"])
+        simulation = self.add_simulation(problem, {"num_tables": num_tables})
+        problem.maximize(dsl.mean(simulation.metric("total_revenue")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"num_tables": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [Objective(stochastic=responses["total_revenue"])]
-        return RepResult(objectives=objectives)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return (

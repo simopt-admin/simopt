@@ -9,13 +9,11 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
-    StochasticConstraint,
     VariableType,
 )
 from simopt.input_models import Exp
@@ -247,7 +245,7 @@ class SAN(Model):
         # If an arc is not on the longest path, the component of the gradient is zero.
         arc_to_index = {arc: i for i, arc in enumerate(arcs)}
 
-        grads = []
+        grads = np.zeros((num_nodes, len(arcs)))
         for node in topo_order:
             gradient = np.zeros(len(arcs))
             current = node
@@ -260,7 +258,7 @@ class SAN(Model):
                 current = backtrack
                 backtrack = int(prev[backtrack - 1])
 
-            grads.append(gradient)
+            grads[node - 1] = gradient
 
         # Compose responses and gradients.
         responses = {
@@ -269,13 +267,9 @@ class SAN(Model):
             "topo_order": topo_order,
         }
         gradients = {
-            response_key: {
-                factor_key: np.zeros(len(self.specifications)) for factor_key in self.specifications
-            }
-            for response_key in responses
+            "longest_path_length": {"arc_means": grads[-1]},
+            "longest_path_to_all_nodes": {"arc_means": grads},
         }
-        gradients["longest_path_length"]["arc_means"] = grads[-1]
-        gradients["longest_path_to_all_nodes"]["arc_means"] = np.array(grads)
         return responses, gradients
 
 
@@ -297,34 +291,25 @@ class SANLongestPath(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"arc_means"}
 
-    @property
-    def dim(self) -> int:
-        return len(self.model.factors["arcs"])
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (1e-2,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        arc_means = problem.add_continuous_vector(
+            lb=1e-2,
+            ub=np.inf,
+            shape=(len(self.model.factors["arcs"]),),
+            initial=tuple(self.factors["initial_solution"]),
+        )
+        simulation = self.add_simulation(problem, {"arc_means": arc_means})
+        deterministic_cost = sum(
+            cost / arc_mean
+            for cost, arc_mean in zip(self.factors["arc_costs"], arc_means, strict=True)
+        )
+        problem.minimize(dsl.mean(simulation.metric("longest_path_length")) + deterministic_cost)
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"arc_means": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(model_factors, rngs)
-        x = tuple(model_factors["arc_means"])
-        objectives = [
-            Objective(
-                stochastic=responses["longest_path_length"],
-                stochastic_gradients=gradients["longest_path_length"]["arc_means"],
-                deterministic=np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
-                deterministic_gradients=-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
-            )
-        ]
-        return RepResult(objectives=objectives)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(x_i >= 0 for x_i in x)
@@ -406,62 +391,32 @@ class SANLongestPathStochastic(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"arc_means"}
 
-    @property
-    def dim(self) -> int:
-        return len(self.model.factors["arcs"])
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (1e-2,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (100.0,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        arc_means = problem.add_continuous_vector(
+            lb=1e-2,
+            ub=100.0,
+            shape=(len(self.model.factors["arcs"]),),
+            initial=tuple(self.factors["initial_solution"]),
+        )
+        constraint_nodes = tuple(self.factors["constraint_nodes"])
+        simulation = self.add_simulation(problem, {"arc_means": arc_means})
+        deterministic_cost = sum(
+            cost / arc_mean
+            for cost, arc_mean in zip(self.factors["arc_costs"], arc_means, strict=True)
+        )
+        problem.minimize(dsl.mean(simulation.metric("longest_path_length")) + deterministic_cost)
+        for node, limit in zip(
+            constraint_nodes, self.factors["length_to_node_constraint"], strict=True
+        ):
+            problem.add_stochastic_constraint(
+                simulation.metric("longest_path_to_all_nodes")[node - 1] <= limit
+            )
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"arc_means": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(model_factors, rngs)
-        x = tuple(model_factors["arc_means"])
-
-        objectives = [
-            Objective(
-                stochastic=responses["longest_path_length"],
-                stochastic_gradients=gradients["longest_path_length"]["arc_means"],
-                deterministic=np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
-                deterministic_gradients=-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
-            )
-        ]
-
-        topo_order = responses["topo_order"]
-        longest_path_nodes = responses["longest_path_to_all_nodes"]
-        node_positions = {node: idx for idx, node in enumerate(topo_order)}
-        arc_gradients = gradients["longest_path_to_all_nodes"]["arc_means"]
-        constraint_limits = self.factors["length_to_node_constraint"]
-        constraint_nodes = self.factors["constraint_nodes"]
-
-        stochastic_constraints = []
-        for i, const_node in enumerate(constraint_nodes):
-            idx = node_positions[const_node]
-            stochastic_value = longest_path_nodes[idx]
-            stochastic_grad = arc_gradients[idx]
-            deterministic_value = -constraint_limits[i]
-            deterministic_grad = [0.0] * self.dim
-            stochastic_constraints.append(
-                StochasticConstraint(
-                    stochastic_value,
-                    stochastic_grad,
-                    deterministic_value,
-                    deterministic_grad,
-                )
-            )
-
-        return RepResult(
-            objectives=objectives,
-            stochastic_constraints=stochastic_constraints,
-        )
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(x_i >= 0 for x_i in x)

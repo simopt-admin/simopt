@@ -10,12 +10,11 @@ import simpy
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import Beta, Exp
@@ -288,44 +287,19 @@ class AmbulanceMinAvgResponse(Problem):
     }
     model_decision_factors: ClassVar[set[str]] = {"variable_locs"}
 
-    @property
     @override
-    def dim(self) -> int:
-        return int(2 * self.model.factors["variable_base_count"])
-
-    @property
-    @override
-    def lower_bounds(self) -> tuple:
-        return tuple(0.0 for _ in range(self.dim))
-
-    @property
-    @override
-    def upper_bounds(self) -> tuple:
-        return tuple(20.0 for _ in range(self.dim))
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        initial = self.factors["initial_solution"]
+        dim = len(initial)
+        location = problem.add_continuous_vector(lb=0.0, ub=20.0, shape=(dim,), initial=initial)
+        simulation = self.add_simulation(problem, {"variable_locs": location})
+        problem.minimize(dsl.mean(simulation.metric("avg_response_time")))
+        return problem
 
     @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"variable_locs": list(vector)}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        # 1. Run the simulation
-        responses, gradients = self.model.replicate(model_factors, rngs)
-
-        # 2. Construct the Objective
-        # Since this problem has no deterministic cost component,
-        # deterministic values are 0.
-        objectives = [
-            Objective(
-                stochastic=responses["avg_response_time"],
-                stochastic_gradients=gradients["avg_response_time"]["variable_locs"],
-                deterministic=0.0,
-                deterministic_gradients=(0.0,) * self.dim,
-            )
-        ]
-
-        # 3. Return result
-        return RepResult(objectives=objectives)
 
     @override
     def check_deterministic_constraints(self, _x: tuple) -> bool:

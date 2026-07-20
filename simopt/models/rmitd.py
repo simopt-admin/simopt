@@ -8,12 +8,11 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import InputModel
@@ -266,29 +265,38 @@ class RMITDMaxRevenue(Problem):
         "reservation_qtys",
     }
 
-    @property
-    def dim(self) -> int:
-        return 3
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        initial_solution = tuple(self.factors["initial_solution"])
+        initial_inventory = problem.add_integer_variable(
+            lb=0, ub=np.inf, initial=initial_solution[0]
+        )
+        reservation_qtys = problem.add_integer_vector(
+            lb=0,
+            ub=np.inf,
+            shape=(self.model.factors["time_horizon"] - 1,),
+            initial=initial_solution[1:],
+        )
+        problem.add_linear_constraint(initial_inventory >= reservation_qtys[0])
+        for idx in range(len(reservation_qtys) - 1):
+            problem.add_linear_constraint(reservation_qtys[idx] >= reservation_qtys[idx + 1])
 
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+        simulation = self.add_simulation(
+            problem,
+            {
+                "initial_inventory": initial_inventory,
+                "reservation_qtys": reservation_qtys,
+            },
+        )
+        problem.maximize(dsl.mean(simulation.metric("revenue")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {
             "initial_inventory": vector[0],
-            "reservation_qtys": list(vector[0:]),
+            "reservation_qtys": list(vector[1:]),
         }
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [Objective(stochastic=responses["revenue"])]
-        return RepResult(objectives=objectives)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1))

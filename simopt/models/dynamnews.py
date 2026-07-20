@@ -10,12 +10,11 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import InputModel
@@ -300,26 +299,21 @@ class DynamNewsMaxProfit(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"init_level"}
 
-    @property
-    def dim(self) -> int:
-        return self.model.factors["num_prod"]
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        init_level = problem.add_continuous_vector(
+            lb=0.0,
+            ub=np.inf,
+            shape=(self.model.factors["num_prod"],),
+            initial=self.factors["initial_solution"],
+        )
+        simulation = self.add_simulation(problem, {"init_level": init_level})
+        problem.maximize(dsl.mean(simulation.metric("profit")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"init_level": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [Objective(stochastic=responses["profit"])]
-        return RepResult(objectives=objectives)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(x[j] > 0 for j in range(self.dim))

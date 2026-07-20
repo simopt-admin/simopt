@@ -9,13 +9,11 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
-    StochasticConstraint,
     VariableType,
 )
 from simopt.input_models import InputModel
@@ -299,39 +297,27 @@ class FacilitySizingTotalCost(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"capacity"}
 
-    @property
-    def dim(self) -> int:
-        return self.model.factors["n_fac"]
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        capacity = problem.add_continuous_vector(
+            lb=0.0,
+            ub=np.inf,
+            shape=(self.model.factors["n_fac"],),
+            initial=self.factors["initial_solution"],
+        )
+        simulation = self.add_simulation(problem, {"capacity": capacity})
+        installation_cost = sum(
+            cost * capacity[index] for index, cost in enumerate(self.factors["installation_costs"])
+        )
+        problem.minimize(installation_cost)
+        problem.add_stochastic_constraint(
+            simulation.metric("stockout_flag") <= self.factors["epsilon"]
+        )
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"capacity": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        x = tuple(model_factors["capacity"])
-        objectives = [
-            Objective(
-                stochastic=0.0,
-                deterministic=np.dot(self.factors["installation_costs"], x),
-                deterministic_gradients=self.factors["installation_costs"],
-            )
-        ]
-        stochastic_constraints = [
-            StochasticConstraint(
-                stochastic=responses["stockout_flag"],
-                deterministic=-self.factors["epsilon"],
-            )
-        ]
-        return RepResult(objectives=objectives, stochastic_constraints=stochastic_constraints)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         cov_matrix = np.diag([x**2 for x in self.factors["initial_solution"]])
@@ -363,27 +349,25 @@ class FacilitySizingMaxService(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"capacity"}
 
-    @property
-    def dim(self) -> int:
-        return self.model.factors["n_fac"]
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        capacity = problem.add_continuous_vector(
+            lb=0.0,
+            ub=np.inf,
+            shape=(self.model.factors["n_fac"],),
+            initial=self.factors["initial_solution"],
+        )
+        simulation = self.add_simulation(problem, {"capacity": capacity})
+        problem.maximize(1 - dsl.mean(simulation.metric("stockout_flag")))
+        installation_cost = sum(
+            cost * capacity[index] for index, cost in enumerate(self.factors["installation_costs"])
+        )
+        problem.add_linear_constraint(installation_cost <= self.factors["installation_budget"])
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"capacity": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        service_value = 1 - responses["stockout_flag"]
-        objectives = [Objective(stochastic=service_value)]
-        return RepResult(objectives=objectives)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         # Check budget constraint

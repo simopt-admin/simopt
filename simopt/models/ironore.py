@@ -14,12 +14,11 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import InputModel
@@ -362,17 +361,25 @@ class IronOreMaxRev(Problem):
         "price_sell",
     }
 
-    @property
-    def dim(self) -> int:
-        return 4
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        initial_solution = self.factors["initial_solution"]
+        price_prod = problem.add_continuous_variable(lb=0.0, ub=np.inf, initial=initial_solution[0])
+        inven_stop = problem.add_integer_variable(lb=0, ub=np.inf, initial=initial_solution[1])
+        price_stop = problem.add_continuous_variable(lb=0.0, ub=np.inf, initial=initial_solution[2])
+        price_sell = problem.add_continuous_variable(lb=0.0, ub=np.inf, initial=initial_solution[3])
+        simulation = self.add_simulation(
+            problem,
+            {
+                "price_prod": price_prod,
+                "inven_stop": inven_stop,
+                "price_stop": price_stop,
+                "price_sell": price_sell,
+            },
+        )
+        problem.maximize(dsl.mean(simulation.metric("total_profit")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {
@@ -381,12 +388,6 @@ class IronOreMaxRev(Problem):
             "price_stop": vector[2],
             "price_sell": vector[3],
         }
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [Objective(stochastic=responses["total_profit"])]
-        return RepResult(objectives=objectives)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # return (
@@ -425,17 +426,23 @@ class IronOreMaxRevCnt(Problem):
         "price_sell",
     }
 
-    @property
-    def dim(self) -> int:
-        return 3
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0.0,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        initial_solution = self.factors["initial_solution"]
+        price_prod = problem.add_continuous_variable(lb=0.0, ub=np.inf, initial=initial_solution[0])
+        price_stop = problem.add_continuous_variable(lb=0.0, ub=np.inf, initial=initial_solution[1])
+        price_sell = problem.add_continuous_variable(lb=0.0, ub=np.inf, initial=initial_solution[2])
+        simulation = self.add_simulation(
+            problem,
+            {
+                "price_prod": price_prod,
+                "price_stop": price_stop,
+                "price_sell": price_sell,
+            },
+        )
+        problem.maximize(dsl.mean(simulation.metric("total_profit")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {
@@ -443,12 +450,6 @@ class IronOreMaxRevCnt(Problem):
             "price_stop": vector[1],
             "price_sell": vector[2],
         }
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [Objective(stochastic=responses["total_profit"])]
-        return RepResult(objectives=objectives)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return x[0] >= 0 and x[1] >= 0 and x[2] >= 0

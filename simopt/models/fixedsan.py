@@ -8,12 +8,11 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import Exp
@@ -243,17 +242,22 @@ class FixedSANLongestPath(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"arc_means"}
 
-    @property
-    def dim(self) -> int:
-        return self.model.factors["num_arcs"]
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (1e-2,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        arc_means = problem.add_continuous_vector(
+            lb=1e-2,
+            ub=np.inf,
+            shape=(self.model.factors["num_arcs"],),
+            initial=tuple(self.factors["initial_solution"]),
+        )
+        simulation = self.add_simulation(problem, {"arc_means": arc_means})
+        deterministic_cost = sum(
+            cost / arc_mean
+            for cost, arc_mean in zip(self.factors["arc_costs"], arc_means, strict=True)
+        )
+        problem.minimize(dsl.mean(simulation.metric("longest_path_length")) + deterministic_cost)
+        return problem
 
     def check_arc_costs(self) -> bool:
         """Check if all arc costs are positive and match the number of arcs."""
@@ -263,20 +267,6 @@ class FixedSANLongestPath(Problem):
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"arc_means": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(model_factors, rngs)
-        x = tuple(model_factors["arc_means"])
-        objectives = [
-            Objective(
-                stochastic=responses["longest_path_length"],
-                stochastic_gradients=gradients["longest_path_length"]["arc_means"],
-                deterministic=np.sum(np.array(self.factors["arc_costs"]) / np.array(x)),
-                deterministic_gradients=-np.array(self.factors["arc_costs"]) / (np.array(x) ** 2),
-            )
-        ]
-        return RepResult(objectives=objectives)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(x_i >= 0 for x_i in x)
