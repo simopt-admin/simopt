@@ -1437,6 +1437,7 @@ class SQPASTRODF(Solver):
         # Origin (t=0) always satisfies this (w_s already respects its own bound
         # from solve_normal_step), so radial scaling toward 0 stays feasible --
         # same principle as the ball projection used elsewhere in this solver.
+        # maybe exlude this part (not used currently)
         if self.problem_type != "eq_only":
             lower = -self.epsilon * np.ones(self.n_v) - s_normal[self.n_x:]
             t_c_s = t_c[self.n_x:]
@@ -1507,7 +1508,7 @@ class SQPASTRODF(Solver):
             delta_hat = a_tangent*self.delta_k
             s_tangent_rescale = self._cauchy_point_tangent(s_normal, delta_hat)
         else:
-            print(">>> ENTERED SLSQP/trust-constr BRANCH — check was False <<<")
+            #print(">>> ENTERED SLSQP/trust-constr BRANCH — check was False <<<")
             # Determine tangent step
             def tangent_subproblem(s_tangent: np.ndarray) -> float:
                 res = (self.grad_term + self.W @ s_normal).T @ s_tangent + 0.5*(s_tangent.T @ self.W @ s_tangent)
@@ -1520,8 +1521,25 @@ class SQPASTRODF(Solver):
             
             def tangent_subproblem_hess(s_tangent: np.ndarray) -> np.ndarray:
                 return self.W
+            def norm_s_tangent_jac(s_tangent: np.ndarray) -> np.ndarray:
+                n = norm(s_tangent)
+                if n < 1e-12:
+                    return np.zeros((1, len(s_tangent)))
+                return (s_tangent / n).reshape(1, -1)
+
+            def norm_s_tangent_hess(s_tangent: np.ndarray, v: np.ndarray) -> np.ndarray:
+                # v is the Lagrange multiplier vector scipy passes for vector-valued constraints;
+                # here the constraint is scalar, so v has length 1
+                n = norm(s_tangent)
+                dim = len(s_tangent)
+                if n < 1e-12:
+                    return np.zeros((dim, dim))
+                outer = np.outer(s_tangent, s_tangent) / n**2
+                return v[0] * (np.eye(dim) - outer) / n
             # constrain step by trust region
-            tr_tangent = NonlinearConstraint(norm_s_tangent, 0, self.delta_k*a_tangent)
+            tr_tangent = NonlinearConstraint(norm_s_tangent, 0, self.delta_k*a_tangent,
+                                             jac = norm_s_tangent_jac,
+                                             hess = norm_s_tangent_hess)
             #Linear constraint
             linc = LinearConstraint(self.R, np.zeros(self.R.shape[0]), np.zeros(self.R.shape[0]))    
             if self.problem_type == "eq_only":

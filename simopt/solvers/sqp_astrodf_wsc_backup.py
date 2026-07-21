@@ -46,7 +46,7 @@ from simopt.base import (
 )
 
 
-class SQPASTRODFConfig(SolverConfig):
+class SQPASTRODFWSCConfig(SolverConfig):
     """Configuration for ASTRO-DF solver."""
 
     eta_1: Annotated[
@@ -176,7 +176,7 @@ class SQPASTRODFConfig(SolverConfig):
     sigma_b_max: Annotated[
         float,
         Field(
-            default=0.01,
+            default=1e8,
             description="smallest amound sigma can increase by",
         ),
     
@@ -231,11 +231,11 @@ class SQPASTRODFConfig(SolverConfig):
         return self
 
 
-class SQPASTRODF(Solver):
+class SQPASTRODFWSC(Solver):
     """The ASTRO-DF solver."""
 
-    name: str = "SQPASTRODF"
-    config_class: ClassVar[type[SolverConfig]] = SQPASTRODFConfig
+    name: str = "SQPASTRODFWSC"
+    config_class: ClassVar[type[SolverConfig]] = SQPASTRODFWSCConfig
     class_name_abbr: ClassVar[str] = "SQPASTRODFWSC"
     class_name: ClassVar[str] = "SQP-ASTRO-DF-WSC"
     objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
@@ -588,6 +588,9 @@ class SQPASTRODF(Solver):
 
         delta = self.delta_k
         model_iterations: int = 0
+        c = self.problem.get_deterministic_equality_constraints(self.incumbent_x)
+        A = self.problem.get_deterministic_equality_constraints_gradients(self.incumbent_x)
+        c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
         while True:
             delta_k = delta * w**model_iterations
             model_iterations += 1
@@ -648,10 +651,17 @@ class SQPASTRODF(Solver):
 
             # construct the model and obtain the model coefficients
             q, grad, hessian = self.get_model_coefficients(var_z, fval, self.problem)
- 
-            norm_grad = norm(grad)
-            if delta_k <= mu * norm_grad or norm_grad == 0:
+            
+            A_N = null_space(A)
+            crit_measure =norm(c) +norm(A_N.T @ grad) 
+            crit_ok =crit_measure >= self.mu*delta_k
+            
+            if crit_ok:
                 break
+            
+            # norm_grad = norm(grad)
+            # if delta_k <= mu * norm_grad or norm_grad == 0:
+            #     break
 
             # If a model gradient norm is zero, there is a possibility that the code
             # stuck in this while loop
@@ -661,7 +671,7 @@ class SQPASTRODF(Solver):
             # if model_iterations > MAX_ITER:
             #     break
 
-        beta_n_grad = float(beta * norm_grad)
+        beta_n_grad = float(beta * crit_measure)
         self.delta_k = min(max(beta_n_grad, delta_k), delta)
 
         return (
@@ -866,6 +876,48 @@ class SQPASTRODF(Solver):
         lam, res, rank, svals = np.linalg.lstsq(A.T, -grad)
         
         return lam
+    
+    def _cauchy_point_tangent(self, s_normal: np.ndarray, delta_hat: float,grad, H, A) -> np.ndarray:
+        """Closed-form Cauchy-point fallback for the tangent step, used when second degree curvature is negligable"""
+        g = grad + H @ s_normal
+        
+        A_N = null_space(A)
+        
+        H_N = A_N.T @ H @ A_N
+    
+        # Project g onto null(R) so the step satisfies R @ t = 0 by construction
+        gp = A_N.T @ g
+    
+        norm_gp = norm(gp)
+        if norm_gp == 0:
+            return np.zeros(len(g))
+    
+        curvature = gp @ H_N @ gp
+        if curvature <= 0:
+            tau = 1.0
+        else:
+            tau = min(1.0, norm_gp**3 / (delta_hat * curvature))
+            
+        # reduced coordinates    
+        z_c = -tau * (delta_hat / norm_gp) * gp
+        
+        # map back
+        t_c = A_N @ z_c
+        # Respect fraction-to-boundary box on the slack block: t_s >= -eps*e - w_s.
+        # Origin (t=0) always satisfies this (w_s already respects its own bound
+        # from solve_normal_step), so radial scaling toward 0 stays feasible --
+        # same principle as the ball projection used elsewhere in this solver.
+        # # maybe exlude this part (not used currently)
+        # if self.problem_type != "eq_only":
+        #     lower = -self.epsilon * np.ones(self.n_v) - s_normal[self.n_x:]
+        #     t_c_s = t_c[self.n_x:]
+        #     alpha = 1.0
+        #     for i in range(self.n_v):
+        #         if t_c_s[i] < lower[i]:
+        #             alpha = min(alpha, lower[i] / t_c_s[i])
+        #     t_c = alpha * t_c
+    
+        return t_c
         
         
 
@@ -914,6 +966,13 @@ class SQPASTRODF(Solver):
                 self.incumbent_solution, pilot_run, self.delta_k
             )
 
+
+
+        # get lhs and Jacobian of constraints for current solution
+        c = self.problem.get_deterministic_equality_constraints(self.incumbent_x)
+        A = self.problem.get_deterministic_equality_constraints_gradients(self.incumbent_x)
+        c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
+        
         # use Taylor expansion if gradient available
         if self.enable_gradient:
             fval = (
@@ -978,10 +1037,10 @@ class SQPASTRODF(Solver):
         #     #     logging.debug("incumbent_x " + str(incumbent_x))
         #     #     logging.debug("candidate_x " + str(candidate_x))
         
-        # get lhs and Jacobian of constraints for current solution
-        c = self.problem.get_deterministic_constraints(self.incumbent_x)
-        A = self.problem.get_deterministic_constraints_gradients(self.incumbent_x)
-        c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
+        # # get lhs and Jacobian of constraints for current solution
+        # c = self.problem.get_deterministic_equality_constraints(self.incumbent_x)
+        # A = self.problem.get_deterministic_equality_constraints_gradients(self.incumbent_x)
+        # c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
         
         # convert any inf or -inf to numbers
         np.nan_to_num(hessian, copy = False)
@@ -1045,8 +1104,15 @@ class SQPASTRODF(Solver):
             constraints=[tr_tangent,linc],
         )
         s_tangent = solve_tangent_subproblem.x
+        
+        #s_tangent = self._cauchy_point_tangent(s_normal, self.delta_k*a_tangent, grad, H, A)
+        
 
         # set new candidate solution 
+        # print("s normal", s_normal)
+        # print(len(s_normal))
+        # print("s tan", s_tangent)
+        # print(len(s_tangent))
         candidate_x = np.asarray(self.incumbent_x, dtype=float) + s_normal + s_tangent
 
         # logging.debug("problem.lower_bounds "+str(problem.lower_bounds))
@@ -1095,51 +1161,54 @@ class SQPASTRODF(Solver):
         # )
         # logging.debug("fval[0] - min(fval) " + str(fval[0] - min(fval)))
 
-        if not self.enable_gradient:
-            min_fval = min(fval)
-            sufficient_reduction = (fval[0] - min_fval) >= self.factors[
-                "ps_sufficient_reduction"
-            ] * self.delta_k**2
+        # if not self.enable_gradient:
+        #     min_fval = min(fval)
+        #     sufficient_reduction = (fval[0] - min_fval) >= self.factors[
+        #         "ps_sufficient_reduction"
+        #     ] * self.delta_k**2
 
-            condition_met = min_fval < fval_tilde and sufficient_reduction
+        #     condition_met = min_fval < fval_tilde and sufficient_reduction
 
-            high_variance = False
-            if not condition_met:
-                # Treat variance as low if mean is zero to avoid division by
-                # zero (zero mean typically indicates negligible uncertainty)
-                if candidate_solution.objectives_mean[0] == 0:
-                    logging.debug(
-                        "Candidate solution objectives_mean is zero, "
-                        "skipping variance check."
-                    )
-                else:
-                    high_variance = (
-                        candidate_solution.objectives_var[0]
-                        / (
-                            candidate_solution.n_reps
-                            * candidate_solution.objectives_mean[0] ** 2
-                        )
-                    ) > 0.75
+        #     high_variance = False
+        #     if not condition_met:
+        #         # Treat variance as low if mean is zero to avoid division by
+        #         # zero (zero mean typically indicates negligible uncertainty)
+        #         if candidate_solution.objectives_mean[0] == 0:
+        #             logging.debug(
+        #                 "Candidate solution objectives_mean is zero, "
+        #                 "skipping variance check."
+        #             )
+        #         else:
+        #             high_variance = (
+        #                 candidate_solution.objectives_var[0]
+        #                 / (
+        #                     candidate_solution.n_reps
+        #                     * candidate_solution.objectives_mean[0] ** 2
+        #                 )
+        #             ) > 0.75
 
-            if condition_met or high_variance:
+        #     if condition_met or high_variance:
  
-                fval_tilde = min_fval
-                min_idx = np.argmin(fval)
-                candidate_x = y_var[min_idx][0]
-                candidate_solution = interpolation_solns[min_idx]
+        #         fval_tilde = min_fval
+        #         min_idx = np.argmin(fval)
+        #         candidate_x = y_var[min_idx][0]
+        #         candidate_solution = interpolation_solns[min_idx]
         
         # get candidate solution constraints
-        candidate_c = self.problem.get_deterministic_constraints(candidate_x)
+        candidate_c = self.problem.get_deterministic_equality_constraints(candidate_x)
         
         # update penalty parameter
         # compute reduction in normal model 
         m_n_reduction = norm(c) -norm(A @ s_normal + c)     
         m_t_reduction = -1*(grad + H @ s_normal) @ s_tangent - .5*(s_tangent @ H @ s_tangent)
         q_n_reduction = -1*(grad @ s_normal) - .5*(s_normal @ H @ s_normal)
-        sig_c_ratio = -1*(q_n_reduction+m_t_reduction) / ((1-self.nu)*m_n_reduction)
+        if m_n_reduction >= 1e-12:
+            sig_c_ratio = -1*(q_n_reduction+m_t_reduction) / ((1-self.nu)*m_n_reduction)
+        else: 
+            sig_c_ratio = 0 
        
         # set sigma b and c
-        sigma_b = min(self.sigma_min + self.sigma_b_increase*self.iteration_count, self.sigma_b_max)
+        sigma_b = min(norm(lam), self.sigma_b_max)
         sigma_c = max(sigma_b, sig_c_ratio)
         #sigma_c = sig_c_ratio # for now leave out sigma b
         #set sigma
