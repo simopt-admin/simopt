@@ -360,7 +360,7 @@ class ContaminationTotalCostDisc(Problem):
     constraint_type: ClassVar[ConstraintType] = ConstraintType.STOCHASTIC
     variable_type: ClassVar[VariableType] = VariableType.DISCRETE
     gradient_available: ClassVar[bool] = True
-    optimal_value: float | None = None
+    optimal_value: ClassVar[float | None] = None
     optimal_solution: tuple | None = None
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"prev_decision"}

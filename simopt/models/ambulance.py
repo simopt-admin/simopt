@@ -266,15 +266,13 @@ class Ambulance(Model):
 class AmbulanceMinAvgResponse(Problem):
     """Base class to implement simulation-optimization problems."""
 
-    config_class: ClassVar[type[BaseModel]] = AmbBaseAllocationConfig
-    model_class: ClassVar[type[Model]] = Ambulance
     class_name_abbr: ClassVar[str] = "AMBULANCE-1"
     class_name: ClassVar[str] = "Minimum Average Waiting Time for Ambulance Dispatch"
     config_class: ClassVar[type[BaseModel]] = AmbBaseAllocationConfig
     model_class: ClassVar[type[Model]] = Ambulance
     n_objectives: ClassVar[int] = 1
     n_stochastic_constraints: ClassVar[int] = 0
-    minmax: ClassVar[tuple[int]] = (-1,)
+    minmax: ClassVar[tuple[int, ...]] = (-1,)
     constraint_type: ClassVar[ConstraintType] = ConstraintType.BOX
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
     gradient_available: ClassVar[bool] = True
