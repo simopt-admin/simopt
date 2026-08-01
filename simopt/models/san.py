@@ -355,7 +355,7 @@ class SANLongestPathStochasticConfig(BaseModel):
     length_to_node_constraint: Annotated[
         list[float],
         Field(
-            default_factory=lambda: [5.0] * len(CONST_NODES),
+            default_factory=lambda: [6.0] * len(CONST_NODES),
             description="Max allowable length to each constraint node.",
             min_length=1,
         ),
