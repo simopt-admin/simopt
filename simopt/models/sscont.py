@@ -13,9 +13,7 @@ from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import Exp, Poisson
@@ -339,20 +337,6 @@ class SSContMinCost(Problem):
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"s": vector[0], "S": vector[0] + vector[1]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [
-            Objective(
-                stochastic=(
-                    responses["avg_backorder_costs"]
-                    + responses["avg_order_costs"]
-                    + responses["avg_holding_costs"]
-                )
-            )
-        ]
-        return RepResult(objectives=objectives)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return x[0] >= 0 and x[1] >= 0

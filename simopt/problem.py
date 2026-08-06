@@ -23,120 +23,6 @@ def _to_grad_array(gradients: float | Iterable[float]) -> np.ndarray:
     return rv
 
 
-class Objective:
-    """Represents an objective function value with optional gradients.
-
-    Combines stochastic and deterministic components of an objective function,
-    along with their respective gradients if available.
-    """
-
-    def __init__(
-        self,
-        stochastic: float,
-        stochastic_gradients: float | Iterable[float] | None = None,
-        deterministic: float = 0.0,
-        deterministic_gradients: float | Iterable[float] | None = None,
-    ) -> None:
-        """Initialize an Objective with stochastic and deterministic components.
-
-        Args:
-            stochastic: The stochastic component of the objective value.
-            stochastic_gradients: Gradients of the stochastic component.
-            deterministic: The deterministic component of the objective value.
-            deterministic_gradients: Gradients of the deterministic component.
-        """
-        self.stochastic = stochastic
-        self.stochastic_gradients = stochastic_gradients
-        self.deterministic = deterministic
-        self.deterministic_gradients = deterministic_gradients
-
-    def value(self) -> float:
-        """Return the total objective value (stochastic + deterministic)."""
-        return self.stochastic + self.deterministic
-
-    def grad(self) -> np.ndarray | None:
-        """Return the combined gradients of both components, or None if unavailable."""
-        match self.stochastic_gradients, self.deterministic_gradients:
-            case None, None:
-                return None
-            case None, _:
-                return _to_grad_array(self.deterministic_gradients)  # pyrefly: ignore
-            case _, None:
-                return _to_grad_array(self.stochastic_gradients)  # pyrefly: ignore
-            case _, _:
-                stochastic_gradients = _to_grad_array(
-                    self.stochastic_gradients  # pyrefly: ignore
-                )
-                deterministic_gradients = _to_grad_array(
-                    self.deterministic_gradients  # pyrefly: ignore
-                )
-                return stochastic_gradients + deterministic_gradients
-
-
-class StochasticConstraint:
-    """Represents a stochastic constraint with optional deterministic component."""
-
-    def __init__(
-        self,
-        stochastic: float,
-        stochastic_gradients: float | Iterable[float] | None = None,
-        deterministic: float = 0.0,
-        deterministic_gradients: float | Iterable[float] | None = None,
-    ) -> None:
-        """Initialize a StochasticConstraint.
-
-        Args:
-            stochastic: The stochastic component of the constraint.
-            stochastic_gradients: Gradients of the stochastic component.
-            deterministic: The deterministic component of the constraint.
-            deterministic_gradients: Gradients of the deterministic component.
-        """
-        self.stochastic = stochastic
-        self.stochastic_gradients = stochastic_gradients
-        self.deterministic = deterministic
-        self.deterministic_gradients = deterministic_gradients
-
-    def value(self) -> float:
-        """Return the total constraint value (stochastic + deterministic if present)."""
-        return self.stochastic + self.deterministic
-
-    def grad(self) -> np.ndarray | None:
-        """Return the combined gradients of both components, or None if unavailable."""
-        match self.stochastic_gradients, self.deterministic_gradients:
-            case None, None:
-                return None
-            case None, _:
-                return _to_grad_array(self.deterministic_gradients)  # pyrefly: ignore
-            case _, None:
-                return _to_grad_array(self.stochastic_gradients)  # pyrefly: ignore
-            case _, _:
-                stochastic_gradients = _to_grad_array(
-                    self.stochastic_gradients  # pyrefly: ignore
-                )
-                deterministic_gradients = _to_grad_array(
-                    self.deterministic_gradients  # pyrefly: ignore
-                )
-                return stochastic_gradients + deterministic_gradients
-
-
-class RepResult:
-    """Container for results from a single simulation replication."""
-
-    def __init__(
-        self,
-        objectives: list[Objective],
-        stochastic_constraints: list[StochasticConstraint] | None = None,
-    ) -> None:
-        """Initialize a RepResult with objectives and optional constraints.
-
-        Args:
-            objectives: List of objective function results from the replication.
-            stochastic_constraints: Optional list of stochastic constraint results.
-        """
-        self.objectives = objectives
-        self.stochastic_constraints = stochastic_constraints
-
-
 class Problem(ABC):
     """Base class for simulation-optimization problems.
 
@@ -406,71 +292,6 @@ class Problem(ABC):
         """
         raise NotImplementedError
 
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a], /) -> RepResult:
-        """Replicate the problem for the supplied model factors.
-
-        The default implementation evaluates the DSL-defined objective. It
-        supports DSL decisions whose names and scalar/vector structure match
-        the corresponding model factors. Problems with a different coordinate
-        mapping can override this method.
-
-        Args:
-            model_factors (dict): Complete model factors used for the replication.
-            rngs (list[MRG32k3a]): RNGs used to drive the simulation.
-        """
-        problem = self.optimization_problem
-        values_by_variable_id: dict[int, float] = {}
-
-        for simulation in problem.simulations:
-            for decision_name, decision in simulation.decisions.items():
-                if decision_name not in model_factors:
-                    raise ValueError(f"DSL decision {decision_name!r} has no matching model factor")
-
-                if isinstance(decision, dsl.Variable):
-                    components = (decision,)
-                    values = (model_factors[decision_name],)
-                else:
-                    components = decision.components
-                    values = tuple(model_factors[decision_name])
-
-                if len(values) != len(components):
-                    raise ValueError(
-                        f"model factor {decision_name!r} must have "
-                        f"{len(components)} component(s), got {len(values)}"
-                    )
-
-                for component, value in zip(components, values, strict=True):
-                    values_by_variable_id[id(component)] = float(value)
-
-        missing_variables = [
-            variable.name
-            for variable in problem.variables
-            if id(variable) not in values_by_variable_id
-        ]
-        if missing_variables:
-            raise ValueError(f"DSL variables are not bound to model factors: {missing_variables!r}")
-
-        decision_vector = tuple(
-            values_by_variable_id[id(variable)] for variable in problem.variables
-        )
-        result = problem.run_replication(decision_vector, rngs)
-        return RepResult(
-            objectives=[
-                Objective(
-                    stochastic=result.objective,
-                    stochastic_gradients=result.objective_gradient,
-                )
-            ],
-            stochastic_constraints=[
-                StochasticConstraint(
-                    stochastic=constraint.value,
-                    stochastic_gradients=constraint.gradient,
-                )
-                for constraint in result.stochastic_constraints
-            ]
-            or None,
-        )
-
     def simulate(self, solution: "Solution", num_macroreps: int = 1) -> None:
         """Simulate `m` i.i.d. replications at solution `x`.
 
@@ -483,10 +304,9 @@ class Problem(ABC):
         # Gradients of objective function and stochastic constraint LHSs are temporarily
         # commented out. Under development.
 
-        model_factors = self.model.factors | self.vector_to_factor_dict(solution.x)
         for _ in range(num_macroreps):
-            # Generate one replication with the solution's model factors.
-            result = self.replicate(model_factors, solution.rng_list)
+            # Generate one replication at the solution.
+            result = self.optimization_problem.run_replication(solution.x, solution.rng_list)
             solution.add_replicate_result(result)
 
             # Advance rngs to start of next subsubstream.
@@ -703,51 +523,33 @@ class Solution:
             self._stoch_constraints_array = np.array(self._stoch_constraints)
         return self._stoch_constraints_array
 
-    def add_replicate_result(self, result: RepResult) -> None:
+    def add_replicate_result(self, result: dsl.ReplicationEvaluation) -> None:
         """Add a replicate result to the solution.
 
         Args:
-            result (RepResult): The replicate result to add.
+            result: The DSL replication evaluation to add.
         """
-        objectives = result.objectives
         stochastic_constraints = result.stochastic_constraints
 
-        # Convert responses and gradients to objectives and gradients and add
-        # to those of deterministic components of objectives.
-        self._objectives.append(np.array([objective.value() for objective in objectives]))
+        self._objectives.append(np.array([result.objective]))
         self._objectives_array = None
 
-        gradients = []
-        for objective in objectives:
-            grad = objective.grad()
-            if grad is None:
-                grad = np.zeros(self.dim)
-            gradients.append(grad)
-        self._objectives_gradients.append(np.array(gradients))
+        objective_gradient = result.objective_gradient
+        objective_gradient = (
+            np.zeros(self.dim) if objective_gradient is None else _to_grad_array(objective_gradient)
+        )
+        self._objectives_gradients.append(np.array([objective_gradient]))
         self._objectives_gradients_array = None
 
-        # Convert responses and gradients to stochastic constraints and
-        # gradients and addto those of deterministic components of stochastic
-        # constraints.
-        if stochastic_constraints is not None:
-            self._stoch_constraints.append(
-                np.array([constraint.value() for constraint in stochastic_constraints])
-            )
-            self._stoch_constraints_array = None
+        self._stoch_constraints.append(
+            np.array([constraint.value for constraint in stochastic_constraints])
+        )
+        self._stoch_constraints_array = None
 
-            gradients = []
-            for constraint in stochastic_constraints:
-                grad = constraint.grad()
-                if grad is None:
-                    grad = np.zeros(self.dim)
-                gradients.append(grad)
-            gradients = np.array(gradients)
-            self._stoch_constraints_gradients.append(gradients)
-            self._stoch_constraints_gradients_array = None
-
-        else:
-            self._stoch_constraints.append(np.array([]))
-            self._stoch_constraints_array = None
-
-            self._stoch_constraints_gradients.append(np.array([]))
-            self._stoch_constraints_gradients_array = None
+        gradients = []
+        for constraint in stochastic_constraints:
+            gradient = constraint.gradient
+            gradient = np.zeros(self.dim) if gradient is None else _to_grad_array(gradient)
+            gradients.append(gradient)
+        self._stoch_constraints_gradients.append(np.array(gradients))
+        self._stoch_constraints_gradients_array = None
