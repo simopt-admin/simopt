@@ -30,6 +30,7 @@ def plot_det_terminal_feasibility(
     obj_const: float = 100.0,
     log_scale: bool = False,
     sym_log: bool = False,
+    floor_feas: bool = False,
     all_in_one: bool = True,
     n_bootstraps: int = 100,
     conf_level: float = 0.95,
@@ -142,7 +143,7 @@ def plot_det_terminal_feasibility(
                     elif score_type == "objective":
                         experiment.det_feasibility_history(method = "objective", obj_const = obj_const, feas_tol = feas_tol)
                     elif score_type == "norm":
-                        experiment.det_feasibility_history(method = "norm", feas_tol = feas_tol)
+                        experiment.det_feasibility_history(method = "norm", feas_tol = feas_tol, floor_feas = floor_feas)
                     term_feas_score = [
                         curve.y_vals[-1] for curve in experiment.det_feasibility_curves
                     ]

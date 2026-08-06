@@ -766,11 +766,13 @@ class ProblemSolver:
                     ),
                 )
             )
+    #old function        
     def det_feasibility_history(
         self,
         method: Literal["value", "norm", "objective"] = "value",
         obj_const: float = 1e6,
         feas_tol: float = 10e-2,
+        floor_feas: bool = False,
     ) -> None:
         """Compute feasibility history."""
 
@@ -789,7 +791,7 @@ class ProblemSolver:
                         feas = c_ineq
                 else:
                     if method != "value":
-                        feas = np.maximum(c_ineq,0)
+                        ineq_feas = np.maximum(c_ineq,0)
                     else:
                         ineq_feas = c_ineq
                     feas = c_eq + ineq_feas  
@@ -812,7 +814,45 @@ class ProblemSolver:
                     y_vals=curve_data,
                 )
             )
+    def det_feasibility_history(
+        self,
+        method: Literal["norm", "objective"] = "norm",
+        obj_const: float = 1e6,
+        feas_tol: float = 1e-2,
+        floor_feas: bool = False,
+    ) -> None:
+        """Compute feasibility history."""
+        self.det_feasibility_curves = []
+        for mrep in range(self.n_macroreps):
+            mrep_feas = []
+            for sol in self.all_recommended_xs[mrep]:
+                c_eq = self.problem.get_deterministic_equality_constraints(tuple(sol))
+                c_ineq = self.problem.get_deterministic_inequality_constraints(tuple(sol))
     
+                parts = []
+                if c_eq is not None:
+                    parts.append(np.atleast_1d(np.abs(c_eq)))  # equality: magnitude of violation
+                if c_ineq is not None:
+                    parts.append(np.maximum(np.atleast_1d(c_ineq), 0))  # inequality: only positive part violates
+    
+                feas = float(norm(np.concatenate(parts))) if parts else 0.0
+                mrep_feas.append(feas)
+    
+            if method == "norm":
+                if floor_feas:
+                    curve_data = [feas_tol if f <= feas_tol else f for f in mrep_feas]
+                else:
+                    curve_data = mrep_feas
+            elif method == "objective":
+                mrep_filter = [0.0 if f <= feas_tol else f for f in mrep_feas]
+                curve_data = [
+                    obj + obj_const * feas
+                    for obj, feas in zip(self.objective_curves[mrep].y_vals, mrep_filter)
+                ]
+    
+            self.det_feasibility_curves.append(
+                Curve(x_vals=self.all_intermediate_budgets[mrep], y_vals=curve_data)
+            )
 
 
     def record_experiment_results(self, file_name: str) -> None:

@@ -1596,7 +1596,8 @@ class SQPASTRODF(Solver):
             self.grad_term = grad
             self.W = H
             self.V = None
-            self.crit_measure = norm(self.feas) + norm(null_space(self.R).T @ grad)
+            self.P = np.eye(self.R.shape[1]) - np.linalg.pinv(self.R) @ self.R
+            self.crit_measure = norm(self.feas) + norm(self.P @ grad)
         else:
             self.V = np.diag(self.incumbent_v)
             v = np.array(self.incumbent_v)
@@ -2026,6 +2027,7 @@ class SQPASTRODF(Solver):
         # get trust region ratio
         rho = 0 if pred_merit_reduction <= 0 else actual_merit_reduction / pred_merit_reduction
         
+        
         # print("s_normal:", s_normal_rescale)
         # print("s_tangent:", s_tangent_rescale)
         # print("s:", s_rescale )
@@ -2040,6 +2042,8 @@ class SQPASTRODF(Solver):
         #print("delta", self.delta_k)
         # successful: accept
         if successful:
+            # print("iteration", self.iteration_count)
+            # print("candidate:", candidate_x)
             self.incumbent_x = candidate_x
             self.incumbent_v = candidate_v
             
@@ -2075,11 +2079,11 @@ class SQPASTRODF(Solver):
         
         #update theta (only used for inequaltiy constrained problem)
         #force theta decrease for now
-        self.theta = self.theta_decrease*self.theta
+        #self.theta = self.theta_decrease*self.theta
 
-        # # have theta decrease with delta
-        # if self.delta_k < self.theta:
-        #     self.theta = self.delta_k
+        # have theta decrease with delta
+        if self.delta_k < self.theta:
+            self.theta = self.delta_k
         #print("successful:", successful)
         
         # TODO: unified TR management

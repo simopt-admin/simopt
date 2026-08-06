@@ -17,7 +17,7 @@ def plot_det_feasibility(
     experiments: list[list[ProblemSolver]],
     plot_type: PlotType = PlotType.DETERMINISTIC_FEASIBILITY_PROGRESS,
     all_in_one: bool = True,
-    score_type: Literal["value", "norm", "objective"] = "value",
+    score_type: Literal["value", "norm", "objective"] = "norm",
     obj_const: float = 100.0,
     log_scale: bool = False,
     log_base: int = 10,
@@ -71,7 +71,7 @@ def plot_det_feasibility(
                 handle = experiment.det_feasibility_curves[0].plot(color_str=color_str)
                 for curve in experiment.det_feasibility_curves[1:]:
                     curve.plot(color_str=color_str)
-                plt.axhline(y=0, color="red", linestyle="--", linewidth=0.75)
+                #plt.axhline(y=0, color="red", linestyle="--", linewidth=0.75)
                 solver_curve_handles.append(handle)
             if log_scale:
                 plt.yscale("log")
