@@ -3,11 +3,8 @@
 
 from simopt.model import Model  # noqa: F401
 from simopt.problem import (  # noqa: F401
-    Objective,
     Problem,
-    RepResult,
     Solution,
-    StochasticConstraint,
 )
 from simopt.problem_types import (  # noqa: F401
     ConstraintType,
