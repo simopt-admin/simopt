@@ -960,7 +960,7 @@ class SQPASTRODF(Solver):
     
             ## inner loop parameters
             w = 0.85  # self.factors["w"]
-            mu = self.mu
+            #mu = self.mu
             beta = 10  # self.factors["beta"]
             # criticality_threshold = 0.1  # self.factors["criticality_threshold"]
             # skip_criticality = True  # self.factors["skip_criticality"]
@@ -1031,7 +1031,7 @@ class SQPASTRODF(Solver):
                         adapt_soln = new_solution
     
                     # Don't perform adaptive sampling on x_0
-                    if not (i == 0 and self.iteration_count == 0):
+                    if not (i == 0 and self.iteration_count == 1):
                         self.perform_adaptive_sampling(adapt_soln, pilot_run, delta_k)
     
                     # Append the function estimate to the list
@@ -1041,9 +1041,13 @@ class SQPASTRODF(Solver):
     
                 # construct the model and obtain the model coefficients
                 q, grad, hessian, matrix_inverse = self.get_model_coefficients(var_z, fval, self.problem)
+                # update diag hessian with lagrange and compute lagrange multipliers
+                H, self.lam = self.create_lagrange_hessian(hessian, grad) 
+                # build problem matrices
+                self.build_problem(grad, H)
      
-                norm_grad = norm(grad)
-                if delta_k <= mu * norm_grad or norm_grad == 0:
+                # check criticality loop, if not satisfied build model again with smaller delta
+                if self.crit_measure >= self.mu*delta_k or self.crit_measure ==0:
                     break
 
             # If a model gradient norm is zero, there is a possibility that the code
@@ -1054,7 +1058,7 @@ class SQPASTRODF(Solver):
             # if model_iterations > MAX_ITER:
             #     break
 
-        beta_n_grad = float(beta * norm_grad)
+        beta_n_grad = float(beta * self.crit_measure)
         self.delta_k = min(max(beta_n_grad, delta_k), delta)
 
         return (
@@ -1482,6 +1486,7 @@ class SQPASTRODF(Solver):
                 np.zeros(self.dim),
                 #method="trust-constr",
                 constraints=const, 
+                tol = self.feas_tol
             )
             # rescale normal step if necessary
             if self.problem_type == "eq_only":
@@ -1503,7 +1508,7 @@ class SQPASTRODF(Solver):
         # check if there is relevent second degree curvature
         curve = np.max(np.abs(np.diag(self.W))) if self.W.shape[0] > 0 else 0.0
         check = True
-        #check = curve < self.feas_tol
+        #check = curve < .01
         if check: # no relevent curvature, peform Cauchy step
             delta_hat = a_tangent*self.delta_k
             s_tangent_rescale = self._cauchy_point_tangent(s_normal, delta_hat)
