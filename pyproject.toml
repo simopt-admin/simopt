@@ -15,6 +15,11 @@ exclude = ["build*"]
 [tool.uv.sources]
 simopt-extensions = { git = "https://github.com/cenwangumass/simopt-extensions", rev = "b40a9c8" }
 
+[tool.uv.workspace]
+members = [
+    "simopt-dsl",
+]
+
 [project]
 name = "simoptlib"
 version = "1.2.4"
