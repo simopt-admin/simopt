@@ -508,7 +508,7 @@ def _validate_initial(initial: float, lower: float, upper: float) -> None:
 
 
 def _validate_integer(value: float, parameter_name: str) -> None:
-    if not value.is_integer():
+    if value % 1 != 0:
         raise ValueError(f"{parameter_name} must be an integer")
 
 
