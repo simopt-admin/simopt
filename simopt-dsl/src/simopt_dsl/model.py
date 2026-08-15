@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from math import isinf
 from numbers import Real
 from typing import Any, cast
 
@@ -219,6 +220,11 @@ class Model:
         flat_values = tuple(float(value) for value in values)
         if len(flat_values) != len(self.variables):
             raise ValueError("solution dimension does not match model variables")
+        for variable, value in zip(self.variables, flat_values, strict=True):
+            if not variable.lb <= value <= variable.ub:
+                raise ValueError("solution variable value must be within its bounds")
+            if variable.integer:
+                _validate_integer(value, "integer variable value")
         if len(rngs) < self.n_rngs:
             raise ValueError("not enough RNGs for model simulations")
 
@@ -263,12 +269,17 @@ class Model:
     ) -> Variable:
         lower = _coerce_number(lb, "variable lower bound")
         upper = _coerce_number(ub, "variable upper bound")
+        if integer:
+            _validate_integer_bound(lower, "integer variable lower bound")
+            _validate_integer_bound(upper, "integer variable upper bound")
         if lower >= upper:
             raise ValueError("variable lower bound must be less than upper bound")
         variable_name = self._resolve_name(name, "variable", self._declared_variables)
         initial_value = (
             lower if initial is None else _coerce_number(initial, "initial value")
         )
+        if integer:
+            _validate_integer(initial_value, "integer variable initial value")
         _validate_initial(initial_value, lower, upper)
         variable = Variable(
             variable_name,
@@ -300,6 +311,13 @@ class Model:
         initial_values = (
             lower if initial is None else _vector_values(initial, size, "initial value")
         )
+        if integer:
+            for lower_value in lower:
+                _validate_integer_bound(lower_value, "integer variable lower bound")
+            for upper_value in upper:
+                _validate_integer_bound(upper_value, "integer variable upper bound")
+            for initial_value in initial_values:
+                _validate_integer(initial_value, "integer variable initial value")
         if any(
             lower_value >= upper_value
             for lower_value, upper_value in zip(lower, upper, strict=True)
@@ -568,6 +586,16 @@ def _coerce_number(value: object, parameter_name: str) -> float:
 def _validate_initial(initial: float, lower: float, upper: float) -> None:
     if not lower <= initial <= upper:
         raise ValueError("variable initial value must be within its bounds")
+
+
+def _validate_integer(value: float, parameter_name: str) -> None:
+    if not value.is_integer():
+        raise ValueError(f"{parameter_name} must be an integer")
+
+
+def _validate_integer_bound(value: float, parameter_name: str) -> None:
+    if not isinf(value):
+        _validate_integer(value, parameter_name)
 
 
 def _vector_size(shape: int | tuple[int]) -> int:
