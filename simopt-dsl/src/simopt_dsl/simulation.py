@@ -12,7 +12,10 @@ import numpy as np
 from simopt_dsl.expressions import EvaluationContext, Metric
 from simopt_dsl.variables import DecisionVariable, Variable, components
 
-SimulationResult = Mapping[str, Any] | tuple[Mapping[str, Any], Mapping[Any, Any]]
+SimulationResult = tuple[
+    Mapping[str, Any],
+    Mapping[str, Mapping[str, Any]],
+]
 
 
 @dataclass(frozen=True)
@@ -76,26 +79,16 @@ def component_items(
     return tuple(items)
 
 
-_DERIVATIVE_KEYS = ("derivatives", "gradient", "gradients")
-
-
 def _coerce_evaluation(
     result: Any, decisions: Mapping[str, DecisionVariable]
 ) -> SimulationEvaluation:
-    raw_derivatives: Any = None
-    if isinstance(result, tuple) and len(result) == 2:
-        raw_metrics, raw_derivatives = result
-        if not isinstance(raw_metrics, Mapping):
-            raise TypeError("simulation metric payload must be a mapping")
-    elif isinstance(result, Mapping):
-        raw_metrics = {
-            key: value for key, value in result.items() if key not in _DERIVATIVE_KEYS
-        }
-        raw_derivatives = next(
-            (result[key] for key in _DERIVATIVE_KEYS if key in result), None
-        )
-    else:
-        raise TypeError("simulation must return a mapping or (metrics, derivatives)")
+    if not isinstance(result, tuple) or len(result) != 2:
+        raise TypeError("simulation must return a (responses, gradients) pair")
+    raw_metrics, raw_derivatives = result
+    if not isinstance(raw_metrics, Mapping):
+        raise TypeError("simulation response payload must be a mapping")
+    if not isinstance(raw_derivatives, Mapping):
+        raise TypeError("simulation gradient payload must be a mapping")
 
     metrics: dict[str, Any] = {}
     for name, value in raw_metrics.items():
@@ -114,64 +107,30 @@ def _coerce_derivatives(
     decisions: Mapping[str, DecisionVariable],
     metrics: Mapping[str, Any],
 ) -> dict[tuple[str, tuple[int, ...], str], float]:
-    if raw is None:
-        return {}
     if not isinstance(raw, Mapping):
         raise TypeError("simulation derivatives must be a mapping")
 
-    ordered_components = component_items(decisions)
     derivatives: dict[tuple[str, tuple[int, ...], str], float] = {}
     for metric_name, derivative_values in raw.items():
-        if isinstance(metric_name, tuple) and len(metric_name) == 2:
-            metric, decision_name = metric_name
-            if not isinstance(metric, str) or not isinstance(decision_name, str):
-                raise TypeError("flat derivative keys must be (metric, decision)")
+        if not isinstance(metric_name, str):
+            raise TypeError("gradient response names must be strings")
+        metric_shape = _metric_shape(metrics, metric_name)
+        if not isinstance(derivative_values, Mapping):
+            raise TypeError(
+                f"gradients for response {metric_name!r} must be a mapping"
+            )
+        for decision_name, value in derivative_values.items():
+            if not isinstance(decision_name, str):
+                raise TypeError("gradient decision names must be strings")
             if decision_name in decisions:
                 _store_decision_derivatives(
                     derivatives,
-                    metric,
-                    _metric_shape(metrics, metric),
+                    metric_name,
+                    metric_shape,
                     decision_name,
                     decisions[decision_name],
-                    derivative_values,
+                    value,
                 )
-            continue
-
-        if not isinstance(metric_name, str):
-            raise TypeError("derivative metric names must be strings")
-        metric_shape = _metric_shape(metrics, metric_name)
-        if isinstance(derivative_values, Mapping):
-            derivative_names = tuple(derivative_values)
-            if not all(isinstance(name, str) for name in derivative_names):
-                raise TypeError("derivative decision names must be strings")
-            if any(name in decisions for name in derivative_names):
-                for decision_name, value in derivative_values.items():
-                    if decision_name in decisions:
-                        _store_decision_derivatives(
-                            derivatives,
-                            metric_name,
-                            metric_shape,
-                            decision_name,
-                            decisions[decision_name],
-                            value,
-                        )
-                continue
-
-        ordered_values = _flatten_values(derivative_values)
-        metric_indices = _metric_indices(metric_shape)
-        expected = len(metric_indices) * len(ordered_components)
-        if len(ordered_values) != expected:
-            raise ValueError(
-                "ordered derivative values must match the metric shape times "
-                "the total number of simulation decision components"
-            )
-        offset = 0
-        for metric_index in metric_indices:
-            for component_name, _ in ordered_components:
-                derivatives[(metric_name, metric_index, component_name)] = (
-                    ordered_values[offset]
-                )
-                offset += 1
     return derivatives
 
 
@@ -241,8 +200,6 @@ def _is_scalar(value: Any) -> bool:
 def _flatten_values(raw: Any) -> tuple[float, ...]:
     if _is_scalar(raw):
         return (float(raw),)
-    if isinstance(raw, Mapping):
-        return tuple(item for value in raw.values() for item in _flatten_values(value))
     if isinstance(raw, (str, bytes)):
         raise TypeError("derivative values must contain ordered numeric values")
     try:
