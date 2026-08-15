@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from numbers import Real
@@ -47,7 +46,7 @@ class Simulation:
             name: variable.evaluate(context)
             for name, variable in self.decisions.items()
         }
-        result = _invoke(self.run, decisions, rngs)
+        result = self.run(decisions, rngs)
         return _coerce_evaluation(result, self.decisions)
 
 
@@ -75,34 +74,6 @@ def component_items(
             seen_names.add(component_name)
             items.append((component_name, component))
     return tuple(items)
-
-
-def _invoke(
-    callback: Callable[..., SimulationResult],
-    decisions: dict[str, float | tuple[float, ...]],
-    rngs: Sequence[Any],
-) -> SimulationResult:
-    candidates = (
-        ((), {"decisions": decisions, "rngs": rngs}),
-        ((decisions, rngs), {}),
-        ((), {"decisions": decisions, "rng": rngs[0]}),
-        ((decisions, rngs[0]), {}),
-        ((), {**decisions, "rngs": rngs}),
-        ((), {**decisions, "rng": rngs[0]}),
-        ((), decisions),
-    )
-    try:
-        signature = inspect.signature(callback)
-    except (TypeError, ValueError):
-        return callback(decisions, rngs)
-
-    for args, kwargs in candidates:
-        try:
-            signature.bind(*args, **kwargs)
-        except TypeError:
-            continue
-        return callback(*args, **kwargs)
-    raise TypeError("simulation callback does not accept a supported signature")
 
 
 _DERIVATIVE_KEYS = ("derivatives", "gradient", "gradients")
