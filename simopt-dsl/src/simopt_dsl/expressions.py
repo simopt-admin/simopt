@@ -91,9 +91,7 @@ class BinaryExpression(Expression):
 
     def evaluate(self, context: EvaluationContext) -> float:
         return apply_binary_operator(
-            self.operator,
-            self.left.evaluate(context),
-            self.right.evaluate(context),
+            self.operator, self.left.evaluate(context), self.right.evaluate(context)
         )
 
 
@@ -203,9 +201,7 @@ def as_aggregate_expression(value: object) -> Expression | AggregateExpression:
         return value
     if isinstance(value, (int, float)):
         return Constant(float(value))
-    raise TypeError(
-        f"expected an expression, statistic, or number, got {type(value).__name__}"
-    )
+    raise TypeError(f"expected an expression, statistic, or number, got {type(value).__name__}")
 
 
 def apply_binary_operator(operator: str, left: float, right: float) -> float:
@@ -225,9 +221,7 @@ def _binary_expression(
 ) -> Expression | AggregateExpression:
     if isinstance(left, AggregateExpression) or isinstance(right, AggregateExpression):
         return BinaryAggregateExpression(
-            operator,
-            as_aggregate_expression(left),
-            as_aggregate_expression(right),
+            operator, as_aggregate_expression(left), as_aggregate_expression(right)
         )
     return BinaryExpression(operator, as_expression(left), as_expression(right))
 

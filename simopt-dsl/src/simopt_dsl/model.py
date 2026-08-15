@@ -66,11 +66,7 @@ class Model:
         return state
 
     def add_continuous_variable(
-        self,
-        lb: Number,
-        ub: Number,
-        name: str | None = None,
-        initial: Number | None = None,
+        self, lb: Number, ub: Number, name: str | None = None, initial: Number | None = None
     ) -> Variable:
         """Add a scalar continuous decision variable."""
         return self._add_scalar_variable(lb, ub, name, initial, integer=False)
@@ -87,11 +83,7 @@ class Model:
         return self._add_vector_variable(lb, ub, name, shape, initial, integer=False)
 
     def add_integer_variable(
-        self,
-        lb: Number,
-        ub: Number,
-        name: str | None = None,
-        initial: Number | None = None,
+        self, lb: Number, ub: Number, name: str | None = None, initial: Number | None = None
     ) -> Variable:
         """Add a scalar integer decision variable."""
         return self._add_scalar_variable(lb, ub, name, initial, integer=True)
@@ -145,25 +137,14 @@ class Model:
             if not isinstance(variable, (Variable, VectorVariable)):
                 raise TypeError("simulation decisions must be decision variables")
             if not any(variable is declared for declared in self._declared_variables):
-                raise ValueError(
-                    f"simulation decision {decision_name!r} is not in this model"
-                )
+                raise ValueError(f"simulation decision {decision_name!r} is not in this model")
             variable_components = components(variable)
-            if any(
-                id(component) in seen_components for component in variable_components
-            ):
-                raise ValueError(
-                    "simulation decision variable components must be unique"
-                )
+            if any(id(component) in seen_components for component in variable_components):
+                raise ValueError("simulation decision variable components must be unique")
             decision_variables[decision_name] = variable
             seen_components.update(id(component) for component in variable_components)
 
-        simulation = Simulation(
-            simulation_name,
-            run,
-            decision_variables,
-            n_rngs,
-        )
+        simulation = Simulation(simulation_name, run, decision_variables, n_rngs)
         self.simulations.append(simulation)
         self.n_rngs = max(self.n_rngs, n_rngs)
         self._invalidate_evaluation_plan()
@@ -189,9 +170,7 @@ class Model:
         """Return upper bounds in flattened solver order."""
         return tuple(variable.ub for variable in self.variables)
 
-    def unpack_vector(
-        self, values: Iterable[float]
-    ) -> dict[str, float | tuple[float, ...]]:
+    def unpack_vector(self, values: Iterable[float]) -> dict[str, float | tuple[float, ...]]:
         """Regroup a flat solver vector by declared scalar and vector variables."""
         flat_values = tuple(float(value) for value in values)
         if len(flat_values) != len(self.variables):
@@ -203,17 +182,13 @@ class Model:
             next_offset = offset + len(components(variable))
             component_values = flat_values[offset:next_offset]
             unpacked[variable.name] = (
-                component_values[0]
-                if isinstance(variable, Variable)
-                else component_values
+                component_values[0] if isinstance(variable, Variable) else component_values
             )
             offset = next_offset
         return unpacked
 
     def run_replication(
-        self,
-        values: Iterable[float],
-        rngs: Sequence[Any],
+        self, values: Iterable[float], rngs: Sequence[Any]
     ) -> ReplicationEvaluation:
         """Evaluate one replication at a solution using caller-owned RNGs."""
         plan = self._get_evaluation_plan()
@@ -247,25 +222,14 @@ class Model:
         objective_gradient = plan.estimate_gradient(plan.objective, context)
         stochastic_constraints = tuple(
             StochasticConstraintEvaluation(
-                residual.evaluate(context),
-                plan.estimate_gradient(residual, context),
+                residual.evaluate(context), plan.estimate_gradient(residual, context)
             )
             for residual in plan.stochastic_constraint_residuals
         )
-        return ReplicationEvaluation(
-            objective_value,
-            objective_gradient,
-            stochastic_constraints,
-        )
+        return ReplicationEvaluation(objective_value, objective_gradient, stochastic_constraints)
 
     def _add_scalar_variable(
-        self,
-        lb: Number,
-        ub: Number,
-        name: str | None,
-        initial: Number | None,
-        *,
-        integer: bool,
+        self, lb: Number, ub: Number, name: str | None, initial: Number | None, *, integer: bool
     ) -> Variable:
         lower = _coerce_number(lb, "variable lower bound")
         upper = _coerce_number(ub, "variable upper bound")
@@ -275,19 +239,11 @@ class Model:
         if lower >= upper:
             raise ValueError("variable lower bound must be less than upper bound")
         variable_name = self._resolve_name(name, "variable", self._declared_variables)
-        initial_value = (
-            lower if initial is None else _coerce_number(initial, "initial value")
-        )
+        initial_value = lower if initial is None else _coerce_number(initial, "initial value")
         if integer:
             _validate_integer(initial_value, "integer variable initial value")
         _validate_initial(initial_value, lower, upper)
-        variable = Variable(
-            variable_name,
-            lower,
-            upper,
-            initial_value,
-            integer,
-        )
+        variable = Variable(variable_name, lower, upper, initial_value, integer)
         self.variables.append(variable)
         self._declared_variables.append(variable)
         self._invalidate_evaluation_plan()
@@ -322,9 +278,7 @@ class Model:
             lower_value >= upper_value
             for lower_value, upper_value in zip(lower, upper, strict=True)
         ):
-            raise ValueError(
-                "each vector variable lower bound must be less than its upper bound"
-            )
+            raise ValueError("each vector variable lower bound must be less than its upper bound")
         for initial_value, lower_value, upper_value in zip(
             initial_values, lower, upper, strict=True
         ):
@@ -347,11 +301,7 @@ class Model:
         self._invalidate_evaluation_plan()
         return variable
 
-    def _set_objective(
-        self,
-        objective: AggregateExpression | Expression,
-        sense: str,
-    ) -> None:
+    def _set_objective(self, objective: AggregateExpression | Expression, sense: str) -> None:
         if not isinstance(objective, (AggregateExpression, Expression)):
             raise TypeError("objective must be an expression")
         self.objective = (
@@ -360,12 +310,7 @@ class Model:
         self.objective_sense = sense
         self._invalidate_evaluation_plan()
 
-    def _resolve_name(
-        self,
-        name: str | None,
-        prefix: str,
-        existing: Iterable[Any],
-    ) -> str:
+    def _resolve_name(self, name: str | None, prefix: str, existing: Iterable[Any]) -> str:
         existing_names = {item.name for item in existing}
         if name is None or name == "":
             index = 1
@@ -400,19 +345,14 @@ class _UnsupportedGradient(Exception):
 
 class _SymbolicGradient:
     def __init__(
-        self,
-        variables: Sequence[Variable],
-        expression: Expression | AggregateExpression,
+        self, variables: Sequence[Variable], expression: Expression | AggregateExpression
     ) -> None:
         self.variables = variables
         self.variable_symbols = {
-            variable: sp.Symbol(f"v_{index}", real=True)
-            for index, variable in enumerate(variables)
+            variable: sp.Symbol(f"v_{index}", real=True) for index, variable in enumerate(variables)
         }
         self.metric_applications: dict[tuple[str, str, tuple[int, ...]], sp.Expr] = {}
-        self.metric_derivative_keys: dict[
-            sp.Expr, tuple[str, str, tuple[int, ...], str]
-        ] = {}
+        self.metric_derivative_keys: dict[sp.Expr, tuple[str, str, tuple[int, ...], str]] = {}
 
         sample_expression = self._expression(expression)
         gradient_expressions = tuple(
@@ -425,10 +365,7 @@ class _SymbolicGradient:
             *self.metric_derivative_keys,
         )
         self._compiled_gradient: Callable[..., Any] = sp.lambdify(
-            arguments,
-            gradient_expressions,
-            modules="math",
-            dummify=True,
+            arguments, gradient_expressions, modules="math", dummify=True
         )
 
     def estimate(self, context: EvaluationContext) -> tuple[float, ...] | None:
@@ -461,15 +398,11 @@ class _SymbolicGradient:
         if isinstance(expression, Metric):
             return self._metric_application(expression)
         if isinstance(expression, BinaryExpression):
-            return self._binary_expression(
-                expression.operator, expression.left, expression.right
-            )
+            return self._binary_expression(expression.operator, expression.left, expression.right)
         if isinstance(expression, Mean):
             return self._expression(expression.expression)
         if isinstance(expression, BinaryAggregateExpression):
-            return self._binary_expression(
-                expression.operator, expression.left, expression.right
-            )
+            return self._binary_expression(expression.operator, expression.left, expression.right)
         raise _UnsupportedGradient(
             f"unsupported objective expression {type(expression).__name__!r}"
         )
@@ -497,15 +430,10 @@ class _SymbolicGradient:
         if key not in self.metric_applications:
             function: Any = sp.Function(f"metric_{len(self.metric_applications)}")
             items = component_items(metric.simulation.decisions)
-            application = function(
-                *(self.variable_symbols[component] for _, component in items)
-            )
+            application = function(*(self.variable_symbols[component] for _, component in items))
             self.metric_applications[key] = application
             for component_name, component in items:
-                derivative = sp.Derivative(
-                    application,
-                    self.variable_symbols[component],
-                )
+                derivative = sp.Derivative(application, self.variable_symbols[component])
                 self.metric_derivative_keys[derivative] = (
                     metric.simulation.name,
                     metric.name,
@@ -527,27 +455,19 @@ class _EvaluationPlan:
             constraint.residual() for _, constraint in model.stochastic_constraints
         )
         self._gradients: dict[
-            int,
-            tuple[
-                Expression | AggregateExpression,
-                _SymbolicGradient | None,
-            ],
+            int, tuple[Expression | AggregateExpression, _SymbolicGradient | None]
         ] = {}
         self._gradient(self.objective)
         for residual in self.stochastic_constraint_residuals:
             self._gradient(residual)
 
     def estimate_gradient(
-        self,
-        expression: Expression | AggregateExpression,
-        context: EvaluationContext,
+        self, expression: Expression | AggregateExpression, context: EvaluationContext
     ) -> tuple[float, ...] | None:
         gradient = self._gradient(expression)
         return None if gradient is None else gradient.estimate(context)
 
-    def _gradient(
-        self, expression: Expression | AggregateExpression
-    ) -> _SymbolicGradient | None:
+    def _gradient(self, expression: Expression | AggregateExpression) -> _SymbolicGradient | None:
         key = id(expression)
         cached = self._gradients.get(key)
         if cached is not None and cached[0] is expression:
@@ -561,8 +481,7 @@ class _EvaluationPlan:
 
 
 def _evaluate_aggregate(
-    expression: Expression | AggregateExpression,
-    context: EvaluationContext,
+    expression: Expression | AggregateExpression, context: EvaluationContext
 ) -> float:
     if isinstance(expression, Mean):
         return expression.expression.evaluate(context)
@@ -614,9 +533,7 @@ def _vector_size(shape: int | tuple[int]) -> int:
 
 
 def _vector_values(
-    value: Number | Iterable[Number],
-    size: int,
-    parameter_name: str,
+    value: Number | Iterable[Number], size: int, parameter_name: str
 ) -> tuple[float, ...]:
     if isinstance(value, Real) and not isinstance(value, bool):
         return (float(value),) * size
@@ -628,12 +545,9 @@ def _vector_values(
         raise TypeError(f"vector variable {parameter_name} must be numeric") from exc
     if len(raw_values) != size:
         raise ValueError(
-            f"vector variable {parameter_name} must have {size} values, "
-            f"got {len(raw_values)}"
+            f"vector variable {parameter_name} must have {size} values, got {len(raw_values)}"
         )
-    return tuple(
-        _coerce_number(item, f"vector variable {parameter_name}") for item in raw_values
-    )
+    return tuple(_coerce_number(item, f"vector variable {parameter_name}") for item in raw_values)
 
 
 __all__ = ["Model"]
