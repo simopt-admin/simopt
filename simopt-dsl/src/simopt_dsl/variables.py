@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import overload
+from uuid import UUID, uuid4
 
 from simopt_dsl.expressions import EvaluationContext, Expression
 
@@ -18,6 +19,7 @@ class Variable(Expression):
     ub: float
     initial: float
     integer: bool = False
+    _id: UUID = field(default_factory=uuid4, init=False, repr=False)
 
     def evaluate(self, context: EvaluationContext) -> float:
         return context.variables[self]
