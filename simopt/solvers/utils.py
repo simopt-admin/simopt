@@ -146,6 +146,8 @@ def fd(
             x_minus = x.copy()
             x_plus[i] += h
             x_minus[i] -= h
+            x_plus[i] = np.clip(x_plus[i], lower_bound[i], upper_bound[i])
+            x_minus[i] = np.clip(x_minus[i], lower_bound[i], upper_bound[i])
             grad[i] = (fn(x_plus) - fn(x_minus)) / (2 * h)
         elif mode == 1:
             h = step_forward
@@ -153,6 +155,7 @@ def fd(
                 continue
             x_plus = x.copy()
             x_plus[i] += h
+            x_plus[i] = np.clip(x_plus[i], lower_bound[i], upper_bound[i])
             grad[i] = (fn(x_plus) - fn_value) / h
         else:
             h = step_backward
@@ -160,6 +163,7 @@ def fd(
                 continue
             x_minus = x.copy()
             x_minus[i] -= h
+            x_minus[i] = np.clip(x_minus[i], lower_bound[i], upper_bound[i])
             grad[i] = (fn_value - fn(x_minus)) / h
 
     return grad
@@ -220,7 +224,8 @@ def bfgs_hessian_approx(
 
     def get_fn_x(x: Iterable) -> float:
         """Helper to simulate the function at a given x."""
-        x_solution = ctx.evaluate(tuple(x), r)
+        feasible_x = np.clip(x, problem.lower_bounds, problem.upper_bounds)
+        x_solution = ctx.evaluate(tuple(feasible_x), r)
         return x_solution.objectives_mean[0]
 
     # Compute function values
