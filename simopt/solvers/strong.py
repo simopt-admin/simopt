@@ -447,4 +447,5 @@ class STRONG(Solver):
             step_diff = (lower_bound_arr[neg_mask] - new_x[neg_mask]) / current_step[neg_mask]
             min_step = min(min_step, float(np.min(step_diff).item()))
         # Calculate the modified x.
-        return new_x + min_step * current_step
+        modified_x = new_x + min_step * current_step
+        return np.clip(modified_x, lower_bound_arr, upper_bound_arr)

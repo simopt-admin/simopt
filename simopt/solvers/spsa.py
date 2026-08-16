@@ -286,4 +286,5 @@ def _check_cons(
 
     # Calculate the modified x.
     modified_x = new_x + min_step_size * current_step
+    modified_x = np.clip(modified_x, lower_bound, upper_bound)
     return modified_x, min_step_size

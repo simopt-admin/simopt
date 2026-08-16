@@ -47,3 +47,24 @@ def test_fd_matches_fd2_all_modes_dim3() -> None:
         grad_fd2 = fd(fn, x, step, fn_value, bounds_check, lower_bound, upper_bound)
 
         np.testing.assert_allclose(grad_fd, grad_fd2, rtol=1e-12, atol=1e-12)
+
+
+def test_fd_keeps_perturbations_within_bounds() -> None:
+    lower_bound = np.array([0.1])
+    upper_bound = np.array([1.0])
+    x = np.array([0.3])
+
+    def fn(z: np.ndarray) -> float:
+        assert np.all(z >= lower_bound)
+        assert np.all(z <= upper_bound)
+        return float(z[0] ** 2)
+
+    fd(
+        fn,
+        x,
+        0.2,
+        fn(x),
+        np.array([0]),
+        lower_bound,
+        upper_bound,
+    )
