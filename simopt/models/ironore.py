@@ -398,7 +398,7 @@ class IronOreMaxRev(Problem):
         # )
         return (
             rand_sol_rng.lognormalvariate(10, 200),
-            rand_sol_rng.lognormalvariate(1000, 10000),
+            round(rand_sol_rng.lognormalvariate(1000, 10000)),
             rand_sol_rng.lognormalvariate(10, 200),
             rand_sol_rng.lognormalvariate(10, 200),
         )

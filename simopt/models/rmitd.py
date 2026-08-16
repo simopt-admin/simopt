@@ -302,9 +302,9 @@ class RMITDMaxRevenue(Problem):
         return all(x[idx] >= x[idx + 1] for idx in range(self.dim - 1))
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        # Generate random solution using acceptable/rejection.
-        while True:
-            x = tuple([200 * rand_sol_rng.random() for _ in range(self.dim)])
-            if self.check_deterministic_constraints(x):
-                break
-        return x
+        return tuple(
+            sorted(
+                (rand_sol_rng.randint(0, 199) for _ in range(self.dim)),
+                reverse=True,
+            )
+        )
