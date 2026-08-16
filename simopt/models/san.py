@@ -312,10 +312,15 @@ class SANLongestPath(Problem):
         return {"arc_means": vector[:]}
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        return all(x_i >= 0 for x_i in x)
+        return all(x_i >= 1e-2 for x_i in x)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        return tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
+        solution = []
+        while len(solution) < self.dim:
+            value = rand_sol_rng.lognormalvariate(lq=0.1, uq=10)
+            if value >= 1e-2:
+                solution.append(value)
+        return tuple(solution)
 
 
 class SANLongestPathStochasticConfig(BaseModel):
@@ -419,7 +424,12 @@ class SANLongestPathStochastic(Problem):
         return {"arc_means": vector[:]}
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
-        return all(x_i >= 0 for x_i in x)
+        return all(1e-2 <= x_i <= 100.0 for x_i in x)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
-        return tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
+        solution = []
+        while len(solution) < self.dim:
+            value = rand_sol_rng.lognormalvariate(lq=0.1, uq=10)
+            if 1e-2 <= value <= 100.0:
+                solution.append(value)
+        return tuple(solution)
