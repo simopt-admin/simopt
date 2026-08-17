@@ -12,13 +12,11 @@ from pydantic import BaseModel, Field
 from scipy import special
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
-    StochasticConstraint,
     VariableType,
 )
 from simopt.input_models import Exp, InputModel
@@ -248,33 +246,21 @@ class ChessAvgDifference(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"allowable_diff"}
 
-    @property
-    def dim(self) -> int:
-        return 1
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,)
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (2400,)
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        allowable_diff = problem.add_continuous_variable(
+            lb=0.0, ub=2400.0, initial=self.factors["initial_solution"][0]
+        )
+        simulation = self.add_simulation(problem, {"allowable_diff": allowable_diff})
+        problem.minimize(dsl.mean(simulation.metric("avg_diff")))
+        problem.add_stochastic_constraint(
+            simulation.metric("avg_wait_time") <= self.factors["upper_time"]
+        )
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"allowable_diff": vector[0]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        return RepResult(
-            objectives=[Objective(stochastic=responses["avg_diff"])],
-            stochastic_constraints=[
-                StochasticConstraint(
-                    stochastic=responses["avg_wait_time"],
-                    deterministic=-1 * self.factors["upper_time"],
-                )
-            ],
-        )
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(x_val > 0 for x_val in x)

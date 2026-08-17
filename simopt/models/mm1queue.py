@@ -11,12 +11,11 @@ import simpy
 from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import Exp
@@ -289,34 +288,20 @@ class MM1MinMeanSojournTime(Problem):
     model_default_factors: ClassVar[dict] = {"warmup": 50, "people": 200}
     model_decision_factors: ClassVar[set[str]] = {"mu"}
 
-    @property
-    def dim(self) -> int:
-        return 1
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        mu = problem.add_continuous_variable(
+            lb=0.0, ub=np.inf, initial=self.factors["initial_solution"][0]
+        )
+        simulation = self.add_simulation(problem, {"mu": mu})
+        problem.minimize(
+            dsl.mean(simulation.metric("avg_sojourn_time")) + self.factors["cost"] * mu * mu
+        )
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"mu": vector[0]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(model_factors, rngs)
-        x = (model_factors["mu"],)
-        objectives = [
-            Objective(
-                stochastic=responses["avg_sojourn_time"],
-                stochastic_gradients=gradients["avg_sojourn_time"]["mu"],
-                deterministic=self.factors["cost"] * (x[0] ** 2),
-                deterministic_gradients=2 * self.factors["cost"] * x[0],
-            )
-        ]
-        return RepResult(objectives=objectives)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # Generate an Exponential(rate = 1/3) r.v.

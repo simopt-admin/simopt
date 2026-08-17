@@ -12,12 +12,11 @@ import numpy as np
 from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import InputModel
@@ -95,7 +94,6 @@ class ERMExampleModel(Model):
         super().__init__(fixed_factors)
         self.resample_model = FileInputModel("workshop/erm_data.npy")
 
-
     def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate the squared error loss of a single observation.
 
@@ -142,9 +140,7 @@ class ERMExampleProblem(Problem):
         x = all_data[:, 0]
         y = all_data[:, 1]
         optbeta1, optbeta0 = np.polyfit(x, y, 1)
-        opttrainingmse = np.mean(
-            [(yy - optbeta0 - optbeta1 * xx) ** 2 for (xx, yy) in zip(x, y)]
-        )
+        opttrainingmse = np.mean([(yy - optbeta0 - optbeta1 * xx) ** 2 for (xx, yy) in zip(x, y)])
         return opttrainingmse
 
     @property
@@ -156,31 +152,16 @@ class ERMExampleProblem(Problem):
         optbeta1, optbeta0 = np.polyfit(x, y, 1)
         return (optbeta0, optbeta1)
 
-    @property
-    def dim(self) -> int:  # noqa: D102
-        return 2
-
-    @property
-    def lower_bounds(self) -> tuple:  # noqa: D102
-        return (-np.inf,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:  # noqa: D102
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        beta = problem.add_continuous_vector(lb=-np.inf, ub=np.inf, shape=(2,), initial=self.factors["initial_solution"])
+        simulation = self.add_simulation(problem, {"beta": beta})
+        problem.minimize(dsl.mean(simulation.metric("sq_error_loss")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:  # noqa: D102
         return {"beta": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:  # noqa: D102
-        responses, gradients = self.model.replicate(model_factors, rngs)
-        objectives = [
-            Objective(
-                stochastic=responses["sq_error_loss"],
-                stochastic_gradients=gradients["sq_error_loss"]["beta"],
-            )
-        ]
-        return RepResult(objectives=objectives)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:  # noqa: D102
         # beta = tuple([rand_sol_rng.uniform(-2, 2) for _ in range(self.dim)])

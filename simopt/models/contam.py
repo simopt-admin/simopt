@@ -8,13 +8,11 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
-    StochasticConstraint,
     VariableType,
 )
 from simopt.input_models import Beta
@@ -365,39 +363,45 @@ class ContaminationTotalCostDisc(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"prev_decision"}
 
-    @property
-    def dim(self) -> int:
-        return self.model.factors["stages"]
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        stages = self.model.factors["stages"]
+        prev_decision = problem.add_integer_vector(
+            lb=0, ub=1, shape=(stages,), initial=tuple(self.factors["initial_solution"])
+        )
 
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.model.factors["stages"]
+        def run(
+            decisions: dict[str, float | tuple[float, ...]],
+            rngs: list[MRG32k3a],
+        ) -> tuple[dict, dict]:
+            prevention = decisions["prev_decision"]
+            if not isinstance(prevention, tuple):
+                raise TypeError("prev_decision must be a vector")
+            decision_factors = {"prev_decision": prevention}
+            responses, _ = self.model.replicate(self.model.factors | decision_factors, rngs)
+            under_control = np.asarray(responses["level"]) <= np.asarray(
+                self.factors["upper_thres"]
+            )
+            return {"under_control": under_control.astype(float)}, {}
 
-    @property
-    def upper_bounds(self) -> tuple:
-        return (1,) * self.model.factors["stages"]
+        simulation = problem.add_simulation(
+            run=run, decisions={"prev_decision": prev_decision}, n_rngs=self.model.n_rngs
+        )
+        problem.minimize(
+            sum(
+                cost * prevention
+                for cost, prevention in zip(self.factors["prev_cost"], prev_decision, strict=True)
+            )
+        )
+        for stage, error_probability in enumerate(self.factors["error_prob"]):
+            problem.add_stochastic_constraint(
+                (1.0 - error_probability) - simulation.metric("under_control")[stage] <= 0.0
+            )
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"prev_decision": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        x = tuple(model_factors["prev_decision"])
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [
-            Objective(
-                stochastic=0.0,
-                deterministic=np.dot(self.factors["prev_cost"], x),
-                deterministic_gradients=self.factors["prev_cost"],
-            )
-        ]
-        under_control = responses["level"] <= self.factors["upper_thres"]
-        error_prob = self.factors["error_prob"]
-        stochastic_constraints = [
-            StochasticConstraint(stochastic=-1 * under_control[i], deterministic=1 - error_prob[i])
-            for i in range(len(under_control))
-        ]
-        return RepResult(objectives=objectives, stochastic_constraints=stochastic_constraints)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(0 <= u <= 1 for u in x)
@@ -424,53 +428,45 @@ class ContaminationTotalCostCont(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"prev_decision"}
 
-    @property
-    def dim(self) -> int:
-        return self.model.factors["stages"]
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        stages = self.model.factors["stages"]
+        prev_decision = problem.add_continuous_vector(
+            lb=0.0, ub=1.0, shape=(stages,), initial=tuple(self.factors["initial_solution"])
+        )
 
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.model.factors["stages"]
+        def run(
+            decisions: dict[str, float | tuple[float, ...]],
+            rngs: list[MRG32k3a],
+        ) -> tuple[dict, dict]:
+            prevention = decisions["prev_decision"]
+            if not isinstance(prevention, tuple):
+                raise TypeError("prev_decision must be a vector")
+            decision_factors = {"prev_decision": prevention}
+            responses, _ = self.model.replicate(self.model.factors | decision_factors, rngs)
+            under_control = np.asarray(responses["level"]) <= np.asarray(
+                self.factors["upper_thres"]
+            )
+            return {"under_control": under_control.astype(float)}, {}
 
-    @property
-    def upper_bounds(self) -> tuple:
-        return (1,) * self.model.factors["stages"]
-
-    # # TODO: figure out how Problem.check_simulatable_factors() works
-    # def check_simulatable_factors(self) -> bool:
-    #     lower_len = len(self.lower_bounds)
-    #     upper_len = len(self.upper_bounds)
-    #     if lower_len != upper_len or lower_len != self.dim:
-    #         error_msg = (
-    #             f"Lower bounds: {lower_len}, "
-    #             f"Upper bounds: {upper_len}, "
-    #             f"Dim: {self.dim}"
-    #         )
-    #         raise ValueError(error_msg)
-    #     return True
+        simulation = problem.add_simulation(
+            run=run, decisions={"prev_decision": prev_decision}, n_rngs=self.model.n_rngs
+        )
+        problem.minimize(
+            sum(
+                cost * prevention
+                for cost, prevention in zip(self.factors["prev_cost"], prev_decision, strict=True)
+            )
+        )
+        for stage, error_probability in enumerate(self.factors["error_prob"]):
+            problem.add_stochastic_constraint(
+                (1.0 - error_probability) - simulation.metric("under_control")[stage] <= 0.0
+            )
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"prev_decision": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        x = tuple(model_factors["prev_decision"])
-        responses, _ = self.model.replicate(model_factors, rngs)
-        deterministic_cost = np.dot(self.factors["prev_cost"], x)
-        objectives = [
-            Objective(
-                stochastic=0.0,
-                deterministic=deterministic_cost,
-                deterministic_gradients=self.factors["prev_cost"],
-            )
-        ]
-        under_control = responses["level"] <= self.factors["upper_thres"]
-        error_prob = self.factors["error_prob"]
-        stochastic_constraints = [
-            StochasticConstraint(stochastic=-1 * under_control[i], deterministic=1 - error_prob[i])
-            for i in range(len(under_control))
-        ]
-        return RepResult(objectives=objectives, stochastic_constraints=stochastic_constraints)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return all(0 <= u <= 1 for u in x)

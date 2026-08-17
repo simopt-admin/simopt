@@ -14,6 +14,12 @@ exclude = ["build*"]
 
 [tool.uv.sources]
 simopt-extensions = { git = "https://github.com/cenwangumass/simopt-extensions", rev = "b40a9c8" }
+simopt-dsl = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+    "simopt-dsl",
+]
 
 [project]
 name = "simoptlib"
@@ -50,6 +56,7 @@ dependencies = [
     "scipy>=1.16.3",
     "seaborn>=0.13.2",
     "simpy>=4.1.2",
+    "simopt-dsl>=0.1.0",
     "structlog>=25.5.0",
 ]
 

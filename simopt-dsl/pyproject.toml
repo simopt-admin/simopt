@@ -1,0 +1,56 @@
+[project]
+name = "simopt-dsl"
+version = "0.1.0"
+description = "A declarative modeling language for simulation optimization."
+readme = "README.md"
+authors = [
+    { name = "Cen Wang", email = "cenwang@umass.edu" }
+]
+requires-python = ">=3.11, <3.14"
+dependencies = [
+    "numpy>=2.0.0",
+    "sympy>=1.14.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.4,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+isort.split-on-trailing-comma = false
+
+select = [
+    "E", # pycodestyle (error)
+    "F", # pyflakes
+    "B", # bugbear
+    "B9",
+    "C4", # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "I", # isort
+    "UP", # pyupgrade
+    "PIE", # flake8-pie
+    "PGH", # pygrep-hooks
+    "PYI", # flake8-pyi
+    "RUF",
+    "S602", # flake8-bandit: subprocess-popen-with-shell-equals-true
+]
+
+ignore = [
+    # only relevant if you run a script with `python -0`,
+    # which seems unlikely for any of the scripts in this repo
+    "B011",
+    # Leave it to the formatter to split long lines and
+    # the judgement of all of us.
+    "E501"
+]

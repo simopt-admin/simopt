@@ -12,12 +12,11 @@ import simpy
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import Exp, InputModel, Triangular
@@ -345,26 +344,22 @@ class NetworkMinTotalCost(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"process_prob"}
 
-    @property
-    def dim(self) -> int:
-        return self.model.factors["n_networks"]
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (1,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        n_networks = self.model.factors["n_networks"]
+        process_prob = problem.add_continuous_vector(
+            lb=0.0, ub=1.0, shape=(n_networks,), initial=self.factors["initial_solution"]
+        )
+        total_probability = dsl.sum(process_prob)
+        problem.add_linear_constraint(total_probability <= 1.0 + 1e-10)
+        problem.add_linear_constraint(total_probability >= 1.0 - 1e-10)
+        simulation = self.add_simulation(problem, {"process_prob": process_prob})
+        problem.minimize(dsl.mean(simulation.metric("total_cost")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"process_prob": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [Objective(stochastic=responses["total_cost"])]
-        return RepResult(objectives=objectives)
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         # Check box constraints.

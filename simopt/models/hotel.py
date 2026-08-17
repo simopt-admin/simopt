@@ -10,12 +10,11 @@ import simpy
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import Exp
@@ -354,36 +353,25 @@ class HotelRevenue(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"booking_limits"}
 
-    @property
-    def dim(self) -> int:
-        return self.model.factors["num_products"]
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        booking_limits = problem.add_integer_vector(
+            lb=0,
+            ub=self.model.factors["num_rooms"],
+            shape=(self.model.factors["num_products"],),
+            initial=self.factors["initial_solution"],
+        )
 
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
+        simulation = self.add_simulation(problem, {"booking_limits": booking_limits})
+        problem.maximize(dsl.mean(simulation.metric("revenue")))
+        return problem
 
-    @property
-    def upper_bounds(self) -> tuple:
-        return (self.model.factors["num_rooms"],) * self.dim
-
-    # # TODO: figure out how Problem.check_simulatable_factors() works
-    # def check_simulatable_factors(self) -> bool:
-    #     return not (
-    #         len(self.lower_bounds) != self.dim or len(self.upper_bounds) != self.dim
-    #     )
-
+    @override
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"booking_limits": vector[:]}
 
     @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [Objective(stochastic=responses["revenue"])]
-        return RepResult(objectives=objectives)
-
-    def check_deterministic_constraints(self, _x: tuple) -> bool:
-        return True
-
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         return tuple(
             [rand_sol_rng.randint(0, self.model.factors["num_rooms"]) for _ in range(self.dim)]

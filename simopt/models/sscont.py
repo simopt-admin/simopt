@@ -9,6 +9,7 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
@@ -316,17 +317,25 @@ class SSContMinCost(Problem):
     model_default_factors: ClassVar[dict] = {"demand_mean": 100.0, "lead_mean": 6.0}
     model_decision_factors: ClassVar[set[str]] = {"s", "S"}
 
-    @property
-    def dim(self) -> int:
-        return 2
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        reorder_point = problem.add_continuous_variable(
+            lb=0.0, ub=np.inf, initial=self.factors["initial_solution"][0]
+        )
+        order_gap = problem.add_continuous_variable(
+            lb=0.0, ub=np.inf, initial=self.factors["initial_solution"][1]
+        )
 
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+        simulation = self.add_simulation(problem, {"s": reorder_point, "order_gap": order_gap})
+        problem.minimize(
+            dsl.mean(
+                simulation.metric("avg_backorder_costs")
+                + simulation.metric("avg_order_costs")
+                + simulation.metric("avg_holding_costs")
+            )
+        )
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"s": vector[0], "S": vector[0] + vector[1]}

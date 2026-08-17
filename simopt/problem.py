@@ -1,7 +1,7 @@
 """Base classes for simulation optimization problems and models."""
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import ClassVar
 
 import numpy as np
@@ -9,6 +9,7 @@ from boltons.typeutils import classproperty
 from pydantic import BaseModel
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.model import Model
 from simopt.problem_types import ConstraintType, VariableType
 from simopt.utils import get_specifications
@@ -213,6 +214,7 @@ class Problem(ABC):
         # Set the model
         self.model = self.model_class(model_factors)
 
+        self._optimization_problem: dsl.Model | None = None
         self.rng_list: list[MRG32k3a] = []
 
     def __eq__(self, other: object) -> bool:
@@ -261,22 +263,38 @@ class Problem(ABC):
         return None
 
     @property
-    @abstractmethod
     def dim(self) -> int:
         """Number of decision variables."""
-        raise NotImplementedError
+        return len(self.optimization_problem.variables)
 
     @property
-    @abstractmethod
-    def lower_bounds(self) -> tuple[float, ...]:
+    def lower_bounds(self) -> tuple[int | float, ...]:
         """Lower bound for each decision variable."""
-        raise NotImplementedError
+        problem = self.optimization_problem
+        return tuple(
+            int(bound) if variable.integer and np.isfinite(bound) else bound
+            for variable, bound in zip(problem.variables, problem.lower_bounds(), strict=True)
+        )
 
     @property
-    @abstractmethod
-    def upper_bounds(self) -> tuple[float, ...]:
+    def upper_bounds(self) -> tuple[int | float, ...]:
         """Upper bound for each decision variable."""
-        raise NotImplementedError
+        problem = self.optimization_problem
+        return tuple(
+            int(bound) if variable.integer and np.isfinite(bound) else bound
+            for variable, bound in zip(problem.variables, problem.upper_bounds(), strict=True)
+        )
+
+    @property
+    def optimization_problem(self) -> dsl.Model:
+        """Optimization problem expressed with the SimOpt DSL."""
+        if self._optimization_problem is None:
+            self._optimization_problem = self.build()
+        return self._optimization_problem
+
+    def build(self) -> dsl.Model:
+        """Build an optimization problem with the SimOpt DSL."""
+        raise NotImplementedError(f"{type(self).__name__} does not build a SimOpt DSL problem")
 
     @classproperty
     def compatibility(cls) -> str:  # noqa: N805
@@ -320,6 +338,44 @@ class Problem(ABC):
         """
         raise NotImplementedError
 
+    def add_simulation(
+        self,
+        target: dsl.Model,
+        decisions: Mapping[str, dsl.Variable | dsl.VectorVariable],
+        *,
+        name: str = "",
+    ) -> dsl.Simulation:
+        """Add this problem's simulation model to the DSL model.
+
+        The problem supplies the replication adapter and RNG count so problem
+        implementations only need to declare the simulation's decisions.
+
+        Args:
+            target: DSL model to which the simulation is added.
+            decisions: Decision variables passed to the simulation.
+            name: Name of the simulation.
+
+        Returns:
+            The simulation added to ``target``.
+        """
+
+        def run(
+            decisions: dict[str, float | tuple[float, ...]], rngs: list[MRG32k3a]
+        ) -> tuple[dict, dict]:
+            decision_vector = []
+            for decision in decisions.values():
+                if isinstance(decision, tuple):
+                    decision_vector.extend(decision)
+                else:
+                    decision_vector.append(decision)
+            decision_vector = tuple(decision_vector)
+            decision_factors = self.vector_to_factor_dict(decision_vector)
+            return self.model.replicate(self.model.factors | decision_factors, rngs)
+
+        return target.add_simulation(
+            name=name, run=run, decisions=decisions, n_rngs=self.model.n_rngs
+        )
+
     def check_deterministic_constraints(self, x: tuple, /) -> bool:
         """Check if a solution `x` satisfies the problem's deterministic constraints.
 
@@ -350,15 +406,70 @@ class Problem(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def replicate(self, model_factors: dict, rngs: list[MRG32k3a], /) -> RepResult:
         """Replicate the problem for the supplied model factors.
+
+        The default implementation evaluates the DSL-defined objective. It
+        supports DSL decisions whose names and scalar/vector structure match
+        the corresponding model factors. Problems with a different coordinate
+        mapping can override this method.
 
         Args:
             model_factors (dict): Complete model factors used for the replication.
             rngs (list[MRG32k3a]): RNGs used to drive the simulation.
         """
-        raise NotImplementedError
+        problem = self.optimization_problem
+        values_by_variable_id: dict[int, float] = {}
+
+        for simulation in problem.simulations:
+            for decision_name, decision in simulation.decisions.items():
+                if decision_name not in model_factors:
+                    raise ValueError(f"DSL decision {decision_name!r} has no matching model factor")
+
+                if isinstance(decision, dsl.Variable):
+                    components = (decision,)
+                    values = (model_factors[decision_name],)
+                else:
+                    components = decision.components
+                    values = tuple(model_factors[decision_name])
+
+                if len(values) != len(components):
+                    raise ValueError(
+                        f"model factor {decision_name!r} must have "
+                        f"{len(components)} component(s), got {len(values)}"
+                    )
+
+                for component, value in zip(components, values, strict=True):
+                    values_by_variable_id[id(component)] = float(value)
+
+        missing_variables = [
+            variable.name
+            for variable in problem.variables
+            if id(variable) not in values_by_variable_id
+        ]
+        if missing_variables:
+            raise ValueError(f"DSL variables are not bound to model factors: {missing_variables!r}")
+
+        decision_vector = tuple(
+            values_by_variable_id[id(variable)] for variable in problem.variables
+        )
+        result = problem.run_replication(decision_vector, rngs)
+        return RepResult(
+            objectives=[
+                Objective(
+                    stochastic=result.objective,
+                    stochastic_gradients=result.objective_gradient,
+                )
+            ],
+            stochastic_constraints=[
+                StochasticConstraint(
+                    stochastic=constraint.value,
+                    stochastic_gradients=constraint.gradient,
+                )
+                for constraint in result.stochastic_constraints
+            ]
+            or None,
+        )
 
     def simulate(self, solution: "Solution", num_macroreps: int = 1) -> None:
         """Simulate `m` i.i.d. replications at solution `x`.

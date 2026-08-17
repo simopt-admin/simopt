@@ -9,12 +9,11 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import Gamma
@@ -164,26 +163,18 @@ class ParamEstiMaxLogLik(Problem):
             return tuple(solution)
         return solution
 
-    @property
-    def dim(self) -> int:
-        return 2
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0.1,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (10,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        x = problem.add_continuous_vector(
+            lb=0.1, ub=10.0, shape=(2,), initial=self.factors["initial_solution"]
+        )
+        simulation = self.add_simulation(problem, {"x": x})
+        problem.maximize(dsl.mean(simulation.metric("loglik")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"x": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [Objective(stochastic=responses["loglik"])]
-        return RepResult(objectives=objectives)
 
     def check_deterministic_constraints(self, _x: tuple) -> bool:
         return True

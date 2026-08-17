@@ -12,12 +12,11 @@ import numpy as np
 from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import Normal
@@ -128,31 +127,19 @@ class ExampleProblem(Problem):
         # TODO: figure out what f is
         return (0,) * self.dim
 
-    @property
-    def dim(self) -> int:
-        return len(self.factors["initial_solution"])
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (-np.inf,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        initial_solution = self.factors["initial_solution"]
+        x = problem.add_continuous_vector(
+            lb=-np.inf, ub=np.inf, shape=(len(initial_solution),), initial=initial_solution
+        )
+        simulation = self.add_simulation(problem, {"x": x})
+        problem.minimize(dsl.mean(simulation.metric("est_f(x)")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"x": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(model_factors, rngs)
-        objectives = [
-            Objective(
-                stochastic=responses["est_f(x)"],
-                stochastic_gradients=gradients["est_f(x)"]["x"],
-            )
-        ]
-        return RepResult(objectives=objectives)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         # x = tuple([rand_sol_rng.uniform(-2, 2) for _ in range(self.dim)])
@@ -258,26 +245,19 @@ class Example2Problem(Problem):
     def optimal_solution(self) -> tuple | None:
         return (1, 2, 3, 4)
 
-    @property
-    def dim(self) -> int:
-        return 4
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (-4,) * self.dim
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (4,) * self.dim
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        initial_solution = self.factors["initial_solution"]
+        x = problem.add_integer_vector(
+            lb=-4, ub=4, shape=(len(initial_solution),), initial=initial_solution
+        )
+        simulation = self.add_simulation(problem, {"x": x})
+        problem.minimize(dsl.mean(simulation.metric("est_f(x)")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"x": vector[:]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        objectives = [Objective(stochastic=responses["est_f(x)"])]
-        return RepResult(objectives=objectives)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         return tuple(rand_sol_rng.randint(-4, 4) for _ in range(self.dim))

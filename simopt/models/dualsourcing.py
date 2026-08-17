@@ -9,12 +9,11 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import InputModel
@@ -305,36 +304,30 @@ class DualSourcingMinCost(Problem):
     model_default_factors: ClassVar[dict] = {}
     model_decision_factors: ClassVar[set[str]] = {"order_level_exp", "order_level_reg"}
 
-    @property
-    def dim(self) -> int:
-        return 2
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        initial_solution = self.factors["initial_solution"]
+        order_level_exp = problem.add_integer_variable(lb=0, ub=np.inf, initial=initial_solution[0])
+        order_level_reg = problem.add_integer_variable(lb=0, ub=np.inf, initial=initial_solution[1])
 
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0, 0)
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf, np.inf)
+        simulation = self.add_simulation(
+            problem, {"order_level_exp": order_level_exp, "order_level_reg": order_level_reg}
+        )
+        problem.minimize(
+            dsl.mean(
+                simulation.metric("average_ordering_cost")
+                + simulation.metric("average_penalty_cost")
+                + simulation.metric("average_holding_cost")
+            )
+        )
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {
             "order_level_exp": vector[0],
             "order_level_reg": vector[1],
         }
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, _ = self.model.replicate(model_factors, rngs)
-        return RepResult(
-            objectives=[
-                Objective(
-                    stochastic=responses["average_ordering_cost"]
-                    + responses["average_penalty_cost"]
-                    + responses["average_holding_cost"],
-                )
-            ],
-        )
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return x[0] >= 0 and x[1] >= 0

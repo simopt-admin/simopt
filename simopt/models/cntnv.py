@@ -9,12 +9,11 @@ import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Model,
-    Objective,
     Problem,
-    RepResult,
     VariableType,
 )
 from simopt.input_models import InputModel
@@ -254,32 +253,18 @@ class CntNVMaxProfit(Problem):
     }
     model_decision_factors: ClassVar[set[str]] = {"order_quantity"}
 
-    @property
-    def dim(self) -> int:
-        return 1
-
-    @property
-    def lower_bounds(self) -> tuple:
-        return (0,)
-
-    @property
-    def upper_bounds(self) -> tuple:
-        return (np.inf,)
+    @override
+    def build(self) -> dsl.Model:
+        problem = dsl.Model()
+        order_quantity = problem.add_continuous_variable(
+            lb=0.0, ub=np.inf, initial=self.factors["initial_solution"][0]
+        )
+        simulation = self.add_simulation(problem, {"order_quantity": order_quantity})
+        problem.maximize(dsl.mean(simulation.metric("profit")))
+        return problem
 
     def vector_to_factor_dict(self, vector: tuple) -> dict:
         return {"order_quantity": vector[0]}
-
-    @override
-    def replicate(self, model_factors: dict, rngs: list[MRG32k3a]) -> RepResult:
-        responses, gradients = self.model.replicate(model_factors, rngs)
-        return RepResult(
-            objectives=[
-                Objective(
-                    stochastic=responses["profit"],
-                    stochastic_gradients=gradients["profit"]["order_quantity"],
-                )
-            ],
-        )
 
     def check_deterministic_constraints(self, x: tuple) -> bool:
         return x[0] > 0
