@@ -9,7 +9,7 @@ from typing import Any
 
 import numpy as np
 
-from simopt_dsl.expressions import EvaluationContext, Metric
+from simopt_dsl.expressions import EvaluationContext, Expression
 from simopt_dsl.variables import DecisionVariable, Variable, components
 
 SimulationResult = tuple[Mapping[str, Any], Mapping[str, Mapping[str, Any]]]
@@ -19,6 +19,31 @@ SimulationResult = tuple[Mapping[str, Any], Mapping[str, Mapping[str, Any]]]
 class SimulationEvaluation:
     metrics: dict[str, Any]
     derivatives: dict[tuple[str, tuple[int, ...], str], float]
+
+
+@dataclass(frozen=True)
+class Metric(Expression):
+    simulation: Simulation
+    name: str
+    indices: tuple[int, ...] = ()
+
+    def evaluate(self, context: EvaluationContext) -> float:
+        value = context.metrics[(self.simulation.name, self.name)]
+        for index in self.indices:
+            value = value[index]
+        try:
+            return float(value)
+        except (TypeError, ValueError) as exc:
+            suffix = "".join(f"[{index}]" for index in self.indices)
+            raise TypeError(
+                f"simulation metric {self.name!r}{suffix} is not scalar; "
+                "select a scalar component with metric[index]"
+            ) from exc
+
+    def __getitem__(self, index: int) -> Metric:
+        if not isinstance(index, int):
+            raise TypeError("simulation metric indices must be integers")
+        return Metric(self.simulation, self.name, (*self.indices, index))
 
 
 @dataclass

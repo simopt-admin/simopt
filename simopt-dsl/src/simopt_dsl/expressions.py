@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from simopt_dsl.simulation import Simulation
+from typing import Any
 
 
 class Expression:
@@ -56,31 +53,6 @@ class Constant(Expression):
 
     def evaluate(self, context: EvaluationContext) -> float:
         return self.value
-
-
-@dataclass(frozen=True)
-class Metric(Expression):
-    simulation: Simulation
-    name: str
-    indices: tuple[int, ...] = ()
-
-    def evaluate(self, context: EvaluationContext) -> float:
-        value = context.metrics[(self.simulation.name, self.name)]
-        for index in self.indices:
-            value = value[index]
-        try:
-            return float(value)
-        except (TypeError, ValueError) as exc:
-            suffix = "".join(f"[{index}]" for index in self.indices)
-            raise TypeError(
-                f"simulation metric {self.name!r}{suffix} is not scalar; "
-                "select a scalar component with metric[index]"
-            ) from exc
-
-    def __getitem__(self, index: int) -> Metric:
-        if not isinstance(index, int):
-            raise TypeError("simulation metric indices must be integers")
-        return Metric(self.simulation, self.name, (*self.indices, index))
 
 
 @dataclass(frozen=True)

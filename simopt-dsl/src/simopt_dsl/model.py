@@ -19,11 +19,10 @@ from simopt_dsl.expressions import (
     EvaluationContext,
     Expression,
     Mean,
-    Metric,
     apply_binary_operator,
     mean,
 )
-from simopt_dsl.simulation import Simulation, SimulationResult, component_items
+from simopt_dsl.simulation import Metric, Simulation, SimulationResult, component_items
 from simopt_dsl.variables import DecisionVariable, Variable, VectorVariable, components
 
 Number = int | float
