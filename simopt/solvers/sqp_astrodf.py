@@ -371,34 +371,47 @@ class SQPASTRODFConfig(SolverConfig):
     bool,
     Field(default=False,
           description="maintain a persistent interpolation set across iterations, reusing all valid points instead of rebuilding from scratch each time"),
-]
+    ]
     recenter_mode: Annotated[
     str,
     Field(default="shift", 
           description="how to recenter the persistent interpolation set on a new incumbent: 'shift' keeps all points (cheapest), 'reduce' discards points outside the new trust region (costlier, tighter geometry)"),
-]
+    ]
     use_lagrange_geometry: Annotated[
     bool,
     Field(
         default=True,
         description="after fitting, check point-set poisedness via Lagrange polynomials and replace the worst-poised point if it exceeds a threshold; only used when reuse_interpolation_set is True",
     ),
-]
+    ]
     dist_threshold: Annotated[
         float,
         Field(
             default=10.0,
             description="trigger a Lagrange-based point replacement when max |L_k(x)| exceeds this value (py-bobyqa-style default; a well-poised set keeps this near 1)",
         ),
-]
+    ]   
     theta_decrease: Annotated[
         float,
         Field(
             default=0.8,
             description="trigger a Lagrange-based point replacement when max |L_k(x)| exceeds this value (py-bobyqa-style default; a well-poised set keeps this near 1)",
         ),
-]
-    
+    ]
+    dogleg: Annotated[
+        bool,
+        Field(
+            default=True,
+            description="use dogleg method to solve normal step",
+        ),
+    ]
+    kappa_scale: Annotated[
+        float,
+        Field(
+            default=1.0,
+            description="scale factor that constrols how quickly we increase our adatpive samples. Larger = slower",
+        ),
+    ]
     
 
     @model_validator(mode="after")
@@ -893,13 +906,12 @@ class SQPASTRODF(Solver):
     
                 # Compute stopping condition
                 kappa: float | None = None
-                kappa_scale = 50
                 if compute_kappa:
                     if self.enable_gradient:
                         rhs_for_kappa = norm(solution.objectives_gradients_mean[0])
                     else:
                         rhs_for_kappa = solution.objectives_mean
-                    kappa = (kappa_scale
+                    kappa = (self.kappa_scale
                         *rhs_for_kappa
                         * np.sqrt(pilot_run)
                         / (delta_k ** (self.delta_power / 2))
@@ -1492,10 +1504,73 @@ class SQPASTRODF(Solver):
             s_c = alpha * s_c
 
         return s_c
+    
+    def solve_exact_normal_subproblem(self, delta_hat):
+        def normal_subproblem(s_normal: np.ndarray) -> float:
+            res: np.array = self.R @ s_normal + self.feas
+            return float(norm(res))
+
+        def norm_s_normal(s_normal: np.ndarray) -> float:
+            return float(norm(s_normal))
+
+        tr_normal = NonlinearConstraint(norm_s_normal, 0, delta_hat)
+
+        if self.problem_type == "eq_only":
+            const = [tr_normal]
+        else:
+            E_v = np.hstack([
+                np.zeros((self.n_v, self.n_x)),
+                np.eye(self.n_v),
+            ])
+            ftb = LinearConstraint(E_v, -1 * self.a_normal * self.epsilon * np.ones(self.n_v), np.inf)
+            const = [tr_normal, ftb]
+
+        solve_normal_subproblem: OptimizeResult = minimize(
+            normal_subproblem,
+            np.zeros(self.dim),
+            #method="trust-constr",
+            constraints=const,
+            tol = 1e-8
+        )
+        s_normal_rescale = solve_normal_subproblem.x
         
+        return s_normal_rescale
+    
+    def _normal_dogleg(self,s1: np.ndarray, s2: np.ndarray, delta_hat: float):
+        '''
+        Find point between s1 and s2 that minimizes linearized constraint violation in the trust-region
+
+        '''
+        
+        d = s2 -s1
+        norm_d_sq = d @ d
+        if norm_d_sq == 0:
+            return s1.copy()  # s1 == s2, nothing to search
+        # --- trust-region boundary crossing ---
+        s1_dot_d = s1 @ d
+        disc = s1_dot_d**2 + norm_d_sq * (delta_hat**2 - s1 @ s1)
+        disc = max(disc, 0.0)  # guard tiny negative from floating point
+        tau_tr = (-s1_dot_d + np.sqrt(disc)) / norm_d_sq  
+        
+        tau = min(tau_tr, 1.0)
+        
+        # --- fraction-to-boundary crossing on the slack block ---
+        if self.problem_type != "eq_only":
+            lower = -1 * self.a_normal * self.epsilon * np.ones(self.n_v)
+            s1_v = s1[self.n_x:]
+            d_v = d[self.n_x:]
+    
+            for i in range(self.n_v):
+                if d_v[i] < 0:
+                    tau_i = (lower[i] - s1_v[i]) / d_v[i]
+                    tau = min(tau, tau_i)
+        tau = max(tau, 0.0)  # defensive: shouldn't go negative if s1 is truly feasible
+        
+        return s1 + tau * d
+    
     def solve_normal_step(self):
-        print(f"[normal_step] feas={self.feas}, norm={norm(self.feas):.3e}, "
-          f"feas_tol={self.feas_tol}")  # TEMP debug
+        #print(f"[normal_step] feas={self.feas}, norm={norm(self.feas):.3e}, "
+          #f"feas_tol={self.feas_tol}")  # TEMP debug
         # only determine normal step if current solution is infeasible
         if norm(self.feas) <= self.feas_tol:
             s_normal = np.zeros(self.dim)
@@ -1503,44 +1578,41 @@ class SQPASTRODF(Solver):
         else:
             delta_hat = self.delta_k * self.a_normal
             check = False
-            if check:
+            if check: #solve using Cauchy step
                 s_normal_rescale = self._cauchy_point_normal(delta_hat)
-            else:
-                def normal_subproblem(s_normal: np.ndarray) -> float:
-                    res: np.array = self.R @ s_normal + self.feas
-                    return float(norm(res))
-    
-                def norm_s_normal(s_normal: np.ndarray) -> float:
-                    return float(norm(s_normal))
-    
-                tr_normal = NonlinearConstraint(norm_s_normal, 0, delta_hat)
-    
-                if self.problem_type == "eq_only":
-                    const = [tr_normal]
+            elif self.dogleg: # solve using dogleg method
+                s2 = lsq_linear(self.R, -1*self.feas).x
+                norm_feasible =  norm(s2) <= delta_hat 
+                print("s2", s2)
+                print("norm_feasible", norm_feasible)
+                if self.problem_type != "eq_only":
+                    ftb = -1 * self.a_normal * self.epsilon * np.ones(self.n_v)
+                    ftb_feasible = True
+                    if np.any(s2[self.n_x:] < ftb):
+                        ftb_feasible = False
+                    feasible = norm_feasible and ftb_feasible
                 else:
-                    E_v = np.hstack([
-                        np.zeros((self.n_v, self.n_x)),
-                        np.eye(self.n_v),
-                    ])
-                    ftb = LinearConstraint(E_v, -1 * self.a_normal * self.epsilon * np.ones(self.n_v), np.inf)
-                    const = [tr_normal, ftb]
-    
-                solve_normal_subproblem: OptimizeResult = minimize(
-                    normal_subproblem,
-                    np.zeros(self.dim),
-                    #method="trust-constr",
-                    constraints=const,
-                    tol = 1e-8
-                )
-                s_normal_rescale = solve_normal_subproblem.x
-    
+                    feasible = norm_feasible   
+                if feasible: #if global minimizer in trust-region accept
+                    s_normal_rescale = s2
+                    print("Norm feasible set normal to s2")
+                else:
+                    print("Not feasible solve s1")
+                    s1 = self.solve_exact_normal_subproblem(delta_hat)
+                    s_normal_rescale = self._normal_dogleg(s1, s2, delta_hat) 
+                    print("s1", s1)
+                    print("dogleg", s_normal_rescale)
+            else:
+               s_normal_rescale =  self.solve_exact_normal_subproblem(delta_hat)
+               
             # rescale normal step if necessary (same for both branches above)
             if self.problem_type == "eq_only":
                 s_normal = s_normal_rescale
             else:
                 s_normal_v = self.V @ s_normal_rescale[self.n_x:]
                 s_normal = np.concatenate((s_normal_rescale[:self.n_x], s_normal_v))
-    
+            
+            return s_normal_rescale, s_normal
         return s_normal, s_normal_rescale
                
     def solve_tangent_step(self, s_normal):
@@ -2130,7 +2202,7 @@ class SQPASTRODF(Solver):
                 self.sigma = max(sigma_c, self.tau_1*self.sigma, self.sigma+ self.tau_2)
         else:
             self.sigma = max(self.sigma, sigma_b)
-        print("sigma:", self.sigma)
+        #print("sigma:", self.sigma)
         # compute the success ratio rho
         # need to update success ratio to include constraints
         # candidate_x_arr = np.array(candidate_x)
@@ -2287,6 +2359,8 @@ class SQPASTRODF(Solver):
         self.dist_threshold: str = self.factors["dist_threshold"]
         self.theta_decrease : float = self.factors["theta_decrease"]
         self.ps_sufficient_reduction: float = self.factors["ps_sufficient_reduction"]
+        self.dogleg: bool = self.factors["dogleg"]
+        self.kappa_scale: float = self.factors["kappa_scale"]
         if self.factors["delta_0"] is not None:
             self.delta_k : float = self.factors["delta_0"]
         if self.factors["delta_max"] is not None:
