@@ -219,6 +219,7 @@ class Solver(ABC):
                 "step": range(len(recommended_solns)),
                 "budget": intermediate_budgets,
                 "solution": recommended_solns,
+                "solution_obj": recommended_solns
             }
         )
         df["solution"] = df["solution"].apply(lambda solution: solution.x)

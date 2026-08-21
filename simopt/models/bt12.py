@@ -92,10 +92,17 @@ class BT12(Model):
         x = np.array(self.factors["x"], dtype=float)
         noise_std = self.factors["noise_std"]
 
-        true_obj = 0.01*x[0]**2 + x[1]**2
-        z = self.rng.normalvariate(0, 1) 
+        # true_obj = 0.01*x[0]**2 + x[1]**2
+        # z = self.rng.normalvariate(0, 1) 
         
-        noisy_obj = true_obj +  noise_std * z  # same z reused across x via CRN stream state
+        # noisy_obj = true_obj +  noise_std * z  # same z reused across x via CRN stream state
+        true_obj = 0.01 * x[0]**2 + x[1]**2
+
+        z = self.rng.normalvariate(0, 1)
+
+        noise = noise_std * (0.1 * x[0] + x[1]) * z
+
+        noisy_obj = true_obj + noise
 
         responses = {"obj_value": noisy_obj}
         gradients = {"obj_value": {}}

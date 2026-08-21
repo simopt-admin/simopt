@@ -94,6 +94,13 @@ class HS42(Model):
 
         true_obj = (x[0]-1)**2 + (x[1]-2)**2 + (x[2]-3)**2 + (x[3]-4)**2
         z = self.rng.normalvariate(0, 1) 
+        # Decision-dependent standard deviation
+        local_noise_std = noise_std * (
+            1.0 + .5 * np.sqrt(true_obj)
+        )
+    
+        # Heteroscedastic noisy response
+        noisy_obj = true_obj + local_noise_std * z
         
         noisy_obj = true_obj +  noise_std * z  # same z reused across x via CRN stream state
 

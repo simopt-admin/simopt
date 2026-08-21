@@ -747,11 +747,11 @@ class SQPASTRODFWSC(Solver):
 
             if is_block_constraint:
                 minus = [
-                    clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j])
+                    clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j], epsilon = self.feas_tol)
                     for j, val in enumerate(minus)
                 ]
                 plus = [
-                    clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j])
+                    clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j], epsilon = self.feas_tol)
                     for j, val in enumerate(plus)
                 ]
 

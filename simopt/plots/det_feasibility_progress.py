@@ -22,6 +22,8 @@ def plot_det_feasibility(
     log_scale: bool = False,
     log_base: int = 10,
     feas_tol: float = 1e-8,
+    feas_tol_lower: float = 1e-8,
+    feas_tol_upper: float = 1e-5,
     sym_log: bool = False,
     solver_set_name: str = "SOLVER_SET",
     plot_title: str | None = None,
@@ -58,20 +60,38 @@ def plot_det_feasibility(
             solver_names = []
             for exp_idx in range(n_solvers):
                 experiment = experiments[exp_idx][problem_idx]
+            
                 if score_type == "value":
-                    experiment.det_feasibility_history(method = "value", feas_tol = feas_tol)
+                    experiment.det_feasibility_history(
+                        method="value",
+                        feas_tol=feas_tol,
+                    )
+            
                 elif score_type == "objective":
-                    for mrep in range(len(experiment.det_feasibility_curves)):
-                        experiment.det_feasibility_history(method= "objective", obj_const = obj_const, feas_tol = feas_tol)
+                    experiment.det_feasibility_history(
+                        method="objective",
+                        obj_const=obj_const,
+                        feas_tol_upper=feas_tol_upper,
+                        feas_tol_lower = feas_tol_lower
+                    )
+            
                 elif score_type == "norm":
-                    experiment.det_feasibility_history(method= "norm", feas_tol = feas_tol)
+                    experiment.det_feasibility_history(
+                        method="norm",
+                        feas_tol_lower=feas_tol_lower,
+                    )
+            
                 color_str = "C" + str(exp_idx)
-                estimator = None
+            
                 solver_names.append(experiment.solver.name)
-                handle = experiment.det_feasibility_curves[0].plot(color_str=color_str)
+            
+                handle = experiment.det_feasibility_curves[0].plot(
+                    color_str=color_str
+                )
+            
                 for curve in experiment.det_feasibility_curves[1:]:
                     curve.plot(color_str=color_str)
-                #plt.axhline(y=0, color="red", linestyle="--", linewidth=0.75)
+            
                 solver_curve_handles.append(handle)
             if log_scale:
                 plt.yscale("log")

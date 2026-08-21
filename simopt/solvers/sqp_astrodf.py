@@ -384,7 +384,7 @@ class SQPASTRODFConfig(SolverConfig):
         description="after fitting, check point-set poisedness via Lagrange polynomials and replace the worst-poised point if it exceeds a threshold; only used when reuse_interpolation_set is True",
     ),
 ]
-    lagrange_poisedness_threshold: Annotated[
+    dist_threshold: Annotated[
         float,
         Field(
             default=10.0,
@@ -778,7 +778,7 @@ class SQPASTRODF(Solver):
         victim_dist = self.interp_set.points[victim_idx].x_dist
         distsq = float(norm(victim_dist) ** 2)
     
-        distsq_thresh = self.lagrange_poisedness_threshold * delta_k**2
+        distsq_thresh = self.dist_threshold * delta_k**2
         if distsq <= distsq_thresh:
             return False # farthest point still close enough -- nothing to do
     
@@ -893,18 +893,19 @@ class SQPASTRODF(Solver):
     
                 # Compute stopping condition
                 kappa: float | None = None
+                kappa_scale = 50
                 if compute_kappa:
                     if self.enable_gradient:
                         rhs_for_kappa = norm(solution.objectives_gradients_mean[0])
                     else:
                         rhs_for_kappa = solution.objectives_mean
-                    kappa = (
-                        rhs_for_kappa
+                    kappa = (kappa_scale
+                        *rhs_for_kappa
                         * np.sqrt(pilot_run)
                         / (delta_k ** (self.delta_power / 2))
                     ).item()
     
-                # Set k to the right kappa
+                # Set k to the right kappa 
                 if kappa is not None:
                     k = kappa
                 elif self.kappa is not None:
@@ -926,6 +927,7 @@ class SQPASTRODF(Solver):
                 self.budget.request(1)
                 self.problem.simulate(solution, 1)
                 sample_size += 1
+            print("sample size", sample_size)
 
     def construct_model(
         self,
@@ -1102,7 +1104,7 @@ class SQPASTRODF(Solver):
         delta = self.delta_k
         model_iterations = 0
         while True:
-            delta_k = delta * self.gamma_2**model_iterations
+            delta_k = delta * w**model_iterations
             model_iterations += 1
     
             # Model-criticality check on the *previous* fit's geometry happens
@@ -1124,6 +1126,10 @@ class SQPASTRODF(Solver):
                 # re-fit model coefficients if set has been updated
                 if set_updated:
                     inverse_mult, grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
+                    H, self.lam = self.create_lagrange_hessian(
+                        hessian, grad
+                    )
+                    self.build_problem(grad, H)
             # check criticality loop, if not satisfied build model again with smaller delta
             if self.crit_measure >= self.mu*delta_k or self.crit_measure ==0:
                 break
@@ -1452,50 +1458,89 @@ class SQPASTRODF(Solver):
             t_c = alpha * t_c
     
         return t_c
+    
+    def _cauchy_point_normal(self, delta_hat: float) -> np.ndarray:
+        """Closed-form Cauchy-point step for the normal (feasibility) subproblem
+        min 0.5*||R @ s + feas||^2  s.t. ||s|| <= delta_hat,
+        respecting the fraction-to-boundary constraint on the slack block for
+        inequality-constrained problems. Mirrors _cauchy_point_tangent, using
+        the Gauss-Newton model of constraint violation in place of the
+        Lagrangian model (H -> R.T @ R, grad -> R.T @ feas)."""
+        g = self.R.T @ self.feas
+        norm_g = norm(g)
+        if norm_g == 0:
+            return np.zeros(self.R.shape[1])
+    
+        Rg = self.R @ g
+        curvature = Rg @ Rg  # == g @ (R.T @ R) @ g, always >= 0
+    
+        if curvature <= 0:
+            tau = 1.0
+        else:
+            tau = min(1.0, norm_g**3 / (delta_hat * curvature))
+    
+        s_c = -tau * (delta_hat / norm_g) * g
+    
+        # respect fraction-to-boundary box on the slack block: s_v >= -a_normal*eps
+        if self.problem_type != "eq_only":
+            lower = -self.a_normal * self.epsilon * np.ones(self.n_v)
+            s_c_v = s_c[self.n_x:]
+            alpha = 1.0
+            for i in range(self.n_v):
+                if s_c_v[i] < lower[i]:
+                    alpha = min(alpha, lower[i] / s_c_v[i])
+            s_c = alpha * s_c
+
+        return s_c
         
     def solve_normal_step(self):
-        
+        print(f"[normal_step] feas={self.feas}, norm={norm(self.feas):.3e}, "
+          f"feas_tol={self.feas_tol}")  # TEMP debug
         # only determine normal step if current solution is infeasible
-        if norm(self.feas) <= self.feas_tol : 
+        if norm(self.feas) <= self.feas_tol:
             s_normal = np.zeros(self.dim)
             s_normal_rescale = s_normal
         else:
-            # Determine normal step
-            def normal_subproblem(s_normal: np.ndarray) -> float:
-                res: np.array =  self.R @ s_normal + self.feas
-                return float(norm(res))
-            # get norm of normal step
-            def norm_s_normal(s_normal: np.ndarray) -> float:
-                return float(norm(s_normal))
-            # trust-region constraint
-            tr_normal = NonlinearConstraint(norm_s_normal, 0, self.delta_k*self.a_normal)
-            # set up normal equation based on problem type
-            if self.problem_type == "eq_only":
-                const = [tr_normal]
-            else: # problem has inequality constraints
-                #fraction to boundary constraint for slack variables
-                E_v = np.hstack([
-                    np.zeros((self.n_v, self.n_x)),
-                    np.eye(self.n_v),
-                    ])
-                ftb = LinearConstraint(E_v, -1*self.a_normal*self.epsilon*np.ones(self.n_v), np.inf)
-                const = [tr_normal, ftb]
-            # solve for normal step
-            solve_normal_subproblem: OptimizeResult = minimize( 
-                normal_subproblem,
-                np.zeros(self.dim),
-                #method="trust-constr",
-                constraints=const, 
-                tol = self.feas_tol
-            )
-            # rescale normal step if necessary
-            if self.problem_type == "eq_only":
-                s_normal = solve_normal_subproblem.x 
-                s_normal_rescale = s_normal # no rescale needed for eq only
+            delta_hat = self.delta_k * self.a_normal
+            check = False
+            if check:
+                s_normal_rescale = self._cauchy_point_normal(delta_hat)
             else:
-                s_normal_rescale = solve_normal_subproblem.x 
+                def normal_subproblem(s_normal: np.ndarray) -> float:
+                    res: np.array = self.R @ s_normal + self.feas
+                    return float(norm(res))
+    
+                def norm_s_normal(s_normal: np.ndarray) -> float:
+                    return float(norm(s_normal))
+    
+                tr_normal = NonlinearConstraint(norm_s_normal, 0, delta_hat)
+    
+                if self.problem_type == "eq_only":
+                    const = [tr_normal]
+                else:
+                    E_v = np.hstack([
+                        np.zeros((self.n_v, self.n_x)),
+                        np.eye(self.n_v),
+                    ])
+                    ftb = LinearConstraint(E_v, -1 * self.a_normal * self.epsilon * np.ones(self.n_v), np.inf)
+                    const = [tr_normal, ftb]
+    
+                solve_normal_subproblem: OptimizeResult = minimize(
+                    normal_subproblem,
+                    np.zeros(self.dim),
+                    #method="trust-constr",
+                    constraints=const,
+                    tol = 1e-8
+                )
+                s_normal_rescale = solve_normal_subproblem.x
+    
+            # rescale normal step if necessary (same for both branches above)
+            if self.problem_type == "eq_only":
+                s_normal = s_normal_rescale
+            else:
                 s_normal_v = self.V @ s_normal_rescale[self.n_x:]
                 s_normal = np.concatenate((s_normal_rescale[:self.n_x], s_normal_v))
+    
         return s_normal, s_normal_rescale
                
     def solve_tangent_step(self, s_normal):
@@ -1572,7 +1617,99 @@ class SQPASTRODF(Solver):
             s_tangent_v = self.V @ s_tangent_rescale[self.n_x:]
             s_tangent = np.concatenate((s_tangent_rescale[:self.n_x], s_tangent_v))
         return s_tangent, s_tangent_rescale
-
+    
+    def evaluate_point_merit(self, x: tuple, fval: float, v: np.ndarray | None = None) -> float:
+        """Actual (non-model) merit value at an arbitrary design point x with
+        known signed objective fval = neg_minmax * objective(x). Unlike
+        evaluate_merit_model, this recomputes real constraint violations at x
+        rather than using a local linearization. If v (slack) isn't supplied
+        (e.g. for an interpolation point with no natural candidate slack), it's
+        freshly derived the same way incumbent_v is initialized."""
+        if self.problem_type == "eq_only":
+            feas = np.atleast_1d(self.problem.get_deterministic_equality_constraints(x))
+            barrier = 0.0
+        else:
+            c_ineq = np.atleast_1d(self.problem.get_deterministic_inequality_constraints(x))
+            if v is None:
+                v = np.maximum(-c_ineq, self.epsilon * np.ones(self.n_v))
+            if self.problem_type == "both":
+                c_eq = np.atleast_1d(self.problem.get_deterministic_equality_constraints(x))
+                feas = np.hstack((c_eq, c_ineq + v))
+            else:  # ineq_only
+                feas = c_ineq + v
+            barrier = -self.theta * np.sum(np.log(v))
+        return float(fval + barrier + self.sigma * norm(feas))
+    
+    def evaluate_point_feasibility(self, x: tuple, v: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray | None]:
+        """Actual (non-model) constraint-violation vector at design point x.
+        Mirrors the feasibility half of evaluate_point_merit, split out so
+        dominance checks don't need to touch sigma/barrier terms at all.
+        If v (slack) isn't supplied, it's freshly derived the same way
+        incumbent_v is initialized. Returns (feas_vector, v) -- v is returned so
+        callers that end up adopting this point can reuse it as candidate_v
+        without recomputing."""
+        if self.problem_type == "eq_only":
+            feas = np.atleast_1d(self.problem.get_deterministic_equality_constraints(x))
+            return feas, None
+    
+        c_ineq = np.atleast_1d(self.problem.get_deterministic_inequality_constraints(x))
+        if v is None:
+            v = np.maximum(-c_ineq, self.epsilon * np.ones(self.n_v))
+        if self.problem_type == "both":
+            c_eq = np.atleast_1d(self.problem.get_deterministic_equality_constraints(x))
+            feas = np.hstack((c_eq, c_ineq + v))
+        else:  # ineq_only
+            feas = c_ineq + v
+        return feas, v
+    
+    def _pattern_search(
+        self,
+        fval: list[float],
+        interpolation_solns: list[Solution],
+        candidate_x: tuple,
+        candidate_solution: Solution,
+        candidate_fval: float,
+        candidate_feas_norm: float,
+    ) -> tuple[tuple, Solution, float, float, bool]:
+        """Direct search over the current interpolation set: adopt an
+        already-simulated point only if it strictly dominates the current best
+        candidate -- i.e. it is at least as good in both objective and
+        feasibility, and strictly better in at least one, with the strictly-
+        better quantity improving by at least ps_sufficient_reduction * delta_k**2.
+        This is a Pareto-dominance filter, not a merit-function comparison, so it
+        doesn't depend on sigma and can safely run before the sigma update."""
+        best_x, best_soln = candidate_x, candidate_solution
+        best_fval, best_feas_norm = candidate_fval, candidate_feas_norm
+        replaced = False
+    
+        threshold = self.ps_sufficient_reduction * self.delta_k**2
+    
+        for i, soln in enumerate(interpolation_solns):
+            x_i = tuple(soln.x)
+            if x_i == tuple(self.incumbent_x):
+                continue  # center point isn't a search candidate
+    
+            obj_i = fval[i]
+            feas_i_vec, _ = self.evaluate_point_feasibility(x_i)
+            feas_i_norm = float(norm(feas_i_vec))
+    
+            obj_delta = best_fval - obj_i        # positive => point i is better
+            feas_delta = best_feas_norm - feas_i_norm  # positive => point i is better
+    
+            obj_improves = obj_delta >= threshold
+            feas_improves = feas_delta >= threshold
+            obj_not_worse = obj_i <= best_fval + 1e-12
+            feas_not_worse = feas_i_norm <= best_feas_norm + 1e-12
+    
+            dominates = (obj_improves or feas_improves) and obj_not_worse and feas_not_worse
+    
+            if dominates:
+                best_x, best_soln = x_i, soln
+                best_fval, best_feas_norm = obj_i, feas_i_norm
+                replaced = True
+    
+        return best_x, best_soln, best_fval, best_feas_norm, replaced
+    
     def get_constraint_info(self, x):
         """Return lhs value of equality and inequality constraints as well as Jacobians of x (tuple of decision values)"""
         c_eq =  np.atleast_1d(self.problem.get_deterministic_equality_constraints(x))
@@ -1897,7 +2034,22 @@ class SQPASTRODF(Solver):
         #     final_ob = fval[0]
         # else:
         # calculate success ratio
-        fval_tilde = neg_minmax * candidate_solution.objectives_mean
+        fval_tilde = float(neg_minmax * candidate_solution.objectives_mean[0])
+        
+        candidate_feas_vec, _ = self.evaluate_point_feasibility(candidate_x, v=candidate_v)
+        candidate_feas_norm = float(norm(candidate_feas_vec))
+
+        candidate_x, candidate_solution, fval_tilde, candidate_feas_norm, ps_replaced = self._pattern_search(
+            fval, interpolation_solns, candidate_x, candidate_solution,
+            fval_tilde, candidate_feas_norm,
+        )
+        if ps_replaced:
+            # candidate_v no longer matches (it came from the composite step's
+            # slack, not this interpolation point) -- re-derive it fresh
+            if self.problem_type != "eq_only":
+                _, candidate_v = self.evaluate_point_feasibility(candidate_x) #updating v for inequality problems could become weird here
+            
+        # perform pattern search using current merit function 
         # replace the candidate x if the interpolation set has lower objective function
         # value and with sufficient reduction (pattern search)
         # also if the candidate solution's variance is high that could be caused by
@@ -1949,7 +2101,10 @@ class SQPASTRODF(Solver):
         # reduction in normal model
         m_n_reduction = norm(self.feas) -norm(self.R @ s_normal_rescale + self.feas)   
         # reduction in tangent model
-        #m_t_reduction = -1*(grad + H @ s_normal) @ s_tangent - .5*(s_tangent @ H @ s_tangent)
+        m_t_reduction = -1 * (
+            (self.grad_term + self.W @ s_normal_rescale) @ s_tangent_rescale
+            + 0.5 * (s_tangent_rescale @ self.W @ s_tangent_rescale)
+        )
         #reduction in objective model after normal step
         #q_n_reduction = -1*(grad @ s_normal) - .5*(s_normal @ H @ s_normal)
         if norm(s_normal) == 0: # no normal step taken so normal improvment is 0
@@ -1963,7 +2118,7 @@ class SQPASTRODF(Solver):
             else:
                 s_normal_v_rescale = s_normal_rescale[self.n_x:]
                 barrier_reduction = self.theta*(np.sum(s_normal_v_rescale) - 0.5* s_normal_v_rescale @ s_normal_v_rescale)
-            sig_numerator =-1* (q_n_reduction + barrier_reduction) 
+            sig_numerator =-1* (q_n_reduction + barrier_reduction + m_t_reduction) 
             sig_c_ratio = sig_numerator / ((1-self.nu)*m_n_reduction)
         # set sigma b to be norm of lagrange multipliers
         sigma_b = min(norm(self.lam), self.sigma_b_max)
@@ -1975,6 +2130,7 @@ class SQPASTRODF(Solver):
                 self.sigma = max(sigma_c, self.tau_1*self.sigma, self.sigma+ self.tau_2)
         else:
             self.sigma = max(self.sigma, sigma_b)
+        print("sigma:", self.sigma)
         # compute the success ratio rho
         # need to update success ratio to include constraints
         # candidate_x_arr = np.array(candidate_x)
@@ -1994,7 +2150,12 @@ class SQPASTRODF(Solver):
         # predicted reduction in merit model
         pred_merit_reduction = -1*self.grad_term @ s_rescale - 0.5*s_rescale @ self.W @ s_rescale + self.sigma*(m_n_reduction)
         # actual reduction in objective
-        obj_reduction = fval[0] - fval_tilde
+        incumbent_fval = float(
+            neg_minmax * self.incumbent_solution.objectives_mean[0]
+        )
+        
+        obj_reduction = incumbent_fval - fval_tilde
+        #obj_reduction = fval[0] - fval_tilde
         if self.problem_type == "eq_only":
             feas_tilde = np.atleast_1d(self.problem.get_deterministic_equality_constraints(candidate_x))
             actual_barrier_reduction = 0
@@ -2044,6 +2205,9 @@ class SQPASTRODF(Solver):
         # else:
         #     crit_ok = True
         successful = rho >= self.eta_1
+      #   print(f"[iterate {self.iteration_count}] rho={float(rho):.3e}, "
+      # f"pred={float(pred_merit_reduction):.3e}, actual={float(actual_merit_reduction):.3e}, "
+      # f"delta_k={float(self.delta_k):.3e}, successful={successful}")
         #print("delta", self.delta_k)
         # successful: accept
         if successful:
@@ -2078,6 +2242,7 @@ class SQPASTRODF(Solver):
                     recenter_mode=self.recenter_mode,
                     victim_idx=victim_idx
                 )
+                print("new x", self.incumbent_solution.x)
 
         elif not successful:
             self.delta_k = min(self.gamma_2 * self.delta_k, self.delta_max)
@@ -2119,8 +2284,9 @@ class SQPASTRODF(Solver):
         self.reuse_interpolation_set: bool = self.factors["reuse_interpolation_set"]
         self.recenter_mode: str = self.factors["recenter_mode"]
         self.use_lagrange_geometry: bool = self.factors["use_lagrange_geometry"]
-        self.lagrange_poisedness_threshold: str = self.factors["lagrange_poisedness_threshold"]
+        self.dist_threshold: str = self.factors["dist_threshold"]
         self.theta_decrease : float = self.factors["theta_decrease"]
+        self.ps_sufficient_reduction: float = self.factors["ps_sufficient_reduction"]
         if self.factors["delta_0"] is not None:
             self.delta_k : float = self.factors["delta_0"]
         if self.factors["delta_max"] is not None:

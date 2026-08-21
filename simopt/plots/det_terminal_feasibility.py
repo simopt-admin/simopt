@@ -143,7 +143,7 @@ def plot_det_terminal_feasibility(
                     elif score_type == "objective":
                         experiment.det_feasibility_history(method = "objective", obj_const = obj_const, feas_tol = feas_tol)
                     elif score_type == "norm":
-                        experiment.det_feasibility_history(method = "norm", feas_tol = feas_tol, floor_feas = floor_feas)
+                        experiment.det_feasibility_history(method = "norm", feas_tol_lower = feas_tol, floor_feas = floor_feas)
                     term_feas_score = [
                         curve.y_vals[-1] for curve in experiment.det_feasibility_curves
                     ]

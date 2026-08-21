@@ -320,6 +320,7 @@ class ProblemSolver:
         self.n_macroreps = n_macroreps
         self.all_recommended_xs = run_solver._to_list(df, "solution")
         self.all_intermediate_budgets = run_solver._to_list(df, "budget")
+        self.all_recommended_solns = run_solver._to_list(df, "solution_obj")
         self.timings = elapsed_times
 
         self.has_run = True
@@ -818,7 +819,8 @@ class ProblemSolver:
         self,
         method: Literal["norm", "objective"] = "norm",
         obj_const: float = 1e6,
-        feas_tol: float = 1e-2,
+        feas_tol_upper: float = 1e-5,
+        feas_tol_lower: float = 1e-8,
         floor_feas: bool = False,
     ) -> None:
         """Compute feasibility history."""
@@ -835,21 +837,27 @@ class ProblemSolver:
                 if c_ineq is not None:
                     parts.append(np.maximum(np.atleast_1d(c_ineq), 0))  # inequality: only positive part violates
     
-                #feas = float(norm(np.concatenate(parts))) if parts else 0.0
-                feas = float(np.max(np.abs(np.concatenate(parts)))) if parts else 0.0 #max violated constraint
+                feas = float(norm(np.concatenate(parts))) if parts else 0.0
+                #feas = float(np.max(np.abs(np.concatenate(parts)))) if parts else 0.0 #max violated constraint
                 mrep_feas.append(feas)
     
             if method == "norm":
                 if floor_feas:
-                    curve_data = [feas_tol if f <= feas_tol else f for f in mrep_feas]
+                    curve_data = [feas_tol_lower if f <= feas_tol_lower else f for f in mrep_feas]
                 else:
                     curve_data = mrep_feas
             elif method == "objective":
-                mrep_filter = [0.0 if f <= feas_tol else f for f in mrep_feas]
+                mrep_filter = [
+                    0.0 if f <= feas_tol_lower
+                    else np.inf if f > feas_tol_upper
+                    else f
+                    for f in mrep_feas
+                ]
                 curve_data = [
                     obj + obj_const * feas
                     for obj, feas in zip(self.objective_curves[mrep].y_vals, mrep_filter)
                 ]
+                
     
             self.det_feasibility_curves.append(
                 Curve(x_vals=self.all_intermediate_budgets[mrep], y_vals=curve_data)
