@@ -1612,7 +1612,7 @@ class SQPASTRODF(Solver):
                 s_normal_v = self.V @ s_normal_rescale[self.n_x:]
                 s_normal = np.concatenate((s_normal_rescale[:self.n_x], s_normal_v))
             
-            return s_normal_rescale, s_normal
+            return s_normal, s_normal_rescale   
         return s_normal, s_normal_rescale
                
     def solve_tangent_step(self, s_normal):

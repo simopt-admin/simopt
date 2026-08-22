@@ -96,7 +96,7 @@ class HS42(Model):
         z = self.rng.normalvariate(0, 1) 
         # Decision-dependent standard deviation
         local_noise_std = noise_std * (
-            1.0 + .5 * np.sqrt(true_obj)
+            1.0 + 5 * np.sqrt(true_obj)
         )
     
         # Heteroscedastic noisy response
