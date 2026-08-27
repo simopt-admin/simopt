@@ -11,6 +11,7 @@ from simopt.base import Problem, Solver
 
 from .post_normalize import post_normalize
 from .single import EXPERIMENT_DIR, ProblemSolver
+from .post_normalize_merit import post_normalize_merit
 
 # Workaround for AutoAPI
 model_directory = directory.model_directory
@@ -677,7 +678,61 @@ class ProblemsSolvers:
                 solve_tols=solve_tols,
                 csv_filename=csv_filename,
             )
-
+    def post_normalize_merit(
+        self,
+        obj_const: float = 1e6,
+        feas_tol_upper: float = 1e-5,
+        feas_tol_lower: float = 1e-8,
+    ) -> None:
+        """Builds merit and normalized merit-progress curves for all experiment
+        collections.
+    
+        Must be called after `post_normalize`, since `post_normalize_merit` relies on
+        each experiment's post-normalized `objective_curves` and `x0`/`x0_postreps`.
+    
+        Args:
+            obj_const (float, optional): Penalty multiplier on feasibility violation.
+                Defaults to 1e6.
+            feas_tol_upper (float, optional): Violation above this is treated as fully
+                infeasible. Defaults to 1e-5.
+            feas_tol_lower (float, optional): Violation at or below this is treated as
+                exactly feasible. Defaults to 1e-8.
+    
+        Raises:
+            RuntimeError: If any experiment has not yet been post-normalized.
+        """
+        if not self.check_postnormalize():
+            error_msg = (
+                "All experiments must be post-normalized (via post_normalize) before "
+                "running post_normalize_merit."
+            )
+            raise RuntimeError(error_msg)
+    
+        for problem_idx in range(self.n_problems):
+            experiments_same_problem = [
+                self.experiments[solver_idx][problem_idx]
+                for solver_idx in range(self.n_solvers)
+            ]
+            post_normalize_merit(
+                experiments=experiments_same_problem,
+                obj_const=obj_const,
+                feas_tol_upper=feas_tol_upper,
+                feas_tol_lower=feas_tol_lower,
+            )
+        # Save ProblemsSolvers object to .pickle file.
+        self.record_group_experiment_results()
+    
+    def check_postnormalize_merit(self) -> bool:
+        """Checks whether all experiments have been merit-postnormalized.
+    
+        Returns:
+            bool: Whether all experiments have been merit-postnormalized.
+        """
+        return all(
+            getattr(experiment, "has_merit_postnormalized", False)
+            for row in self.experiments
+            for experiment in row
+        )           
     def report_statistics(
         self,
         pair_list: list[ProblemSolver],

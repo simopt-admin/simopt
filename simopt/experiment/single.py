@@ -31,11 +31,16 @@ from simopt.utils import resolve_file_path
 
 from numpy.linalg import LinAlgError, inv, norm, pinv
 from scipy.linalg import null_space
+
+from simopt.deterministic_feasibility import (
+    deterministic_feas_violation,
+    merit_from_obj_and_feas,
+)
+from simopt.utils import make_nonzero 
 # Workaround for AutoAPI
 model_directory = directory.model_directory
 problem_directory = directory.problem_directory
 solver_directory = directory.solver_directory
-
 
 # Imports exclusively used when type checking
 # Prevents imports from being executed at runtime
@@ -495,6 +500,9 @@ class ProblemSolver:
         feasibility_norm_degree: int = 1,
         feasibility_two_sided: bool = False,
         disable_macrorep_bootstrap: bool = False,
+        feas_obj_const: float = 1e6,
+        feas_tol_upper: float = 1e-5,
+        feas_tol_lower: float = 1e-8,
     ) -> tuple[list[Curve], list[Curve]]:
         """Generates bootstrap samples of objective/progress and feasibility curves.
 
@@ -517,6 +525,7 @@ class ProblemSolver:
         """
         bootstrap_curves: list[Curve] = []
         bootstrap_feasibility_curves: list[Curve] = []
+        bootstrap_merit_curves: list[Curve] = []
         has_stochastic_constraints = self.problem.n_stochastic_constraints >= 1
 
         # Uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1.
@@ -555,6 +564,79 @@ class ProblemSolver:
         )
         # Compute initial optimality gap.
         bs_initial_opt_gap = bs_initial_obj_val - bs_optimal_obj_val
+        
+        # compute merit gap
+        if not hasattr(self, "best_merit"):
+            error_msg = (
+                "Run post_normalize_merit on this experiment's problem group before "
+                "bootstrapping merit curves."
+            )
+            raise RuntimeError(error_msg)
+        
+        # x0_feas = deterministic_feas_violation(self.problem, self.x0)
+        # bs_initial_merit_val = merit_from_obj_and_feas(
+        #     bs_initial_obj_val, x0_feas, feas_obj_const, feas_tol_lower, feas_tol_upper
+        # )
+        # bs_optimal_merit_val = self.best_merit  # fixed, not resampled/recomputed
+        # bs_initial_merit_gap = make_nonzero(
+        #     bs_initial_merit_val - bs_optimal_merit_val, "bs_initial_merit_gap"
+        # )
+        # Subsubstream 1: reserved for bootstrapping at x0 and x*.
+        bs_postrep_idxs = bootstrap_rng.choices(
+            range(self.n_postreps_init_opt), k=self.n_postreps_init_opt
+        )
+        bs_initial_obj_val = np.mean(
+            [self.x0_postreps[postrep] for postrep in bs_postrep_idxs]
+        )
+        if self.crn_across_init_opt:
+            bootstrap_rng.reset_subsubstream()
+        bs_postrep_idxs = bootstrap_rng.choices(
+            range(self.n_postreps_init_opt), k=self.n_postreps_init_opt
+        )
+        bs_optimal_obj_val = np.mean(
+            [self.xstar_postreps[postrep] for postrep in bs_postrep_idxs]
+        )
+        bs_initial_opt_gap = bs_initial_obj_val - bs_optimal_obj_val
+        
+        # --- Merit-optimal resampling (mirrors the x0/x* resampling above) ---
+        # Feasibility is deterministic, so only the objective component needs resampling.
+        x0_feas = deterministic_feas_violation(self.problem, self.x0)
+        bs_initial_merit_val = merit_from_obj_and_feas(
+            bs_initial_obj_val, x0_feas, feas_obj_const, feas_tol_lower, feas_tol_upper
+        )
+        
+        if getattr(self, "xstar_merit", None) is not None:
+            xstar_merit_feas = deterministic_feas_violation(self.problem, self.xstar_merit)
+            if self.crn_across_init_opt:
+                bootstrap_rng.reset_subsubstream()
+            bs_postrep_idxs = bootstrap_rng.choices(
+                range(self.n_postreps_init_opt), k=self.n_postreps_init_opt
+            )
+            bs_optimal_merit_obj_val = np.mean(
+                [self.xstar_merit_postreps[postrep] for postrep in bs_postrep_idxs]
+            )
+            bs_optimal_merit_val = merit_from_obj_and_feas(
+                bs_optimal_merit_obj_val,
+                xstar_merit_feas,
+                feas_obj_const,
+                feas_tol_lower,
+                feas_tol_upper,
+            )
+        else:
+            # Fallback: post_normalize_merit was called with an explicit proxy_opt_merit,
+            # so there's no re-simulated distribution to resample from — use the fixed value.
+            if not hasattr(self, "best_merit"):
+                error_msg = (
+                    "Run post_normalize_merit on this experiment's problem group before "
+                    "bootstrapping merit curves."
+                )
+                raise RuntimeError(error_msg)
+            bs_optimal_merit_val = self.best_merit
+        
+        bs_initial_merit_gap = make_nonzero(
+            bs_initial_merit_val - bs_optimal_merit_val, "bs_initial_merit_gap"
+        )
+
         # Advance RNG subsubstream to prepare for inner-level bootstrapping.
         # Will now be at start of subsubstream 2.
         bootstrap_rng.advance_subsubstream()
@@ -597,12 +679,14 @@ class ProblemSolver:
                                 ]
                             )
                         )
+               
                 # Record objective or progress curve.
                 if normalize:
                     frac_intermediate_budgets = [
                         budget / self.problem.factors["budget"]
                         for budget in self.all_intermediate_budgets[mrep]
                     ]
+                    
                     norm_est_objectives = [
                         (est_objective - bs_optimal_obj_val) / bs_initial_opt_gap
                         for est_objective in est_objectives
@@ -612,6 +696,38 @@ class ProblemSolver:
                         y_vals=norm_est_objectives,
                     )
                     bootstrap_curves.append(new_progress_curve)
+                    # Build merit values in parallel with objective values — feasibility of a
+                    # solution is deterministic, so it doesn't need its own resampling; we just
+                    # reuse the already-resampled est_objectives.
+                    est_merit = []
+                    for budget in range(len(self.all_intermediate_budgets[mrep])):
+                        sol = self.all_recommended_xs[mrep][budget]
+                        feas = deterministic_feas_violation(self.problem, sol)
+                        est_merit.append(
+                            merit_from_obj_and_feas(
+                                est_objectives[budget], feas, feas_obj_const, feas_tol_lower, feas_tol_upper
+                            )
+                        )
+                    if normalize:
+                        best_so_far = np.inf
+                        running_best = []
+                        for m in est_merit:
+                            best_so_far = min(best_so_far, m)
+                            running_best.append(best_so_far)
+                        est_merit = running_best
+                        norm_est_merit = [
+                            max((m - bs_optimal_merit_val) / bs_initial_merit_gap, 0.0)
+                            if np.isfinite(m) else 1.0
+                            for m in est_merit
+                        ]
+                        new_merit_curve = Curve(
+                            x_vals=frac_intermediate_budgets, y_vals=norm_est_merit
+                        )
+                    else:
+                        new_merit_curve = Curve(
+                            x_vals=self.all_intermediate_budgets[mrep], y_vals=est_merit
+                        )
+                    bootstrap_merit_curves.append(new_merit_curve)
                 else:
                     new_objective_curve = Curve(
                         x_vals=self.all_intermediate_budgets[mrep],
@@ -715,7 +831,33 @@ class ProblemSolver:
                         ),
                     )
                 )
-        return bootstrap_curves, bootstrap_feasibility_curves
+                # Build merit values in parallel with objective values — feasibility of a
+                # solution is deterministic, so it doesn't need its own resampling; we just
+                # reuse the already-resampled est_objectives.
+                est_merit = []
+                for budget in range(len(self.all_intermediate_budgets[mrep])):
+                    sol = self.all_recommended_xs[mrep][budget]
+                    feas = deterministic_feas_violation(self.problem, sol)
+                    est_merit.append(
+                        merit_from_obj_and_feas(
+                            est_objectives[budget], feas, feas_obj_const, feas_tol_lower, feas_tol_upper
+                        )
+                    )
+                if normalize:
+                    norm_est_merit = [
+                        max((m - bs_optimal_merit_val) / bs_initial_merit_gap, 0.0)
+                        if np.isfinite(m) else 1.0
+                        for m in est_merit
+                    ]
+                    new_merit_curve = Curve(
+                        x_vals=frac_intermediate_budgets, y_vals=norm_est_merit
+                    )
+                else:
+                    new_merit_curve = Curve(
+                        x_vals=self.all_intermediate_budgets[mrep], y_vals=est_merit
+                    )
+                bootstrap_merit_curves.append(new_merit_curve)
+        return bootstrap_curves, bootstrap_feasibility_curves, bootstrap_merit_curves
 
     def bootstrap_terminal_objective_and_feasibility(
         self,
@@ -725,7 +867,7 @@ class ProblemSolver:
         feasibility_two_sided: bool = True,
     ) -> tuple[list[float], list[float]]:
         """Bootstraps terminal objective and feasibility scores."""
-        bootstrap_objective_curves, bootstrap_feasibility_curves = (
+        bootstrap_objective_curves, bootstrap_feasibility_curves, _= (
             self.bootstrap_sample(
                 bootstrap_rng,
                 False,

@@ -12,7 +12,7 @@ from simopt.plot_type import PlotType
 from .utils import plot_bootstrap_conf_ints, report_max_halfwidth, save_plot, setup_plot
 
 
-def plot_solvability_profiles(
+def plot_merit_solvability_profiles(
     experiments: list[list[ProblemSolver]],
     plot_type: PlotType,
     all_in_one: bool = True,
@@ -22,10 +22,6 @@ def plot_solvability_profiles(
     print_max_hw: bool = True,
     solve_tol: float = 0.1,
     beta: float = 0.5,
-    curve_source: str = "progress_curves",
-    feas_obj_const: float = 1e6,       # <-- new
-    feas_tol_upper: float = 1e-5,      # <-- new
-    feas_tol_lower: float = 1e-8,      # <-- new
     ref_solver: str | None = None,
     plot_title: str | None = None,
     legend_loc: str | None = None,
@@ -153,14 +149,14 @@ def plot_solvability_profiles(
                     PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
                 ]:
                     sub_curve = curve_utils.cdf_of_curves_crossing_times(
-                        curves=getattr(experiment, curve_source), threshold=solve_tol
+                        curves=experiment.progress_curves, threshold=solve_tol
                     )
                 elif plot_type in [
                     PlotType.QUANTILE_SOLVABILITY,
                     PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
                 ]:
                     sub_curve = curve_utils.quantile_cross_jump(
-                        curves=getattr(experiment, curve_source),
+                        curves=experiment.progress_curves,
                         threshold=solve_tol,
                         beta=beta,
                     )
@@ -189,10 +185,6 @@ def plot_solvability_profiles(
                         beta=beta,
                         estimator=solver_curve,
                         normalize=True,
-                        curve_source=curve_source,
-                        feas_obj_const=feas_obj_const,        # <-- add
-                        feas_tol_upper=feas_tol_upper,        # <-- add
-                        feas_tol_lower=feas_tol_lower,        # <-- add
                     )
                     if plot_conf_ints:
                         if isinstance(bs_conf_int_lb_curve, (int, float)) or isinstance(
@@ -293,10 +285,6 @@ def plot_solvability_profiles(
                                 beta=beta,
                                 estimator=diff_solver_curve,
                                 normalize=True,
-                                curve_source=curve_source,
-                                feas_obj_const=feas_obj_const,        # <-- add
-                                feas_tol_upper=feas_tol_upper,        # <-- add
-                                feas_tol_lower=feas_tol_lower,        # <-- add
                             )
                         )
                         if plot_conf_ints:
@@ -377,14 +365,14 @@ def plot_solvability_profiles(
                     PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
                 ]:
                     sub_curve = curve_utils.cdf_of_curves_crossing_times(
-                        curves=getattr(experiment, curve_source), threshold=solve_tol
+                        curves=experiment.progress_curves, threshold=solve_tol
                     )
                 elif plot_type in [
                     PlotType.QUANTILE_SOLVABILITY,
                     PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
                 ]:
                     sub_curve = curve_utils.quantile_cross_jump(
-                        curves=getattr(experiment, curve_source),
+                        curves=experiment.progress_curves,
                         threshold=solve_tol,
                         beta=beta,
                     )

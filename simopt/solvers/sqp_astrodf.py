@@ -590,7 +590,7 @@ class SQPASTRODF(Solver):
 
         # compute sample size
         raw_sample_size = pilot_run * max(
-            1.0, max(sig2,1) / (kappa**2 * delta**self.delta_power)
+            1.0, max(sig2,1e-12) / (kappa**2 * delta**self.delta_power)
         )
         return ceil(raw_sample_size)
 
@@ -626,10 +626,10 @@ class SQPASTRODF(Solver):
         ):
             # Construct the interpolation set
             var_y = self.get_coordinate_basis_interpolation_points(
-                self.incumbent_x, delta_k, self.problem
+                self.incumbent_x, delta_k, self.problem, 
             )
             var_z = self.get_coordinate_basis_interpolation_points(
-                tuple(np.zeros(self.problem.dim)), delta_k, self.problem
+                tuple(np.zeros(self.problem.dim)), delta_k, self.problem, apply_bounds=False
             )
         # Else if we will reuse one design point (k > 1)
         else:
@@ -667,6 +667,7 @@ class SQPASTRODF(Solver):
                 self.problem,
                 np.array(rotate_matrix),
                 np.array(self.visited_pts_list[f_index].x) - np.array(self.incumbent_x),
+                apply_bounds = False
             )
 
         return var_y, var_z
@@ -926,6 +927,19 @@ class SQPASTRODF(Solver):
                     # TODO: figure out if we need to raise an error instead
                     logging.warning("kappa is not set. Using default value of 0.")
                     k = 0
+                print(
+                    "pilot =", pilot_run,
+                    "sig2 =", sig2,
+                    "kappa =", k,
+                    "delta =", delta_k,
+                    "rhs =", solution.objectives_mean,
+                )
+                
+                stopping = self.get_stopping_time(
+                    pilot_run, sig2, delta_k, k
+                )
+                
+                print("stopping =", stopping)
                 # Compute stopping time
                 stopping = self.get_stopping_time(pilot_run, sig2, delta_k, k)
     
@@ -1248,11 +1262,11 @@ class SQPASTRODF(Solver):
         return inverse_mult, grad, hessian, matrix_inverse
 
     def get_coordinate_basis_interpolation_points(
-        self, x_k: tuple[int | float, ...], delta: float, problem: Problem
+        self, x_k: tuple[int | float, ...], delta: float, problem: Problem, apply_bounds=True
     ) -> list[list[list[int | float]]]:
         """Compute the interpolation points (2d+1) using the coordinate basis."""
         y_var = [[list(x_k)]]
-        is_block_constraint = sum(x_k) != 0
+        #is_block_constraint = sum(x_k) != 0
         num_decision_vars = problem.dim
 
         lower_bounds = problem.lower_bounds
@@ -1265,7 +1279,7 @@ class SQPASTRODF(Solver):
             minus: list[float] = [x - d for x, d in zip(x_k, coord_diff, strict=False)]
             plus: list[float] = [x + d for x, d in zip(x_k, coord_diff, strict=False)]
 
-            if is_block_constraint:
+            if apply_bounds:
                 minus = [
                     clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j])
                     for j, val in enumerate(minus)
@@ -1287,13 +1301,14 @@ class SQPASTRODF(Solver):
         problem: Problem,
         rotate_matrix: np.ndarray,
         reused_x: np.ndarray,
+        apply_bounds = True
     ) -> list[list[np.ndarray]]:
         """Compute the interpolation points (2d+1) using the rotated coordinate basis.
 
         One design point is reused, which is the farthest point from the center point.
         """
         y_var = [[x_k]]
-        is_block_constraint = np.sum(x_k) != 0
+        #is_block_constraint = np.sum(x_k) != 0
         num_decision_vars = problem.dim
 
         lower_bounds = np.array(problem.lower_bounds)
@@ -1306,7 +1321,7 @@ class SQPASTRODF(Solver):
 
             minus = x_k - rotate_matrix_delta
 
-            if is_block_constraint:
+            if apply_bounds:
                 minus = np.array(
                     [
                         clamp_with_epsilon(val, lower_bounds[j], upper_bounds[j])
@@ -1583,8 +1598,8 @@ class SQPASTRODF(Solver):
             elif self.dogleg: # solve using dogleg method
                 s2 = lsq_linear(self.R, -1*self.feas).x
                 norm_feasible =  norm(s2) <= delta_hat 
-                print("s2", s2)
-                print("norm_feasible", norm_feasible)
+                #print("s2", s2)
+                #print("norm_feasible", norm_feasible)
                 if self.problem_type != "eq_only":
                     ftb = -1 * self.a_normal * self.epsilon * np.ones(self.n_v)
                     ftb_feasible = True
@@ -1595,13 +1610,13 @@ class SQPASTRODF(Solver):
                     feasible = norm_feasible   
                 if feasible: #if global minimizer in trust-region accept
                     s_normal_rescale = s2
-                    print("Norm feasible set normal to s2")
+                    #print("Norm feasible set normal to s2")
                 else:
-                    print("Not feasible solve s1")
+                    #print("Not feasible solve s1")
                     s1 = self.solve_exact_normal_subproblem(delta_hat)
                     s_normal_rescale = self._normal_dogleg(s1, s2, delta_hat) 
-                    print("s1", s1)
-                    print("dogleg", s_normal_rescale)
+                    #print("s1", s1)
+                    #print("dogleg", s_normal_rescale)
             else:
                s_normal_rescale =  self.solve_exact_normal_subproblem(delta_hat)
                
@@ -1887,11 +1902,12 @@ class SQPASTRODF(Solver):
         neg_minmax = -self.problem.minmax[0]
 
         # determine power of delta in adaptive sampling rule
+        pilot_scale = .25
         if self.sampling_method == "adaptive":
             pilot_run = ceil(
                 max(
                     self.lambda_min * log(10 + self.iteration_count, 10) ** 1.1,
-                    min(0.5 * self.problem.dim, self.budget.total),
+                    min(pilot_scale * self.problem.dim, self.budget.total),
                 )
                 - 1
             )

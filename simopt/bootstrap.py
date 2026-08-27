@@ -18,6 +18,9 @@ def bootstrap_sample_all(
     feasibility_score_method: Literal["inf_norm", "norm"] = "inf_norm",
     feasibility_norm_degree: int = 1,
     feasibility_two_sided: bool = False,
+    feas_obj_const: float = 1e6,
+    feas_tol_upper: float = 1e-5,
+    feas_tol_lower: float = 1e-8,
 ) -> tuple[list[list[list[Curve]]], list[list[list[Curve]]]]:
     """Generates bootstrap samples of progress and feasibility curves.
 
@@ -45,24 +48,29 @@ def bootstrap_sample_all(
     bootstrap_feasibility_curves = [
         [[] for _ in range(n_problems)] for _ in range(n_solvers)
     ]
+    bootstrap_merit_curves = [[[] for _ in range(n_problems)] for _ in range(n_solvers)]
     # Obtain a bootstrap sample from each experiment.
     for solver_idx in range(n_solvers):
         for problem_idx in range(n_problems):
             experiment = experiments[solver_idx][problem_idx]
-            objective_curves, feasibility_curves = experiment.bootstrap_sample(
+            objective_curves, feasibility_curves, merit_curves = experiment.bootstrap_sample(
                 bootstrap_rng,
                 normalize,
                 feasibility_score_method,
                 feasibility_norm_degree,
                 feasibility_two_sided,
+                feas_obj_const=feas_obj_const,
+                feas_tol_upper=feas_tol_upper,
+                feas_tol_lower=feas_tol_lower,
             )
             bootstrap_curves[solver_idx][problem_idx] = objective_curves
             bootstrap_feasibility_curves[solver_idx][problem_idx] = feasibility_curves
+            bootstrap_merit_curves[solver_idx][problem_idx] = merit_curves
             # Reset substream for next solver-problem pair.
             bootstrap_rng.reset_substream()
     # Advance substream of random number generator to prepare for next bootstrap sample.
     bootstrap_rng.advance_substream()
-    return bootstrap_curves, bootstrap_feasibility_curves
+    return  bootstrap_curves, bootstrap_feasibility_curves, bootstrap_merit_curves
 
 
 def bootstrap_procedure(
@@ -77,6 +85,10 @@ def bootstrap_procedure(
     feasibility_score_method: Literal["inf_norm", "norm"] = "inf_norm",
     feasibility_norm_degree: int = 1,
     feasibility_two_sided: bool = False,
+    curve_source: str = "progress_curves",   # <-- new
+    feas_obj_const: float = 1e6,             # <-- new
+    feas_tol_upper: float = 1e-5,            # <-- new
+    feas_tol_lower: float = 1e-8,            # <-- new
 ) -> tuple[float, float] | tuple[Curve, Curve]:
     """Performs bootstrapping and computes confidence intervals for progress curves.
 
@@ -143,18 +155,16 @@ def bootstrap_procedure(
     bootstrap_replications = []
     for _ in range(n_bootstraps):
         # Generate bootstrap sample of estimated objective/progress curves.
-        bootstrap_curves, bootstrap_feasibility_curves = bootstrap_sample_all(
-            experiments,
-            bootstrap_rng,
-            normalize,
-            feasibility_score_method,
-            feasibility_norm_degree,
-            feasibility_two_sided,
+        bootstrap_curves, bootstrap_feasibility_curves, bootstrap_merit_curves = bootstrap_sample_all(
+        experiments, bootstrap_rng, normalize,
+        feasibility_score_method, feasibility_norm_degree, feasibility_two_sided,
+        feas_obj_const=feas_obj_const,
+        feas_tol_upper=feas_tol_upper,
+        feas_tol_lower=feas_tol_lower,
         )
-        if plot_type in (
-            PlotType.MEAN_FEASIBILITY_PROGRESS,
-            PlotType.QUANTILE_FEASIBILITY_PROGRESS,
-        ):
+        if curve_source == "merit_progress_curves":
+            curves = bootstrap_merit_curves
+        elif plot_type in (PlotType.MEAN_FEASIBILITY_PROGRESS, PlotType.QUANTILE_FEASIBILITY_PROGRESS):
             curves = bootstrap_feasibility_curves
         else:
             curves = bootstrap_curves
@@ -229,11 +239,11 @@ def bootstrap_procedure(
     # Create the curves for the lower and upper bounds of the bootstrap
     # confidence intervals.
     unique_budget_list_floats = [float(val) for val in unique_budget_list]
-    lower_bound_list = [float(val) for val in bs_conf_int_lower_bound_list]
+    lower_bound_list = [float(np.asarray(val).reshape(-1)[0]) for val in bs_conf_int_lower_bound_list]
     bs_conf_int_lower_bounds = Curve(
         x_vals=unique_budget_list_floats, y_vals=lower_bound_list
     )
-    upper_bound_list = [float(val) for val in bs_conf_int_upper_bound_list]
+    upper_bound_list = [float(np.asarray(val).reshape(-1)[0]) for val in bs_conf_int_upper_bound_list]
     bs_conf_int_upper_bounds = Curve(
         x_vals=unique_budget_list_floats, y_vals=upper_bound_list
     )
@@ -401,6 +411,7 @@ def compute_bootstrap_conf_int(
         ValueError: If `conf_level` is not in (0, 1), or if `overall_estimator` is None
             when `bias_correction` is True.
     """
+    #print(">>> USING PATCHED VERSION <<<")
     # Value checking
     if not 0 < conf_level < 1:
         error_msg = "Confidence level must be in (0, 1)."
@@ -423,6 +434,12 @@ def compute_bootstrap_conf_int(
         zconflvl = norm.ppf(conf_level)
         q_lower = norm.cdf(2 * z0 - zconflvl)
         q_upper = norm.cdf(2 * z0 + zconflvl)
+         # --- DEBUG ---
+        if np.ndim(q_lower) != 0 or np.ndim(q_upper) != 0:
+            print("BAD q_lower/q_upper:", q_lower, q_upper)
+            print("overall_estimator:", overall_estimator, type(overall_estimator))
+            print("observations sample:", observations[:5], type(observations[0]))
+        # --- END DEBUG ---
     else:
         # For uncorrected CIs, see equation (4.3) on page 146.
         q_lower = (1 - conf_level) / 2
