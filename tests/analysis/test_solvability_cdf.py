@@ -5,7 +5,7 @@ from simopt.analysis.solvability_cdf import analyze, analyze_many, plot, plot_ma
 from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plots.solvability_cdf import plot_solvability_cdfs
-from test.utils import capture_log_data
+from tests.utils import capture_log_data
 
 
 def test_solvability_cdf(experiment):

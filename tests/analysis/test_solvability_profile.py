@@ -6,7 +6,7 @@ from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plot_type import PlotType
 from simopt.plots.solvability_profile import plot_solvability_profiles
-from test.utils import capture_log_data
+from tests.utils import capture_log_data
 
 
 def test_solvability_profile(experiment):

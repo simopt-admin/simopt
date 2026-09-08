@@ -2,7 +2,7 @@ import pytest
 
 from simopt.experiment.post_normalize import post_normalize
 from simopt.experiment.single import ProblemSolver
-from test.utils import load_problem_solver
+from tests.utils import load_problem_solver
 
 
 @pytest.fixture(scope="session")

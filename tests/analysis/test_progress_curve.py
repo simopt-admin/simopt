@@ -6,7 +6,7 @@ from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plot_type import PlotType
 from simopt.plots.progress_curve import plot_progress_curves
-from test.utils import capture_log_data
+from tests.utils import capture_log_data
 
 
 def test_progress_curve(experiment):

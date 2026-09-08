@@ -4,7 +4,7 @@ import numpy as np
 from simopt.analysis.terminal_scatterplot import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.plots.terminal_scatterplot import plot_terminal_scatterplots
-from test.utils import capture_log_data
+from tests.utils import capture_log_data
 
 
 def test_terminal_scatterplot(experiment):

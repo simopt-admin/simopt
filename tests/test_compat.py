@@ -6,7 +6,7 @@ from simopt.experiment.api import SimulationConfig, run_experiment
 from simopt.experiment.data import ManyPostReplicateSchema, ManySolverHistorySchema
 from simopt.experiment.single import ProblemSolver
 from simopt.options import CrnOptions
-from test.utils import load_problem_solver
+from tests.utils import load_problem_solver
 
 
 def _solver_history_df(result):

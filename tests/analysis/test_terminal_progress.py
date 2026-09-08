@@ -5,7 +5,7 @@ from simopt.analysis.terminal_progress import analyze, analyze_many, plot, plot_
 from simopt.compat import convert
 from simopt.plot_type import PlotType
 from simopt.plots.terminal_progress import plot_terminal_progress
-from test.utils import capture_log_data
+from tests.utils import capture_log_data
 
 
 def test_terminal_progress(experiment):

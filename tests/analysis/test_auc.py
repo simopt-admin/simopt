@@ -5,7 +5,7 @@ from simopt.analysis.auc import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plots.area_scatterplot import plot_area_scatterplots
-from test.utils import capture_log_data
+from tests.utils import capture_log_data
 
 
 def test_auc(experiment):
