@@ -8,6 +8,8 @@ from collections.abc import Sequence
 from random import Random
 from typing import ParamSpec, Protocol, TypeVar
 
+from simopt._markers import input_model
+
 P = ParamSpec("P")
 R = TypeVar("R", covariant=True)
 T = TypeVar("T")
@@ -31,6 +33,7 @@ class InputModel(Protocol[P, R]):
         pass
 
 
+@input_model
 class Exp(InputModel):
     """Exponential distribution wrapper."""
 
@@ -47,6 +50,7 @@ class Exp(InputModel):
         return rng.expovariate(lambda_)
 
 
+@input_model
 class Gamma(InputModel):
     """Gamma distribution wrapper."""
 
@@ -64,6 +68,7 @@ class Gamma(InputModel):
         return rng.gammavariate(alpha, beta)
 
 
+@input_model
 class WeightedChoice(InputModel):
     """Discrete weighted choice wrapper."""
 
@@ -87,6 +92,7 @@ class WeightedChoice(InputModel):
         return population[bisect.bisect(cum_weights, x)]
 
 
+@input_model
 class Poisson(InputModel):
     """Poisson distribution wrapper."""
 
@@ -117,6 +123,7 @@ class Poisson(InputModel):
         return self._poissonvariate(rng, lam)
 
 
+@input_model
 class Beta(InputModel):
     """Beta distribution wrapper."""
 
@@ -134,6 +141,7 @@ class Beta(InputModel):
         return rng.betavariate(alpha, beta)
 
 
+@input_model
 class Triangular(InputModel):
     """Triangular distribution wrapper."""
 
@@ -152,6 +160,7 @@ class Triangular(InputModel):
         return rng.triangular(low, high, mode)
 
 
+@input_model
 class Uniform(InputModel):
     """Uniform distribution wrapper."""
 

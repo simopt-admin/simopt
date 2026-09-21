@@ -19,23 +19,8 @@ from simopt.base import (
     Problem,
     VariableType,
 )
-from simopt.input_models import InputModel
+from simopt.simulations.ermexample import ERMExampleModelConfig, FileInputModel, replicate
 from simopt.utils import override
-
-
-class ERMExampleModelConfig(BaseModel):
-    """Configuration model for ERMExample simulation.
-
-    An empirical risk minimization model for linear regression.
-    """
-
-    beta: Annotated[
-        tuple[float, ...],
-        Field(
-            default=(0.0, 0.0),
-            description="(intercept, slope) coefficients",
-        ),
-    ]
 
 
 class ERMExampleProblemConfig(BaseModel):
@@ -60,18 +45,6 @@ class ERMExampleProblemConfig(BaseModel):
             json_schema_extra={"isDatafarmable": False},
         ),
     ]
-
-
-class FileInputModel(InputModel):
-    def __init__(self, filename):
-        self.data = np.load(filename)
-
-    def random(self, rng: MRG32k3a) -> tuple[float, float]:
-        n_rows = np.shape(self.data)[0]
-        resample_idx = np.random.choice(n_rows, size=1, replace=True)
-        resample_x = self.data[resample_idx, 0].item()
-        resample_y = self.data[resample_idx, 1].item()
-        return resample_x, resample_y
 
 
 class ERMExampleModel(Model):
@@ -104,12 +77,7 @@ class ERMExampleModel(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        beta0, beta1 = factors.beta
-        x, y = self.resample_model.random(rngs[0])
-        sq_error_loss = (y - beta0 - beta1 * x) ** 2
-        error_loss = y - beta0 - beta1 * x
-        # gradients wrt beta0 and beta1
-        grad_sq_error_loss = (-2 * error_loss, -2 * x * error_loss)
+        sq_error_loss, grad_sq_error_loss = replicate(factors, rngs, self.resample_model)
 
         # Compose responses and gradients.
         responses = {"sq_error_loss": sq_error_loss}
@@ -155,7 +123,9 @@ class ERMExampleProblem(Problem):
     @override
     def build(self) -> dsl.Model:
         problem = dsl.Model()
-        beta = problem.add_continuous_vector(lb=-np.inf, ub=np.inf, shape=(2,), initial=self.factors["initial_solution"])
+        beta = problem.add_continuous_vector(
+            lb=-np.inf, ub=np.inf, shape=(2,), initial=self.factors["initial_solution"]
+        )
         simulation = self.add_simulation(problem, {"beta": beta})
         problem.minimize(dsl.mean(simulation.metric("sq_error_loss")))
         return problem

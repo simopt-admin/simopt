@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import math
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar
 
-import numpy as np
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt import dsl
@@ -17,48 +15,8 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Gamma
+from simopt.simulations.paramesti import ParameterEstimationConfig, replicate
 from simopt.utils import override
-
-
-class ParameterEstimationConfig(BaseModel):
-    """Configuration for the parameter estimation model."""
-
-    xstar: Annotated[
-        list[float],
-        Field(
-            default=[2, 5],
-            description="x^*, the unknown parameter that maximizes g(x)",
-        ),
-    ]
-    x: Annotated[
-        list[float],
-        Field(
-            default=[1, 1],
-            description="x, variable in pdf",
-        ),
-    ]
-
-    def _check_xstar(self) -> None:
-        if any(xstar_i <= 0 for xstar_i in self.xstar):
-            raise ValueError("All elements in xstar must be greater than 0.")
-
-    def _check_x(self) -> None:
-        if any(x_i <= 0 for x_i in self.x):
-            raise ValueError("All elements in x must be greater than 0.")
-
-    @model_validator(mode="after")
-    def _validate_model(self) -> Self:
-        self._check_xstar()
-        self._check_x()
-
-        x_len = len(self.x)
-        xstar_len = len(self.xstar)
-        if x_len != 2:
-            raise ValueError("The length of x must equal 2.")
-        if xstar_len != 2:
-            raise ValueError("The length of xstar must equal 2.")
-
-        return self
 
 
 class ParamEstiMaxLogLikConfig(BaseModel):
@@ -118,21 +76,7 @@ class ParameterEstimation(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        xstar = factors.xstar
-        x = factors.x
-        # Generate y1 and y2 from specified gamma distributions using input models.
-        # Outputs will be coupled when generating Y_j's.
-        y2 = self.y2_model.random(rngs[0], xstar[1], 1)
-        y1 = self.y1_model.random(rngs[1], xstar[0] * y2, 1)
-        # Compute Log Likelihood
-        loglik = (
-            -y1
-            - y2
-            + (x[0] * y2 - 1) * np.log(y1)
-            + (x[1] - 1) * np.log(y2)
-            - np.log(math.gamma(x[0] * y2))
-            - np.log(math.gamma(x[1]))
-        )
+        loglik = replicate(factors, rngs, self.y1_model, self.y2_model)
         # Compose responses and gradients.
         responses = {"loglik": loglik}
         return responses, {}

@@ -20,22 +20,13 @@ from simopt.base import (
     VariableType,
 )
 from simopt.input_models import Normal
+from simopt.simulations.example import (
+    Example2ModelConfig,
+    ExampleModelConfig,
+    replicate,
+    replicate_discrete,
+)
 from simopt.utils import override
-
-
-class ExampleModelConfig(BaseModel):
-    """Configuration model for Example simulation.
-
-    A model that is a deterministic function evaluated with noise.
-    """
-
-    x: Annotated[
-        tuple[float, ...],
-        Field(
-            default=(2.0, 2.0),
-            description="point to evaluate",
-        ),
-    ]
 
 
 class ExampleProblemConfig(BaseModel):
@@ -92,12 +83,11 @@ class ExampleModel(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        x = np.array(factors.x)
-        fn_eval_at_x = np.linalg.norm(x) ** 2 + self.noise_model.random(rngs[0])
+        fn_eval_at_x, gradient = replicate(factors, rngs, self.noise_model)
 
         # Compose responses and gradients.
         responses = {"est_f(x)": fn_eval_at_x}
-        gradients = {"est_f(x)": {"x": tuple(2 * x)}}
+        gradients = {"est_f(x)": {"x": gradient}}
         return responses, gradients
 
 
@@ -152,21 +142,6 @@ class ExampleProblem(Problem):
         )
 
 
-class Example2ModelConfig(BaseModel):
-    """Configuration model for Example-2 simulation.
-
-    A model that is a deterministic quadratic function evaluated with noise.
-    """
-
-    x: Annotated[
-        tuple[int, ...],
-        Field(
-            default=(0, 0, 0, 0),
-            description="point to evaluate",
-        ),
-    ]
-
-
 class Example2ProblemConfig(BaseModel):
     """Configuration model for Example-2 Problem.
 
@@ -213,9 +188,7 @@ class Example2Model(Model):
 
     def replicate(self, factors: Example2ModelConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate a quadratic function f(x) with stochastic noise."""
-        x = np.array(factors.x)
-        target = np.array([1, 2, 3, 4])
-        fn_eval_at_x = np.sum((x - target) ** 2) + self.noise_model.random(rngs[0])
+        fn_eval_at_x = replicate_discrete(factors, rngs, self.noise_model)
 
         responses = {"est_f(x)": fn_eval_at_x}
         return responses, {}
