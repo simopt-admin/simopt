@@ -198,7 +198,7 @@ class RMITD(Model):
 
         self.demand_model = DemandInputModel()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: RMITDConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -212,13 +212,13 @@ class RMITD(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        gamma_shape = factors["gamma_shape"]
-        gamma_scale = factors["gamma_scale"]
-        initial_inventory = factors["initial_inventory"]
-        reservation_qtys: list = factors["reservation_qtys"]
-        demand_means = np.array(factors["demand_means"])
-        prices = factors["prices"]
-        cost = factors["cost"]
+        gamma_shape = factors.gamma_shape
+        gamma_scale = factors.gamma_scale
+        initial_inventory = factors.initial_inventory
+        reservation_qtys: list = factors.reservation_qtys
+        demand_means = np.array(factors.demand_means)
+        prices = factors.prices
+        cost = factors.cost
         # Generate X and Y (to use for computing demand).
         # random.gammavariate takes two inputs: alpha and beta.
         #     alpha = k = gamma_shape

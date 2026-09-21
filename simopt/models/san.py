@@ -184,7 +184,7 @@ class SAN(Model):
             self.__dfs(graph, next_point, visited)
         return visited
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: SANConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -198,9 +198,9 @@ class SAN(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        num_nodes: int = factors["num_nodes"]
-        arcs: list[tuple[int, int]] = factors["arcs"]
-        arc_means: tuple[int, ...] = factors["arc_means"]
+        num_nodes: int = factors.num_nodes
+        arcs: list[tuple[int, int]] = factors.arcs
+        arc_means: tuple[int, ...] = factors.arc_means
 
         # Topological sort.
         node_range = range(1, num_nodes + 1)

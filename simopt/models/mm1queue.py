@@ -139,7 +139,7 @@ class MM1Queue(Model):
         self.arrival_model = Exp()
         self.service_model = Exp()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: MM1QueueConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -155,11 +155,11 @@ class MM1Queue(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        mu: float = factors["mu"]
-        epsilon: float = factors["epsilon"]
-        warmup: int = factors["warmup"]
-        people: int = factors["people"]
-        f_lambda: float = factors["lambda"]
+        mu: float = factors.mu
+        epsilon: float = factors.epsilon
+        warmup: int = factors.warmup
+        people: int = factors.people
+        f_lambda: float = factors.lambda_
         # Designate separate RNGs for interarrival and serivce times.
         # Set mu to be at least epsilon.
         mu_floor = max(mu, epsilon)

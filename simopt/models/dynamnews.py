@@ -204,7 +204,7 @@ class DynamNews(Model):
 
         self.utility_model = Utility()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: DynamNewsConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -221,13 +221,13 @@ class DynamNews(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        num_customer: int = factors["num_customer"]
-        num_prod: int = factors["num_prod"]
-        mu: float = factors["mu"]
-        init_level: list = factors["init_level"]
-        c_utility: list = factors["c_utility"]
-        price: list = factors["price"]
-        cost: list = factors["cost"]
+        num_customer: int = factors.num_customer
+        num_prod: int = factors.num_prod
+        mu: float = factors.mu
+        init_level: list = factors.init_level
+        c_utility: list = factors.c_utility
+        price: list = factors.price
+        cost: list = factors.cost
 
         utility = self.utility_model.random(
             rngs[0],

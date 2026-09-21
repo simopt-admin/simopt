@@ -233,7 +233,7 @@ class IronOre(Model):
 
         self.movement_model = MovementInputModel()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: IronOreConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -249,19 +249,19 @@ class IronOre(Model):
                 - gradients (dict): A dictionary of gradient estimates for each
                     response.
         """
-        n_days: int = factors["n_days"]
-        min_price: float = factors["min_price"]
-        mean_price: float = factors["mean_price"]
-        max_price: float = factors["max_price"]
-        st_dev: float = factors["st_dev"]
-        price_stop: float = factors["price_stop"]
-        inven_stop: int = factors["inven_stop"]
-        max_prod_perday: int = factors["max_prod_perday"]
-        capacity: int = factors["capacity"]
-        prod_cost: float = factors["prod_cost"]
-        price_prod: float = factors["price_prod"]
-        price_sell: float = factors["price_sell"]
-        holding_cost: float = factors["holding_cost"]
+        n_days: int = factors.n_days
+        min_price: float = factors.min_price
+        mean_price: float = factors.mean_price
+        max_price: float = factors.max_price
+        st_dev: float = factors.st_dev
+        price_stop: float = factors.price_stop
+        inven_stop: int = factors.inven_stop
+        max_prod_perday: int = factors.max_prod_perday
+        capacity: int = factors.capacity
+        prod_cost: float = factors.prod_cost
+        price_prod: float = factors.price_prod
+        price_sell: float = factors.price_sell
+        holding_cost: float = factors.holding_cost
         # Initialize quantities to track:
         #   - Market price in each period (Pt).
         #   - Starting stock in each period.

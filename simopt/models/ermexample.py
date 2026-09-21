@@ -94,7 +94,7 @@ class ERMExampleModel(Model):
         super().__init__(fixed_factors)
         self.resample_model = FileInputModel("workshop/erm_data.npy")
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: ERMExampleModelConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate the squared error loss of a single observation.
 
         Returns:
@@ -104,7 +104,7 @@ class ERMExampleModel(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        beta0, beta1 = factors["beta"]
+        beta0, beta1 = factors.beta
         x, y = self.resample_model.random(rngs[0])
         sq_error_loss = (y - beta0 - beta1 * x) ** 2
         error_loss = y - beta0 - beta1 * x

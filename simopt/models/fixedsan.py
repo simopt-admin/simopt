@@ -134,7 +134,7 @@ class FixedSAN(Model):
 
         self.time_model = Exp()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: FixedSANConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -148,9 +148,9 @@ class FixedSAN(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        num_nodes: int = factors["num_nodes"]
-        num_arcs: int = factors["num_arcs"]
-        thetas = list(factors["arc_means"])
+        num_nodes: int = factors.num_nodes
+        num_arcs: int = factors.num_arcs
+        thetas = list(factors.arc_means)
 
         # Make sure we're not going to index out of bounds.
         if num_nodes < 9 or num_arcs < 13:

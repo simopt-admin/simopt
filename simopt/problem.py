@@ -256,7 +256,8 @@ class Problem(ABC):
                     decision_vector.append(decision)
             decision_vector = tuple(decision_vector)
             decision_factors = self.vector_to_factor_dict(decision_vector)
-            return self.model.replicate(self.model.factors | decision_factors, rngs)
+            factors = self.model.config.model_copy(update=decision_factors)
+            return self.model.replicate(factors, rngs)
 
         return target.add_simulation(
             name=name, run=run, decisions=decisions, n_rngs=self.model.n_rngs

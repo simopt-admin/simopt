@@ -266,7 +266,7 @@ class Hotel(Model):
 
         self.arrival_model = Exp()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: HotelConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -280,15 +280,15 @@ class Hotel(Model):
                 - gradients (dict): A dictionary of gradient estimates for each
                     response.
         """
-        booking_limits = list(factors["booking_limits"])
-        product_incidence = np.array(factors["product_incidence"])
-        num_products: int = factors["num_products"]
-        time_before: int = factors["time_before"]
-        f_lambda = factors["lambda"]
-        run_length: int = factors["runlength"]
-        time_limit: list = factors["time_limit"]
-        rack_rate: int = factors["rack_rate"]
-        discount_rate: int = factors["discount_rate"]
+        booking_limits = list(factors.booking_limits)
+        product_incidence = np.array(factors.product_incidence)
+        num_products: int = factors.num_products
+        time_before: int = factors.time_before
+        f_lambda = factors.lambda_
+        run_length: int = factors.runlength
+        time_limit: list = factors.time_limit
+        rack_rate: int = factors.rack_rate
+        discount_rate: int = factors.discount_rate
 
         # Designate separate random number generators.
         total_revenue = 0

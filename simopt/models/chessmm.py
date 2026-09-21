@@ -149,7 +149,7 @@ class ChessMatchmaking(Model):
         self.elo_model = EloInputModel()
         self.arrival_model = Exp()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: ChessMatchmakingConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -164,13 +164,13 @@ class ChessMatchmaking(Model):
                 - dict[str, dict]: Gradient estimates for each response.
         """
         # Constants
-        num_players = factors["num_players"]
+        num_players = factors.num_players
         num_players_range = range(num_players)
-        elo_mean = factors["elo_mean"]
-        elo_sd = factors["elo_sd"]
+        elo_mean = factors.elo_mean
+        elo_sd = factors.elo_sd
         elo_min, elo_max = 0, 2400
-        allowable_diff = factors["allowable_diff"]
-        poisson_rate = factors["poisson_rate"]
+        allowable_diff = factors.allowable_diff
+        poisson_rate = factors.poisson_rate
 
         # Initialize statistics.
         # Incoming players are initialized with a wait time of 0.

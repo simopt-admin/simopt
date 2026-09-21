@@ -106,7 +106,9 @@ class ParameterEstimation(Model):
         self.y1_model = Gamma()
         self.y2_model = Gamma()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(
+        self, factors: ParameterEstimationConfig, rngs: list[MRG32k3a]
+    ) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Returns:
@@ -116,8 +118,8 @@ class ParameterEstimation(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        xstar = factors["xstar"]
-        x = factors["x"]
+        xstar = factors.xstar
+        x = factors.x
         # Generate y1 and y2 from specified gamma distributions using input models.
         # Outputs will be coupled when generating Y_j's.
         y2 = self.y2_model.random(rngs[0], xstar[1], 1)

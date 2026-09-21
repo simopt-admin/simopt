@@ -167,7 +167,7 @@ class CntNV(Model):
 
         self.demand_model = DemandInputModel()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: CntNVConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -182,12 +182,12 @@ class CntNV(Model):
                     - "stockout": Whether there was unmet demand ("Y" or "N").
                 - gradients (dict): Gradient estimates for each response.
         """
-        ord_quant: float = factors["order_quantity"]
-        purch_price: float = factors["purchase_price"]
-        sales_price: float = factors["sales_price"]
-        salvage_price: float = factors["salvage_price"]
-        burr_k: float = factors["Burr_k"]
-        burr_c: float = factors["Burr_c"]
+        ord_quant: float = factors.order_quantity
+        purch_price: float = factors.purchase_price
+        sales_price: float = factors.sales_price
+        salvage_price: float = factors.salvage_price
+        burr_k: float = factors.burr_k
+        burr_c: float = factors.burr_c
         # Designate random number generator for demand variability.
         demand = self.demand_model.random(rngs[0], burr_c, burr_k)
 

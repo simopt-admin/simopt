@@ -167,7 +167,7 @@ class SSCont(Model):
         self.demand_model = Exp()
         self.lead_model = Poisson()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: SSContConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -191,16 +191,16 @@ class SSCont(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        demand_mean = factors["demand_mean"]
-        n_days = factors["n_days"]
-        warmup = factors["warmup"]
-        fac_s = factors["s"]
-        fac_S = factors["S"]  # noqa: N806
-        lead_mean = factors["lead_mean"]
-        fixed_cost = factors["fixed_cost"]
-        variable_cost = factors["variable_cost"]
-        holding_cost = factors["holding_cost"]
-        backorder_cost = factors["backorder_cost"]
+        demand_mean = factors.demand_mean
+        n_days = factors.n_days
+        warmup = factors.warmup
+        fac_s = factors.s
+        fac_S = factors.S  # noqa: N806
+        lead_mean = factors.lead_mean
+        fixed_cost = factors.fixed_cost
+        variable_cost = factors.variable_cost
+        holding_cost = factors.holding_cost
+        backorder_cost = factors.backorder_cost
 
         periods = n_days + warmup
         # Generate exponential random demands.

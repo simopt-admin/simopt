@@ -134,19 +134,19 @@ class Ambulance(Model):
         self.beta_x_model = Beta()
         self.beta_y_model = Beta()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: AmbulanceConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Run one replication of the ambulance dispatch simulation."""
         # ------------------------------
         # Setup base locations and system parameters
         # ------------------------------
-        fixed_base_count = factors["fixed_base_count"]
-        variable_base_count = factors["variable_base_count"]
-        fixed_locs = factors["fixed_locs"]
-        variable_locs = factors["variable_locs"]
+        fixed_base_count = factors.fixed_base_count
+        variable_base_count = factors.variable_base_count
+        fixed_locs = factors.fixed_locs
+        variable_locs = factors.variable_locs
 
         # Beta parameters
-        alpha_x, beta_x = factors["call_loc_beta_x"]
-        alpha_y, beta_y = factors["call_loc_beta_y"]
+        alpha_x, beta_x = factors.call_loc_beta_x
+        alpha_y, beta_y = factors.call_loc_beta_y
 
         fixed_base_positions = [
             [fixed_locs[2 * i], fixed_locs[2 * i + 1]] for i in range(fixed_base_count)

@@ -37,7 +37,7 @@ def test_queued_dispatch_keeps_ambulance_busy() -> None:
     model.beta_y_model = _SequenceInputModel([0, 1, 1, 1, 0])  # type: ignore
 
     rngs = [MRG32k3a(s_ss_sss_index=[0, i, 0]) for i in range(model.n_rngs)]
-    factors = model.factors | {"variable_locs": [0, 0, 20, 20]}
+    factors = model.config.model_copy(update={"variable_locs": [0, 0, 20, 20]})
     responses, _gradients = model.replicate(factors, rngs)
 
     assert responses["avg_response_time"] == pytest.approx(10.25)

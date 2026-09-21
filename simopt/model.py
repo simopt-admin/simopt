@@ -41,7 +41,6 @@ class Model(ABC):
         # Add all the fixed factors to the model
         fixed_factors = fixed_factors or {}
         self.config = self.config_class(**fixed_factors)
-        self._factors = self.config.model_dump(by_alias=True)
 
     def __eq__(self, other: object) -> bool:
         """Check if two models are equivalent.
@@ -76,9 +75,8 @@ class Model(ABC):
 
     @property
     def factors(self) -> dict:
-        """Changeable factors of the simulation model."""
-        # TODO: this is currently needed because the solver may update the factors
-        return self._factors
+        """Model factors exported as a dictionary using their external names."""
+        return self.config.model_dump(by_alias=True)
 
     def model_created(self) -> None:  # noqa: B027
         """Hook called after the model is constructed.
@@ -88,11 +86,11 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: BaseModel, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
-            factors (dict): Factors used for the replication.
+            factors (BaseModel): Configuration used for the replication.
             rngs (list[MRG32k3a]): RNGs used to drive the simulation.
 
         Returns:

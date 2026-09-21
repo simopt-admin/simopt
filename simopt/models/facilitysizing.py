@@ -246,7 +246,7 @@ class FacilitySize(Model):
 
         self.demand_model = DemandInputModel()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: FacilitySizeConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication using the current model factors.
 
         Args:
@@ -262,9 +262,9 @@ class FacilitySize(Model):
                     - "n_cut" (int): Total number of demand units that could not be satisfied.
                 - dict: Gradient estimates for each response.
         """  # noqa: E501
-        mean_vec = np.array(factors["mean_vec"])
-        cov = np.array(factors["cov"])
-        capacity = np.array(factors["capacity"])
+        mean_vec = np.array(factors.mean_vec)
+        cov = np.array(factors.cov)
+        capacity = np.array(factors.capacity)
         demand = self.demand_model.random(rngs[0], mean_vec, cov)
         extra_demand = demand - capacity
         pos_excess_mask = extra_demand > 0

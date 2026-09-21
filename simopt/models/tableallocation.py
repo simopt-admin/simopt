@@ -173,7 +173,7 @@ class TableAllocation(Model):
         self.group_size_model = WeightedChoice()
         self.service_time_model = Exp()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: TableAllocationConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -189,15 +189,15 @@ class TableAllocation(Model):
                     each response.
         """
 
-        num_tables = factors["num_tables"]
+        num_tables = factors.num_tables
         # TODO: figure out how floats are getting into the num_tables list
         num_tables = [int(n) for n in num_tables]
-        n_hours = factors["n_hours"]
-        f_lambda = factors["lambda"]
-        table_cap = factors["table_cap"]
+        n_hours = factors.n_hours
+        f_lambda = factors.lambda_
+        table_cap = factors.table_cap
         max_table_cap = max(table_cap)
-        service_time_means = factors["service_time_means"]
-        table_revenue = factors["table_revenue"]
+        service_time_means = factors.service_time_means
+        table_revenue = factors.table_revenue
         # Track total revenue.
         total_rev = 0
         # Generate total number of arrivals in the period

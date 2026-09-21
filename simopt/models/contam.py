@@ -293,7 +293,7 @@ class Contamination(Model):
         self.contam_model = Beta()
         self.restore_model = Beta()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: ContaminationConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -307,14 +307,14 @@ class Contamination(Model):
                 - gradients (dict): A dictionary of gradient estimates for each
                     response.
         """
-        stages: int = factors["stages"]
-        init_alpha: float = factors["initial_rate_alpha"]
-        init_beta: float = factors["initial_rate_beta"]
-        contam_alpha: float = factors["contam_rate_alpha"]
-        contam_beta: float = factors["contam_rate_beta"]
-        restore_alpha: float = factors["restore_rate_alpha"]
-        restore_beta: float = factors["restore_rate_beta"]
-        u: tuple = factors["prev_decision"]
+        stages: int = factors.stages
+        init_alpha: float = factors.initial_rate_alpha
+        init_beta: float = factors.initial_rate_beta
+        contam_alpha: float = factors.contam_rate_alpha
+        contam_beta: float = factors.contam_rate_beta
+        restore_alpha: float = factors.restore_rate_alpha
+        restore_beta: float = factors.restore_rate_beta
+        u: tuple = factors.prev_decision
 
         # Initialize levels with beta distribution.
         levels = np.zeros(stages)
@@ -379,7 +379,8 @@ class ContaminationTotalCostDisc(Problem):
             if not isinstance(prevention, tuple):
                 raise TypeError("prev_decision must be a vector")
             decision_factors = {"prev_decision": prevention}
-            responses, _ = self.model.replicate(self.model.factors | decision_factors, rngs)
+            factors = self.model.config.model_copy(update=decision_factors)
+            responses, _ = self.model.replicate(factors, rngs)
             under_control = np.asarray(responses["level"]) <= np.asarray(
                 self.factors["upper_thres"]
             )
@@ -444,7 +445,8 @@ class ContaminationTotalCostCont(Problem):
             if not isinstance(prevention, tuple):
                 raise TypeError("prev_decision must be a vector")
             decision_factors = {"prev_decision": prevention}
-            responses, _ = self.model.replicate(self.model.factors | decision_factors, rngs)
+            factors = self.model.config.model_copy(update=decision_factors)
+            responses, _ = self.model.replicate(factors, rngs)
             under_control = np.asarray(responses["level"]) <= np.asarray(
                 self.factors["upper_thres"]
             )

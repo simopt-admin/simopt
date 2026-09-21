@@ -82,7 +82,7 @@ class ExampleModel(Model):
         super().__init__(fixed_factors)
         self.noise_model = Normal()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: ExampleModelConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate a deterministic function f(x) with stochastic noise.
 
         Returns:
@@ -92,7 +92,7 @@ class ExampleModel(Model):
                 - gradients (dict): A dictionary of gradient estimates for
                     each response.
         """
-        x = np.array(factors["x"])
+        x = np.array(factors.x)
         fn_eval_at_x = np.linalg.norm(x) ** 2 + self.noise_model.random(rngs[0])
 
         # Compose responses and gradients.
@@ -211,9 +211,9 @@ class Example2Model(Model):
         super().__init__(fixed_factors)
         self.noise_model = Normal()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: Example2ModelConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Evaluate a quadratic function f(x) with stochastic noise."""
-        x = np.array(factors["x"])
+        x = np.array(factors.x)
         target = np.array([1, 2, 3, 4])
         fn_eval_at_x = np.sum((x - target) ** 2) + self.noise_model.random(rngs[0])
 

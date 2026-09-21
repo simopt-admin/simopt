@@ -224,7 +224,7 @@ class Network(Model):
         self.route_model = RouteInputModel()
         self.service_model = Triangular()
 
-    def replicate(self, factors: dict, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: NetworkConfig, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:
@@ -239,15 +239,15 @@ class Network(Model):
                     each response.
         """
         # Determine total number of arrivals to simulate.
-        total_arrivals = factors["n_messages"]
-        arrival_rate = factors["arrival_rate"]
-        n_networks = factors["n_networks"]
-        process_prob = factors["process_prob"]
-        lower_limits_transit_time = factors["lower_limits_transit_time"]
-        upper_limits_transit_time = factors["upper_limits_transit_time"]
-        mode_transit_time = factors["mode_transit_time"]
-        cost_process = factors["cost_process"]
-        cost_time = factors["cost_time"]
+        total_arrivals = factors.n_messages
+        arrival_rate = factors.arrival_rate
+        n_networks = factors.n_networks
+        process_prob = factors.process_prob
+        lower_limits_transit_time = factors.lower_limits_transit_time
+        upper_limits_transit_time = factors.upper_limits_transit_time
+        mode_transit_time = factors.mode_transit_time
+        cost_process = factors.cost_process
+        cost_time = factors.cost_time
 
         # Generate all interarrival, network routes, and service times before the
         # simulation run.

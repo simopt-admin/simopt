@@ -130,9 +130,10 @@ class DesignPoint:
             error_msg = "Number of macroreplications must be greater than 0."
             raise ValueError(error_msg)
 
+        factors = self.model.config_class(**self.model_factors)
         for _ in range(num_macroreps):
             # Generate a single replication of model, as described by design point.
-            responses, gradients = self.model.replicate(self.model_factors, self.rng_list)
+            responses, gradients = self.model.replicate(factors, self.rng_list)
             # If first replication, set up recording responses and gradients.
             if self.n_reps == 0:
                 self.responses = {response_key: [] for response_key in responses}
@@ -314,7 +315,7 @@ class DataFarmingExperiment:
                 design_pt_factors[factor] = factor_val
             # TODO: investigate if deepcopy is needed for self.model
             # Update model factors according to next design point.
-            self.model.factors.update(design_pt_factors)
+            self.model.config = self.model.config_class(**(self.model.factors | design_pt_factors))
             # Create new design point and add to design.
             self.design.append(DesignPoint(self.model))
 

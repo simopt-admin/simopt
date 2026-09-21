@@ -280,7 +280,7 @@ class AmusementPark(Model):
             self.service_models.append(Gamma())
 
     def replicate(
-        self, factors: dict, rngs: list[MRG32k3a]
+        self, factors: AmusementParkConfig, rngs: list[MRG32k3a]
     ) -> tuple[dict[str, float | list[float]], dict]:
         """Simulate a single replication using current model factors.
 
@@ -299,14 +299,14 @@ class AmusementPark(Model):
         """  # noqa: E501
 
         # Keep local copies of factors to prevent excessive lookups
-        num_attractions: int = factors["number_attractions"]
-        arrival_gammas: list[int] = factors["arrival_gammas"]
-        time_open: float = factors["time_open"]
-        erlang_shape: list[int] = factors["erlang_shape"]
-        erlang_scale: list[float] = factors["erlang_scale"]
-        queue_capacities: list[int] = factors["queue_capacities"]
-        transition_probabilities: list[list[float]] = factors["transition_probabilities"]
-        depart_probabilities: list[float] = factors["depart_probabilities"]
+        num_attractions: int = factors.number_attractions
+        arrival_gammas: list[int] = factors.arrival_gammas
+        time_open: float = factors.time_open
+        erlang_shape: list[int] = factors.erlang_shape
+        erlang_scale: list[float] = factors.erlang_scale
+        queue_capacities: list[int] = factors.queue_capacities
+        transition_probabilities: list[list[float]] = factors.transition_probabilities
+        depart_probabilities: list[float] = factors.depart_probabilities
 
         # initialize list of attractions to be selected upon arrival.
         attraction_range = range(num_attractions)
