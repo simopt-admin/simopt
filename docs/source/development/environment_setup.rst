@@ -83,18 +83,7 @@ Installation Steps
             :alt: A dropdown of Python interpreters visible in VS Code
             :align: center
 
-Running the GUI
----------------
+Running the Web Interface
+-------------------------
 
-To run the GUI with debugging, use one of the following methods:
-
-- From the menu bar, choosing `Run > Start Debugging`
-- Pressing `F5`
-
-Alternatively, you can run the application without debugging using one of the following methods:
-
-- From the menu bar, choosing `Run > Run Without Debugging`
-- Pressing `Ctrl + F5`
-- Running ``python -m simopt.GUI`` in the terminal
-
-NOTE: If launching via VS Code, you may be prompted to configure a launch environment. Choose `Python Module` and input ``simopt.GUI`` as the module name.
+Run ``simopt web`` (or ``python -m simopt web``) in the terminal and open http://localhost:8000.
