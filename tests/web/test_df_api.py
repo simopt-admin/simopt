@@ -69,3 +69,34 @@ def test_run_model(tmp_path, monkeypatch):
 def test_run_model_rejects_non_model():
     spec = {"kind": "solver", "name": "ASTRODF"}
     assert client.post("/df/run_model", json={"spec": spec}).status_code == 422
+
+
+def test_saved_designs(tmp_path, monkeypatch):
+    monkeypatch.setattr(server, "DESIGNS_DIR", tmp_path / "designs")
+    spec = {"kind": "model", "name": "MM1", "varied": {"mu": {"min": 2, "max": 4, "decimals": 1}}}
+    assert client.get("/df/designs").json() == {"designs": []}
+
+    saved = client.put("/df/designs/my-design", json=spec)
+    assert saved.status_code == 200
+    n_points = len(saved.json()["rows"])
+    assert n_points > 1
+
+    listed = client.get("/df/designs").json()["designs"]
+    assert [(d["name"], d["kind"], d["target"], d["n_points"]) for d in listed] == [
+        ("my-design", "model", "MM1", n_points)
+    ]
+    assert client.get("/df/designs/my-design").json() == saved.json()
+
+    download = client.get("/df/designs/my-design/design.csv")
+    assert "my-design_design.csv" in download.headers["content-disposition"]
+    lines = download.text.splitlines()
+    assert lines[0].split("\t")[0] == "mu"
+    assert len(lines) == n_points + 1
+
+    assert client.put("/df/designs/my-design", json=spec).status_code == 409
+    assert client.put("/df/designs/my-design?overwrite=true", json=spec).status_code == 200
+
+    assert client.delete("/df/designs/my-design").json() == {"deleted": "my-design"}
+    assert client.get("/df/designs/my-design").status_code == 404
+    assert client.delete("/df/designs/my-design").status_code == 404
+    assert client.put("/df/designs/bad.name", json=spec).status_code == 422

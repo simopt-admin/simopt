@@ -3,6 +3,9 @@
 # ruff: noqa: ANN001, ANN201, ANN202, D101, D103, E501
 
 import csv
+import io
+import json
+import re
 import threading
 from datetime import datetime
 
@@ -79,6 +82,7 @@ class ExperimentRequest(BaseModel):
 WEB_DIR = Path(__file__).resolve().parent
 BASE_DIR = WEB_DIR.parent.parent
 RESULTS_DIR = BASE_DIR / "simopt-web" / "results"
+DESIGNS_DIR = BASE_DIR / "simopt-web" / "designs"
 DIST_DIR = WEB_DIR / "dist"
 STATIC_DIR = DIST_DIR / "assets"
 
@@ -1740,6 +1744,27 @@ def _df_json_safe(value):
     return value
 
 
+def _df_columns(spec: DesignSpec, rows: list[dict]) -> list[str]:
+    """Return design column names: varied, then crossed, then the remaining factors."""
+    first = [*spec.varied, *spec.crossed]
+    return first + [name for name in (rows[0] if rows else {}) if name not in first]
+
+
+def _df_design_path(name: str) -> Path:
+    """Return the file path of a saved design, rejecting names outside [A-Za-z0-9_-]{1,64}."""
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", name):
+        raise HTTPException(status_code=422, detail="Name must match [A-Za-z0-9_-]{1,64}.")
+    return DESIGNS_DIR / f"{name}.json"
+
+
+def _df_load_design(name: str) -> dict:
+    """Load a saved design by name, raising 404 if it does not exist."""
+    path = _df_design_path(name)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail=f"Design '{name}' not found.")
+    return json.loads(path.read_text())
+
+
 @app.get("/models")
 def get_models():
     """Return all available models with display names."""
@@ -1794,8 +1819,7 @@ def df_preview(spec: DesignSpec):
         rows = build_design(spec)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
-    first = [*spec.varied, *spec.crossed]
-    columns = first + [name for name in (rows[0] if rows else {}) if name not in first]
+    columns = _df_columns(spec, rows)
     return {"columns": columns, "rows": _df_json_safe(rows), "n_points": len(rows)}
 
 
@@ -1861,3 +1885,78 @@ def serve_df_csv(run_id: str):
     if not path.is_relative_to(RESULTS_DIR.resolve()) or not path.is_file():
         raise HTTPException(status_code=404, detail="Results not found.")
     return FileResponse(str(path), media_type="text/csv", filename="raw_results.csv")
+
+
+@app.get("/df/designs")
+def list_df_designs():
+    """List saved designs, newest first."""
+    designs = []
+    for path in DESIGNS_DIR.glob("*.json") if DESIGNS_DIR.is_dir() else []:
+        saved = json.loads(path.read_text())
+        spec = saved["spec"]
+        designs.append(
+            {
+                "name": saved["name"],
+                "kind": spec["kind"],
+                "target": spec["name"],
+                "n_points": len(saved["rows"]),
+                "created_at": saved["created_at"],
+            }
+        )
+    designs.sort(key=lambda d: d["created_at"], reverse=True)
+    return {"designs": designs}
+
+
+@app.get("/df/designs/{name}/design.csv")
+def download_df_design(name: str):
+    """Download a saved design as a tab-separated CSV."""
+    saved = _df_load_design(name)
+    spec = DesignSpec(**saved["spec"])
+    rows = saved["rows"]
+    out = io.StringIO()
+    writer = csv.writer(out, delimiter="\t", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    columns = _df_columns(spec, rows)
+    writer.writerow(columns)
+    for row in rows:
+        writer.writerow([str(row.get(column, "")) for column in columns])
+    return Response(
+        out.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{name}_design.csv"'},
+    )
+
+
+@app.get("/df/designs/{name}")
+def get_df_design(name: str):
+    """Return a saved design."""
+    return _df_load_design(name)
+
+
+@app.put("/df/designs/{name}")
+def save_df_design(name: str, spec: DesignSpec, overwrite: bool = False):
+    """Build a design and save it to disk under the given name."""
+    path = _df_design_path(name)
+    if path.exists() and not overwrite:
+        raise HTTPException(status_code=409, detail=f"Design '{name}' already exists.")
+    spec.name = _df_abbr_name(spec.kind, spec.name)
+    try:
+        rows = build_design(spec)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    saved = {
+        "name": name,
+        "spec": spec.model_dump(mode="json"),
+        "rows": _df_json_safe(rows),
+        "created_at": datetime.now().isoformat(),
+    }
+    DESIGNS_DIR.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(saved))
+    return saved
+
+
+@app.delete("/df/designs/{name}")
+def delete_df_design(name: str):
+    """Delete a saved design."""
+    _df_load_design(name)
+    _df_design_path(name).unlink()
+    return {"deleted": name}
