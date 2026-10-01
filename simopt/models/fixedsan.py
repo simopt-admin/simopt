@@ -66,7 +66,7 @@ class FixedSANLongestPathConfig(BaseModel):
         return self
 
 
-class FixedSAN(Model):
+class FixedSAN(Model[FixedSANConfig]):
     """Fixed Stochastic Activity Network (SAN) Model.
 
     A model that simulates a stochastic activity network problem with tasks
@@ -76,7 +76,7 @@ class FixedSAN(Model):
 
     class_name_abbr: ClassVar[str] = "FIXEDSAN"
     class_name: ClassVar[str] = "Fixed Stochastic Activity Network"
-    config_class: ClassVar[type[BaseModel]] = FixedSANConfig
+    config_class: ClassVar[type[FixedSANConfig]] = FixedSANConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 1
 

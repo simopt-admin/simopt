@@ -43,12 +43,12 @@ class ParamEstiMaxLogLikConfig(BaseModel):
     ]
 
 
-class ParameterEstimation(Model):
+class ParameterEstimation(Model[ParameterEstimationConfig]):
     """MLE estimation model for the parameters of a 2D gamma distribution."""
 
     class_name_abbr: ClassVar[str] = "PARAMESTI"
     class_name: ClassVar[str] = "Gamma Parameter Estimation"
-    config_class: ClassVar[type[BaseModel]] = ParameterEstimationConfig
+    config_class: ClassVar[type[ParameterEstimationConfig]] = ParameterEstimationConfig
     n_rngs: ClassVar[int] = 2
     n_responses: ClassVar[int] = 1
 

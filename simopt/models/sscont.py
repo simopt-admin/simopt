@@ -45,7 +45,7 @@ class SSContMinCostConfig(BaseModel):
     ]
 
 
-class SSCont(Model):
+class SSCont(Model[SSContConfig]):
     """(s,S) Inventory Simulation Model.
 
     A model that simulates multiple periods' worth of sales for a (s,S)
@@ -58,7 +58,7 @@ class SSCont(Model):
 
     class_name_abbr: ClassVar[str] = "SSCONT"
     class_name: ClassVar[str] = "(s, S) Inventory"
-    config_class: ClassVar[type[BaseModel]] = SSContConfig
+    config_class: ClassVar[type[SSContConfig]] = SSContConfig
     n_rngs: ClassVar[int] = 2
     n_responses: ClassVar[int] = 7
 

@@ -43,12 +43,12 @@ class HotelRevenueConfig(BaseModel):
     ]
 
 
-class Hotel(Model):
+class Hotel(Model[HotelConfig]):
     """A model that simulates business of a hotel with Poisson arrival rate."""
 
     class_name_abbr: ClassVar[str] = "HOTEL"
     class_name: ClassVar[str] = "Hotel Booking"
-    config_class: ClassVar[type[BaseModel]] = HotelConfig
+    config_class: ClassVar[type[HotelConfig]] = HotelConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 1
 

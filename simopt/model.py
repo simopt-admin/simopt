@@ -1,7 +1,7 @@
 """Base class for simulation models used in simulation optimization problems."""
 
 from abc import ABC, abstractmethod
-from typing import ClassVar
+from typing import ClassVar, Generic, TypeVar, cast
 
 from boltons.typeutils import classproperty
 from pydantic import BaseModel
@@ -9,8 +9,10 @@ from pydantic import BaseModel
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.utils import get_specifications
 
+ConfigT = TypeVar("ConfigT", bound=BaseModel)
 
-class Model(ABC):
+
+class Model(ABC, Generic[ConfigT]):
     """Base class for simulation models used in simulation-optimization problems.
 
     Each model defines the simulation logic behind a given problem instance.
@@ -40,7 +42,7 @@ class Model(ABC):
         """
         # Add all the fixed factors to the model
         fixed_factors = fixed_factors or {}
-        self.config = self.config_class(**fixed_factors)
+        self.config: ConfigT = cast(ConfigT, self.config_class(**fixed_factors))
 
     def __eq__(self, other: object) -> bool:
         """Check if two models are equivalent.
@@ -86,7 +88,7 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def replicate(self, factors: BaseModel, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
+    def replicate(self, factors: ConfigT, rngs: list[MRG32k3a]) -> tuple[dict, dict]:
         """Simulate a single replication for the current model factors.
 
         Args:

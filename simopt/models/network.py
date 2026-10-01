@@ -43,12 +43,12 @@ class NetworkMinTotalCostConfig(BaseModel):
     ]
 
 
-class Network(Model):
+class Network(Model[NetworkConfig]):
     """Simulate messages being processed in a queueing network."""
 
     class_name_abbr: ClassVar[str] = "NETWORK"
     class_name: ClassVar[str] = "Communication Networks System"
-    config_class: ClassVar[type[BaseModel]] = NetworkConfig
+    config_class: ClassVar[type[NetworkConfig]] = NetworkConfig
     n_rngs: ClassVar[int] = 3
     n_responses: ClassVar[int] = 1
 

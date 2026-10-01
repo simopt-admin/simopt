@@ -44,7 +44,7 @@ class TableAllocationMaxRevConfig(BaseModel):
     ]
 
 
-class TableAllocation(Model):
+class TableAllocation(Model[TableAllocationConfig]):
     """Table Allocation Model.
 
     A model that simulates a table capacity allocation problem at a restaurant
@@ -54,7 +54,7 @@ class TableAllocation(Model):
 
     class_name_abbr: ClassVar[str] = "TABLEALLOCATION"
     class_name: ClassVar[str] = "Restaurant Table Allocation"
-    config_class: ClassVar[type[BaseModel]] = TableAllocationConfig
+    config_class: ClassVar[type[TableAllocationConfig]] = TableAllocationConfig
     n_rngs: ClassVar[int] = 4
     n_responses: ClassVar[int] = 2
 

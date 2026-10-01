@@ -47,12 +47,12 @@ class ERMExampleProblemConfig(BaseModel):
     ]
 
 
-class ERMExampleModel(Model):
+class ERMExampleModel(Model[ERMExampleModelConfig]):
     """A model that for the empirical risk of a linear regression model."""
 
     class_name_abbr: ClassVar[str] = "ERMEXAMPLE"
     class_name: ClassVar[str] = "Linear Regression ERM"
-    config_class: ClassVar[type[BaseModel]] = ERMExampleModelConfig
+    config_class: ClassVar[type[ERMExampleModelConfig]] = ERMExampleModelConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 1
 

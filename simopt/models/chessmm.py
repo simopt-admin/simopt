@@ -57,7 +57,7 @@ class ChessAvgDifferenceConfig(BaseModel):
     ]
 
 
-class ChessMatchmaking(Model):
+class ChessMatchmaking(Model[ChessMatchmakingConfig]):
     """Matchmaking model following an Elo distribution.
 
     A model that simulates a matchmaking problem with a Elo (truncated normal)
@@ -67,7 +67,7 @@ class ChessMatchmaking(Model):
 
     class_name_abbr: ClassVar[str] = "CHESS"
     class_name: ClassVar[str] = "Chess Matchmaking"
-    config_class: ClassVar[type[BaseModel]] = ChessMatchmakingConfig
+    config_class: ClassVar[type[ChessMatchmakingConfig]] = ChessMatchmakingConfig
     n_rngs: ClassVar[int] = 2
     n_responses: ClassVar[int] = 2
 

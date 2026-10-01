@@ -52,7 +52,7 @@ class AmusementParkMinDepartConfig(BaseModel):
     ]
 
 
-class AmusementPark(Model):
+class AmusementPark(Model[AmusementParkConfig]):
     """Amusement Park Model.
 
     A model that simulates a single day of operation for an
@@ -64,7 +64,7 @@ class AmusementPark(Model):
 
     class_name_abbr: ClassVar[str] = "AMUSEMENTPARK"
     class_name: ClassVar[str] = "Amusement Park"
-    config_class: ClassVar[type[BaseModel]] = AmusementParkConfig
+    config_class: ClassVar[type[AmusementParkConfig]] = AmusementParkConfig
     n_rngs: ClassVar[int] = 4
     n_responses: ClassVar[int] = 4
 

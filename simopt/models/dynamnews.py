@@ -46,7 +46,7 @@ class DynamNewsMaxProfitConfig(BaseModel):
     ]
 
 
-class DynamNews(Model):
+class DynamNews(Model[DynamNewsConfig]):
     """Dynamic Newsvendor Model.
 
     A model that simulates a day's worth of sales for a newsvendor
@@ -56,7 +56,7 @@ class DynamNews(Model):
 
     class_name_abbr: ClassVar[str] = "DYNAMNEWS"
     class_name: ClassVar[str] = "Dynamic Newsvendor"
-    config_class: ClassVar[type[BaseModel]] = DynamNewsConfig
+    config_class: ClassVar[type[DynamNewsConfig]] = DynamNewsConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 4
 

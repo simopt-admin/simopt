@@ -52,7 +52,7 @@ class MM1MinMeanSojournTimeConfig(BaseModel):
     ]
 
 
-class MM1Queue(Model):
+class MM1Queue(Model[MM1QueueConfig]):
     """MM1 Queue Simulation Model.
 
     A model that simulates an M/M/1 queue with an Exponential(lambda)
@@ -66,7 +66,7 @@ class MM1Queue(Model):
 
     class_name_abbr: ClassVar[str] = "MM1"
     class_name: ClassVar[str] = "MM1 Queue"
-    config_class: ClassVar[type[BaseModel]] = MM1QueueConfig
+    config_class: ClassVar[type[MM1QueueConfig]] = MM1QueueConfig
     n_rngs: ClassVar[int] = 2
     n_responses: ClassVar[int] = 3
 

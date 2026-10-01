@@ -123,7 +123,7 @@ class FacilitySizingTotalCostConfig(BaseModel):
         return self
 
 
-class FacilitySize(Model):
+class FacilitySize(Model[FacilitySizeConfig]):
     """Facility Sizing Model.
 
     A model that simulates a facilitysize problem with a multi-variate normal
@@ -132,7 +132,7 @@ class FacilitySize(Model):
 
     class_name_abbr: ClassVar[str] = "FACSIZE"
     class_name: ClassVar[str] = "Facility Sizing"
-    config_class: ClassVar[type[BaseModel]] = FacilitySizeConfig
+    config_class: ClassVar[type[FacilitySizeConfig]] = FacilitySizeConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 3
 

@@ -168,7 +168,7 @@ class ContaminationTotalCostDiscConfig(BaseModel):
         return self
 
 
-class Contamination(Model):
+class Contamination(Model[ContaminationConfig]):
     """Contamination model with contamination and restoration rates.
 
     A model that simulates a contamination problem with a beta distribution.
@@ -178,7 +178,7 @@ class Contamination(Model):
 
     class_name_abbr: ClassVar[str] = "CONTAM"
     class_name: ClassVar[str] = "Contamination"
-    config_class: ClassVar[type[BaseModel]] = ContaminationConfig
+    config_class: ClassVar[type[ContaminationConfig]] = ContaminationConfig
     n_rngs: ClassVar[int] = 2
     n_responses: ClassVar[int] = 1
 

@@ -43,7 +43,7 @@ class RMITDMaxRevenueConfig(BaseModel):
     ]
 
 
-class RMITD(Model):
+class RMITD(Model[RMITDConfig]):
     """Multi-stage Revenue Management with Inter-temporal Dependence (RMITD).
 
     A model that simulates a multi-stage revenue management system with
@@ -52,7 +52,7 @@ class RMITD(Model):
 
     class_name_abbr: ClassVar[str] = "RMITD"
     class_name: ClassVar[str] = "Revenue Management Temporal Demand"
-    config_class: ClassVar[type[BaseModel]] = RMITDConfig
+    config_class: ClassVar[type[RMITDConfig]] = RMITDConfig
     n_rngs: ClassVar[int] = 2
     n_responses: ClassVar[int] = 1
 

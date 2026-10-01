@@ -44,7 +44,7 @@ class DualSourcingMinCostConfig(BaseModel):
     ]
 
 
-class DualSourcing(Model):
+class DualSourcing(Model[DualSourcingConfig]):
     """Dual Sourcing Inventory Model.
 
     A model that simulates multiple periods of ordering and sales for a single-staged,
@@ -54,7 +54,7 @@ class DualSourcing(Model):
 
     class_name_abbr: ClassVar[str] = "DUALSOURCING"
     class_name: ClassVar[str] = "Dual Sourcing"
-    config_class: ClassVar[type[BaseModel]] = DualSourcingConfig
+    config_class: ClassVar[type[DualSourcingConfig]] = DualSourcingConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 3
 

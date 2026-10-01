@@ -70,7 +70,7 @@ class IronOreMaxRevConfig(BaseModel):
     ]
 
 
-class IronOre(Model):
+class IronOre(Model[IronOreConfig]):
     """Iron Ore Inventory Model.
 
     A model that simulates multiple periods of production and sales for an
@@ -81,7 +81,7 @@ class IronOre(Model):
 
     class_name_abbr: ClassVar[str] = "IRONORE"
     class_name: ClassVar[str] = "Iron Ore"
-    config_class: ClassVar[type[BaseModel]] = IronOreConfig
+    config_class: ClassVar[type[IronOreConfig]] = IronOreConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 3
 

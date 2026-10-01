@@ -40,7 +40,7 @@ class AmbBaseAllocationConfig(BaseModel):
     ]
 
 
-class Ambulance(Model):
+class Ambulance(Model[AmbulanceConfig]):
     """Simulate the average response time in a multi-base ambulance dispatch system.
 
     The system includes a set of fixed ambulance bases and a set of variable bases
@@ -50,7 +50,7 @@ class Ambulance(Model):
 
     class_name_abbr: ClassVar[str] = "AMBULANCE"
     class_name: ClassVar[str] = "Ambulance Base Allocation"
-    config_class: ClassVar[type[BaseModel]] = AmbulanceConfig
+    config_class: ClassVar[type[AmbulanceConfig]] = AmbulanceConfig
     n_rngs: ClassVar[int] = 4
     n_responses: ClassVar[int] = 1
 

@@ -44,7 +44,7 @@ class CntNVMaxProfitConfig(BaseModel):
     ]
 
 
-class CntNV(Model):
+class CntNV(Model[CntNVConfig]):
     """Continuous Newsvendor Model with a Burr Type XII demand distribution.
 
     A model that simulates a day's worth of sales for a newsvendor with a Burr Type XII
@@ -54,7 +54,7 @@ class CntNV(Model):
 
     class_name_abbr: ClassVar[str] = "CNTNEWS"
     class_name: ClassVar[str] = "Continuous Newsvendor"
-    config_class: ClassVar[type[BaseModel]] = CntNVConfig
+    config_class: ClassVar[type[CntNVConfig]] = CntNVConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 1
 

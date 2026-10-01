@@ -70,7 +70,7 @@ class SANLongestPathConfig(BaseModel):
         return self
 
 
-class SAN(Model):
+class SAN(Model[SANConfig]):
     """Stochastic Activity Network (SAN) Model.
 
     A model that simulates a stochastic activity network problem with
@@ -80,7 +80,7 @@ class SAN(Model):
 
     class_name_abbr: ClassVar[str] = "SAN"
     class_name: ClassVar[str] = "Stochastic Activity Network"
-    config_class: ClassVar[type[BaseModel]] = SANConfig
+    config_class: ClassVar[type[SANConfig]] = SANConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 1
 
