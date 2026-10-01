@@ -1792,7 +1792,8 @@ def get_df_factors(kind: str, name: str):
 
     sources = [(cls.specifications, kind)]
     if kind == "problem":
-        sources.append((cls.model_class.specifications, "model"))
+        problem_cls = problem_directory[_df_abbr_name(kind, name)]
+        sources.append((problem_cls.model_class.specifications, "model"))
     factors = []
     for specifications, source in sources:
         for factor_name, factor in specifications.items():

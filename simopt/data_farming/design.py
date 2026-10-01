@@ -44,7 +44,8 @@ def _get_specifications(spec: DesignSpec) -> dict[str, dict]:
     cls = directory[spec.name]
     specifications = dict(cls.specifications)
     if spec.kind == "problem":
-        specifications.update(cls.model_class.specifications)
+        problem_cls = problem_directory[spec.name]
+        specifications.update(problem_cls.model_class.specifications)
     return specifications
 
 
