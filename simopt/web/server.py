@@ -2,7 +2,12 @@
 
 # ruff: noqa: ANN001, ANN201, ANN202, D101, D103, E501
 
+import csv
+import io
+import json
+import re
 import threading
+from datetime import datetime
 
 import matplotlib
 
@@ -12,14 +17,18 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import matplotlib.pyplot as plt
-from fastapi import Body, FastAPI
+from fastapi import Body, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt import experiment_base as eb
+from simopt.data_farming.design import DesignSpec, build_design
+from simopt.data_farming_base import DesignPoint
 from simopt.directory import (
+    model_directory,
     problem_directory,
     solver_directory,
 )
@@ -73,6 +82,7 @@ class ExperimentRequest(BaseModel):
 WEB_DIR = Path(__file__).resolve().parent
 BASE_DIR = WEB_DIR.parent.parent
 RESULTS_DIR = BASE_DIR / "simopt-web" / "results"
+DESIGNS_DIR = BASE_DIR / "simopt-web" / "designs"
 DIST_DIR = WEB_DIR / "dist"
 STATIC_DIR = DIST_DIR / "assets"
 
@@ -1702,3 +1712,252 @@ def get_results(experiment_id: str):
     path = Path(f"svelte-app/results/{experiment_id}")
     images = [f"svelte-app/results/{experiment_id}/{p.name}" for p in path.glob("*.png")]
     return {"images": images}
+
+
+# ── Data farming endpoints ──
+class RunModelRequest(BaseModel):
+    spec: DesignSpec
+    n_reps: int = 10
+    crn_across_design_pts: bool = True
+
+
+def _df_abbr_name(kind: str, name: str) -> str:
+    """Convert a display name to its abbreviated name for the given kind."""
+    mapping = {"solver": SOLVER_FULL_TO_ABBR, "problem": PROBLEM_FULL_TO_ABBR}.get(kind, {})
+    return mapping.get(name, name)
+
+
+def _df_factor_type(datatype) -> str:
+    """Map a factor datatype to one of int/float/bool/list/str/other."""
+    for type_name, py_type in [("bool", bool), ("int", int), ("float", float), ("str", str)]:
+        if datatype is py_type:
+            return type_name
+    return "list" if datatype in (list, tuple) else "other"
+
+
+def _df_json_safe(value):
+    """Convert tuples to lists (recursively) so the value is JSON-serializable."""
+    if isinstance(value, (list, tuple)):
+        return [_df_json_safe(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _df_json_safe(v) for k, v in value.items()}
+    return value
+
+
+def _df_columns(spec: DesignSpec, rows: list[dict]) -> list[str]:
+    """Return design column names: varied, then crossed, then the remaining factors."""
+    first = [*spec.varied, *spec.crossed]
+    return first + [name for name in (rows[0] if rows else {}) if name not in first]
+
+
+def _df_design_path(name: str) -> Path:
+    """Return the file path of a saved design, rejecting names outside [A-Za-z0-9_-]{1,64}."""
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", name):
+        raise HTTPException(status_code=422, detail="Name must match [A-Za-z0-9_-]{1,64}.")
+    return DESIGNS_DIR / f"{name}.json"
+
+
+def _df_load_design(name: str) -> dict:
+    """Load a saved design by name, raising 404 if it does not exist."""
+    path = _df_design_path(name)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail=f"Design '{name}' not found.")
+    return json.loads(path.read_text())
+
+
+@app.get("/models")
+def get_models():
+    """Return all available models with display names."""
+    return {
+        "models": [
+            {"name": abbr, "display": f"{abbr} ({getattr(cls, 'class_name', abbr)})"}
+            for abbr, cls in model_directory.items()
+        ]
+    }
+
+
+@app.get("/df/factors/{kind}/{name}")
+def get_df_factors(kind: str, name: str):
+    """Return the factors of a solver, problem (including its model) or model."""
+    directories = {
+        "solver": solver_directory,
+        "problem": problem_directory,
+        "model": model_directory,
+    }
+    if kind not in directories:
+        raise HTTPException(status_code=404, detail=f"Unknown kind '{kind}'.")
+    cls = directories[kind].get(_df_abbr_name(kind, name))
+    if cls is None:
+        raise HTTPException(status_code=404, detail=f"{kind.capitalize()} '{name}' not found.")
+
+    sources = [(cls.specifications, kind)]
+    if kind == "problem":
+        problem_cls = problem_directory[_df_abbr_name(kind, name)]
+        sources.append((problem_cls.model_class.specifications, "model"))
+    factors = []
+    for specifications, source in sources:
+        for factor_name, factor in specifications.items():
+            factor_type = _df_factor_type(factor["datatype"])
+            factors.append(
+                {
+                    "name": factor_name,
+                    "type": factor_type,
+                    "default": _df_json_safe(factor.get("default")),
+                    "description": factor.get("description", ""),
+                    "datafarmable": factor_type in ("int", "float", "bool")
+                    and factor.get("isDatafarmable", True) is not False,
+                    "source": source,
+                }
+            )
+    return {"factors": factors}
+
+
+@app.post("/df/preview")
+def df_preview(spec: DesignSpec):
+    """Build a design and return its points."""
+    spec.name = _df_abbr_name(spec.kind, spec.name)
+    try:
+        rows = build_design(spec)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    columns = _df_columns(spec, rows)
+    return {"columns": columns, "rows": _df_json_safe(rows), "n_points": len(rows)}
+
+
+@app.post("/df/run_model")
+def df_run_model(req: RunModelRequest):
+    """Run replications of a model at every point of a design and write raw_results.csv."""
+    spec = req.spec
+    if spec.kind != "model":
+        raise HTTPException(status_code=422, detail="Only kind 'model' can be run.")
+    if req.n_reps <= 0:
+        raise HTTPException(status_code=422, detail="n_reps must be greater than 0.")
+    try:
+        design = build_design(spec)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+
+    model_cls = model_directory[spec.name]
+    design_pts = [DesignPoint(model_cls(fixed_factors=point)) for point in design]
+
+    # Same CRN logic as DataFarmingExperiment.run.
+    n_rngs = design_pts[0].model.n_rngs
+    main_rng_list = [MRG32k3a(s_ss_sss_index=[0, ss, 0]) for ss in range(n_rngs)]
+    for design_pt in design_pts:
+        design_pt.attach_rngs(rng_list=main_rng_list, copy=False)
+        design_pt.simulate(req.n_reps)
+        if req.crn_across_design_pts:
+            for rng in main_rng_list:
+                rng.reset_substream()
+        else:
+            for rng in main_rng_list:
+                for _ in range(len(main_rng_list)):
+                    rng.advance_substream()
+
+    # Same columns/format as DataFarmingExperiment.print_to_csv.
+    run_id = f"df_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+    folder = RESULTS_DIR / run_id
+    folder.mkdir(parents=True, exist_ok=True)
+    csv_path = folder / "raw_results.csv"
+    factor_names = list(design_pts[0].model.specifications.keys())
+    response_names = list(design_pts[0].responses.keys())
+    columns = ["DesignPt#", *factor_names, "MacroRep#", *response_names]
+    rows = []
+    with csv_path.open(mode="w", newline="") as f:
+        writer = csv.writer(f, delimiter="\t", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(columns)
+        for index, design_pt in enumerate(design_pts):
+            for mrep in range(design_pt.n_reps):
+                values = [
+                    index,
+                    *(design_pt.model_factors[name] for name in factor_names),
+                    mrep,
+                    *(design_pt.responses[name][mrep] for name in response_names),
+                ]
+                writer.writerow(values)
+                rows.append(_df_json_safe(dict(zip(columns, values, strict=True))))
+    return {"run_id": run_id, "csv_path": str(csv_path), "columns": columns, "rows": rows}
+
+
+@app.get("/df/results/{run_id}/raw_results.csv")
+def serve_df_csv(run_id: str):
+    """Serve the raw_results.csv of a data-farming run."""
+    path = (RESULTS_DIR / run_id / "raw_results.csv").resolve()
+    if not path.is_relative_to(RESULTS_DIR.resolve()) or not path.is_file():
+        raise HTTPException(status_code=404, detail="Results not found.")
+    return FileResponse(str(path), media_type="text/csv", filename="raw_results.csv")
+
+
+@app.get("/df/designs")
+def list_df_designs():
+    """List saved designs, newest first."""
+    designs = []
+    for path in DESIGNS_DIR.glob("*.json") if DESIGNS_DIR.is_dir() else []:
+        saved = json.loads(path.read_text())
+        spec = saved["spec"]
+        designs.append(
+            {
+                "name": saved["name"],
+                "kind": spec["kind"],
+                "target": spec["name"],
+                "n_points": len(saved["rows"]),
+                "created_at": saved["created_at"],
+            }
+        )
+    designs.sort(key=lambda d: d["created_at"], reverse=True)
+    return {"designs": designs}
+
+
+@app.get("/df/designs/{name}/design.csv")
+def download_df_design(name: str):
+    """Download a saved design as a tab-separated CSV."""
+    saved = _df_load_design(name)
+    spec = DesignSpec(**saved["spec"])
+    rows = saved["rows"]
+    out = io.StringIO()
+    writer = csv.writer(out, delimiter="\t", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    columns = _df_columns(spec, rows)
+    writer.writerow(columns)
+    for row in rows:
+        writer.writerow([str(row.get(column, "")) for column in columns])
+    return Response(
+        out.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{name}_design.csv"'},
+    )
+
+
+@app.get("/df/designs/{name}")
+def get_df_design(name: str):
+    """Return a saved design."""
+    return _df_load_design(name)
+
+
+@app.put("/df/designs/{name}")
+def save_df_design(name: str, spec: DesignSpec, overwrite: bool = False):
+    """Build a design and save it to disk under the given name."""
+    path = _df_design_path(name)
+    if path.exists() and not overwrite:
+        raise HTTPException(status_code=409, detail=f"Design '{name}' already exists.")
+    spec.name = _df_abbr_name(spec.kind, spec.name)
+    try:
+        rows = build_design(spec)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    saved = {
+        "name": name,
+        "spec": spec.model_dump(mode="json"),
+        "rows": _df_json_safe(rows),
+        "created_at": datetime.now().isoformat(),
+    }
+    DESIGNS_DIR.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(saved))
+    return saved
+
+
+@app.delete("/df/designs/{name}")
+def delete_df_design(name: str):
+    """Delete a saved design."""
+    _df_load_design(name)
+    _df_design_path(name).unlink()
+    return {"deleted": name}

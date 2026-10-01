@@ -1,4 +1,4 @@
-export type Page = "Simulator" | "User Guide" | "About Us";
+export type Page = "Simulator" | "Data Farming" | "User Guide" | "About Us";
 export type SummaryKind = "solver" | "problem" | "plot";
 export type EditMode = { kind: SummaryKind; index: number };
 
@@ -7,10 +7,12 @@ export type Param = {
   description: string;
   default: unknown;
   value: string;
+  source?: string;
 };
 
 export type SummaryEntry = {
   name: string;
+  rename?: string;
   params: Param[];
   expanded: boolean;
 };

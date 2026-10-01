@@ -87,94 +87,12 @@ conda activate simopt
 
 If you wish to update the environment with the latest compatible packages, you can simply rerun the setup script.
 
-## Graphical User Interface (GUI) - User Guide
+## Web Interface
 
-### Main Menu
-To open the GUI, run `python -m simopt`. This will launch the main menu. From the menu, you will be given 2 options:
-1. Open the `Data Farm Models` window
-2. Open the `Simulation Optimization Experiments` window ([read more](#simulation-optimization-experiments))
+To open the web interface, run `simopt web` (or `python -m simopt web`) and open http://localhost:8000.
+From the web interface you can build and run problem-solver experiments, generate plots, and create data-farming designs for solvers, problems, and models.
 
-### Simulation Optimization Experiments
-
-#### Overview
-From the GUI, you can create a specified **problem-solver pair** or a **problem-solver group**, run macroreplications, and generate plots. The main page provides ways to create or continue working with experiments:
-
-1. Create an individual **problem-solver pair** with customized problem and solver factors.
-2. Load a .pickle file of a previously created **problem-solver pair**.
-3. Create a **problem-solver group**. 
-
-At the bottom of the main page, there is a workspace containing all **problem-solver pair**s and **problem-solver group**s. The first tab lists the **problem-solver pair**s ready to be run or post-replicated, the second tab lists the **problem-solver group**s made from the cross-design or by generating a **problem-solver group** from partial set of **problem-solver pair** in the first tab, and the third tab lists those **problem-solver pair**s that are ready to be post-normalized and prepared for plotting.
-
-#### 1. Creating a **problem-solver pair**
-This is the main way to add **problem-solver pair**s to the queue in the workspace.
-1. First, select a solver from the "Solver" dropdown list. Each of the solvers has an abbreviation for the type of problems the solver can handle. Once a solver is selected, the "Problem" list will be sorted and show only the problems that work with the selected solver.
-2. Change factors associated with the solver as necessary. The first factor is a customizable name for the solver that use can specify. 
-3. All solvers with unique combinations of factors must have unique names, i.e., no two solvers can have the same name, but different factors. If you want to use the same solver twice for a problem but with different solver factors, make sure you change the name of the solver accordingly. For example, if you want to create two **problem-solver pair**s with the same problem and solver but with or without CRN for the solver, you can change the name of the solver of choice for each pair to reflect that. This name will appear in the queue within the workspace below.
-4. Select a problem from the "Problem" dropdown list.
-Each problem has an abbreviation indicating which types of solver is compatible to solve it. The letters in the abbreviation stand for:
-
-| Objective    | Constraint        | Variable       | Direct Gradient Observations |
-| ------------ | ----------------- | -------------- | ---------------------------- |
-| Single (S)   | Unconstrained (U) | Discrete (D)   | Available (G)                |
-| Multiple (M) | Box (B)           | Continuous (C) | Not Available (N)            |
-|              | Deterministic (D) | Mixed (M)      |                              |
-|              | Stochastic (S)    |                |                              |
-
-6. Change factors associated with the problem and model as necessary.
-7. All problems with unique factors must have unique names, i.e., no two problems can have the same name, but different factors. If you want to use the same problem twice for a solver but with different problem or model factors, make sure you change the name of the problem accordingly. This name will appear in the queue within the workspace below.
-8.  The number of macroreplications can be modified in the top-left corner. The default is 10.
-9.  Select the "Add **problem-solver pair**" button, which only appears when a solver and problem is selected. The **problem-solver pair** will be added in the "Queue of **problem-solver pair**s."
-
-#### 2. Loading a **problem-solver pair** from a file
-Instead of creating a **problem-solver pair** from scratch, you can load one from a \*.pickle file:
-1. In the top left corner, click "Load a **problem-solver pair**". Your file system will pop up, and you can navigate to and select an appropriate \*.pickle file. The GUI will throw an error if the selected file is not a \*.pickle file.
-2. Once a **problem-solver pair** object is loaded, it will be added to the "Queue of **problem-solver pair**s".
-3. The Run and Post-Process buttons will be updated to accurately reflect whether the **problem-solver pair** has already been run and/or post-processed.
-
-#### 3. Creating a **problem-solver group**
-Currently, **problem-solver group**s can only be created within the GUI or command line; they cannot be loaded from a file. 
-
-You can create a **problem-solver group** and add a new item to the "Queue of **problem-solver group**s" in two ways. The first is a quick grouping of problems and solvers that are compatible with their default factors: 
-of problems and solvers with their default factors.
-1. Click the "Create a **problem-solver group**" button.
-2. Check the compatibility of the Problems and Solvers being selected. Note that solvers with deterministic constraint type can not handle problems with stochastic constraints (e.g., ASTRO-DF cannot be run on FACSIZE-2).
-3. Specify the number of macroreplications - the default is 10.
-4. Click "Confirm Cross-Design **problem-solver group**."
-5. The pop-up window will disappear, and the **problem-solver pair**s frame will automatically switch to the "Queue of **problem-solver group**s".
-6. To exit out of the **problem-solver group** pop-up without creating a **problem-solver group**, click the red "x" in the top-left corner of the window.
-
-The second is converting a list of **problem-solver pair**s into a **problem-solver group** by a cross-design: 
-1. Select the **problem-solver pair**s of interest from the "Queue of **problem-solver pair**s". 
-2. Clicking the "Convert to a **problem-solver group**" button. This will complete the cross-design for the partial list and create a new row in the "Queue of **problem-solver group**s".
-
-### Running a **problem-solver pair** or a **problem-solver group** 
-To run a **problem-solver pair** or a **problem-solver group**, click the "Run" button in the "Queue of **problem-solver pair**s" or "Queue of **problem-solver group**s". Once the **problem-solver pair** or **problem-solver group** has been run, the "Run" button becomes disabled.
-**Note:** Running a **problem-solver pair** can take anywhere from a couple of seconds to a couple of minutes depending on the **problem-solver pair** and the number of macroreplications.
-
-### Post-Processing and Post-Normalization
-Post-processing happens before post-normalizing and after the run is complete. You can specify the number of post-replications and the (proxy) optimal solution or function value.  After post-normalization is complete, the Plotting window appears.
-To exit out of the Post-Process/Normalize pop-up without post-processing or post-normalizing, click the red "x" in the top-left corner of the window.
-
-#### - **problem-solver pair**
-**problem-solver pair**s can be post-processed from the "Queue of **problem-solver pair**s" tab by clicking "Post-Process." Adjust Post-Processing factors as necessary. Only **problem-solver pair**s that have already been run can be post-processed. After post-processing, click the "Post-Normalize by Problem" tab to select which **problem-solver pair**s to post-normalize together.
-* Only **problem-solver pair**s with the same problem can be post-normalized together.
-* Once all **problem-solver pair**s of interest are selected, click the "Post-Normalize Selected" button at the bottom of the GUI (this button only appears when in the Post-Normalize tab).
-* In the new pop-up form, update any values necessary and click "Post-Normalize" when the **problem-solver pair**s are ready to be post-normalized.
-
-#### - **problem-solver group**
-**problem-solver group**s are post-processed and post-normalized at the same time. In the "Queue of **problem-solver group**s" tab, click the "Post-Process" button for the specific **problem-solver group**, then change any values necessary, then click "Post-Process".
-
-### Plotting
-The Plotting page is identical for both **problem-solver pair**s and **problem-solver group**s. Currently, multiple **problem-solver pair**s with the same problem can be plotted together, and any problem-solver pair from a single **problem-solver group** can be plotted together:
-1. On the left side, select one or more problems from the problem list.
-2. Select solvers from the solver list.
-3. On the right side, select a plot type and adjust plot parameters and settings.
-There are 5 settings common to most plot types: Confidence Intervals, Number of Bootstrap Samples, Confidence Level, Plot Together, and Print Max HW.
-The type of plots that are currently available in the GUI are: Mean Progress Curve, Quantile Progress Curve, Solve Time CDF, Scatter Plot, CDF Solvability, Quantile Solvability, CDF Difference Plot, Quantile Difference Plot, Terminal Box/Violin, and Terminal Scatter.
-4. Click "Add."
-5. All plots will show in the plotting queue, along with information about their parameters and where the file is saved.
-6. To view one plot, click "View Plot." All plots can be viewed together by clicking "See All Plots" at the bottom of the page.
-7. To return to the main page, click the red "x" in the top-left corner of the window.
+The previous Tkinter GUI has been removed; it is preserved on the `archive/tkinter` branch.
 
 ## Package
 The `simoptlib` package is available to download through the Python Packaging Index (PyPI) and can be installed from the terminal with the following command:
