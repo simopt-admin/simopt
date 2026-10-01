@@ -261,7 +261,8 @@ def test_invalid_plan_configuration_is_rejected():
 
 def test_run_requires_simulation_config():
     with pytest.raises(TypeError, match="simulation_config"):
-        run(api.create_matrix([_solver()], [_problem()]))
+        # Deliberately omit the required argument to verify the runtime error.
+        run(api.create_matrix([_solver()], [_problem()]))  # ty: ignore[missing-argument]
 
 
 def test_run_empty_experiments():

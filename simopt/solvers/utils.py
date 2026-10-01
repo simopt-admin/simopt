@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 
 import numpy as np
 
@@ -222,7 +222,7 @@ def bfgs_hessian_approx(
     x1[np.arange(problem.dim), bounds_non_neg] += steps[bounds_non_neg]
     x2[np.arange(problem.dim), bounds_non_pos] -= steps[bounds_non_pos]
 
-    def get_fn_x(x: Iterable) -> float:
+    def get_fn_x(x: np.ndarray) -> float:
         """Helper to simulate the function at a given x."""
         feasible_x = np.clip(x, problem.lower_bounds, problem.upper_bounds)
         x_solution = ctx.evaluate(tuple(feasible_x), r)

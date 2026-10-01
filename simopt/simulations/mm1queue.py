@@ -185,11 +185,11 @@ def replicate(
     # Compute fraction of customers who wait.
     fraction_wait = np.mean(cust_mat_warmup[:, Col.IN_SYS] > 0)
     return (
-        mean_sojourn_time,
-        grad_mean_sojourn_time_mu,
-        grad_mean_sojourn_time_lambda,
-        mean_waiting_time,
-        grad_mean_waiting_time_mu,
-        grad_mean_waiting_time_lambda,
-        fraction_wait,
+        float(mean_sojourn_time),
+        float(grad_mean_sojourn_time_mu),
+        float(grad_mean_sojourn_time_lambda),
+        float(mean_waiting_time),
+        float(grad_mean_waiting_time_mu),
+        float(grad_mean_waiting_time_lambda),
+        float(fraction_wait),
     )

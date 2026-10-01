@@ -155,4 +155,4 @@ def replicate(
 
     # If there weren't any matches, the elo_diffs list will be empty.
     avg_diff = np.mean(elo_diffs) if elo_diffs else np.nan
-    return avg_diff, np.mean(wait_times)
+    return float(avg_diff), float(np.mean(wait_times))

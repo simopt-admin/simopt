@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from dataclasses import dataclass
 from typing import Annotated, Final, Self
 
@@ -234,7 +234,7 @@ def replicate(
     arrival_model: InputModel,
     attraction_model: InputModel,
     destination_model: InputModel,
-    service_models: list[InputModel],
+    service_models: Sequence[InputModel],
 ) -> tuple[int, float, float, list[float]]:
     """Return departures, departure fraction, mean occupancy, and attraction utilization."""
     # Keep local copies of factors to prevent excessive lookups

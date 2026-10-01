@@ -207,12 +207,12 @@ def replicate(
     else:
         avg_order = np.mean(orders_post_warmup[pos_orders_placed_post_warmup])
     return (
-        avg_backorder_costs,
-        avg_order_costs,
-        avg_holding_costs,
-        on_time_rate,
-        order_rate,
-        stockout_rate,
-        avg_stockout,
-        avg_order,
+        float(avg_backorder_costs),
+        float(avg_order_costs),
+        float(avg_holding_costs),
+        float(on_time_rate),
+        float(order_rate),
+        float(stockout_rate),
+        float(avg_stockout),
+        float(avg_order),
     )
