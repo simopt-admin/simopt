@@ -80,7 +80,7 @@ class Model(ABC, Generic[ConfigT]):
         """Model factors exported as a dictionary using their external names."""
         return self.config.model_dump(by_alias=True)
 
-    def model_created(self) -> None:  # noqa: B027
+    def model_created(self) -> None:
         """Hook called after the model is constructed.
 
         Subclasses can override this to use custom input models.
