@@ -14,7 +14,7 @@
 # ---
 
 # %% [markdown]
-# # Demo for the ProblemsSolvers class.
+# # Demo for running multiple problem-solver pairs.
 #
 # This script is intended to help with debugging problems and solvers.
 #
@@ -49,30 +49,39 @@ num_postreps = 50
 num_postreps_init_opt = 50
 
 # %%
-# Initialize an instance of the experiment class.
-from simopt.experiment_base import ProblemsSolvers
+# Create one problem-solver pair for each solver on each problem.
+from simopt.experiment_base import ProblemSolver, post_normalize
 
-mymetaexperiment = ProblemsSolvers(
-    solver_names=solver_abbr_names, problem_names=problem_abbr_names
-)
-
-# Write to log file.
-mymetaexperiment.log_group_experiment_results()
+experiments = [
+    [
+        ProblemSolver(solver_name=solver_name, problem_name=problem_name)
+        for problem_name in problem_abbr_names
+    ]
+    for solver_name in solver_abbr_names
+]
 
 # %%
 # Run a fixed number of macroreplications of each solver on each problem.
-mymetaexperiment.run(n_macroreps=num_macroreps)
+for solver_experiments in experiments:
+    for experiment in solver_experiments:
+        experiment.run(n_macroreps=num_macroreps)
 
 # %%
 print("Post-processing results.")
 # Run a fixed number of postreplications at all recommended solutions.
-mymetaexperiment.post_replicate(n_postreps=num_postreps)
+for solver_experiments in experiments:
+    for experiment in solver_experiments:
+        experiment.post_replicate(n_postreps=num_postreps)
 
 # %%
 print("Post-normalizing results.")
 
 # Find an optimal solution x* for normalization.
-mymetaexperiment.post_normalize(n_postreps_init_opt=num_postreps_init_opt)
+for problem_idx in range(len(problem_abbr_names)):
+    post_normalize(
+        experiments=[solver_experiments[problem_idx] for solver_experiments in experiments],
+        n_postreps_init_opt=num_postreps_init_opt,
+    )
 
 # %%
 # Produce basic plots.
@@ -88,7 +97,7 @@ def _print_path(plot_path: list[Path]) -> None:
 
 _print_path(
     plot_solvability_profiles(
-        experiments=mymetaexperiment.experiments, plot_type=PlotType.CDF_SOLVABILITY
+        experiments=experiments, plot_type=PlotType.CDF_SOLVABILITY
     )
 )
 

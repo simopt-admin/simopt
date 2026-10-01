@@ -32,7 +32,7 @@ from simopt.directory import (
     problem_directory,
     solver_directory,
 )
-from simopt.experiment_base import ProblemsSolvers
+from simopt.experiment import ProblemSolver
 from simopt.web.plots import (
     PlotAreaScatterplotsConfig,
     PlotProgressCurvesConfig,
@@ -395,7 +395,7 @@ def check_compatibility(payload: dict):
             problem = problem_cls()
 
             try:
-                exp = ProblemsSolvers(solvers=[solver], problems=[problem])
+                exp = ProblemSolver(solver=solver, problem=problem)
                 err = exp.check_compatibility()
                 if err.strip() == "":
                     compatibility[display_name][prob_display_name] = {

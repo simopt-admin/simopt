@@ -10,12 +10,11 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 import simopt.directory as directory
-from simopt.base import Problem, Solver
+from simopt.base import Problem
 from simopt.data_farming.nolhs import NOLHS
 from simopt.experiment import (
     EXPERIMENT_DIR,
     ProblemSolver,
-    ProblemsSolvers,
     post_normalize,  # noqa: F401
 )
 from simopt.plot_type import PlotType  # noqa: F401
@@ -62,126 +61,6 @@ def read_experiment_results(file_name_path: Path | str) -> ProblemSolver:
     file_name_path = resolve_file_path(file_name_path, EXPERIMENT_DIR)
     with file_name_path.open("rb") as file:
         return pickle.load(file)
-
-
-def read_group_experiment_results(
-    file_path: Path | str,
-) -> ProblemsSolvers:
-    """Reads a ProblemsSolvers object from a .pickle file.
-
-    Args:
-        file_path (Path): Path to the .pickle file.
-
-    Returns:
-        ProblemsSolvers: A group of problem-solver experiments that were run
-            or post-processed.
-
-    Raises:
-        FileNotFoundError: If the file does not exist.
-    """
-    file_path = resolve_file_path(file_path, EXPERIMENT_DIR / "outputs")
-    with file_path.open("rb") as file:
-        return pickle.load(file)
-
-
-def find_unique_solvers_problems(
-    experiments: list[ProblemSolver],
-) -> tuple[list[Solver], list[Problem]]:
-    """Finds unique solvers and problems from a list of ProblemSolver experiments.
-
-    Args:
-        experiments (list[ProblemSolver]): List of problem-solver pairs.
-
-    Returns:
-        tuple[list[Solver], list[Problem]]: A tuple containing:
-            - A list of unique solvers.
-            - A list of unique problems.
-    """
-    unique_solvers = list({experiment.solver for experiment in experiments})
-    unique_problems = list({experiment.problem for experiment in experiments})
-    return unique_solvers, unique_problems
-
-
-def find_missing_experiments(
-    experiments: list[ProblemSolver],
-) -> tuple[list[Solver], list[Problem], list[tuple[Solver, Problem]]]:
-    """Finds missing problem-solver pairs from a list of experiments.
-
-    Args:
-        experiments (list[ProblemSolver]): List of problem-solver pairs.
-
-    Returns:
-        tuple: A tuple containing:
-            - list[Solver]: Unique solvers present in the experiments.
-            - list[Problem]: Unique problems present in the experiments.
-            - list[tuple[Solver, Problem]]: Problem-solver pairs that are missing.
-    """
-    pairs = {(experiment.solver, experiment.problem) for experiment in experiments}
-    unique_solvers, unique_problems = find_unique_solvers_problems(experiments)
-
-    missing = [
-        (solver, problem)
-        for solver in unique_solvers
-        for problem in unique_problems
-        if (solver, problem) not in pairs
-    ]
-
-    return unique_solvers, unique_problems, missing
-
-
-def make_full_metaexperiment(
-    existing_experiments: list[ProblemSolver],
-    unique_solvers: list[Solver],
-    unique_problems: list[Problem],
-    missing_experiments: list[tuple[Solver, Problem]],
-) -> ProblemsSolvers:
-    """Creates experiments for missing problem-solver pairs.
-
-    Args:
-        existing_experiments (list[ProblemSolver]): Existing problem-solver experiments.
-        unique_solvers (list[Solver]): Solvers present in the existing experiments.
-        unique_problems (list[Problem]): Problems present in the existing experiments.
-        missing_experiments (list[tuple[Solver, Problem]]): Problem-solver pairs that
-            have not yet been run.
-
-    Returns:
-        ProblemsSolvers: A new ProblemsSolvers object containing the completed set.
-    """
-    # Make sure the right number of experiments are being given
-    expected_num_exps = len(unique_solvers) * len(unique_problems)
-    actual_num_exps = len(existing_experiments) + len(missing_experiments)
-    if actual_num_exps != expected_num_exps:
-        error_msg = (
-            "Error in creating full meta-experiment. "
-            "Number of existing and missing experiments specified does not match "
-            "number of unique solvers and problems. "
-            f"Expected: {expected_num_exps}, Actual: {actual_num_exps}"
-        )
-        raise Exception(error_msg)
-    # Create the missing experiments
-    created_experiments = [
-        ProblemSolver(solver=solver, problem=problem) for solver, problem in missing_experiments
-    ]
-    # Create 2D list to hold all experiments.
-    full_experiments: list[list[ProblemSolver | None]] = [
-        [None for _ in range(len(unique_problems))] for _ in range(len(unique_solvers))
-    ]
-    # Populate the 2D list with existing and new experiments.
-    for experiment in existing_experiments + created_experiments:
-        # Add the experiment to correct location in 2D list.
-        solver_idx = unique_solvers.index(experiment.solver)
-        problem_idx = unique_problems.index(experiment.problem)
-        full_experiments[solver_idx][problem_idx] = experiment
-    # Ensure all entries are ProblemSolvers and not None
-    for row in full_experiments:
-        for experiment in row:
-            if not isinstance(experiment, ProblemSolver):
-                error_msg = (
-                    "Error in creating full meta-experiment. "
-                    "Some problem-solver pairs are still missing."
-                )
-                raise Exception(error_msg)
-    return ProblemsSolvers(experiments=full_experiments)  # type: ignore
 
 
 def create_design_list_from_table(design_table: DataFrame) -> list[dict[str, Any]]:

@@ -14,7 +14,7 @@
 # ---
 
 # %% [markdown]
-# # Demo for the ProblemsSolvers class.
+# # Demo for running multiple problem-solver pairs.
 #
 # This script is intended to help with running a data-farming experiment on a solver.
 #
@@ -63,36 +63,43 @@ num_postreps = 10
 num_postreps_init_opt = 10
 
 # %%
-# Create ProblemsSolvers experiment with solver and model design
-from simopt.experiment_base import ProblemsSolvers
+# Create the cross product of solvers and problems
+from simopt.experiment.api import SimulationConfig, run
+from simopt.experiment.single import ProblemSolver
 
-experiment = ProblemsSolvers(
-    solver_factors=solver_factors,
-    problem_factors=problem_factors,
-    solver_names=solver_names,
-    problem_names=problem_names,
-    solver_renames=solver_renames,
-    problem_renames=problem_renames,
-    experiment_name=experiment_name,
-    create_pair_pickles=True,
-)
+experiments = [
+    ProblemSolver(
+        solver_name=solver_name,
+        problem_name=problem_name,
+        solver_rename=solver_rename,
+        problem_rename=problem_rename,
+        solver_fixed_factors=solver_ff,
+        problem_fixed_factors=problem_ff,
+    )
+    for solver_name, solver_rename, solver_ff in zip(
+        solver_names, solver_renames, solver_factors, strict=True
+    )
+    for problem_name, problem_rename, problem_ff in zip(
+        problem_names, problem_renames, problem_factors, strict=True
+    )
+]
 
 # check compatibility of selected solvers and problems
-experiment.check_compatibility()
+for ps in experiments:
+    if message := ps.check_compatibility():
+        print(message)
 
 # %%
-# Run macroreplications at each design point.
-experiment.run(n_macroreps=num_macroreps)
+simulation_config = SimulationConfig(
+    n_mreps=num_macroreps,
+    n_preps=num_postreps,
+    n_preps_x0_xstar=num_postreps_init_opt,
+)
 
 # %%
-# Postprocess the experimental results from each design point.
-experiment.post_replicate(n_postreps=num_postreps)
+# Run macroreplications, postreplications and normalization.
+analysis_inputs = run(experiments, simulation_config)
 
 # %%
-experiment.post_normalize(n_postreps_init_opt=num_postreps_init_opt)
-
-# %%
-# Record and log results
-experiment.record_group_experiment_results()
-experiment.log_group_experiment_results()
-experiment.report_group_statistics()
+# Inspect the results of the first problem-solver pair.
+analysis_inputs[0].mean_df.head()
