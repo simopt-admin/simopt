@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import DataFarming from './lib/DataFarming.svelte';
   import type {
     Compatibility,
     EditMode,
@@ -16,6 +17,12 @@
   let currentPage: Page = "Simulator";
   const navigate = (p: Page) => (currentPage = p);
 
+  function addDesignToExperiment(kind: "solver" | "problem", entries: SummaryEntry[]): void {
+    if (kind === "solver") summarySolvers = [...summarySolvers, ...entries];
+    else summaryProblems = [...summaryProblems, ...entries];
+    navigate("Simulator");
+  }
+
   let allSolvers: string[] = [];
   let allProblems: string[] = [];
 
@@ -26,6 +33,9 @@
 
   let summarySolvers: SummaryEntry[] = [];         // [{name, params:[...], expanded?:bool}]
   let summaryProblems: SummaryEntry[] = [];
+  // Design points share a class name; pickers and the matrix use class names once each.
+  $: uniqueSolverNames = [...new Set(summarySolvers.map(s => s.name))];
+  $: uniqueProblemNames = [...new Set(summaryProblems.map(p => p.name))];
 
   // { kind: 'solver'|'problem', index: number } | null
   let editMode: EditMode | null = null;
@@ -326,19 +336,24 @@
         num_postreps: prValues.num_post_reps || 100,
         num_postnorms: pnValues.num_post_reps_init_opt || 100
       },
-      problems: summaryProblems.map(p => ({
-        name: p.name,
-        rename: p.name,
-        fixed_factors: p.params.reduce<Record<string, unknown>>((acc, param) => {
-          const parsed = parseValue(param.value);
-          if (parsed !== null) acc[param.name] = parsed;
-          return acc;
-        }, {}),
-        model_fixed_factors: {}
-      })),
+      problems: summaryProblems.map(p => {
+        const collect = (isModel: boolean) =>
+          p.params.reduce<Record<string, unknown>>((acc, param) => {
+            if ((param.source === "model") !== isModel) return acc;
+            const parsed = parseValue(param.value);
+            if (parsed !== null) acc[param.name] = parsed;
+            return acc;
+          }, {});
+        return {
+          name: p.name,
+          rename: p.rename ?? p.name,
+          fixed_factors: collect(false),
+          model_fixed_factors: collect(true)
+        };
+      }),
       solvers: summarySolvers.map(s => ({
         name: s.name,
-        rename: s.name,
+        rename: s.rename ?? s.name,
         fixed_factors: s.params.reduce<Record<string, unknown>>((acc, param) => {
           const parsed = parseValue(param.value);
           if (parsed !== null) acc[param.name] = parsed;
@@ -420,8 +435,8 @@
       return;
     }
     const payload = {
-      solvers: solvers.map(s => s.name),
-      problems: problems.map(p => p.name)
+      solvers: [...new Set(solvers.map(s => s.name))],
+      problems: [...new Set(problems.map(p => p.name))]
     };
     try {
       const res = await fetch("http://localhost:8000/check_compatibility", {
@@ -489,6 +504,13 @@
           class:active={currentPage === "Simulator"}
           on:click|preventDefault={() => navigate("Simulator")}
         >Simulator</a>
+      </li>
+      <li>
+        <a
+          href="#data-farming"
+          class:active={currentPage === "Data Farming"}
+          on:click|preventDefault={() => navigate("Data Farming")}
+        >Data Farming</a>
       </li>
       <li>
         <a
@@ -648,8 +670,8 @@
                             on:change={(e) => { plotParams[i].value = inputValue(e); plotParams = [...plotParams]; }}
                         >
                             <option value="">— None —</option>
-                            {#each summarySolvers as solver (solver.name)}
-                                <option value={solver.name}>{solver.name}</option>
+                            {#each uniqueSolverNames as name (name)}
+                                <option value={name}>{name}</option>
                             {/each}
                         </select>
                     {:else if typeof p.default === 'boolean'}
@@ -678,14 +700,14 @@
               {#if summarySolvers.length === 0}
                 <p style="color:#6b7280;font-size:0.9rem;margin-top:0.25rem;">No solvers added yet</p>
               {:else}
-                {#each summarySolvers as solver (solver.name)}
+                {#each uniqueSolverNames as name (name)}
                   <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
                     <input
                       type="checkbox"
-                      value={solver.name}
+                      value={name}
                       bind:group={selectedPlotSolvers}
                     />
-                    <span style="flex:1;">{solver.name}</span>
+                    <span style="flex:1;">{name}</span>
                   </label>
                 {/each}
               {/if}
@@ -696,14 +718,14 @@
               {#if summaryProblems.length === 0}
                 <p style="color:#6b7280;font-size:0.9rem;margin-top:0.25rem;">No problems added yet</p>
               {:else}
-                {#each summaryProblems as problem (problem.name)}
+                {#each uniqueProblemNames as name (name)}
                   <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
                     <input
                       type="checkbox"
-                      value={problem.name}
+                      value={name}
                       bind:group={selectedPlotProblems}
                     />
-                    <span style="flex:1;">{problem.name}</span>
+                    <span style="flex:1;">{name}</span>
                   </label>
                 {/each}
               {/if}
@@ -823,9 +845,9 @@
                 <button
                   class="summary-toggle pill"
                   on:click={() => { s.expanded = !s.expanded; summarySolvers = [...summarySolvers]; }}
-                  title={s.name}
+                  title={s.rename ?? s.name}
                 >
-                  <span class="pill-text">{s.name}</span>
+                  <span class="pill-text">{s.rename ?? s.name}</span>
                   <span class="pill-right">
                     <span class="pill-chevron">{s.expanded ? "▼" : "▶"}</span>
                     <a
@@ -857,9 +879,9 @@
                 <button
                   class="summary-toggle pill"
                   on:click={() => { p.expanded = !p.expanded; summaryProblems = [...summaryProblems]; }}
-                  title={p.name}
+                  title={p.rename ?? p.name}
                 >
-                  <span class="pill-text">{p.name}</span>
+                  <span class="pill-text">{p.rename ?? p.name}</span>
                   <span class="pill-right">
                     <span class="pill-chevron">{p.expanded ? "▼" : "▶"}</span>
                     <a
@@ -1011,19 +1033,19 @@
             <thead>
               <tr>
                 <th scope="col">S \ P</th>
-                {#each summaryProblems as p (p.name)}
-                  <th scope="col" title={p.name}>{abbrev(p.name)}</th>
+                {#each uniqueProblemNames as pn (pn)}
+                  <th scope="col" title={pn}>{abbrev(pn)}</th>
                 {/each}
               </tr>
             </thead>
             <tbody>
-              {#each summarySolvers as s (s.name)}
+              {#each uniqueSolverNames as sn (sn)}
                 <tr>
-                  <th class="solver-name" scope="row" title={s.name}>{abbrev(s.name)}</th>
-                  {#each summaryProblems as p (p.name)}
+                  <th class="solver-name" scope="row" title={sn}>{abbrev(sn)}</th>
+                  {#each uniqueProblemNames as pn (pn)}
                     <td
-                      class={compatibility[s.name]?.[p.name] ? (compatibility[s.name][p.name].compatible ? 'compat-cell ok' : 'compat-cell bad') : 'compat-cell neutral'}
-                      title={compatibility[s.name]?.[p.name] && !compatibility[s.name][p.name].compatible && compatibility[s.name][p.name].message ? `${s.name} × ${p.name}: ${compatibility[s.name][p.name].message}` : ''}
+                      class={compatibility[sn]?.[pn] ? (compatibility[sn][pn].compatible ? 'compat-cell ok' : 'compat-cell bad') : 'compat-cell neutral'}
+                      title={compatibility[sn]?.[pn] && !compatibility[sn][pn].compatible && compatibility[sn][pn].message ? `${sn} × ${pn}: ${compatibility[sn][pn].message}` : ''}
                     >&nbsp;</td>
                   {/each}
                 </tr>
@@ -1037,6 +1059,10 @@
       </div>
     {/if}
   {/if}
+  <!-- Kept mounted (just hidden) so the form survives page switches. -->
+  <div hidden={currentPage !== "Data Farming"}>
+    <DataFarming onAddToExperiment={addDesignToExperiment} />
+  </div>
 </main>
 
 <style>

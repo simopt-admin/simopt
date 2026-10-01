@@ -31,6 +31,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!simopt-web/src/lib/
 lib64/
 parts/
 sdist/
