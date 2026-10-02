@@ -80,15 +80,21 @@ class Context:
         model: dsl.Model,
         total_budget: int,
         solution_progenitor_rngs: list[MRG32k3a],
+        solver_rngs: list[MRG32k3a],
         crn_across_solns: bool,
     ) -> None:
         """Initialize the runtime context."""
         self.model = model
         self.budget = Budget(total_budget)
         self.solution_progenitor_rngs = solution_progenitor_rngs
+        self.solver_rngs = solver_rngs
         self.crn_across_solns = crn_across_solns
         self.recommended_solns: list[Solution] = []
         self.intermediate_budgets: list[int] = []
+
+    def rng(self, index: int) -> MRG32k3a:
+        """Return the solver RNG at ``index`` for the solver's internal randomness."""
+        return self.solver_rngs[index]
 
     def evaluate(self, x: Solution | tuple, n_reps: int = 1) -> Solution:
         """Evaluate a solution by simulating it and returning the updated object."""
@@ -186,9 +192,6 @@ class Solver(ABC):
         fixed_factors = fixed_factors or {}
         self.config = self.config_class(**fixed_factors)
 
-        self.rng_list: list[MRG32k3a] = []
-        self.solution_progenitor_rngs: list[MRG32k3a] = []
-
     def __eq__(self, other: object) -> bool:
         """Check if two solvers are equivalent.
 
@@ -229,15 +232,6 @@ class Solver(ABC):
     def factors(self) -> dict:
         """Changeable factors (i.e., parameters) of the solver."""
         return self.config.model_dump(by_alias=True)
-
-    def attach_rngs(self, rng_list: list[MRG32k3a]) -> None:
-        """Attach a list of random-number generators to the solver.
-
-        Args:
-            rng_list (list[``mrg32k3a.mrg32k3a.MRG32k3a``]): List of random-number
-                generators used for the solver's internal purposes.
-        """
-        self.rng_list = rng_list
 
     @abstractmethod
     def solve(self, problem: dsl.Model, ctx: Context) -> None:

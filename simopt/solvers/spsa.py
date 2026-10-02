@@ -122,7 +122,7 @@ class SPSA(Solver):
         # Check divisibility for the for loop.
         return self.factors["n_loss"] % (2 * self.factors["gavg"]) == 0
 
-    def _gen_simul_pert_vec(self, dim: int) -> NDArray[np.int_]:
+    def _gen_simul_pert_vec(self, ctx: Context, dim: int) -> NDArray[np.int_]:
         """Generate a random perturbation vector.
 
         Generate a new simulatanious pertubation vector with a 50/50 probability
@@ -130,12 +130,13 @@ class SPSA(Solver):
         problem's dimension. The vector components are independent from each other.
 
         Args:
+            ctx (Context): Runtime services providing the solver RNG.
             dim (int): The length of the vector.
 
         Returns:
             NDArray[np.int_]: A random vector of -1's and 1's.
         """
-        return np.array(self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim))
+        return np.array(ctx.rng(2).choices([-1, 1], [0.5, 0.5], k=dim))
 
     def solve(self, problem: dsl.Model, ctx: Context) -> None:
         lower_bound = np.array(problem.lower_bounds())
@@ -163,7 +164,7 @@ class SPSA(Solver):
             ghat = np.zeros((1, problem.dim))
             for _ in range(self.factors["gavg"]):
                 # Generate random direction (delta).
-                delta = self._gen_simul_pert_vec(problem.dim)
+                delta = self._gen_simul_pert_vec(ctx, problem.dim)
                 c_delta = c * delta
                 # Determine points forward/backward relative to random direction.
                 theta_forward = theta + c_delta
@@ -203,7 +204,7 @@ class SPSA(Solver):
             ak = a / (k + aalg) ** self.factors["alpha"]
             ck = c / (k ** self.factors["gamma"])
             # Generate random direction (delta).
-            delta = self._gen_simul_pert_vec(problem.dim)
+            delta = self._gen_simul_pert_vec(ctx, problem.dim)
             ck_delta = ck * delta
             # Determine points forward/backward relative to random direction.
             theta_forward = theta + ck_delta

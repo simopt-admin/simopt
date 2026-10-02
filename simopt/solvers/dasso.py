@@ -97,20 +97,17 @@ class DASSO(Solver):
         # Let the base class handle default arguments.
         super().__init__(name, fixed_factors)
 
-    def _solver_rng(self) -> MRG32k3a:
+    def _solver_rng(self, ctx: Context) -> MRG32k3a:
         """Return the RNG used for solver-internal randomness."""
-        if len(self.rng_list) < 3:
-            error_msg = "DASSO requires an internal RNG before solve() is called."
-            raise RuntimeError(error_msg)
-        return self.rng_list[2]
+        return ctx.rng(2)
 
-    def _numpy_rng(self) -> np.random.Generator:
+    def _numpy_rng(self, ctx: Context) -> np.random.Generator:
         """Create a NumPy generator derived from the solver RNG."""
-        return np.random.default_rng(_numpy_seed_from_mrg(self._solver_rng()))
+        return np.random.default_rng(_numpy_seed_from_mrg(self._solver_rng(ctx)))
 
     def solve(self, problem: dsl.Model, ctx: Context) -> None:
         run_state = _RunState()
-        solver_rng = self._solver_rng()
+        solver_rng = self._solver_rng(ctx)
 
         # Problem specifications.
         dim = problem.dim
@@ -647,7 +644,7 @@ class DASSO(Solver):
 
         # Default values.
         n_init: int = self.factors["n_points_for_estimation"]
-        solver_rng = self._solver_rng()
+        solver_rng = self._solver_rng(ctx)
 
         # Create the reference points.
         bounds: dict[int | str, list[int | float]] = {
@@ -733,6 +730,7 @@ class DASSO(Solver):
             )
             theta_parameters[coord_ids], transformed_cov_matrices_dd[coord_ids] = (
                 self._estimate_theta(
+                    ctx,
                     mapping,
                     coord_ids,
                     design_point_indices,
@@ -816,6 +814,7 @@ class DASSO(Solver):
 
     def _estimate_theta(
         self,
+        ctx: Context,
         mapping: DASSO._Mapping,
         coordinate_ids: tuple,
         solution_indices: list,
@@ -826,6 +825,7 @@ class DASSO(Solver):
         """Estimate hyperparameters of the precision matrix via MLE.
 
         Args:
+            ctx (Context): Runtime services providing the solver RNG.
             mapping (DASSO._Mapping): The mapping instance providing mapping between
                 solutions and coordinates.
             coordinate_ids (tuple): The lower dimensional component coordinate ids of a
@@ -913,8 +913,8 @@ class DASSO(Solver):
         diff_tf_mat_d = diff_mat @ rearranged_tf_mat_d  # B^(rho) T^(rho)_DD
 
         # Generate Sobol points to create a feasible candidate parameters.
-        solver_rng = self._solver_rng()
-        sampler = qmc.Sobol(len(coordinate_ids), rng=self._numpy_rng())
+        solver_rng = self._solver_rng(ctx)
+        sampler = qmc.Sobol(len(coordinate_ids), rng=self._numpy_rng(ctx))
         candidates = sampler.random(2**12)  # without theta_0, all non-negative
 
         # Restrict the set of candidates for efficiency.

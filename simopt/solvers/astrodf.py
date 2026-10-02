@@ -930,7 +930,7 @@ class ASTRODF(Solver):
         self.lambda_min: int = self.factors["lambda_min"]
 
         # Designate random number generator for random sampling
-        rng = self.rng_list[1]
+        rng = ctx.rng(1)
 
         # Generate dummy solutions to estimate a reasonable maximum radius
         dummy_solns = [self.problem.random_solution(rng) for _ in range(1000 * self.problem.dim)]

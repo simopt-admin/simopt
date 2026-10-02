@@ -86,7 +86,7 @@ class NelderMead(Solver):
     # FIXME: fix typing on `sort_sol`
     def solve(self, problem: dsl.Model, ctx: Context) -> None:
         # Designate random number generator for random sampling.
-        get_rand_soln_rng = self.rng_list[1]
+        get_rand_soln_rng = ctx.rng(1)
         n_pts = problem.dim + 1
 
         # Check for sufficiently large budget.

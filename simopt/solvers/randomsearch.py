@@ -46,7 +46,7 @@ class RandomSearch(Solver):
 
     def solve(self, problem: dsl.Model, ctx: Context) -> None:
         # Designate random number generator for random sampling.
-        find_next_soln_rng = self.rng_list[1]
+        find_next_soln_rng = ctx.rng(1)
         # Start at initial solution and record as best.
         new_x = problem.initial_vector()
         new_solution = ctx.evaluate(new_x, 0)
