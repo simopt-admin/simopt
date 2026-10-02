@@ -176,6 +176,7 @@ class Problem(ABC):
         """Optimization problem expressed with the SimOpt DSL."""
         if self._optimization_problem is None:
             self._optimization_problem = self.build()
+            self._optimization_problem.set_random_solution(self.get_random_solution)
         return self._optimization_problem
 
     def build(self) -> dsl.Model:
@@ -233,8 +234,9 @@ class Problem(ABC):
     ) -> dsl.Simulation:
         """Add this problem's simulation model to the DSL model.
 
-        The problem supplies the replication adapter and RNG count so problem
-        implementations only need to declare the simulation's decisions.
+        The problem supplies the replication adapter, RNG count, and gradient
+        availability so problem implementations only need to declare the
+        simulation's decisions.
 
         Args:
             target: DSL model to which the simulation is added.
@@ -260,7 +262,11 @@ class Problem(ABC):
             return self.model.replicate(factors, rngs)
 
         return target.add_simulation(
-            name=name, run=run, decisions=decisions, n_rngs=self.model.n_rngs
+            name=name,
+            run=run,
+            decisions=decisions,
+            n_rngs=self.model.n_rngs,
+            gradients=self.gradient_available,
         )
 
     def check_deterministic_constraints(self, x: tuple, /) -> bool:
