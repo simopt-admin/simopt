@@ -20,11 +20,11 @@ from scipy.special import (
 from scipy.stats import qmc
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Context,
     ObjectiveType,
-    Problem,
     Solver,
     SolverConfig,
     VariableType,
@@ -108,14 +108,14 @@ class DASSO(Solver):
         """Create a NumPy generator derived from the solver RNG."""
         return np.random.default_rng(_numpy_seed_from_mrg(self._solver_rng()))
 
-    def solve(self, problem: Problem, ctx: Context) -> None:
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
         run_state = _RunState()
         solver_rng = self._solver_rng()
 
         # Problem specifications.
         dim = problem.dim
-        lower_bounds = problem.lower_bounds
-        upper_bounds = problem.upper_bounds
+        lower_bounds = problem.lower_bounds()
+        upper_bounds = problem.upper_bounds()
 
         # Decomposition.
         if len(self.factors["decomposition"]) >= 1:
@@ -619,7 +619,7 @@ class DASSO(Solver):
     def _hyperparameter_estimation(
         self,
         run_state: _RunState,
-        problem: Problem,
+        problem: dsl.Model,
         ctx: Context,
         mapping: DASSO._Mapping,
         decomposition: list,
@@ -628,7 +628,7 @@ class DASSO(Solver):
 
         Args:
             run_state (_RunState): Run-scoped storage for design point data.
-            problem (Problem): The problem instance providing bounds and function
+            problem (dsl.Model): The problem instance providing bounds and function
                 evaluations.
             ctx (Context): Runtime services for the current run.
             mapping (DASSO._Mapping): The mapping instance providing mapping between
@@ -641,8 +641,8 @@ class DASSO(Solver):
             float: The estimated location parameter.
         """
         # Problem specifications.
-        lower_bound: list[int | float] = list(problem.lower_bounds)
-        upper_bound: list[int | float] = list(problem.upper_bounds)
+        lower_bound: list[int | float] = list(problem.lower_bounds())
+        upper_bound: list[int | float] = list(problem.upper_bounds())
         dim = len(lower_bound)
 
         # Default values.

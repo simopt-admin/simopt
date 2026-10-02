@@ -34,11 +34,11 @@ from numpy.linalg import LinAlgError, inv, norm, pinv
 from pydantic import Field, model_validator
 from scipy.optimize import NonlinearConstraint, OptimizeResult, minimize
 
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Context,
     ObjectiveType,
-    Problem,
     Solution,
     Solver,
     SolverConfig,
@@ -529,7 +529,7 @@ class ASTRODF(Solver):
         )
 
     def get_model_coefficients(
-        self, y_var: list, fval: list, problem: Problem
+        self, y_var: list, fval: list, problem: dsl.Model
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Compute model coefficients using 2d+1 design points and function values.
 
@@ -539,7 +539,7 @@ class ASTRODF(Solver):
         Args:
             y_var (list): List of sampled decision vectors (design points).
             fval (list): Corresponding function values for each design point.
-            problem (Problem): Problem instance providing dimension and structure.
+            problem (dsl.Model): Problem instance providing dimension and structure.
 
         Returns:
             tuple[np.ndarray, np.ndarray, np.ndarray]: A tuple containing:
@@ -573,15 +573,15 @@ class ASTRODF(Solver):
         return inverse_mult, grad, hessian
 
     def get_coordinate_basis_interpolation_points(
-        self, x_k: tuple[int | float, ...], delta: float, problem: Problem
+        self, x_k: tuple[int | float, ...], delta: float, problem: dsl.Model
     ) -> list[list[list[int | float]]]:
         """Compute the interpolation points (2d+1) using the coordinate basis."""
         y_var = [[list(x_k)]]
         is_block_constraint = sum(x_k) != 0
         num_decision_vars = problem.dim
 
-        lower_bounds = problem.lower_bounds
-        upper_bounds = problem.upper_bounds
+        lower_bounds = problem.lower_bounds()
+        upper_bounds = problem.upper_bounds()
 
         for var_idx in range(num_decision_vars):
             coord_vector = self.get_coordinate_vector(num_decision_vars, var_idx)
@@ -609,7 +609,7 @@ class ASTRODF(Solver):
         self,
         x_k: np.ndarray,
         delta: float,
-        problem: Problem,
+        problem: dsl.Model,
         rotate_matrix: np.ndarray,
         reused_x: np.ndarray,
     ) -> list[list[np.ndarray]]:
@@ -621,8 +621,8 @@ class ASTRODF(Solver):
         is_block_constraint = np.sum(x_k) != 0
         num_decision_vars = problem.dim
 
-        lower_bounds = np.array(problem.lower_bounds)
-        upper_bounds = np.array(problem.upper_bounds)
+        lower_bounds = np.array(problem.lower_bounds())
+        upper_bounds = np.array(problem.upper_bounds())
 
         for i in range(num_decision_vars):
             rotate_matrix_delta: np.ndarray = delta * rotate_matrix[i]
@@ -811,13 +811,13 @@ class ASTRODF(Solver):
             )
             candidate_x = self.incumbent_x + solve_subproblem.x
 
-        # logging.debug("problem.lower_bounds "+str(problem.lower_bounds))
+        # logging.debug("problem.lower_bounds() "+str(problem.lower_bounds()))
         # handle the box constraints
         candidate_x = tuple(
             clamp_with_epsilon(
                 float(candidate_x[i]),
-                self.problem.lower_bounds[i],
-                self.problem.upper_bounds[i],
+                self.problem.lower_bounds()[i],
+                self.problem.upper_bounds()[i],
             )
             for i in range(self.problem.dim)
         )
@@ -933,22 +933,20 @@ class ASTRODF(Solver):
         rng = self.rng_list[1]
 
         # Generate dummy solutions to estimate a reasonable maximum radius
-        dummy_solns = [
-            self.problem.get_random_solution(rng) for _ in range(1000 * self.problem.dim)
-        ]
+        dummy_solns = [self.problem.random_solution(rng) for _ in range(1000 * self.problem.dim)]
 
         # Range for each dimension is calculated and compared with box constraints
         # range if given
         # TODO: just use box constraints range if given
         # self.delta_max = min(
         #     self.factors["delta_max"],
-        #     problem.upper_bounds[0] - problem.lower_bounds[0]
+        #     problem.upper_bounds()[0] - problem.lower_bounds()[0]
         # )
         delta_max_candidates: list[float | int] = []
         for i in range(self.problem.dim):
             sol_values = [sol[i] for sol in dummy_solns]
             min_soln, max_soln = min(sol_values), max(sol_values)
-            bound_range = self.problem.upper_bounds[i] - self.problem.lower_bounds[i]
+            bound_range = self.problem.upper_bounds()[i] - self.problem.lower_bounds()[i]
             delta_max_candidates.append(min(max_soln - min_soln, bound_range))
 
         # TODO: update this so that it could be used for problems with decision
@@ -960,10 +958,7 @@ class ASTRODF(Solver):
         self.delta_k = 10 ** (ceil(log(self.delta_max * 2, 10) - 1) / self.problem.dim)
         # logging.debug("initial delta " + str(self.delta_k))
 
-        if "initial_solution" in self.problem.factors:
-            self.incumbent_x = tuple(self.problem.factors["initial_solution"])
-        else:
-            self.incumbent_x = tuple(self.problem.get_random_solution(rng))
+        self.incumbent_x = tuple(self.problem.initial_vector())
 
         self.incumbent_solution = ctx.evaluate(self.incumbent_x, 0)
         self.h_k = np.identity(self.problem.dim)
@@ -981,7 +976,7 @@ class ASTRODF(Solver):
         self.visited_pts_list = []
         self.kappa = None
 
-    def solve(self, problem: Problem, ctx: Context) -> None:
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
         self.problem = problem
         self._initialize_solving(ctx)
 

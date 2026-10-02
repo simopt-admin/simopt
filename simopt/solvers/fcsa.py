@@ -11,11 +11,11 @@ import cvxpy as cp
 import numpy as np
 from pydantic import Field
 
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Context,
     ObjectiveType,
-    Problem,
     Solution,
     Solver,
     SolverConfig,
@@ -139,7 +139,7 @@ class FCSA(Solver):
 
     def _objective_grad(
         self,
-        problem: Problem,
+        problem: dsl.Model,
         ctx: Context,
         solution: Solution,
         normalize: bool,
@@ -198,7 +198,7 @@ class FCSA(Solver):
         assert direction.value is not None
         return -direction.value
 
-    def _direction_fcsa(self, problem: Problem, ctx: Context, solution: Solution) -> np.ndarray:
+    def _direction_fcsa(self, problem: dsl.Model, ctx: Context, solution: Solution) -> np.ndarray:
         normalize = self.factors["normalize_grads"]
 
         obj_grad = self._objective_grad(problem, ctx, solution, normalize)
@@ -226,12 +226,12 @@ class FCSA(Solver):
         return -direction.value
 
     def _direction_no_violation(
-        self, problem: Problem, ctx: Context, solution: Solution
+        self, problem: dsl.Model, ctx: Context, solution: Solution
     ) -> np.ndarray:
         normalize = self.factors["normalize_grads"]
         return self._objective_grad(problem, ctx, solution, normalize)
 
-    def _direction(self, solution: Solution, problem: Problem, ctx: Context) -> np.ndarray:
+    def _direction(self, solution: Solution, problem: dsl.Model, ctx: Context) -> np.ndarray:
         method = self.factors["search_direction"]
 
         violated_values = solution.stoch_constraints_mean
@@ -315,11 +315,11 @@ class FCSA(Solver):
 
         return solution
 
-    def solve(self, problem: Problem, ctx: Context) -> None:
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
         assert problem.n_stochastic_constraints > 0
 
-        lower = np.array(problem.lower_bounds)
-        upper = np.array(problem.upper_bounds)
+        lower = np.array(problem.lower_bounds())
+        upper = np.array(problem.upper_bounds())
 
         # NOTE: currently not used
         ieq_lhs = None
@@ -331,7 +331,7 @@ class FCSA(Solver):
         self._feasible_found = False
 
         # Start with the initial solution.
-        x = problem.factors["initial_solution"]
+        x = problem.initial_vector()
         solution = self._new_solution_found(ctx, x, False)
 
         k = 0

@@ -151,25 +151,17 @@ class Problem(ABC):
     @property
     def dim(self) -> int:
         """Number of decision variables."""
-        return len(self.optimization_problem.variables)
+        return self.optimization_problem.dim
 
     @property
     def lower_bounds(self) -> tuple[int | float, ...]:
         """Lower bound for each decision variable."""
-        problem = self.optimization_problem
-        return tuple(
-            int(bound) if variable.integer and np.isfinite(bound) else bound
-            for variable, bound in zip(problem.variables, problem.lower_bounds(), strict=True)
-        )
+        return self.optimization_problem.lower_bounds()
 
     @property
     def upper_bounds(self) -> tuple[int | float, ...]:
         """Upper bound for each decision variable."""
-        problem = self.optimization_problem
-        return tuple(
-            int(bound) if variable.integer and np.isfinite(bound) else bound
-            for variable, bound in zip(problem.variables, problem.upper_bounds(), strict=True)
-        )
+        return self.optimization_problem.upper_bounds()
 
     @property
     def optimization_problem(self) -> dsl.Model:

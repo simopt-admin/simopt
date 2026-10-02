@@ -10,6 +10,7 @@ from boltons.typeutils import classproperty
 from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+from simopt import dsl
 from simopt.problem import Problem, Solution
 from simopt.problem_types import ConstraintType, ObjectiveType, VariableType
 from simopt.utils import get_specifications
@@ -239,11 +240,11 @@ class Solver(ABC):
         self.rng_list = rng_list
 
     @abstractmethod
-    def solve(self, problem: Problem, ctx: Context) -> None:
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
         """Run a single macroreplication of a solver on a problem.
 
         Args:
-            problem (Problem): Simulation-optimization problem to solve.
+            problem (dsl.Model): Simulation-optimization problem to solve.
             ctx (Context): Runtime services for the current run.
         """
         raise NotImplementedError

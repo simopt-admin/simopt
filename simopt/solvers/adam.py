@@ -11,11 +11,11 @@ from typing import Annotated, ClassVar
 import numpy as np
 from pydantic import Field
 
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Context,
     ObjectiveType,
-    Problem,
     Solver,
     SolverConfig,
     VariableType,
@@ -79,7 +79,7 @@ class ADAM(Solver):
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem, ctx: Context) -> None:
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
         # Default values.
         r: int = self.factors["r"]
         beta_1: float = self.factors["beta_1"]
@@ -88,11 +88,11 @@ class ADAM(Solver):
         epsilon: float = self.factors["epsilon"]
 
         # Upper bound and lower bound.
-        lower_bound = np.array(problem.lower_bounds)
-        upper_bound = np.array(problem.upper_bounds)
+        lower_bound = np.array(problem.lower_bounds())
+        upper_bound = np.array(problem.upper_bounds())
 
         # Start with the initial solution.
-        new_solution = ctx.evaluate(problem.factors["initial_solution"], 0)
+        new_solution = ctx.evaluate(problem.initial_vector(), 0)
         ctx.log(new_solution)
         new_solution = ctx.evaluate(new_solution, r)
 

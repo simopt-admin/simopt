@@ -6,9 +6,9 @@ from collections.abc import Callable
 
 import numpy as np
 
+from simopt import dsl
 from simopt.base import (
     Context,
-    Problem,
     Solution,
     Solver,
 )
@@ -18,7 +18,7 @@ def finite_diff(
     ctx: Context,
     new_solution: Solution,
     bounds_check: np.ndarray,
-    problem: Problem,
+    problem: dsl.Model,
     stepsize: float,
     r: int,
 ) -> np.ndarray:
@@ -29,7 +29,7 @@ def finite_diff(
         new_solution (Solution): The current solution to perturb.
         bounds_check (np.ndarray): Array indicating which perturbation method to
             use per dimension.
-        problem (Problem): The problem instance providing bounds and function
+        problem (dsl.Model): The problem instance providing bounds and function
             evaluations.
         stepsize (float): The step size used for finite difference calculations.
         r (int): The number of replications used for each function evaluation.
@@ -45,8 +45,8 @@ def finite_diff(
 
     x = np.array(new_solution.x, dtype=float)
     fn_value = float(new_solution.objectives_mean[0])
-    lower_bound = np.array(problem.lower_bounds, dtype=float)
-    upper_bound = np.array(problem.upper_bounds, dtype=float)
+    lower_bound = np.array(problem.lower_bounds(), dtype=float)
+    upper_bound = np.array(problem.upper_bounds(), dtype=float)
 
     return fd(fn, x, stepsize, fn_value, bounds_check, lower_bound, upper_bound)
 
@@ -174,7 +174,7 @@ def bfgs_hessian_approx(
     ctx: Context,
     new_solution: Solution,
     bounds_check: np.ndarray,
-    problem: Problem,
+    problem: dsl.Model,
     r: int,
 ) -> np.ndarray:
     """Approximate Hessian using BFGS.
@@ -187,7 +187,7 @@ def bfgs_hessian_approx(
         new_solution (Solution): The solution at which derivatives are computed.
         bounds_check (np.ndarray): Boolean mask indicating which variables are
             within bounds and eligible for perturbation.
-        problem (Problem): The simulation-optimization problem being solved.
+        problem (dsl.Model): The simulation-optimization problem being solved.
         r (int): Number of replications used when estimating gradients.
 
     Returns:
@@ -198,8 +198,8 @@ def bfgs_hessian_approx(
 
     # Initialize step sizes.
     delta_t: float = solver.factors["delta_T"]
-    ub_steps = np.minimum(delta_t, np.array(problem.upper_bounds) - new_x)
-    lb_steps = np.minimum(delta_t, new_x - np.array(problem.lower_bounds))
+    ub_steps = np.minimum(delta_t, np.array(problem.upper_bounds()) - new_x)
+    lb_steps = np.minimum(delta_t, new_x - np.array(problem.lower_bounds()))
 
     # Compute masks for numpy vectorization
     bounds_neg = bounds_check == -1
@@ -224,7 +224,7 @@ def bfgs_hessian_approx(
 
     def get_fn_x(x: np.ndarray) -> float:
         """Helper to simulate the function at a given x."""
-        feasible_x = np.clip(x, problem.lower_bounds, problem.upper_bounds)
+        feasible_x = np.clip(x, problem.lower_bounds(), problem.upper_bounds())
         x_solution = ctx.evaluate(tuple(feasible_x), r)
         return x_solution.objectives_mean[0]
 

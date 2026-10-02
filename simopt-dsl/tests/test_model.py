@@ -133,3 +133,52 @@ def test_derivatives_with_gradients_flag_do_not_warn() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         model.run_replication((3,), [object()])
+
+
+def test_dim_counts_scalar_components() -> None:
+    model = Model()
+    model.add_continuous_variable(0, 1, name="a")
+    model.add_continuous_vector(0, 1, name="q", shape=3)
+
+    assert model.dim == 4
+
+
+def test_n_stochastic_constraints() -> None:
+    model = Model()
+    x = model.add_continuous_variable(0, 1)
+    model.add_stochastic_constraint(x <= 0.5)
+    model.add_stochastic_constraint(x >= 0.1)
+
+    assert model.n_stochastic_constraints == 2
+
+
+def test_integer_variables_store_ints_and_keep_infinite_bounds() -> None:
+    model = Model()
+    model.add_integer_variable(0, math.inf, initial=3)
+    model.add_integer_vector(1, 5, shape=2, initial=[2, 4])
+    model.add_continuous_variable(0, 1, initial=0)
+
+    assert [type(b) for b in model.lower_bounds()] == [int, int, int, float]
+    assert [type(b) for b in model.upper_bounds()] == [float, int, int, float]
+    assert model.upper_bounds()[0] == math.inf
+    assert [type(v) for v in model.initial_vector()] == [int, int, int, float]
+
+
+def test_integer_values_passed_to_simulation_as_ints() -> None:
+    model = Model()
+    n = model.add_integer_variable(0, 10, name="n")
+    seen = {}
+
+    def run(decisions: dict, rngs: list) -> tuple[dict, dict]:
+        seen.update(decisions)
+        return {"y": float(sum(range(decisions["n"])))}, {}
+
+    simulation = model.add_simulation(run=run, decisions={"n": n})
+    model.minimize(simulation.metric("y"))
+
+    evaluation = model.run_replication((4.0,), [object()])
+
+    assert type(seen["n"]) is int
+    assert evaluation.objective == 6
+    assert model.unpack_vector((4.0,)) == {"n": 4}
+    assert type(model.unpack_vector((4.0,))["n"]) is int

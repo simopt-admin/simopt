@@ -12,11 +12,11 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import Field, model_validator
 
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Context,
     ObjectiveType,
-    Problem,
     Solver,
     SolverConfig,
     VariableType,
@@ -137,12 +137,12 @@ class SPSA(Solver):
         """
         return np.array(self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim))
 
-    def solve(self, problem: Problem, ctx: Context) -> None:
-        lower_bound = np.array(problem.lower_bounds)
-        upper_bound = np.array(problem.upper_bounds)
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
+        lower_bound = np.array(problem.lower_bounds())
+        upper_bound = np.array(problem.upper_bounds())
 
         # Start at initial solution and record as best.
-        theta = problem.factors["initial_solution"]
+        theta = problem.initial_vector()
         theta_sol = ctx.evaluate(tuple(theta), 0)
         ctx.log(theta_sol)
 
@@ -246,7 +246,7 @@ class SPSA(Solver):
 
 def _check_cons(
     candidate_x: np.ndarray,
-    new_x: np.ndarray,
+    new_x: np.ndarray | tuple[float, ...],
     lower_bound: np.ndarray,
     upper_bound: np.ndarray,
 ) -> tuple[np.ndarray, float]:

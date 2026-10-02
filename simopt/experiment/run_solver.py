@@ -70,7 +70,7 @@ def _run_solver(solver: Solver, problem: Problem) -> pd.DataFrame:
         crn_across_solns=solver.config.crn_across_solns,
     )
     with contextlib.suppress(BudgetExhaustedError):
-        solver.solve(problem, ctx)
+        solver.solve(problem.optimization_problem, ctx)
 
     return ctx.history()
 

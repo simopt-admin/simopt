@@ -13,11 +13,11 @@ from typing import Annotated, ClassVar
 import numpy as np
 from pydantic import Field
 
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Context,
     ObjectiveType,
-    Problem,
     Solver,
     SolverConfig,
     VariableType,
@@ -87,7 +87,7 @@ class ALOE(Solver):
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem, ctx: Context) -> None:
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
         # Default values.
         r = self.factors["r"]
         theta = self.factors["theta"]
@@ -97,11 +97,11 @@ class ALOE(Solver):
         epsilon_f = self.factors["epsilon_f"]
 
         # Upper and lower bounds.
-        lower_bound = np.array(problem.lower_bounds)
-        upper_bound = np.array(problem.upper_bounds)
+        lower_bound = np.array(problem.lower_bounds())
+        upper_bound = np.array(problem.upper_bounds())
 
         # Start with the initial solution.
-        new_solution = ctx.evaluate(problem.factors["initial_solution"], 0)
+        new_solution = ctx.evaluate(problem.initial_vector(), 0)
         ctx.log(new_solution)
         new_solution = ctx.evaluate(new_solution, r)
 

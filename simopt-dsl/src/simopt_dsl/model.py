@@ -166,6 +166,16 @@ class Model:
         self._set_objective(objective, "minimize")
 
     @property
+    def dim(self) -> int:
+        """Number of scalar decision variables, i.e. the length of a solution vector."""
+        return len(self.variables)
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        """Number of stochastic constraints."""
+        return len(self.stochastic_constraints)
+
+    @property
     def gradient_available(self) -> bool:
         """Whether replications provide an objective gradient estimate.
 
@@ -251,6 +261,7 @@ class Model:
         flat_values = tuple(float(value) for value in values)
         if len(flat_values) != len(self.variables):
             raise ValueError("solution dimension does not match model variables")
+        flat_values = _typed_values(self.variables, flat_values)
 
         unpacked: dict[str, float | tuple[float, ...]] = {}
         offset = 0
@@ -278,6 +289,7 @@ class Model:
                 _validate_integer(value, "integer variable value")
         if len(rngs) < self.n_rngs:
             raise ValueError("not enough RNGs for model simulations")
+        flat_values = _typed_values(self.variables, flat_values)
 
         context = EvaluationContext(dict(zip(self.variables, flat_values, strict=True)))
         for _, constraint in self.deterministic_constraints:
@@ -319,6 +331,12 @@ class Model:
         if integer:
             _validate_integer(initial_value, "integer variable initial value")
         _validate_initial(initial_value, lower, upper)
+        if integer:
+            lower, upper, initial_value = (
+                _as_integer(lower),
+                _as_integer(upper),
+                _as_integer(initial_value),
+            )
         variable = Variable(variable_name, lower, upper, initial_value, integer)
         self.variables.append(variable)
         self._declared_variables.append(variable)
@@ -359,6 +377,11 @@ class Model:
             initial_values, lower, upper, strict=True
         ):
             _validate_initial(initial_value, lower_value, upper_value)
+
+        if integer:
+            lower = tuple(_as_integer(value) for value in lower)
+            upper = tuple(_as_integer(value) for value in upper)
+            initial_values = tuple(_as_integer(value) for value in initial_values)
 
         variable_name = self._resolve_name(name, "variable", self._declared_variables)
         scalar_components = tuple(
@@ -572,10 +595,21 @@ def _evaluate_aggregate(
     raise TypeError(f"unsupported aggregate objective {type(expression).__name__!r}")
 
 
-def _sample_variable(variable: Variable, rng: Any) -> float:
+def _as_integer(value: float) -> Number:
+    return value if isinf(value) else int(value)
+
+
+def _typed_values(variables: Sequence[Variable], values: tuple[float, ...]) -> tuple[Number, ...]:
+    return tuple(
+        int(value) if variable.integer and float(value).is_integer() else value
+        for variable, value in zip(variables, values, strict=True)
+    )
+
+
+def _sample_variable(variable: Variable, rng: Any) -> Number:
     if not variable.integer:
         return float(rng.uniform(variable.lb, variable.ub))
-    return float(min(floor(rng.uniform(variable.lb, variable.ub + 1)), variable.ub))
+    return min(floor(rng.uniform(variable.lb, variable.ub + 1)), variable.ub)
 
 
 def _coerce_number(value: object, parameter_name: str) -> float:

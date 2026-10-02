@@ -11,11 +11,11 @@ from typing import Annotated, ClassVar
 
 from pydantic import Field
 
+from simopt import dsl
 from simopt.base import (
     ConstraintType,
     Context,
     ObjectiveType,
-    Problem,
     Solver,
     SolverConfig,
     VariableType,
@@ -44,11 +44,11 @@ class RandomSearch(Solver):
     variable_type: ClassVar[VariableType] = VariableType.MIXED
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem, ctx: Context) -> None:
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
         # Designate random number generator for random sampling.
         find_next_soln_rng = self.rng_list[1]
         # Start at initial solution and record as best.
-        new_x = problem.factors["initial_solution"]
+        new_x = problem.initial_vector()
         new_solution = ctx.evaluate(new_x, 0)
         best_solution = new_solution
         ctx.log(new_solution)
@@ -73,5 +73,5 @@ class RandomSearch(Solver):
                 ctx.log(new_solution)
 
             # Identify new solution to simulate for next iteration.
-            new_x = problem.get_random_solution(find_next_soln_rng)
+            new_x = problem.random_solution(find_next_soln_rng)
             new_solution = ctx.evaluate(new_x, 0)
