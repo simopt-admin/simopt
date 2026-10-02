@@ -43,7 +43,8 @@ def _set_up_rngs(solver: Solver, problem: Problem, mrep: int) -> None:
 
     # Create RNGs for simulation
     simulation_rngs = [
-        MRG32k3a(s_ss_sss_index=[mrep + 3, i, 0]) for i in range(problem.model.n_rngs)
+        MRG32k3a(s_ss_sss_index=[mrep + 3, i, 0])
+        for i in range(problem.optimization_problem.n_rngs)
     ]
 
     # Create RNGs for the solver
@@ -51,7 +52,7 @@ def _set_up_rngs(solver: Solver, problem: Problem, mrep: int) -> None:
         MRG32k3a(
             s_ss_sss_index=[
                 mrep + 3,
-                problem.model.n_rngs + i,
+                problem.optimization_problem.n_rngs + i,
                 0,
             ]
         )
@@ -64,7 +65,7 @@ def _set_up_rngs(solver: Solver, problem: Problem, mrep: int) -> None:
 
 def _run_solver(solver: Solver, problem: Problem) -> pd.DataFrame:
     ctx = Context(
-        problem=problem,
+        model=problem.optimization_problem,
         total_budget=problem.factors["budget"],
         solution_progenitor_rngs=solver.solution_progenitor_rngs,
         crn_across_solns=solver.config.crn_across_solns,

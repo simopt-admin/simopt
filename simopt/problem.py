@@ -299,18 +299,7 @@ class Problem(ABC):
             num_macroreps (int, optional): Number of macroreplications to simulate at
                 `x`. Defaults to 1.
         """
-        # NOTE:
-        # Gradients of objective function and stochastic constraint LHSs are temporarily
-        # commented out. Under development.
-
-        for _ in range(num_macroreps):
-            # Generate one replication at the solution.
-            result = self.optimization_problem.run_replication(solution.x, solution.rng_list)
-            solution.add_replicate_result(result)
-
-            # Advance rngs to start of next subsubstream.
-            for rng in solution.rng_list:
-                rng.advance_subsubstream()
+        solution.simulate(self.optimization_problem, num_macroreps)
 
 
 class Solution:
@@ -552,3 +541,27 @@ class Solution:
             gradients.append(gradient)
         self._stoch_constraints_gradients.append(np.array(gradients))
         self._stoch_constraints_gradients_array = None
+
+    def simulate(self, model: dsl.Model, num_macroreps: int = 1) -> None:
+        """Simulate `m` i.i.d. replications of `model` at this solution.
+
+        Each replication uses the solution's RNGs, which are then advanced to the
+        start of the next subsubstream.
+
+        Args:
+            model (dsl.Model): Model to replicate.
+            num_macroreps (int, optional): Number of macroreplications to simulate at
+                `x`. Defaults to 1.
+        """
+        # NOTE:
+        # Gradients of objective function and stochastic constraint LHSs are temporarily
+        # commented out. Under development.
+
+        for _ in range(num_macroreps):
+            # Generate one replication at the solution.
+            result = model.run_replication(self.x, self.rng_list)
+            self.add_replicate_result(result)
+
+            # Advance rngs to start of next subsubstream.
+            for rng in self.rng_list:
+                rng.advance_subsubstream()

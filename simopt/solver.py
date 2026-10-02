@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt import dsl
-from simopt.problem import Problem, Solution
+from simopt.problem import Solution
 from simopt.problem_types import ConstraintType, ObjectiveType, VariableType
 from simopt.utils import get_specifications
 
@@ -77,13 +77,13 @@ class Context:
 
     def __init__(
         self,
-        problem: Problem,
+        model: dsl.Model,
         total_budget: int,
         solution_progenitor_rngs: list[MRG32k3a],
         crn_across_solns: bool,
     ) -> None:
         """Initialize the runtime context."""
-        self.problem = problem
+        self.model = model
         self.budget = Budget(total_budget)
         self.solution_progenitor_rngs = solution_progenitor_rngs
         self.crn_across_solns = crn_across_solns
@@ -100,13 +100,13 @@ class Context:
                 # ...advance each rng to start of the substream
                 # substream = current substream + # of model RNGs.
                 for rng in self.solution_progenitor_rngs:
-                    for _ in range(self.problem.model.n_rngs):
+                    for _ in range(self.model.n_rngs):
                         rng.advance_substream()
         start_reps = x.n_reps
         self.budget.request(n_reps)
-        self.problem.simulate(x, n_reps)
-        factor = -np.array(self.problem.minmax)
-        if not np.all(factor == 1):
+        x.simulate(self.model, n_reps)
+        if self.model.objective_sense == "maximize":
+            factor = np.array([-1])
             for i in range(start_reps, x.n_reps):
                 x._objectives[i] = factor * x._objectives[i]
                 x._objectives_gradients[i] = factor[:, np.newaxis] * x._objectives_gradients[i]
