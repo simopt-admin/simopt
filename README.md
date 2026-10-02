@@ -49,16 +49,16 @@ There are two ways to download a copy of the source code onto your machine:
 
 If you do not need the source code for SimOpt, you may install the library as a Python package instead. See the [Package](#package) and [Basic Example](#basic-example) sections for more details about this option.
 
-The `notebooks` folder includes several useful Jupyter notebooks and scripts that are easy to customize. You can either run the scripts as standalone programs or open the notebooks in JupyterLab or VS Code. A description of the contents is provided below:
+The `notebooks` folder contains short, self-contained Jupyter notebooks (each runs in under a minute) that walk through the library. Each notebook is paired with a `.py` script via [Jupytext](https://jupytext.readthedocs.io/), so you can either run the scripts as standalone programs or open the notebooks in JupyterLab or VS Code. Older demo notebooks are kept in `archive/notebooks`.
 
-| File                                     | Description                                                                                                                                                                                                        |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `demo_model.py`                          | Run multiple replications of a simulation model and report its responses                                                                                                                                           |
-| `demo_problem.py`                        | Run multiple replications of a given solution for an SO problem and report its objective function values and left-hand sides of stochastic constraints                                                             |
-| `demo_problem_solver.py`                 | Run multiple macroreplications of a solver on a problem, save the outputs to a `.pickle` file in the `experiments/outputs` folder, and save plots of the results to `.png` files in the `experiments/plots` folder |
-| `demo_problems_solvers.py`               | Run multiple macroreplications of groups of problem-solver pairs and save the outputs and plots                                                                                                                    |
-| `demo_data_farming_model.py`             | Create a design over model factors, run multiple replications at each design point, and save the results to a comma separated value (`.csv`) file in the `data_farming_experiments` folder                         |
-| `demo_san-sscont-ironorecont_experiment` | Run multiple solvers on multiple versions of (s, S) inventory, iron ore, and stochastic activiy network problems and produce plots                                                                                 |
+| Notebook                     | Description                                                                                                                                  |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `01_model_and_problem`       | Run replications of a simulation model, evaluate a problem at a solution, and estimate stochastic constraints                                |
+| `02_single_experiment`       | Run one solver on one problem, inspect the results, and plot progress curves, solvability CDFs, terminal progress, and area under the curve  |
+| `03_comparing_solvers`       | Benchmark several solvers on a set of problem variants with solvability profiles, difference profiles, and terminal scatter plots           |
+| `04_constrained_problems`    | Compare solver variants on a problem with stochastic constraints using feasibility progress and terminal feasibility plots                   |
+| `05_data_farming`            | Build designs over model, solver, and problem factors, run them, and load designs from a file                                                |
+| `06_extending_simopt`        | Use data-driven input models, run discrete solvers, and supply a known optimal solution for normalization                                    |
 
 ### Environment Setup
 
