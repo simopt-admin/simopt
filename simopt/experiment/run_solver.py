@@ -1,6 +1,5 @@
 """Functions for running solvers and collecting their outputs."""
 
-import contextlib
 import logging
 import time
 from copy import deepcopy
@@ -8,9 +7,8 @@ from copy import deepcopy
 import pandas as pd
 from joblib import Parallel, delayed
 
-from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.problem import Problem
-from simopt.solver import BudgetExhaustedError, Context, Solver
+from simopt.solver import Solver, solve
 
 
 def _trim(df: pd.DataFrame, budget: int) -> pd.DataFrame:
@@ -27,37 +25,9 @@ def _trim(df: pd.DataFrame, budget: int) -> pd.DataFrame:
     return df
 
 
-def _set_up_rngs(problem: Problem, mrep: int) -> tuple[list[MRG32k3a], list[MRG32k3a]]:
-    """Create the simulation and solver RNGs for one macroreplication."""
-    # Stream 0: reserved for taking post-replications
-    # Stream 1: reserved for bootstrapping
-    # Streams 3, 4, ..., n_macroreps + 2: reserved for macroreplications
-    #     Substreams 0, ..., n_rngs - 1: simulation RNGs (solution progenitors)
-    #     Substreams n_rngs, n_rngs + 1, n_rngs + 2: solver RNGs (ctx.rng(0..2))
-    n_rngs = problem.optimization_problem.n_rngs
-
-    # Create RNGs for simulation
-    simulation_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, i, 0]) for i in range(n_rngs)]
-
-    # Create RNGs for the solver
-    solver_rngs = [MRG32k3a(s_ss_sss_index=[mrep + 3, n_rngs + i, 0]) for i in range(3)]
-
-    return simulation_rngs, solver_rngs
-
-
 def _run_solver(solver: Solver, problem: Problem, mrep: int) -> pd.DataFrame:
-    simulation_rngs, solver_rngs = _set_up_rngs(problem, mrep)
-    ctx = Context(
-        model=problem.optimization_problem,
-        total_budget=problem.factors["budget"],
-        solution_progenitor_rngs=simulation_rngs,
-        solver_rngs=solver_rngs,
-        crn_across_solns=solver.config.crn_across_solns,
-    )
-    with contextlib.suppress(BudgetExhaustedError):
-        solver.solve(problem.optimization_problem, ctx)
-
-    return ctx.history()
+    result = solve(problem.optimization_problem, solver, problem.factors["budget"], seed=mrep)
+    return result.history
 
 
 def _run_mrep(solver: Solver, problem: Problem, mrep: int) -> tuple[pd.DataFrame, float]:

@@ -1,7 +1,9 @@
 """Base classes for simulation optimization solvers."""
 
+import contextlib
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import Annotated, ClassVar
 
 import numpy as np
@@ -242,3 +244,72 @@ class Solver(ABC):
             ctx (Context): Runtime services for the current run.
         """
         raise NotImplementedError
+
+
+def _make_rngs(n_rngs: int, seed: int) -> tuple[list[MRG32k3a], list[MRG32k3a]]:
+    """Create the simulation and solver RNGs for run ``seed``."""
+    # Stream 0: reserved for taking post-replications
+    # Stream 1: reserved for bootstrapping
+    # Streams 3, 4, ...: one per run (seed), i.e. per macroreplication
+    #     Substreams 0, ..., n_rngs - 1: simulation RNGs (solution progenitors)
+    #     Substreams n_rngs, n_rngs + 1, n_rngs + 2: solver RNGs (ctx.rng(0..2))
+
+    # Create RNGs for simulation
+    simulation_rngs = [MRG32k3a(s_ss_sss_index=[seed + 3, i, 0]) for i in range(n_rngs)]
+
+    # Create RNGs for the solver
+    solver_rngs = [MRG32k3a(s_ss_sss_index=[seed + 3, n_rngs + i, 0]) for i in range(3)]
+
+    return simulation_rngs, solver_rngs
+
+
+@dataclass
+class SolveResult:
+    """Outcome of running a solver on a model.
+
+    Attributes:
+        x: Final recommended solution, or None if the solver recommended nothing
+            before the budget ran out.
+        history: Recommended solutions with the budget used when each was
+            recommended (columns ``step``, ``budget``, ``solution``).
+        budget_used: Number of replications consumed.
+    """
+
+    x: tuple | None
+    history: pd.DataFrame
+    budget_used: int
+
+
+def solve(model: dsl.Model, solver: Solver, budget: int, seed: int = 0) -> SolveResult:
+    """Run ``solver`` on ``model`` until ``budget`` replications are used.
+
+    Args:
+        model (dsl.Model): Simulation-optimization model to solve.
+        solver (Solver): Solver to run.
+        budget (int): Maximum number of simulation replications.
+        seed (int, optional): Run index selecting independent random-number streams.
+            The same seed reproduces the same run; ``seed=k`` matches
+            macroreplication ``k`` of a SimOpt experiment. Defaults to 0.
+
+    Returns:
+        SolveResult: Final recommendation and recommendation history.
+    """
+    if budget <= 0:
+        raise ValueError("budget must be positive.")
+    if seed < 0:
+        raise ValueError("seed must be non-negative.")
+
+    simulation_rngs, solver_rngs = _make_rngs(model.n_rngs, seed)
+    ctx = Context(
+        model=model,
+        total_budget=budget,
+        solution_progenitor_rngs=simulation_rngs,
+        solver_rngs=solver_rngs,
+        crn_across_solns=solver.config.crn_across_solns,
+    )
+    with contextlib.suppress(BudgetExhaustedError):
+        solver.solve(model, ctx)
+
+    history = ctx.history()
+    x = history["solution"].iloc[-1] if len(history) else None
+    return SolveResult(x=x, history=history, budget_used=ctx.budget.used)
