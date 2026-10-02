@@ -149,7 +149,7 @@ class FCSA(Solver):
         else:
             h = self.factors["h"]
             r = self.factors["r"]
-            grad = self._finite_difference(ctx, np.array(solution.x), h, r)
+            grad = self._finite_difference(ctx, np.array(solution.x, dtype=float), h, r)
         if normalize:
             norm = np.linalg.norm(grad)
             if norm == 0:
