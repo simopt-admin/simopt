@@ -55,7 +55,10 @@ def test_progress_curve(experiment):
     np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
 
 
-def test_progress_curve_same_problem_experiments(same_problem_experiments):
+def test_progress_curve_same_problem_experiments(plot_experiments):
+    same_problem_experiments = [
+        experiment for group in zip(*plot_experiments, strict=True) for experiment in group
+    ]
     reference = same_problem_experiments[0]
 
     crn_options = CrnOptions(
@@ -69,23 +72,27 @@ def test_progress_curve_same_problem_experiments(same_problem_experiments):
         bias_correction=True,
     )
 
-    desired = capture_log_data(
-        plot_progress_curves,
-        experiments=same_problem_experiments,
-        plot_type=PlotType.MEAN,
-        beta=0.50,
-        normalize=True,
-        all_in_one=True,
-        n_bootstraps=ci_options.n_bootstraps,
-        conf_level=ci_options.confidence_level,
-        plot_conf_ints=True,
-        print_max_hw=False,
-        plot_title=None,
-        legend_loc=None,
-        ext=".png",
-        save_as_pickle=False,
-        solver_set_name="SOLVER_SET",
-    )
+    desired = []
+    for group in zip(*plot_experiments, strict=True):
+        desired.extend(
+            capture_log_data(
+                plot_progress_curves,
+                experiments=list(group),
+                plot_type=PlotType.MEAN,
+                beta=0.50,
+                normalize=True,
+                all_in_one=True,
+                n_bootstraps=ci_options.n_bootstraps,
+                conf_level=ci_options.confidence_level,
+                plot_conf_ints=True,
+                print_max_hw=False,
+                plot_title=None,
+                legend_loc=None,
+                ext=".png",
+                save_as_pickle=False,
+                solver_set_name="SOLVER_SET",
+            )
+        )
 
     analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
@@ -98,6 +105,6 @@ def test_progress_curve_same_problem_experiments(same_problem_experiments):
 
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments)
 
-    assert len(actual) == len(desired)
+    assert len(actual) == len(desired) == len(same_problem_experiments)
     for a, d in zip(actual, desired, strict=True):
         np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)

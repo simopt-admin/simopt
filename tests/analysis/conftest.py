@@ -1,8 +1,17 @@
+from copy import deepcopy
+
+import matplotlib.pyplot as plt
 import pytest
 
 from simopt.experiment.post_normalize import post_normalize
 from simopt.experiment.single import ProblemSolver
 from tests.utils import EXPECTED_RESULTS_DIR, load_problem_solver
+
+
+@pytest.fixture(autouse=True)
+def close_plot_figures():
+    yield
+    plt.close("all")
 
 
 @pytest.fixture(scope="session")
@@ -101,3 +110,55 @@ def different_problem_experiments_stochastic_constraints():
     post_normalize([experiment2], n_postreps_init_opt)
 
     return [experiment1, experiment2]
+
+
+@pytest.fixture(scope="session")
+def plot_experiment_grid(same_problem_experiments):
+    experiments = [
+        ProblemSolver(solver_name=experiment.solver.name, problem_name="SAN-1")
+        for experiment in same_problem_experiments
+    ]
+    for experiment in experiments:
+        experiment.run(2)
+        experiment.post_replicate(10)
+    post_normalize(experiments, 10)
+    return [list(pair) for pair in zip(same_problem_experiments, experiments, strict=True)]
+
+
+@pytest.fixture(scope="session")
+def stochastic_plot_experiment_grid(san2_experiments):
+    experiments = [
+        ProblemSolver(solver_name=experiment.solver.name, problem_name="CONTAM-2")
+        for experiment in san2_experiments
+    ]
+    for experiment in experiments:
+        experiment.run(2)
+        experiment.post_replicate(10)
+    post_normalize(experiments, 10)
+    return [list(pair) for pair in zip(san2_experiments, experiments, strict=True)]
+
+
+@pytest.fixture(
+    scope="session", params=[(1, 1), (1, 2), (2, 1), (2, 2)], ids=["1p1s", "1p2s", "2p1s", "2p2s"]
+)
+def plot_experiments(request, plot_experiment_grid):
+    n_problems, n_solvers = request.param
+    experiments = deepcopy([row[:n_problems] for row in plot_experiment_grid[:n_solvers]])
+    # Normalize each problem using only the solvers included in this case.
+    for group in zip(*experiments, strict=True):
+        post_normalize(list(group), 10)
+    return experiments
+
+
+@pytest.fixture(
+    scope="session", params=[(1, 1), (1, 2), (2, 1), (2, 2)], ids=["1p1s", "1p2s", "2p1s", "2p2s"]
+)
+def stochastic_plot_experiments(request, stochastic_plot_experiment_grid):
+    n_problems, n_solvers = request.param
+    experiments = deepcopy(
+        [row[:n_problems] for row in stochastic_plot_experiment_grid[:n_solvers]]
+    )
+    # Normalize each problem using only the solvers included in this case.
+    for group in zip(*experiments, strict=True):
+        post_normalize(list(group), 10)
+    return experiments

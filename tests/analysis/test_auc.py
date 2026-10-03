@@ -49,7 +49,8 @@ def test_auc(experiment):
     np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
 
 
-def test_auc_same_problem_experiments(same_problem_experiments):
+def test_auc_same_problem_experiments(plot_experiments):
+    same_problem_experiments = [experiment for row in plot_experiments for experiment in row]
     reference = same_problem_experiments[0]
 
     crn_options = CrnOptions(
@@ -64,7 +65,7 @@ def test_auc_same_problem_experiments(same_problem_experiments):
     )
     desired = capture_log_data(
         plot_area_scatterplots,
-        experiments=[same_problem_experiments],
+        experiments=plot_experiments,
         all_in_one=True,
         n_bootstraps=ci_options.n_bootstraps,
         conf_level=ci_options.confidence_level,
@@ -88,7 +89,7 @@ def test_auc_same_problem_experiments(same_problem_experiments):
 
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments)
 
-    assert len(actual) == len(desired)
+    assert len(actual) == len(desired) == len(same_problem_experiments)
     for a, d in zip(actual, desired, strict=True):
         np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)
 

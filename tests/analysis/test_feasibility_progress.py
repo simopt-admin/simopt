@@ -64,7 +64,12 @@ def test_feasibility_progress(experiment):
     np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
 
 
-def test_feasibility_progress_plot_many(san2_experiments):
+def test_feasibility_progress_plot_many(stochastic_plot_experiments):
+    san2_experiments = [
+        experiment
+        for group in zip(*stochastic_plot_experiments, strict=True)
+        for experiment in group
+    ]
     reference = san2_experiments[0]
 
     ci_options = ConfidenceIntervalOptions(
@@ -80,7 +85,7 @@ def test_feasibility_progress_plot_many(san2_experiments):
 
     desired = capture_log_data(
         plot_feasibility_progress,
-        experiments=[san2_experiments],
+        experiments=stochastic_plot_experiments,
         plot_type=PlotType.MEAN_FEASIBILITY_PROGRESS,
         score_type="inf_norm",
         norm_degree=1,
@@ -115,7 +120,7 @@ def test_feasibility_progress_plot_many(san2_experiments):
         plot_zero=False,
     )
 
-    assert len(actual) == len(desired)
+    assert len(actual) == len(desired) == len(san2_experiments)
     for a, d in zip(actual, desired, strict=True):
         np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)
 

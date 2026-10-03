@@ -8,7 +8,9 @@ from simopt.plots.solvability_profile import plot_solvability_profiles
 from tests.utils import capture_log_data
 
 
-def test_diff_solvability_cdf(same_problem_experiments):
+def test_diff_solvability_cdf(plot_experiments):
+    same_problem_experiments = [experiment for row in plot_experiments for experiment in row]
+    reference_solver = plot_experiments[-1][0].solver.name
     reference = same_problem_experiments[0]
     ci_options = ConfidenceIntervalOptions(n_bootstraps=10, confidence_level=0.95)
     crn_options = CrnOptions(
@@ -19,7 +21,7 @@ def test_diff_solvability_cdf(same_problem_experiments):
 
     desired = capture_log_data(
         plot_solvability_profiles,
-        experiments=[[experiment] for experiment in same_problem_experiments],
+        experiments=plot_experiments,
         plot_type=PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
         all_in_one=True,
         n_bootstraps=ci_options.n_bootstraps,
@@ -28,7 +30,7 @@ def test_diff_solvability_cdf(same_problem_experiments):
         print_max_hw=False,
         solve_tol=0.1,
         beta=0.5,
-        ref_solver="ADAM",
+        ref_solver=reference_solver,
         plot_title=None,
         legend_loc=None,
         ext=".png",
@@ -42,7 +44,7 @@ def test_diff_solvability_cdf(same_problem_experiments):
         analysis_inputs,
         same_problem_experiments,
         "cdf",
-        "ADAM",
+        reference_solver,
         ci_options,
         crn_options,
         normalize=True,
@@ -51,13 +53,16 @@ def test_diff_solvability_cdf(same_problem_experiments):
     )
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments)
 
-    assert len(actual) == len(desired)
+    assert len(analysis_results) == len(plot_experiments) - 1
+    assert len(actual) == len(desired) == len(plot_experiments) - 1
     for a1, d1 in zip(actual, desired, strict=True):
         for a2, d2 in zip(a1, d1, strict=True):
             np.testing.assert_allclose(a2, d2, rtol=1e-5, atol=1e-5)
 
 
-def test_diff_solvability_quantile(same_problem_experiments):
+def test_diff_solvability_quantile(plot_experiments):
+    same_problem_experiments = [experiment for row in plot_experiments for experiment in row]
+    reference_solver = plot_experiments[-1][0].solver.name
     reference = same_problem_experiments[0]
     ci_options = ConfidenceIntervalOptions(n_bootstraps=10, confidence_level=0.95)
     crn_options = CrnOptions(
@@ -68,7 +73,7 @@ def test_diff_solvability_quantile(same_problem_experiments):
 
     desired = capture_log_data(
         plot_solvability_profiles,
-        experiments=[[experiment] for experiment in same_problem_experiments],
+        experiments=plot_experiments,
         plot_type=PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
         all_in_one=True,
         n_bootstraps=ci_options.n_bootstraps,
@@ -77,7 +82,7 @@ def test_diff_solvability_quantile(same_problem_experiments):
         print_max_hw=False,
         solve_tol=0.1,
         beta=0.5,
-        ref_solver="ADAM",
+        ref_solver=reference_solver,
         plot_title=None,
         legend_loc=None,
         ext=".png",
@@ -91,7 +96,7 @@ def test_diff_solvability_quantile(same_problem_experiments):
         analysis_inputs,
         same_problem_experiments,
         "quantile",
-        "ADAM",
+        reference_solver,
         ci_options,
         crn_options,
         normalize=True,
@@ -100,7 +105,8 @@ def test_diff_solvability_quantile(same_problem_experiments):
     )
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments)
 
-    assert len(actual) == len(desired)
+    assert len(analysis_results) == len(plot_experiments) - 1
+    assert len(actual) == len(desired) == len(plot_experiments) - 1
     for a1, d1 in zip(actual, desired, strict=True):
         for a2, d2 in zip(a1, d1, strict=True):
             np.testing.assert_allclose(a2, d2, rtol=1e-5, atol=1e-5)

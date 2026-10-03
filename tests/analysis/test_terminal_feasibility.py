@@ -60,7 +60,12 @@ def test_terminal_feasibility(experiment):
     np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
 
 
-def test_terminal_feasibility_same_problem_experiments(san2_experiments):
+def test_terminal_feasibility_same_problem_experiments(stochastic_plot_experiments):
+    san2_experiments = [
+        experiment
+        for group in zip(*stochastic_plot_experiments, strict=True)
+        for experiment in group
+    ]
     reference = san2_experiments[0]
     crn_options = CrnOptions(
         across_budget=reference.crn_across_budget,
@@ -75,7 +80,7 @@ def test_terminal_feasibility_same_problem_experiments(san2_experiments):
 
     desired = capture_log_data(
         plot_terminal_feasibility,
-        experiments=[[experiment] for experiment in san2_experiments],
+        experiments=stochastic_plot_experiments,
         plot_type=PlotType.FEASIBILITY_SCATTER,
         score_type="norm",
         two_sided=True,
@@ -106,7 +111,7 @@ def test_terminal_feasibility_same_problem_experiments(san2_experiments):
 
     actual = capture_log_data(plot_many, analysis_results, san2_experiments)
 
-    assert len(actual) == len(desired)
+    assert len(actual) == len(desired) == len(san2_experiments)
     for a, d in zip(actual, desired, strict=True):
         np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)
 

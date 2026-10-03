@@ -54,7 +54,10 @@ def test_solvability_cdf(experiment):
         np.testing.assert_allclose(actual_value, expected_value, rtol=1e-5, atol=1e-5)
 
 
-def test_solvability_cdf_same_problem_experiments(same_problem_experiments):
+def test_solvability_cdf_same_problem_experiments(plot_experiments):
+    same_problem_experiments = [
+        experiment for group in zip(*plot_experiments, strict=True) for experiment in group
+    ]
     solve_tolerance = 0.1
     reference = same_problem_experiments[0]
 
@@ -68,21 +71,25 @@ def test_solvability_cdf_same_problem_experiments(same_problem_experiments):
         confidence_level=0.95,
     )
 
-    desired = capture_log_data(
-        plot_solvability_cdfs,
-        experiments=same_problem_experiments,
-        solve_tol=solve_tolerance,
-        all_in_one=False,
-        n_bootstraps=ci_options.n_bootstraps,
-        conf_level=ci_options.confidence_level,
-        plot_conf_ints=True,
-        print_max_hw=False,
-        plot_title=None,
-        legend_loc=None,
-        ext=".png",
-        save_as_pickle=False,
-        solver_set_name="SOLVER_SET",
-    )
+    desired = []
+    for group in zip(*plot_experiments, strict=True):
+        desired.extend(
+            capture_log_data(
+                plot_solvability_cdfs,
+                experiments=list(group),
+                solve_tol=solve_tolerance,
+                all_in_one=False,
+                n_bootstraps=ci_options.n_bootstraps,
+                conf_level=ci_options.confidence_level,
+                plot_conf_ints=True,
+                print_max_hw=False,
+                plot_title=None,
+                legend_loc=None,
+                ext=".png",
+                save_as_pickle=False,
+                solver_set_name="SOLVER_SET",
+            )
+        )
 
     analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
@@ -95,7 +102,7 @@ def test_solvability_cdf_same_problem_experiments(same_problem_experiments):
 
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments)
 
-    assert len(actual) == len(desired)
+    assert len(actual) == len(desired) == len(same_problem_experiments)
     for a1, d1 in zip(actual, desired, strict=True):
         for a2, d2 in zip(a1, d1, strict=True):
             np.testing.assert_allclose(a2, d2, rtol=1e-5, atol=1e-5)

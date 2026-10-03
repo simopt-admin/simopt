@@ -38,18 +38,25 @@ def test_terminal_progress(experiment):
     np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
 
 
-def test_terminal_progress_same_problem_experiments(same_problem_experiments):
-    desired = capture_log_data(
-        plot_terminal_progress,
-        experiments=same_problem_experiments,
-        plot_type=PlotType.VIOLIN,
-        normalize=True,
-        all_in_one=False,
-        plot_title=None,
-        ext=".png",
-        save_as_pickle=False,
-        solver_set_name="SOLVER_SET",
-    )
+def test_terminal_progress_same_problem_experiments(plot_experiments):
+    same_problem_experiments = [
+        experiment for group in zip(*plot_experiments, strict=True) for experiment in group
+    ]
+    desired = []
+    for group in zip(*plot_experiments, strict=True):
+        desired.extend(
+            capture_log_data(
+                plot_terminal_progress,
+                experiments=list(group),
+                plot_type=PlotType.VIOLIN,
+                normalize=True,
+                all_in_one=False,
+                plot_title=None,
+                ext=".png",
+                save_as_pickle=False,
+                solver_set_name="SOLVER_SET",
+            )
+        )
 
     analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
@@ -64,6 +71,6 @@ def test_terminal_progress_same_problem_experiments(same_problem_experiments):
         plot_type="violin",
     )
 
-    assert len(actual) == len(desired)
+    assert len(actual) == len(desired) == len(same_problem_experiments)
     for a, d in zip(actual, desired, strict=True):
         np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)

@@ -64,7 +64,8 @@ def test_solvability_profile(experiment):
         np.testing.assert_allclose(actual_value, expected_value, rtol=1e-5, atol=1e-5)
 
 
-def test_solvability_profile_same_problem_experiments(same_problem_experiments):
+def test_solvability_profile_same_problem_experiments(plot_experiments):
+    same_problem_experiments = [experiment for row in plot_experiments for experiment in row]
     solve_tolerance = 0.1
     reference = same_problem_experiments[0]
     crn_options = CrnOptions(
@@ -79,7 +80,7 @@ def test_solvability_profile_same_problem_experiments(same_problem_experiments):
 
     desired = capture_log_data(
         plot_solvability_profiles,
-        experiments=[[experiment] for experiment in same_problem_experiments],
+        experiments=plot_experiments,
         # TODO: test quantile solvability
         plot_type=PlotType.CDF_SOLVABILITY,
         all_in_one=True,
@@ -111,7 +112,7 @@ def test_solvability_profile_same_problem_experiments(same_problem_experiments):
 
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments, "cdf")
 
-    assert len(actual) == len(desired)
+    assert len(actual) == len(desired) == len(plot_experiments)
     for a1, d1 in zip(actual, desired, strict=True):
         for a2, d2 in zip(a1, d1, strict=True):
             np.testing.assert_allclose(a2, d2, rtol=1e-5, atol=1e-5)
