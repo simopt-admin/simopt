@@ -1,0 +1,32 @@
+[project]
+name = "simopt-solvers"
+version = "0.1.0"
+description = "Simulation-optimization solvers for models built with simopt-dsl."
+readme = "README.md"
+authors = [
+    { name = "Cen Wang", email = "cenwang@umass.edu" }
+]
+requires-python = ">=3.11, <3.14"
+dependencies = [
+    "boltons>=25.0.0",
+    "mrg32k3a>=2.0.0",
+    "numpy>=2.3.4,<2.4",
+    "pandas>=2.3.3",
+    "pydantic>=2.12.3",
+    "scipy>=1.16.3",
+    "simopt-dsl>=0.1.0",
+]
+
+[project.optional-dependencies]
+fcsa = ["cvxpy>=1.7.3"]
+dasso = ["pydoe>=0.9.7"]
+all = ["simopt-solvers[fcsa,dasso]"]
+
+[build-system]
+requires = ["uv_build>=0.12.4,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

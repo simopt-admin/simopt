@@ -1,14 +1,14 @@
-"""Tests for running solvers directly on DSL models with ``solve``."""
+"""Tests for running solvers on DSL models with ``solve``."""
+
+import subprocess
+import sys
+import textwrap
 
 import pandas as pd
 import pytest
+import simopt_dsl as dsl
 
-from simopt import dsl
-from simopt.directory import problem_directory
-from simopt.experiment.run_solver import run_solver
-from simopt.solver import solve
-from simopt.solvers.adam import ADAM
-from simopt.solvers.randomsearch import RandomSearch
+from simopt_solvers import ADAM, RandomSearch, solve
 
 
 def _noisy_quadratic() -> dsl.Model:
@@ -25,21 +25,7 @@ def _noisy_quadratic() -> dsl.Model:
     return model
 
 
-def test_solve_matches_benchmark_macroreplication() -> None:
-    problem = problem_directory["CNTNEWS-1"](fixed_factors={"budget": 200})
-    solver = RandomSearch()
-
-    expected, _ = run_solver(solver, problem, n_macroreps=2, n_jobs=1)
-    expected = expected[expected["mrep"] == 1]
-
-    result = solve(problem.optimization_problem, RandomSearch(), budget=200, seed=1)
-
-    n = len(result.history)
-    assert result.history["solution"].tolist() == expected["solution"].tolist()[:n]
-    assert result.history["budget"].tolist() == expected["budget"].tolist()[:n]
-
-
-def test_solve_dsl_model_without_problem() -> None:
+def test_solve_dsl_model() -> None:
     model = _noisy_quadratic()
     model.set_random_solution(lambda rng: (rng.uniform(-10, 10), rng.uniform(-10, 10)))
 
@@ -74,3 +60,27 @@ def test_solve_is_reproducible_per_seed() -> None:
 def test_solve_rejects_invalid_arguments(budget: int, seed: int) -> None:
     with pytest.raises(ValueError):
         solve(_noisy_quadratic(), RandomSearch(), budget=budget, seed=seed)
+
+
+def test_solving_does_not_import_simopt_benchmark() -> None:
+    code = textwrap.dedent(
+        """
+        import sys
+
+        import simopt_dsl as dsl
+        from simopt_solvers import ADAM, solve
+
+        model = dsl.Model()
+        x = model.add_continuous_variable(0, 10, initial=5)
+        simulation = model.add_simulation(
+            run=lambda decisions, rngs: ({"y": (decisions["x"] - 2) ** 2}, {}),
+            decisions={"x": x},
+        )
+        model.minimize(dsl.mean(simulation.metric("y")))
+        solve(model, ADAM(), budget=200)
+
+        loaded = sorted(m for m in sys.modules if m == "simopt" or m.startswith("simopt."))
+        assert not loaded, loaded
+        """
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)

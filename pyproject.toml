@@ -15,10 +15,12 @@ exclude = ["build*"]
 [tool.uv.sources]
 simopt-extensions = { git = "https://github.com/cenwangumass/simopt-extensions", rev = "b40a9c8" }
 simopt-dsl = { workspace = true }
+simopt-solvers = { workspace = true }
 
 [tool.uv.workspace]
 members = [
     "simopt-dsl",
+    "simopt-solvers",
 ]
 
 [project]
@@ -42,7 +44,6 @@ classifiers = [
 dependencies = [
     "boltons>=25.0.0",
     "colorama>=0.4.6",
-    "cvxpy>=1.7.3",
     "fastapi[standard]>=0.128.8",
     "joblib>=1.5.2",
     "matplotlib>=3.10.7",
@@ -52,11 +53,11 @@ dependencies = [
     "pandera[pandas]>=0.27.0",
     "pillow>=12.0.0",
     "pydantic>=2.12.3",
-    "pydoe>=0.9.7",
     "scipy>=1.16.3",
     "seaborn>=0.13.2",
     "simpy>=4.1.2",
     "simopt-dsl>=0.1.0",
+    "simopt-solvers[all]>=0.1.0",
     "structlog>=25.5.0",
 ]
 
