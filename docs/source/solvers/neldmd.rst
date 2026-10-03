@@ -1,7 +1,7 @@
 Nelder-Mead (NELDMD)
 ====================
 
-See the :mod:`simopt.solvers.neldmd` module for API details.
+See the :mod:`simopt_solvers.solvers.neldmd` module for API details.
 
 Description
 -----------

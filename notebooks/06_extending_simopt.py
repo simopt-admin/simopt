@@ -34,9 +34,7 @@ from simopt.input_models import InputModel
 from simopt.models.cntnv import CntNVMaxProfit
 from simopt.models.example import Example2Problem
 from simopt.options import ConfidenceIntervalOptions
-from simopt.solvers.astrodf import ASTRODF
-from simopt.solvers.dasso import DASSO
-from simopt.solvers.randomsearch import RandomSearch
+from simopt.solvers import ASTRODF, DASSO, RandomSearch
 
 simulation_config = SimulationConfig(n_mreps=5, n_preps=50, n_preps_x0_xstar=100)
 ci_options = ConfidenceIntervalOptions(n_bootstraps=20)

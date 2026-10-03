@@ -4,7 +4,7 @@ from itertools import product
 
 import numpy as np
 
-from simopt.solvers.utils import fd, fd_old
+from simopt_solvers.solvers.utils import fd, fd_old
 
 
 def _make_x_for_modes(

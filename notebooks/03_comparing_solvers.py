@@ -39,9 +39,7 @@ from simopt.experiment.api import SimulationConfig, run
 from simopt.experiment.single import ProblemSolver
 from simopt.models.sscont import SSContMinCost
 from simopt.options import ConfidenceIntervalOptions
-from simopt.solvers.astrodf import ASTRODF
-from simopt.solvers.neldmd import NelderMead
-from simopt.solvers.randomsearch import RandomSearch
+from simopt.solvers import ASTRODF, NelderMead, RandomSearch
 
 # %% [markdown]
 # ## Configuration

@@ -5,8 +5,7 @@ from simopt.base import Solution, Solver
 from simopt.directory import load_solvers, problem_directory
 from simopt.experiment.run_solver import run_solver
 from simopt.solver import solve
-from simopt.solvers.adam import ADAM
-from simopt.solvers.randomsearch import RandomSearch
+from simopt.solvers import ADAM, RandomSearch
 
 
 def test_solve_matches_benchmark_macroreplication() -> None:

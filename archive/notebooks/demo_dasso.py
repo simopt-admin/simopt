@@ -36,8 +36,7 @@ from simopt.experiment_base import (
     post_normalize,
 )
 from simopt.models.example import Example2Problem
-from simopt.solvers.dasso import DASSO
-from simopt.solvers.randomsearch import RandomSearch
+from simopt.solvers import DASSO, RandomSearch
 
 # %%
 problem = Example2Problem(fixed_factors={"budget": 10000})

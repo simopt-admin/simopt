@@ -34,7 +34,7 @@ from simopt.experiment.api import SimulationConfig, run
 from simopt.experiment.single import ProblemSolver
 from simopt.models.san import SANLongestPathStochastic
 from simopt.options import ConfidenceIntervalOptions
-from simopt.solvers.fcsa import FCSA
+from simopt.solvers import FCSA
 
 # %% [markdown]
 # ## Configuration

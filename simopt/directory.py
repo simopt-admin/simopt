@@ -34,14 +34,10 @@ def load_solvers() -> dict[str, type[Solver]]:
     """Dynamically load solvers from simopt.solvers."""
     solvers = {}
 
-    for _, modname, _ in pkgutil.iter_modules(
-        simopt.solvers.__path__, simopt.solvers.__name__ + "."
-    ):
-        mod = importlib.import_module(modname)
-        for attr_name in dir(mod):
-            attr = getattr(mod, attr_name)
-            if isinstance(attr, type) and issubclass(attr, Solver) and attr is not Solver:
-                solvers[attr.class_name_abbr] = attr
+    for attr_name in simopt.solvers.__all__:
+        attr = getattr(simopt.solvers, attr_name)
+        if isinstance(attr, type) and issubclass(attr, Solver) and attr is not Solver:
+            solvers[attr.class_name_abbr] = attr
 
     return solvers
 

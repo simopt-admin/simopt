@@ -1,7 +1,7 @@
 Solver: Fully Cooperative Stochastic Approximation (FCSA)
 =========================================================
 
-See the :mod:`simopt.solvers.fcsa` module for API details.
+See the :mod:`simopt_solvers.solvers.fcsa` module for API details.
 
 Description
 -----------

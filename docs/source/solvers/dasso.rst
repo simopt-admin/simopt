@@ -1,7 +1,7 @@
 Dice and Slice Simulation Optimization (DASSO)
 ====
 
-See the :mod:`simopt.solvers.dasso` module for API details.
+See the :mod:`simopt_solvers.solvers.dasso` module for API details.
 
 Description
 -----------
