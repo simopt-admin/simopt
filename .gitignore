@@ -1,6 +1,5 @@
 # SimOpt-specific paths
 experiments/
-test/test_.*.py
 
 # mrg32k3a folder (only used during mrg32k3a co-development)
 mrg32k3a/
