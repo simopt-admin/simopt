@@ -59,6 +59,7 @@ The `notebooks` folder contains short, self-contained Jupyter notebooks (each ru
 | `04_constrained_problems`    | Compare solver variants on a problem with stochastic constraints using feasibility progress and terminal feasibility plots                   |
 | `05_data_farming`            | Build designs over model, solver, and problem factors, run them, and load designs from a file                                                |
 | `06_extending_simopt`        | Use data-driven input models, run discrete solvers, and supply a known optimal solution for normalization                                    |
+| `07_standalone_solvers`      | Describe your own problem with `simopt_dsl`, run one solver on it with `simopt_solvers.solve`, and plot its recommendation history          |
 
 ### Environment Setup
 
