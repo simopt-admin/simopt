@@ -2,15 +2,15 @@ import pytest
 
 from simopt.experiment.post_normalize import post_normalize
 from simopt.experiment.single import ProblemSolver
-from tests.utils import load_problem_solver
+from tests.utils import EXPECTED_RESULTS_DIR, load_problem_solver
 
 
 @pytest.fixture(scope="session")
 def experiment(request):
     """Fixture that loads an experiment based on the parametrized path."""
     # Default to CNTNEWS1_ADAM if no parameter is provided
-    path = getattr(request, "param", "test/expected_results/CNTNEWS1_ADAM.pickle.zst")
-    return load_problem_solver(path)
+    filename = getattr(request, "param", "CNTNEWS1_ADAM.pickle.zst")
+    return load_problem_solver(EXPECTED_RESULTS_DIR / filename)
 
 
 @pytest.fixture(scope="session")

@@ -10,9 +10,7 @@ from simopt.plots.feasibility_progress import plot_feasibility_progress
 from tests.utils import capture_log_data
 
 
-@pytest.mark.parametrize(
-    "experiment", ["test/expected_results/SAN2_FCSA.pickle.zst"], indirect=True
-)
+@pytest.mark.parametrize("experiment", ["SAN2_FCSA.pickle.zst"], indirect=True)
 def test_feasibility_progress(experiment):
     # TODO: Add test for bias_correction = False
     ci_options = ConfidenceIntervalOptions(

@@ -10,9 +10,7 @@ from simopt.plots.terminal_feasibility import plot_terminal_feasibility
 from tests.utils import capture_log_data
 
 
-@pytest.mark.parametrize(
-    "experiment", ["test/expected_results/SAN2_FCSA.pickle.zst"], indirect=True
-)
+@pytest.mark.parametrize("experiment", ["SAN2_FCSA.pickle.zst"], indirect=True)
 def test_terminal_feasibility(experiment):
     crn_options = CrnOptions(
         across_budget=experiment.crn_across_budget,

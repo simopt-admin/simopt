@@ -1,5 +1,6 @@
 import pickle
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 import structlog
@@ -9,8 +10,10 @@ from structlog.testing import capture_logs
 from simopt.curve import Curve
 from simopt.experiment import ProblemSolver
 
+EXPECTED_RESULTS_DIR = Path(__file__).parent / "expected_results"
 
-def load_problem_solver(path: str) -> ProblemSolver:
+
+def load_problem_solver(path: str | Path) -> ProblemSolver:
     with zstd.open(path, "rb") as f:
         data = pickle.load(f)
 
