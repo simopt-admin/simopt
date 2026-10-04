@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import pytest
 
 from simopt.analysis.feasibility_progress import analyze, analyze_many, plot, plot_many
@@ -7,7 +6,7 @@ from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plot_type import PlotType
 from simopt.plots.feasibility_progress import plot_feasibility_progress
-from tests.utils import capture_log_data
+from tests.utils import assert_logs_match, capture_log_data
 
 
 @pytest.mark.parametrize("experiment", ["SAN2_FCSA.pickle.zst"], indirect=True)
@@ -61,7 +60,7 @@ def test_feasibility_progress(experiment):
         analysis_result,
     )
 
-    np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
+    assert_logs_match(actual, desired)
 
 
 def test_feasibility_progress_plot_many(stochastic_plot_experiments):
@@ -120,9 +119,8 @@ def test_feasibility_progress_plot_many(stochastic_plot_experiments):
         plot_zero=False,
     )
 
+    assert_logs_match(actual, desired)
     assert len(actual) == len(desired) == len(san2_experiments)
-    for a, d in zip(actual, desired, strict=True):
-        np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)
 
 
 def test_feasibility_progress_different_problem_experiments(
@@ -182,6 +180,5 @@ def test_feasibility_progress_different_problem_experiments(
         plot_zero=False,
     )
 
+    assert_logs_match(actual, desired)
     assert len(actual) == len(desired)
-    for a, d in zip(actual, desired, strict=True):
-        np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)

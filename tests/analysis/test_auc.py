@@ -1,11 +1,10 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
 from simopt.analysis.auc import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plots.area_scatterplot import plot_area_scatterplots
-from tests.utils import capture_log_data
+from tests.utils import assert_logs_match, capture_log_data
 
 
 def test_auc(experiment):
@@ -46,7 +45,7 @@ def test_auc(experiment):
     _, ax = plt.subplots()
     actual = capture_log_data(plot, ax, analysis_result, "C0", "o")
 
-    np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
+    assert_logs_match(actual, desired)
 
 
 def test_auc_same_problem_experiments(plot_experiments):
@@ -89,9 +88,8 @@ def test_auc_same_problem_experiments(plot_experiments):
 
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments)
 
+    assert_logs_match(actual, desired)
     assert len(actual) == len(desired) == len(same_problem_experiments)
-    for a, d in zip(actual, desired, strict=True):
-        np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)
 
 
 def test_auc_different_problem_experiments(different_problem_experiments):
@@ -133,6 +131,5 @@ def test_auc_different_problem_experiments(different_problem_experiments):
 
     actual = capture_log_data(plot_many, analysis_results, different_problem_experiments)
 
+    assert_logs_match(actual, desired)
     assert len(actual) == len(desired)
-    for a, d in zip(actual, desired, strict=True):
-        np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)

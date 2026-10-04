@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import pytest
 
 from simopt.analysis.terminal_feasibility import analyze, analyze_many, plot, plot_many
@@ -7,7 +6,7 @@ from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plot_type import PlotType
 from simopt.plots.terminal_feasibility import plot_terminal_feasibility
-from tests.utils import capture_log_data
+from tests.utils import assert_logs_match, capture_log_data
 
 
 @pytest.mark.parametrize("experiment", ["SAN2_FCSA.pickle.zst"], indirect=True)
@@ -57,7 +56,7 @@ def test_terminal_feasibility(experiment):
     _, ax = plt.subplots()
     actual = capture_log_data(plot, ax, analysis_result, "C0", "o")
 
-    np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
+    assert_logs_match(actual, desired)
 
 
 def test_terminal_feasibility_same_problem_experiments(stochastic_plot_experiments):
@@ -111,9 +110,8 @@ def test_terminal_feasibility_same_problem_experiments(stochastic_plot_experimen
 
     actual = capture_log_data(plot_many, analysis_results, san2_experiments)
 
+    assert_logs_match(actual, desired)
     assert len(actual) == len(desired) == len(san2_experiments)
-    for a, d in zip(actual, desired, strict=True):
-        np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)
 
 
 def test_terminal_feasibility_different_problem_experiments(
@@ -172,6 +170,5 @@ def test_terminal_feasibility_different_problem_experiments(
         different_problem_experiments_stochastic_constraints,
     )
 
+    assert_logs_match(actual, desired)
     assert len(actual) == len(desired)
-    for a, d in zip(actual, desired, strict=True):
-        np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)

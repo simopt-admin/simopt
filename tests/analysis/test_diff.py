@@ -1,11 +1,9 @@
-import numpy as np
-
 from simopt.analysis.diff import analyze_many, plot_many
 from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plot_type import PlotType
 from simopt.plots.solvability_profile import plot_solvability_profiles
-from tests.utils import capture_log_data
+from tests.utils import assert_logs_match, capture_log_data
 
 
 def test_diff_solvability_cdf(plot_experiments):
@@ -54,10 +52,12 @@ def test_diff_solvability_cdf(plot_experiments):
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments)
 
     assert len(analysis_results) == len(plot_experiments) - 1
+    if analysis_results:
+        assert_logs_match(actual, desired)
+    else:
+        # A single reference solver has no differences to plot.
+        assert actual == desired == []
     assert len(actual) == len(desired) == len(plot_experiments) - 1
-    for a1, d1 in zip(actual, desired, strict=True):
-        for a2, d2 in zip(a1, d1, strict=True):
-            np.testing.assert_allclose(a2, d2, rtol=1e-5, atol=1e-5)
 
 
 def test_diff_solvability_quantile(plot_experiments):
@@ -106,7 +106,9 @@ def test_diff_solvability_quantile(plot_experiments):
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments)
 
     assert len(analysis_results) == len(plot_experiments) - 1
+    if analysis_results:
+        assert_logs_match(actual, desired)
+    else:
+        # A single reference solver has no differences to plot.
+        assert actual == desired == []
     assert len(actual) == len(desired) == len(plot_experiments) - 1
-    for a1, d1 in zip(actual, desired, strict=True):
-        for a2, d2 in zip(a1, d1, strict=True):
-            np.testing.assert_allclose(a2, d2, rtol=1e-5, atol=1e-5)

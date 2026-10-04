@@ -1,11 +1,10 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
 from simopt.analysis.terminal_progress import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.plot_type import PlotType
 from simopt.plots.terminal_progress import plot_terminal_progress
-from tests.utils import capture_log_data
+from tests.utils import assert_logs_match, capture_log_data
 
 
 def test_terminal_progress(experiment):
@@ -35,7 +34,7 @@ def test_terminal_progress(experiment):
         plot_type="violin",
     )
 
-    np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
+    assert_logs_match(actual, desired)
 
 
 def test_terminal_progress_same_problem_experiments(plot_experiments):
@@ -71,6 +70,5 @@ def test_terminal_progress_same_problem_experiments(plot_experiments):
         plot_type="violin",
     )
 
+    assert_logs_match(actual, desired)
     assert len(actual) == len(desired) == len(same_problem_experiments)
-    for a, d in zip(actual, desired, strict=True):
-        np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)

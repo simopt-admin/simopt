@@ -1,12 +1,11 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
 from simopt.analysis.progress_curve import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plot_type import PlotType
 from simopt.plots.progress_curve import plot_progress_curves
-from tests.utils import capture_log_data
+from tests.utils import assert_logs_match, capture_log_data
 
 
 def test_progress_curve(experiment):
@@ -52,7 +51,7 @@ def test_progress_curve(experiment):
     _, ax = plt.subplots()
     actual = capture_log_data(plot, ax, analysis_result)
 
-    np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
+    assert_logs_match(actual, desired)
 
 
 def test_progress_curve_same_problem_experiments(plot_experiments):
@@ -105,6 +104,5 @@ def test_progress_curve_same_problem_experiments(plot_experiments):
 
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments)
 
+    assert_logs_match(actual, desired)
     assert len(actual) == len(desired) == len(same_problem_experiments)
-    for a, d in zip(actual, desired, strict=True):
-        np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)

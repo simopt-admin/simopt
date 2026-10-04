@@ -1,11 +1,10 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
 from simopt.analysis.solvability_cdf import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.plots.solvability_cdf import plot_solvability_cdfs
-from tests.utils import capture_log_data
+from tests.utils import assert_logs_match, capture_log_data
 
 
 def test_solvability_cdf(experiment):
@@ -49,9 +48,8 @@ def test_solvability_cdf(experiment):
     _, ax = plt.subplots()
     actual = capture_log_data(plot, ax, analysis_result)
 
+    assert_logs_match(actual, desired)
     assert len(actual) == len(desired) == 1
-    for actual_value, expected_value in zip(actual[0], desired[0], strict=True):
-        np.testing.assert_allclose(actual_value, expected_value, rtol=1e-5, atol=1e-5)
 
 
 def test_solvability_cdf_same_problem_experiments(plot_experiments):
@@ -102,7 +100,5 @@ def test_solvability_cdf_same_problem_experiments(plot_experiments):
 
     actual = capture_log_data(plot_many, analysis_results, same_problem_experiments)
 
+    assert_logs_match(actual, desired)
     assert len(actual) == len(desired) == len(same_problem_experiments)
-    for a1, d1 in zip(actual, desired, strict=True):
-        for a2, d2 in zip(a1, d1, strict=True):
-            np.testing.assert_allclose(a2, d2, rtol=1e-5, atol=1e-5)
