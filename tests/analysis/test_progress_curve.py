@@ -4,8 +4,6 @@ import pytest
 from simopt.analysis.progress_curve import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
-from simopt.plot_type import PlotType
-from simopt.plots.progress_curve import plot_progress_curves
 from tests.utils import assert_logs_match, capture_log_data
 
 
@@ -13,7 +11,7 @@ from tests.utils import assert_logs_match, capture_log_data
     ("agg", "beta"), [("mean", 0.5), ("quantile", 0.1), ("quantile", 0.5), ("quantile", 0.9)]
 )
 @pytest.mark.parametrize("normalize", [False, True])
-def test_progress_curve(experiment, agg, beta, normalize):
+def test_progress_curve(experiment, agg, beta, normalize, plot_baseline):
     crn_options = CrnOptions(
         across_budget=experiment.crn_across_budget,
         across_macroreps=experiment.crn_across_macroreps,
@@ -25,23 +23,7 @@ def test_progress_curve(experiment, agg, beta, normalize):
         bias_correction=True,
     )
 
-    desired = capture_log_data(
-        plot_progress_curves,
-        experiments=[experiment],
-        plot_type=PlotType(agg),
-        beta=beta,
-        normalize=normalize,
-        all_in_one=True,
-        n_bootstraps=ci_options.n_bootstraps,
-        conf_level=ci_options.confidence_level,
-        plot_conf_ints=True,
-        print_max_hw=False,
-        plot_title=None,
-        legend_loc=None,
-        ext=".png",
-        save_as_pickle=False,
-        solver_set_name="SOLVER_SET",
-    )
+    desired = plot_baseline["logs"]
 
     analysis_input = convert(experiment)
     analysis_result = analyze(
@@ -59,7 +41,7 @@ def test_progress_curve(experiment, agg, beta, normalize):
     assert_logs_match(actual, desired)
 
 
-def test_progress_curve_same_problem_experiments(plot_experiments):
+def test_progress_curve_same_problem_experiments(plot_experiments, plot_baseline):
     same_problem_experiments = [
         experiment for group in zip(*plot_experiments, strict=True) for experiment in group
     ]
@@ -76,27 +58,7 @@ def test_progress_curve_same_problem_experiments(plot_experiments):
         bias_correction=True,
     )
 
-    desired = []
-    for group in zip(*plot_experiments, strict=True):
-        desired.extend(
-            capture_log_data(
-                plot_progress_curves,
-                experiments=list(group),
-                plot_type=PlotType.MEAN,
-                beta=0.50,
-                normalize=True,
-                all_in_one=True,
-                n_bootstraps=ci_options.n_bootstraps,
-                conf_level=ci_options.confidence_level,
-                plot_conf_ints=True,
-                print_max_hw=False,
-                plot_title=None,
-                legend_loc=None,
-                ext=".png",
-                save_as_pickle=False,
-                solver_set_name="SOLVER_SET",
-            )
-        )
+    desired = plot_baseline["logs"]
 
     analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(

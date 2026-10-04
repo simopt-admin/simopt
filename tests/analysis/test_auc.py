@@ -3,11 +3,10 @@ import matplotlib.pyplot as plt
 from simopt.analysis.auc import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
-from simopt.plots.area_scatterplot import plot_area_scatterplots
 from tests.utils import assert_logs_match, capture_log_data
 
 
-def test_auc(experiment):
+def test_auc(experiment, plot_baseline):
     crn_options = CrnOptions(
         across_budget=experiment.crn_across_budget,
         across_macroreps=experiment.crn_across_macroreps,
@@ -18,21 +17,7 @@ def test_auc(experiment):
         confidence_level=0.9,
         bias_correction=True,
     )
-    desired = capture_log_data(
-        plot_area_scatterplots,
-        experiments=[[experiment]],
-        all_in_one=True,
-        n_bootstraps=ci_options.n_bootstraps,
-        conf_level=ci_options.confidence_level,
-        plot_conf_ints=True,
-        print_max_hw=True,
-        plot_title=None,
-        legend_loc="best",
-        ext=".png",
-        save_as_pickle=False,
-        solver_set_name="SOLVER_SET",
-        problem_set_name="PROBLEM_SET",
-    )
+    desired = plot_baseline["logs"]
 
     analysis_input = convert(experiment)
     analysis_result = analyze(
@@ -48,7 +33,7 @@ def test_auc(experiment):
     assert_logs_match(actual, desired)
 
 
-def test_auc_same_problem_experiments(plot_experiments):
+def test_auc_same_problem_experiments(plot_experiments, plot_baseline):
     same_problem_experiments = [experiment for row in plot_experiments for experiment in row]
     reference = same_problem_experiments[0]
 
@@ -62,21 +47,7 @@ def test_auc_same_problem_experiments(plot_experiments):
         confidence_level=0.9,
         bias_correction=True,
     )
-    desired = capture_log_data(
-        plot_area_scatterplots,
-        experiments=plot_experiments,
-        all_in_one=True,
-        n_bootstraps=ci_options.n_bootstraps,
-        conf_level=ci_options.confidence_level,
-        plot_conf_ints=True,
-        print_max_hw=True,
-        plot_title=None,
-        legend_loc="best",
-        ext=".png",
-        save_as_pickle=False,
-        solver_set_name="SOLVER_SET",
-        problem_set_name="PROBLEM_SET",
-    )
+    desired = plot_baseline["logs"]
 
     analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
@@ -92,7 +63,7 @@ def test_auc_same_problem_experiments(plot_experiments):
     assert len(actual) == len(desired) == len(same_problem_experiments)
 
 
-def test_auc_different_problem_experiments(different_problem_experiments):
+def test_auc_different_problem_experiments(different_problem_experiments, plot_baseline):
     reference = different_problem_experiments[0]
 
     crn_options = CrnOptions(
@@ -105,21 +76,7 @@ def test_auc_different_problem_experiments(different_problem_experiments):
         confidence_level=0.9,
         bias_correction=True,
     )
-    desired = capture_log_data(
-        plot_area_scatterplots,
-        experiments=[different_problem_experiments],
-        all_in_one=True,
-        n_bootstraps=ci_options.n_bootstraps,
-        conf_level=ci_options.confidence_level,
-        plot_conf_ints=True,
-        print_max_hw=True,
-        plot_title=None,
-        legend_loc="best",
-        ext=".png",
-        save_as_pickle=False,
-        solver_set_name="SOLVER_SET",
-        problem_set_name="PROBLEM_SET",
-    )
+    desired = plot_baseline["logs"]
 
     analysis_inputs = [convert(experiment) for experiment in different_problem_experiments]
     analysis_results = analyze_many(

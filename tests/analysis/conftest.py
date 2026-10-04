@@ -163,3 +163,10 @@ def stochastic_plot_experiments(request, stochastic_plot_experiment_grid):
     for group in zip(*experiments, strict=True):
         post_normalize(list(group), 10)
     return experiments
+
+
+@pytest.fixture
+def plot_baseline(request):
+    from tests.analysis.baselines import load_plot_baseline
+
+    return load_plot_baseline(request.node.nodeid)

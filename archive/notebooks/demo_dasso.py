@@ -28,13 +28,11 @@ sys.path.append("..")
 
 # %%
 from simopt.base import Problem, Solver
-from simopt.experiment_base import (
-    PlotType,
-    ProblemSolver,
-    plot_progress_curves,
-    plot_terminal_progress,
-    post_normalize,
-)
+from simopt.experiment_base import PlotType, ProblemSolver, post_normalize
+from simopt.analysis.progress_curve import ProgressCurve
+from simopt.analysis.terminal_progress import TerminalProgress
+from simopt.experiment.plot import save_plots
+from simopt.options import ConfidenceIntervalOptions
 from simopt.models.example import Example2Problem
 from simopt.solvers import DASSO, RandomSearch
 
@@ -64,8 +62,7 @@ def run_experiment(
 n_macroreps = 10
 n_postreps = 100
 experiments = [
-    run_experiment(solver, problem, n_macroreps, n_postreps)
-    for solver in [dasso, random_search]
+    run_experiment(solver, problem, n_macroreps, n_postreps) for solver in [dasso, random_search]
 ]
 experiment1, experiment2 = experiments
 post_normalize(experiments, n_postreps)
@@ -74,7 +71,23 @@ post_normalize(experiments, n_postreps)
 # ## Plots
 
 # %%
-plot_progress_curves([experiment1, experiment2], PlotType.ALL, normalize=False)
+save_plots(
+    [experiment1, experiment2],
+    ProgressCurve(
+        agg=PlotType.ALL.value,
+        normalize=False,
+        beta=0.5,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
+    print_max_hw=True,
+    use_experiment_crn=True,
+)
 
 # %%
-plot_terminal_progress([experiment1, experiment2], PlotType.VIOLIN, normalize=False)
+save_plots(
+    [experiment1, experiment2],
+    TerminalProgress(plot_type=PlotType.VIOLIN.value, normalize=False),
+    use_experiment_crn=True,
+)

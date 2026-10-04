@@ -1,4 +1,4 @@
-"""Base classes for problem-solver pairs and I/O/plotting helper functions."""
+"""Compatibility imports for experiments and design I/O helper functions."""
 
 from __future__ import annotations
 
@@ -18,16 +18,6 @@ from simopt.experiment import (
     post_normalize,  # noqa: F401
 )
 from simopt.plot_type import PlotType  # noqa: F401
-from simopt.plots import (
-    plot_area_scatterplots,  # noqa: F401
-    plot_feasibility_progress,  # noqa: F401
-    plot_progress_curves,  # noqa: F401
-    plot_solvability_cdfs,  # noqa: F401
-    plot_solvability_profiles,  # noqa: F401
-    plot_terminal_feasibility,  # noqa: F401
-    plot_terminal_progress,  # noqa: F401
-    plot_terminal_scatterplots,  # noqa: F401
-)
 from simopt.utils import resolve_file_path
 
 # Workaround for AutoAPI
@@ -41,7 +31,6 @@ solver_directory = directory.solver_directory
 if TYPE_CHECKING:
     from typing import Literal
 
-    from matplotlib.lines import Line2D as Line2D
     from pandas import DataFrame as DataFrame
 
 

@@ -36,15 +36,16 @@ from pathlib import Path
 # Take the current directory, find the parent, and add it to the system path
 sys.path.append(str(Path.cwd().parent))
 
-from simopt.experiment_base import (
-    PlotType,
-    plot_area_scatterplots,
-    plot_progress_curves,
-    plot_solvability_cdfs,
-    plot_solvability_profiles,
-    plot_terminal_progress,
-    plot_terminal_scatterplots,
-)
+from simopt.experiment_base import PlotType
+from simopt.analysis.auc import Auc
+from simopt.analysis.diff import DiffSolvability
+from simopt.analysis.progress_curve import ProgressCurve
+from simopt.analysis.solvability_cdf import SolvabilityCdf
+from simopt.analysis.solvability_profile import SolvabilityProfile
+from simopt.analysis.terminal_progress import TerminalProgress
+from simopt.analysis.terminal_scatterplot import TerminalScatter
+from simopt.experiment.plot import save_plots
+from simopt.options import ConfidenceIntervalOptions
 from simopt.experimental import group_experiments_by_solver, run_experiment
 
 # %% [markdown]
@@ -122,9 +123,7 @@ SAN_problems = [
 ]
 
 # Run the experiment for SAN problems.
-SAN_experiments = run_experiment(
-    SAN_problems, solvers, num_macroreps, num_postreps, num_postnorms
-)
+SAN_experiments = run_experiment(SAN_problems, solvers, num_macroreps, num_postreps, num_postnorms)
 
 # %%
 # Problem 2 - SSCONT
@@ -202,76 +201,126 @@ enable_confidence_intervals = True
 alpha = 0.2
 
 # %%
-plot_solvability_profiles(
+save_plots(
     experiments,
-    plot_type=PlotType.CDF_SOLVABILITY,
-    solve_tol=alpha,
+    SolvabilityProfile(
+        plot_type="cdf",
+        beta=0.5,
+        solve_tolerance=alpha,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        )
+        if enable_confidence_intervals
+        else None,
+    ),
     all_in_one=True,
     plot_conf_ints=enable_confidence_intervals,
     print_max_hw=enable_confidence_intervals,
+    use_experiment_crn=True,
 )
 
 # %%
-plot_solvability_profiles(
+save_plots(
     experiments,
-    plot_type=PlotType.QUANTILE_SOLVABILITY,
-    solve_tol=alpha,
-    beta=0.5,
+    SolvabilityProfile(
+        plot_type="quantile",
+        beta=0.5,
+        solve_tolerance=alpha,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        )
+        if enable_confidence_intervals
+        else None,
+    ),
     all_in_one=True,
     plot_conf_ints=enable_confidence_intervals,
     print_max_hw=enable_confidence_intervals,
+    use_experiment_crn=True,
 )
 
 # %%
-plot_solvability_profiles(
-    experiments=experiments,
-    plot_type=PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
-    solve_tol=alpha,
-    ref_solver="ASTRODF",
-    all_in_one=True,
-    plot_conf_ints=enable_confidence_intervals,
-    print_max_hw=enable_confidence_intervals,
-)
-
-# %%
-plot_solvability_profiles(
-    experiments=experiments,
-    plot_type=PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
-    solve_tol=alpha,
-    beta=0.5,
-    ref_solver="ASTRODF",
-    all_in_one=True,
-    plot_conf_ints=enable_confidence_intervals,
-    print_max_hw=enable_confidence_intervals,
-)
-
-# %%
-plot_area_scatterplots(
+save_plots(
     experiments,
+    DiffSolvability(
+        reference_solver="ASTRODF",
+        plot_type="cdf",
+        beta=0.5,
+        solve_tolerance=alpha,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        )
+        if enable_confidence_intervals
+        else None,
+    ),
     all_in_one=True,
     plot_conf_ints=enable_confidence_intervals,
     print_max_hw=enable_confidence_intervals,
+    use_experiment_crn=True,
 )
 
 # %%
-plot_terminal_scatterplots(experiments, all_in_one=True)
+save_plots(
+    experiments,
+    DiffSolvability(
+        reference_solver="ASTRODF",
+        plot_type="quantile",
+        beta=0.5,
+        solve_tolerance=alpha,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        )
+        if enable_confidence_intervals
+        else None,
+    ),
+    all_in_one=True,
+    plot_conf_ints=enable_confidence_intervals,
+    print_max_hw=enable_confidence_intervals,
+    use_experiment_crn=True,
+)
+
+# %%
+save_plots(
+    experiments,
+    Auc(
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        )
+        if enable_confidence_intervals
+        else None
+    ),
+    all_in_one=True,
+    plot_conf_ints=enable_confidence_intervals,
+    print_max_hw=enable_confidence_intervals,
+    use_experiment_crn=True,
+)
+
+# %%
+save_plots(experiments, TerminalScatter(), all_in_one=True, use_experiment_crn=True)
 
 # %%
 n_solvers = len(solvers)
 
 for i in range(len(experiments[0])):
-    plot_progress_curves(
+    save_plots(
         [experiments[solver_idx][i] for solver_idx in range(n_solvers)],
-        plot_type=PlotType.MEAN,
+        ProgressCurve(
+            agg=PlotType.MEAN.value,
+            normalize=True,
+            beta=0.5,
+            ci_options=ConfidenceIntervalOptions(
+                n_bootstraps=100, confidence_level=0.95, bias_correction=True
+            ),
+        ),
         all_in_one=True,
         plot_conf_ints=enable_confidence_intervals,
         print_max_hw=True,
+        use_experiment_crn=True,
     )
-    plot_terminal_progress(
+    save_plots(
         [experiments[solver_idx][i] for solver_idx in range(n_solvers)],
-        plot_type=PlotType.VIOLIN,
-        normalize=True,
+        TerminalProgress(plot_type=PlotType.VIOLIN.value, normalize=True),
         all_in_one=True,
+        use_experiment_crn=True,
     )
     # plot_solvability_cdfs(
     #     [experiments[solver_idx][i] for solver_idx in range(n_solvers)],
@@ -283,39 +332,69 @@ for i in range(len(experiments[0])):
 
 # %%
 # Plots for mu_D = 400 and mu_L = 6 (appreared in the paper)
-plot_progress_curves(
+save_plots(
     [experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-    plot_type=PlotType.ALL,
+    ProgressCurve(
+        agg=PlotType.ALL.value,
+        normalize=True,
+        beta=0.5,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
     all_in_one=True,
+    print_max_hw=True,
+    use_experiment_crn=True,
 )
 
-plot_progress_curves(
+save_plots(
     [experiments[solver_idx][0] for solver_idx in range(3, 4)],
-    plot_type=PlotType.ALL,
+    ProgressCurve(
+        agg=PlotType.ALL.value,
+        normalize=False,
+        beta=0.5,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
     all_in_one=True,
-    normalize=False,
+    print_max_hw=True,
+    use_experiment_crn=True,
 )
 
-plot_progress_curves(
+save_plots(
     [experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-    plot_type=PlotType.ALL,
+    ProgressCurve(
+        agg=PlotType.ALL.value,
+        normalize=True,
+        beta=0.5,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
     all_in_one=True,
     plot_conf_ints=True,
     print_max_hw=False,
-    normalize=True,
+    use_experiment_crn=True,
 )
 
-plot_solvability_cdfs(
-    experiments=[experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-    solve_tol=0.2,
+save_plots(
+    [experiments[solver_idx][0] for solver_idx in range(n_solvers)],
+    SolvabilityCdf(
+        solve_tolerance=0.2,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
     all_in_one=True,
     plot_conf_ints=True,
     print_max_hw=False,
+    use_experiment_crn=True,
 )
 
-plot_terminal_progress(
+save_plots(
     [experiments[solver_idx][0] for solver_idx in range(n_solvers)],
-    plot_type=PlotType.VIOLIN,
-    normalize=False,
+    TerminalProgress(plot_type=PlotType.VIOLIN.value, normalize=False),
     all_in_one=True,
+    use_experiment_crn=True,
 )

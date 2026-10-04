@@ -24,12 +24,10 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 
-from simopt.experiment_base import (
-    PlotType,
-    ProblemSolver,
-    plot_progress_curves,
-    post_normalize,
-)
+from simopt.experiment_base import PlotType, ProblemSolver, post_normalize
+from simopt.analysis.progress_curve import ProgressCurve
+from simopt.experiment.plot import save_plots
+from simopt.options import ConfidenceIntervalOptions
 from simopt.input_models import InputModel
 
 
@@ -56,6 +54,7 @@ class Experiment(ProblemSolver):
         # model.demand_model = DemandInputModel()
         model.demand_model = FileInputModel("demand.npy")
 
+
 # %%
 # Run 10 macroreplications of ASTRO-DF on the continuous newsvendor problem.
 experiment = Experiment("ASTRODF", "CNTNEWS-1")
@@ -67,9 +66,17 @@ post_normalize(experiments=[experiment], n_postreps_init_opt=200)
 
 # Record the results and plot the mean progress curve.
 experiment.log_experiment_results()
-plot_progress_curves(
-    experiments=[experiment],
-    plot_type=PlotType.MEAN,
-    normalize=False,
+save_plots(
+    [experiment],
+    ProgressCurve(
+        agg=PlotType.MEAN.value,
+        normalize=False,
+        beta=0.5,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
+    print_max_hw=True,
+    use_experiment_crn=True,
 )
 plt.show()

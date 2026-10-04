@@ -16,7 +16,6 @@ import inspect
 from pathlib import Path
 from typing import Annotated, Any
 
-import matplotlib.pyplot as plt
 from fastapi import Body, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
@@ -33,6 +32,7 @@ from simopt.directory import (
     solver_directory,
 )
 from simopt.experiment import ProblemSolver
+from simopt.plot_type import PlotType
 from simopt.web.plots import (
     PlotAreaScatterplotsConfig,
     PlotProgressCurvesConfig,
@@ -247,11 +247,8 @@ def postnormalize_schema() -> dict[str, Any]:
 
 @app.get("/plots")
 def list_plots():
-    """Returns a flat list of plot names derived from experiment_base.PlotType."""
-    if not hasattr(eb, "PlotType"):
-        return {"plots": [], "source": "missing PlotType"}
-
-    plot_type_cls = eb.PlotType
+    """Returns a flat list of plot names derived from PlotType."""
+    plot_type_cls = PlotType
 
     plots = []
     try:
@@ -486,15 +483,17 @@ def generate_plots(
     folder,
 ):
     """Shared plot generation logic used by both run_experiment_async and run_plots_only."""
-    from simopt.experiment_base import (
-        plot_area_scatterplots,
-        plot_progress_curves,
-        plot_solvability_cdfs,
-        plot_solvability_profiles,
-        plot_terminal_progress,
-        plot_terminal_scatterplots,
-    )
-    from simopt.plot_type import PlotType
+    from simopt.analysis.auc import Auc
+    from simopt.analysis.diff import DiffSolvability
+    from simopt.analysis.feasibility_progress import FeasibilityProgress
+    from simopt.analysis.progress_curve import ProgressCurve
+    from simopt.analysis.solvability_cdf import SolvabilityCdf
+    from simopt.analysis.solvability_profile import SolvabilityProfile
+    from simopt.analysis.terminal_feasibility import TerminalFeasibility
+    from simopt.analysis.terminal_progress import TerminalProgress
+    from simopt.analysis.terminal_scatterplot import TerminalScatter
+    from simopt.experiment.plot import save_plots
+    from simopt.options import ConfidenceIntervalOptions, CrnOptions
 
     plot_files = []
 
@@ -526,280 +525,157 @@ def generate_plots(
         if not solver_exp_indices or not problem_exp_indices:
             continue
 
-        if plot_type_name in ["ALL", "MEAN", "QUANTILE"]:
-            # Generate progress curves for each problem
-            for exp_prob_idx in problem_exp_indices:
-                try:
-                    plt.figure(figsize=(10, 6))
-
-                    all_in_one = plot_params.get("all_in_one", True)
-                    normalize = plot_params.get("normalize", False)
-
-                    plot_type_map = {
-                        "ALL": PlotType.ALL,
-                        "MEAN": PlotType.MEAN,
-                        "QUANTILE": PlotType.QUANTILE,
-                    }
-                    plot_type_enum = plot_type_map.get(plot_type_name, PlotType.MEAN)
-
-                    plot_progress_curves(
-                        [
-                            all_experiments[exp_prob_idx][exp_solver_idx]
-                            for exp_solver_idx in solver_exp_indices
-                        ],
-                        plot_type=plot_type_enum,
-                        all_in_one=all_in_one,
-                        normalize=normalize,
-                    )
-                    actual_prob_idx = needed_problem_indices[exp_prob_idx]
-                    filename = f"{plot_type_name.lower()}_progress_curves_problem_{actual_prob_idx + 1}.png"
-                    plt.savefig(folder / filename, dpi=150, bbox_inches="tight")
-                    plt.close()
-                    plot_files.append(filename)
-                    print(f"  Saved {filename}")
-                except Exception as e:
-                    print(
-                        f"Error generating {plot_type_name} plot for problem {exp_prob_idx + 1}: {e}"
-                    )
-                    import traceback
-
-                    traceback.print_exc()
-                    continue
-
-        elif plot_type_name in ["VIOLIN", "BOX"]:
-            # Generate terminal progress plots (BOX or VIOLIN) for each problem
-            for exp_prob_idx in problem_exp_indices:
-                try:
-                    plt.figure(figsize=(10, 6))
-
-                    # Extract parameters with defaults
-                    normalize = plot_params.get("normalize", True)
-                    all_in_one = plot_params.get("all_in_one", True)
-
-                    # Determine which PlotType to use
-                    plot_type_enum = PlotType.VIOLIN if plot_type_name == "VIOLIN" else PlotType.BOX
-
-                    plot_terminal_progress(
-                        [
-                            all_experiments[exp_prob_idx][exp_solver_idx]
-                            for exp_solver_idx in solver_exp_indices
-                        ],
-                        plot_type=plot_type_enum,
-                        normalize=normalize,
-                        all_in_one=all_in_one,
-                    )
-                    actual_prob_idx = needed_problem_indices[exp_prob_idx]
-                    filename = f"{plot_type_name.lower()}_progress_curves_problem_{actual_prob_idx + 1}.png"
-                    plt.savefig(folder / filename, dpi=150, bbox_inches="tight")
-                    plt.close()
-                    plot_files.append(filename)
-                    print(f"  Saved {filename}")
-                except Exception as e:
-                    print(
-                        f"Error generating {plot_type_name} plot for problem {exp_prob_idx + 1}: {e}"
-                    )
-                    import traceback
-
-                    traceback.print_exc()
-                    continue
-
-        elif plot_type_name in ["AREA", "AREA_MEAN", "AREA_STD_DEV"]:
-            # Generate area scatterplots for each problem
-            if len(problem_exp_indices) < 2:
-                print(f"Warning: {plot_type_name} requires multiple problems. Skipping.")
-                continue
+        per_problem = plot_type_name in {
+            "ALL",
+            "MEAN",
+            "QUANTILE",
+            "BOX",
+            "VIOLIN",
+            "SOLVE_TIME_CDF",
+            "SOLVE_TIME_QUANTILE",
+            "ALL_FEASIBILITY_PROGRESS",
+            "MEAN_FEASIBILITY_PROGRESS",
+            "QUANTILE_FEASIBILITY_PROGRESS",
+            "FEASIBILITY_SCATTER",
+            "FEASIBILITY_VIOLIN",
+        }
+        if not per_problem and len(problem_exp_indices) < 2:
+            print(f"Warning: {plot_type_name} requires multiple problems. Skipping.")
+            continue
+        problem_groups = (
+            [[index] for index in problem_exp_indices] if per_problem else [problem_exp_indices]
+        )
+        for problem_group in problem_groups:
             try:
-                print(f"Generating {plot_type_name} plot...")
-                plt.figure(figsize=(10, 6))
-                # Extract parameters with defaults
-                all_in_one = plot_params.get("all_in_one", True)
-                n_bootstraps = plot_params.get("n_bootstraps", 100)
-                conf_level = plot_params.get("conf_level", 0.95)
-                plot_conf_ints = plot_params.get("plot_conf_ints", True)
-                print_max_hw = plot_params.get("print_max_hw", True)
-                solver_set_name = plot_params.get("solver_set_name", "SOLVER_SET")
-                problem_set_name = plot_params.get("problem_set_name", "PROBLEM_SET")
-
-                plot_type_map = {
-                    "AREA": PlotType.AREA,
-                    "AREA_MEAN": PlotType.AREA_MEAN,
-                    "AREA_STD_DEV": PlotType.AREA_STD_DEV,
-                }
-                plot_type_enum = plot_type_map[plot_type_name]
-
                 filtered_experiments = [
-                    [
-                        all_experiments[exp_prob_idx][exp_solver_idx]
-                        for exp_solver_idx in solver_exp_indices
-                    ]
-                    for exp_prob_idx in problem_exp_indices
+                    all_experiments[exp_prob_idx][exp_solver_idx]
+                    for exp_prob_idx in problem_group
+                    for exp_solver_idx in solver_exp_indices
                 ]
-
-                plot_area_scatterplots(
-                    filtered_experiments,
-                    all_in_one=all_in_one,
-                    n_bootstraps=n_bootstraps,
-                    conf_level=conf_level,
-                    plot_conf_ints=plot_conf_ints,
-                    print_max_hw=print_max_hw,
-                    solver_set_name=solver_set_name,
-                    problem_set_name=problem_set_name,
+                reference = filtered_experiments[0]
+                crn_options = CrnOptions(
+                    across_budget=plot_params.get("crn_across_budget", reference.crn_across_budget),
+                    across_macroreps=plot_params.get(
+                        "crn_across_macroreps", reference.crn_across_macroreps
+                    ),
+                    across_x0_xstar=plot_params.get(
+                        "crn_across_init_opt", reference.crn_across_init_opt
+                    ),
                 )
-                filename = f"{plot_type_name.lower()}_area_scatterplot.png"
-                plt.savefig(folder / filename, dpi=150, bbox_inches="tight")
-                plt.close()
-                plot_files.append(filename)
-                print(f"  Saved {filename}")
-            except Exception as e:
-                print(f"Error generating {plot_type_name} plot: {e}")
-                import traceback
-
-                traceback.print_exc()
-
-        elif plot_type_name in [
-            "CDF_SOLVABILITY",
-            "QUANTILE_SOLVABILITY",
-            "DIFFERENCE_OF_CDF_SOLVABILITY",
-            "DIFFERENCE_OF_QUANTILE_SOLVABILITY",
-        ]:
-            # Solvability profiles require multiple problems
-            if len(problem_exp_indices) < 2:
-                print(f"Warning: {plot_type_name} requires multiple problems. Skipping.")
-                continue
-            try:
-                print(f"Generating {plot_type_name} plot...")
-                plt.figure(figsize=(10, 6))
-                # Extract parameters with defaults
-                all_in_one = plot_params.get("all_in_one", True)
-                n_bootstraps = plot_params.get("n_bootstraps", 100)
-                conf_level = plot_params.get("conf_level", 0.95)
-                plot_conf_ints = plot_params.get("plot_conf_ints", False)  # Disabled by default
-                print_max_hw = plot_params.get("print_max_hw", False)
-                solve_tol = plot_params.get("solve_tol", 0.1)
+                default_ci = (
+                    plot_type_name
+                    in {"ALL", "MEAN", "QUANTILE", "AREA", "AREA_MEAN", "AREA_STD_DEV"}
+                    or "FEASIBILITY" in plot_type_name
+                )
+                plot_conf_ints = plot_params.get("plot_conf_ints", default_ci)
+                print_max_hw = plot_params.get("print_max_hw", default_ci)
+                ci_options = (
+                    ConfidenceIntervalOptions(
+                        n_bootstraps=plot_params.get("n_bootstraps", 100),
+                        confidence_level=plot_params.get("conf_level", 0.95),
+                        bias_correction=plot_params.get("bias_correction", True),
+                    )
+                    if plot_conf_ints or print_max_hw
+                    else None
+                )
+                options = {"ci_options": ci_options, "crn_options": crn_options}
+                normalize = plot_params.get(
+                    "normalize", plot_type_name not in {"ALL", "MEAN", "QUANTILE"}
+                )
                 beta = plot_params.get("beta", 0.5)
-                ref_solver = plot_params.get("ref_solver", None)
-                solver_set_name = plot_params.get("solver_set_name", "SOLVER_SET")
-                problem_set_name = plot_params.get("problem_set_name", "PROBLEM_SET")
-                # Map plot type name to PlotType enum
-                plot_type_map = {
-                    "CDF_SOLVABILITY": PlotType.CDF_SOLVABILITY,
-                    "QUANTILE_SOLVABILITY": PlotType.QUANTILE_SOLVABILITY,
-                    "DIFFERENCE_OF_CDF_SOLVABILITY": PlotType.DIFFERENCE_OF_CDF_SOLVABILITY,
-                    "DIFFERENCE_OF_QUANTILE_SOLVABILITY": PlotType.DIFFERENCE_OF_QUANTILE_SOLVABILITY,
+                solve_tol = plot_params.get("solve_tol", 0.1)
+                feasibility_options = {
+                    "score_type": plot_params.get("score_type", "inf_norm"),
+                    "norm_degree": plot_params.get("norm_degree", 1),
+                    "two_sided": plot_params.get(
+                        "two_sided",
+                        plot_type_name
+                        not in {"MEAN_FEASIBILITY_PROGRESS", "QUANTILE_FEASIBILITY_PROGRESS"},
+                    ),
                 }
-                plot_type_enum = plot_type_map[plot_type_name]
+                if plot_type_name in {"ALL", "MEAN", "QUANTILE"}:
+                    config = ProgressCurve(
+                        agg=plot_type_name.lower(), normalize=normalize, beta=beta, **options
+                    )
+                elif plot_type_name in {"BOX", "VIOLIN"}:
+                    config = TerminalProgress(plot_type=plot_type_name.lower(), normalize=normalize)
+                elif plot_type_name in {"AREA", "AREA_MEAN", "AREA_STD_DEV"}:
+                    config = Auc(**options)
+                elif plot_type_name == "SOLVE_TIME_CDF":
+                    config = SolvabilityCdf(
+                        normalize=normalize, solve_tolerance=solve_tol, **options
+                    )
+                elif plot_type_name in {"FEASIBILITY_SCATTER", "FEASIBILITY_VIOLIN"}:
+                    config = TerminalFeasibility(
+                        plot_type=plot_type_name.lower().removeprefix("feasibility_"),
+                        **feasibility_options,
+                        **options,
+                    )
+                elif plot_type_name.endswith("FEASIBILITY_PROGRESS"):
+                    config = FeasibilityProgress(
+                        agg=plot_type_name.lower().removesuffix("_feasibility_progress"),
+                        beta=beta,
+                        **feasibility_options,
+                        **options,
+                    )
+                elif plot_type_name == "TERMINAL_SCATTER":
+                    config = TerminalScatter(normalize=normalize)
+                elif plot_type_name in {
+                    "CDF_SOLVABILITY",
+                    "QUANTILE_SOLVABILITY",
+                    "SOLVE_TIME_QUANTILE",
+                    "DIFFERENCE_OF_CDF_SOLVABILITY",
+                    "DIFFERENCE_OF_QUANTILE_SOLVABILITY",
+                }:
+                    profile_options = dict(
+                        plot_type="quantile" if "QUANTILE" in plot_type_name else "cdf",
+                        normalize=normalize,
+                        solve_tolerance=solve_tol,
+                        beta=beta,
+                        **options,
+                    )
+                    if plot_type_name.startswith("DIFFERENCE_OF"):
+                        ref_solver = plot_params.get("ref_solver")
+                        if ref_solver is None:
+                            raise ValueError("Difference plots require ref_solver.")
+                        config = DiffSolvability(reference_solver=ref_solver, **profile_options)
+                    else:
+                        config = SolvabilityProfile(**profile_options)
+                else:
+                    raise ValueError(f"Unsupported plot type: {plot_type_name}")
 
-                filtered_experiments = [
-                    [
-                        all_experiments[exp_prob_idx][exp_solver_idx]
-                        for exp_solver_idx in solver_exp_indices
-                    ]
-                    for exp_prob_idx in problem_exp_indices
-                ]
-
-                plot_solvability_profiles(
+                if per_problem:
+                    exp_prob_idx = problem_group[0]
+                    actual_prob_idx = needed_problem_indices[exp_prob_idx]
+                    if plot_type_name == "SOLVE_TIME_CDF":
+                        filename = f"solvability_cdf_problem_{actual_prob_idx + 1}.png"
+                    else:
+                        filename = f"{plot_type_name.lower()}_progress_curves_problem_{actual_prob_idx + 1}.png"
+                elif plot_type_name in {"AREA", "AREA_MEAN", "AREA_STD_DEV"}:
+                    filename = f"{plot_type_name.lower()}_area_scatterplot.png"
+                elif plot_type_name == "TERMINAL_SCATTER":
+                    filename = "terminal_scatterplot.png"
+                else:
+                    filename = f"{plot_type_name.lower()}_solvability_profile.png"
+                paths = save_plots(
                     filtered_experiments,
-                    plot_type=plot_type_enum,
-                    all_in_one=all_in_one,
-                    n_bootstraps=n_bootstraps,
-                    conf_level=conf_level,
+                    config,
+                    output_dir=folder,
+                    filename=filename,
+                    all_in_one=plot_params.get("all_in_one", True),
+                    plot_title=plot_params.get("plot_title"),
+                    legend_loc=plot_params.get("legend_loc"),
                     plot_conf_ints=plot_conf_ints,
                     print_max_hw=print_max_hw,
-                    solve_tol=solve_tol,
-                    beta=beta,
-                    ref_solver=ref_solver,
-                    solver_set_name=solver_set_name,
-                    problem_set_name=problem_set_name,
+                    plot_zero=plot_params.get("plot_zero", True),
+                    plot_optimal=plot_params.get("plot_optimal", False),
+                    save_as_pickle=plot_params.get("save_as_pickle", False),
                 )
-                filename = f"{plot_type_name.lower()}_solvability_profile.png"
-                plt.savefig(folder / filename, dpi=150, bbox_inches="tight")
-                plt.close()
-                plot_files.append(filename)
-                print(f"  Saved {filename}")
+                for path in paths:
+                    plot_files.append(path.name)
+                    print(f"  Saved {path.name}")
             except Exception as e:
                 print(f"Error generating {plot_type_name} plot: {e}")
-                import traceback
-
-                traceback.print_exc()
-
-        elif plot_type_name == "SOLVE_TIME_CDF":
-            # Generate solvability CDF plots for each problem
-            for exp_prob_idx in problem_exp_indices:
-                try:
-                    plt.figure(figsize=(10, 6))
-
-                    # Extract parameters with defaults
-                    solve_tol = plot_params.get("solve_tol", 0.1)
-                    all_in_one = plot_params.get("all_in_one", True)
-                    n_bootstraps = plot_params.get("n_bootstraps", 100)
-                    conf_level = plot_params.get("conf_level", 0.95)
-                    plot_conf_ints = plot_params.get(
-                        "plot_conf_ints", False
-                    )  # Disabled by default to avoid bootstrap errors
-                    print_max_hw = plot_params.get("print_max_hw", False)
-
-                    plot_solvability_cdfs(
-                        [
-                            all_experiments[exp_prob_idx][exp_solver_idx]
-                            for exp_solver_idx in solver_exp_indices
-                        ],
-                        solve_tol=solve_tol,
-                        all_in_one=all_in_one,
-                        n_bootstraps=n_bootstraps,
-                        conf_level=conf_level,
-                        plot_conf_ints=plot_conf_ints,
-                        print_max_hw=print_max_hw,
-                    )
-                    filename = f"solvability_cdf_problem_{exp_prob_idx + 1}.png"
-                    plt.savefig(folder / filename, dpi=150, bbox_inches="tight")
-                    plt.close()
-                    plot_files.append(filename)
-                    print(f"  Saved {filename}")
-                except Exception as e:
-                    print(
-                        f"Error generating SOLVE_TIME_CDF plot for problem {exp_prob_idx + 1}: {e}"
-                    )
-                    import traceback
-
-                    traceback.print_exc()
-                    continue
-
-        elif plot_type_name == "TERMINAL_SCATTER":
-            # Generate terminal scatterplot (requires multiple problems)
-            if len(problem_exp_indices) < 2:
-                print("Warning: TERMINAL_SCATTER requires multiple problems. Skipping.")
-                continue
-
-            try:
-                print("Generating TERMINAL_SCATTER plot...")
-                plt.figure(figsize=(10, 6))
-
-                # Extract parameters with defaults
-                all_in_one = plot_params.get("all_in_one", True)
-                solver_set_name = plot_params.get("solver_set_name", "SOLVER_SET")
-                problem_set_name = plot_params.get("problem_set_name", "PROBLEM_SET")
-
-                filtered_experiments = [
-                    [
-                        all_experiments[exp_prob_idx][exp_solver_idx]
-                        for exp_solver_idx in solver_exp_indices
-                    ]
-                    for exp_prob_idx in problem_exp_indices
-                ]
-
-                plot_terminal_scatterplots(
-                    filtered_experiments,
-                    all_in_one=all_in_one,
-                    solver_set_name=solver_set_name,
-                    problem_set_name=problem_set_name,
-                )
-                filename = "terminal_scatterplot.png"
-                plt.savefig(folder / filename, dpi=150, bbox_inches="tight")
-                plt.close()
-                plot_files.append(filename)
-                print(f"  Saved {filename}")
-            except Exception as e:
-                print(f"Error generating TERMINAL_SCATTER plot: {e}")
                 import traceback
 
                 traceback.print_exc()

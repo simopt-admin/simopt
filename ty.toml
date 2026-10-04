@@ -19,7 +19,6 @@ exclude = [
     "simopt/model.py",
     "simopt/models/ermexample.py",
     "simopt/plot_type.py",
-    "simopt/plots",
     "simopt/problem.py",
     "simopt/utils.py",
     "tests/test_experiments.py",

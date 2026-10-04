@@ -86,7 +86,10 @@ for problem_idx in range(len(problem_abbr_names)):
 # %%
 # Produce basic plots.
 
-from simopt.experiment_base import PlotType, plot_solvability_profiles
+from simopt.experiment_base import PlotType
+from simopt.analysis.solvability_profile import SolvabilityProfile
+from simopt.experiment.plot import save_plots
+from simopt.options import ConfidenceIntervalOptions
 
 print("Plotting results...")
 
@@ -96,8 +99,18 @@ def _print_path(plot_path: list[Path]) -> None:
 
 
 _print_path(
-    plot_solvability_profiles(
-        experiments=experiments, plot_type=PlotType.CDF_SOLVABILITY
+    save_plots(
+        experiments,
+        SolvabilityProfile(
+            plot_type="cdf",
+            beta=0.5,
+            solve_tolerance=0.1,
+            ci_options=ConfidenceIntervalOptions(
+                n_bootstraps=100, confidence_level=0.95, bias_correction=True
+            ),
+        ),
+        print_max_hw=True,
+        use_experiment_crn=True,
     )
 )
 

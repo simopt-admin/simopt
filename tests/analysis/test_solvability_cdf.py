@@ -3,11 +3,10 @@ import matplotlib.pyplot as plt
 from simopt.analysis.solvability_cdf import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
-from simopt.plots.solvability_cdf import plot_solvability_cdfs
 from tests.utils import assert_logs_match, capture_log_data
 
 
-def test_solvability_cdf(experiment):
+def test_solvability_cdf(experiment, plot_baseline):
     solve_tolerance = 0.1
 
     crn_options = CrnOptions(
@@ -20,21 +19,7 @@ def test_solvability_cdf(experiment):
         confidence_level=0.95,
     )
 
-    desired = capture_log_data(
-        plot_solvability_cdfs,
-        experiments=[experiment],
-        solve_tol=solve_tolerance,
-        all_in_one=False,
-        n_bootstraps=ci_options.n_bootstraps,
-        conf_level=ci_options.confidence_level,
-        plot_conf_ints=True,
-        print_max_hw=False,
-        plot_title=None,
-        legend_loc=None,
-        ext=".png",
-        save_as_pickle=False,
-        solver_set_name="SOLVER_SET",
-    )
+    desired = plot_baseline["logs"]
 
     analysis_input = convert(experiment)
     analysis_result = analyze(
@@ -52,7 +37,7 @@ def test_solvability_cdf(experiment):
     assert len(actual) == len(desired) == 1
 
 
-def test_solvability_cdf_same_problem_experiments(plot_experiments):
+def test_solvability_cdf_same_problem_experiments(plot_experiments, plot_baseline):
     same_problem_experiments = [
         experiment for group in zip(*plot_experiments, strict=True) for experiment in group
     ]
@@ -69,25 +54,7 @@ def test_solvability_cdf_same_problem_experiments(plot_experiments):
         confidence_level=0.95,
     )
 
-    desired = []
-    for group in zip(*plot_experiments, strict=True):
-        desired.extend(
-            capture_log_data(
-                plot_solvability_cdfs,
-                experiments=list(group),
-                solve_tol=solve_tolerance,
-                all_in_one=False,
-                n_bootstraps=ci_options.n_bootstraps,
-                conf_level=ci_options.confidence_level,
-                plot_conf_ints=True,
-                print_max_hw=False,
-                plot_title=None,
-                legend_loc=None,
-                ext=".png",
-                save_as_pickle=False,
-                solver_set_name="SOLVER_SET",
-            )
-        )
+    desired = plot_baseline["logs"]
 
     analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(

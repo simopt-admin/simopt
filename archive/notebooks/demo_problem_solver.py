@@ -90,11 +90,11 @@ myexperiment.log_experiment_results()
 # %%
 # Produce basic plots.
 
-from simopt.experiment_base import (
-    PlotType,
-    plot_progress_curves,
-    plot_solvability_cdfs,
-)
+from simopt.experiment_base import PlotType
+from simopt.analysis.progress_curve import ProgressCurve
+from simopt.analysis.solvability_cdf import SolvabilityCdf
+from simopt.experiment.plot import save_plots
+from simopt.options import ConfidenceIntervalOptions
 
 print("Plotting results...")
 
@@ -104,23 +104,62 @@ def _print_path(plot_path: list[Path]) -> None:
 
 
 _print_path(
-    plot_progress_curves(
-        experiments=[myexperiment], plot_type=PlotType.ALL, normalize=False
+    save_plots(
+        [myexperiment],
+        ProgressCurve(
+            agg=PlotType.ALL.value,
+            normalize=False,
+            beta=0.5,
+            ci_options=ConfidenceIntervalOptions(
+                n_bootstraps=100, confidence_level=0.95, bias_correction=True
+            ),
+        ),
+        print_max_hw=True,
+        use_experiment_crn=True,
     )
 )
 _print_path(
-    plot_progress_curves(
-        experiments=[myexperiment], plot_type=PlotType.MEAN, normalize=False
+    save_plots(
+        [myexperiment],
+        ProgressCurve(
+            agg=PlotType.MEAN.value,
+            normalize=False,
+            beta=0.5,
+            ci_options=ConfidenceIntervalOptions(
+                n_bootstraps=100, confidence_level=0.95, bias_correction=True
+            ),
+        ),
+        print_max_hw=True,
+        use_experiment_crn=True,
     )
 )
 _print_path(
-    plot_progress_curves(
-        experiments=[myexperiment],
-        plot_type=PlotType.QUANTILE,
-        beta=0.90,
-        normalize=False,
+    save_plots(
+        [myexperiment],
+        ProgressCurve(
+            agg=PlotType.QUANTILE.value,
+            normalize=False,
+            beta=0.9,
+            ci_options=ConfidenceIntervalOptions(
+                n_bootstraps=100, confidence_level=0.95, bias_correction=True
+            ),
+        ),
+        print_max_hw=True,
+        use_experiment_crn=True,
     )
 )
-_print_path(plot_solvability_cdfs(experiments=[myexperiment], solve_tol=0.1))
+_print_path(
+    save_plots(
+        [myexperiment],
+        SolvabilityCdf(
+            solve_tolerance=0.1,
+            ci_options=ConfidenceIntervalOptions(
+                n_bootstraps=100, confidence_level=0.95, bias_correction=True
+            ),
+        ),
+        print_max_hw=True,
+        use_experiment_crn=True,
+    )
+)
 
 print("Plotting complete!")
