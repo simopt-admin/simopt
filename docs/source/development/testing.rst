@@ -12,20 +12,36 @@ The tests are primarily intended for developers making changes to the code base.
 Testing Framework
 -----------------
 
-The tests are written using the `unittest <https://docs.python.org/3/library/unittest.html>`_ framework, which is included in the Python standard library.
+The tests are written with `pytest <https://docs.pytest.org/>`_ and are located in the ``tests`` directory at the root of the repository.
+Inside it, the ``expected_results`` directory contains one ``*.pickle.zst`` file of expected results for each model and solver pair.
 
-The tests are located in the `test` directory at the root of the repository.
-Inside the `test` directory, there is a `expected_results` directory that contains the expected results for the tests.
-Additionally, there are two test scripts of note: `experiment_test_core.py` and `test_experiments.py`.
+The main test is ``test_experiment`` in ``tests/test_experiments.py``.
+It is parametrized over the pickle files, so every pair is its own test case, named after the file (for example ``CNTNEWS1_ADAM``).
+Adding a new pickle to ``expected_results`` adds a new test case without any code changes.
 
-- `test_experiments.py` is the main test script that is run to execute all tests.
-  It dynamically creates test classes for each YAML file in the `expected_results` directory.
-  Each test class inherits from a base class in `experiment_test_core.py` that contains the actual test methods.
-  This design allows for easy addition of new test cases by simply adding a new YAML file to the `expected_results` directory.
-- `experiment_test_core.py` contains the base class and mixin class for the tests.
+Each test case runs the pair once with ``simopt.experiment.api.run``, using the number of macroreplications and postreplications stored in the pickle, and compares the result with the pickle stage by stage:
 
-  - The `ExperimentTest` class is responsible for the common setup logic needed to run an experiment.
-  - The `ExperimentTestMixin` class contains the actual test methods that check the results. It's called a mixin because its sole purpose is to be "mixed in" with the base class to provide specific, reusable testing functionality without being a complete class on its own.
+1. **Solver run**: the recommended solutions and the intermediate budgets.
+2. **Post-replication**: the estimated objectives and, for problems with stochastic constraints, the estimated constraint values.
+3. **Normalization**: ``x0``, the ``x0`` and ``xstar`` samples, the objective curves, the progress curves, and finally ``xstar``.
+
+Failure messages name the stage, the problem, the solver and the macroreplication.
+Because the pair is run end to end, an early difference usually makes the later stages fail as well, so look at the first failing stage.
+
+Some solvers give different results on different machines.
+Their pickles end in ``_darwin_arm64`` or ``_linux_x64`` and are only used on the matching platform.
+If the pickle for the current platform is missing, the test case fails with a message saying so.
+
+To run a single case, select it with ``-k``:
+
+.. code-block:: bash
+
+    python -m pytest tests/test_experiments.py -n 4 -k CNTNEWS1_ADAM
+
+To create expected results for new pairs, run ``scripts/generate_experiment_results.py``.
+It runs every compatible pair that does not have a pickle yet and writes the pickles to ``tests/expected_results``.
+Existing pickles are never overwritten.
+It accepts two options: ``--pair PROBLEM SOLVER`` generates only that pair and fails if the pair is unknown or incompatible, and ``--output-dir DIR`` writes the pickles to another directory.
 
 Running Tests
 -------------
@@ -39,38 +55,25 @@ Please refer to the `Environment Setup <environment_setup.html>`_ guide for inst
 Execution
 ^^^^^^^^^
 
-Executing the tests can be done in several ways:
+Run the tests from the root directory of the SimOpt repository with ``uv``:
 
-1. **Using the command line**:
+.. code-block:: bash
 
-    - Open a terminal and navigate to the root directory of the SimOpt repository.
-    - Activate the SimOpt conda environment if it is not already activated:
+    MRG32K3A_BACKEND=rust uv run python -m pytest -n 4 tests/test_experiments.py
 
-        - Windows (cmd): ``conda activate simopt``
-        - Windows (PowerShell): ``conda activate simopt``
-        - MacOS/Linux: ``conda activate simopt``
-
-    - Run the tests using the following command: ``python -m unittest discover -s test -p "test_*.py"``
-
-        - This command will discover and run all test files in the `test` directory that match the pattern `test_*.py`.
-    
-2. **Using Visual Studio Code**:
-
-   Since VS Code's testing interface automatically discovers tests via the `unittest` framework, you can run the tests directly from the VS Code interface.
-
-    - Open the SimOpt repository in VS Code.
-    - Ensure that the SimOpt conda environment is selected as the interpreter.
-    - Open the Testing sidebar by clicking on the beaker icon on the left sidebar.
-    - Click on the "Run Tests" button (the double triangle icon) to execute all tests.
+``MRG32K3A_BACKEND=rust`` selects the random-number generator backend for test runs.
+To run a single case, add ``-k`` followed by the case name, for example ``-k CNTNEWS1_ADAM``.
 
 Generating Expected Results
 ---------------------------
 
-The `generate_experiment_results.py` script in the `scripts` directory is used to generate the expected results for the tests.
-It automatically checks for any missing `.yaml` files in the `expected_results` directory and generates them by running the corresponding experiments, skipping any experiments that are not compatible.
+Expected results are generated with ``scripts/generate_experiment_results.py``, as described in `Testing Framework`_.
+Run it from the repository root:
 
-To run the script, use the following command:
-``python scripts/generate_experiment_results.py``
+.. code-block:: bash
+
+    uv run python scripts/generate_experiment_results.py
+    uv run python scripts/generate_experiment_results.py --pair PROBLEM SOLVER
 
 Dealing with Test Failures
 --------------------------
@@ -84,5 +87,5 @@ To determine the cause of the failure, you should:
     2. If you don't believe the changes should have affected the results, roll back SimOpt to the last known good state (e.g., the last commit where all tests passed) and re-run the tests.
        If the tests do not pass, it is likely that a dependencies update or other external factor has caused the failure.
        If the tests do pass, you can incrementally re-apply your changes until you identify the specific change that caused the failure.
-    3. If you believe the changes you made should have affected the results, or if you have determined that the failure is due to a dependencies update or other external factor, you can update the expected results by deleting the relevant `.yaml` files in the `expected_results` directory and re-running the `generate_experiment_results.py` script.
+    3. If you believe the changes you made should have affected the results, or if you have determined that the failure is due to a dependencies update or other external factor, you can update the expected results by deleting the relevant ``.pickle.zst`` files in the ``expected_results`` directory and re-running the ``generate_experiment_results.py`` script.
        Please ensure that you carefully review the changes in the expected results to confirm that they are indeed correct and expected.
