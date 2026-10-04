@@ -10,8 +10,11 @@ from tests.utils import assert_logs_match, capture_log_data
 
 
 @pytest.mark.parametrize("experiment", ["SAN2_FCSA.pickle.zst"], indirect=True)
-def test_feasibility_progress(experiment):
-    # TODO: Add test for bias_correction = False
+@pytest.mark.parametrize(
+    ("agg", "beta"), [("mean", 0.5), ("quantile", 0.1), ("quantile", 0.5), ("quantile", 0.9)]
+)
+@pytest.mark.parametrize("score_type", ["inf_norm", "norm"])
+def test_feasibility_progress(experiment, agg, beta, score_type):
     ci_options = ConfidenceIntervalOptions(
         n_bootstraps=5,
         confidence_level=0.95,
@@ -26,8 +29,8 @@ def test_feasibility_progress(experiment):
     desired = capture_log_data(
         plot_feasibility_progress,
         experiments=[[experiment]],
-        plot_type=PlotType.MEAN_FEASIBILITY_PROGRESS,
-        score_type="inf_norm",
+        plot_type=PlotType(f"{agg}_feasibility_progress"),
+        score_type=score_type,
         norm_degree=1,
         two_sided=False,
         plot_zero=False,
@@ -36,7 +39,7 @@ def test_feasibility_progress(experiment):
         conf_level=ci_options.confidence_level,
         plot_conf_ints=True,
         print_max_hw=False,
-        beta=0.5,
+        beta=beta,
         solver_set_name="SOLVER_SET",
         plot_title=None,
         legend_loc=None,
@@ -47,10 +50,12 @@ def test_feasibility_progress(experiment):
     analysis_input = convert(experiment)
     analysis_result = analyze(
         analysis_input,
-        "mean",
+        agg,
         ci_options,
         crn_options,
         two_sided=False,
+        score_type=score_type,
+        beta=beta,
     )
 
     _, ax = plt.subplots()

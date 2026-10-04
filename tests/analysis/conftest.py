@@ -5,6 +5,7 @@ import pytest
 
 from simopt.experiment.post_normalize import post_normalize
 from simopt.experiment.single import ProblemSolver
+from tests.analysis.options_helpers import option_experiment, option_pair  # noqa: F401
 from tests.utils import EXPECTED_RESULTS_DIR, load_problem_solver
 
 

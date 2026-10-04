@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import pytest
 
 from simopt.analysis.progress_curve import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
@@ -8,8 +9,11 @@ from simopt.plots.progress_curve import plot_progress_curves
 from tests.utils import assert_logs_match, capture_log_data
 
 
-def test_progress_curve(experiment):
-    # TODO: Add test for quantile plot
+@pytest.mark.parametrize(
+    ("agg", "beta"), [("mean", 0.5), ("quantile", 0.1), ("quantile", 0.5), ("quantile", 0.9)]
+)
+@pytest.mark.parametrize("normalize", [False, True])
+def test_progress_curve(experiment, agg, beta, normalize):
     crn_options = CrnOptions(
         across_budget=experiment.crn_across_budget,
         across_macroreps=experiment.crn_across_macroreps,
@@ -24,9 +28,9 @@ def test_progress_curve(experiment):
     desired = capture_log_data(
         plot_progress_curves,
         experiments=[experiment],
-        plot_type=PlotType.MEAN,
-        beta=0.50,
-        normalize=True,
+        plot_type=PlotType(agg),
+        beta=beta,
+        normalize=normalize,
         all_in_one=True,
         n_bootstraps=ci_options.n_bootstraps,
         conf_level=ci_options.confidence_level,
@@ -42,10 +46,11 @@ def test_progress_curve(experiment):
     analysis_input = convert(experiment)
     analysis_result = analyze(
         analysis_input,
-        "mean",
+        agg,
         ci_options,
         crn_options,
-        normalize=True,
+        normalize=normalize,
+        beta=beta,
     )
 
     _, ax = plt.subplots()

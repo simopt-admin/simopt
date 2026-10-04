@@ -10,7 +10,9 @@ from tests.utils import assert_logs_match, capture_log_data
 
 
 @pytest.mark.parametrize("experiment", ["SAN2_FCSA.pickle.zst"], indirect=True)
-def test_terminal_feasibility(experiment):
+@pytest.mark.parametrize("plot_conf_ints", [False, True])
+@pytest.mark.parametrize("bias_correction", [False, True])
+def test_terminal_feasibility(experiment, plot_conf_ints, bias_correction):
     crn_options = CrnOptions(
         across_budget=experiment.crn_across_budget,
         across_macroreps=experiment.crn_across_macroreps,
@@ -19,7 +21,7 @@ def test_terminal_feasibility(experiment):
     ci_options = ConfidenceIntervalOptions(
         n_bootstraps=10,
         confidence_level=0.95,
-        bias_correction=True,
+        bias_correction=bias_correction,
     )
 
     desired = capture_log_data(
@@ -34,8 +36,8 @@ def test_terminal_feasibility(experiment):
         all_in_one=True,
         n_bootstraps=ci_options.n_bootstraps,
         conf_level=ci_options.confidence_level,
-        plot_conf_ints=True,
-        bias_correction=True,
+        plot_conf_ints=plot_conf_ints,
+        bias_correction=bias_correction,
         solver_set_name="SOLVER_SET",
         plot_title=None,
         legend_loc=None,
@@ -46,7 +48,7 @@ def test_terminal_feasibility(experiment):
     analysis_input = convert(experiment)
     analysis_result = analyze(
         analysis_input,
-        ci_options,
+        ci_options if plot_conf_ints else None,
         crn_options,
         score_type="norm",
         norm_degree=2,

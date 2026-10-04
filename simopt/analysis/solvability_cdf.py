@@ -49,7 +49,7 @@ def _estimator(analysis_input: AnalysisInput, solve_tolerance: float) -> pd.Data
     counts = first_hit.groupby("budget")[group_column].size().rename("cdf").to_frame().sort_index()
     counts["cdf"] = counts["cdf"].cumsum() / n
 
-    budget_points = [0.0, *counts.index, 1.0]
+    budget_points = [0.0, *counts.index, float(df["budget"].max())]
     counts = counts.reindex(budget_points).ffill().fillna(0.0)
     return counts.reset_index()
 

@@ -14,6 +14,16 @@ from simopt.experiment.single import ProblemSolver
 from simopt.options import CrnOptions
 
 
+def validate_options(plot_type: str, solve_tolerance: float, beta: float) -> None:
+    """Validate solvability mode, tolerance, and quantile level."""
+    if plot_type not in ("cdf", "quantile"):
+        raise ValueError("Unsupported solvability profile plot type.")
+    if plot_type == "quantile" and not 0 < beta < 1:
+        raise ValueError("Beta quantile must be in (0, 1).")
+    if not 0 < solve_tolerance <= 1:
+        raise ValueError("Solve tolerance must be in (0, 1].")
+
+
 def cdf(
     df: pd.DataFrame,
     solve_tolerance: float,
@@ -26,7 +36,7 @@ def cdf(
     counts = first_hit.groupby("budget")["mrep"].size().rename("value").to_frame().sort_index()
     counts["value"] = counts["value"].cumsum() / n
 
-    budget_points = [0.0, *counts.index, 1.0]
+    budget_points = [0.0, *counts.index, float(df["budget"].max())]
     counts = counts.reindex(budget_points).ffill().fillna(0.0)
     return counts.reset_index()
 

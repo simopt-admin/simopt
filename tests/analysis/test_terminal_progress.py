@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import pytest
 
 from simopt.analysis.terminal_progress import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
@@ -7,12 +8,14 @@ from simopt.plots.terminal_progress import plot_terminal_progress
 from tests.utils import assert_logs_match, capture_log_data
 
 
-def test_terminal_progress(experiment):
+@pytest.mark.parametrize("plot_type", ["box", "violin"])
+@pytest.mark.parametrize("normalize", [False, True])
+def test_terminal_progress(experiment, plot_type, normalize):
     desired = capture_log_data(
         plot_terminal_progress,
         experiments=[experiment],
-        plot_type=PlotType.VIOLIN,
-        normalize=True,
+        plot_type=PlotType(plot_type),
+        normalize=normalize,
         all_in_one=False,
         plot_title=None,
         ext=".png",
@@ -23,7 +26,7 @@ def test_terminal_progress(experiment):
     analysis_input = convert(experiment)
     analysis_result = analyze(
         analysis_input,
-        normalize=True,
+        normalize=normalize,
     )
 
     _, ax = plt.subplots()
@@ -31,7 +34,7 @@ def test_terminal_progress(experiment):
         plot,
         ax,
         analysis_result,
-        plot_type="violin",
+        plot_type=plot_type,
     )
 
     assert_logs_match(actual, desired)

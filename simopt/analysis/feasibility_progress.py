@@ -108,6 +108,9 @@ def analyze(
     if agg != "all" and two_sided:
         raise ValueError("mean and quantile plots not supported for two sided feasibility .")
 
+    if agg == "quantile" and not 0 < beta < 1:
+        raise ValueError("Beta quantile must be in (0, 1).")
+
     df_mean = analysis_input.mean_df
     df_mean = _append_feasibility_score(df_mean, score_type, norm_degree, two_sided)
 

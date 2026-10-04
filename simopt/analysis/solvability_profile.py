@@ -21,6 +21,7 @@ from .common import (
     compute_estimator_and_ci,
     plot_ci,
     plot_step,
+    validate_ci_options,
 )
 from .solvability import (
     cdf,
@@ -30,6 +31,7 @@ from .solvability import (
     quantile,
     select_df,
     solver_bootstraps,
+    validate_options,
 )
 
 
@@ -99,12 +101,7 @@ def analyze(
     Returns:
         SolvabilityProfileResult containing the solvability profile results.
     """
-    if plot_type not in ("cdf", "quantile"):
-        raise ValueError("Unsupported solvability profile plot type.")
-    if plot_type == "quantile" and not 0 < beta < 1:
-        raise ValueError("Beta quantile must be in (0, 1).")
-    if not 0 < solve_tolerance <= 1:
-        raise ValueError("Solve tolerance must be in (0, 1].")
+    validate_options(plot_type, solve_tolerance, beta)
 
     budget = analysis_input.budget if not normalize else 1.0
 
@@ -211,6 +208,8 @@ def analyze_many(
     beta: float = 0.5,
 ) -> list[SolvabilityProfileResult]:
     """Analyze solvability profiles for multiple problems."""
+    validate_options(plot_type, solve_tolerance, beta)
+    validate_ci_options(ci_options)
     solvers, solver_to_inputs = group_by_solver(analysis_inputs, experiments)
 
     results: list[SolvabilityProfileResult] = []

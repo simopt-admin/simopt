@@ -82,6 +82,9 @@ def analyze(
     Returns:
         ProgressCurveResult containing the progress curve analysis results.
     """
+    if agg == "quantile" and not 0 < beta < 1:
+        raise ValueError("Beta quantile must be in (0, 1).")
+
     df = analysis_input.mean_df
     if agg == "all":
         df = df.copy()
