@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from simopt.experiment.api import AnalysisInput, PlotConfig
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment.experiment import Experiment
 from simopt.feasibility import feasibility_score
 from simopt.logging import Logger, null_logger
 from simopt.options import (
@@ -208,7 +208,7 @@ def analyze_many(
 
 def plot_many(
     results: list[FeasibilityProgressResult],
-    experiments: list[ProblemSolver],
+    experiments: list[Experiment],
     /,
     *,
     plot_zero: bool = True,
@@ -248,7 +248,7 @@ class FeasibilityProgress(PlotConfig):
     def plot(
         self,
         analysis_inputs: list[AnalysisInput],
-        experiments: list[ProblemSolver],
+        experiments: list[Experiment],
     ) -> tuple[plt.Figure, plt.Axes]:
         """Analyze and plot feasibility progress curves."""
         results = analyze_many(

@@ -14,10 +14,10 @@ from simopt.experiment.data import (
     ManyPostReplicateSchema,
     ManySolverHistorySchema,
 )
+from simopt.experiment.experiment import Experiment
 from simopt.experiment.post_normalize import normalize
 from simopt.experiment.post_replicate import _post_replicate_mrep
 from simopt.experiment.run_solver import _run_mrep
-from simopt.experiment.single import ProblemSolver
 from simopt.options import DEFAULT_CRN_OPTIONS, CrnOptions
 from simopt.problem import Problem
 from simopt.solver import Solver
@@ -79,9 +79,9 @@ def validate_problems(problems: list[dict]) -> list[Problem]:
     return [to_problem(problem) for problem in problems]
 
 
-def create_matrix(solvers: list[Solver], problems: list[Problem]) -> list[ProblemSolver]:
+def create_matrix(solvers: list[Solver], problems: list[Problem]) -> list[Experiment]:
     return [
-        ProblemSolver(solver=solver, problem=problem) for solver in solvers for problem in problems
+        Experiment(solver=solver, problem=problem) for solver in solvers for problem in problems
     ]
 
 
@@ -311,7 +311,7 @@ def _run_plans(plans: list[ExperimentPlan], n_jobs: int) -> list[AnalysisInput]:
 
 
 def run(
-    experiments: list[ProblemSolver],
+    experiments: list[Experiment],
     simulation_config: SimulationConfig,
     crn_options: CrnOptions = DEFAULT_CRN_OPTIONS,
     proxy_values: ProxyValues | None = None,
@@ -324,7 +324,7 @@ def run(
     normalization result.
 
     Args:
-        experiments: List of ProblemSolver experiments to run.
+        experiments: List of experiments to run.
         simulation_config: Configuration for the simulation (n_mreps, n_preps, etc.).
         crn_options: Options for common random numbers.
         proxy_values: Optional proxy values for normalization.

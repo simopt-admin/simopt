@@ -14,15 +14,13 @@ import pandas as pd
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.base import (
-    ConstraintType,
     Model,
-    ObjectiveType,
     Problem,
     Solver,
-    VariableType,
 )
 from simopt.curve import Curve
 from simopt.experiment import post_replicate, run_solver
+from simopt.experiment.experiment import Experiment, check_compatibility
 from simopt.feasibility import feasibility_score_history
 from simopt.utils import resolve_file_path
 
@@ -184,81 +182,13 @@ class ProblemSolver:
         """
         pass
 
-    # TODO: Convert this to throwing exceptions?
-    # TODO: Convert this functionality to run automatically
     def check_compatibility(self) -> str:
         """Check whether the experiment's solver and problem are compatible.
 
         Returns:
             str: Error message in the event problem and solver are incompatible.
         """
-        # make a string builder
-        error_messages = []
-        # Check number of objectives.
-        if self.solver.objective_type == ObjectiveType.SINGLE and self.problem.n_objectives > 1:
-            error_message = "Solver cannot solve a multi-objective problem"
-            error_messages.append(error_message)
-        elif self.solver.objective_type == ObjectiveType.MULTI and self.problem.n_objectives == 1:
-            error_message = "Solver cannot solve a single-objective problem"
-            error_messages.append(error_message)
-        # Check constraint types.
-        if self.solver.constraint_type.value < self.problem.constraint_type.value:
-            solver_str = self.solver.constraint_type.name.lower()
-            problem_str = self.problem.constraint_type.name.lower()
-            error_message = (
-                f"Solver can handle {solver_str} constraints, "
-                f"but problem has {problem_str} constraints."
-            )
-            error_messages.append(error_message)
-
-        if (
-            # TODO: this is a hack to get around the fact that compatibility checks are
-            # not implemented correctly.
-            self.solver.class_name_abbr == "FCSA"
-            and self.solver.constraint_type == ConstraintType.STOCHASTIC
-            and self.problem.constraint_type != ConstraintType.STOCHASTIC
-        ):
-            error_message = (
-                "Solver is designed for problems with stochastic constraints, but "
-                "the problem does not have any."
-            )
-            error_messages.append(error_message)
-
-        if (
-            self.solver.constraint_type != ConstraintType.STOCHASTIC
-            and self.problem.constraint_type == ConstraintType.STOCHASTIC
-        ):
-            error_message = (
-                "Solver is not designed for problems with stochastic constraints, but "
-                "the problem have some."
-            )
-            error_messages.append(error_message)
-
-        # Check variable types.
-        if (
-            self.solver.variable_type == VariableType.DISCRETE
-            and self.problem.variable_type != VariableType.DISCRETE
-        ):
-            problem_type = self.problem.variable_type.name.lower()
-            error_message = (
-                f"Solver is for discrete variables, but problem variables are {problem_type}."
-            )
-            error_messages.append(error_message)
-        elif (
-            self.solver.variable_type == VariableType.CONTINUOUS
-            and self.problem.variable_type != VariableType.CONTINUOUS
-        ):
-            problem_type = self.problem.variable_type.name.lower()
-            error_message = (
-                f"Solver is for continuous variables, but problem variables are {problem_type}."
-            )
-            error_messages.append(error_message)
-        # Check for existence of gradient estimates.
-        if self.solver.gradient_needed and not self.problem.gradient_available:
-            error_message = "Solver requires gradient estimates but problem does not have them."
-            error_messages.append(error_message)
-        # Strip trailing newline character.
-        return "\n".join(error_messages)
+        return check_compatibility(Experiment(solver=self.solver, problem=self.problem))
 
     def run(self, n_macroreps: int, n_jobs: int = -1) -> None:
         """Runs the solver on the problem for a given number of macroreplications.

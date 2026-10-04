@@ -16,7 +16,7 @@
 # %% [markdown]
 # # 02 · Running a Single Experiment
 #
-# An **experiment** pairs one solver with one problem (`ProblemSolver`). Running it
+# An **experiment** pairs one solver with one problem (`Experiment`). Running it
 # has three stages, all handled by `simopt.experiment.api.run`:
 #
 # 1. **Macroreplications** – run the solver several times from scratch.
@@ -36,7 +36,7 @@ from simopt.analysis.progress_curve import ProgressCurve
 from simopt.analysis.solvability_cdf import SolvabilityCdf
 from simopt.analysis.terminal_progress import TerminalProgress
 from simopt.experiment.api import SimulationConfig, run
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment import Experiment, check_compatibility
 from simopt.models.cntnv import CntNVMaxProfit
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from simopt.solvers import ASTRODF
@@ -61,11 +61,11 @@ ci_options = ConfidenceIntervalOptions(n_bootstraps=50)
 # Import the solver and problem classes and customize them with fixed factors.
 
 # %%
-experiment = ProblemSolver(
+experiment = Experiment(
     solver=ASTRODF(),
     problem=CntNVMaxProfit(fixed_factors={"budget": 500}),
 )
-if message := experiment.check_compatibility():
+if message := check_compatibility(experiment):
     print(message)
 
 [result] = run([experiment], simulation_config, crn_options)

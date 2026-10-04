@@ -31,7 +31,7 @@ from simopt.analysis.progress_curve import ProgressCurve
 from simopt.analysis.terminal_feasibility import TerminalFeasibility
 from simopt.analysis.terminal_progress import TerminalProgress
 from simopt.experiment.api import SimulationConfig, run
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment import Experiment
 from simopt.models.san import SANLongestPathStochastic
 from simopt.options import ConfidenceIntervalOptions
 from simopt.solvers import FCSA
@@ -81,7 +81,7 @@ solvers = [
     fcsa("CSA-N", "CSA", normalize_grads=True, report_all_solns=True),
     fcsa("FCSA", "FCSA", normalize_grads=True, report_all_solns=True),
 ]
-experiments = [ProblemSolver(solver=solver, problem=problem) for solver in solvers]
+experiments = [Experiment(solver=solver, problem=problem) for solver in solvers]
 results = run(experiments, simulation_config)
 
 # %% [markdown]

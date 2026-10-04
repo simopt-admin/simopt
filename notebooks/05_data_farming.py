@@ -35,7 +35,7 @@ from simopt.analysis import terminal_scatterplot
 from simopt.data_farming.design import DesignSpec, NumericRange, build_design
 from simopt.data_farming_base import DataFarmingExperiment
 from simopt.experiment.api import SimulationConfig, run
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment import Experiment
 from simopt.models.cntnv import CntNVMaxProfit
 from simopt.models.sscont import SSContMinCost
 from simopt.solvers import ASTRODF, RandomSearch
@@ -145,7 +145,7 @@ print(f"{len(solver_design)} solver design points")
 
 problem = CntNVMaxProfit(fixed_factors={"budget": 500})
 experiments = [
-    ProblemSolver(solver=ASTRODF(name=f"ASTRODF_dp{i}", fixed_factors=dp), problem=problem)
+    Experiment(solver=ASTRODF(name=f"ASTRODF_dp{i}", fixed_factors=dp), problem=problem)
     for i, dp in enumerate(solver_design)
 ]
 solver_df = summarize(
@@ -184,7 +184,7 @@ print(f"{len(problem_design)} problem design points")
 
 solver = RandomSearch(fixed_factors={"sample_size": 10})
 experiments = [
-    ProblemSolver(solver=solver, problem=make_problem(CntNVMaxProfit, dp)) for dp in problem_design
+    Experiment(solver=solver, problem=make_problem(CntNVMaxProfit, dp)) for dp in problem_design
 ]
 problem_df = summarize(
     problem_design, run(experiments, simulation_config), ["purchase_price", "sales_price"]
@@ -198,7 +198,7 @@ problem_df.head()
 
 # %%
 crossed = [
-    ProblemSolver(
+    Experiment(
         solver=ASTRODF(name=f"ASTRODF_dp{i}", fixed_factors=solver_dp),
         problem=problem,
     )
@@ -222,7 +222,7 @@ print(f"{len(loaded_design)} design points, factors: {list(loaded_design[0])}")
 
 problem = SSContMinCost(fixed_factors={"budget": 500})
 experiments = [
-    ProblemSolver(solver=RandomSearch(name=f"RNDSRCH_dp{i}", fixed_factors=dp), problem=problem)
+    Experiment(solver=RandomSearch(name=f"RNDSRCH_dp{i}", fixed_factors=dp), problem=problem)
     for i, dp in enumerate(loaded_design)
 ]
 loaded_df = summarize(loaded_design, run(experiments, simulation_config), ["sample_size"])

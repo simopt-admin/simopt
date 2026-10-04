@@ -31,7 +31,8 @@ from simopt.directory import (
     problem_directory,
     solver_directory,
 )
-from simopt.experiment import ProblemSolver
+from simopt.experiment.experiment import Experiment
+from simopt.experiment.experiment import check_compatibility as check_experiment_compatibility
 from simopt.plot_type import PlotType
 from simopt.web.plots import (
     PlotAreaScatterplotsConfig,
@@ -392,8 +393,8 @@ def check_compatibility(payload: dict):
             problem = problem_cls()
 
             try:
-                exp = ProblemSolver(solver=solver, problem=problem)
-                err = exp.check_compatibility()
+                exp = Experiment(solver=solver, problem=problem)
+                err = check_experiment_compatibility(exp)
                 if err.strip() == "":
                     compatibility[display_name][prob_display_name] = {
                         "compatible": True,

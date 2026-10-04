@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib.collections import PathCollection
 
 from simopt.experiment.api import AnalysisInput, PlotConfig
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment.experiment import Experiment
 from simopt.logging import Logger, null_logger
 
 from .common import styled_group_entries
@@ -87,7 +87,7 @@ def analyze_many(
 
 def plot_many(
     results: list[TerminalScatterResult],
-    experiments: list[ProblemSolver],
+    experiments: list[Experiment],
     /,
     *,
     colors: list[str] | None = None,
@@ -126,7 +126,7 @@ class TerminalScatter(PlotConfig):
     def plot(
         self,
         analysis_inputs: list[AnalysisInput],
-        experiments: list[ProblemSolver],
+        experiments: list[Experiment],
     ) -> tuple[plt.Figure, plt.Axes]:
         """Analyze and plot terminal scatter summaries."""
         results = analyze_many(analysis_inputs, normalize=self.normalize)

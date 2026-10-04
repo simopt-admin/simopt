@@ -13,22 +13,22 @@ import seaborn as sns
 from simopt.analysis.bootstrap import bootstrap
 from simopt.bootstrap import compute_bootstrap_conf_int
 from simopt.experiment.api import AnalysisInput
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment.experiment import Experiment
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 
 R = TypeVar("R")
 
 
 def styled_group_entries(
-    group: list[tuple[ProblemSolver, R]],
+    group: list[tuple[Experiment, R]],
     colors: list[str],
     markers: list[str],
-) -> tuple[list[tuple[ProblemSolver, R, str, str, str]], set[str]]:
+) -> tuple[list[tuple[Experiment, R, str, str, str]], set[str]]:
     """Attach color, marker, and legend label metadata to grouped entries."""
     style_map: dict[str, tuple[str, str]] = {}
     style_index = 0
     used_labels: set[str] = set()
-    styled_entries: list[tuple[ProblemSolver, R, str, str, str]] = []
+    styled_entries: list[tuple[Experiment, R, str, str, str]] = []
 
     for experiment, result in group:
         style_key = experiment.solver.name

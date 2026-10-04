@@ -20,7 +20,7 @@ from simopt.analysis.terminal_feasibility import TerminalFeasibility
 from simopt.analysis.terminal_progress import TerminalProgress
 from simopt.analysis.terminal_scatterplot import TerminalScatter
 from simopt.compat import convert
-from simopt.experiment import EXPERIMENT_DIR, ProblemSolver
+from simopt.experiment import EXPERIMENT_DIR, Experiment, ProblemSolver
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 
 if TYPE_CHECKING:
@@ -209,7 +209,8 @@ def save_plots(
         analysis_inputs = [convert(experiment) for experiment in group]
         before = set(plt.get_fignums())
         try:
-            fig, ax = config.plot(analysis_inputs, group)
+            pairs = [Experiment(solver=e.solver, problem=e.problem) for e in group]
+            fig, ax = config.plot(analysis_inputs, pairs)
             if (
                 isinstance(
                     config,

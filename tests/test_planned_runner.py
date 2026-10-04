@@ -179,9 +179,9 @@ def test_legacy_run_preserves_interleaved_input_order():
     first_problem = _problem()
     second_problem = _problem((3.0, 3.0))
     experiments = [
-        api.ProblemSolver(problem=first_problem, solver=_solver(1), create_pickle=False),
-        api.ProblemSolver(problem=second_problem, solver=_solver(2), create_pickle=False),
-        api.ProblemSolver(problem=first_problem, solver=_solver(2), create_pickle=False),
+        api.Experiment(problem=first_problem, solver=_solver(1)),
+        api.Experiment(problem=second_problem, solver=_solver(2)),
+        api.Experiment(problem=first_problem, solver=_solver(2)),
     ]
 
     results = run(experiments, _config(1), n_jobs=1)
@@ -202,8 +202,8 @@ def test_equivalent_problems_keep_their_own_model_state_and_normalization():
     assert first_problem is not second_problem
     solver = _solver(2)
     experiments = [
-        api.ProblemSolver(problem=first_problem, solver=solver, create_pickle=False),
-        api.ProblemSolver(problem=second_problem, solver=solver, create_pickle=False),
+        api.Experiment(problem=first_problem, solver=solver),
+        api.Experiment(problem=second_problem, solver=solver),
     ]
 
     results = run(experiments, _config(1), n_jobs=1)

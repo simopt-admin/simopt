@@ -29,7 +29,7 @@ import numpy as np
 from simopt.analysis.progress_curve import ProgressCurve
 from simopt.analysis.terminal_progress import TerminalProgress
 from simopt.experiment.api import ProxyValues, SimulationConfig, run
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment import Experiment
 from simopt.input_models import InputModel
 from simopt.models.cntnv import CntNVMaxProfit
 from simopt.models.example import Example2Problem
@@ -66,31 +66,16 @@ print(f"{len(demand_data)} observations, mean demand {demand_data.mean():.2f}")
 
 default_problem = CntNVMaxProfit(name="CNTNEWS-1 (Burr)", fixed_factors={"budget": 500})
 data_problem = CntNVMaxProfit(name="CNTNEWS-1 (data)", fixed_factors={"budget": 500})
-data_problem.model.demand_model = EmpiricalDemand(demand_data)  # ty: ignore[missing-attribute]
+data_problem.model.demand_model = EmpiricalDemand(demand_data)  # ty: ignore[unresolved-attribute]
 
 solver = ASTRODF()
-experiments = [ProblemSolver(solver=solver, problem=p) for p in (default_problem, data_problem)]
+experiments = [Experiment(solver=solver, problem=p) for p in (default_problem, data_problem)]
 results = run(experiments, simulation_config)
 
 for experiment, result in zip(experiments, results, strict=True):
     xstar_value = result.xstar_sample.mean()
     xstar = np.round(result.xstar, 3)
     print(f"{experiment.problem.name:>18}: x* ≈ {xstar}, f(x*) ≈ {xstar_value:.3f}")
-
-# %% [markdown]
-# Alternatively, subclass `ProblemSolver` and override the `model_created` hook, which
-# runs right after the model is constructed. This keeps the customization with the
-# experiment, e.g. when the same setup is reused across many experiments.
-
-
-# %%
-class DataDrivenNewsvendor(ProblemSolver):
-    def model_created(self, model):
-        model.demand_model = EmpiricalDemand(demand_data)
-
-
-experiment = DataDrivenNewsvendor(solver=ASTRODF(), problem=CntNVMaxProfit())
-print(type(experiment.problem.model.demand_model).__name__)  # ty: ignore[missing-attribute]
 
 # %% [markdown]
 # ## 2. Discrete solvers
@@ -101,7 +86,7 @@ print(type(experiment.problem.model.demand_model).__name__)  # ty: ignore[missin
 # %%
 problem = Example2Problem(fixed_factors={"budget": 2000})
 solvers = [DASSO(), RandomSearch()]
-experiments = [ProblemSolver(solver=solver, problem=problem) for solver in solvers]
+experiments = [Experiment(solver=solver, problem=problem) for solver in solvers]
 results = run(experiments, simulation_config)
 
 ProgressCurve(agg="all", normalize=False).plot(results, experiments)
@@ -130,9 +115,7 @@ critical_ratio = (factors["sales_price"] - factors["purchase_price"]) / (
 xstar = ((1 - critical_ratio) ** (-1 / factors["Burr_k"]) - 1) ** (1 / factors["Burr_c"])
 print(f"analytic x* = {xstar:.4f}")
 
-experiments = [
-    ProblemSolver(solver=solver, problem=problem) for solver in (ASTRODF(), RandomSearch())
-]
+experiments = [Experiment(solver=solver, problem=problem) for solver in (ASTRODF(), RandomSearch())]
 estimated = run(experiments, simulation_config)
 known = run(experiments, simulation_config, proxy_values=ProxyValues(xstar=(xstar,)))
 print(f"estimated x* = {estimated[0].xstar[0]:.4f}, known x* = {known[0].xstar[0]:.4f}")
