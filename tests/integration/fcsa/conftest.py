@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 import zstandard as zstd
 
+from simopt.experiment import Experiment
 from simopt.experiment.api import AnalysisInput, SimulationConfig, run
-from simopt.experiment.single import ProblemSolver
 from simopt.models.san import SANLongestPathStochastic
 from simopt.solvers import FCSA
 
@@ -53,7 +53,7 @@ def fcsa_problem() -> SANLongestPathStochastic:
 @pytest.fixture(scope="session")
 def fcsa_all_solutions_experiments(
     fcsa_problem: SANLongestPathStochastic,
-) -> list[ProblemSolver]:
+) -> list[Experiment]:
     solvers = [
         FCSA(
             fixed_factors={
@@ -83,13 +83,13 @@ def fcsa_all_solutions_experiments(
             name="FCSA",
         ),
     ]
-    return [ProblemSolver(solver=solver, problem=fcsa_problem) for solver in solvers]
+    return [Experiment(solver=solver, problem=fcsa_problem) for solver in solvers]
 
 
 @pytest.fixture(scope="session")
 def fcsa_all_solutions_results(
     fcsa_artifacts_dir: Path,
-    fcsa_all_solutions_experiments: list[ProblemSolver],
+    fcsa_all_solutions_experiments: list[Experiment],
     fcsa_simulation_config: SimulationConfig,
 ) -> list[AnalysisInput]:
     cache_path = fcsa_artifacts_dir / "run_all_solutions.pkl.zst"
@@ -106,7 +106,7 @@ def fcsa_all_solutions_results(
 @pytest.fixture(scope="session")
 def fcsa_recommended_experiments(
     fcsa_problem: SANLongestPathStochastic,
-) -> list[ProblemSolver]:
+) -> list[Experiment]:
     solvers = [
         FCSA(
             fixed_factors={
@@ -127,13 +127,13 @@ def fcsa_recommended_experiments(
             name="FCSA",
         ),
     ]
-    return [ProblemSolver(solver=solver, problem=fcsa_problem) for solver in solvers]
+    return [Experiment(solver=solver, problem=fcsa_problem) for solver in solvers]
 
 
 @pytest.fixture(scope="session")
 def fcsa_recommended_results(
     fcsa_artifacts_dir: Path,
-    fcsa_recommended_experiments: list[ProblemSolver],
+    fcsa_recommended_experiments: list[Experiment],
     fcsa_simulation_config: SimulationConfig,
 ) -> list[AnalysisInput]:
     cache_path = fcsa_artifacts_dir / "run_recommended.pkl.zst"

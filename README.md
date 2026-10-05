@@ -106,38 +106,26 @@ After installing `simoptlib`, the package's main modules can be imported from th
 ```
 import simopt
 from simopt import models, solvers
-from simopt.experiment import ProblemSolver, post_normalize
+from simopt.experiment.api import SimulationConfig, run
+from simopt.experiment.experiment import from_names
 ```
 
-The following snippet of code will run 10 macroreplications of the Random Search solver ("RNDSRCH") on the Continuous Newsvendor problem ("CNTNEWS-1"):
+The following snippet of code will pair the Random Search solver ("RNDSRCH") with the Continuous Newsvendor problem ("CNTNEWS-1") and run 10 macroreplications:
 ```python
-myexperiment = ProblemSolver("RNDSRCH", "CNTNEWS-1")
-myexperiment.run(n_macroreps=10)
+myexperiment = from_names("RNDSRCH", "CNTNEWS-1")
+config = SimulationConfig(n_mreps=10, n_preps=200, n_preps_x0_xstar=200)
+(analysis_input,) = run([myexperiment], config)
 ```
 
-The results will be saved to a .pickle file in a folder called `experiments/outputs`. To post-process the results, by taking, for example 200 postreplications at each recommended solution, run the following:
-```python
-myexperiment.post_replicate(n_postreps=200)
-post_normalize([myexperiment], n_postreps_init_opt=200)
-```
-
-A .txt file summarizing the progress of the solver on each macroreplication can be produced:
-```python
-myexperiment.log_experiment_results()
-```
-
-A .txt file called `RNDSRCH_on_CNTNEWS-1_experiment_results.txt` will be saved in a folder called `experiments/logs`.
+Here `run` also post-processes the results, by taking 200 postreplications at each recommended solution and 200 replications to estimate the initial and optimal objective values. It returns one `AnalysisInput` per experiment, in the same order.
 
 One can then plot the mean progress curve of the solver (with confidence intervals) with the objective function values shown on the y-axis:
 ```python
 from simopt.analysis.progress_curve import ProgressCurve
-from simopt.compat import convert
-from simopt.experiment import Experiment
 from simopt.experiment.plot import save_plots
 
-pair = (Experiment(solver=myexperiment.solver, problem=myexperiment.problem), convert(myexperiment))
 plot_files = save_plots(
-    [pair],
+    [(myexperiment, analysis_input)],
     ProgressCurve(agg="mean", normalize=False),
 )
 ```

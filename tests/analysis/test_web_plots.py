@@ -1,5 +1,4 @@
 from copy import deepcopy
-from types import SimpleNamespace
 
 import matplotlib.pyplot as plt
 import pytest
@@ -33,32 +32,13 @@ PLOT_TYPES = [
 ]
 
 
-def web_entries(pairs, monkeypatch, crn=(True, False, True)):
-    """Stand in for the ProblemSolvers the web server still holds until it moves to Experiment."""
-    entries = [
-        SimpleNamespace(
-            solver=experiment.solver,
-            problem=experiment.problem,
-            crn_across_budget=crn[0],
-            crn_across_macroreps=crn[1],
-            crn_across_init_opt=crn[2],
-        )
-        for experiment, _ in pairs
-    ]
-    data = {
-        id(entry): analysis_input for entry, (_, analysis_input) in zip(entries, pairs, strict=True)
-    }
-    monkeypatch.setattr("simopt.web.server.convert", lambda entry: data[id(entry)])
-    return entries
-
-
 @pytest.mark.parametrize("plot_type", PLOT_TYPES)
 @pytest.mark.parametrize("all_in_one", [False, True])
-def test_web_plot_generation(option_pair, plot_type, all_in_one, tmp_path, monkeypatch):
+def test_web_plot_generation(option_pair, plot_type, all_in_one, tmp_path):
     second_problem = deepcopy(option_pair)
     for experiment, _ in second_problem:
         experiment.problem.name = "second problem"
-    grid = web_entries(option_pair + second_problem, monkeypatch)
+    grid = option_pair + second_problem
     params = {
         "all_in_one": all_in_one,
         "plot_conf_ints": False,
@@ -88,7 +68,6 @@ def test_web_plot_generation(option_pair, plot_type, all_in_one, tmp_path, monke
 
 
 def test_web_selection_and_option_forwarding(option_pair, tmp_path, monkeypatch):
-    entries = web_entries(option_pair, monkeypatch)
     records = []
 
     def record_save(experiments, config, **kwargs):
@@ -117,7 +96,7 @@ def test_web_selection_and_option_forwarding(option_pair, tmp_path, monkeypatch)
                 "problems": ["SAN-2"],
             }
         ],
-        [entries],
+        [option_pair],
         [2, 5],
         [4],
         {2: 0, 5: 1},
@@ -144,8 +123,7 @@ def test_web_selection_and_option_forwarding(option_pair, tmp_path, monkeypatch)
     assert files == ["quantile_progress_curves_problem_5.png"]
 
 
-def test_web_crn_falls_back_to_reference_flags(option_pair, tmp_path, monkeypatch):
-    entries = web_entries(option_pair, monkeypatch, crn=(False, True, False))
+def test_web_crn_falls_back_to_run_crn_options(option_pair, tmp_path, monkeypatch):
     records = []
 
     def record_save(experiments, config, **kwargs):
@@ -155,7 +133,7 @@ def test_web_crn_falls_back_to_reference_flags(option_pair, tmp_path, monkeypatc
     monkeypatch.setattr("simopt.experiment.plot.save_plots", record_save)
     files = generate_plots(
         [{"plot_type": "MEAN", "params": {"plot_conf_ints": False, "print_max_hw": False}}],
-        [entries],
+        [option_pair],
         [0, 1],
         [0],
         {0: 0, 1: 1},
@@ -163,6 +141,7 @@ def test_web_crn_falls_back_to_reference_flags(option_pair, tmp_path, monkeypatc
         [{"name": "RNDSRCH"}, {"name": "comparison"}],
         [{"name": "SAN-2"}],
         tmp_path,
+        run_crn_options=CrnOptions(False, True, False),
     )
     assert files and len(records) == 1
     assert records[0].crn_options == CrnOptions(False, True, False)
