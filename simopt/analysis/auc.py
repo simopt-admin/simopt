@@ -7,7 +7,6 @@ import numpy as np
 from matplotlib.collections import PathCollection
 from matplotlib.container import ErrorbarContainer
 
-from simopt.bootstrap import compute_bootstrap_conf_int
 from simopt.experiment.api import AnalysisInput, PlotConfig
 from simopt.experiment.experiment import Experiment
 from simopt.logging import Logger, null_logger
@@ -18,6 +17,7 @@ from simopt.options import (
     CrnOptions,
 )
 
+from .bootstrap import compute_bootstrap_conf_int
 from .common import compute_estimator_and_ci, styled_group_entries
 
 

@@ -218,3 +218,64 @@ def bootstrap(
         results.append(result)
 
     return results
+
+
+def compute_bootstrap_conf_int(
+    observations: list[float | int],
+    conf_level: float,
+    bias_correction: bool = True,
+    overall_estimator: float | None = None,
+) -> tuple[float, float]:
+    """Construct a bootstrap confidence interval for an estimator.
+
+    Args:
+        observations (list[float | int]): Estimators from all bootstrap instances.
+        conf_level (float): Confidence level for confidence intervals, i.e., 1 - gamma;
+            must be in (0, 1).
+        bias_correction (bool, optional): Whether to use bias-corrected bootstrap CIs
+            (via the percentile method). Defaults to True.
+        overall_estimator (float | None, optional): The estimator to compute the CI
+            around. Required if`bias_correction` is True.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: A tuple containing the lower and upper bounds of
+            the bootstrap confidence interval.
+
+    Raises:
+        ValueError: If `conf_level` is not in (0, 1), or if `overall_estimator` is None
+            when `bias_correction` is True.
+    """
+    # Value checking
+    if not 0 < conf_level < 1:
+        error_msg = "Confidence level must be in (0, 1)."
+        raise ValueError(error_msg)
+    if bias_correction and overall_estimator is None:
+        error_msg = "Overall estimator must be provided for bias correction."
+        raise ValueError(error_msg)
+
+    # This assertion is used during refactoring to ensure that observations is a 1D
+    # array.
+    observations = np.array(observations, dtype=float)
+    assert observations.ndim == 1
+
+    # Compute bootstrapping confidence interval via percentile method.
+    # See Efron (1981) "Nonparameteric Standard Errors and Confidence Intervals."
+    if bias_correction:
+        if overall_estimator is None:
+            error_msg = "Overall estimator must be provided for bias correction."
+            raise ValueError(error_msg)
+        # Lazy imports
+        from scipy.stats import norm
+
+        # For biased-corrected CIs, see equation (4.4) on page 146.
+        z0 = norm.ppf(np.mean([obs < overall_estimator for obs in observations]))
+        zconflvl = norm.ppf(conf_level)
+        q_lower = norm.cdf(2 * z0 - zconflvl)
+        q_upper = norm.cdf(2 * z0 + zconflvl)
+    else:
+        # For uncorrected CIs, see equation (4.3) on page 146.
+        q_lower = (1 - conf_level) / 2
+        q_upper = 1 - (1 - conf_level) / 2
+    bs_conf_int_lower_bound = np.quantile(observations, q=q_lower)
+    bs_conf_int_upper_bound = np.quantile(observations, q=q_upper)
+    return bs_conf_int_lower_bound, bs_conf_int_upper_bound

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import itertools
-import pickle
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -12,13 +11,8 @@ import pandas as pd
 import simopt.directory as directory
 from simopt.base import Problem
 from simopt.data_farming.nolhs import NOLHS
-from simopt.experiment import (
-    EXPERIMENT_DIR,
-    ProblemSolver,
-    post_normalize,  # noqa: F401
-)
+from simopt.experiment import EXPERIMENT_DIR
 from simopt.plot_type import PlotType  # noqa: F401
-from simopt.utils import resolve_file_path
 
 # Workaround for AutoAPI
 model_directory = directory.model_directory
@@ -32,24 +26,6 @@ if TYPE_CHECKING:
     from typing import Literal
 
     from pandas import DataFrame as DataFrame
-
-
-def read_experiment_results(file_name_path: Path | str) -> ProblemSolver:
-    """Reads a ProblemSolver object from a .pickle file.
-
-    Args:
-        file_name_path (Path | str): Path to the .pickle file.
-
-    Returns:
-        ProblemSolver: Loaded problem-solver pair that was previously run or
-            post-processed.
-
-    Raises:
-        ValueError: If the file does not exist.
-    """
-    file_name_path = resolve_file_path(file_name_path, EXPERIMENT_DIR)
-    with file_name_path.open("rb") as file:
-        return pickle.load(file)
 
 
 def create_design_list_from_table(design_table: DataFrame) -> list[dict[str, Any]]:

@@ -13,7 +13,6 @@ exclude = [
     "scripts/run_experiment.py",
     "simopt-solvers/src/simopt_solvers/solvers/astrodf.py",
     "simopt-solvers/src/simopt_solvers/solvers/fcsa.py",
-    "simopt/bootstrap.py",
     "simopt/directory.py",
     "simopt/experiment_base.py",
     "simopt/model.py",

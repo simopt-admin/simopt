@@ -10,8 +10,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from simopt.analysis.bootstrap import bootstrap
-from simopt.bootstrap import compute_bootstrap_conf_int
+from simopt.analysis.bootstrap import bootstrap, compute_bootstrap_conf_int
 from simopt.experiment.api import AnalysisInput
 from simopt.experiment.experiment import Experiment
 from simopt.options import ConfidenceIntervalOptions, CrnOptions

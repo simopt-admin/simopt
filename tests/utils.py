@@ -9,8 +9,7 @@ import structlog
 import zstandard as zstd
 from structlog.testing import capture_logs
 
-from simopt.curve import Curve
-from simopt.experiment import ProblemSolver, post_replicate, run_solver
+from simopt.experiment import post_replicate, run_solver
 from simopt.experiment.api import AnalysisInput
 from simopt.experiment.data import ManyPostReplicateSchema, ManySolverHistorySchema
 from simopt.experiment.experiment import Experiment, from_names
@@ -50,31 +49,6 @@ def _assert_log_values_match(a, d, message):
     np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5, err_msg=message)
 
 
-def load_problem_solver(path: str | Path) -> ProblemSolver:
-    with zstd.open(path, "rb") as f:
-        data = pickle.load(f)
-
-    problem_solver = ProblemSolver(data["solver_name"], data["problem_name"])
-    problem_solver.n_macroreps = data["num_macroreps"]
-    problem_solver.n_postreps = data["num_postreps"]
-    problem_solver.n_postreps_init_opt = data["n_postreps_init_opt"]
-    problem_solver.all_recommended_xs = data["all_recommended_xs"]
-    problem_solver.all_intermediate_budgets = data["all_intermediate_budgets"]
-    problem_solver.all_post_replicates = data["all_post_replicates"]
-    problem_solver.all_stoch_constraints = data.get("all_stoch_constraints", [])
-    problem_solver.all_est_lhs = data.get("all_est_lhs", [])
-    problem_solver.x0 = data["x0"]
-    problem_solver.xstar = data["xstar"]
-    problem_solver.x0_postreps = data["x0_postreps"]
-    problem_solver.xstar_postreps = data["xstar_postreps"]
-    problem_solver.objective_curves = [Curve(x, y) for x, y in data["objective_curves"]]
-    problem_solver.progress_curves = [Curve(x, y) for x, y in data["progress_curves"]]
-    problem_solver.has_run = True
-    problem_solver.has_postreplicated = True
-    problem_solver.has_postnormalized = True
-    return problem_solver
-
-
 def build_analysis_input(
     all_intermediate_budgets,
     all_recommended_xs,
@@ -86,7 +60,7 @@ def build_analysis_input(
     x0_postreps,
     xstar_postreps,
 ) -> AnalysisInput:
-    """Build an AnalysisInput from per-macrorep lists, without a ProblemSolver."""
+    """Build an AnalysisInput from per-macrorep lists."""
     budget = run_solver._from_list(all_intermediate_budgets, "budget")
     solution = run_solver._from_list(all_recommended_xs, "solution")
     solver_history_df = budget.merge(solution, on=["mrep", "step"])

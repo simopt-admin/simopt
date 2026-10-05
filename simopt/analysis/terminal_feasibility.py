@@ -11,7 +11,6 @@ from matplotlib.collections import PathCollection
 from matplotlib.container import ErrorbarContainer
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.bootstrap import compute_bootstrap_conf_int
 from simopt.experiment.api import AnalysisInput, PlotConfig
 from simopt.experiment.experiment import Experiment
 from simopt.feasibility import feasibility_score
@@ -23,7 +22,12 @@ from simopt.options import (
     CrnOptions,
 )
 
-from .bootstrap import _bootstrap_sample, _get_n_preps, _transform_bootstrap_data
+from .bootstrap import (
+    _bootstrap_sample,
+    _get_n_preps,
+    _transform_bootstrap_data,
+    compute_bootstrap_conf_int,
+)
 from .common import compute_estimator_and_ci, plot_distribution
 
 
