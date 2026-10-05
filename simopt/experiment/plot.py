@@ -19,9 +19,9 @@ from simopt.analysis.solvability_profile import SolvabilityProfile
 from simopt.analysis.terminal_feasibility import TerminalFeasibility
 from simopt.analysis.terminal_progress import TerminalProgress
 from simopt.analysis.terminal_scatterplot import TerminalScatter
-from simopt.compat import convert
-from simopt.experiment import EXPERIMENT_DIR, Experiment, ProblemSolver
-from simopt.options import ConfidenceIntervalOptions, CrnOptions
+from simopt.experiment import EXPERIMENT_DIR, Experiment
+from simopt.experiment.api import AnalysisInput
+from simopt.options import ConfidenceIntervalOptions
 
 if TYPE_CHECKING:
     from matplotlib.typing import LegendLocType
@@ -39,10 +39,13 @@ PlotConfiguration = (
 )
 
 
-def _flatten(experiments: list[ProblemSolver] | list[list[ProblemSolver]]) -> list[ProblemSolver]:
+ExperimentPair = tuple[Experiment, AnalysisInput]
+
+
+def _flatten(pairs: list[ExperimentPair] | list[list[ExperimentPair]]) -> list[ExperimentPair]:
     result = []
-    for group in experiments:
-        if isinstance(group, ProblemSolver):
+    for group in pairs:
+        if isinstance(group, tuple):
             result.append(group)
         else:
             result.extend(group)
@@ -50,14 +53,14 @@ def _flatten(experiments: list[ProblemSolver] | list[list[ProblemSolver]]) -> li
 
 
 def _groups(
-    experiments: list[ProblemSolver], config: PlotConfiguration, all_in_one: bool
-) -> list[list[ProblemSolver]]:
+    experiments: list[ExperimentPair], config: PlotConfiguration, all_in_one: bool
+) -> list[list[ExperimentPair]]:
     if isinstance(config, (Auc, TerminalScatter, SolvabilityProfile, DiffSolvability)):
         if all_in_one:
             return [experiments]
         groups = {}
-        for experiment in experiments:
-            groups.setdefault(experiment.solver.name, []).append(experiment)
+        for pair in experiments:
+            groups.setdefault(pair[0].solver.name, []).append(pair)
         if isinstance(config, DiffSolvability):
             reference = groups.get(config.reference_solver, [])
             return [
@@ -67,10 +70,10 @@ def _groups(
             ]
         return list(groups.values())
     if not all_in_one:
-        return [[experiment] for experiment in experiments]
+        return [[pair] for pair in experiments]
     groups = {}
-    for experiment in experiments:
-        groups.setdefault(experiment.problem.name, []).append(experiment)
+    for pair in experiments:
+        groups.setdefault(pair[0].problem.name, []).append(pair)
     return list(groups.values())
 
 
@@ -135,13 +138,12 @@ def _confidence_display(
 
 
 def save_plots(
-    experiments: list[ProblemSolver] | list[list[ProblemSolver]],
+    experiments: list[ExperimentPair] | list[list[ExperimentPair]],
     config: PlotConfiguration,
     *,
     output_dir: Path | str = EXPERIMENT_DIR / "plots",
     filename: str | None = None,
     all_in_one: bool = True,
-    use_experiment_crn: bool = False,
     plot_title: str | None = None,
     legend_loc: "LegendLocType | None" = None,
     ext: str = ".png",
@@ -156,11 +158,10 @@ def save_plots(
     """Analyze and save experiment plots, grouping by problem or solver as appropriate.
 
     Pass an analysis configuration to choose the statistic, normalization, confidence
-    intervals and CRN options. Flat collections and either orientation of an experiment
-    grid are accepted. Separate plots receive numbered filename suffixes. Returned paths
-    refer to image files; optional figure pickles are saved alongside them.
-    Set use_experiment_crn to use the stored experiment CRN flags instead of the
-    configuration's CRN options when migrating experiment plots.
+    intervals and CRN options. Experiments are given as (Experiment, AnalysisInput) pairs;
+    flat collections and either orientation of a grid of pairs are accepted. Separate plots
+    receive numbered filename suffixes. Returned paths refer to image files; optional
+    figure pickles are saved alongside them.
     """
     experiments = _flatten(experiments)
     if not experiments:
@@ -184,33 +185,11 @@ def save_plots(
     output_dir.mkdir(parents=True, exist_ok=True)
     paths = []
     for index, group in enumerate(groups):
-        if use_experiment_crn and isinstance(
-            config,
-            (
-                Auc,
-                DiffSolvability,
-                FeasibilityProgress,
-                ProgressCurve,
-                SolvabilityCdf,
-                SolvabilityProfile,
-                TerminalFeasibility,
-            ),
-        ):
-            reference = group[0]
-            config = replace(
-                config,
-                crn_options=CrnOptions(
-                    across_budget=reference.crn_across_budget,
-                    across_macroreps=reference.crn_across_macroreps,
-                    across_x0_xstar=reference.crn_across_init_opt,
-                ),
-            )
-        # Conversion preserves experiment data while the analysis selects raw or normalized values.
-        analysis_inputs = [convert(experiment) for experiment in group]
         before = set(plt.get_fignums())
+        analysis_inputs = [analysis_input for _, analysis_input in group]
+        group_experiments = [experiment for experiment, _ in group]
         try:
-            pairs = [Experiment(solver=e.solver, problem=e.problem) for e in group]
-            fig, ax = config.plot(analysis_inputs, pairs)
+            fig, ax = config.plot(analysis_inputs, group_experiments)
             if (
                 isinstance(
                     config,
@@ -238,7 +217,7 @@ def save_plots(
                     ax.axhline(0, color="red", linestyle="--", linewidth=0.75)
                 if plot_optimal and config.plot_type == "scatter":
                     ax.axvline(
-                        float(np.mean(group[0].xstar_postreps)),
+                        float(np.mean(group[0][1].xstar_sample)),
                         color="red",
                         linestyle="--",
                         linewidth=0.75,
@@ -247,16 +226,20 @@ def save_plots(
                 ax.set_ylabel("Normalized Objective" if config.normalize else "Objective")
             if isinstance(config, ProgressCurve):
                 ax.set_xlabel("Fraction of Budget" if config.normalize else "Budget")
-            problems = ", ".join(dict.fromkeys(experiment.problem.name for experiment in group))
-            solvers = ", ".join(dict.fromkeys(experiment.solver.name for experiment in group))
+            problems = ", ".join(
+                dict.fromkeys(experiment.problem.name for experiment in group_experiments)
+            )
+            solvers = ", ".join(
+                dict.fromkeys(experiment.solver.name for experiment in group_experiments)
+            )
             solver_label = (
                 solver_set_name
-                if len({experiment.solver.name for experiment in group}) > 1
+                if len({experiment.solver.name for experiment in group_experiments}) > 1
                 else solvers
             )
             problem_label = (
                 problem_set_name
-                if len({experiment.problem.name for experiment in group}) > 1
+                if len({experiment.problem.name for experiment in group_experiments}) > 1
                 else problems
             )
             ax.set_title(plot_title or f"{_plot_name(config)}: {solver_label} on {problem_label}")

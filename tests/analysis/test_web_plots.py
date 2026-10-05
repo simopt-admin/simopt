@@ -1,13 +1,13 @@
-# ruff: noqa: F811
 from copy import deepcopy
+from types import SimpleNamespace
 
 import matplotlib.pyplot as plt
 import pytest
 
 from simopt.analysis.progress_curve import ProgressCurve
 from simopt.experiment.plot import save_plots
+from simopt.options import CrnOptions
 from simopt.web.server import generate_plots
-from tests.analysis.legacy_options_helpers import option_experiment, option_pair  # noqa: F401
 
 PLOT_TYPES = [
     "ALL",
@@ -33,12 +33,32 @@ PLOT_TYPES = [
 ]
 
 
+def web_entries(pairs, monkeypatch, crn=(True, False, True)):
+    """Stand in for the ProblemSolvers the web server still holds until it moves to Experiment."""
+    entries = [
+        SimpleNamespace(
+            solver=experiment.solver,
+            problem=experiment.problem,
+            crn_across_budget=crn[0],
+            crn_across_macroreps=crn[1],
+            crn_across_init_opt=crn[2],
+        )
+        for experiment, _ in pairs
+    ]
+    data = {
+        id(entry): analysis_input for entry, (_, analysis_input) in zip(entries, pairs, strict=True)
+    }
+    monkeypatch.setattr("simopt.web.server.convert", lambda entry: data[id(entry)])
+    return entries
+
+
 @pytest.mark.parametrize("plot_type", PLOT_TYPES)
 @pytest.mark.parametrize("all_in_one", [False, True])
-def test_web_plot_generation(option_pair, plot_type, all_in_one, tmp_path):
+def test_web_plot_generation(option_pair, plot_type, all_in_one, tmp_path, monkeypatch):
     second_problem = deepcopy(option_pair)
-    for experiment in second_problem:
+    for experiment, _ in second_problem:
         experiment.problem.name = "second problem"
+    grid = web_entries(option_pair + second_problem, monkeypatch)
     params = {
         "all_in_one": all_in_one,
         "plot_conf_ints": False,
@@ -53,7 +73,7 @@ def test_web_plot_generation(option_pair, plot_type, all_in_one, tmp_path):
     before = set(plt.get_fignums())
     files = generate_plots(
         [{"plot_type": plot_type, "params": params}],
-        [option_pair, second_problem],
+        [grid[:2], grid[2:]],
         [0, 1],
         [0, 1],
         {0: 0, 1: 1},
@@ -68,6 +88,7 @@ def test_web_plot_generation(option_pair, plot_type, all_in_one, tmp_path):
 
 
 def test_web_selection_and_option_forwarding(option_pair, tmp_path, monkeypatch):
+    entries = web_entries(option_pair, monkeypatch)
     records = []
 
     def record_save(experiments, config, **kwargs):
@@ -96,7 +117,7 @@ def test_web_selection_and_option_forwarding(option_pair, tmp_path, monkeypatch)
                 "problems": ["SAN-2"],
             }
         ],
-        [option_pair],
+        [entries],
         [2, 5],
         [4],
         {2: 0, 5: 1},
@@ -110,7 +131,10 @@ def test_web_selection_and_option_forwarding(option_pair, tmp_path, monkeypatch)
     )
     assert len(files) == len(records) == 1
     experiments, config, _kwargs = records[0]
-    assert experiments == [option_pair[1]]
+    ((selected, analysis_input),) = experiments
+    expected, expected_input = option_pair[1]
+    assert selected.solver is expected.solver and selected.problem is expected.problem
+    assert analysis_input is expected_input
     assert isinstance(config, ProgressCurve)
     assert config.agg == "quantile" and config.beta == 0.73 and not config.normalize
     assert config.ci_options.n_bootstraps == 8
@@ -118,3 +142,27 @@ def test_web_selection_and_option_forwarding(option_pair, tmp_path, monkeypatch)
     assert not config.crn_options.across_budget and config.crn_options.across_macroreps
     assert not config.crn_options.across_x0_xstar
     assert files == ["quantile_progress_curves_problem_5.png"]
+
+
+def test_web_crn_falls_back_to_reference_flags(option_pair, tmp_path, monkeypatch):
+    entries = web_entries(option_pair, monkeypatch, crn=(False, True, False))
+    records = []
+
+    def record_save(experiments, config, **kwargs):
+        records.append(config)
+        return save_plots(experiments, config, **kwargs)
+
+    monkeypatch.setattr("simopt.experiment.plot.save_plots", record_save)
+    files = generate_plots(
+        [{"plot_type": "MEAN", "params": {"plot_conf_ints": False, "print_max_hw": False}}],
+        [entries],
+        [0, 1],
+        [0],
+        {0: 0, 1: 1},
+        {0: 0},
+        [{"name": "RNDSRCH"}, {"name": "comparison"}],
+        [{"name": "SAN-2"}],
+        tmp_path,
+    )
+    assert files and len(records) == 1
+    assert records[0].crn_options == CrnOptions(False, True, False)

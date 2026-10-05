@@ -131,12 +131,14 @@ A .txt file called `RNDSRCH_on_CNTNEWS-1_experiment_results.txt` will be saved i
 One can then plot the mean progress curve of the solver (with confidence intervals) with the objective function values shown on the y-axis:
 ```python
 from simopt.analysis.progress_curve import ProgressCurve
+from simopt.compat import convert
+from simopt.experiment import Experiment
 from simopt.experiment.plot import save_plots
 
+pair = (Experiment(solver=myexperiment.solver, problem=myexperiment.problem), convert(myexperiment))
 plot_files = save_plots(
-    [myexperiment],
+    [pair],
     ProgressCurve(agg="mean", normalize=False),
-    use_experiment_crn=True,
 )
 ```
 

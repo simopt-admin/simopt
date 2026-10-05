@@ -24,6 +24,7 @@ from pydantic import BaseModel
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt import experiment_base as eb
+from simopt.compat import convert
 from simopt.data_farming.design import DesignSpec, build_design
 from simopt.data_farming_base import DesignPoint
 from simopt.directory import (
@@ -658,8 +659,13 @@ def generate_plots(
                     filename = "terminal_scatterplot.png"
                 else:
                     filename = f"{plot_type_name.lower()}_solvability_profile.png"
+                # Until the run path moves to Experiment, bridge each ProblemSolver here.
+                pairs = [
+                    (Experiment(solver=ps.solver, problem=ps.problem), convert(ps))
+                    for ps in filtered_experiments
+                ]
                 paths = save_plots(
-                    filtered_experiments,
+                    pairs,
                     config,
                     output_dir=folder,
                     filename=filename,

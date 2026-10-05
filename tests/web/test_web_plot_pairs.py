@@ -1,20 +1,17 @@
-"""ProblemSolver-based option fixtures for test_saved_plots.py and test_web_plots.py.
-
-Remove this module in Phase 4, once save_plots takes Experiment and AnalysisInput.
-"""
-
-from copy import deepcopy
+"""Check the server builds (Experiment, AnalysisInput) pairs from real ProblemSolvers."""
 
 import numpy as np
-import pytest
 
 from simopt.compat import convert
 from simopt.curve import Curve
+from simopt.experiment import Experiment
+from simopt.experiment.api import AnalysisInput
+from simopt.experiment.plot import save_plots
 from simopt.experiment.single import ProblemSolver
+from simopt.web.server import generate_plots
 
 
-@pytest.fixture
-def option_experiment():
+def fabricated_problem_solver():
     experiment = ProblemSolver(solver_name="RNDSRCH", problem_name="SAN-2")
     experiment.problem.factors["budget"] = 10
     experiment.n_macroreps = 4
@@ -51,11 +48,6 @@ def option_experiment():
     experiment.crn_across_budget = True
     experiment.crn_across_macroreps = False
     experiment.crn_across_init_opt = True
-    refresh_curves(experiment)
-    return experiment
-
-
-def refresh_curves(experiment):
     df = convert(experiment).mean_df
     experiment.objective_curves = [
         Curve(group["budget"].tolist(), group["objective"].tolist())
@@ -65,13 +57,32 @@ def refresh_curves(experiment):
         Curve(group["normalized_budget"].tolist(), group["normalized_objective"].tolist())
         for _, group in df.groupby("mrep")
     ]
+    return experiment
 
 
-@pytest.fixture
-def option_pair(option_experiment):
-    second = deepcopy(option_experiment)
-    second.solver.name = "comparison"
-    for macrorep in second.all_post_replicates:
-        macrorep[1] = [value + 1.5 for value in macrorep[1]]
-    refresh_curves(second)
-    return [option_experiment, second]
+def test_generate_plots_builds_pairs_from_problem_solvers(tmp_path, monkeypatch):
+    problem_solver = fabricated_problem_solver()
+    records = []
+
+    def spy_save(pairs, config, **kwargs):
+        records.append(pairs)
+        return save_plots(pairs, config, **kwargs)
+
+    monkeypatch.setattr("simopt.experiment.plot.save_plots", spy_save)
+    files = generate_plots(
+        [{"plot_type": "MEAN", "params": {"plot_conf_ints": False, "print_max_hw": False}}],
+        [[problem_solver]],
+        [0],
+        [0],
+        {0: 0},
+        {0: 0},
+        [{"name": "RNDSRCH"}],
+        [{"name": "SAN-2"}],
+        tmp_path,
+    )
+    assert files and (tmp_path / files[0]).exists()
+    (pairs,) = records
+    ((experiment, analysis_input),) = pairs
+    assert isinstance(experiment, Experiment) and isinstance(analysis_input, AnalysisInput)
+    assert experiment.solver is problem_solver.solver
+    assert experiment.problem is problem_solver.problem
