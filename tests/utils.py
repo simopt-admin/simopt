@@ -4,14 +4,22 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pandas as pd
 import structlog
 import zstandard as zstd
 from structlog.testing import capture_logs
 
 from simopt.curve import Curve
-from simopt.experiment import ProblemSolver
+from simopt.experiment import ProblemSolver, post_replicate, run_solver
+from simopt.experiment.api import AnalysisInput
+from simopt.experiment.data import ManyPostReplicateSchema, ManySolverHistorySchema
+from simopt.experiment.experiment import Experiment, from_names
+from simopt.options import CrnOptions
 
 EXPECTED_RESULTS_DIR = Path(__file__).parent / "expected_results"
+
+# Pickle-loaded results carry no CRN settings; plot-log baselines were recorded with all flags off.
+PICKLE_CRN_OPTIONS = CrnOptions(False, False, False)
 
 
 def assert_logs_match(actual, desired):
@@ -65,6 +73,81 @@ def load_problem_solver(path: str | Path) -> ProblemSolver:
     problem_solver.has_postreplicated = True
     problem_solver.has_postnormalized = True
     return problem_solver
+
+
+def build_analysis_input(
+    all_intermediate_budgets,
+    all_recommended_xs,
+    all_post_replicates,
+    all_stoch_constraints,
+    has_stochastic_constraints,
+    x0,
+    xstar,
+    x0_postreps,
+    xstar_postreps,
+) -> AnalysisInput:
+    """Build an AnalysisInput from per-macrorep lists, without a ProblemSolver."""
+    budget = run_solver._from_list(all_intermediate_budgets, "budget")
+    solution = run_solver._from_list(all_recommended_xs, "solution")
+    solver_history_df = budget.merge(solution, on=["mrep", "step"])
+    solver_history_df["experiment"] = 0
+    solver_history_df = ManySolverHistorySchema.validate(solver_history_df)
+
+    objective = post_replicate._from_list_reps(all_post_replicates, "objective")
+    if has_stochastic_constraints:
+        stochastic_constraints = post_replicate._from_list_reps(
+            all_stoch_constraints, "stochastic_constraints"
+        )
+    else:
+        stochastic_constraints = pd.DataFrame(
+            {
+                "mrep": objective["mrep"],
+                "step": objective["step"],
+                "rep": objective["rep"],
+                "stochastic_constraints": [np.array([])] * len(objective),
+            }
+        )
+    post_replicate_df = objective.merge(stochastic_constraints, on=["mrep", "step", "rep"])
+    post_replicate_df["experiment"] = 0
+    post_replicate_df = ManyPostReplicateSchema.validate(post_replicate_df)
+
+    full_df = solver_history_df.merge(post_replicate_df, on=["experiment", "mrep", "step"])
+    full_df = full_df.set_index(["experiment", "mrep", "step", "rep"])
+    # Slice to remove experiment index level (there's only one experiment)
+    full_df = full_df.loc[0]
+
+    return AnalysisInput(
+        full_df=full_df,
+        x0=np.array(x0),
+        x0_sample=np.array(x0_postreps, dtype=float),
+        xstar=np.array(xstar),
+        xstar_sample=np.array(xstar_postreps, dtype=float),
+    )
+
+
+def load_experiment_pair(path: str | Path) -> tuple[Experiment, AnalysisInput]:
+    """Load an expected-result pickle as an Experiment and its AnalysisInput."""
+    with zstd.open(path, "rb") as f:
+        data = pickle.load(f)
+
+    experiment = from_names(data["solver_name"], data["problem_name"])
+    analysis_input = build_analysis_input(
+        data["all_intermediate_budgets"],
+        data["all_recommended_xs"],
+        data["all_post_replicates"],
+        data.get("all_stoch_constraints", []),
+        experiment.problem.n_stochastic_constraints > 0,
+        data["x0"],
+        data["xstar"],
+        data["x0_postreps"],
+        data["xstar_postreps"],
+    )
+    return experiment, analysis_input
+
+
+def split_pairs(pairs):
+    """Split (Experiment, AnalysisInput) pairs into a list of each."""
+    return [experiment for experiment, _ in pairs], [data for _, data in pairs]
 
 
 def capture_log_data(

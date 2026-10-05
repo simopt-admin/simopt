@@ -22,7 +22,6 @@ from simopt.analysis import (
     terminal_progress,
     terminal_scatterplot,
 )
-from simopt.compat import convert
 from simopt.curve import Curve
 from simopt.curve_utils import (
     difference_of_curves,
@@ -35,11 +34,15 @@ from tests.analysis.options_helpers import (
     analyze_case,
     curve_reference,
     distribution_records,
+    estimated_lhs,
     feasibility_reference,
     forbid_bootstrap,
+    intermediate_budgets,
     module_results,
+    objective_curves,
     plot_module_many,
 )
+from tests.utils import split_pairs
 
 SCORE_CASES: list[tuple[Literal["inf_norm", "norm"], int]] = [
     ("inf_norm", 1),
@@ -132,16 +135,14 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
     monkeypatch.setattr(solvability, "bootstrap", forbid_bootstrap)
     monkeypatch.setattr(terminal_feasibility, "_bootstrap", forbid_bootstrap)
     records = distribution_records(monkeypatch)
-    inputs = [convert(experiment) for experiment in option_pair]
-    fig, ax = config.plot(inputs, option_pair)
+    experiments, inputs = split_pairs(option_pair)
+    fig, ax = config.plot(inputs, experiments)
     assert fig is ax.figure
     if isinstance(config, (progress_curve.ProgressCurve, feasibility_progress.FeasibilityProgress)):
         expected = []
-        for experiment in option_pair:
+        for _, data in option_pair:
             if isinstance(config, progress_curve.ProgressCurve):
-                curves = (
-                    experiment.progress_curves if config.normalize else experiment.objective_curves
-                )
+                curves = objective_curves(data, config.normalize)
             else:
                 curves = [
                     Curve(
@@ -154,7 +155,7 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
                         ],
                     )
                     for budgets, values in zip(
-                        experiment.all_intermediate_budgets, experiment.all_est_lhs, strict=True
+                        intermediate_budgets(data), estimated_lhs(data), strict=True
                     )
                 ]
             selected = (
@@ -175,7 +176,7 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
             assert line.get_drawstyle() == "steps-post"
         if isinstance(config, feasibility_progress.FeasibilityProgress):
             zeros = [line for line in ax.lines if line.get_linewidth() != 2]
-            assert len(zeros) == len(option_pair)
+            assert len(zeros) == len(experiments)
             for line in zeros:
                 np.testing.assert_array_equal(line.get_ydata(), [0, 0])
             assert ax.get_ylabel() == "Feasibility Score"
@@ -196,20 +197,20 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
             curve_reference(
                 "profile",
                 mode,
-                experiment.progress_curves if config.normalize else experiment.objective_curves,
+                objective_curves(data, config.normalize),
                 [],
                 beta,
                 config.solve_tolerance,
             )
-            for experiment in option_pair
+            for _, data in option_pair
         ]
         if isinstance(config, diff.DiffSolvability):
-            reference = 0 if config.reference_solver == option_pair[0].solver.name else 1
+            reference = 0 if config.reference_solver == experiments[0].solver.name else 1
             curves = [difference_of_curves(curves[1 - reference], curves[reference])]
-            labels = [f"{option_pair[1 - reference].solver.name} - {config.reference_solver}"]
+            labels = [f"{experiments[1 - reference].solver.name} - {config.reference_solver}"]
             assert ax.get_ylabel() == "Difference"
         else:
-            labels = [experiment.solver.name for experiment in option_pair]
+            labels = [experiment.solver.name for experiment in experiments]
         assert len(ax.lines) == len(curves)
         for line, curve in zip(ax.lines, curves, strict=True):
             # Aggregated profiles remove duplicated budgets.
@@ -225,23 +226,21 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
         config, (terminal_progress.TerminalProgress, terminal_feasibility.TerminalFeasibility)
     ):
         expected = []
-        for experiment in option_pair:
+        for _, data in option_pair:
             if isinstance(config, terminal_progress.TerminalProgress):
-                curves = (
-                    experiment.progress_curves if config.normalize else experiment.objective_curves
-                )
+                curves = objective_curves(data, config.normalize)
                 expected.extend(curve.y_vals[-1] for curve in curves)
             else:
                 expected.extend(
                     feasibility_reference(
                         values[-1], config.score_type, config.norm_degree, config.two_sided
                     )
-                    for values in experiment.all_est_lhs
+                    for values in estimated_lhs(data)
                 )
         if config.plot_type == "scatter":
             assert len(ax.collections) == 2
             for i, collection in enumerate(ax.collections):
-                objectives = [curve.y_vals[-1] for curve in option_pair[i].objective_curves]
+                objectives = [curve.y_vals[-1] for curve in objective_curves(option_pair[i][1])]
                 np.testing.assert_allclose(
                     collection.get_offsets(),
                     np.array([objectives, expected[i * 4 : (i + 1) * 4]]).T,
@@ -255,13 +254,13 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
             assert ax.get_xlabel() == "Solver"
     else:
         expected = []
-        for experiment in option_pair:
+        for _, data in option_pair:
             if isinstance(config, auc.Auc):
-                values = [curve.compute_area_under_curve() for curve in experiment.progress_curves]
+                values = [
+                    curve.compute_area_under_curve() for curve in objective_curves(data, True)
+                ]
             else:
-                curves = (
-                    experiment.progress_curves if config.normalize else experiment.objective_curves
-                )
+                curves = objective_curves(data, config.normalize)
                 values = [curve.y_vals[-1] for curve in curves]
             expected.append([np.mean(values), np.std(values, ddof=1)])
         assert len(ax.collections) == len(expected)
@@ -275,9 +274,8 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
 @pytest.mark.parametrize("plot_zero", [False, True])
 @pytest.mark.parametrize("agg", ["all", "mean", "quantile"])
 def test_feasibility_zero_line(option_experiment, plot_zero, agg):
-    result = feasibility_progress.analyze(
-        convert(option_experiment), agg, None, CrnOptions(), two_sided=False
-    )
+    _, data = option_experiment
+    result = feasibility_progress.analyze(data, agg, None, CrnOptions(), two_sided=False)
     _, ax = plt.subplots()
     feasibility_progress.plot(ax, result, plot_zero=plot_zero, color="magenta")
     n_curves = 4 if agg == "all" else 1
@@ -333,8 +331,7 @@ def test_curve_ci_artists(option_pair, name):
 @pytest.mark.parametrize("module", [module for module in MODULES if module != terminal_progress])
 @pytest.mark.parametrize("custom_style", [False, True])
 def test_plot_many_styles_and_legends(option_pair, module, custom_style):
-    experiments = [*option_pair, deepcopy(option_pair[0])]
-    inputs = [convert(experiment) for experiment in experiments]
+    experiments, inputs = split_pairs([*option_pair, deepcopy(option_pair[0])])
     results = module_results(module, inputs, experiments)
     kwargs = {}
     if custom_style:
@@ -387,7 +384,8 @@ def test_plot_many_styles_and_legends(option_pair, module, custom_style):
 @pytest.mark.parametrize("with_ci", [False, True])
 def test_scatter_artists_and_labels(option_experiment, module, with_ci):
     options = ConfidenceIntervalOptions(n_bootstraps=8, bias_correction=False) if with_ci else None
-    result = module.analyze(convert(option_experiment), options, CrnOptions())
+    _, data = option_experiment
+    result = module.analyze(data, options, CrnOptions())
     _, ax = plt.subplots()
     handle = module.plot(ax, result, "magenta", "D", label="chosen label")
     assert handle.get_label() == "chosen label"
@@ -462,7 +460,7 @@ def test_configuration_ci_forwarding(option_pair, config, bias_correction, crn_f
         crn_options=CrnOptions(*crn_flags),
     )
     module = next(module for module in MODULES if config.__class__.__module__ == module.__name__)
-    inputs = [convert(experiment) for experiment in option_pair]
+    experiments, inputs = split_pairs(option_pair)
     captured = []
     original = cast(Callable[..., list[Any]], module.analyze_many)
 
@@ -472,7 +470,7 @@ def test_configuration_ci_forwarding(option_pair, config, bias_correction, crn_f
         return results
 
     monkeypatch.setattr(module, "analyze_many", record_results)
-    _, ax = config.plot(inputs, option_pair)
+    _, ax = config.plot(inputs, experiments)
     # The CI matrix checks the calculations independently; here verify that the
     # configuration wrapper forwards every option to its analysis entry point.
     kwargs = {
@@ -483,7 +481,7 @@ def test_configuration_ci_forwarding(option_pair, config, bias_correction, crn_f
     if module in (progress_curve, feasibility_progress):
         expected = original(inputs, config.agg, config.ci_options, config.crn_options, **kwargs)
     elif module in (solvability_profile, diff):
-        args = [inputs, option_pair, config.plot_type]
+        args = [inputs, experiments, config.plot_type]
         if module == diff:
             args.append(config.reference_solver)
         expected = original(*args, config.ci_options, config.crn_options, **kwargs)

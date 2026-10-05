@@ -17,7 +17,6 @@ from simopt.analysis import (
     terminal_progress,
     terminal_scatterplot,
 )
-from simopt.compat import convert
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from tests.analysis.options_helpers import (
     CI_CASES,
@@ -27,6 +26,7 @@ from tests.analysis.options_helpers import (
     interval_reference,
     plot_module_many,
 )
+from tests.utils import split_pairs
 
 
 @pytest.mark.parametrize("module", MODULES)
@@ -42,34 +42,34 @@ def test_empty_plot_results(module):
     "module", [module for module in MODULES if module not in (diff, solvability_profile)]
 )
 def test_mismatched_plot_inputs(module, option_experiment):
+    experiment, _ = option_experiment
     with pytest.raises(ValueError, match="same length"):
-        plot_module_many(module, [], [option_experiment])
+        plot_module_many(module, [], [experiment])
 
 
 @pytest.mark.parametrize("module", [solvability_profile, diff])
 def test_mismatched_analysis_inputs(module, option_experiment):
+    experiment, _ = option_experiment
     with pytest.raises(ValueError, match=r"shorter|longer|same length"):
         if module == diff:
-            module.analyze_many(
-                [], [option_experiment], "cdf", option_experiment.solver.name, None, CrnOptions()
-            )
+            module.analyze_many([], [experiment], "cdf", experiment.solver.name, None, CrnOptions())
         else:
-            module.analyze_many([], [option_experiment], "cdf", None, CrnOptions())
+            module.analyze_many([], [experiment], "cdf", None, CrnOptions())
 
 
 @pytest.mark.parametrize("module", [progress_curve, feasibility_progress])
 def test_invalid_aggregation(module, option_experiment):
     kwargs = {"two_sided": False} if module == feasibility_progress else {}
+    _, data = option_experiment
     with pytest.raises(ValueError, match=r"unsupported|agg"):
-        module.analyze(convert(option_experiment), "unknown", None, CrnOptions(), **kwargs)
+        module.analyze(data, "unknown", None, CrnOptions(), **kwargs)
 
 
 @pytest.mark.parametrize("agg", ["mean", "quantile"])
 def test_invalid_two_sided_aggregation(option_experiment, agg):
+    _, data = option_experiment
     with pytest.raises(ValueError, match="two sided"):
-        feasibility_progress.analyze(
-            convert(option_experiment), agg, None, CrnOptions(), two_sided=True
-        )
+        feasibility_progress.analyze(data, agg, None, CrnOptions(), two_sided=True)
 
 
 @pytest.mark.parametrize("module", [solvability_profile, diff])
@@ -86,26 +86,28 @@ def test_invalid_two_sided_aggregation(option_experiment, agg):
 def test_invalid_solvability_options(module, option_pair, kwargs, message):
     kwargs = dict(kwargs)
     mode = kwargs.pop("plot_type", "quantile")
+    experiments, inputs = split_pairs(option_pair)
     with pytest.raises(ValueError, match=message):
         if module == diff:
             module.analyze_many(
-                [convert(experiment) for experiment in option_pair],
-                option_pair,
+                inputs,
+                experiments,
                 mode,
-                option_pair[0].solver.name,
+                experiments[0].solver.name,
                 None,
                 CrnOptions(),
                 **kwargs,
             )
         else:
-            module.analyze(convert(option_pair[0]), mode, None, CrnOptions(), **kwargs)
+            module.analyze(inputs[0], mode, None, CrnOptions(), **kwargs)
 
 
 def test_missing_reference_solver(option_pair):
+    experiments, inputs = split_pairs(option_pair)
     with pytest.raises(ValueError, match=r"reference solver.*not found"):
         diff.analyze_many(
-            [convert(experiment) for experiment in option_pair],
-            option_pair,
+            inputs,
+            experiments,
             "cdf",
             "missing",
             None,
@@ -130,6 +132,7 @@ def test_invalid_ci_in_each_analysis(option_pair, name, mode, normalize, options
 
 @pytest.mark.parametrize("module", [terminal_progress, common])
 def test_invalid_distribution_mode(module, option_experiment):
+    _, data = option_experiment
     _, ax = plt.subplots()
     with pytest.raises(ValueError, match=r"[Pp]lot type"):
         if module == common:
@@ -137,7 +140,7 @@ def test_invalid_distribution_mode(module, option_experiment):
                 ax, [{"solver": "A", "value": 1}], "solver", "value", "unknown"
             )
         else:
-            module.plot(ax, module.analyze(convert(option_experiment)), plot_type="unknown")
+            module.plot(ax, module.analyze(data), plot_type="unknown")
 
 
 @pytest.mark.parametrize("module", [progress_curve, feasibility_progress])
@@ -156,7 +159,7 @@ def test_empty_all_curves(module):
     ("crossing", "expected_values"), [(None, [0, 0]), (0, [0, 1, 1]), (0.5, [0, 1, 1]), (1, [0, 1])]
 )
 def test_quantile_crossing_boundaries(option_experiment, normalize, crossing, expected_values):
-    data = convert(option_experiment)
+    _, data = option_experiment
     data.mean_df["budget"] = np.tile([0, 5, 10], 4)
     data.mean_df["normalized_budget"] = data.mean_df["budget"] / 10
     for prefix in ["", "normalized_"]:
@@ -180,7 +183,7 @@ def test_quantile_crossing_boundaries(option_experiment, normalize, crossing, ex
 @pytest.mark.parametrize("module", [solvability_cdf, solvability_profile])
 @pytest.mark.parametrize("normalize", [False, True])
 def test_strict_crossing_threshold_and_end_budget(option_experiment, module, normalize):
-    data = convert(option_experiment)
+    _, data = option_experiment
     data.mean_df["budget"] = np.tile([0, 5, 10], 4)
     data.mean_df["normalized_budget"] = data.mean_df["budget"] / 10
     values = np.tile([1.0, 0.5, 0.0], 4)
@@ -245,18 +248,18 @@ def test_missing_bias_estimator():
 @pytest.mark.parametrize("beta", [-0.1, 0, 1, 1.1])
 def test_invalid_progress_quantiles(module, option_experiment, beta):
     kwargs = {"two_sided": False} if module == feasibility_progress else {}
+    _, data = option_experiment
     with pytest.raises(ValueError, match="Beta"):
-        module.analyze(
-            convert(option_experiment), "quantile", None, CrnOptions(), beta=beta, **kwargs
-        )
+        module.analyze(data, "quantile", None, CrnOptions(), beta=beta, **kwargs)
 
 
 def test_invalid_terminal_feasibility_mode(option_experiment):
-    result = terminal_feasibility.analyze(convert(option_experiment), None, CrnOptions())
+    experiment, data = option_experiment
+    result = terminal_feasibility.analyze(data, None, CrnOptions())
     with pytest.raises(ValueError, match="plot_type"):
         terminal_feasibility.plot_many(
             [result],
-            [option_experiment],
+            [experiment],
             plot_type="unknown",  # ty: ignore[invalid-argument-type]
         )
 
@@ -264,7 +267,8 @@ def test_invalid_terminal_feasibility_mode(option_experiment):
 @pytest.mark.parametrize("module", [feasibility_progress, terminal_feasibility])
 def test_invalid_feasibility_score_type(module, option_experiment):
     # The history includes positive violations, which exercise score validation.
-    args = [convert(option_experiment)]
+    _, data = option_experiment
+    args = [data]
     if module == feasibility_progress:
         args.append("all")
     with pytest.raises(ValueError, match="invalid method"):
@@ -274,24 +278,26 @@ def test_invalid_feasibility_score_type(module, option_experiment):
 @pytest.mark.parametrize("module", [progress_curve, feasibility_progress])
 def test_all_mode_ignores_ci_options(option_experiment, module, monkeypatch):
     monkeypatch.setattr(common, "bootstrap", forbid_bootstrap)
-    args = [convert(option_experiment), "all", ConfidenceIntervalOptions(), CrnOptions()]
+    _, data = option_experiment
+    args = [data, "all", ConfidenceIntervalOptions(), CrnOptions()]
     result = module.analyze(*args)
     assert "lb" not in result.df and "ub" not in result.df
 
 
 @pytest.mark.parametrize("module", [solvability_profile, diff])
 def test_no_comparison_solver(option_experiment, module):
-    args = [[convert(option_experiment)], [option_experiment], "cdf"]
+    experiment, data = option_experiment
+    args = [[data], [experiment], "cdf"]
     if module == diff:
-        args.append(option_experiment.solver.name)
+        args.append(experiment.solver.name)
     results = module.analyze_many(*args, None, CrnOptions())
     assert len(results) == (0 if module == diff else 1)
-    _, ax = plot_module_many(module, results, [option_experiment])
+    _, ax = plot_module_many(module, results, [experiment])
     assert len(ax.lines) == len(results)
 
 
 def test_feasibility_without_constraints(option_experiment):
-    data = convert(option_experiment)
+    _, data = option_experiment
     data.mean_df["stochastic_constraints"] = [np.array([])] * len(data.mean_df)
     progress = feasibility_progress.analyze(data, "mean", None, CrnOptions(), two_sided=False)
     terminal = terminal_feasibility.analyze(data, None, CrnOptions())
@@ -300,7 +306,7 @@ def test_feasibility_without_constraints(option_experiment):
 
 
 def test_inconsistent_postreplication_counts(option_experiment):
-    data = convert(option_experiment)
+    _, data = option_experiment
     data.full_df = data.full_df.iloc[:-1]
     with pytest.raises(ValueError, match="not consistent"):
         progress_curve.analyze(

@@ -1,3 +1,4 @@
+# ruff: noqa: F811
 import pickle
 from copy import deepcopy
 
@@ -16,6 +17,7 @@ from simopt.analysis.terminal_progress import TerminalProgress
 from simopt.analysis.terminal_scatterplot import TerminalScatter
 from simopt.experiment.plot import save_plots
 from simopt.options import ConfidenceIntervalOptions
+from tests.analysis.legacy_options_helpers import option_experiment, option_pair  # noqa: F401
 
 
 @pytest.mark.parametrize("all_in_one", [False, True])

@@ -1,14 +1,13 @@
 import matplotlib.pyplot as plt
 
 from simopt.analysis.terminal_scatterplot import analyze, analyze_many, plot, plot_many
-from simopt.compat import convert
-from tests.utils import assert_logs_match, capture_log_data
+from tests.utils import assert_logs_match, capture_log_data, split_pairs
 
 
-def test_terminal_scatterplot(experiment, plot_baseline):
+def test_terminal_scatterplot(experiment_pair, plot_baseline):
     desired = plot_baseline["logs"]
 
-    analysis_input = convert(experiment)
+    _, analysis_input = experiment_pair
     analysis_result = analyze(
         analysis_input,
         normalize=True,
@@ -21,10 +20,11 @@ def test_terminal_scatterplot(experiment, plot_baseline):
 
 
 def test_terminal_scatterplot_same_problem_experiments(plot_experiments, plot_baseline):
-    same_problem_experiments = [experiment for row in plot_experiments for experiment in row]
+    same_problem_experiments, analysis_inputs = split_pairs(
+        [pair for row in plot_experiments for pair in row]
+    )
     desired = plot_baseline["logs"]
 
-    analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         normalize=True,
@@ -42,13 +42,13 @@ def test_terminal_scatterplot_different_problem_experiments(
 ):
     desired = plot_baseline["logs"]
 
-    analysis_inputs = [convert(experiment) for experiment in different_problem_experiments]
+    experiments, analysis_inputs = split_pairs(different_problem_experiments)
     analysis_results = analyze_many(
         analysis_inputs,
         normalize=True,
     )
 
-    actual = capture_log_data(plot_many, analysis_results, different_problem_experiments)
+    actual = capture_log_data(plot_many, analysis_results, experiments)
 
     assert_logs_match(actual, desired)
     assert len(actual) == len(desired)

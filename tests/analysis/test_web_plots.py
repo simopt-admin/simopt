@@ -1,3 +1,4 @@
+# ruff: noqa: F811
 from copy import deepcopy
 
 import matplotlib.pyplot as plt
@@ -6,6 +7,7 @@ import pytest
 from simopt.analysis.progress_curve import ProgressCurve
 from simopt.experiment.plot import save_plots
 from simopt.web.server import generate_plots
+from tests.analysis.legacy_options_helpers import option_experiment, option_pair  # noqa: F401
 
 PLOT_TYPES = [
     "ALL",
