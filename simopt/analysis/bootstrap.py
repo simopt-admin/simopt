@@ -1,6 +1,6 @@
 """Bootstrapping procedures."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Any
 
 import numpy as np
@@ -221,7 +221,7 @@ def bootstrap(
 
 
 def compute_bootstrap_conf_int(
-    observations: list[float | int],
+    observations: Sequence[float] | np.ndarray,
     conf_level: float,
     bias_correction: bool = True,
     overall_estimator: float | None = None,
@@ -229,7 +229,7 @@ def compute_bootstrap_conf_int(
     """Construct a bootstrap confidence interval for an estimator.
 
     Args:
-        observations (list[float | int]): Estimators from all bootstrap instances.
+        observations (Sequence[float] | np.ndarray): Estimators from all bootstrap instances.
         conf_level (float): Confidence level for confidence intervals, i.e., 1 - gamma;
             must be in (0, 1).
         bias_correction (bool, optional): Whether to use bias-corrected bootstrap CIs
@@ -238,7 +238,7 @@ def compute_bootstrap_conf_int(
             around. Required if`bias_correction` is True.
 
     Returns:
-        tuple[np.ndarray, np.ndarray]: A tuple containing the lower and upper bounds of
+        tuple[float, float]: A tuple containing the lower and upper bounds of
             the bootstrap confidence interval.
 
     Raises:
@@ -255,8 +255,8 @@ def compute_bootstrap_conf_int(
 
     # This assertion is used during refactoring to ensure that observations is a 1D
     # array.
-    observations = np.array(observations, dtype=float)
-    assert observations.ndim == 1
+    values = np.asarray(observations, dtype=float)
+    assert values.ndim == 1
 
     # Compute bootstrapping confidence interval via percentile method.
     # See Efron (1981) "Nonparameteric Standard Errors and Confidence Intervals."
@@ -268,7 +268,7 @@ def compute_bootstrap_conf_int(
         from scipy.stats import norm
 
         # For biased-corrected CIs, see equation (4.4) on page 146.
-        z0 = norm.ppf(np.mean([obs < overall_estimator for obs in observations]))
+        z0 = norm.ppf(np.mean([obs < overall_estimator for obs in values]))
         zconflvl = norm.ppf(conf_level)
         q_lower = norm.cdf(2 * z0 - zconflvl)
         q_upper = norm.cdf(2 * z0 + zconflvl)
@@ -276,6 +276,6 @@ def compute_bootstrap_conf_int(
         # For uncorrected CIs, see equation (4.3) on page 146.
         q_lower = (1 - conf_level) / 2
         q_upper = 1 - (1 - conf_level) / 2
-    bs_conf_int_lower_bound = np.quantile(observations, q=q_lower)
-    bs_conf_int_upper_bound = np.quantile(observations, q=q_upper)
+    bs_conf_int_lower_bound = np.quantile(values, q=q_lower)
+    bs_conf_int_upper_bound = np.quantile(values, q=q_upper)
     return bs_conf_int_lower_bound, bs_conf_int_upper_bound

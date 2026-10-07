@@ -68,8 +68,10 @@ def test_analysis_ci_options(
         for i in range(options.n_bootstraps):
             if name == "auc":
                 rng = MRG32k3a(s_ss_sss_index=[1, i, 0])
+            experiment, data = option_pair[0]
             curves, bootstrap_feasibility_curves = reference_bootstrap_sample(
-                *option_pair[0],
+                experiment,
+                data,
                 rng,
                 crn_options,
                 normalize=normalize,
