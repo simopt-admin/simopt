@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
+from matplotlib.collections import PathCollection
 
 from simopt.analysis import auc, feasibility_progress, progress_curve, solvability_cdf
 from simopt.experiment.api import AnalysisInput
@@ -47,8 +48,8 @@ def test_progress_without_ci(analysis_input, agg, normalize):
         expected = values if agg == "all" else [np.mean(values, axis=0)]
         assert len(ax.lines) == len(expected)
         for line, value in zip(ax.lines, expected, strict=True):
-            np.testing.assert_allclose(line.get_xdata(), budget)
-            np.testing.assert_allclose(line.get_ydata(), value)
+            np.testing.assert_allclose(np.asarray(line.get_xdata()), budget)
+            np.testing.assert_allclose(np.asarray(line.get_ydata()), value)
         assert "lb" not in result.df and "ub" not in result.df
         pd.testing.assert_frame_equal(analysis_input.mean_df, original)
     finally:
@@ -65,8 +66,8 @@ def test_feasibility_without_ci(analysis_input, agg):
         expected = [[0, -1, 0], [0, -3, 0]] if agg == "all" else [[0, -2, 0]]
         assert len(ax.lines) == len(expected)
         for line, value in zip(ax.lines, expected, strict=True):
-            np.testing.assert_allclose(line.get_xdata(), [0, 5, 10])
-            np.testing.assert_allclose(line.get_ydata(), value)
+            np.testing.assert_allclose(np.asarray(line.get_xdata()), [0, 5, 10])
+            np.testing.assert_allclose(np.asarray(line.get_ydata()), value)
         assert "lb" not in result.df and "ub" not in result.df
         pd.testing.assert_frame_equal(analysis_input.mean_df, original)
     finally:
@@ -84,7 +85,8 @@ def test_auc_without_ci(analysis_input, normalize):
     fig, ax = plt.subplots()
     try:
         handle = auc.plot(ax, result, "C0", "o")
-        np.testing.assert_allclose(handle.get_offsets(), [[result.mean, result.std]])
+        assert isinstance(handle, PathCollection)
+        np.testing.assert_allclose(np.asarray(handle.get_offsets()), [[result.mean, result.std]])
     finally:
         plt.close(fig)
 

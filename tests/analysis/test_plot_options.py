@@ -1,5 +1,7 @@
+from collections.abc import Callable
 from copy import deepcopy
 from itertools import product
+from typing import Any, Literal, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,6 +41,13 @@ from tests.analysis.options_helpers import (
     plot_module_many,
 )
 
+SCORE_CASES: list[tuple[Literal["inf_norm", "norm"], int]] = [
+    ("inf_norm", 1),
+    ("norm", 1),
+    ("norm", 2),
+    ("norm", 3),
+]
+
 CONFIG_CASES = (
     [
         progress_curve.ProgressCurve(agg=agg, beta=beta, normalize=normalize, ci_options=None)
@@ -57,7 +66,7 @@ CONFIG_CASES = (
         )
         for agg in ["all", "mean", "quantile"]
         for beta in ([0.1, 0.5, 0.9] if agg == "quantile" else [0.5])
-        for score_type, degree in [("inf_norm", 1), ("norm", 1), ("norm", 2), ("norm", 3)]
+        for score_type, degree in SCORE_CASES
         for two_sided in ([False, True] if agg == "all" else [False])
     ]
     + [
@@ -105,7 +114,7 @@ CONFIG_CASES = (
             ci_options=None,
         )
         for mode in ["scatter", "violin"]
-        for score_type, degree in [("inf_norm", 1), ("norm", 1), ("norm", 2), ("norm", 3)]
+        for score_type, degree in SCORE_CASES
         for two_sided in [False, True]
     ]
     + [
@@ -161,8 +170,8 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
         lines = [line for line in ax.lines if line.get_linewidth() == 2]
         assert len(lines) == len(expected)
         for line, curve in zip(lines, expected, strict=True):
-            np.testing.assert_allclose(line.get_xdata(), curve.x_vals)
-            np.testing.assert_allclose(line.get_ydata(), curve.y_vals)
+            np.testing.assert_allclose(np.asarray(line.get_xdata()), curve.x_vals)
+            np.testing.assert_allclose(np.asarray(line.get_ydata()), curve.y_vals)
             assert line.get_drawstyle() == "steps-post"
         if isinstance(config, feasibility_progress.FeasibilityProgress):
             zeros = [line for line in ax.lines if line.get_linewidth() != 2]
@@ -303,15 +312,15 @@ def test_curve_ci_artists(option_pair, name):
     assert len(ax.lines) == 3
     assert len(ax.collections) == 1
     for line, column in zip(ax.lines[1:], ["lb", "ub"], strict=True):
-        np.testing.assert_allclose(line.get_xdata(), ci["budget"])
-        np.testing.assert_allclose(line.get_ydata(), ci[column])
+        np.testing.assert_allclose(np.asarray(line.get_xdata()), ci["budget"])
+        np.testing.assert_allclose(np.asarray(line.get_ydata()), ci[column])
         assert line.get_linestyle() == "--"
         assert line.get_linewidth() == 1
         assert line.get_drawstyle() == "steps-post"
         assert to_rgba(line.get_color()) == to_rgba("magenta")
     collection = ax.collections[0]
     assert collection.get_alpha() == 0.2
-    np.testing.assert_allclose(collection.get_facecolor()[0], to_rgba("magenta", 0.2))
+    np.testing.assert_allclose(np.asarray(collection.get_facecolor())[0], to_rgba("magenta", 0.2))
     vertices = np.concatenate([path.vertices for path in collection.get_paths()])
     assert min(vertices[:, 0]) == min(ci["budget"])
     assert max(vertices[:, 0]) == max(ci["budget"])
@@ -346,8 +355,8 @@ def test_plot_many_styles_and_legends(option_pair, module, custom_style):
             if custom_style:
                 marker = MarkerStyle("D")
                 np.testing.assert_allclose(
-                    collection.get_paths()[0].vertices,
-                    marker.get_path().transformed(marker.get_transform()).vertices,
+                    np.asarray(collection.get_paths()[0].vertices),
+                    np.asarray(marker.get_path().transformed(marker.get_transform()).vertices),
                 )
     else:
         assert len(ax.lines) == len(results)
@@ -453,7 +462,7 @@ def test_configuration_ci_forwarding(option_pair, config, bias_correction, crn_f
     module = next(module for module in MODULES if config.__class__.__module__ == module.__name__)
     inputs = [convert(experiment) for experiment in option_pair]
     captured = []
-    original = module.analyze_many
+    original = cast(Callable[..., list[Any]], module.analyze_many)
 
     def record_results(*args, **kwargs):
         results = original(*args, **kwargs)
@@ -504,4 +513,6 @@ def test_plot_helper_styles():
     assert line.get_color() == "cyan"
     df = pd.DataFrame({"budget": [0, 1], "lb": [1, 2], "ub": [3, 4]})
     common.plot_ci(ax, df, color="cyan", alpha=0.4)
-    np.testing.assert_allclose(ax.collections[0].get_facecolor()[0], to_rgba("cyan", 0.4))
+    np.testing.assert_allclose(
+        np.asarray(ax.collections[0].get_facecolor())[0], to_rgba("cyan", 0.4)
+    )

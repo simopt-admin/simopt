@@ -254,7 +254,11 @@ def test_invalid_progress_quantiles(module, option_experiment, beta):
 def test_invalid_terminal_feasibility_mode(option_experiment):
     result = terminal_feasibility.analyze(convert(option_experiment), None, CrnOptions())
     with pytest.raises(ValueError, match="plot_type"):
-        terminal_feasibility.plot_many([result], [option_experiment], plot_type="unknown")
+        terminal_feasibility.plot_many(
+            [result],
+            [option_experiment],
+            plot_type="unknown",  # ty: ignore[invalid-argument-type]
+        )
 
 
 @pytest.mark.parametrize("module", [feasibility_progress, terminal_feasibility])

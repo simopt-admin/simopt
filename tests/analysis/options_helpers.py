@@ -45,9 +45,9 @@ def option_experiment():
     ]
     experiment.all_post_replicates = [
         [
-            experiment.x0_postreps,
-            [3.0 + i + j / 2 for j in range(4)],
-            [0.25 + i / 4 + j / 8 for j in range(4)],
+            np.array(experiment.x0_postreps),
+            np.array([3.0 + i + j / 2 for j in range(4)]),
+            np.array([0.25 + i / 4 + j / 8 for j in range(4)]),
         ]
         for i in range(4)
     ]

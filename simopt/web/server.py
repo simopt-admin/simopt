@@ -627,13 +627,13 @@ def generate_plots(
                     "DIFFERENCE_OF_CDF_SOLVABILITY",
                     "DIFFERENCE_OF_QUANTILE_SOLVABILITY",
                 }:
-                    profile_options = dict(
-                        plot_type="quantile" if "QUANTILE" in plot_type_name else "cdf",
-                        normalize=normalize,
-                        solve_tolerance=solve_tol,
-                        beta=beta,
+                    profile_options: dict[str, Any] = {
+                        "plot_type": "quantile" if "QUANTILE" in plot_type_name else "cdf",
+                        "normalize": normalize,
+                        "solve_tolerance": solve_tol,
+                        "beta": beta,
                         **options,
-                    )
+                    }
                     if plot_type_name.startswith("DIFFERENCE_OF"):
                         ref_solver = plot_params.get("ref_solver")
                         if ref_solver is None:

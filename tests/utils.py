@@ -31,7 +31,7 @@ def _assert_log_values_match(a, d, message):
         desired = np.asarray(d)
     except ValueError:
         actual = desired = None
-    if actual is None or actual.dtype == object or desired.dtype == object:
+    if actual is None or desired is None or actual.dtype == object or desired.dtype == object:
         assert len(a) == len(d), f"{message}: component count differs: {len(a)} != {len(d)}"
         for index, (actual_value, desired_value) in enumerate(zip(a, d, strict=True)):
             _assert_log_values_match(actual_value, desired_value, f"{message}, component {index}")

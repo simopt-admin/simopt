@@ -100,8 +100,8 @@ class ProblemSolver:
         self.has_run = False
         self.has_postreplicated = False
         self.has_postnormalized = False
-        self.xstar = ()
-        self.x0 = ()
+        self.xstar: tuple | None = ()
+        self.x0: tuple = ()
         self.objective_curves = []
         self.progress_curves = []
         self.all_stoch_constraints: list[list[np.ndarray]] = []

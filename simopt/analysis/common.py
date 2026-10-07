@@ -131,8 +131,9 @@ def compute_ci(
     if ci_options.bias_correction and estimator is None:
         raise ValueError("bias correction estimator is required.")
 
+    estimates = None
     if estimator is not None:
-        estimator = (
+        estimates = (
             estimator.groupby("budget")[value_column]
             .last()
             .reindex(np.sort(np.unique(np.concatenate([budget, estimator["budget"]]))))
@@ -148,7 +149,7 @@ def compute_ci(
             row.to_list(),
             ci_options.confidence_level,
             ci_options.bias_correction,
-            estimator[i] if estimator is not None else None,
+            estimates[i] if estimates is not None else None,
         )
         lb_values.append(lb)
         ub_values.append(ub)

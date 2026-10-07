@@ -3,6 +3,7 @@
 import pickle
 from dataclasses import replace
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,6 +22,9 @@ from simopt.analysis.terminal_scatterplot import TerminalScatter
 from simopt.compat import convert
 from simopt.experiment import EXPERIMENT_DIR, ProblemSolver
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
+
+if TYPE_CHECKING:
+    from matplotlib.typing import LegendLocType
 
 PlotConfiguration = (
     Auc
@@ -139,7 +143,7 @@ def save_plots(
     all_in_one: bool = True,
     use_experiment_crn: bool = False,
     plot_title: str | None = None,
-    legend_loc: str | None = None,
+    legend_loc: "LegendLocType | None" = None,
     ext: str = ".png",
     save_as_pickle: bool = False,
     plot_conf_ints: bool = True,
