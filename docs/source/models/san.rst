@@ -39,7 +39,9 @@ Model Factors
 Responses
 ^^^^^^^^^
 
-* longest_path_length: Length/duration of the longest path.
+* longest_path_length: Duration of the longest path to the final node.
+* longest_path_to_all_nodes: Longest-path durations to all nodes.
+* topo_order: Topological ordering of the nodes.
 
 References
 ^^^^^^^^^^
@@ -48,139 +50,105 @@ This model is adapted from Avramidis, A.N., Wilson, J.R. (1996).
 Integrated variance reduction strategies for simulation. *Operations Research* 44, 327-346.
 (https://pubsonline.informs.org/doi/abs/10.1287/opre.44.2.327)
 
+Shared Optimization Settings
+----------------------------
+
+All four problems use ``arc_means`` as continuous decision variables
+:math:`\theta`, with dimension equal to the number of arcs (default: 13).
+Let :math:`T(\theta)` denote the random longest-path duration from node 1
+to the final node, and let :math:`q_i` denote ``arc_costs``.
+
+The following parameters and settings are shared across all problems:
+
+* budget: Maximum solver replications. Default: ``10000``.
+* arc_costs: Positive cost coefficients. Default: ``(1,) * 13``.
+* initial_solution: Default: ``(8,) * 13``.
+* Fixed model factors: None.
+* Random solutions: Each arc mean is sampled independently from a lognormal
+  distribution with 2.5th and 97.5th percentiles of 0.1 and 10.
+* Optimal solution and objective value: Unknown.
+
 Optimization Problem: Minimize Longest Path Plus Penalty (SAN-1)
 ----------------------------------------------------------------
 
-Decision Variables
-^^^^^^^^^^^^^^^^^^
+Objective
+^^^^^^^^^
 
-* arc_means
+.. math::
 
-Objectives
-^^^^^^^^^^
+    \min_{\theta}\; \mathbb{E}[T(\theta)] + \sum_{i=1}^{n}\frac{q_i}{\theta_i}.
 
-Suppose that we can select :math:`\theta_i > 0` for each :math:`i`,
-but there is an associated cost. In particular, we want to minimize :math:`ET(\theta) + f(\theta)`,
-where :math:`T(\theta)` is the (random) duration of the longest path from :math:`a`
-to :math:`i` and :math:`f(\theta) = \sum_{i=1}^{n}\theta_i^{-1}` where :math:`n`
-is the number of arcs.
-
-The objective function is convex in :math:`\theta`. An IPA estimator of the gradient
-is also given in the code.
+The objective is convex. IPA objective-gradient estimates are available.
 
 Constraints
 ^^^^^^^^^^^
 
-We require that :math:`theta_i > 0` for each :math:`i`.
+:math:`\theta_i \geq 0.01` for every arc, with no finite upper bound.
 
-Problem Factors
-^^^^^^^^^^^^^^^
+Optimization Problem: Longest Path Plus Penalty with Stochastic Constraints (SAN-2)
+-----------------------------------------------------------------------------------
 
-* budget: Max # of replications for a solver to take.
-    * Default: 10000
-* arc_costs: Cost associated to each arc.
-    * Default: (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-
-Fixed Model Factors
-^^^^^^^^^^^^^^^^^^^
-
-* N/A
-
-Starting Solution
-^^^^^^^^^^^^^^^^^
-
-* initial_solution: (8,) * 13
-
-Random Solutions
-^^^^^^^^^^^^^^^^
-
-Sample each arc mean uniformly from a lognormal distribution with 
-2.5- and 97.5-percentiles at 0.1 and 10 respectively.
-
-Optimal Solution
-^^^^^^^^^^^^^^^^
-
-Unknown
-
-Optimal Objective Function Value
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Unknown
-
-Optimization Problem: Minimize Longest Path Plus Penalty with Stochastic Constraints (SAN-2)
---------------------------------------------------------------------------------------------
-
-Decision Variables
-^^^^^^^^^^^^^^^^^^
-
-* **arc_means**
-
-Objectives
-^^^^^^^^^^
-
-Suppose that we can select :math:`\theta_i > 0` for each :math:`i`, but there is an associated cost.
-In particular, we want to minimize:
-
-.. math::
-
-    \mathbb{E}[T(\theta)] + f(\theta),
-
-where :math:`T(\theta)` is the (random) duration of the longest path from node :math:`a` to node :math:`i`, and
-
-.. math::
-
-    f(\theta) = \sum_{i=1}^{n} \theta_i^{-1},
-
-where :math:`n` is the number of arcs.
-
-The objective function is convex in :math:`\theta`.
+The objective and shared parameters are the same as SAN-1.
+IPA objective- and constraint-gradient estimates are available.
 
 Constraints
 ^^^^^^^^^^^
 
-We require that :math:`\theta_i > 0` for each :math:`i`.
-Additionally, we allow :math:`n` stochastic constraints that restrict the expected time to reach node :math:`i`, of the form:
+:math:`0.01 \leq \theta_i \leq 100` for every arc, together with:
 
 .. math::
 
-    \mathbb{E}[T_i(\theta)] \leq a_i.
+    \mathbb{E}[T_j(\theta)] \leq a_j,
+    \qquad j \in \text{constraint_nodes},
 
-Problem Factors
-^^^^^^^^^^^^^^^
+where :math:`T_j(\theta)` is the longest-path duration from node 1 to node
+:math:`j`, and :math:`a_j` is its corresponding limit.
 
-* **budget**: Maximum number of replications the solver is allowed to take.
-    *Default:* ``10000``
+Additional Problem Factors
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* **arc_costs**: Cost associated with each arc.
-    *Default:* ``(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)``
+* constraint_nodes: Nodes with stochastic constraints. Default: ``[6, 8]``.
+* length_to_node_constraint: Corresponding expected-duration limits.
+  Default: ``[5.0, 5.0]``.
 
-* **constraint_nodes**: Nodes with corresponding stochastic constraints.
-    *Default:* ``[6, 8]``
+Optimization Problem: Minimize Longest Path with Equality Cost Constraint (SAN-3)
+---------------------------------------------------------------------------------
 
-* **length_to_node_constraint**: Maximum expected length to corresponding constraint nodes.
-    *Default:* ``[5, 5]``
+Shared parameters and variable bounds are the same as SAN-1.
+The problem declares objective gradients unavailable.
 
-Fixed Model Factors
-^^^^^^^^^^^^^^^^^^^
+Objective
+^^^^^^^^^
 
-* **N/A**
+.. math::
 
-Starting Solution
-^^^^^^^^^^^^^^^^^
+    \min_{\theta}\; \mathbb{E}[T(\theta)].
 
-* **initial_solution**: ``(8,) * 13``
+Constraints
+^^^^^^^^^^^
 
-Random Solutions
-^^^^^^^^^^^^^^^^
+In addition to the variable bounds, impose the deterministic equality:
 
-Each arc mean is sampled independently from a lognormal distribution with 2.5th and 97.5th percentiles equal to 0.1 and 10, respectively.
+.. math::
 
-Optimal Solution
-^^^^^^^^^^^^^^^^
+    \sum_{i=1}^{n}\frac{q_i}{\theta_i} - C = 0.
 
-* **Unknown**
+The constraint Jacobian and Hessian are provided analytically.
 
-Optimal Objective Function Value
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Additional Problem Factors
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* **Unknown**
+* total_cost: Required total cost :math:`C`. Default: ``5.0``.
+
+Optimization Problem: Minimize Longest Path with Inequality Cost Constraint (SAN-4)
+-----------------------------------------------------------------------------------
+
+The objective, parameters, variable bounds, and gradient availability are
+the same as SAN-3. Replace its equality with the deterministic inequality:
+
+.. math::
+
+    \sum_{i=1}^{n}\frac{q_i}{\theta_i} - C \leq 0.
+
+Here, ``total_cost`` is the maximum allowable cost.
+The constraint Jacobian and Hessian are provided analytically.

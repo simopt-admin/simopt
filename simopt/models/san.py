@@ -592,7 +592,7 @@ class SANLongestPathCostConstIneqConfig(BaseModel):
         return self
     
 class SANLongestPathCostConst(Problem):
-    """Base class to implement simulation-optimization problems."""
+    """Minimize the expected longest path subject to equality cost constraints."""
 
     class_name_abbr: ClassVar[str] = "SAN-3"
     class_name: ClassVar[str] = "Min Mean Longest Path for Stochastic Activity Network with Cost Constraint"
@@ -642,29 +642,30 @@ class SANLongestPathCostConst(Problem):
         return all(x_i >= 0 for x_i in x) and sum(x) == self.total_cost
     
     # get lhs value of deterministic constraints
-    def get_deterministic_equality_constraints(self, x:tuple) -> tuple:
+    def get_deterministic_equality_constraints(
+            self, x: tuple
+        ) -> tuple[float, ...]:
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
         cost = cost_array/x_array
-        return (sum(cost) - self.factors["total_cost"])
+        return (sum(cost) - self.factors["total_cost"],)
     # get lhs value of deterministic constraints (must transform constraints to <= form)
-    def get_deterministic_inequality_constraints(self, x:tuple) -> tuple:
-        cost_array = np.array(self.factors["arc_costs"])
-        x_array = np.array(x)
-        cost = cost_array/x_array
+    def get_deterministic_inequality_constraints(
+            self, x: tuple
+        ) -> None:
         return None
     #return jacobian of deterministic inequality constraints
     def get_deterministic_inequality_constraints_gradients(self,  x:tuple) -> tuple:
         return None
     
     #return jacobian of deterministic constraints
-    def get_deterministic_equality_constraints_gradients(self,  x:tuple) -> tuple:
+    def get_deterministic_equality_constraints_gradients(self,  x:tuple) -> np.array(np.float64):
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
         return (-1*cost_array/x_array**2).reshape(1,self.dim)
 
     # provide constraint hessian in order of equality constraints and then inequality constraints
-    def get_deterministic_constraints_hessian(self, x:tuple) -> np.array():
+    def get_deterministic_constraints_hessian(self, x:tuple) -> np.array(np.float64):
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
         H = np.diag(2.0*cost_array/x_array**3)
@@ -677,7 +678,7 @@ class SANLongestPathCostConst(Problem):
         )
 
 class SANLongestPathCostConstIneq(Problem):
-    """Base class to implement simulation-optimization problems."""
+    """Minimize the expected longest path subject to inequality cost constraints."""
 
     class_name_abbr: ClassVar[str] = "SAN-4"
     class_name: ClassVar[str] = "Min Mean Longest Path for Stochastic Activity Network with Cost Constraint"
@@ -726,26 +727,27 @@ class SANLongestPathCostConstIneq(Problem):
     def check_deterministic_constraints(self, x: tuple) -> bool:  # noqa: D102
         return all(x_i >= 0 for x_i in x) and sum(x) == self.total_cost
     
-    # get lhs value of deterministic constraints
-    def get_deterministic_equality_constraints(self, x:tuple) -> tuple:
+    # get lhs value of deterministic equality constraints
+    def get_deterministic_equality_constraints(self, x:tuple) -> None:
         return None
     
-    # get lhs value of deterministic constraints (must transform constraints to <= form)
-    def get_deterministic_inequality_constraints(self, x:tuple) -> tuple:
+    # get lhs value of deterministic inequality constraints (must transform constraints to <= form)
+    def get_deterministic_inequality_constraints(self, x:tuple) -> tuple[float, ...]:
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
         cost = cost_array/x_array
-        return (sum(cost) - self.factors["total_cost"])
+        return (sum(cost) - self.factors["total_cost"],)
     
     #return jacobian of deterministic equality constraints
-    def get_deterministic_equality_constraints_gradients(self,  x:tuple) -> tuple:
+    def get_deterministic_equality_constraints_gradients(self,  x:tuple) -> None:
         return None
     #return jacobian of deterministic inequality constraints
-    def get_deterministic_inequality_constraints_gradients(self,  x:tuple) -> tuple:
+    def get_deterministic_inequality_constraints_gradients(self,  x:tuple) -> np.array(np.float64):
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
         return (-1*cost_array/x_array**2).reshape(1,self.dim)
-    def get_deterministic_constraints_hessian(self, x:tuple) -> np.array():
+    # provide constraint hessian in order of equality constraints and then inequality constraints
+    def get_deterministic_constraints_hessian(self, x:tuple) -> np.array(np.float64):
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
         H = np.diag(2.0*cost_array/x_array**3)

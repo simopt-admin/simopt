@@ -1,24 +1,24 @@
-"""ASTRO-DF Solver.
+"""C-ASTRO-DF Solver.
 
-The ASTRO-DF solver progressively builds local models (quadratic with diagonal Hessian)
+The C-ASTRO-DF solver progressively builds local models (quadratic with diagonal Hessian)
 using interpolation on a set of points on the coordinate bases of the best (incumbent)
 solution. Solving the local models within a trust region (closed ball around the
-incumbent solution) at each iteration suggests a candidate solution for the next
-iteration. If the candidate solution is worse than the best interpolation point, it is
-replaced with the latter (a.k.a. direct search). The solver then decides whether to
+incumbent solution)  using linearized constraints. At each iteration suggests a candidate solution for the next
+iteration. The solver then decides whether to
 accept the candidate solution and expand the trust-region or reject it and shrink the
 trust-region based on a success ratio test. The sample size at each visited point is
 determined adaptively and based on closeness to optimality. A detailed description of
 the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.html>`__.
 
-This version does not require a delta_max, instead it estimates the maximum step size
-using get_random_solution(). Parameter tuning on delta_max is therefore not needed and
-removed from this version as well.
-- Delta_max is so longer a factor, instead the maximum step size is estimated using get_random_solution().
-- Parameter tuning on delta_max is therefore not needed and removed from this version as well.
-- No upper bound on sample size may be better - testing
-- It seems for SAN we always use pattern search - why? because the problem is convex and model may be misleading at the beginning
-- Added sufficient reduction for the pattern search
+Parameter tuning warranted, default values not necessarily optimal.
+- Direct search currenly disabled
+- Caution for inequality constraints - slack initialization and barrier penalty managment still a work in progress
+- Sometimes Scipy does not do a very good job for normal/tangent step. 
+    Try both easy_solve_normal and easy_solve_tangent True/False if poor results
+- Adaptive sampling may unnecessarily blow up sample size -- work in progress
+- make sure def get_deterministic_equality_constraints,  get_deterministic_inequality_constraints, 
+    get_deterministic_equality_constraints_gradients, get_deterministic_inequality_constraints_gradients, 
+    and get_deterministic_constraints_hessian have been defined in problem before running. 
 """  # noqa: E501
 
 # TODO: check if bullet points can be indented and ignore tag removed
@@ -276,7 +276,7 @@ class CASTRODFConfig(SolverConfig):
         float,
         Field(
             default=1e8,
-            description="upper bound on simga_b",
+            description="upper bound on simga_b (used to control penalty parameter)",
         ),
     
     
@@ -305,32 +305,10 @@ class CASTRODFConfig(SolverConfig):
             description="Maximum allowed trust-region radius",
         ),
     ]
-    sampling_method: Annotated[
-        str,
-        Field(
-            default="adaptive",
-            description="Maximum allowed trust-region radius",
-        ),
-    ]
-    epsilon: Annotated[
-        float,
-        Field(
-            default=0.5,
-            description="fraction to boundary measure for barrier problem",
-        ),
-    ]
     reuse_interpolation_set: Annotated[
     bool,
     Field(default=False,
           description="maintain a persistent interpolation set across iterations, reusing all valid points instead of rebuilding from scratch each time"),
-    ]
-
-    use_lagrange_geometry: Annotated[
-    bool,
-    Field(
-        default=True,
-        description="after fitting, check point-set poisedness via Lagrange polynomials and replace the worst-poised point if it exceeds a threshold; only used when reuse_interpolation_set is True",
-    ),
     ]
     dist_threshold: Annotated[
         float,
@@ -344,13 +322,6 @@ class CASTRODFConfig(SolverConfig):
         Field(
             default=True,
             description="use dogleg method to solve normal step",
-        ),
-    ]
-    kappa_scale: Annotated[
-        float,
-        Field(
-            default=1.0,
-            description="scale factor that constrols how quickly we increase our adatpive samples. Larger = slower",
         ),
     ]
     
@@ -2004,15 +1975,15 @@ class CASTRODF(Solver):
         self.sigma_min : int = self.factors["sigma_min"]
         self.sigma_b_max : int = self.factors["sigma_b_max"]
         self.feas_tol : float = self.factors["feas_tol"]
-        self.sampling_method : str = self.factors["sampling_method"]
-        self.epsilon : str = self.factors["epsilon"]
+        self.sampling_method : str = "adaptive" #hardcoded for release
+        self.epsilon : str = 0.5 #used in ftb barrier problem, hardcoded for release
         self.reuse_interpolation_set: bool = self.factors["reuse_interpolation_set"]
-        self.use_lagrange_geometry: bool = self.factors["use_lagrange_geometry"]
+        self.use_lagrange_geometry: bool = True #hardcoded for release
         self.dist_threshold: str = self.factors["dist_threshold"]
         self.dogleg: bool = self.factors["dogleg"]
         self.easy_solve_normal: bool = self.factors["easy_solve_normal"]
         self.easy_solve_tangent: bool = self.factors["easy_solve_tangent"]
-        self.kappa_scale: float = self.factors["kappa_scale"]
+        self.kappa_scale: float = 1.0 #hardcoded for release
         if self.factors["delta_0"] is not None:
             self.delta_k : float = self.factors["delta_0"]
         if self.factors["delta_max"] is not None:
