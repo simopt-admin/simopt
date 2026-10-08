@@ -66,21 +66,12 @@ class InterpolationSet:
         self.base_x = base_x.copy()
         # points[0] is always the current center point at construction time
         self.points: list[InterpolationPoint] = [InterpolationPoint(np.zeros(dim), base_solution)]
-        self.kopt = 0  # index of best point (by raw objective, sign applied by caller)
-
+        
     def size(self) -> int:
         return len(self.points)
 
     def is_complete(self) -> bool:
         return self.size() == self.num_pts
-
-    def xopt_dist(self) -> np.ndarray:
-        """Best point's displacement from base_x."""
-        return self.points[self.kopt].x_dist
-
-    def xopt_abs(self) -> np.ndarray:
-        """Best point's coordinates, in absolute (problem) space."""
-        return self.base_x + self.points[self.kopt].x_dist
 
     def solution_at(self, k: int) -> Solution:
         return self.points[k].solution
@@ -95,11 +86,7 @@ class InterpolationSet:
         for pt in self.points:
             pt.x_dist = pt.x_dist - shift
         self.base_x = new_base_x.copy()
-    
-    def reduce_to_trust_region(self, delta_k: float) -> None:
-        """Remove points whose displacement from base_x falls outside the trust region.
-            Only called when recenter_mode == 'reduce'."""
-        self.points = [pt for pt in self.points if norm(pt.x_dist) <= delta_k]        
+     
 
     def add_point(
         self, x_dist: np.ndarray, solution: Solution, victim_idx: int | None = None
@@ -117,37 +104,18 @@ class InterpolationSet:
         dists = [norm(pt.x_dist) for pt in self.points]
         return int(np.argmax(dists))
     
-    
-
-    def recompute_kopt(self, neg_minmax: int) -> None:
-        """Caller supplies the sign convention of optimization problem"""
-        values = [neg_minmax * self.raw_obj_mean(k) for k in range(self.size())]
-        self.kopt = int(np.argmin(values))
         
     def recenter(
         self,
         new_base_x: np.ndarray,
         new_incumbent_solution: Solution,
-        delta_k: float,
-        neg_minmax: int,
-        recenter_mode: str,
         victim_idx: int | None = None
     ) -> None:
         """Recenter the set on a new incumbent: shift coordinates, optionally
-        drop out-of-radius points, insert the new incumbent, and refresh kopt.
-        This is the single entry point the solver calls on a successful step --
-        it exists so shift_base/reduce_to_trust_region/add_point/recompute_kopt
-        can't be sequenced inconsistently across call sites."""
+        drop out-of-radius points, insert the new incumbent."""
         self.shift_base(new_base_x)
-    
-        if recenter_mode == "reduce":
-            self.reduce_to_trust_region(delta_k)
-        elif recenter_mode != "shift":
-            raise ValueError(f"Unknown recenter_mode: {recenter_mode!r}")
-    
         # New incumbent sits at displacement 0 from itself
         self.add_point(np.zeros(self.dim), new_incumbent_solution, victim_idx = victim_idx)
-        self.recompute_kopt(neg_minmax) # kopt currently not used for anything, we use x_k for interopolation update
         
     def _coordinate_offset(self, slot_idx: int, delta_k: float) -> np.ndarray:
         """Generate the displacement for interpolation slot `slot_idx` using plain
@@ -185,8 +153,8 @@ class InterpolationSet:
         fval = np.array([neg_minmax * self.raw_obj_mean(k) for k in range(self.size())])
         return y_var, fval
         
-class SQPASTRODFConfig(SolverConfig):
-    """Configuration for ASTRO-DF solver."""
+class CASTRODFConfig(SolverConfig):
+    """Configuration for C-ASTRO-DF solver."""
 
     eta_1: Annotated[
         float,
@@ -219,26 +187,9 @@ class SQPASTRODFConfig(SolverConfig):
     lambda_min: Annotated[
         int, Field(default=5, gt=2, description="minimum sample size")
     ]
-    easy_solve: Annotated[
-        bool,
-        Field(
-            default=True,
-            description="solve the subproblem approximately with Cauchy point",
-        ),
-    ]
+
     reuse_points: Annotated[
-        bool, Field(default=True, description="reuse the previously visited points")
-    ]
-    ps_sufficient_reduction: Annotated[
-        float,
-        Field(
-            default=0.1,
-            ge=0,
-            description=(
-                "use pattern search if with sufficient reduction, "
-                "0 always allows it, large value never does"
-            ),
-        ),
+        bool, Field(default=True, description="reuse the previously visited points (only applicable when reuse_interpolation_set = False)")
     ]
     mu: Annotated[
         float,
@@ -254,6 +205,24 @@ class SQPASTRODFConfig(SolverConfig):
         Field(
             default=0.5,
             description="portion of the trust-region dedicated to the normal step",
+        ),
+    
+    
+    ]
+    easy_solve_normal: Annotated[
+        bool,
+        Field(
+            default=False,
+            description="Find normal step using the Cauchy point",
+        ),
+    
+    
+    ]
+    easy_solve_tangent: Annotated[
+        bool,
+        Field(
+            default=False,
+            description="Find tangent step using the Cauchy point",
         ),
     
     
@@ -312,15 +281,7 @@ class SQPASTRODFConfig(SolverConfig):
     
     
     ]
-    sigma_b_increase: Annotated[
-        float,
-        Field(
-            default=0.01,
-            description="multiple to increase sigma_b by each iteration, sigma_b_k = sigma_min + sigma_b_incrase*k",
-        ),
-    
-    
-    ]
+
     feas_tol: Annotated[
         float,
         Field(
@@ -363,11 +324,7 @@ class SQPASTRODFConfig(SolverConfig):
     Field(default=False,
           description="maintain a persistent interpolation set across iterations, reusing all valid points instead of rebuilding from scratch each time"),
     ]
-    recenter_mode: Annotated[
-    str,
-    Field(default="shift", 
-          description="how to recenter the persistent interpolation set on a new incumbent: 'shift' keeps all points (cheapest), 'reduce' discards points outside the new trust region (costlier, tighter geometry)"),
-    ]
+
     use_lagrange_geometry: Annotated[
     bool,
     Field(
@@ -382,13 +339,6 @@ class SQPASTRODFConfig(SolverConfig):
             description="trigger a Lagrange-based point replacement when max |L_k(x)| exceeds this value (py-bobyqa-style default; a well-poised set keeps this near 1)",
         ),
     ]   
-    theta_decrease: Annotated[
-        float,
-        Field(
-            default=0.8,
-            description="trigger a Lagrange-based point replacement when max |L_k(x)| exceeds this value (py-bobyqa-style default; a well-poised set keeps this near 1)",
-        ),
-    ]
     dogleg: Annotated[
         bool,
         Field(
@@ -412,13 +362,13 @@ class SQPASTRODFConfig(SolverConfig):
         return self
 
 
-class SQPASTRODF(Solver):
-    """The ASTRO-DF solver."""
+class CASTRODF(Solver):
+    """The C-ASTRO-DF solver."""
 
-    name: str = "SQPASTRODF"
-    config_class: ClassVar[type[SolverConfig]] = SQPASTRODFConfig
-    class_name_abbr: ClassVar[str] = "SQPASTRODF"
-    class_name: ClassVar[str] = "SQP-ASTRO-DF"
+    name: str = "CASTRODF"
+    config_class: ClassVar[type[SolverConfig]] = CASTRODFConfig
+    class_name_abbr: ClassVar[str] = "CASTRODF"
+    class_name: ClassVar[str] = "C-ASTRO-DF"
     objective_type: ClassVar[ObjectiveType] = ObjectiveType.SINGLE
     constraint_type: ClassVar[ConstraintType] = ConstraintType.DETERMINISTIC
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
@@ -606,45 +556,27 @@ class SQPASTRODF(Solver):
         # the trust region, use the coordinate basis
         if (
             not self.reuse_points
-            or (
-                norm(
-                    np.array(self.incumbent_x)
-                    - np.array(self.visited_pts_list[f_index].x)
-                )
-                == 0
-            )
+            or norm(
+                np.array(self.incumbent_x)
+                - np.array(self.visited_pts_list[f_index].x)
+            ) == 0
             or self.iteration_count == 1
         ):
-            # Construct the interpolation set
             var_y = self.get_coordinate_basis_interpolation_points(
-                self.incumbent_x, delta_k, self.problem, 
+                self.incumbent_x, delta_k, self.problem
             )
-            var_z = self.get_coordinate_basis_interpolation_points(
-                tuple(np.zeros(self.problem.dim)), delta_k, self.problem, apply_bounds=False
-            )
-        # Else if we will reuse one design point (k > 1)
         else:
             visited_pts_array = np.array(self.visited_pts_list[f_index].x)
             diff_array = visited_pts_array - np.array(self.incumbent_x)
-            first_basis = (diff_array) / norm(diff_array)
-            # if first_basis has some non-zero components, use rotated basis for those
-            # dimensions
+            first_basis = diff_array / norm(diff_array)
             rotate_list = np.nonzero(first_basis)[0]
             rotate_matrix = self.get_rotated_basis(first_basis, rotate_list)
-
-            # if first_basis has some zero components, use coordinate basis for those
-            # dimensions
+        
             for i in range(self.problem.dim):
                 if first_basis[i] == 0:
                     coord_vector = self.get_coordinate_vector(self.problem.dim, i)
-                    rotate_matrix = np.vstack(
-                        (
-                            rotate_matrix,
-                            coord_vector,
-                        )
-                    )
-
-            # construct the interpolation set
+                    rotate_matrix = np.vstack((rotate_matrix, coord_vector))
+        
             var_y = self.get_rotated_basis_interpolation_points(
                 np.array(self.incumbent_x),
                 delta_k,
@@ -652,16 +584,13 @@ class SQPASTRODF(Solver):
                 np.array(rotate_matrix),
                 self.visited_pts_list[f_index].x,
             )
-            var_z = self.get_rotated_basis_interpolation_points(
-                np.zeros(self.problem.dim),
-                delta_k,
-                self.problem,
-                np.array(rotate_matrix),
-                np.array(self.visited_pts_list[f_index].x) - np.array(self.incumbent_x),
-                apply_bounds = False
-            )
-
+        
+        # Displacements from the incumbent at the points actually simulated
+        incumbent = np.asarray(self.incumbent_x, dtype=float)
+        var_z = [[np.asarray(pt[0], dtype=float) - incumbent] for pt in var_y]
+        
         return var_y, var_z
+
 
     def _choose_exiting_at_step(self, matrix_inverse: np.ndarray, d: np.ndarray, delta_k: float) -> int:
         """After adding x_k, choose point to remove from interpolation set"""
@@ -686,48 +615,7 @@ class SQPASTRODF(Solver):
         # slice uscaled matrix
         return matrix_inverse[:, k]    
 
-    def _maximize_abs_lagrange_old(self, coeffs: np.ndarray, delta_k: float) -> tuple[np.ndarray, float]:
-        """Find the displacement x (within the trust-region ball and box constraints)
-        that maximizes |L(x)| for a Lagrange polynomial given by `coeffs - note this version has been replaced
-        with an approximate version that has much smaller runtime"""
-        dim = self.problem.dim
     
-        def make_objective(sign: float):
-            # run lagrange coeffs through model at given x since lagrange poly matches structure of model 
-            def objective(x: np.ndarray) -> float:
-                return sign * self.evaluate_model(x, coeffs)
-            return objective
-    
-        def norm_x(x: np.ndarray) -> float:
-            return float(norm(x))
-    
-        tr_constraint = NonlinearConstraint(norm_x, 0, delta_k)
-        
-        # respect bound constraints to avoid breaking simulations
-        box_bounds = [
-            (
-                self.problem.lower_bounds[i] - self.interp_set.base_x[i],
-                self.problem.upper_bounds[i] - self.interp_set.base_x[i],
-            )
-            for i in range(dim)
-        ]
-    
-        best_x = None
-        best_abs_val = -np.inf
-        # find min and max of objective and take largest absolute value to avoid maximizing a norm
-        for sign in (1.0, -1.0):
-            result: OptimizeResult = minimize(
-                make_objective(sign),
-                np.zeros(dim),
-                bounds=box_bounds,
-                constraints=[tr_constraint],
-            )
-            abs_val = abs(self.evaluate_model(result.x, coeffs))
-            if abs_val > best_abs_val:
-                best_abs_val = abs_val
-                best_x = result.x
-    
-        return best_x, best_abs_val
     
     def _maximize_abs_lagrange(self, coeffs: np.ndarray, delta_k: float) -> tuple[np.ndarray, float]:
         """Approximate maximizer of |L(x)| within the trust-region ball and box
@@ -777,7 +665,7 @@ class SQPASTRODF(Solver):
 
         return best_x, best_abs_val
     
-    def _improve_geometry(self, matrix_inverse: np.ndarray, delta_k: float, pilot_run: int) -> None:
+    def _improve_geometry(self, matrix_inverse: np.ndarray, delta_k: float, pilot_run: int) -> bool:
         """If distance to farthest point exceeds threshold, replace with point intended to impove geometry"""
         victim_idx = self.interp_set._choose_exiting_by_dist()
         victim_dist = self.interp_set.points[victim_idx].x_dist
@@ -794,30 +682,6 @@ class SQPASTRODF(Solver):
         
         return True
 
-    def _choose_exiting_lagrange(
-        self, matrix_inverse: np.ndarray, delta_k: float
-    ) -> tuple[int, np.ndarray, float]:
-        """Lagrange-poisedness-based eviction: for each point k currently in the
-        set, find the displacement that maximizes |L_k(x)| in the trust region.
-        The point with the largest such value is the worst-poised  -- return its index along with the
-        maximizing displacement and value"""
-        worst_idx = None
-        worst_x = None
-        worst_val = -np.inf
-        for k in range(self.interp_set.size()):
-            coeffs = self.lagrange_polynomial_coeffs(matrix_inverse, k)
-            x_max, max_abs_val = self._maximize_abs_lagrange(coeffs, delta_k)
-            if max_abs_val > worst_val:
-                worst_val = max_abs_val
-                worst_x = x_max
-                worst_idx = k
-            if worst_idx is None:
-                logging.warning(
-                    "Lagrange eviction scan found no valid candidate "
-                    "(all points returned nan) -- skipping geometry improvement this pass"
-                )
-                return None, None, -np.inf
-        return worst_idx, worst_x, worst_val
     
     def _replace_worst_point(
             self,
@@ -844,14 +708,7 @@ class SQPASTRODF(Solver):
         actual_dist = np.array(x) - self.interp_set.base_x  # may differ from replacement_dist due to clamping
         self.interp_set.add_point(actual_dist, new_solution, victim_idx=victim_idx)
         
-        # victim_idx may have been kopt so recompute
-        neg_minmax = -self.problem.minmax[0]
-        self.interp_set.recompute_kopt(neg_minmax)
 
-    def _simulate_surviving_points(self, delta_k: float, pilot_run: int) -> None:
-        """Re-run adaptive sampling on every point currently in the set."""
-        for k in range(self.interp_set.size()):
-            self.perform_adaptive_sampling(self.interp_set.solution_at(k), pilot_run, delta_k)
 
 
     def perform_adaptive_sampling(
@@ -1059,7 +916,7 @@ class SQPASTRODF(Solver):
                     interpolation_solns.append(adapt_soln)
     
                 # construct the model and obtain the model coefficients
-                q, grad, hessian, matrix_inverse = self.get_model_coefficients(var_z, fval, self.problem)
+                grad, hessian, matrix_inverse = self.get_model_coefficients(var_z, fval, self.problem)
                 # update diag hessian with lagrange and compute lagrange multipliers
                 H, self.lam = self.create_lagrange_hessian(hessian, grad) 
                 # build problem matrices
@@ -1083,7 +940,6 @@ class SQPASTRODF(Solver):
         return (
             fval,
             var_y,
-            q,
             grad,
             hessian,
             interpolation_solns,
@@ -1123,16 +979,11 @@ class SQPASTRODF(Solver):
         while True:
             delta_k = delta * w**model_iterations
             model_iterations += 1
-    
-            # Model-criticality check on the *previous* fit's geometry happens
-            # after fitting below -- this pass first ensures the set matches delta_k.
-            if self.recenter_mode == "reduce":
-                self.interp_set.reduce_to_trust_region(delta_k)
             
             self._simulate_missing_indexes(delta_k, pilot_run)
             #self._simulate_surviving_points(delta_k, pilot_run)
     
-            inverse_mult, grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
+            grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
             # update diag hessian with lagrange and compute lagrange multipliers
             H, self.lam = self.create_lagrange_hessian(hessian, grad) 
             # build problem matrices
@@ -1142,7 +993,7 @@ class SQPASTRODF(Solver):
                 set_updated = self._improve_geometry(matrix_inverse, delta_k, pilot_run)
                 # re-fit model coefficients if set has been updated
                 if set_updated:
-                    inverse_mult, grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
+                    grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
                     H, self.lam = self.create_lagrange_hessian(
                         hessian, grad
                     )
@@ -1160,7 +1011,7 @@ class SQPASTRODF(Solver):
         fval = list(fval_arr)
         interpolation_solns = [self.interp_set.solution_at(k) for k in range(self.interp_set.size())]
     
-        return fval, list(y_var), inverse_mult, grad, hessian, interpolation_solns, matrix_inverse
+        return fval, list(y_var), grad, hessian, interpolation_solns, matrix_inverse
     
     # this method is for old trust region interpolation construction
     def get_model_coefficients(
@@ -1176,11 +1027,14 @@ class SQPASTRODF(Solver):
             fval (list): Corresponding function values for each design point.
             problem (Problem): Problem instance providing dimension and structure.
 
-        Returns:
-            tuple[np.ndarray, np.ndarray, np.ndarray]: A tuple containing:
-                - q (np.ndarray): Coefficients of the fitted local quadratic model.
-                - y_mean (np.ndarray): Mean of the y_var design points.
-                - fval_mean (np.ndarray): Mean of the function values.
+       Returns:
+        tuple[np.ndarray, np.ndarray, np.ndarray]:
+            - grad (np.ndarray): Model gradient g at the origin, shape (dim,).
+            - hessian (np.ndarray): Coefficients h of the squared terms, shape (dim,).
+              The model's diagonal Hessian is 2 * h.
+            - matrix_inverse (np.ndarray): Inverse (or pseudoinverse) of the design
+              matrix M. Column k holds the coefficients of the kth Lagrange
+              polynomial of the point set, used for interpolation management.
         """
         num_design_points = 2 * problem.dim + 1
 
@@ -1205,7 +1059,7 @@ class SQPASTRODF(Solver):
         grad = inverse_mult[1:decision_var_idx].reshape(problem.dim)
         hessian = inverse_mult[decision_var_idx:num_design_points].reshape(problem.dim)
 
-        return inverse_mult, grad, hessian, matrix_inverse
+        return grad, hessian, matrix_inverse
     
     # this method is for new interpolation handling
     def get_model_coefficients_persistent(self, delta_k: float) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -1250,7 +1104,7 @@ class SQPASTRODF(Solver):
         grad = inverse_mult[1:decision_var_idx].reshape(dim)
         hessian = inverse_mult[decision_var_idx:num_design_points].reshape(dim)
     
-        return inverse_mult, grad, hessian, matrix_inverse
+        return grad, hessian, matrix_inverse
 
     def get_coordinate_basis_interpolation_points(
         self, x_k: tuple[int | float, ...], delta: float, problem: Problem, apply_bounds=True
@@ -1331,62 +1185,6 @@ class SQPASTRODF(Solver):
 
         return y_var
 
-    def update_hessian(
-        self, candidate_solution: Solution, grad: np.ndarray, s: np.ndarray
-    ) -> None:
-        """Performs Hessian update if gradients are enabled."""
-        epsilon = 1e-15
-        if not hasattr(self, "hessian_skip_count"):
-            self.hessian_skip_count = 0
-
-        def handle_hessian_skip(variable: str, value: float | np.ndarray) -> None:
-            """Handles skipping Hessian update if gradients are near zero."""
-            self.hessian_skip_count += 1
-            message = (
-                f"{variable} near zero ({value}); "
-                "skipping Hessian update to avoid numerical instability. "
-                f"({self.hessian_skip_count} consecutive skips)"
-            )
-            logging.debug(message)
-            if self.hessian_skip_count == 10:
-                message = (
-                    "Hessian update skipped 10 consecutive times. "
-                    "Check optimization stability."
-                )
-                logging.info(message)
-            # If Hessian updates fail too often, the current approximation may
-            # be useless or unstable. Resetting can prevent further instability
-            # elif self.hessian_skip_count == 50:
-            #     message = (
-            #         "Hessian update skipped 50 consecutive times. "
-            #         "Resetting Hessian approximation."
-            #     )
-            #     logging.warning(message)
-            #     self.h_k = np.identity(self.problem.dim)
-            #     self.hessian_skip_count = 0
-
-        candidate_grad = (
-            -1
-            * self.problem.minmax[0]
-            * candidate_solution.objectives_gradients_mean[0]
-        )
-        y_k = candidate_grad - grad
-        y_ks = y_k @ s
-
-        if np.isclose(y_ks, 0, atol=epsilon):
-            handle_hessian_skip("y_ks", y_ks)
-            return
-
-        r_k = 1.0 / y_ks
-        h_s_k = self.h_k @ s
-        s_h_s_k = s @ h_s_k
-
-        if np.all(np.isclose(s_h_s_k, 0, atol=epsilon)):
-            handle_hessian_skip("s_h_s_k", s_h_s_k)
-            return
-        self.h_k += np.outer(y_k, y_k) * r_k - np.outer(h_s_k, h_s_k) / s_h_s_k
-        # Reset counter on successful update
-        self.hessian_skip_count = 0
         
     def estimate_lagrange_mult(self, grad, A_eq = None, A_ineq =None, c_ineq = None) -> np.array():
         """
@@ -1417,7 +1215,7 @@ class SQPASTRODF(Solver):
                 ub.extend([np.inf]*n_eq)
 
             #determine if constraint is active
-            active = c_ineq >= self.feas_tol
+            active = c_ineq >= -1*self.feas_tol
             A_active = A_ineq[active]
             
             n_active = A_active.shape[0] #get number of active inequality constraints
@@ -1534,7 +1332,6 @@ class SQPASTRODF(Solver):
         solve_normal_subproblem: OptimizeResult = minimize(
             normal_subproblem,
             np.zeros(self.dim),
-            #method="trust-constr",
             constraints=const,
             tol = 1e-8
         )
@@ -1575,22 +1372,16 @@ class SQPASTRODF(Solver):
         return s1 + tau * d
     
     def solve_normal_step(self):
-        #print(f"[normal_step] feas={self.feas}, norm={norm(self.feas):.3e}, "
-          #f"feas_tol={self.feas_tol}")  # TEMP debug
-        # only determine normal step if current solution is infeasible
         if norm(self.feas) <= self.feas_tol:
             s_normal = np.zeros(self.dim)
             s_normal_rescale = s_normal
         else:
             delta_hat = self.delta_k * self.a_normal
-            check = False
-            if check: #solve using Cauchy step
+            if self.easy_solve_normal: #solve using Cauchy step
                 s_normal_rescale = self._cauchy_point_normal(delta_hat)
             elif self.dogleg: # solve using dogleg method
                 s2 = lsq_linear(self.R, -1*self.feas).x
                 norm_feasible =  norm(s2) <= delta_hat 
-                #print("s2", s2)
-                #print("norm_feasible", norm_feasible)
                 if self.problem_type != "eq_only":
                     ftb = -1 * self.a_normal * self.epsilon * np.ones(self.n_v)
                     ftb_feasible = True
@@ -1601,13 +1392,10 @@ class SQPASTRODF(Solver):
                     feasible = norm_feasible   
                 if feasible: #if global minimizer in trust-region accept
                     s_normal_rescale = s2
-                    #print("Norm feasible set normal to s2")
                 else:
-                    #print("Not feasible solve s1")
                     s1 = self.solve_exact_normal_subproblem(delta_hat)
                     s_normal_rescale = self._normal_dogleg(s1, s2, delta_hat) 
-                    #print("s1", s1)
-                    #print("dogleg", s_normal_rescale)
+
             else:
                s_normal_rescale =  self.solve_exact_normal_subproblem(delta_hat)
                
@@ -1628,11 +1416,8 @@ class SQPASTRODF(Solver):
         else:
             a_tangent = self.a_tangent
             
-        # check if there is relevent second degree curvature
-        curve = np.max(np.abs(np.diag(self.W))) if self.W.shape[0] > 0 else 0.0
-        check = True
         #check = curve < .01
-        if check: # no relevent curvature, peform Cauchy step
+        if self.easy_solve_tangent: # no relevent curvature, peform Cauchy step
             delta_hat = a_tangent*self.delta_k
             s_tangent_rescale = self._cauchy_point_tangent(s_normal, delta_hat)
         else:
@@ -1683,7 +1468,6 @@ class SQPASTRODF(Solver):
             solve_tangent_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
                 tangent_subproblem,
                 np.zeros(self.dim),
-                method="trust-constr",
                 constraints=const,
                 hess = tangent_subproblem_hess,
                 jac = tangent_subproblem_jac
@@ -1696,27 +1480,6 @@ class SQPASTRODF(Solver):
             s_tangent = np.concatenate((s_tangent_rescale[:self.n_x], s_tangent_v))
         return s_tangent, s_tangent_rescale
     
-    def evaluate_point_merit(self, x: tuple, fval: float, v: np.ndarray | None = None) -> float:
-        """Actual (non-model) merit value at an arbitrary design point x with
-        known signed objective fval = neg_minmax * objective(x). Unlike
-        evaluate_merit_model, this recomputes real constraint violations at x
-        rather than using a local linearization. If v (slack) isn't supplied
-        (e.g. for an interpolation point with no natural candidate slack), it's
-        freshly derived the same way incumbent_v is initialized."""
-        if self.problem_type == "eq_only":
-            feas = np.atleast_1d(self.problem.get_deterministic_equality_constraints(x))
-            barrier = 0.0
-        else:
-            c_ineq = np.atleast_1d(self.problem.get_deterministic_inequality_constraints(x))
-            if v is None:
-                v = np.maximum(-c_ineq, self.epsilon * np.ones(self.n_v))
-            if self.problem_type == "both":
-                c_eq = np.atleast_1d(self.problem.get_deterministic_equality_constraints(x))
-                feas = np.hstack((c_eq, c_ineq + v))
-            else:  # ineq_only
-                feas = c_ineq + v
-            barrier = -self.theta * np.sum(np.log(v))
-        return float(fval + barrier + self.sigma * norm(feas))
     
     def evaluate_point_feasibility(self, x: tuple, v: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray | None]:
         """Actual (non-model) constraint-violation vector at design point x.
@@ -1754,8 +1517,7 @@ class SQPASTRODF(Solver):
         candidate -- i.e. it is at least as good in both objective and
         feasibility, and strictly better in at least one, with the strictly-
         better quantity improving by at least ps_sufficient_reduction * delta_k**2.
-        This is a Pareto-dominance filter, not a merit-function comparison, so it
-        doesn't depend on sigma and can safely run before the sigma update."""
+        Currenlty not supported."""
         best_x, best_soln = candidate_x, candidate_solution
         best_fval, best_feas_norm = candidate_fval, candidate_feas_norm
         replaced = False
@@ -1790,10 +1552,25 @@ class SQPASTRODF(Solver):
     
     def get_constraint_info(self, x):
         """Return lhs value of equality and inequality constraints as well as Jacobians of x (tuple of decision values)"""
-        c_eq =  np.atleast_1d(self.problem.get_deterministic_equality_constraints(x))
-        c_ineq = np.atleast_1d(self.problem.get_deterministic_inequality_constraints(x))
-        A_eq = np.atleast_1d(self.problem.get_deterministic_equality_constraints_gradients(x))
-        A_ineq = self.problem.get_deterministic_inequality_constraints_gradients(x)
+        c_eq = self.problem.get_deterministic_equality_constraints(x)
+        c_ineq = self.problem.get_deterministic_inequality_constraints(x)
+        
+        # if equality constraints get gradient
+        A_eq = None
+        if c_eq is not None:
+            c_eq = np.atleast_1d(np.asarray(c_eq, dtype=float))
+            A_eq = np.asarray(
+                self.problem.get_deterministic_equality_constraints_gradients(x), dtype=float
+            ).reshape(len(c_eq), -1)
+        
+        # if inequality constraints get gradient
+        A_ineq = None
+        if c_ineq is not None:
+            c_ineq = np.atleast_1d(np.asarray(c_ineq, dtype=float))
+            A_ineq = np.asarray(
+                self.problem.get_deterministic_inequality_constraints_gradients(x), dtype=float
+            ).reshape(len(c_ineq), -1)
+
         
         return c_eq, c_ineq, A_eq, A_ineq
 
@@ -1878,7 +1655,7 @@ class SQPASTRODF(Solver):
                 lam = self.estimate_lagrange_mult(grad,A_eq = self.A_eq, A_ineq = self.A_ineq, c_ineq = self.c_ineq)
             # subtract constraint component from hessian
             for i in range(len(lam)):
-                H -= lam[i]*c_hess[i]
+                H += lam[i]*c_hess[i]
             return H, lam
     
         
@@ -1934,7 +1711,6 @@ class SQPASTRODF(Solver):
             # set barrier parameter (only used in inequality constrained problems)
             #self.theta = min(1e-2, self.delta_k)
             self.theta = self.delta_k #set theta to starting delta
-            self.theta_0 = self.delta_k
             # determine optimization type
             if self.problem.get_deterministic_equality_constraints(self.incumbent_x) is None:
                 if self.problem.get_deterministic_inequality_constraints(self.incumbent_x) is None:
@@ -1993,7 +1769,6 @@ class SQPASTRODF(Solver):
             (
                 fval,
                 y_var,
-                q,
                 grad,
                 hessian,
                 interpolation_solns,
@@ -2001,50 +1776,7 @@ class SQPASTRODF(Solver):
             ) = self.construct_model()
         
         
-        # remove easy solve
-        
-        # # solve the local model (subproblem)
-        # if self.easy_solve:
-        #     print("running easy solve...")
-        #     s_normal = np.zeros(self.problem.dim)
-        #     # Cauchy reduction
-        #     # TODO: why do we need this? Check model reduction calculation too.
-        #     # logging.debug(
-        #     #     "np.dot(np.multiply(grad, Hessian), grad) "
-        #     #     + str(np.dot(np.multiply(grad, hessian), grad))
-        #     # )
-        #     # logging.debug(
-        #     #     "np.dot(np.dot(grad, hessian), grad) "
-        #     #     + str(np.dot(np.dot(grad, hessian), grad))
-        #     # )
-        #     dot_a = np.dot(grad, hessian) if self.enable_gradient else grad * hessian
-
-        #     check_positive_definite: float = np.dot(dot_a, grad)
-
-        #     if check_positive_definite <= 0:
-        #         tau = 1.0
-        #     else:
-        #         norm_ratio = norm(grad) ** 3 / (self.delta_k * check_positive_definite)
-        #         tau = min(1.0, float(norm_ratio))
-
-        #     grad: np.ndarray = np.reshape(grad, (1, self.problem.dim))[0]
-        #     grad_norm = norm(grad)
-        #     # Make sure we don't divide by 0
-        #     if grad_norm == 0:
-        #         candidate_x = self.incumbent_x
-        #     else:
-        #         product = tau * self.delta_k * grad
-        #         adjustment = product / float(grad_norm)
-        #         candidate_x = self.incumbent_x - adjustment
-        #     # if norm(incumbent_x - candidate_x) > 0:
-        #     #     logging.debug("incumbent_x " + str(incumbent_x))
-        #     #     logging.debug("candidate_x " + str(candidate_x))
-        
-        # get lhs and Jacobian of constraints for current solution
-        # self.c_eq =  np.atleast_1d(self.problem.get_deterministic_equality_constraints(self.incumbent_x))
-        # self.c_ineq = np.atleast_1d(self.problem.get_deterministic_inequality_constraints(self.incumbent_x))
-        # self.A_eq = np.atleast_1d(self.problem.get_deterministic_equality_constraints_gradients(self.incumbent_x))
-        # self.A_ineq = self.problem.get_deterministic_inequality_constraints_gradients(self.incumbent_x)
+      
         
         # intialize slack variables for first iteration
         if self.iteration_count == 1: 
@@ -2091,6 +1823,11 @@ class SQPASTRODF(Solver):
             )
             for i in range(self.problem.dim)
         )
+        # Reflect the clamped x-step in the composite steps. The slack block is unchanged,
+        # and the x-block is identical in original and rescaled coordinates.
+        s_x_actual = np.asarray(candidate_x, dtype=float) - np.asarray(self.incumbent_x, dtype=float)
+        s[:self.n_x] = s_x_actual
+        s_rescale[:self.n_x] = s_x_actual
 
         # Store the solution (and function estimate at it) to the subproblem as a
         # candidate for the next iterate
@@ -2117,65 +1854,21 @@ class SQPASTRODF(Solver):
         
         candidate_feas_vec, _ = self.evaluate_point_feasibility(candidate_x, v=candidate_v)
         candidate_feas_norm = float(norm(candidate_feas_vec))
-
-        candidate_x, candidate_solution, fval_tilde, candidate_feas_norm, ps_replaced = self._pattern_search(
-            fval, interpolation_solns, candidate_x, candidate_solution,
-            fval_tilde, candidate_feas_norm,
-        )
-        if ps_replaced:
-            # candidate_v no longer matches (it came from the composite step's
-            # slack, not this interpolation point) -- re-derive it fresh
-            if self.problem_type != "eq_only":
-                _, candidate_v = self.evaluate_point_feasibility(candidate_x) #updating v for inequality problems could become weird here
-            
-        # perform pattern search using current merit function 
-        # replace the candidate x if the interpolation set has lower objective function
-        # value and with sufficient reduction (pattern search)
-        # also if the candidate solution's variance is high that could be caused by
-        # stopping early due to exhausting budget
-        # logging.debug(
-        #     "cv "
-        #     + str(
-        #         candidate_solution.objectives_var
-        #         / (candidate_solution.n_reps * candidate_solution.objectives_mean**2)
-        #     )
-        # )
-        # logging.debug("fval[0] - min(fval) " + str(fval[0] - min(fval)))
         
-        #Disable pattern search for now
-
-        # if not self.enable_gradient:
-        #     min_fval = min(fval)
-        #     sufficient_reduction = (fval[0] - min_fval) >= self.factors[
-        #         "ps_sufficient_reduction"
-        #     ] * self.delta_k**2
-
-        #     condition_met = min_fval < fval_tilde and sufficient_reduction
-
-        #     high_variance = False
-        #     if not condition_met:
-        #         # Treat variance as low if mean is zero to avoid division by
-        #         # zero (zero mean typically indicates negligible uncertainty)
-        #         if candidate_solution.objectives_mean[0] == 0:
-        #             logging.debug(
-        #                 "Candidate solution objectives_mean is zero, "
-        #                 "skipping variance check."
-        #             )
-        #         else:
-        #             high_variance = (
-        #                 candidate_solution.objectives_var[0]
-        #                 / (
-        #                     candidate_solution.n_reps
-        #                     * candidate_solution.objectives_mean[0] ** 2
-        #                 )
-        #             ) > 0.75
-
-        #     if condition_met or high_variance:
- 
-        #         fval_tilde = min_fval
-        #         min_idx = np.argmin(fval)
-        #         candidate_x = y_var[min_idx][0]
-        #         candidate_solution = interpolation_solns[min_idx]
+        
+        # pattern search currently not supported
+        
+        # candidate_x, candidate_solution, fval_tilde, candidate_feas_norm, ps_replaced = self._pattern_search(
+        #     fval, interpolation_solns, candidate_x, candidate_solution,
+        #     fval_tilde, candidate_feas_norm,
+        # )
+        # if ps_replaced:
+        #     # candidate_v no longer matches (it came from the composite step's
+        #     # slack, not this interpolation point) -- re-derive it fresh
+        #     if self.problem_type != "eq_only":
+        #         _, candidate_v = self.evaluate_point_feasibility(candidate_x) #updating v for inequality problems could become weird here
+            
+       
         
         # reduction in normal model
         m_n_reduction = norm(self.feas) -norm(self.R @ s_normal_rescale + self.feas)   
@@ -2186,7 +1879,7 @@ class SQPASTRODF(Solver):
         )
         #reduction in objective model after normal step
         #q_n_reduction = -1*(grad @ s_normal) - .5*(s_normal @ H @ s_normal)
-        if norm(s_normal) == 0: # no normal step taken so normal improvment is 0
+        if norm(s_normal) <= 0: # no normal step taken so normal improvment is 0
             sig_c_ratio = 0 # can use any value of sigma
         else:
             # objective improvement after normal step
@@ -2209,22 +1902,7 @@ class SQPASTRODF(Solver):
                 self.sigma = max(sigma_c, self.tau_1*self.sigma, self.sigma+ self.tau_2)
         else:
             self.sigma = max(self.sigma, sigma_b)
-        #print("sigma:", self.sigma)
-        # compute the success ratio rho
-        # need to update success ratio to include constraints
-        # candidate_x_arr = np.array(candidate_x)
-        # incumbent_x_arr = np.array(self.incumbent_x)
-        # s = s_normal + s_tangent
-        # do not enable gradients for now
-        # if self.enable_gradient:
-        #     model_reduction = -np.dot(s, grad) - 0.5 * np.dot(np.dot(s, H), s)
-        # else:
-        #     # compute objective model reduction 
-        #     model_reduction = self.evaluate_model(
-        #         np.zeros(self.problem.dim),
-        #         q,
-        #     ) - self.evaluate_model(s, q)
-        #     # compute merit model reduction
+      
             
         # predicted reduction in merit model
         pred_merit_reduction = -1*self.grad_term @ s_rescale - 0.5*s_rescale @ self.W @ s_rescale + self.sigma*(m_n_reduction)
@@ -2240,12 +1918,6 @@ class SQPASTRODF(Solver):
             actual_barrier_reduction = 0
         else: # problem has inequality constraints
             # extract candidate slack variables
-            if candidate_v[0] <= 0:
-                print("curve", np.max(np.abs(np.diag(self.W))) if self.W.shape[0] > 0 else 0.0)
-                print("incum v", self.incumbent_v)
-                print("candidate", candidate_v)
-                print("n_rescale", s_normal_rescale)
-                print("t_rescale", s_tangent_rescale)
             if norm(candidate_v) <= 1e-12: # slack variables essentially 0
                 actual_barrier_reduction = 0
             else:
@@ -2264,34 +1936,17 @@ class SQPASTRODF(Solver):
         # actual merit reduction
         actual_merit_reduction = obj_reduction + actual_barrier_reduction + feas_reduction
             
-            
-            
-            # merit_model_reduction = m_t_reduction + self.sigma*(m_n_reduction) + model_reduction
-            # merit_reduction = fval[0] - fval_tilde + self.sigma*(norm(c)-norm(candidate_c))
+    
         
         # get trust region ratio
         rho = 0 if pred_merit_reduction <= 0 else actual_merit_reduction / pred_merit_reduction
         
         
-        # print("s_normal:", s_normal_rescale)
-        # print("s_tangent:", s_tangent_rescale)
-        # print("s:", s_rescale )
-        # print("candidate:", candidate_x)
-
-        # check crit measure
-        # if self.sampling_method != "IBO":
-        #     crit_ok = self.crit_measure >= self.mu*self.delta_k
-        # else:
-        #     crit_ok = True
+       
         successful = rho >= self.eta_1
-      #   print(f"[iterate {self.iteration_count}] rho={float(rho):.3e}, "
-      # f"pred={float(pred_merit_reduction):.3e}, actual={float(actual_merit_reduction):.3e}, "
-      # f"delta_k={float(self.delta_k):.3e}, successful={successful}")
-        #print("delta", self.delta_k)
-        # successful: accept
+     
         if successful:
-            # print("iteration", self.iteration_count)
-            # print("candidate:", candidate_x)
+
             self.incumbent_x = candidate_x
             self.incumbent_v = candidate_v
             
@@ -2304,21 +1959,14 @@ class SQPASTRODF(Solver):
             # very successful: expand
             if rho >= self.eta_2:
                 self.delta_k = min(self.gamma_1 * self.delta_k, self.delta_max)
-
-            if self.enable_gradient:
-                self.update_hessian(candidate_solution, grad, s)
                
             # update interpolation set on successful iterations
             if self.reuse_interpolation_set:
-                neg_minmax = -self.problem.minmax[0]
                 d = np.array(candidate_x, dtype=float) - self.interp_set.base_x
                 victim_idx = self._choose_exiting_at_step(matrix_inverse, d, self.delta_k)
                 self.interp_set.recenter(
                     new_base_x=np.array(candidate_x, dtype=float),
                     new_incumbent_solution=candidate_solution,
-                    delta_k=self.delta_k,
-                    neg_minmax=neg_minmax,
-                    recenter_mode=self.recenter_mode,
                     victim_idx=victim_idx
                 )
                 print("new x", self.incumbent_solution.x)
@@ -2345,7 +1993,6 @@ class SQPASTRODF(Solver):
         self.eta_2: float = self.factors["eta_2"]
         self.gamma_1: float = self.factors["gamma_1"]
         self.gamma_2: float = self.factors["gamma_2"]
-        self.easy_solve: bool = self.factors["easy_solve"]
         self.reuse_points: bool = self.factors["reuse_points"]
         self.lambda_min: int = self.factors["lambda_min"]
         self.mu : int = self.factors["mu"]
@@ -2356,17 +2003,15 @@ class SQPASTRODF(Solver):
         self.tau_2 : int = self.factors["tau_2"]
         self.sigma_min : int = self.factors["sigma_min"]
         self.sigma_b_max : int = self.factors["sigma_b_max"]
-        self.sigma_b_increase : float = self.factors["sigma_b_increase"]
         self.feas_tol : float = self.factors["feas_tol"]
         self.sampling_method : str = self.factors["sampling_method"]
         self.epsilon : str = self.factors["epsilon"]
         self.reuse_interpolation_set: bool = self.factors["reuse_interpolation_set"]
-        self.recenter_mode: str = self.factors["recenter_mode"]
         self.use_lagrange_geometry: bool = self.factors["use_lagrange_geometry"]
         self.dist_threshold: str = self.factors["dist_threshold"]
-        self.theta_decrease : float = self.factors["theta_decrease"]
-        self.ps_sufficient_reduction: float = self.factors["ps_sufficient_reduction"]
         self.dogleg: bool = self.factors["dogleg"]
+        self.easy_solve_normal: bool = self.factors["easy_solve_normal"]
+        self.easy_solve_tangent: bool = self.factors["easy_solve_tangent"]
         self.kappa_scale: float = self.factors["kappa_scale"]
         if self.factors["delta_0"] is not None:
             self.delta_k : float = self.factors["delta_0"]
