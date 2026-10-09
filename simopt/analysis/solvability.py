@@ -52,11 +52,12 @@ def cdf(
 
 
 def _crossing_times(df: pd.DataFrame, solve_tolerance: float) -> list[float]:
-    solved = df.loc[df["objective"] < solve_tolerance, ["mrep", "budget"]]
-    first_hit = solved.groupby("mrep")["budget"].min()
-    # The reindex is needed to handle the case where some mreps did not solve the
-    # problem.
-    return first_hit.reindex(df["mrep"].unique(), fill_value=np.inf)
+    solved = df["objective"].to_numpy() < solve_tolerance
+    # Mreps that did not solve the problem keep an infinite crossing time.
+    mreps, inverse = np.unique(df["mrep"].to_numpy(), return_inverse=True)
+    crossings = np.full(len(mreps), np.inf)
+    np.minimum.at(crossings, inverse[solved], df["budget"].to_numpy()[solved])
+    return crossings.tolist()
 
 
 def quantile(
