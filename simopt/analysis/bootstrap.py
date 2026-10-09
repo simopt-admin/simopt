@@ -55,10 +55,8 @@ def _bootstrap_mrep(
     rng: MRG32k3a,
     crn_across_budget: bool,
     crn_across_macroreps: bool,
-) -> pd.DataFrame:
+) -> tuple[np.ndarray, np.ndarray]:
     """Bootstrap a single macroreplication."""
-    budgets = mrep_data["budget"]
-    solutions = mrep_data["solution"]
     objectives = mrep_data["objective"]
     stochastic_constraints = mrep_data["stochastic_constraints"]
     n_steps = objectives.shape[0]
@@ -67,21 +65,10 @@ def _bootstrap_mrep(
     use_special_indices = crn_across_budget and not crn_across_macroreps
     special_indices = rng.choices(range(n_preps), k=n_preps) if use_special_indices else None
 
-    data = []
-    for i in range(n_steps):
+    all_indices = []
+    for _ in range(n_steps):
         indices = special_indices if use_special_indices else rng.choices(range(n_preps), k=n_preps)
-
-        bootstrap_objective = float(np.mean(objectives[i, indices]))
-        bootstrap_stochastic_constraints = np.mean(stochastic_constraints[i, indices], axis=0)
-
-        datum = {
-            "step": i,
-            "budget": budgets[i],
-            "solution": solutions[i],
-            "objective": bootstrap_objective,
-            "stochastic_constraints": bootstrap_stochastic_constraints,
-        }
-        data.append(datum)
+        all_indices.append(indices)
 
         if crn_across_budget and not use_special_indices:
             rng.reset_subsubstream()
@@ -92,7 +79,11 @@ def _bootstrap_mrep(
         else:
             rng.advance_subsubstream()
 
-    return pd.DataFrame.from_records(data)
+    all_indices = np.array(all_indices)
+    steps = np.arange(n_steps)[:, None]
+    bootstrap_objective = objectives[steps, all_indices].mean(axis=1)
+    bootstrap_stochastic_constraints = stochastic_constraints[steps, all_indices].mean(axis=1)
+    return bootstrap_objective, bootstrap_stochastic_constraints
 
 
 def _transform_bootstrap_data(
@@ -141,18 +132,29 @@ def _bootstrap_sample(
         crn_across_x0_xstar,
     )
 
-    dfs = []
-    for i, mrep in enumerate(bootstrap_mreps):
-        bootstrap_df = _bootstrap_mrep(
+    objectives = []
+    stochastic_constraints = []
+    for mrep in bootstrap_mreps:
+        bootstrap_objective, bootstrap_stochastic_constraints = _bootstrap_mrep(
             data[mrep],
             rng,
             crn_across_budget,
             crn_across_macroreps,
         )
-        bootstrap_df["mrep"] = i
-        dfs.append(bootstrap_df)
+        objectives.append(bootstrap_objective)
+        stochastic_constraints.append(bootstrap_stochastic_constraints)
 
-    full_df = pd.concat(dfs, ignore_index=True)
+    n_steps = [len(data[mrep]["budget"]) for mrep in bootstrap_mreps]
+    full_df = pd.DataFrame(
+        {
+            "step": np.concatenate([np.arange(n) for n in n_steps]),
+            "budget": np.concatenate([data[mrep]["budget"] for mrep in bootstrap_mreps]),
+            "solution": np.concatenate([data[mrep]["solution"] for mrep in bootstrap_mreps]),
+            "objective": np.concatenate(objectives),
+            "stochastic_constraints": list(np.concatenate(stochastic_constraints)),
+            "mrep": np.repeat(np.arange(len(bootstrap_mreps)), n_steps),
+        }
+    )
     return AnalysisInput(
         full_df=full_df,
         x0=analysis_input.x0,
