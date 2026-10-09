@@ -92,14 +92,17 @@ def select_df(analysis_input: AnalysisInput, normalize: bool) -> pd.DataFrame:
 
 def mean(curves: list[pd.DataFrame]) -> pd.DataFrame:
     """Average step curves over a common set of budgets."""
-    stacked = pd.concat(
-        [curve.assign(curve_id=i) for i, curve in enumerate(curves)], ignore_index=True
-    )
-    # TODO: aggfunc="max": if repeated budget rows occur in data, keep the highest
-    # attained value. But this may not be necessary.
-    pivot = stacked.pivot_table(index="budget", columns="curve_id", values="value", aggfunc="max")
-    pivot = pivot.sort_index().ffill().fillna(0.0)
-    return pd.DataFrame({"budget": pivot.index.to_numpy(), "value": pivot.mean(axis=1).to_numpy()})
+    budgets = np.unique(np.concatenate([curve["budget"].to_numpy() for curve in curves]))
+    values = np.zeros((len(budgets), len(curves)))
+    for i, curve in enumerate(curves):
+        # If repeated budget rows occur in data, keep the highest attained value.
+        curve_budgets, inverse = np.unique(curve["budget"].to_numpy(), return_inverse=True)
+        curve_values = np.full(len(curve_budgets), -np.inf)
+        np.maximum.at(curve_values, inverse, curve["value"].to_numpy())
+        # Step function: carry the last value forward, 0 before the first budget.
+        last = np.searchsorted(curve_budgets, budgets, side="right") - 1
+        values[:, i] = np.where(last >= 0, curve_values[np.maximum(last, 0)], 0.0)
+    return pd.DataFrame({"budget": budgets, "value": values.mean(axis=1)})
 
 
 def problem_bootstraps(
