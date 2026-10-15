@@ -69,6 +69,22 @@ class _RunState:
     noise_cov_mat_diagonals: np.ndarray = field(default_factory=lambda: np.array([]))
 
 
+@dataclass
+class _ThetaDesign:
+    num_u: int
+    num_d: int
+    rows_uu: list[int]
+    columns_uu: list[int]
+    dimension_ids_uu: list[int]
+    rows_ud: list[int]
+    columns_ud: list[int]
+    dimension_ids_ud: list[int]
+    rows_dd: list[int]
+    columns_dd: list[int]
+    dimension_ids_dd: list[int]
+    rearranged_tf_mat_d: sparse.csc_matrix
+
+
 class DASSO(Solver):
     """Dice and Slice Simulation Optimization (DASSO).
 
@@ -128,7 +144,7 @@ class DASSO(Solver):
         mapping = self._Mapping(decomposition, lower_bounds, upper_bounds)
 
         # Parameter estimation.
-        theta_parameters, random_effect_variances, beta_0 = self._hyperparameter_estimation(
+        theta_parameters, random_effect_variances, _ = self._hyperparameter_estimation(
             run_state, problem, ctx, mapping, decomposition
         )
 
@@ -155,247 +171,320 @@ class DASSO(Solver):
             sample_best_solution_index = run_state.design_point_indices[
                 best_solution_candidate_index
             ]
-
             # -- Dice Stage --
-            # Update random effect group.
-            random_effect_group_index = solver_rng.randrange(len(groups))
-
-            # Calculate the covariance matrix corresponding to design points, Sigma_DD
-            num_design_points = len(run_state.design_point_indices)
-            cov_mat_dd = sum(
-                group.transformed_cov_mat_dd
-                if group_index != random_effect_group_index
-                else group.random_effect_variance * np.eye(num_design_points)
-                for group_index, group in enumerate(groups)
+            random_effect_group_index, restricted_set = self._dice_stage(
+                run_state, ctx, mapping, groups, sample_best_solution_index, solver_rng
             )
-
-            # Estimate the location parameter.
-            ones_vec = np.ones(num_design_points)  # vector of ones, 1_D
-            part1 = (
-                1 / sum(np.linalg.solve(cov_mat_dd, ones_vec)) * ones_vec
-            )  # (1_D * Sigma^-1 * 1_D^T)^-1 * 1_D^T
-            part2 = np.linalg.solve(
-                cov_mat_dd, run_state.sample_means_vec_d
-            )  # Sigma^-1 * \bar{Y}_D
-            beta_0 = float(part1 @ part2)
-
-            # Get vectors needed to compute CEI for solutions in D and find
-            # Pareto-efficient points.
-            sample_means_vec_d_stand = run_state.sample_means_vec_d - beta_0  # \bar{Y}_D - beta_0
-            cond_var_of_diff_vec_d = np.zeros(
-                num_design_points
-            )  # v(x) + v(x_best) - 2 * c(x_best, x) for x in D
-            cond_mean_of_diff_vec_d = np.zeros(num_design_points)  # m(x_best) - m(x) for x in D
-
-            covariance_matrix_d = cov_mat_dd + np.diag(
-                run_state.noise_cov_mat_diagonals
-            )  # Sigma_DD + Q_epsilon^-1
-            eye_d = np.eye(num_design_points)
-            covariance_matrix_inv_d = np.linalg.solve(
-                covariance_matrix_d, eye_d
-            )  # inverse of Sigma_DD + Q_epsilon^-1
-
-            cond_dist_comp_of_diff_pareto_each_group = {}
-            for group_index, group in enumerate(groups):
-                is_random_effect = group_index == random_effect_group_index
-                comp_d, comp_pareto = group.get_cond_dist_components(
-                    sample_best_solution_index,
-                    covariance_matrix_inv_d,
-                    sample_means_vec_d_stand,
-                    is_random_effect,
-                )
-                cond_dist_comp_of_diff_pareto_each_group[group_index] = comp_pareto
-
-                cond_var_of_diff_vec_d += comp_d["var"]
-                cond_mean_of_diff_vec_d += comp_d["mean"]
-
-            # Calculate CEI for design points.
-            cond_std_of_diff_vec_d = np.sqrt(cond_var_of_diff_vec_d)  # sqrt{v(x_best, x)}
-            sample_best_index = run_state.design_point_indices.index(sample_best_solution_index)
-            cond_std_of_diff_vec_d[sample_best_index] = np.inf
-
-            stand_mean_of_diff_vec_d = (
-                cond_mean_of_diff_vec_d / cond_std_of_diff_vec_d
-            )  # [m(x_best) - m(x)] / sqrt{v(x_best, x)}
-            cei_values_d = cond_mean_of_diff_vec_d * ndtr(
-                stand_mean_of_diff_vec_d
-            ) + cond_std_of_diff_vec_d * self._standard_normal_pdf(stand_mean_of_diff_vec_d)
-            cei_values_d[sample_best_index] = 0
-            max_cei_index_d = np.argmax(cei_values_d)
-
-            # Construct Pareto frontier, set check{F}.
-            cond_mean_of_diff_vec_f = np.array([0])
-            cond_var_of_diff_vec_f = np.array([0])
-            for (
-                cond_dist_comp_of_diff_pareto_group
-            ) in cond_dist_comp_of_diff_pareto_each_group.values():
-                cond_mean_of_diff_vec_f = np.concatenate(
-                    [
-                        cond_mean_of_diff_vec_f + mean_p
-                        for mean_p in cond_dist_comp_of_diff_pareto_group["mean"]
-                    ]
-                )
-                cond_var_of_diff_vec_f = np.concatenate(
-                    [
-                        cond_var_of_diff_vec_f + var_p
-                        for var_p in cond_dist_comp_of_diff_pareto_group["var"]
-                    ]
-                )
-
-            # Calculate CEI for Pareto frontier.
-            cond_std_of_diff_vec_f = np.sqrt(cond_var_of_diff_vec_f)  # sqrt{v(x_best, x)}
-            stand_mean_of_diff_vec_f = (
-                cond_mean_of_diff_vec_f / cond_std_of_diff_vec_f
-            )  # [m(x_best) - m(x)] / sqrt{v(x_best, x)}
-            cei_values_f = cond_mean_of_diff_vec_f * ndtr(
-                stand_mean_of_diff_vec_f
-            ) + cond_std_of_diff_vec_f * self._standard_normal_pdf(stand_mean_of_diff_vec_f)
-
-            max_cei_index_f = np.argmax(cei_values_f)
-
-            # Find a slice with the largest CEI.
-            if (
-                cei_values_d[max_cei_index_d] > cei_values_f[max_cei_index_f]
-            ):  # if it is a design point
-                max_cei_solution = run_state.design_point_indices[max_cei_index_d]
-
-                best_non_g_comp = tuple(
-                    mapping.get_low_dim_comp_ind_from_sol_index(max_cei_solution, group.coord_ids)
-                    if group_index != random_effect_group_index
-                    else None
-                    for group_index, group in enumerate(groups)
-                )
-            else:
-                best_non_g_comp = ()
-                tmp = max_cei_index_f
-                for i in range(len(groups)):
-                    indices = cond_dist_comp_of_diff_pareto_each_group[i]["indices"]
-                    best_non_g_comp += (indices[tmp % len(indices)],)
-                    tmp = tmp // len(indices)
-
-            # Find the restricted set.
-            non_g_comp_as_tuple = {
-                group.coord_ids: comp for group, comp in zip(groups, best_non_g_comp, strict=True)
-            }
-            restricted_set = mapping.get_solution_indices_from_non_g_component(non_g_comp_as_tuple)
-
-            # Simulate the sample best solution.
-            self._record_simulations(run_state, [sample_best_solution_index], ctx, mapping)
-
-            # Simulate a solution from the restricted set if it does not have any
-            # solution that has been simulated.
-            if not any(sol in run_state.design_point_indices for sol in restricted_set):
-                solution_index = solver_rng.choice(restricted_set)
-                self._record_simulations(run_state, [solution_index], ctx, mapping)
-                for group in groups:
-                    group.add_design_points([solution_index])
-
             # -- Slice Stage --
-            group_g = groups[random_effect_group_index]
-
-            solutions_u, solutions_d = [], []
-            for sol in restricted_set:
-                solutions_d.append(
-                    sol
-                ) if sol in run_state.design_point_indices else solutions_u.append(sol)
-            reordered_solutions = solutions_u + solutions_d
-            low_dim_comp_indices_reordered = [
-                mapping.get_low_dim_comp_ind_from_sol_index(i, group_g.coord_ids)
-                for i in reordered_solutions
-            ]
-
-            num_u = len(solutions_u)
-            num_d = len(solutions_d)
-
-            design_point_indices_slice = [
-                run_state.design_point_indices.index(i) for i in solutions_d
-            ]
-            noise_prec_mat = np.diag(
-                1 / run_state.noise_cov_mat_diagonals[design_point_indices_slice]
+            self._slice_stage(
+                run_state, ctx, mapping, groups, random_effect_group_index, restricted_set
             )
-            noise_cov_mat = np.diag(run_state.noise_cov_mat_diagonals[design_point_indices_slice])
-
-            # Conditional precision matrix: \bar{Q}
-            low_dim_comp_u = low_dim_comp_indices_reordered[:num_u]
-            low_dim_comp_d = low_dim_comp_indices_reordered[num_u:]
-            uu, ud, du, dd = group_g.get_precision_matrix_components(low_dim_comp_u, low_dim_comp_d)
-
-            q_bar = np.vstack(
-                [
-                    np.hstack([uu.toarray(), ud.toarray()]),
-                    np.hstack([du.toarray(), dd.toarray() + noise_prec_mat]),
-                ]
-            )
-
-            # \bar{Q}^{-1}
-            q_bar_inv = np.linalg.solve(q_bar, np.eye(num_u + num_d))
-
-            # # Calculate the conditional mean vector.
-            sample_means_vec_d_slice = run_state.sample_means_vec_d[
-                design_point_indices_slice
-            ]  # \bar{Y}_D
-
-            # Estimate mean.
-            schur_complement_mat = dd - du @ sparse.linalg.spsolve(uu, ud)
-            if schur_complement_mat.size == 1:
-                cov_mat = 1 / np.array(schur_complement_mat) + noise_cov_mat
-            else:
-                cov_mat = (
-                    np.linalg.solve(schur_complement_mat.toarray(), np.eye(len(low_dim_comp_d)))
-                    + noise_cov_mat
-                )
-
-            ones_vec = np.ones(num_d)  # vector of ones, 1_D
-            part1 = (
-                1 / sum(np.linalg.solve(cov_mat, ones_vec)) * ones_vec
-            )  # (1_D * Sigma^-1 * 1_D^T)^-1 * 1_D^T
-            part2 = np.linalg.solve(cov_mat, sample_means_vec_d_slice)  # Sigma^-1 * \bar{Y}_D
-            beta = part1 @ part2
-
-            comp_d = noise_prec_mat @ (sample_means_vec_d_slice - beta)
-            # Vertical stack: 0_|U| and [[B^-1]^-1 * (\bar{Y}_D - mu_D)
-            cond_mean_comp = np.concatenate([np.zeros(num_u), comp_d])
-
-            cond_mean_vec = q_bar_inv @ cond_mean_comp
-
-            sample_best_index = num_u + sample_means_vec_d_slice.argmin()
-
-            # Conditional variance and covariance vectors
-            cond_var_vec = q_bar_inv.diagonal()  # v(x)
-            cond_cov_vec = q_bar_inv[sample_best_index, :]  # c(x_best, x)
-
-            # Calculate CEI values.
-            # conditional mean of difference Y(x_best) - Y(x): m(x_best) - m(x)
-            cond_mean_of_diff_vec = cond_mean_vec[sample_best_index] - cond_mean_vec
-            # Conditional variance of difference Y(x_best) - Y(x): v(x_best, x)
-            # = v(x_best) + v(x) - 2 * c(x_best, x)
-            cond_var_of_diff_vec = cond_var_vec + cond_var_vec[sample_best_index] - 2 * cond_cov_vec
-            cond_std_of_diff_vec = np.sqrt(cond_var_of_diff_vec)  # sqrt{v(x_best, x)}
-            cond_std_of_diff_vec[sample_best_index] = np.inf
-
-            # [m(x_best) - m(x)] / sqrt{v(x_best, x)}
-            stand_mean_of_diff_vec = cond_mean_of_diff_vec / cond_std_of_diff_vec
-
-            cei_values = cond_mean_of_diff_vec * ndtr(
-                stand_mean_of_diff_vec
-            ) + cond_std_of_diff_vec * self._standard_normal_pdf(stand_mean_of_diff_vec)
-            cei_values[sample_best_index] = 0
-
-            # Simulate max-CEI solution.
-            max_cei_index = np.argmax(cei_values)
-            max_cei_solution = reordered_solutions[max_cei_index]
-            if max_cei_solution not in run_state.design_point_indices:
-                for group in groups:
-                    group.add_design_points([max_cei_solution])
-            self._record_simulations(run_state, [max_cei_solution], ctx, mapping)
-
-            # Simulate sample-best solution of the restricted set.
-            sample_best_solution_restricted = reordered_solutions[sample_best_index]
-            self._record_simulations(run_state, [sample_best_solution_restricted], ctx, mapping)
 
             # Identify the sample best solution.
             best_solution_candidate_index = run_state.sample_means_vec_d.argmin()
             ctx.log(run_state.design_points_actual[best_solution_candidate_index])
+
+    def _dice_stage(
+        self,
+        run_state: _RunState,
+        ctx: Context,
+        mapping: DASSO._Mapping,
+        groups: list[DASSO._Group],
+        sample_best_solution_index: int,
+        solver_rng: MRG32k3a,
+    ) -> tuple[int, list[int]]:
+        # Update random effect group.
+        random_effect_group_index = solver_rng.randrange(len(groups))
+        (
+            cond_mean_of_diff_vec_d,
+            cond_var_of_diff_vec_d,
+            cond_dist_comp_of_diff_pareto_each_group,
+        ) = self._dice_conditional_components(
+            run_state, groups, random_effect_group_index, sample_best_solution_index
+        )
+        restricted_set = self._select_restricted_set(
+            run_state,
+            mapping,
+            groups,
+            random_effect_group_index,
+            sample_best_solution_index,
+            cond_mean_of_diff_vec_d,
+            cond_var_of_diff_vec_d,
+            cond_dist_comp_of_diff_pareto_each_group,
+        )
+
+        # Simulate the sample best solution.
+        self._record_simulations(run_state, [sample_best_solution_index], ctx, mapping)
+
+        # Simulate a solution from the restricted set if it does not have any
+        # solution that has been simulated.
+        if not any(sol in run_state.design_point_indices for sol in restricted_set):
+            solution_index = solver_rng.choice(restricted_set)
+            self._record_simulations(run_state, [solution_index], ctx, mapping)
+            for group in groups:
+                group.add_design_points([solution_index])
+        return random_effect_group_index, restricted_set
+
+    def _dice_conditional_components(
+        self,
+        run_state: _RunState,
+        groups: list[DASSO._Group],
+        random_effect_group_index: int,
+        sample_best_solution_index: int,
+    ) -> tuple[np.ndarray, np.ndarray, dict]:
+        # Calculate the covariance matrix corresponding to design points, Sigma_DD
+        num_design_points = len(run_state.design_point_indices)
+        cov_mat_dd = sum(
+            group.transformed_cov_mat_dd
+            if group_index != random_effect_group_index
+            else group.random_effect_variance * np.eye(num_design_points)
+            for group_index, group in enumerate(groups)
+        )
+
+        # Estimate the location parameter.
+        ones_vec = np.ones(num_design_points)  # vector of ones, 1_D
+        part1 = (
+            1 / sum(np.linalg.solve(cov_mat_dd, ones_vec)) * ones_vec
+        )  # (1_D * Sigma^-1 * 1_D^T)^-1 * 1_D^T
+        part2 = np.linalg.solve(cov_mat_dd, run_state.sample_means_vec_d)  # Sigma^-1 * \bar{Y}_D
+        beta_0 = float(part1 @ part2)
+
+        # Get vectors needed to compute CEI for solutions in D and find
+        # Pareto-efficient points.
+        sample_means_vec_d_stand = run_state.sample_means_vec_d - beta_0  # \bar{Y}_D - beta_0
+        cond_var_of_diff_vec_d = np.zeros(
+            num_design_points
+        )  # v(x) + v(x_best) - 2 * c(x_best, x) for x in D
+        cond_mean_of_diff_vec_d = np.zeros(num_design_points)  # m(x_best) - m(x) for x in D
+
+        covariance_matrix_d = cov_mat_dd + np.diag(
+            run_state.noise_cov_mat_diagonals
+        )  # Sigma_DD + Q_epsilon^-1
+        eye_d = np.eye(num_design_points)
+        covariance_matrix_inv_d = np.linalg.solve(
+            covariance_matrix_d, eye_d
+        )  # inverse of Sigma_DD + Q_epsilon^-1
+
+        cond_dist_comp_of_diff_pareto_each_group = {}
+        for group_index, group in enumerate(groups):
+            is_random_effect = group_index == random_effect_group_index
+            comp_d, comp_pareto = group.get_cond_dist_components(
+                sample_best_solution_index,
+                covariance_matrix_inv_d,
+                sample_means_vec_d_stand,
+                is_random_effect,
+            )
+            cond_dist_comp_of_diff_pareto_each_group[group_index] = comp_pareto
+
+            cond_var_of_diff_vec_d += comp_d["var"]
+            cond_mean_of_diff_vec_d += comp_d["mean"]
+        return (
+            cond_mean_of_diff_vec_d,
+            cond_var_of_diff_vec_d,
+            cond_dist_comp_of_diff_pareto_each_group,
+        )
+
+    def _select_restricted_set(
+        self,
+        run_state: _RunState,
+        mapping: DASSO._Mapping,
+        groups: list[DASSO._Group],
+        random_effect_group_index: int,
+        sample_best_solution_index: int,
+        cond_mean_of_diff_vec_d: np.ndarray,
+        cond_var_of_diff_vec_d: np.ndarray,
+        cond_dist_comp_of_diff_pareto_each_group: dict,
+    ) -> list[int]:
+        # Calculate CEI for design points.
+        cond_std_of_diff_vec_d = np.sqrt(cond_var_of_diff_vec_d)  # sqrt{v(x_best, x)}
+        sample_best_index = run_state.design_point_indices.index(sample_best_solution_index)
+        cond_std_of_diff_vec_d[sample_best_index] = np.inf
+
+        stand_mean_of_diff_vec_d = (
+            cond_mean_of_diff_vec_d / cond_std_of_diff_vec_d
+        )  # [m(x_best) - m(x)] / sqrt{v(x_best, x)}
+        cei_values_d = cond_mean_of_diff_vec_d * ndtr(
+            stand_mean_of_diff_vec_d
+        ) + cond_std_of_diff_vec_d * self._standard_normal_pdf(stand_mean_of_diff_vec_d)
+        cei_values_d[sample_best_index] = 0
+        max_cei_index_d = np.argmax(cei_values_d)
+
+        # Construct Pareto frontier, set check{F}.
+        cond_mean_of_diff_vec_f = np.array([0])
+        cond_var_of_diff_vec_f = np.array([0])
+        for (
+            cond_dist_comp_of_diff_pareto_group
+        ) in cond_dist_comp_of_diff_pareto_each_group.values():
+            cond_mean_of_diff_vec_f = np.concatenate(
+                [
+                    cond_mean_of_diff_vec_f + mean_p
+                    for mean_p in cond_dist_comp_of_diff_pareto_group["mean"]
+                ]
+            )
+            cond_var_of_diff_vec_f = np.concatenate(
+                [
+                    cond_var_of_diff_vec_f + var_p
+                    for var_p in cond_dist_comp_of_diff_pareto_group["var"]
+                ]
+            )
+
+        # Calculate CEI for Pareto frontier.
+        cond_std_of_diff_vec_f = np.sqrt(cond_var_of_diff_vec_f)  # sqrt{v(x_best, x)}
+        stand_mean_of_diff_vec_f = (
+            cond_mean_of_diff_vec_f / cond_std_of_diff_vec_f
+        )  # [m(x_best) - m(x)] / sqrt{v(x_best, x)}
+        cei_values_f = cond_mean_of_diff_vec_f * ndtr(
+            stand_mean_of_diff_vec_f
+        ) + cond_std_of_diff_vec_f * self._standard_normal_pdf(stand_mean_of_diff_vec_f)
+
+        max_cei_index_f = np.argmax(cei_values_f)
+
+        # Find a slice with the largest CEI.
+        if cei_values_d[max_cei_index_d] > cei_values_f[max_cei_index_f]:  # if it is a design point
+            max_cei_solution = run_state.design_point_indices[max_cei_index_d]
+
+            best_non_g_comp = tuple(
+                mapping.get_low_dim_comp_ind_from_sol_index(max_cei_solution, group.coord_ids)
+                if group_index != random_effect_group_index
+                else None
+                for group_index, group in enumerate(groups)
+            )
+        else:
+            best_non_g_comp = ()
+            tmp = max_cei_index_f
+            for i in range(len(groups)):
+                indices = cond_dist_comp_of_diff_pareto_each_group[i]["indices"]
+                best_non_g_comp += (indices[tmp % len(indices)],)
+                tmp = tmp // len(indices)
+
+        # Find the restricted set.
+        non_g_comp_as_tuple = {
+            group.coord_ids: comp for group, comp in zip(groups, best_non_g_comp, strict=True)
+        }
+        return mapping.get_solution_indices_from_non_g_component(non_g_comp_as_tuple)
+
+    def _slice_stage(
+        self,
+        run_state: _RunState,
+        ctx: Context,
+        mapping: DASSO._Mapping,
+        groups: list[DASSO._Group],
+        random_effect_group_index: int,
+        restricted_set: list[int],
+    ) -> None:
+        group_g = groups[random_effect_group_index]
+        reordered_solutions, cond_mean_vec, q_bar_inv, sample_best_index = (
+            self._slice_conditional_distribution(run_state, mapping, group_g, restricted_set)
+        )
+        cei_values = self._slice_expected_improvement(cond_mean_vec, q_bar_inv, sample_best_index)
+
+        # Simulate max-CEI solution.
+        max_cei_index = np.argmax(cei_values)
+        max_cei_solution = reordered_solutions[max_cei_index]
+        if max_cei_solution not in run_state.design_point_indices:
+            for group in groups:
+                group.add_design_points([max_cei_solution])
+        self._record_simulations(run_state, [max_cei_solution], ctx, mapping)
+
+        # Simulate sample-best solution of the restricted set.
+        sample_best_solution_restricted = reordered_solutions[sample_best_index]
+        self._record_simulations(run_state, [sample_best_solution_restricted], ctx, mapping)
+
+    def _slice_conditional_distribution(
+        self,
+        run_state: _RunState,
+        mapping: DASSO._Mapping,
+        group_g: DASSO._Group,
+        restricted_set: list[int],
+    ) -> tuple[list[int], np.ndarray, np.ndarray, np.integer]:
+        solutions_u, solutions_d = [], []
+        for sol in restricted_set:
+            solutions_d.append(
+                sol
+            ) if sol in run_state.design_point_indices else solutions_u.append(sol)
+        reordered_solutions = solutions_u + solutions_d
+        low_dim_comp_indices_reordered = [
+            mapping.get_low_dim_comp_ind_from_sol_index(i, group_g.coord_ids)
+            for i in reordered_solutions
+        ]
+
+        num_u = len(solutions_u)
+        num_d = len(solutions_d)
+
+        design_point_indices_slice = [run_state.design_point_indices.index(i) for i in solutions_d]
+        noise_prec_mat = np.diag(1 / run_state.noise_cov_mat_diagonals[design_point_indices_slice])
+        noise_cov_mat = np.diag(run_state.noise_cov_mat_diagonals[design_point_indices_slice])
+
+        # Conditional precision matrix: \bar{Q}
+        low_dim_comp_u = low_dim_comp_indices_reordered[:num_u]
+        low_dim_comp_d = low_dim_comp_indices_reordered[num_u:]
+        uu, ud, du, dd = group_g.get_precision_matrix_components(low_dim_comp_u, low_dim_comp_d)
+
+        q_bar = np.vstack(
+            [
+                np.hstack([uu.toarray(), ud.toarray()]),
+                np.hstack([du.toarray(), dd.toarray() + noise_prec_mat]),
+            ]
+        )
+
+        # \bar{Q}^{-1}
+        q_bar_inv = np.linalg.solve(q_bar, np.eye(num_u + num_d))
+
+        # # Calculate the conditional mean vector.
+        sample_means_vec_d_slice = run_state.sample_means_vec_d[
+            design_point_indices_slice
+        ]  # \bar{Y}_D
+
+        # Estimate mean.
+        schur_complement_mat = dd - du @ sparse.linalg.spsolve(uu, ud)
+        if schur_complement_mat.size == 1:
+            cov_mat = 1 / np.array(schur_complement_mat) + noise_cov_mat
+        else:
+            cov_mat = (
+                np.linalg.solve(schur_complement_mat.toarray(), np.eye(len(low_dim_comp_d)))
+                + noise_cov_mat
+            )
+
+        ones_vec = np.ones(num_d)  # vector of ones, 1_D
+        part1 = (
+            1 / sum(np.linalg.solve(cov_mat, ones_vec)) * ones_vec
+        )  # (1_D * Sigma^-1 * 1_D^T)^-1 * 1_D^T
+        part2 = np.linalg.solve(cov_mat, sample_means_vec_d_slice)  # Sigma^-1 * \bar{Y}_D
+        beta = part1 @ part2
+
+        comp_d = noise_prec_mat @ (sample_means_vec_d_slice - beta)
+        # Vertical stack: 0_|U| and [[B^-1]^-1 * (\bar{Y}_D - mu_D)
+        cond_mean_comp = np.concatenate([np.zeros(num_u), comp_d])
+
+        cond_mean_vec = q_bar_inv @ cond_mean_comp
+
+        sample_best_index = num_u + sample_means_vec_d_slice.argmin()
+        return reordered_solutions, cond_mean_vec, q_bar_inv, sample_best_index
+
+    def _slice_expected_improvement(
+        self, cond_mean_vec: np.ndarray, q_bar_inv: np.ndarray, sample_best_index: int | np.integer
+    ) -> np.ndarray:
+        # Conditional variance and covariance vectors
+        cond_var_vec = q_bar_inv.diagonal()  # v(x)
+        cond_cov_vec = q_bar_inv[sample_best_index, :]  # c(x_best, x)
+
+        # Calculate CEI values.
+        # conditional mean of difference Y(x_best) - Y(x): m(x_best) - m(x)
+        cond_mean_of_diff_vec = cond_mean_vec[sample_best_index] - cond_mean_vec
+        # Conditional variance of difference Y(x_best) - Y(x): v(x_best, x)
+        # = v(x_best) + v(x) - 2 * c(x_best, x)
+        cond_var_of_diff_vec = cond_var_vec + cond_var_vec[sample_best_index] - 2 * cond_cov_vec
+        cond_std_of_diff_vec = np.sqrt(cond_var_of_diff_vec)  # sqrt{v(x_best, x)}
+        cond_std_of_diff_vec[sample_best_index] = np.inf
+
+        # [m(x_best) - m(x)] / sqrt{v(x_best, x)}
+        stand_mean_of_diff_vec = cond_mean_of_diff_vec / cond_std_of_diff_vec
+
+        cei_values = cond_mean_of_diff_vec * ndtr(
+            stand_mean_of_diff_vec
+        ) + cond_std_of_diff_vec * self._standard_normal_pdf(stand_mean_of_diff_vec)
+        cei_values[sample_best_index] = 0
+        return cei_values
 
     class _Mapping:
         """Map between solutions and coordinates."""
@@ -842,6 +931,33 @@ class DASSO(Solver):
             np.ndarray: The transformed covariance matrix component corresponding to
                 design points.
         """
+        theta_design = self._prepare_theta_design(mapping, coordinate_ids, solution_indices)
+        rearranged_tf_mat_d = theta_design.rearranged_tf_mat_d
+
+        # B^(rho) Q_eps^-1 [B^(rho)]^T, which is a diagonal matrix since Q_eps^-1 is
+        # diagonal.
+        noise_cov_mat_diff = np.diag(np.abs(diff_mat) @ noise_cov_mat_diagonals)  # type: ignore
+        diff_tf_mat_d = diff_mat @ rearranged_tf_mat_d  # B^(rho) T^(rho)_DD
+        feasible_candidates = self._generate_theta_candidates(ctx, coordinate_ids)
+
+        # Find the best candidate
+        sample_mean_differences = diff_mat @ sample_means_vec_d  # B^(rho) * \bar{Y}
+        prec_mat_parameters = self._fit_theta_candidates(
+            theta_design,
+            feasible_candidates,
+            diff_tf_mat_d,
+            noise_cov_mat_diff,
+            sample_mean_differences,
+        )
+
+        cov_mat_dd = self._get_covariance_matrix_dd(theta_design, prec_mat_parameters)
+        transformed_cov_mat_dd = rearranged_tf_mat_d @ cov_mat_dd @ rearranged_tf_mat_d.transpose()
+
+        return prec_mat_parameters, transformed_cov_mat_dd
+
+    def _prepare_theta_design(
+        self, mapping: DASSO._Mapping, coordinate_ids: tuple, solution_indices: list
+    ) -> _ThetaDesign:
         # Use simulated solutions to obtain the corresponding lower dimensional
         # component of the design points.
         low_dim_comp_indices_d = list(
@@ -905,13 +1021,22 @@ class DASSO(Solver):
         rearranged_tf_mat_d = sparse.coo_matrix(
             (data, (rows, columns)), shape=(num_solutions_d, num_d)
         ).tocsc()
+        return _ThetaDesign(
+            num_u=num_u,
+            num_d=num_d,
+            rows_uu=rows_uu,
+            columns_uu=columns_uu,
+            dimension_ids_uu=dimension_ids_uu,
+            rows_ud=rows_ud,
+            columns_ud=columns_ud,
+            dimension_ids_ud=dimension_ids_ud,
+            rows_dd=rows_dd,
+            columns_dd=columns_dd,
+            dimension_ids_dd=dimension_ids_dd,
+            rearranged_tf_mat_d=rearranged_tf_mat_d,
+        )
 
-        # B^(rho) Q_eps^-1 [B^(rho)]^T, which is a diagonal matrix since Q_eps^-1 is
-        # diagonal.
-        noise_cov_mat_diff = np.diag(np.abs(diff_mat) @ noise_cov_mat_diagonals)  # type: ignore
-
-        diff_tf_mat_d = diff_mat @ rearranged_tf_mat_d  # B^(rho) T^(rho)_DD
-
+    def _generate_theta_candidates(self, ctx: Context, coordinate_ids: tuple) -> np.ndarray:
         # Generate Sobol points to create a feasible candidate parameters.
         solver_rng = self._solver_rng(ctx)
         sampler = qmc.Sobol(len(coordinate_ids), rng=self._numpy_rng(ctx))
@@ -920,60 +1045,58 @@ class DASSO(Solver):
         # Restrict the set of candidates for efficiency.
         candidates = candidates[:30]
         # Make the sum of candidate parameters less than 0.5
-        feasible_candidates = np.array(
+        return np.array(
             [solver_rng.uniform(0, 0.5) * candidate / sum(candidate) for candidate in candidates]
         )
 
-        # Find the best candidate
-        sample_mean_differences = diff_mat @ sample_means_vec_d  # B^(rho) * \bar{Y}
+    def _get_covariance_matrix_dd(
+        self, theta_design: _ThetaDesign, precision_matrix_parameters: list
+    ) -> np.ndarray:
+        data_uu = [precision_matrix_parameters[dim_id] for dim_id in theta_design.dimension_ids_uu]
+        data_ud = [precision_matrix_parameters[dim_id] for dim_id in theta_design.dimension_ids_ud]
+        data_dd = [precision_matrix_parameters[dim_id] for dim_id in theta_design.dimension_ids_dd]
+
+        uu = sparse.coo_matrix(
+            (data_uu, (theta_design.rows_uu, theta_design.columns_uu)),
+            shape=(theta_design.num_u, theta_design.num_u),
+        ).tocsc()
+        ud = sparse.coo_matrix(
+            (data_ud, (theta_design.rows_ud, theta_design.columns_ud)),
+            shape=(theta_design.num_u, theta_design.num_d),
+        ).tocsc()
+        du = ud.transpose().tocsc()
+        dd = sparse.coo_matrix(
+            (data_dd, (theta_design.rows_dd, theta_design.columns_dd)),
+            shape=(theta_design.num_d, theta_design.num_d),
+        ).tocsc()
+
+        schur_complement_mat = dd - du @ sparse.linalg.spsolve(uu, ud)
+
+        return np.linalg.solve(schur_complement_mat.toarray(), np.eye(theta_design.num_d))
+
+    def _fit_theta_candidates(
+        self,
+        theta_design: _ThetaDesign,
+        feasible_candidates: np.ndarray,
+        diff_tf_mat_d: sparse.csc_matrix,
+        noise_cov_mat_diff: np.ndarray,
+        sample_mean_differences: np.ndarray,
+    ) -> list:
         theta_0_init = 1 / np.var(sample_mean_differences)
-
-        def _get_covariance_matrix_dd(precision_matrix_parameters: list) -> np.ndarray:
-            """Compute the covariance matrix component for design points.
-
-            Args:
-                precision_matrix_parameters (list): The theta values representing the
-                    correlation.
-
-            Returns:
-                np.ndarray: The covariance matrix component for design points.
-            """
-            data_uu = [precision_matrix_parameters[dim_id] for dim_id in dimension_ids_uu]
-            data_ud = [precision_matrix_parameters[dim_id] for dim_id in dimension_ids_ud]
-            data_dd = [precision_matrix_parameters[dim_id] for dim_id in dimension_ids_dd]
-
-            uu = sparse.coo_matrix((data_uu, (rows_uu, columns_uu)), shape=(num_u, num_u)).tocsc()
-            ud = sparse.coo_matrix((data_ud, (rows_ud, columns_ud)), shape=(num_u, num_d)).tocsc()
-            du = ud.transpose().tocsc()
-            dd = sparse.coo_matrix((data_dd, (rows_dd, columns_dd)), shape=(num_d, num_d)).tocsc()
-
-            schur_complement_mat = dd - du @ sparse.linalg.spsolve(uu, ud)
-
-            return np.linalg.solve(schur_complement_mat.toarray(), np.eye(num_d))
 
         objectives = {}
         for other_thetas in feasible_candidates:
             # Construct the components of precision matrix with theta_0 = 1
-            prec_mat_inv_dd = _get_covariance_matrix_dd([1] + [-theta for theta in other_thetas])
+            prec_mat_inv_dd = self._get_covariance_matrix_dd(
+                theta_design, [1] + [-theta for theta in other_thetas]
+            )
             # theta_0 B^(rho) T^(rho)_DD Sigma^(rho)_DD [B^(rho) T^(rho)_DD]^T
             cov_mat_temp = diff_tf_mat_d @ prec_mat_inv_dd @ diff_tf_mat_d.transpose()
 
-            def _negative_log_likelihood_function(
-                theta_0: float, cov_mat_temp: np.ndarray = cov_mat_temp
-            ) -> float:
-                """Calculate the negative log likelihood value."""
-                cov_mat_b = cov_mat_temp / float(theta_0) + noise_cov_mat_diff  # Sigma^(rho)_B
-
-                # log | sigma_c^-1 | = - log | sigma_c |
-                first_part = -np.prod(np.linalg.slogdet(cov_mat_b))
-                second_part = sample_mean_differences.transpose() @ np.linalg.solve(
-                    cov_mat_b, sample_mean_differences
-                )
-                return -(first_part - second_part)  # negative likelihood (1/2 is ignored)
-
             res = optimize.minimize(
-                _negative_log_likelihood_function,
+                self._negative_log_likelihood_function,
                 theta_0_init,
+                args=(cov_mat_temp, noise_cov_mat_diff, sample_mean_differences),
                 method="SLSQP",
                 bounds=[(1e-6, None)],
                 options={"maxiter": 50},
@@ -981,12 +1104,23 @@ class DASSO(Solver):
             objectives[(res.x[0], *(-res.x[0] * theta for theta in other_thetas))] = res.fun
 
         # Get the hyperparameters with the lowest negative log likelihood value
-        prec_mat_parameters = list(min(objectives, key=objectives.__getitem__))
+        return list(min(objectives, key=objectives.__getitem__))
 
-        cov_mat_dd = _get_covariance_matrix_dd(prec_mat_parameters)
-        transformed_cov_mat_dd = rearranged_tf_mat_d @ cov_mat_dd @ rearranged_tf_mat_d.transpose()
+    @staticmethod
+    def _negative_log_likelihood_function(
+        theta_0: float,
+        cov_mat_temp: np.ndarray,
+        noise_cov_mat_diff: np.ndarray,
+        sample_mean_differences: np.ndarray,
+    ) -> float:
+        cov_mat_b = cov_mat_temp / float(theta_0) + noise_cov_mat_diff  # Sigma^(rho)_B
 
-        return prec_mat_parameters, transformed_cov_mat_dd
+        # log | sigma_c^-1 | = - log | sigma_c |
+        first_part = -np.prod(np.linalg.slogdet(cov_mat_b))
+        second_part = sample_mean_differences.transpose() @ np.linalg.solve(
+            cov_mat_b, sample_mean_differences
+        )
+        return -(first_part - second_part)  # negative likelihood (1/2 is ignored)
 
     class _Group:
         """A _Group object contains group information for given hyperparameters."""
