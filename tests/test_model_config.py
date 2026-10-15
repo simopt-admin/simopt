@@ -3,7 +3,6 @@
 import pytest
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import Solution
 from simopt.data_farming_base import DataFarmingExperiment, DesignPoint
 from simopt.models.contam import (
     ContaminationTotalCostCont,
@@ -11,6 +10,7 @@ from simopt.models.contam import (
 )
 from simopt.models.example import ExampleProblem
 from simopt.models.mm1queue import MM1Queue
+from simopt_solvers.solution import Solution
 
 
 @pytest.mark.parametrize(

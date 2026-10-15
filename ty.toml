@@ -9,7 +9,6 @@ exclude = [
     "simopt-solvers/src/simopt_solvers/solvers/astrodf.py",
     "simopt-solvers/src/simopt_solvers/solvers/fcsa.py",
     "simopt/directory.py",
-    "simopt/experiment_base.py",
     "simopt/model.py",
     "simopt/models/ermexample.py",
     "simopt/plot_type.py",

@@ -105,7 +105,8 @@ python -m pip install simoptlib
 After installing `simoptlib`, the package's main modules can be imported from the Python console (or in code):
 ```
 import simopt
-from simopt import models, solvers
+import simopt_solvers
+from simopt import models
 from simopt.experiment.api import SimulationConfig, run
 from simopt.experiment.experiment import from_names
 ```

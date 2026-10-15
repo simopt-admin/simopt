@@ -15,13 +15,13 @@ The paper `Dong et al. (2017) <https://www.informs-sim.org/wsc17papers/includes/
 The recent Winter Simulation Conference paper `Eckman et al. (2019) <https://www.informs-sim.org/wsc19papers/374.pdf>`_ describes in detail the recent changes to the architecture of SimOpt and the control of random number streams.
 
 The :mod:`simopt.models` module contains the simulation logic to simulate a variety of systems and SO test problems built around these models.
-The :mod:`simopt.solvers` module provides users with the latest SO solvers to solve different types of SO problems.
+The :mod:`simopt_solvers` module provides users with the latest SO solvers to solve different types of SO problems.
 The two modules are intended to help researchers evaluate and compare the finite-time performance of existing solvers.
 
 The source code consists of the following modules:
 
-* The :mod:`simopt.base` module contains class definitions for models, problems, and solvers.
-* The :mod:`simopt.experiment_base` module contains class definitions and functions for running experiments with simulation-optimization solvers. 
+* The :mod:`simopt.model`, :mod:`simopt.problem`, and :mod:`simopt_solvers.solver` modules contain class definitions for models, problems, and solvers.
+* The :mod:`simopt.experiment` module contains class definitions and functions for running experiments with simulation-optimization solvers.
 * The :mod:`simopt.data_farming_base` module contains class definitions and functions for running data-farming experiments.
 
 Contents

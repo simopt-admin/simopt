@@ -13,9 +13,9 @@ import pandas as pd
 
 import simopt.directory as directory
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import Model
 from simopt.data_farming.nolhs import NOLHS
 from simopt.experiment import EXPERIMENT_DIR
+from simopt.model import Model
 from simopt.utils import resolve_file_path
 
 DATA_FARMING_DIR = EXPERIMENT_DIR / "data_farming"

@@ -23,7 +23,6 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt import experiment_base as eb
 from simopt.data_farming.design import DesignSpec, build_design
 from simopt.data_farming_base import DesignPoint
 from simopt.directory import (
@@ -101,9 +100,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-POST_REPLICATE_DEFAULTS = getattr(eb, "POST_REPLICATE_DEFAULTS", {})
-POST_NORMALIZE_DEFAULTS = getattr(eb, "POST_NORMALIZE_DEFAULTS", {})
 
 
 # ── Static file serving ──
@@ -198,7 +194,6 @@ def postreplicate_schema() -> dict[str, Any]:
         "crn_diff_times": True,
         "crn_diff_macroreps": True,
     }
-    d.update(POST_REPLICATE_DEFAULTS or {})
     return {
         "params": [
             {
@@ -230,7 +225,6 @@ def postnormalize_schema() -> dict[str, Any]:
         "num_post_reps_init_opt": 100,
         "crn_init_opt": True,
     }
-    d.update(POST_NORMALIZE_DEFAULTS or {})
     return {
         "params": [
             {

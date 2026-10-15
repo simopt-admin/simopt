@@ -8,8 +8,10 @@ import importlib
 import pkgutil
 
 import simopt.models
-import simopt.solvers
-from simopt.base import Model, Problem, Solver
+import simopt_solvers
+from simopt.model import Model
+from simopt.problem import Problem
+from simopt_solvers.solver import Solver
 
 
 def load_models_and_problems() -> tuple[dict[str, type[Model]], dict[str, type[Problem]]]:
@@ -31,11 +33,11 @@ def load_models_and_problems() -> tuple[dict[str, type[Model]], dict[str, type[P
 
 
 def load_solvers() -> dict[str, type[Solver]]:
-    """Dynamically load solvers from simopt.solvers."""
+    """Dynamically load solvers from simopt_solvers."""
     solvers = {}
 
-    for attr_name in simopt.solvers.__all__:
-        attr = getattr(simopt.solvers, attr_name)
+    for attr_name in simopt_solvers.__all__:
+        attr = getattr(simopt_solvers, attr_name)
         if isinstance(attr, type) and issubclass(attr, Solver) and attr is not Solver:
             solvers[attr.class_name_abbr] = attr
 

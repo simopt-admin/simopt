@@ -9,7 +9,7 @@ import zstandard as zstd
 from simopt.experiment import Experiment
 from simopt.experiment.api import AnalysisInput, SimulationConfig, run
 from simopt.models.san import SANLongestPathStochastic
-from simopt.solvers import FCSA
+from simopt_solvers import FCSA
 
 NUM_MACROREPS = 10
 NUM_POSTREPS = 100

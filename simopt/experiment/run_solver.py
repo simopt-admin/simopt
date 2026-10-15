@@ -8,7 +8,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 from simopt.problem import Problem
-from simopt.solver import Solver, solve
+from simopt_solvers.solver import Solver, solve
 
 
 def _trim(df: pd.DataFrame, budget: int) -> pd.DataFrame:

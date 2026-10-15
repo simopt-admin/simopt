@@ -10,15 +10,12 @@ from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt import dsl
-from simopt.base import (
-    ConstraintType,
-    Model,
-    Problem,
-    VariableType,
-)
 from simopt.input_models import Exp, Poisson
+from simopt.model import Model
+from simopt.problem import Problem
 from simopt.simulations.sscont import SSContConfig, replicate
 from simopt.utils import override
+from simopt_solvers.problem_types import ConstraintType, VariableType
 
 
 class SSContMinCostConfig(BaseModel):

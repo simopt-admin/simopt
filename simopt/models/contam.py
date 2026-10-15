@@ -9,15 +9,12 @@ from pydantic import BaseModel, Field, model_validator
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt import dsl
-from simopt.base import (
-    ConstraintType,
-    Model,
-    Problem,
-    VariableType,
-)
 from simopt.input_models import Beta
+from simopt.model import Model
+from simopt.problem import Problem
 from simopt.simulations.contam import ContaminationConfig, replicate
 from simopt.utils import override
+from simopt_solvers.problem_types import ConstraintType, VariableType
 
 NUM_STAGES: Final[int] = 5
 

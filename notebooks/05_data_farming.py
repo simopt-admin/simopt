@@ -38,7 +38,7 @@ from simopt.experiment.api import SimulationConfig, run
 from simopt.experiment import Experiment
 from simopt.models.cntnv import CntNVMaxProfit
 from simopt.models.sscont import SSContMinCost
-from simopt.solvers import ASTRODF, RandomSearch
+from simopt_solvers import ASTRODF, RandomSearch
 
 # %% [markdown]
 # ## 1. Model data farming

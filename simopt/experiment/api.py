@@ -20,8 +20,8 @@ from simopt.experiment.post_replicate import _post_replicate_mrep
 from simopt.experiment.run_solver import _run_mrep
 from simopt.options import DEFAULT_CRN_OPTIONS, CrnOptions
 from simopt.problem import Problem
-from simopt.solver import Solver
 from simopt.utils import make_nonzero
+from simopt_solvers.solver import Solver
 
 
 class SolverConfig(BaseModel):

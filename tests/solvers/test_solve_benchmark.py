@@ -1,11 +1,10 @@
-"""Tests that ``solve`` and the ``simopt`` re-exports agree with the benchmark."""
+"""Tests for direct solver execution and discovery."""
 
 import simopt_solvers
-from simopt.base import Solution, Solver
 from simopt.directory import load_solvers, problem_directory
 from simopt.experiment.run_solver import run_solver
-from simopt.solver import solve
-from simopt.solvers import ADAM, RandomSearch
+from simopt_solvers import RandomSearch
+from simopt_solvers.solver import solve
 
 
 def test_solve_matches_benchmark_macroreplication() -> None:
@@ -20,13 +19,6 @@ def test_solve_matches_benchmark_macroreplication() -> None:
     n = len(result.history)
     assert result.history["solution"].tolist() == expected["solution"].tolist()[:n]
     assert result.history["budget"].tolist() == expected["budget"].tolist()[:n]
-
-
-def test_simopt_paths_reexport_simopt_solvers() -> None:
-    assert Solver is simopt_solvers.Solver
-    assert Solution is simopt_solvers.Solution
-    assert ADAM is simopt_solvers.ADAM
-    assert solve is simopt_solvers.solve
 
 
 def test_load_solvers_finds_all_solvers() -> None:

@@ -8,14 +8,10 @@ from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt import dsl
-from simopt.base import (
-    ConstraintType,
-    Model,
-    Problem,
-    VariableType,
-)
 from simopt.input_models import Exp, Gamma, WeightedChoice
+from simopt.model import Model
 from simopt.models._ext import patch_model
+from simopt.problem import Problem
 from simopt.simulations.amusementpark import (
     NUM_ATTRACTIONS,
     PARK_CAPACITY,
@@ -23,6 +19,7 @@ from simopt.simulations.amusementpark import (
     replicate,
 )
 from simopt.utils import override
+from simopt_solvers.problem_types import ConstraintType, VariableType
 
 
 class AmusementParkMinDepartConfig(BaseModel):

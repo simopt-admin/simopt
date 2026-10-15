@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import simopt.directory as directory
-from simopt.base import ConstraintType, ObjectiveType, Problem, Solver, VariableType
+from simopt.problem import Problem
+from simopt_solvers.problem_types import ConstraintType, ObjectiveType, VariableType
+from simopt_solvers.solver import Solver
 
 
 @dataclass(frozen=True, eq=False)

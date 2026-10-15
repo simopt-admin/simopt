@@ -5,10 +5,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from simopt.data_farming.design import DesignSpec, NumericRange, build_design
+from simopt.data_farming.design import DesignSpec, NumericRange, build_design, create_design
 from simopt.data_farming.nolhs import NOLHS
 from simopt.directory import solver_directory
-from simopt.experiment_base import create_design
 
 N_NOLHS_ROWS = len(NOLHS(designs=[(0.0, 1.0, 2), (1.0, 9.0, 0)]).generate_design())
 
@@ -104,10 +103,10 @@ class TestBuildDesign(unittest.TestCase):
             build_design(DesignSpec(kind="solver", name="ASTRODF", crossed={"eta_1": [True]}))
 
     def test_parity_with_create_design(self) -> None:
-        """Test that build_design matches experiment_base.create_design."""
+        """Test that build_design matches create_design."""
         with (
             tempfile.TemporaryDirectory() as tmp_dir,
-            patch("simopt.experiment_base.EXPERIMENT_DIR", Path(tmp_dir)),
+            patch("simopt.data_farming.design.EXPERIMENT_DIR", Path(tmp_dir)),
         ):
             expected = create_design(
                 name="ASTRODF",

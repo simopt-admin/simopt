@@ -8,9 +8,9 @@ import pandas as pd
 import pandera.pandas as pa
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import Solution
 from simopt.problem import Problem
 from simopt.utils import make_nonzero
+from simopt_solvers.solution import Solution
 
 
 class MeanReplicateSchema(pa.DataFrameModel):

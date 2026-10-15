@@ -31,7 +31,7 @@
 import numpy as np
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.base import Solution
+from simopt_solvers.solution import Solution
 from simopt.models.cntnv import CntNVMaxProfit
 from simopt.models.facilitysizing import FacilitySizingTotalCost
 from simopt.models.mm1queue import MM1Queue
