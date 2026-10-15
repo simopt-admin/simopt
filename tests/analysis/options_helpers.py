@@ -15,18 +15,49 @@ from simopt.analysis import (
     terminal_progress,
     terminal_scatterplot,
 )
-from simopt.curve import Curve
-from simopt.curve_utils import (
-    cdf_of_curves_crossing_times,
-    mean_of_curves,
-    quantile_cross_jump,
-    quantile_of_curves,
-)
 from simopt.experiment.api import AnalysisInput
 from simopt.experiment.experiment import Experiment, from_names
 from simopt.feasibility import feasibility_score_history
 from simopt.options import CrnOptions
 from tests.utils import build_analysis_input, split_pairs
+
+
+def curve_points(x_vals, y_vals):
+    # Reference arrays store budgets in row 0 and values in row 1.
+    return np.array([x_vals, y_vals], dtype=float)
+
+
+def lookup(curve, x_val):
+    if x_val < curve[0][0] or x_val > curve[0][-1]:
+        return np.nan
+    return curve[1][np.searchsorted(curve[0], x_val, side="right") - 1]
+
+
+def compute_crossing_time(curve, threshold):
+    crossings = curve[0][curve[1] < threshold]
+    return crossings[0] if len(crossings) else np.inf
+
+
+def mean_of_curves(curves):
+    unique_x_vals = np.unique(np.concatenate([curve[0] for curve in curves]))
+    mean_y_vals = [np.mean([lookup(curve, x_val) for curve in curves]) for x_val in unique_x_vals]
+    return curve_points(unique_x_vals, mean_y_vals)
+
+
+def quantile_of_curves(curves, beta):
+    unique_x_vals = np.unique(np.concatenate([curve[0] for curve in curves]))
+    quantile_idx = int(beta * 99)
+    quantile_y_vals = [
+        quantiles([lookup(curve, x_val) for curve in curves], n=100)[quantile_idx]
+        for x_val in unique_x_vals
+    ]
+    return curve_points(unique_x_vals, quantile_y_vals)
+
+
+def difference_of_curves(curve_1, curve_2):
+    unique_x_vals = np.union1d(curve_1[0], curve_2[0])
+    difference_y_vals = [lookup(curve_1, x_val) - lookup(curve_2, x_val) for x_val in unique_x_vals]
+    return curve_points(unique_x_vals, difference_y_vals)
 
 
 def option_input(has_stochastic_constraints):
@@ -101,7 +132,8 @@ def objective_curves(data, normalize=False):
     else:
         budget, objective = "budget", "objective"
     return [
-        Curve(group[budget].tolist(), group[objective].tolist()) for _, group in df.groupby("mrep")
+        curve_points(group[budget].tolist(), group[objective].tolist())
+        for _, group in df.groupby("mrep")
     ]
 
 
@@ -129,7 +161,7 @@ def intermediate_budgets(data):
 
 def feasibility_curves(data, method, norm_degree, two_sided):
     return [
-        Curve(x_vals, feasibility_score_history(lhs, method, norm_degree, two_sided))
+        curve_points(x_vals, feasibility_score_history(lhs, method, norm_degree, two_sided))
         for x_vals, lhs in zip(intermediate_budgets(data), estimated_lhs(data), strict=True)
     ]
 
@@ -233,7 +265,7 @@ def reference_bootstrap_sample(
                 bootstrap_rng.advance_subsubstream()
         if normalize:
             bootstrap_curves.append(
-                Curve(
+                curve_points(
                     x_vals=[
                         budget / experiment.problem.factors["budget"]
                         for budget in all_intermediate_budgets[mrep]
@@ -245,9 +277,9 @@ def reference_bootstrap_sample(
                 )
             )
         else:
-            bootstrap_curves.append(Curve(all_intermediate_budgets[mrep], est_objectives))
+            bootstrap_curves.append(curve_points(all_intermediate_budgets[mrep], est_objectives))
         bootstrap_feasibility_curves.append(
-            Curve(
+            curve_points(
                 all_intermediate_budgets[mrep],
                 feasibility_score_history(
                     est_lhs,
@@ -333,23 +365,20 @@ def curve_reference(name, mode, curves, feasibility_curves, beta, solve_toleranc
     if name in ("progress", "feasibility"):
         selected = feasibility_curves if name == "feasibility" else curves
         return mean_of_curves(selected) if mode == "mean" else quantile_of_curves(selected, beta)
-    budget = max(curve.x_vals[-1] for curve in curves)
-    if budget != 1:
-        crossings = [curve.compute_crossing_time(solve_tolerance) for curve in curves]
-        if mode == "cdf":
-            times = sorted({0, budget, *[time for time in crossings if np.isfinite(time)]})
-            return Curve(
-                times, [sum(time <= point for time in crossings) / len(curves) for point in times]
-            )
-        crossing = quantiles(crossings, n=100)[int(beta * 99)]
-        if not np.isfinite(crossing):
-            return Curve([0, budget], [0, 0])
-        if crossing == budget:
-            return Curve([0, budget], [0, 1])
-        return Curve([0, crossing, budget], [0, 1, 1])
+    budget = max(curve[0][-1] for curve in curves)
+    crossings = [compute_crossing_time(curve, solve_tolerance) for curve in curves]
     if mode == "cdf":
-        return cdf_of_curves_crossing_times(curves, solve_tolerance)
-    return quantile_cross_jump(curves, solve_tolerance, beta)
+        finite_crossings = sorted({time for time in crossings if np.isfinite(time)})
+        times = [0, *finite_crossings, 1] if budget == 1 else sorted({0, budget, *finite_crossings})
+        return curve_points(
+            times, [sum(time <= point for time in crossings) / len(curves) for point in times]
+        )
+    crossing = quantiles(crossings, n=100)[int(beta * 99)]
+    if not np.isfinite(crossing):
+        return curve_points([0, budget], [0, 0])
+    if crossing == budget and budget != 1:
+        return curve_points([0, budget], [0, 1])
+    return curve_points([0, crossing, budget], [0, 1, 1])
 
 
 CI_CASES = [
@@ -432,10 +461,10 @@ def plot_module_many(module, results, experiments, **kwargs):
 
 def mean_reference(curves):
     # Continue each step curve through the longest raw problem budget.
-    budget = max(curve.x_vals[-1] for curve in curves)
+    budget = max(curve[0][-1] for curve in curves)
     curves = [
-        Curve([*curve.x_vals, budget], [*curve.y_vals, curve.y_vals[-1]])
-        if curve.x_vals[-1] < budget
+        curve_points([*curve[0], budget], [*curve[1], curve[1][-1]])
+        if curve[0][-1] < budget
         else curve
         for curve in curves
     ]

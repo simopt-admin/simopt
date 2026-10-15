@@ -8,17 +8,16 @@ from simopt.analysis import (
     diff,
     solvability_profile,
 )
-from simopt.curve_utils import (
-    difference_of_curves,
-)
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from tests.analysis.options_helpers import (
     CI_CASES,
     analyze_case,
     another_problem_pair,
     curve_reference,
+    difference_of_curves,
     feasibility_curves,
     interval_reference,
+    lookup,
     mean_reference,
     objective_curves,
     reference_bootstrap_sample,
@@ -44,14 +43,13 @@ def test_analysis_ci_options(
     if name in ("auc", "terminal"):
         if name == "auc":
             curves = objective_curves(option_pair[0][1], normalize)
-            areas = [curve.compute_area_under_curve() for curve in curves]
+            areas = [np.sum(np.diff(curve[0]) * curve[1][:-1]) for curve in curves]
             estimator = [np.mean(areas), np.std(areas, ddof=1)]
             actual = np.array([[result.lb_mean, result.lb_std], [result.ub_mean, result.ub_std]])
             np.testing.assert_allclose([result.mean, result.std], estimator)
         else:
-            estimator = [curve.y_vals[-1] for curve in objective_curves(option_pair[0][1])] + [
-                curve.y_vals[-1]
-                for curve in feasibility_curves(option_pair[0][1], "norm", 2, False)
+            estimator = [curve[1][-1] for curve in objective_curves(option_pair[0][1])] + [
+                curve[1][-1] for curve in feasibility_curves(option_pair[0][1], "norm", 2, False)
             ]
             actual = np.concatenate(
                 [
@@ -81,12 +79,12 @@ def test_analysis_ci_options(
                 disable_macrorep_bootstrap=name == "terminal",
             )
             if name == "auc":
-                areas = [curve.compute_area_under_curve() for curve in curves]
+                areas = [np.sum(np.diff(curve[0]) * curve[1][:-1]) for curve in curves]
                 observations.append([np.mean(areas), np.std(areas, ddof=1)])
             else:
                 observations.append(
-                    [curve.y_vals[-1] for curve in curves]
-                    + [curve.y_vals[-1] for curve in bootstrap_feasibility_curves]
+                    [curve[1][-1] for curve in curves]
+                    + [curve[1][-1] for curve in bootstrap_feasibility_curves]
                 )
     else:
         ci = result.ci if name in ("cdf", "profile", "difference") else result.df
@@ -109,7 +107,7 @@ def test_analysis_ci_options(
             if name == "difference"
             else originals[0]
         )
-        estimator = [original.lookup(budget) for budget in budgets]
+        estimator = [lookup(original, budget) for budget in budgets]
         observations = []
         for i in range(options.n_bootstraps):
             samples = []
@@ -133,11 +131,11 @@ def test_analysis_ci_options(
             sample = (
                 difference_of_curves(samples[1], samples[0]) if name == "difference" else samples[0]
             )
-            observations.append([sample.lookup(budget) for budget in budgets])
+            observations.append([lookup(sample, budget) for budget in budgets])
         actual = ci[["lb", "ub"]].to_numpy().T
         value_column = "cdf" if name == "cdf" else "value"
         np.testing.assert_allclose(
-            result.df[value_column], [original.lookup(budget) for budget in result.df["budget"]]
+            result.df[value_column], [lookup(original, budget) for budget in result.df["budget"]]
         )
     expected = interval_reference(observations, estimator, confidence_level, bias_correction)
     np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
@@ -188,7 +186,7 @@ def test_multiple_problem_aggregation(option_pair, module, normalize, mode, bias
     assert len(results) == len(expected)
     for i, (result, curve) in enumerate(zip(results, expected, strict=True)):
         np.testing.assert_allclose(
-            result.df["value"], [curve.lookup(budget) for budget in result.df["budget"]]
+            result.df["value"], [lookup(curve, budget) for budget in result.df["budget"]]
         )
         if options is None:
             assert result.ci is None
@@ -211,10 +209,10 @@ def test_multiple_problem_aggregation(option_pair, module, normalize, mode, bias
                     )
                 samples.append(mean_reference(curves))
             sample = difference_of_curves(samples[1], samples[0]) if module == diff else samples[i]
-            observations.append([sample.lookup(budget) for budget in budgets])
+            observations.append([lookup(sample, budget) for budget in budgets])
         bounds = interval_reference(
             observations,
-            [curve.lookup(budget) for budget in budgets],
+            [lookup(curve, budget) for budget in budgets],
             options.confidence_level,
             bias_correction,
         )

@@ -22,25 +22,24 @@ from simopt.analysis import (
     terminal_progress,
     terminal_scatterplot,
 )
-from simopt.curve import Curve
-from simopt.curve_utils import (
-    difference_of_curves,
-    mean_of_curves,
-    quantile_of_curves,
-)
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from tests.analysis.options_helpers import (
     MODULES,
     analyze_case,
+    curve_points,
     curve_reference,
+    difference_of_curves,
     distribution_records,
     estimated_lhs,
     feasibility_reference,
     forbid_bootstrap,
     intermediate_budgets,
+    lookup,
+    mean_of_curves,
     module_results,
     objective_curves,
     plot_module_many,
+    quantile_of_curves,
 )
 from tests.utils import split_pairs
 
@@ -145,7 +144,7 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
                 curves = objective_curves(data, config.normalize)
             else:
                 curves = [
-                    Curve(
+                    curve_points(
                         budgets,
                         [
                             feasibility_reference(
@@ -171,8 +170,8 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
         lines = [line for line in ax.lines if line.get_linewidth() == 2]
         assert len(lines) == len(expected)
         for line, curve in zip(lines, expected, strict=True):
-            np.testing.assert_allclose(np.asarray(line.get_xdata()), curve.x_vals)
-            np.testing.assert_allclose(np.asarray(line.get_ydata()), curve.y_vals)
+            np.testing.assert_allclose(np.asarray(line.get_xdata()), curve[0])
+            np.testing.assert_allclose(np.asarray(line.get_ydata()), curve[1])
             assert line.get_drawstyle() == "steps-post"
         if isinstance(config, feasibility_progress.FeasibilityProgress):
             zeros = [line for line in ax.lines if line.get_linewidth() != 2]
@@ -215,7 +214,7 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
         for line, curve in zip(ax.lines, curves, strict=True):
             # Aggregated profiles remove duplicated budgets.
             np.testing.assert_allclose(
-                line.get_ydata(), [curve.lookup(budget) for budget in line.get_xdata()]
+                line.get_ydata(), [lookup(curve, budget) for budget in line.get_xdata()]
             )
             assert max(line.get_xdata()) == (1 if config.normalize else 10)
             assert np.all(np.diff(line.get_xdata()) >= 0)
@@ -229,7 +228,7 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
         for _, data in option_pair:
             if isinstance(config, terminal_progress.TerminalProgress):
                 curves = objective_curves(data, config.normalize)
-                expected.extend(curve.y_vals[-1] for curve in curves)
+                expected.extend(curve[1][-1] for curve in curves)
             else:
                 expected.extend(
                     feasibility_reference(
@@ -240,7 +239,7 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
         if config.plot_type == "scatter":
             assert len(ax.collections) == 2
             for i, collection in enumerate(ax.collections):
-                objectives = [curve.y_vals[-1] for curve in objective_curves(option_pair[i][1])]
+                objectives = [curve[1][-1] for curve in objective_curves(option_pair[i][1])]
                 np.testing.assert_allclose(
                     collection.get_offsets(),
                     np.array([objectives, expected[i * 4 : (i + 1) * 4]]).T,
@@ -257,11 +256,12 @@ def test_configuration_plot_options(option_pair, config, monkeypatch):
         for _, data in option_pair:
             if isinstance(config, auc.Auc):
                 values = [
-                    curve.compute_area_under_curve() for curve in objective_curves(data, True)
+                    np.sum(np.diff(curve[0]) * curve[1][:-1])
+                    for curve in objective_curves(data, True)
                 ]
             else:
                 curves = objective_curves(data, config.normalize)
-                values = [curve.y_vals[-1] for curve in curves]
+                values = [curve[1][-1] for curve in curves]
             expected.append([np.mean(values), np.std(values, ddof=1)])
         assert len(ax.collections) == len(expected)
         for collection, value in zip(ax.collections, expected, strict=True):
