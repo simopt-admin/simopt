@@ -21,7 +21,6 @@ Parameter tuning warranted, default values not necessarily optimal.
     and get_deterministic_constraints_hessian have been defined in problem before running. 
 """  # noqa: E501
 
-# TODO: check if bullet points can be indented and ignore tag removed
 
 from __future__ import annotations
 
@@ -55,7 +54,7 @@ class InterpolationSet:
     """
     Persistent interpolation point set for ASTRO-DF's diagonal-Hessian local model.
     Points are stored as displacements from `base_x` and survive across iterations;
-    only points flagged for replacement (Piece 4) are re-simulated.
+    only points flagged for replacement are re-simulated.
 
     Stores raw Solution objects — callers apply neg_minmax when reading
     objective values, consistent with the rest of the solver.
@@ -111,8 +110,8 @@ class InterpolationSet:
         new_incumbent_solution: Solution,
         victim_idx: int | None = None
     ) -> None:
-        """Recenter the set on a new incumbent: shift coordinates, optionally
-        drop out-of-radius points, insert the new incumbent."""
+        """Recenter the set on a new incumbent: shift coordinates,
+        insert the new incumbent."""
         self.shift_base(new_base_x)
         # New incumbent sits at displacement 0 from itself
         self.add_point(np.zeros(self.dim), new_incumbent_solution, victim_idx = victim_idx)
@@ -130,9 +129,7 @@ class InterpolationSet:
     def missing_index_offsets(self, delta_k: float) -> list[np.ndarray]:
         """Return displacement vectors for however many points are needed to
         reach num_pts, using fixed coordinate-axis placement at the trust
-        region boundary. This is the fallback/init strategy for filling gaps --
-        distinct from future Lagrange-polynomial-based placement, which will
-        depend on the fitted model rather than a fixed slot pattern."""
+        region boundary."""
         num_missing = self.num_pts - self.size()
         offsets = []
         slot_idx = 1  # slot 0 is reserved for the center point, never generated here
@@ -592,7 +589,6 @@ class CASTRODF(Solver):
         """Approximate maximizer of |L(x)| within the trust-region ball and box
         constraints"""
         dim = self.problem.dim
-        c = coeffs[0]
         g = coeffs[1 : dim + 1]
         h = coeffs[dim + 1 :]
     
@@ -931,7 +927,6 @@ class CASTRODF(Solver):
     
         w = 0.85 #hard coded for now
         beta = 10 #hard coded for now
-        mu = self.mu
     
         lambda_max = self.budget.remaining
         if self.sampling_method == "adaptive":
@@ -1212,7 +1207,7 @@ class CASTRODF(Solver):
             return lam
 
     def _cauchy_point_tangent(self, s_normal: np.ndarray, delta_hat: float) -> np.ndarray:
-        """Closed-form Cauchy-point fallback for the tangent step, used when second degree curvature is negligable"""
+        """Closed-form Cauchy-point fallback for the tangent step, used when easy_solve_tangent = True"""
         g = self.grad_term + self.W @ s_normal
     
         # Project g onto null(R) so the step satisfies R @ t = 0 by construction
@@ -1247,12 +1242,7 @@ class CASTRODF(Solver):
         return t_c
     
     def _cauchy_point_normal(self, delta_hat: float) -> np.ndarray:
-        """Closed-form Cauchy-point step for the normal (feasibility) subproblem
-        min 0.5*||R @ s + feas||^2  s.t. ||s|| <= delta_hat,
-        respecting the fraction-to-boundary constraint on the slack block for
-        inequality-constrained problems. Mirrors _cauchy_point_tangent, using
-        the Gauss-Newton model of constraint violation in place of the
-        Lagrangian model (H -> R.T @ R, grad -> R.T @ feas)."""
+        """Closed-form Cauchy-point step for the normal subproblem, used when easy_solve_normal = True"""
         g = self.R.T @ self.feas
         norm_g = norm(g)
         if norm_g == 0:
@@ -1473,53 +1463,7 @@ class CASTRODF(Solver):
         else:  # ineq_only
             feas = c_ineq + v
         return feas, v
-    
-    def _pattern_search(
-        self,
-        fval: list[float],
-        interpolation_solns: list[Solution],
-        candidate_x: tuple,
-        candidate_solution: Solution,
-        candidate_fval: float,
-        candidate_feas_norm: float,
-    ) -> tuple[tuple, Solution, float, float, bool]:
-        """Direct search over the current interpolation set: adopt an
-        already-simulated point only if it strictly dominates the current best
-        candidate -- i.e. it is at least as good in both objective and
-        feasibility, and strictly better in at least one, with the strictly-
-        better quantity improving by at least ps_sufficient_reduction * delta_k**2.
-        Currenlty not supported."""
-        best_x, best_soln = candidate_x, candidate_solution
-        best_fval, best_feas_norm = candidate_fval, candidate_feas_norm
-        replaced = False
-    
-        threshold = self.ps_sufficient_reduction * self.delta_k**2
-    
-        for i, soln in enumerate(interpolation_solns):
-            x_i = tuple(soln.x)
-            if x_i == tuple(self.incumbent_x):
-                continue  # center point isn't a search candidate
-    
-            obj_i = fval[i]
-            feas_i_vec, _ = self.evaluate_point_feasibility(x_i)
-            feas_i_norm = float(norm(feas_i_vec))
-    
-            obj_delta = best_fval - obj_i        # positive => point i is better
-            feas_delta = best_feas_norm - feas_i_norm  # positive => point i is better
-    
-            obj_improves = obj_delta >= threshold
-            feas_improves = feas_delta >= threshold
-            obj_not_worse = obj_i <= best_fval + 1e-12
-            feas_not_worse = feas_i_norm <= best_feas_norm + 1e-12
-    
-            dominates = (obj_improves or feas_improves) and obj_not_worse and feas_not_worse
-    
-            if dominates:
-                best_x, best_soln = x_i, soln
-                best_fval, best_feas_norm = obj_i, feas_i_norm
-                replaced = True
-    
-        return best_x, best_soln, best_fval, best_feas_norm, replaced
+
     
     def get_constraint_info(self, x):
         """Return lhs value of equality and inequality constraints as well as Jacobians of x (tuple of decision values)"""

@@ -17,14 +17,12 @@ def plot_det_feasibility(
     experiments: list[list[ProblemSolver]],
     plot_type: PlotType = PlotType.DETERMINISTIC_FEASIBILITY_PROGRESS,
     all_in_one: bool = True,
-    score_type: Literal["value", "norm", "objective"] = "norm",
-    obj_const: float = 100.0,
-    log_scale: bool = False,
-    log_base: int = 10,
-    feas_tol: float = 1e-8,
-    feas_tol_lower: float = 1e-8,
-    feas_tol_upper: float = 1e-5,
-    sym_log: bool = False,
+    score_type: Literal["value", "norm", "merit"] = "norm",
+    obj_const: float = 1e8,
+    log_scale: bool = True,
+    floor_feas: bool = False,
+    feas_tol_lower: float = 1e-5,
+    feas_tol_upper: float = 1e-2,
     solver_set_name: str = "SOLVER_SET",
     plot_title: str | None = None,
     legend_loc: str | None = None,
@@ -56,7 +54,6 @@ def plot_det_feasibility(
                 normalize=False,
             )
             solver_curve_handles = []
-            curve_pairs = []
             solver_names = []
             for exp_idx in range(n_solvers):
                 experiment = experiments[exp_idx][problem_idx]
@@ -64,21 +61,22 @@ def plot_det_feasibility(
                 if score_type == "value":
                     experiment.det_feasibility_history(
                         method="value",
-                        feas_tol=feas_tol,
                     )
             
-                elif score_type == "objective":
+                elif score_type == "merit":
                     experiment.det_feasibility_history(
                         method="objective",
                         obj_const=obj_const,
                         feas_tol_upper=feas_tol_upper,
-                        feas_tol_lower = feas_tol_lower
+                        feas_tol_lower = feas_tol_lower,
+                        floor_feas = floor_feas
                     )
             
                 elif score_type == "norm":
                     experiment.det_feasibility_history(
                         method="norm",
                         feas_tol_lower=feas_tol_lower,
+                        floor_feas = floor_feas
                     )
             
                 color_str = "C" + str(exp_idx)
@@ -95,9 +93,6 @@ def plot_det_feasibility(
                 solver_curve_handles.append(handle)
             if log_scale:
                 plt.yscale("log")
-            if sym_log:
-                plt.yscale("symlog", linthresh=1e-8)
-                plt.ylim(bottom=0) 
 
                 #plt.ylim(bottom=0.001)
             plt.legend(
@@ -118,34 +113,6 @@ def plot_det_feasibility(
             )
 
         else:
-            for solver_idx in range(n_solvers):
-                experiment = experiments[solver_idx][problem_idx]
-                setup_plot(
-                    plot_type=plot_type,
-                    solver_name=experiment.solver.name,
-                    problem_name=experiment.problem.name,
-                    budget=experiment.problem.factors["budget"],
-                    normalize=False,
-                )
-
-                experiment.det_feasibility_history()
-                for curve in experiment.det_feasibility_curves:
-                    curve.plot()
-                
-                plt.axhline(y=0, color="red", linestyle="--", linewidth=0.75)
-                if log_scale:
-                    plt.yscale("log", base = log_base)
-               
-                file_list.append(
-                    save_plot(
-                        solver_name=experiment.solver.name,
-                        problem_name=experiment.problem.name,
-                        plot_type=plot_type,
-                        ext=ext,
-                        normalize=False,
-                        save_as_pickle=save_as_pickle,
-                    )
-                )
-
+            raise NotImplementedError("Currenlty only plot_all_in_one = True supported.")
     return file_list
 

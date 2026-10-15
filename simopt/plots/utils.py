@@ -19,7 +19,7 @@ def setup_plot(
     normalize: bool = True,
     budget: int | None = None,
     beta: float | None = None,
-    feasibility_score_method: Literal["inf_norm", "norm"] = "inf_norm",
+    feasibility_score_method: Literal["inf_norm", "norm", "value", "merit"] = "inf_norm",
     feasibility_norm_degree: int = 1,
     solve_tol: float | None = None,
     plot_title: str | None = None,
@@ -259,7 +259,7 @@ def setup_plot(
         plt.xlabel("Budget", size=14)
         if feasibility_score_method == "value":
             ylabel = "Feasibility"
-        elif feasibility_score_method == "objective":
+        elif feasibility_score_method == "merit":
             ylabel = "Merit"
         elif feasibility_score_method == "norm":
             ylabel = "Feasibility Norm"
@@ -271,10 +271,10 @@ def setup_plot(
         plt.xlabel("Terminal Objective", size=14)
         if feasibility_score_method == "value":
             ylabel = "Feasibility"
-        elif feasibility_score_method == "objective":
+        elif feasibility_score_method == "merit":
             ylabel = "Merit"
         elif feasibility_score_method == "norm":
-            ylabel = "Feasibility Norm"
+            ylabel = "Terminal Feasibility Norm"
         plt.ylabel(ylabel, size=14)
         plt.tick_params(axis="both", which="major", labelsize=12)
         

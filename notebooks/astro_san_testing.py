@@ -339,11 +339,11 @@ solver_factors = [
 # ============================================================
 
 problem_abbr_names = [
-    "SAN-4",
-    "SAN-4",
-    "SAN-4",
-    "SAN-4",
-    "SAN-4",
+    "SAN-3",
+    "SAN-3",
+    "SAN-3",
+    "SAN-3",
+    "SAN-3",
 ]
 
 problem_renames = [
@@ -380,7 +380,7 @@ mymetaexperiment = ProblemsSolvers(
     problem_names=problem_abbr_names, 
     solver_factors = solver_factors, 
     problem_factors = problem_factors,
-    #solver_renames = solver_renames
+    problem_renames = problem_renames
 )
 
 # Write to log file.
@@ -423,52 +423,7 @@ from simopt.experiment_base import (
 
 
 # %%
-print(mymetaexperiment.experiments[0][0])
-
-
-# %%
-def _print_path(plot_path: list[Path]) -> None:
-    print(f"Plot saved to {plot_path!s}")
-
-
-_print_path(
-    plot_progress_curves(
-        experiments=[mymetaexperiment.experiments[0][1], mymetaexperiment.experiments[1][1] ]  , all_in_one = True, plot_type=PlotType.ALL, normalize=False,  save_as_pickle = True,
-    )
-)
-
-print("Plotting complete!")
-
-
-# %%
-def _print_path(plot_path: list[Path]) -> None:
-    print(f"Plot saved to {plot_path!s}")
-
-
-_print_path(
-    plot_terminal_progress(
-        experiments=mymetaexperiment.experiments[0], normalize = False
-    )
-)
-
-print("Plotting complete!")
-
-
-# %%
-def _print_path(plot_path: list[Path]) -> None:
-    print(f"Plot saved to {plot_path!s}")
-
-
-_print_path(
-    plot_det_feasibility(
-        experiments=mymetaexperiment.experiments,  sym_log = False, score_type = "norm", feas_tol_upper = 1e-2, feas_tol_lower = 1e-5, save_as_pickle=True, log_scale=True,
-    )
-)
-
-print("Plotting complete!")
-
-
-# %%
+# plot merit progress curves for each problem variation
 def _print_path(plot_path: list[Path]) -> None:
     print(f"Plot saved to {plot_path!s}")
 
@@ -476,9 +431,7 @@ def _print_path(plot_path: list[Path]) -> None:
 _print_path(
     plot_det_feasibility(
         experiments=mymetaexperiment.experiments, 
-        log_scale = True, 
-        score_type = "objective", 
-        obj_const = 1e8, 
+        score_type = "merit",  
         feas_tol_upper = .01,
         feas_tol_lower = 1e-5,
         save_as_pickle = True,
@@ -489,47 +442,20 @@ print("Plotting complete!")
 
 
 # %%
+# plot objective vs feasibility for each problem variation
 def _print_path(plot_path: list[Path]) -> None:
     print(f"Plot saved to {plot_path!s}")
 
 
 _print_path(
     plot_det_terminal_feasibility(
-        experiments=mymetaexperiment.experiments, all_in_one = True, plot_conf_ints = False, score_type = "norm", 
+        experiments=mymetaexperiment.experiments,  
+        score_type = "norm", 
         feas_tol = 1e-5,
         log_scale = True,
-        sym_log= False,
         floor_feas=False,
         plot_zero = False,
         save_as_pickle=True,
-    )
-)
-
-print("Plotting complete!")
-
-
-# %%
-def _print_path(plot_path: list[Path]) -> None:
-    print(f"Plot saved to {plot_path!s}")
-
-
-_print_path(
-    plot_det_terminal_feasibility(
-        experiments=mymetaexperiment.experiments, all_in_one = True, plot_conf_ints = True, sym_log = True, score_type = "norm", feas_tol = 1e-2, log_scale=True
-    )
-)
-
-print("Plotting complete!")
-
-
-# %%
-def _print_path(plot_path: list[Path]) -> None:
-    print(f"Plot saved to {plot_path!s}")
-
-
-_print_path(
-    plot_det_terminal_feasibility(
-        experiments=mymetaexperiment.experiments, all_in_one = True, score_type = "norm", save_as_pickle = True, plot_conf_ints = True, feas_tol = 1e-4,  plot_zero = False, log_scale = False
     )
 )
 
