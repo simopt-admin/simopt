@@ -751,7 +751,7 @@ class DASSO(Solver):
             1 / sum(np.linalg.solve(cov_sum, ones_vec)) * ones_vec
         )  # (1_D * Sigma^-1 * 1_D^T)^-1 * 1_D^T
         part2 = np.linalg.solve(cov_sum, run_state.sample_means_vec_d)  # Sigma^-1 * \bar{Y}_D
-        beta_0 = part1 @ part2
+        beta_0 = float(part1 @ part2)
 
         return theta_parameters, random_effect_variances, beta_0
 

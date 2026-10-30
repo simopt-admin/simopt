@@ -66,6 +66,8 @@ model.maximize(dsl.mean(season.metric("profit")))
 # %%
 result = solve(model, ADAM(fixed_factors={"alpha": 10}), budget=1000, seed=0)
 
+if result.x is None:
+    raise RuntimeError("The solver returned no recommended solution.")
 print(f"recommended q: {result.x[0]:.1f}")
 print("replications used:", result.budget_used)
 

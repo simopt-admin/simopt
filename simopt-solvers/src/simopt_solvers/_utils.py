@@ -40,6 +40,7 @@ def make_nonzero(value: float, name: str, epsilon: float = 1e-15) -> float:
 def get_specifications(config_class: type[BaseModel]) -> dict[str, dict]:
     """Get the specifications for a configuration class."""
     spec = {}
+    defaults = {}
 
     for name, field in config_class.model_fields.items():
         data = {
@@ -48,10 +49,10 @@ def get_specifications(config_class: type[BaseModel]) -> dict[str, dict]:
 
         datatype = field.annotation
 
-        # `field.default` can be missing when `default_factory` is used
-        default = (
-            field.default if field.default is not PydanticUndefined else field.default_factory()
-        )
+        default = field.get_default(call_default_factory=True, validated_data=defaults)
+        if default is PydanticUndefined:
+            raise ValueError(f"Configuration field {name!r} must have a default.")
+        defaults[name] = default
 
         # Handle data type like list[int]
         if isinstance(datatype, types.GenericAlias):
@@ -64,8 +65,9 @@ def get_specifications(config_class: type[BaseModel]) -> dict[str, dict]:
         data["datatype"] = datatype
         data["default"] = default
 
-        if field.json_schema_extra is not None and "isDatafarmable" in field.json_schema_extra:
-            data["isDatafarmable"] = field.json_schema_extra["isDatafarmable"]
+        extra = field.json_schema_extra
+        if isinstance(extra, dict) and "isDatafarmable" in extra:
+            data["isDatafarmable"] = extra["isDatafarmable"]
 
         name = field.alias or name
         spec[name] = data
