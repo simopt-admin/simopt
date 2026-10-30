@@ -67,7 +67,7 @@ class ChessMatchmaking(Model[ChessMatchmakingConfig]):
 
     class_name_abbr: ClassVar[str] = "CHESS"
     class_name: ClassVar[str] = "Chess Matchmaking"
-    config_class: ClassVar[type[ChessMatchmakingConfig]] = ChessMatchmakingConfig
+    config_class: ClassVar[type[BaseModel]] = ChessMatchmakingConfig
     n_rngs: ClassVar[int] = 2
     n_responses: ClassVar[int] = 2
 

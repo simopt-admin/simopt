@@ -50,7 +50,7 @@ class Ambulance(Model[AmbulanceConfig]):
 
     class_name_abbr: ClassVar[str] = "AMBULANCE"
     class_name: ClassVar[str] = "Ambulance Base Allocation"
-    config_class: ClassVar[type[AmbulanceConfig]] = AmbulanceConfig
+    config_class: ClassVar[type[BaseModel]] = AmbulanceConfig
     n_rngs: ClassVar[int] = 4
     n_responses: ClassVar[int] = 1
 

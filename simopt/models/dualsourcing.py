@@ -54,7 +54,7 @@ class DualSourcing(Model[DualSourcingConfig]):
 
     class_name_abbr: ClassVar[str] = "DUALSOURCING"
     class_name: ClassVar[str] = "Dual Sourcing"
-    config_class: ClassVar[type[DualSourcingConfig]] = DualSourcingConfig
+    config_class: ClassVar[type[BaseModel]] = DualSourcingConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 3
 

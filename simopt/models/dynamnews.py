@@ -56,7 +56,7 @@ class DynamNews(Model[DynamNewsConfig]):
 
     class_name_abbr: ClassVar[str] = "DYNAMNEWS"
     class_name: ClassVar[str] = "Dynamic Newsvendor"
-    config_class: ClassVar[type[DynamNewsConfig]] = DynamNewsConfig
+    config_class: ClassVar[type[BaseModel]] = DynamNewsConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 4
 

@@ -64,7 +64,7 @@ class AmusementPark(Model[AmusementParkConfig]):
 
     class_name_abbr: ClassVar[str] = "AMUSEMENTPARK"
     class_name: ClassVar[str] = "Amusement Park"
-    config_class: ClassVar[type[AmusementParkConfig]] = AmusementParkConfig
+    config_class: ClassVar[type[BaseModel]] = AmusementParkConfig
     n_rngs: ClassVar[int] = 4
     n_responses: ClassVar[int] = 4
 

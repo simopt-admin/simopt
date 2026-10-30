@@ -80,7 +80,7 @@ class SAN(Model[SANConfig]):
 
     class_name_abbr: ClassVar[str] = "SAN"
     class_name: ClassVar[str] = "Stochastic Activity Network"
-    config_class: ClassVar[type[SANConfig]] = SANConfig
+    config_class: ClassVar[type[BaseModel]] = SANConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 1
 

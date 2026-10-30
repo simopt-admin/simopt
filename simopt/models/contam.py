@@ -178,7 +178,7 @@ class Contamination(Model[ContaminationConfig]):
 
     class_name_abbr: ClassVar[str] = "CONTAM"
     class_name: ClassVar[str] = "Contamination"
-    config_class: ClassVar[type[ContaminationConfig]] = ContaminationConfig
+    config_class: ClassVar[type[BaseModel]] = ContaminationConfig
     n_rngs: ClassVar[int] = 2
     n_responses: ClassVar[int] = 1
 

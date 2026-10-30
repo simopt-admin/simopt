@@ -68,7 +68,7 @@ print(f"{len(demand_data)} observations, mean demand {demand_data.mean():.2f}")
 
 default_problem = CntNVMaxProfit(name="CNTNEWS-1 (Burr)", fixed_factors={"budget": 500})
 data_problem = CntNVMaxProfit(name="CNTNEWS-1 (data)", fixed_factors={"budget": 500})
-data_problem.model.demand_model = EmpiricalDemand(demand_data)
+data_problem.model.demand_model = EmpiricalDemand(demand_data)  # ty: ignore[unresolved-attribute]
 
 solver = ASTRODF()
 experiments = [ProblemSolver(solver=solver, problem=p) for p in (default_problem, data_problem)]
@@ -92,7 +92,7 @@ class DataDrivenNewsvendor(ProblemSolver):
 
 
 experiment = DataDrivenNewsvendor(solver=ASTRODF(), problem=CntNVMaxProfit())
-print(type(experiment.problem.model.demand_model).__name__)
+print(type(experiment.problem.model.demand_model).__name__)  # ty: ignore[unresolved-attribute]
 
 # %% [markdown]
 # ## 2. Discrete solvers

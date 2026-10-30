@@ -48,7 +48,7 @@ class Network(Model[NetworkConfig]):
 
     class_name_abbr: ClassVar[str] = "NETWORK"
     class_name: ClassVar[str] = "Communication Networks System"
-    config_class: ClassVar[type[NetworkConfig]] = NetworkConfig
+    config_class: ClassVar[type[BaseModel]] = NetworkConfig
     n_rngs: ClassVar[int] = 3
     n_responses: ClassVar[int] = 1
 

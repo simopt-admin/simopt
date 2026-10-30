@@ -81,7 +81,7 @@ class IronOre(Model[IronOreConfig]):
 
     class_name_abbr: ClassVar[str] = "IRONORE"
     class_name: ClassVar[str] = "Iron Ore"
-    config_class: ClassVar[type[IronOreConfig]] = IronOreConfig
+    config_class: ClassVar[type[BaseModel]] = IronOreConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 3
 
