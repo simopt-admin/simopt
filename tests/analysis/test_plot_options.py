@@ -306,8 +306,10 @@ def test_curve_ci_artists(option_pair, name):
         "difference": diff,
     }[name]
     _, ax = plt.subplots()
-    kwargs = {"plot_zero": False} if name == "feasibility" else {}
-    module.plot(ax, result, color="magenta", **kwargs)
+    if name == "feasibility":
+        feasibility_progress.plot(ax, result, plot_zero=False, color="magenta")
+    else:
+        module.plot(ax, result, color="magenta")
     ci = result.ci if name in ("cdf", "profile", "difference") else result.df
     assert len(ax.lines) == 3
     assert len(ax.collections) == 1
