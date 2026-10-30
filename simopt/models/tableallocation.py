@@ -54,7 +54,7 @@ class TableAllocation(Model[TableAllocationConfig]):
 
     class_name_abbr: ClassVar[str] = "TABLEALLOCATION"
     class_name: ClassVar[str] = "Restaurant Table Allocation"
-    config_class: ClassVar[type[TableAllocationConfig]] = TableAllocationConfig
+    config_class: ClassVar[type[BaseModel]] = TableAllocationConfig
     n_rngs: ClassVar[int] = 4
     n_responses: ClassVar[int] = 2
 

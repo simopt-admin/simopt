@@ -141,46 +141,56 @@ crn_across_init_opt = True  # Default
 # ## Create Experiment using Specified Configuration
 
 # %%
-from simopt.experiment_base import ProblemsSolvers
+from simopt.directory import problem_directory, solver_directory
+from simopt.experiment.api import SimulationConfig, run
+from simopt.experiment.single import ProblemSolver
+from simopt.options import CrnOptions
+from simopt.problem import Problem
 
-# Create solver and problem names lists
-solver_names = [solver_abbr_name] * len(solver_design_list)
-problem_names = [problem_abbr_name] * len(model_design_list)
+def make_problem(name: str, factors: dict) -> Problem:
+    """Split design-point factors into problem and model factors."""
+    default = problem_directory[name]()
+    return problem_directory[name](
+        fixed_factors={k: v for k, v in factors.items() if k in default.specifications},
+        model_fixed_factors={
+            k: v for k, v in factors.items() if k in default.model.specifications
+        },
+    )
 
-# Create ProblemsSolvers experiment with solver and model design
-experiment = ProblemsSolvers(
-    solver_factors=solver_design_list,
-    problem_factors=model_design_list,
-    solver_names=solver_names,
-    problem_names=problem_names,
-)
+# Create one solver per solver design point and one problem per model design point
+solvers = [
+    solver_directory[solver_abbr_name](fixed_factors=dp) for dp in solver_design_list
+]
+problems = [make_problem(problem_abbr_name, dp) for dp in model_design_list]
+
+# Create the cross product of solver and problem design points
+experiments = [
+    ProblemSolver(solver=solver, problem=problem) for problem in problems for solver in solvers
+]
 
 # check compatibility of selected solvers and problems
-experiment.check_compatibility()
+for ps in experiments:
+    if message := ps.check_compatibility():
+        print(message)
+
+simulation_config = SimulationConfig(
+    n_mreps=n_macroreps,
+    n_preps=n_postreps,
+    n_preps_x0_xstar=n_postreps_init_opt,
+)
+crn_options = CrnOptions(
+    across_budget=crn_across_budget,
+    across_macroreps=crn_across_macroreps,
+    across_x0_xstar=crn_across_init_opt,
+)
 
 # %% [markdown]
 # ## Run Experiment
 
 # %%
-# Run macroreplications at each design point.
-experiment.run(n_macroreps)
+# Run macroreplications, postreplications and normalization at each design point.
+analysis_inputs = run(experiments, simulation_config, crn_options)
 
 # %%
-# Postprocess the experimental results from each design point.
-experiment.post_replicate(
-    n_postreps=n_postreps,
-    crn_across_budget=crn_across_budget,
-    crn_across_macroreps=crn_across_macroreps,
-)
-
-# %%
-experiment.post_normalize(
-    n_postreps_init_opt=n_postreps_init_opt,
-    crn_across_init_opt=crn_across_init_opt,
-)
-
-# %%
-# Record and log results
-experiment.record_group_experiment_results()
-experiment.log_group_experiment_results()
-experiment.report_group_statistics()
+# Inspect the results of the first problem-solver pair.
+analysis_inputs[0].mean_df.head()

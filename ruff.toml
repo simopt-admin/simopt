@@ -1,6 +1,7 @@
 # ruff.toml
 line-length = 100
 exclude = [
+    "archive/*",
     "notebooks/*",
     "simopt/models/ermexample.py",
     "workshop/erm_data_generator.ipynb",

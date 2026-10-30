@@ -58,7 +58,7 @@ class ExampleModel(Model[ExampleModelConfig]):
 
     class_name_abbr: ClassVar[str] = "EXAMPLE"
     class_name: ClassVar[str] = "Deterministic Function + Noise"
-    config_class: ClassVar[type[ExampleModelConfig]] = ExampleModelConfig
+    config_class: ClassVar[type[BaseModel]] = ExampleModelConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 1
 
@@ -171,7 +171,7 @@ class Example2Model(Model[Example2ModelConfig]):
 
     class_name_abbr: ClassVar[str] = "EXAMPLE-2-MODEL"
     class_name: ClassVar[str] = "Quadratic Function + Noise (Discrete)"
-    config_class: ClassVar[type[Example2ModelConfig]] = Example2ModelConfig
+    config_class: ClassVar[type[BaseModel]] = Example2ModelConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 1
 

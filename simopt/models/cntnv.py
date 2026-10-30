@@ -54,7 +54,7 @@ class CntNV(Model[CntNVConfig]):
 
     class_name_abbr: ClassVar[str] = "CNTNEWS"
     class_name: ClassVar[str] = "Continuous Newsvendor"
-    config_class: ClassVar[type[CntNVConfig]] = CntNVConfig
+    config_class: ClassVar[type[BaseModel]] = CntNVConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 1
 

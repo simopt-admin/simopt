@@ -48,7 +48,7 @@ class ParameterEstimation(Model[ParameterEstimationConfig]):
 
     class_name_abbr: ClassVar[str] = "PARAMESTI"
     class_name: ClassVar[str] = "Gamma Parameter Estimation"
-    config_class: ClassVar[type[ParameterEstimationConfig]] = ParameterEstimationConfig
+    config_class: ClassVar[type[BaseModel]] = ParameterEstimationConfig
     n_rngs: ClassVar[int] = 2
     n_responses: ClassVar[int] = 1
 

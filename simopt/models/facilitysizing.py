@@ -132,7 +132,7 @@ class FacilitySize(Model[FacilitySizeConfig]):
 
     class_name_abbr: ClassVar[str] = "FACSIZE"
     class_name: ClassVar[str] = "Facility Sizing"
-    config_class: ClassVar[type[FacilitySizeConfig]] = FacilitySizeConfig
+    config_class: ClassVar[type[BaseModel]] = FacilitySizeConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 3
 

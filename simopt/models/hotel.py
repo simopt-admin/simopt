@@ -48,7 +48,7 @@ class Hotel(Model[HotelConfig]):
 
     class_name_abbr: ClassVar[str] = "HOTEL"
     class_name: ClassVar[str] = "Hotel Booking"
-    config_class: ClassVar[type[HotelConfig]] = HotelConfig
+    config_class: ClassVar[type[BaseModel]] = HotelConfig
     n_rngs: ClassVar[int] = 1
     n_responses: ClassVar[int] = 1
 

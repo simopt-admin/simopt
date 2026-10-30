@@ -52,7 +52,7 @@ class RMITD(Model[RMITDConfig]):
 
     class_name_abbr: ClassVar[str] = "RMITD"
     class_name: ClassVar[str] = "Revenue Management Temporal Demand"
-    config_class: ClassVar[type[RMITDConfig]] = RMITDConfig
+    config_class: ClassVar[type[BaseModel]] = RMITDConfig
     n_rngs: ClassVar[int] = 2
     n_responses: ClassVar[int] = 1
 

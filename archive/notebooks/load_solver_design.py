@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.18.1
+#       jupytext_version: 1.17.3
 #   kernelspec:
 #     display_name: simopt
 #     language: python
@@ -117,31 +117,44 @@ for fixed_factor in solver_fixed_factors:
     for dp in dp_list:
         dp[fixed_factor] = solver_fixed_factors[fixed_factor]
 
-n_dp = len(dp_list)
-solver_names = []
-for _ in range(n_dp):
-    solver_names.append(solver_name)
+# %%
+from simopt.directory import problem_directory, solver_directory
+from simopt.experiment.api import SimulationConfig, run
+from simopt.experiment.single import ProblemSolver
+from simopt.options import CrnOptions
+from simopt.problem import Problem
+
+def make_problem(name: str, factors: dict) -> Problem:
+    """Split design-point factors into problem and model factors."""
+    default = problem_directory[name]()
+    return problem_directory[name](
+        fixed_factors={k: v for k, v in factors.items() if k in default.specifications},
+        model_fixed_factors={
+            k: v for k, v in factors.items() if k in default.model.specifications
+        },
+    )
+
+solvers = [solver_directory[solver_name](fixed_factors=dp) for dp in dp_list]
+problems = [
+    make_problem(name, factors)
+    for name, factors in zip(problem_names, problem_fixed_factors, strict=True)
+]
+
+experiments = [
+    ProblemSolver(solver=solver, problem=problem) for problem in problems for solver in solvers
+]
 
 # %%
-from simopt.experiment_base import ProblemsSolvers
-
-experiment = ProblemsSolvers(
-    solver_factors=dp_list,
-    problem_factors=problem_fixed_factors,
-    solver_names=solver_names,
-    problem_names=problem_names,
+simulation_config = SimulationConfig(
+    n_mreps=n_macroreps,
+    n_preps=n_postreps,
+    n_preps_x0_xstar=n_postreps_init_opt,
 )
 
 # %%
-experiment.run(n_macroreps)
+# Run macroreplications, postreplications and normalization at each design point.
+analysis_inputs = run(experiments, simulation_config)
 
 # %%
-experiment.post_replicate(n_postreps)
-
-# %%
-experiment.post_normalize(n_postreps_init_opt)
-
-# %%
-experiment.record_group_experiment_results()
-experiment.log_group_experiment_results()
-experiment.report_group_statistics()
+# Inspect the results of the first problem-solver pair.
+analysis_inputs[0].mean_df.head()
