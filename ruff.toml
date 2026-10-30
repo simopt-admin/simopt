@@ -49,12 +49,13 @@ convention = "google"
 ignore-decorators = ["simopt.utils.override"]
 
 [lint.isort]
-known-first-party = ["simopt", "mrg32k3a"]
+known-first-party = ["simopt", "simopt_solvers", "mrg32k3a"]
 
 [lint.pep8-naming]
 classmethod-decorators = ["simopt.utils.classproperty"]
 
 [lint.per-file-ignores]
 "simopt/models/*" = ["D"]
-"simopt/solvers/*" = ["D"]
+"simopt-solvers/src/simopt_solvers/solvers/*" = ["D"]
+"simopt-solvers/tests/*" = ["ANN", "ARG", "D"]
 "tests/*" = ["ANN", "ARG", "D"]

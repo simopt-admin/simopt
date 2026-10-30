@@ -1,7 +1,7 @@
 Simultaneous Perturbation Stochastic Approximation (SPSA)
 =========================================================
 
-See the :mod:`simopt.solvers.spsa` module for API details.
+See the :mod:`simopt_solvers.solvers.spsa` module for API details.
 
 Description
 -----------

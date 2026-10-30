@@ -12,13 +12,13 @@ from collections.abc import Iterable
 from typing import Annotated, ClassVar
 
 import numpy as np
+import simopt_dsl as dsl
 from pydantic import Field
 
-from simopt.base import (
+from simopt_solvers.base import (
     ConstraintType,
     Context,
     ObjectiveType,
-    Problem,
     Solution,
     Solver,
     SolverConfig,
@@ -84,9 +84,9 @@ class NelderMead(Solver):
     gradient_needed: ClassVar[bool] = False
 
     # FIXME: fix typing on `sort_sol`
-    def solve(self, problem: Problem, ctx: Context) -> None:
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
         # Designate random number generator for random sampling.
-        get_rand_soln_rng = self.rng_list[1]
+        get_rand_soln_rng = ctx.rng(1)
         n_pts = problem.dim + 1
 
         # Check for sufficiently large budget.
@@ -95,26 +95,25 @@ class NelderMead(Solver):
             raise ValueError(err_msg)
 
         # Shrink variable bounds to avoid floating errors.
-        if problem.lower_bounds and not np.all(np.isneginf(problem.lower_bounds)):
-            self.lower_bounds = np.array(problem.lower_bounds) + self.factors["sensitivity"]
+        if problem.lower_bounds() and not np.all(np.isneginf(problem.lower_bounds())):
+            self.lower_bounds = np.array(problem.lower_bounds()) + self.factors["sensitivity"]
         else:
             self.lower_bounds = None
 
-        if problem.upper_bounds and not np.all(np.isposinf(problem.upper_bounds)):
-            self.upper_bounds = np.array(problem.upper_bounds) - self.factors["sensitivity"]
+        if problem.upper_bounds() and not np.all(np.isposinf(problem.upper_bounds())):
+            self.upper_bounds = np.array(problem.upper_bounds()) - self.factors["sensitivity"]
         else:
             self.upper_bounds = None
 
         # Initial dim + 1 points.
-        sol = [ctx.evaluate(problem.factors["initial_solution"], 0)]
+        sol = [ctx.evaluate(problem.initial_vector(), 0)]
 
         if self.lower_bounds is None or self.upper_bounds is None:
             sol.extend(
-                ctx.evaluate(problem.get_random_solution(get_rand_soln_rng), 0)
-                for _ in range(1, n_pts)
+                ctx.evaluate(problem.random_solution(get_rand_soln_rng), 0) for _ in range(1, n_pts)
             )
         else:  # Restrict starting shape/location.
-            initial_solution = np.array(problem.factors["initial_solution"], dtype=float)
+            initial_solution = np.array(problem.initial_vector(), dtype=float)
             distances = (self.upper_bounds - self.lower_bounds) * self.factors["initial_spread"]
 
             # Generate new points

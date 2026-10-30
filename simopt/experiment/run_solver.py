@@ -1,6 +1,5 @@
 """Functions for running solvers and collecting their outputs."""
 
-import contextlib
 import logging
 import time
 from copy import deepcopy
@@ -8,9 +7,8 @@ from copy import deepcopy
 import pandas as pd
 from joblib import Parallel, delayed
 
-from mrg32k3a.mrg32k3a import MRG32k3a
 from simopt.problem import Problem
-from simopt.solver import BudgetExhaustedError, Context, Solver
+from simopt.solver import Solver, solve
 
 
 def _trim(df: pd.DataFrame, budget: int) -> pd.DataFrame:
@@ -27,52 +25,9 @@ def _trim(df: pd.DataFrame, budget: int) -> pd.DataFrame:
     return df
 
 
-def _set_up_rngs(solver: Solver, problem: Problem, mrep: int) -> None:
-    # Stream 0: reserved for taking post-replications
-    # Stream 1: reserved for bootstrapping
-    # Stream 2: reserved for overhead ...
-    #     Substream 0: rng for random problem instance
-    #     Substream 1: rng for random initial solution x0 and restart solutions
-    #     Substream 2: rng for selecting random feasible solutions
-    #     Substream 3: rng for solver's internal randomness
-    # Streams 3, 4, ..., n_macroreps + 2: reserved for
-    #                                     macroreplications
-    # FIXME: the following rngs seem to be overriden by the solver rngs below
-    rng_list = [MRG32k3a(s_ss_sss_index=[2, i + 1, 0]) for i in range(3)]
-    solver.attach_rngs(rng_list)
-
-    # Create RNGs for simulation
-    simulation_rngs = [
-        MRG32k3a(s_ss_sss_index=[mrep + 3, i, 0]) for i in range(problem.model.n_rngs)
-    ]
-
-    # Create RNGs for the solver
-    solver_rngs = [
-        MRG32k3a(
-            s_ss_sss_index=[
-                mrep + 3,
-                problem.model.n_rngs + i,
-                0,
-            ]
-        )
-        for i in range(len(solver.rng_list))
-    ]
-
-    solver.solution_progenitor_rngs = simulation_rngs
-    solver.rng_list = solver_rngs
-
-
-def _run_solver(solver: Solver, problem: Problem) -> pd.DataFrame:
-    ctx = Context(
-        problem=problem,
-        total_budget=problem.factors["budget"],
-        solution_progenitor_rngs=solver.solution_progenitor_rngs,
-        crn_across_solns=solver.config.crn_across_solns,
-    )
-    with contextlib.suppress(BudgetExhaustedError):
-        solver.solve(problem, ctx)
-
-    return ctx.history()
+def _run_solver(solver: Solver, problem: Problem, mrep: int) -> pd.DataFrame:
+    result = solve(problem.optimization_problem, solver, problem.factors["budget"], seed=mrep)
+    return result.history
 
 
 def _run_mrep(solver: Solver, problem: Problem, mrep: int) -> tuple[pd.DataFrame, float]:
@@ -81,12 +36,9 @@ def _run_mrep(solver: Solver, problem: Problem, mrep: int) -> tuple[pd.DataFrame
         f"Macroreplication {mrep}: starting solver {solver.name} on problem {problem.name}."
     )
 
-    # Set up RNGs
-    _set_up_rngs(solver, problem, mrep)
-
     # Run solver
     start = time.perf_counter()
-    df = _run_solver(solver, problem)
+    df = _run_solver(solver, problem, mrep)
     elapsed = time.perf_counter() - start
     logging.debug(
         f"Macroreplication {mrep}: "

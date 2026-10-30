@@ -1,7 +1,7 @@
 Adaptive Line-search with Oracle Estimations (ALOE)
 ===================================================
 
-See the :mod:`simopt.solvers.aloe` module for API details.
+See the :mod:`simopt_solvers.solvers.aloe` module for API details.
 
 Description
 -----------

@@ -1,7 +1,7 @@
 Solver: <solver_name> (<solver_abbreviation>)
 =============================================
 
-See the :mod:`simopt.solvers.<module_name>` module for API details.
+See the :mod:`simopt_solvers.solvers.<module_name>` module for API details.
 
 Description
 -----------

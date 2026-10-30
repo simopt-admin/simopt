@@ -11,20 +11,20 @@ from __future__ import annotations
 from typing import Annotated, ClassVar, Self
 
 import numpy as np
+import simopt_dsl as dsl
 from numpy.linalg import norm
 from pydantic import Field, model_validator
 
-from simopt.base import (
+from simopt_solvers._utils import make_nonzero
+from simopt_solvers.base import (
     ConstraintType,
     Context,
     ObjectiveType,
-    Problem,
     Solver,
     SolverConfig,
     VariableType,
 )
-from simopt.solvers.utils import bfgs_hessian_approx, fd
-from simopt.utils import make_nonzero
+from simopt_solvers.solvers.utils import bfgs_hessian_approx, fd
 
 
 class STRONGConfig(SolverConfig):
@@ -122,7 +122,7 @@ class STRONG(Solver):
     variable_type: ClassVar[VariableType] = VariableType.CONTINUOUS
     gradient_needed: ClassVar[bool] = False
 
-    def solve(self, problem: Problem, ctx: Context) -> None:
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
         # Default values.
         n0: int = self.factors["n0"]
         n_r: int = self.factors["n_r"]
@@ -135,11 +135,11 @@ class STRONG(Solver):
         lam: int = self.factors["lambda"]
 
         # Upper bound and lower bound.
-        lower_bound = np.array(problem.lower_bounds)
-        upper_bound = np.array(problem.upper_bounds)
+        lower_bound = np.array(problem.lower_bounds())
+        upper_bound = np.array(problem.upper_bounds())
 
         # Start with the initial solution.
-        new_solution = ctx.evaluate(problem.factors["initial_solution"], n0)
+        new_solution = ctx.evaluate(problem.initial_vector(), n0)
 
         best_solution = new_solution
         ctx.log(new_solution)
@@ -391,12 +391,12 @@ class STRONG(Solver):
         grad: np.ndarray,
         hessian: np.ndarray,
         new_x: np.ndarray,
-        problem: Problem,
+        problem: dsl.Model,
     ) -> np.ndarray:
         """Find the Cauchy point based on the gradient and Hessian matrix."""
         delta_t = self.factors["delta_T"]
-        lower_bound = problem.lower_bounds
-        upper_bound = problem.upper_bounds
+        lower_bound = problem.lower_bounds()
+        upper_bound = problem.upper_bounds()
 
         val = float(np.dot(grad, hessian @ grad))
         val_dt = delta_t * val

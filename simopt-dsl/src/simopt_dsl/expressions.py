@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, overload
 
 
 class Expression:
@@ -13,26 +13,98 @@ class Expression:
     def evaluate(self, context: EvaluationContext) -> float:
         raise NotImplementedError
 
+    @overload
+    def __add__(self, other: Expression | float) -> Expression: ...
+
+    @overload
+    def __add__(self, other: AggregateExpression) -> AggregateExpression: ...
+
+    @overload
+    def __add__(self, other: object) -> Expression | AggregateExpression: ...
+
     def __add__(self, other: object) -> Expression | AggregateExpression:
         return _binary_expression("+", self, other)
+
+    @overload
+    def __radd__(self, other: Expression | float) -> Expression: ...
+
+    @overload
+    def __radd__(self, other: AggregateExpression) -> AggregateExpression: ...
+
+    @overload
+    def __radd__(self, other: object) -> Expression | AggregateExpression: ...
 
     def __radd__(self, other: object) -> Expression | AggregateExpression:
         return _binary_expression("+", other, self)
 
+    @overload
+    def __sub__(self, other: Expression | float) -> Expression: ...
+
+    @overload
+    def __sub__(self, other: AggregateExpression) -> AggregateExpression: ...
+
+    @overload
+    def __sub__(self, other: object) -> Expression | AggregateExpression: ...
+
     def __sub__(self, other: object) -> Expression | AggregateExpression:
         return _binary_expression("-", self, other)
+
+    @overload
+    def __rsub__(self, other: Expression | float) -> Expression: ...
+
+    @overload
+    def __rsub__(self, other: AggregateExpression) -> AggregateExpression: ...
+
+    @overload
+    def __rsub__(self, other: object) -> Expression | AggregateExpression: ...
 
     def __rsub__(self, other: object) -> Expression | AggregateExpression:
         return _binary_expression("-", other, self)
 
+    @overload
+    def __mul__(self, other: Expression | float) -> Expression: ...
+
+    @overload
+    def __mul__(self, other: AggregateExpression) -> AggregateExpression: ...
+
+    @overload
+    def __mul__(self, other: object) -> Expression | AggregateExpression: ...
+
     def __mul__(self, other: object) -> Expression | AggregateExpression:
         return _binary_expression("*", self, other)
+
+    @overload
+    def __rmul__(self, other: Expression | float) -> Expression: ...
+
+    @overload
+    def __rmul__(self, other: AggregateExpression) -> AggregateExpression: ...
+
+    @overload
+    def __rmul__(self, other: object) -> Expression | AggregateExpression: ...
 
     def __rmul__(self, other: object) -> Expression | AggregateExpression:
         return _binary_expression("*", other, self)
 
+    @overload
+    def __truediv__(self, other: Expression | float) -> Expression: ...
+
+    @overload
+    def __truediv__(self, other: AggregateExpression) -> AggregateExpression: ...
+
+    @overload
+    def __truediv__(self, other: object) -> Expression | AggregateExpression: ...
+
     def __truediv__(self, other: object) -> Expression | AggregateExpression:
         return _binary_expression("/", self, other)
+
+    @overload
+    def __rtruediv__(self, other: Expression | float) -> Expression: ...
+
+    @overload
+    def __rtruediv__(self, other: AggregateExpression) -> AggregateExpression: ...
+
+    @overload
+    def __rtruediv__(self, other: object) -> Expression | AggregateExpression: ...
 
     def __rtruediv__(self, other: object) -> Expression | AggregateExpression:
         return _binary_expression("/", other, self)

@@ -39,7 +39,7 @@ from simopt.experiment.api import SimulationConfig, run
 from simopt.experiment.single import ProblemSolver
 from simopt.models.cntnv import CntNVMaxProfit
 from simopt.options import ConfidenceIntervalOptions, CrnOptions
-from simopt.solvers.astrodf import ASTRODF
+from simopt.solvers import ASTRODF
 
 # %% [markdown]
 # ## Configuration

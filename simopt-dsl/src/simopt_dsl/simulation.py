@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from numbers import Real
@@ -54,6 +55,7 @@ class Simulation:
     run: Callable[..., SimulationResult]
     decisions: dict[str, DecisionVariable]
     n_rngs: int = 1
+    gradients: bool = False
 
     def metric(self, name: str) -> Metric:
         """Return a scalar expression referring to a simulation response."""
@@ -67,7 +69,15 @@ class Simulation:
         """Evaluate the callback once and normalize its metrics and derivatives."""
         decisions = {name: variable.evaluate(context) for name, variable in self.decisions.items()}
         result = self.run(decisions, rngs)
-        return _coerce_evaluation(result, self.decisions)
+        evaluation = _coerce_evaluation(result, self.decisions)
+        if not self.gradients and evaluation.derivatives:
+            warnings.warn(
+                f"simulation {self.name!r} returned derivatives but was added with "
+                "gradients=False; pass gradients=True if they are valid estimates",
+                UserWarning,
+                stacklevel=2,
+            )
+        return evaluation
 
 
 def component_items(decisions: Mapping[str, DecisionVariable]) -> tuple[tuple[str, Variable], ...]:

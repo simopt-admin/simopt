@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from math import isinf
+from math import floor, isinf
 from numbers import Real
 from typing import Any, cast
 
@@ -55,6 +55,7 @@ class Model:
         self.objective: AggregateExpression | None = None
         self.objective_sense = "minimize"
         self.n_rngs = 1
+        self._random_solution: Callable[[Any], Iterable[float]] | None = None
         self._declared_variables: list[DecisionVariable] = []
         self._evaluation_plan: _EvaluationPlan | None = None
 
@@ -116,14 +117,21 @@ class Model:
         run: Callable[..., SimulationResult] | None = None,
         decisions: Mapping[str, DecisionVariable] | None = None,
         n_rngs: int = 1,
+        gradients: bool = False,
     ) -> Simulation:
-        """Add a simulation callback and bind its decision variables."""
+        """Add a simulation callback and bind its decision variables.
+
+        Set ``gradients`` to True when ``run`` returns derivative estimates of its
+        responses with respect to its decisions.
+        """
         if run is None or not callable(run):
             raise TypeError("simulation run callable is required")
         if decisions is None:
             raise TypeError("simulation decisions are required")
         if not isinstance(n_rngs, int) or isinstance(n_rngs, bool) or n_rngs <= 0:
             raise ValueError("simulation must use at least one RNG")
+        if not isinstance(gradients, bool):
+            raise TypeError("simulation gradients flag must be a bool")
         simulation_name = self._resolve_name(name, "simulation", self.simulations)
 
         decision_variables: dict[str, DecisionVariable] = {}
@@ -143,7 +151,7 @@ class Model:
             decision_variables[decision_name] = variable
             seen_components.update(id(component) for component in variable_components)
 
-        simulation = Simulation(simulation_name, run, decision_variables, n_rngs)
+        simulation = Simulation(simulation_name, run, decision_variables, n_rngs, gradients)
         self.simulations.append(simulation)
         self.n_rngs = max(self.n_rngs, n_rngs)
         self._invalidate_evaluation_plan()
@@ -156,6 +164,85 @@ class Model:
     def minimize(self, objective: AggregateExpression | Expression) -> None:
         """Set the model's minimization objective."""
         self._set_objective(objective, "minimize")
+
+    @property
+    def dim(self) -> int:
+        """Number of scalar decision variables, i.e. the length of a solution vector."""
+        return len(self.variables)
+
+    @property
+    def n_stochastic_constraints(self) -> int:
+        """Number of stochastic constraints."""
+        return len(self.stochastic_constraints)
+
+    @property
+    def gradient_available(self) -> bool:
+        """Whether replications provide an objective gradient estimate.
+
+        True when the objective has a symbolic gradient and every simulation it
+        depends on declares ``gradients=True``.
+        """
+        if self.objective is None:
+            return False
+        gradient = self._get_evaluation_plan()._gradient(self.objective)
+        if gradient is None:
+            return False
+        used_simulations = {
+            simulation_name for simulation_name, _, _ in gradient.metric_applications
+        }
+        return all(
+            simulation.gradients
+            for simulation in self.simulations
+            if simulation.name in used_simulations
+        )
+
+    def set_random_solution(self, sampler: Callable[[Any], Iterable[float]] | None) -> None:
+        """Set the callable that draws a random solution from an RNG.
+
+        The sampler receives one RNG and returns a flat solution vector. Pass None to
+        restore the default sampler.
+        """
+        if sampler is not None and not callable(sampler):
+            raise TypeError("random solution sampler must be callable")
+        self._random_solution = sampler
+
+    def random_solution(self, rng: Any, max_attempts: int = 1000) -> tuple[float, ...]:
+        """Draw a random solution in flattened solver order.
+
+        Uses the sampler set by :meth:`set_random_solution` if any. Otherwise draws
+        each variable uniformly within its bounds (integer variables uniformly over
+        their integer values) and rejects draws that violate deterministic
+        constraints.
+
+        Args:
+            rng: RNG providing ``uniform(a, b)``, e.g. ``MRG32k3a`` or
+                ``numpy.random.Generator``.
+            max_attempts: Maximum draws of the default sampler before giving up.
+
+        Raises:
+            ValueError: If the default sampler is used with an infinite bound or
+                cannot find a solution satisfying the deterministic constraints.
+        """
+        if self._random_solution is not None:
+            return tuple(self._random_solution(rng))
+
+        for variable in self.variables:
+            if isinf(variable.lb) or isinf(variable.ub):
+                raise ValueError(
+                    f"variable {variable.name!r} has an infinite bound; "
+                    "use set_random_solution to provide a sampler"
+                )
+        for _ in range(max_attempts):
+            values = tuple(_sample_variable(variable, rng) for variable in self.variables)
+            context = EvaluationContext(dict(zip(self.variables, values, strict=True)))
+            if all(
+                constraint.satisfied(context) for _, constraint in self.deterministic_constraints
+            ):
+                return values
+        raise ValueError(
+            f"no random solution satisfying the deterministic constraints "
+            f"found in {max_attempts} attempts"
+        )
 
     def initial_vector(self) -> tuple[float, ...]:
         """Return initial values in flattened solver order."""
@@ -174,6 +261,7 @@ class Model:
         flat_values = tuple(float(value) for value in values)
         if len(flat_values) != len(self.variables):
             raise ValueError("solution dimension does not match model variables")
+        flat_values = _typed_values(self.variables, flat_values)
 
         unpacked: dict[str, float | tuple[float, ...]] = {}
         offset = 0
@@ -201,6 +289,7 @@ class Model:
                 _validate_integer(value, "integer variable value")
         if len(rngs) < self.n_rngs:
             raise ValueError("not enough RNGs for model simulations")
+        flat_values = _typed_values(self.variables, flat_values)
 
         context = EvaluationContext(dict(zip(self.variables, flat_values, strict=True)))
         for _, constraint in self.deterministic_constraints:
@@ -242,6 +331,12 @@ class Model:
         if integer:
             _validate_integer(initial_value, "integer variable initial value")
         _validate_initial(initial_value, lower, upper)
+        if integer:
+            lower, upper, initial_value = (
+                _as_integer(lower),
+                _as_integer(upper),
+                _as_integer(initial_value),
+            )
         variable = Variable(variable_name, lower, upper, initial_value, integer)
         self.variables.append(variable)
         self._declared_variables.append(variable)
@@ -282,6 +377,11 @@ class Model:
             initial_values, lower, upper, strict=True
         ):
             _validate_initial(initial_value, lower_value, upper_value)
+
+        if integer:
+            lower = tuple(_as_integer(value) for value in lower)
+            upper = tuple(_as_integer(value) for value in upper)
+            initial_values = tuple(_as_integer(value) for value in initial_values)
 
         variable_name = self._resolve_name(name, "variable", self._declared_variables)
         scalar_components = tuple(
@@ -493,6 +593,23 @@ def _evaluate_aggregate(
     if isinstance(expression, Expression):
         return expression.evaluate(context)
     raise TypeError(f"unsupported aggregate objective {type(expression).__name__!r}")
+
+
+def _as_integer(value: float) -> Number:
+    return value if isinf(value) else int(value)
+
+
+def _typed_values(variables: Sequence[Variable], values: tuple[float, ...]) -> tuple[Number, ...]:
+    return tuple(
+        int(value) if variable.integer and float(value).is_integer() else value
+        for variable, value in zip(variables, values, strict=True)
+    )
+
+
+def _sample_variable(variable: Variable, rng: Any) -> Number:
+    if not variable.integer:
+        return float(rng.uniform(variable.lb, variable.ub))
+    return min(floor(rng.uniform(variable.lb, variable.ub + 1)), variable.ub)
 
 
 def _coerce_number(value: object, parameter_name: str) -> float:

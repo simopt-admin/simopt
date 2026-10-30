@@ -41,7 +41,10 @@ templates_path = ["_templates"]
 
 # AutoAPI settings
 autoapi_type = "python"
-autoapi_dirs = [str(project_path / "simopt")]
+autoapi_dirs = [
+    str(project_path / "simopt"),
+    str(project_path / "simopt-solvers" / "src" / "simopt_solvers"),
+]
 main_path = str(project_path / "simopt" / "__main__.py")
 autoapi_ignore = [main_path]
 autoapi_keep_files = False

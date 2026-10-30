@@ -17,7 +17,7 @@ from simopt.models.chessmm import ChessAvgDifference
 from simopt.models.cntnv import CntNVMaxProfit
 from simopt.models.example import ExampleProblem
 from simopt.options import CrnOptions
-from simopt.solvers.randomsearch import RandomSearch
+from simopt.solvers import RandomSearch
 
 
 class FixedNoise:

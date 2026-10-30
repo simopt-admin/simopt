@@ -1,8 +1,14 @@
 import numpy as np
 import pandas as pd
-from pydoe import lhs
 
 from mrg32k3a.mrg32k3a import MRG32k3a
+
+try:
+    from pydoe import lhs
+except ImportError as exc:
+    raise ImportError(
+        "DASSO requires pydoe; install it with `pip install 'simopt-solvers[dasso]'`"
+    ) from exc
 
 # ================================================================================
 # Function for constructing a DataFrame from a matrix with floats between 0 and 1

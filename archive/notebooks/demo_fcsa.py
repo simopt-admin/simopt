@@ -40,7 +40,7 @@ from simopt.experiment_base import (
     post_normalize,
 )
 from simopt.models.san import SANLongestPathStochastic
-from simopt.solvers.fcsa import FCSA
+from simopt.solvers import FCSA
 
 # %% [markdown]
 # ## Experiment Configuration Parameters

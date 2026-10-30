@@ -25,7 +25,7 @@ NUM_POSTREPS = 100
 
 # Setup the SimOpt directory structure
 HOME_DIR = Path(__file__).resolve().parent.parent
-EXPECTED_RESULTS_DIR = HOME_DIR / "test" / "expected_results"
+EXPECTED_RESULTS_DIR = HOME_DIR / "tests" / "expected_results"
 
 
 def _color_text(text: str, color: str | int) -> str:

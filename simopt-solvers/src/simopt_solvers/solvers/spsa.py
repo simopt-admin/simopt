@@ -9,19 +9,19 @@ from __future__ import annotations
 from typing import Annotated, ClassVar, Self
 
 import numpy as np
+import simopt_dsl as dsl
 from numpy.typing import NDArray
 from pydantic import Field, model_validator
 
-from simopt.base import (
+from simopt_solvers._utils import make_nonzero
+from simopt_solvers.base import (
     ConstraintType,
     Context,
     ObjectiveType,
-    Problem,
     Solver,
     SolverConfig,
     VariableType,
 )
-from simopt.utils import make_nonzero
 
 
 class SPSAConfig(SolverConfig):
@@ -122,7 +122,7 @@ class SPSA(Solver):
         # Check divisibility for the for loop.
         return self.factors["n_loss"] % (2 * self.factors["gavg"]) == 0
 
-    def _gen_simul_pert_vec(self, dim: int) -> NDArray[np.int_]:
+    def _gen_simul_pert_vec(self, ctx: Context, dim: int) -> NDArray[np.int_]:
         """Generate a random perturbation vector.
 
         Generate a new simulatanious pertubation vector with a 50/50 probability
@@ -130,19 +130,20 @@ class SPSA(Solver):
         problem's dimension. The vector components are independent from each other.
 
         Args:
+            ctx (Context): Runtime services providing the solver RNG.
             dim (int): The length of the vector.
 
         Returns:
             NDArray[np.int_]: A random vector of -1's and 1's.
         """
-        return np.array(self.rng_list[2].choices([-1, 1], [0.5, 0.5], k=dim))
+        return np.array(ctx.rng(2).choices([-1, 1], [0.5, 0.5], k=dim))
 
-    def solve(self, problem: Problem, ctx: Context) -> None:
-        lower_bound = np.array(problem.lower_bounds)
-        upper_bound = np.array(problem.upper_bounds)
+    def solve(self, problem: dsl.Model, ctx: Context) -> None:
+        lower_bound = np.array(problem.lower_bounds())
+        upper_bound = np.array(problem.upper_bounds())
 
         # Start at initial solution and record as best.
-        theta = problem.factors["initial_solution"]
+        theta = problem.initial_vector()
         theta_sol = ctx.evaluate(tuple(theta), 0)
         ctx.log(theta_sol)
 
@@ -163,7 +164,7 @@ class SPSA(Solver):
             ghat = np.zeros((1, problem.dim))
             for _ in range(self.factors["gavg"]):
                 # Generate random direction (delta).
-                delta = self._gen_simul_pert_vec(problem.dim)
+                delta = self._gen_simul_pert_vec(ctx, problem.dim)
                 c_delta = c * delta
                 # Determine points forward/backward relative to random direction.
                 theta_forward = theta + c_delta
@@ -203,7 +204,7 @@ class SPSA(Solver):
             ak = a / (k + aalg) ** self.factors["alpha"]
             ck = c / (k ** self.factors["gamma"])
             # Generate random direction (delta).
-            delta = self._gen_simul_pert_vec(problem.dim)
+            delta = self._gen_simul_pert_vec(ctx, problem.dim)
             ck_delta = ck * delta
             # Determine points forward/backward relative to random direction.
             theta_forward = theta + ck_delta
@@ -246,7 +247,7 @@ class SPSA(Solver):
 
 def _check_cons(
     candidate_x: np.ndarray,
-    new_x: np.ndarray,
+    new_x: np.ndarray | tuple[float, ...],
     lower_bound: np.ndarray,
     upper_bound: np.ndarray,
 ) -> tuple[np.ndarray, float]:
