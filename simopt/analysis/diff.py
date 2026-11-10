@@ -72,9 +72,28 @@ def _difference(lhs: pd.DataFrame, rhs: pd.DataFrame) -> pd.DataFrame:
     return df.assign(value=df["lhs"] - df["rhs"])[["budget", "value"]]
 
 
+def _bootstrap(
+    solver_inputs: list[AnalysisInput],
+    n_bootstraps: int,
+    plot_type: str,
+    crn_options: CrnOptions,
+    normalize: bool,
+    solve_tolerance: float,
+    beta: float,
+) -> list[pd.DataFrame]:
+    problem_level_bootstraps = problem_bootstraps(
+        solver_inputs,
+        n_bootstraps,
+        lambda data: _solvability(data, plot_type, solve_tolerance, beta, normalize),
+        crn_options,
+    )
+    return solver_bootstraps(problem_level_bootstraps, n_bootstraps)
+
+
 def _analyze_solver(
     inputs: list[AnalysisInput],
     reference_inputs: list[AnalysisInput],
+    reference_solver_bootstraps: list[pd.DataFrame] | None,
     plot_type: str,
     ci_options: ConfidenceIntervalOptions | None,
     crn_options: CrnOptions,
@@ -88,23 +107,12 @@ def _analyze_solver(
         _aggregate(reference_inputs, plot_type, solve_tolerance, beta, normalize),
     )
 
-    def _bootstrap(
-        solver_inputs: list[AnalysisInput],
-        n_bootstraps: int,
-    ) -> list[pd.DataFrame]:
-        problem_level_bootstraps = problem_bootstraps(
-            solver_inputs,
-            n_bootstraps,
-            lambda data: _solvability(data, plot_type, solve_tolerance, beta, normalize),
-            crn_options,
-        )
-        return solver_bootstraps(problem_level_bootstraps, n_bootstraps)
-
     ci = None
-    if ci_options is not None:
+    if ci_options is not None and reference_solver_bootstraps is not None:
         n_bootstraps = ci_options.n_bootstraps
-        solver_level_bootstraps = _bootstrap(inputs, n_bootstraps)
-        reference_solver_bootstraps = _bootstrap(reference_inputs, n_bootstraps)
+        solver_level_bootstraps = _bootstrap(
+            inputs, n_bootstraps, plot_type, crn_options, normalize, solve_tolerance, beta
+        )
         diff_bootstraps = [
             _difference(solver_level_bootstraps[i], reference_solver_bootstraps[i])
             for i in range(n_bootstraps)
@@ -136,6 +144,19 @@ def analyze_many(
         raise ValueError(f"reference solver '{reference_solver}' not found.")
 
     reference_inputs = solver_to_inputs[reference_solver]
+    # The reference solver's bootstraps are shared by all solvers.
+    reference_solver_bootstraps = None
+    if ci_options is not None:
+        reference_solver_bootstraps = _bootstrap(
+            reference_inputs,
+            ci_options.n_bootstraps,
+            plot_type,
+            crn_options,
+            normalize,
+            solve_tolerance,
+            beta,
+        )
+
     results: list[DiffSolvabilityResult] = []
     for solver in solvers:
         if solver == reference_solver:
@@ -144,6 +165,7 @@ def analyze_many(
         estimator, ci = _analyze_solver(
             solver_to_inputs[solver],
             reference_inputs,
+            reference_solver_bootstraps,
             plot_type,
             ci_options,
             crn_options,

@@ -29,24 +29,35 @@ def cdf(
     solve_tolerance: float,
 ) -> pd.DataFrame:
     """Compute an empirical solvability CDF over normalized budget."""
-    solved = df.loc[df["objective"] < solve_tolerance, ["mrep", "budget"]]
-    n = df["mrep"].nunique()
+    solved = df["objective"].to_numpy() < solve_tolerance
+    mreps = df["mrep"].to_numpy()
+    budgets = df["budget"].to_numpy()
+    n = len(np.unique(mreps))
 
-    first_hit = solved.groupby("mrep")["budget"].min().reset_index()
-    counts = first_hit.groupby("budget")["mrep"].size().rename("value").to_frame().sort_index()
-    counts["value"] = counts["value"].cumsum() / n
+    # First budget at which each mrep solves the problem.
+    solved_mreps = mreps[solved]
+    solved_budgets = budgets[solved]
+    order = np.lexsort((solved_budgets, solved_mreps))
+    solved_mreps = solved_mreps[order]
+    is_first = np.ones(len(order), dtype=bool)
+    is_first[1:] = solved_mreps[1:] != solved_mreps[:-1]
+    first_hit = solved_budgets[order][is_first]
 
-    budget_points = [0.0, *counts.index, float(df["budget"].max())]
-    counts = counts.reindex(budget_points).ffill().fillna(0.0)
-    return counts.reset_index()
+    hit_budgets, counts = np.unique(first_hit, return_counts=True)
+    values = np.r_[0.0, np.cumsum(counts) / n]
+
+    budget_points = np.array([0.0, *hit_budgets, float(budgets.max())])
+    value = values[np.searchsorted(hit_budgets, budget_points, side="right")]
+    return pd.DataFrame({"budget": budget_points, "value": value})
 
 
 def _crossing_times(df: pd.DataFrame, solve_tolerance: float) -> list[float]:
-    solved = df.loc[df["objective"] < solve_tolerance, ["mrep", "budget"]]
-    first_hit = solved.groupby("mrep")["budget"].min()
-    # The reindex is needed to handle the case where some mreps did not solve the
-    # problem.
-    return first_hit.reindex(df["mrep"].unique(), fill_value=np.inf)
+    solved = df["objective"].to_numpy() < solve_tolerance
+    # Mreps that did not solve the problem keep an infinite crossing time.
+    mreps, inverse = np.unique(df["mrep"].to_numpy(), return_inverse=True)
+    crossings = np.full(len(mreps), np.inf)
+    np.minimum.at(crossings, inverse[solved], df["budget"].to_numpy()[solved])
+    return crossings.tolist()
 
 
 def quantile(
@@ -82,14 +93,17 @@ def select_df(analysis_input: AnalysisInput, normalize: bool) -> pd.DataFrame:
 
 def mean(curves: list[pd.DataFrame]) -> pd.DataFrame:
     """Average step curves over a common set of budgets."""
-    stacked = pd.concat(
-        [curve.assign(curve_id=i) for i, curve in enumerate(curves)], ignore_index=True
-    )
-    # TODO: aggfunc="max": if repeated budget rows occur in data, keep the highest
-    # attained value. But this may not be necessary.
-    pivot = stacked.pivot_table(index="budget", columns="curve_id", values="value", aggfunc="max")
-    pivot = pivot.sort_index().ffill().fillna(0.0)
-    return pd.DataFrame({"budget": pivot.index.to_numpy(), "value": pivot.mean(axis=1).to_numpy()})
+    budgets = np.unique(np.concatenate([curve["budget"].to_numpy() for curve in curves]))
+    values = np.zeros((len(budgets), len(curves)))
+    for i, curve in enumerate(curves):
+        # If repeated budget rows occur in data, keep the highest attained value.
+        curve_budgets, inverse = np.unique(curve["budget"].to_numpy(), return_inverse=True)
+        curve_values = np.full(len(curve_budgets), -np.inf)
+        np.maximum.at(curve_values, inverse, curve["value"].to_numpy())
+        # Step function: carry the last value forward, 0 before the first budget.
+        last = np.searchsorted(curve_budgets, budgets, side="right") - 1
+        values[:, i] = np.where(last >= 0, curve_values[np.maximum(last, 0)], 0.0)
+    return pd.DataFrame({"budget": budgets, "value": values.mean(axis=1)})
 
 
 def problem_bootstraps(

@@ -72,7 +72,7 @@ def aggregate_curve(
             unsupported, or if agg is unsupported.
     """
     x = np.sort(df["budget"].unique())
-    pivot = df.pivot_table(index="budget", columns="mrep", values=value_column)
+    pivot = df.groupby(["budget", "mrep"])[value_column].mean().unstack("mrep")
     pivot = pivot.reindex(x).ffill()
     if agg == "mean":
         y = pivot.mean(axis=1)
@@ -81,7 +81,7 @@ def aggregate_curve(
             raise ValueError("beta is required for quantile aggregation.")
         if quantile_method == "python":
             i = int(beta * 99)
-            y = [quantiles(row, n=100)[i] for _, row in pivot.iterrows()]
+            y = [quantiles(row, n=100)[i] for row in pivot.to_numpy()]
         elif quantile_method == "pandas":
             y = pivot.quantile(q=beta, axis=1).to_numpy()
         else:
@@ -124,7 +124,7 @@ def compute_ci(
 
     budget = np.sort(df["budget"].unique())
 
-    pivot = df.pivot_table(index="budget", columns="bootstrap", values=value_column)
+    pivot = df.groupby(["budget", "bootstrap"])[value_column].mean().unstack("bootstrap")
     pivot = pivot.reindex(budget).ffill()
 
     if ci_options.bias_correction and estimator is None:
@@ -143,9 +143,9 @@ def compute_ci(
 
     lb_values: list[float] = []
     ub_values: list[float] = []
-    for i, (_, row) in enumerate(pivot.iterrows()):
+    for i, row in enumerate(pivot.to_numpy()):
         lb, ub = compute_bootstrap_conf_int(
-            row.to_list(),
+            row,
             ci_options.confidence_level,
             ci_options.bias_correction,
             estimates[i] if estimates is not None else None,
