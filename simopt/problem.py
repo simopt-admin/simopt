@@ -1,9 +1,10 @@
 """Base classes for simulation optimization problems and models."""
 
 from abc import ABC, abstractmethod
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
+import numpy as np
 from boltons.typeutils import classproperty
 from pydantic import BaseModel
 
@@ -161,6 +162,14 @@ class Problem(ABC):
         if self._optimization_problem is None:
             self._optimization_problem = self.build()
             self._optimization_problem.set_random_solution(self.get_random_solution)
+            # Single source of truth: the Problem's hooks are exposed to solvers via the DSL model.
+            self._optimization_problem.set_deterministic_constraint_functions(
+                equality=self.get_deterministic_equality_constraints,
+                inequality=self.get_deterministic_inequality_constraints,
+                equality_jacobian=self.get_deterministic_equality_constraints_gradients,
+                inequality_jacobian=self.get_deterministic_inequality_constraints_gradients,
+                hessian=self.get_deterministic_constraints_hessian,
+            )
         return self._optimization_problem
 
     def build(self) -> dsl.Model:
@@ -268,6 +277,46 @@ class Problem(ABC):
             lb <= x_i <= ub
             for x_i, lb, ub in zip(x, self.lower_bounds, self.upper_bounds, strict=False)
         )
+
+    def get_deterministic_equality_constraints(self, x: tuple, /) -> Sequence[float] | float | None:
+        """Return the left-hand sides of equality constraints, c(x) == 0.
+
+        Args:
+            x (tuple): A vector of decision variables.
+
+        Returns:
+            Values of the equality constraints, or None if there are none.
+        """
+        return None
+
+    def get_deterministic_inequality_constraints(
+        self, x: tuple, /
+    ) -> Sequence[float] | float | None:
+        """Return the left-hand sides of inequality constraints, h(x) <= 0.
+
+        Args:
+            x (tuple): A vector of decision variables.
+
+        Returns:
+            Values of the inequality constraints, or None if there are none.
+        """
+        return None
+
+    def get_deterministic_equality_constraints_gradients(self, x: tuple, /) -> np.ndarray | None:
+        """Return the Jacobian (n_eq, dim) of the equality constraints, or None."""
+        return None
+
+    def get_deterministic_inequality_constraints_gradients(self, x: tuple, /) -> np.ndarray | None:
+        """Return the Jacobian (n_ineq, dim) of the inequality constraints, or None."""
+        return None
+
+    def get_deterministic_constraints_hessian(self, x: tuple, /) -> np.ndarray | None:
+        """Return constraint Hessians, shape (n_eq + n_ineq, dim, dim).
+
+        Equality constraints come first, then inequality constraints.
+        Returns None if there are no nonlinear deterministic constraints.
+        """
+        return None
 
     @abstractmethod
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:

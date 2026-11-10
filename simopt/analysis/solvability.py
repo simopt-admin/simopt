@@ -9,9 +9,10 @@ import numpy as np
 import pandas as pd
 
 from simopt.analysis.bootstrap import bootstrap
+from simopt.analysis.merit import merit_progress
 from simopt.experiment.api import AnalysisInput
 from simopt.experiment.experiment import Experiment
-from simopt.options import CrnOptions
+from simopt.options import CrnOptions, MeritOptions
 
 
 def validate_options(plot_type: str, solve_tolerance: float, beta: float) -> None:
@@ -81,8 +82,15 @@ def quantile(
     return pd.DataFrame({"budget": x, "value": y})
 
 
-def select_df(analysis_input: AnalysisInput, normalize: bool) -> pd.DataFrame:
-    """Select mean data with budget/objective columns for solvability profiles."""
+def select_df(
+    analysis_input: AnalysisInput, normalize: bool, merit: MeritOptions | None = None
+) -> pd.DataFrame:
+    """Select mean data with budget/objective columns for solvability profiles.
+
+    If `merit` is given, objective holds the normalized merit progress instead.
+    """
+    if merit is not None:
+        return merit_progress(analysis_input, merit)
     df = copy.copy(analysis_input.mean_df)
     if not normalize:
         return df

@@ -1,6 +1,7 @@
 """Analysis and plotting of solvability profiles."""
 
 from dataclasses import dataclass
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,6 +15,7 @@ from simopt.options import (
     DEFAULT_CRN_OPTIONS,
     ConfidenceIntervalOptions,
     CrnOptions,
+    MeritOptions,
 )
 
 from .common import (
@@ -33,6 +35,23 @@ from .solvability import (
     solver_bootstraps,
     validate_options,
 )
+
+
+def make_merit_options(
+    curve_source: str, feas_obj_const: float, feas_tol_upper: float, feas_tol_lower: float
+) -> MeritOptions | None:
+    """Merit options if profiling merit progress curves, otherwise None."""
+    if curve_source == "progress_curves":
+        return None
+    if curve_source != "merit_progress_curves":
+        raise ValueError("curve_source must be 'progress_curves' or 'merit_progress_curves'.")
+    return MeritOptions(feas_obj_const, feas_tol_upper, feas_tol_lower)
+
+
+def validate_merit(normalize: bool, merit: MeritOptions | None) -> None:
+    """Merit progress curves are only defined normalized."""
+    if merit is not None and not normalize:
+        raise ValueError("merit progress curves require normalize=True.")
 
 
 @dataclass(frozen=True)
@@ -59,8 +78,9 @@ def _estimator(
     # TODO: check better way to unify _select_df and _select_input in
     # simopt.analysis.common
     use_normalized: bool = False,
+    merit: MeritOptions | None = None,
 ) -> pd.DataFrame:
-    df = select_df(analysis_input, use_normalized)
+    df = select_df(analysis_input, use_normalized, merit)
     if plot_type == "cdf":
         return cdf(df, solve_tolerance)
     if plot_type == "quantile":
@@ -86,6 +106,10 @@ def analyze(
     normalize: bool = True,
     solve_tolerance: float = 0.1,
     beta: float = 0.5,
+    curve_source: Literal["progress_curves", "merit_progress_curves"] = "progress_curves",
+    feas_obj_const: float = 1e6,
+    feas_tol_upper: float = 1e-5,
+    feas_tol_lower: float = 1e-8,
 ) -> SolvabilityProfileResult:
     """Analyze the solvability profile.
 
@@ -97,21 +121,38 @@ def analyze(
         normalize: Whether to normalize the objectives and budget.
         ci_options: Options for computing confidence intervals, or None to skip.
         crn_options: Options for handling common random numbers in bootstraps.
+        curve_source: "progress_curves", or "merit_progress_curves" to profile the
+            normalized merit (objective plus penalized deterministic violation) instead.
+            Merit requires `normalize` and a prior `post_normalize_merit`.
+        feas_obj_const: Merit penalty multiplier on the violation.
+        feas_tol_upper: Violation above this has infinite merit.
+        feas_tol_lower: Violation at or below this is treated as exactly feasible.
 
     Returns:
         SolvabilityProfileResult containing the solvability profile results.
     """
     validate_options(plot_type, solve_tolerance, beta)
+    merit = make_merit_options(curve_source, feas_obj_const, feas_tol_upper, feas_tol_lower)
+    validate_merit(normalize, merit)
 
     budget = analysis_input.budget if not normalize else 1.0
 
+    # Merit curves are built from the unselected mean data.
     estimator, ci = compute_estimator_and_ci(
         analysis_input,
-        lambda data: _estimator(data, plot_type, solve_tolerance, beta, budget),
+        lambda data: _estimator(
+            data,
+            plot_type,
+            solve_tolerance,
+            beta,
+            budget,
+            use_normalized=merit is not None,
+            merit=merit,
+        ),
         _ci,
         ci_options,
         crn_options,
-        normalize=normalize,
+        normalize=normalize and merit is None,
     )
 
     return SolvabilityProfileResult(df=estimator, ci=ci, normalize=normalize)
@@ -157,6 +198,7 @@ def _analyze_solver(
     normalize: bool,
     solve_tolerance: float,
     beta: float,
+    merit: MeritOptions | None = None,
 ) -> SolvabilityProfileResult:
     """Analyze one solver over multiple problem inputs."""
     problem_data = [
@@ -167,6 +209,7 @@ def _analyze_solver(
             beta,
             analysis_input.budget if not normalize else 1.0,
             use_normalized=normalize,
+            merit=merit,
         )
         for analysis_input in inputs
     ]
@@ -184,6 +227,7 @@ def _analyze_solver(
                 beta,
                 data.budget if not normalize else 1.0,
                 use_normalized=normalize,
+                merit=merit,
             ),
             crn_options,
         )
@@ -206,9 +250,15 @@ def analyze_many(
     normalize: bool = True,
     solve_tolerance: float = 0.1,
     beta: float = 0.5,
+    curve_source: Literal["progress_curves", "merit_progress_curves"] = "progress_curves",
+    feas_obj_const: float = 1e6,
+    feas_tol_upper: float = 1e-5,
+    feas_tol_lower: float = 1e-8,
 ) -> list[SolvabilityProfileResult]:
     """Analyze solvability profiles for multiple problems."""
     validate_options(plot_type, solve_tolerance, beta)
+    merit = make_merit_options(curve_source, feas_obj_const, feas_tol_upper, feas_tol_lower)
+    validate_merit(normalize, merit)
     validate_ci_options(ci_options)
     solvers, solver_to_inputs = group_by_solver(analysis_inputs, experiments)
 
@@ -223,6 +273,7 @@ def analyze_many(
                 normalize,
                 solve_tolerance,
                 beta,
+                merit,
             )
         )
 
@@ -274,6 +325,10 @@ class SolvabilityProfile(PlotConfig):
     normalize: bool = True
     solve_tolerance: float = 0.1
     beta: float = 0.5
+    curve_source: Literal["progress_curves", "merit_progress_curves"] = "progress_curves"
+    feas_obj_const: float = 1e6
+    feas_tol_upper: float = 1e-5
+    feas_tol_lower: float = 1e-8
 
     def plot(
         self,
@@ -290,5 +345,9 @@ class SolvabilityProfile(PlotConfig):
             normalize=self.normalize,
             solve_tolerance=self.solve_tolerance,
             beta=self.beta,
+            curve_source=self.curve_source,
+            feas_obj_const=self.feas_obj_const,
+            feas_tol_upper=self.feas_tol_upper,
+            feas_tol_lower=self.feas_tol_lower,
         )
         return plot_many(results, experiments, self.plot_type)

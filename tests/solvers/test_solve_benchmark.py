@@ -28,6 +28,7 @@ def test_load_solvers_finds_all_solvers() -> None:
         "ADAM",
         "ALOE",
         "ASTRODF",
+        "CASTRODF",
         "DASSO",
         "FCSA",
         "NELDMD",

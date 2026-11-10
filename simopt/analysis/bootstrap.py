@@ -33,7 +33,8 @@ def _bootstrap_common(
     x0_sample: np.ndarray,
     xstar_sample: np.ndarray,
     crn_across_x0_xstar: bool,
-) -> tuple[np.ndarray, np.ndarray]:
+    xstar_merit_sample: np.ndarray | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
     # Subsubstream 1: reserved for bootstrapping at x0 and x*.
     # Bootstrap sample post-replicates at common x0.
     # Reset subsubstream if using CRN across budgets.
@@ -44,10 +45,16 @@ def _bootstrap_common(
         rng.reset_subsubstream()
     xstar_sample = _bootstrap_resample(rng, xstar_sample)
 
+    # Bootstrap sample post-replicates at the best merit solution, mirroring x*.
+    if xstar_merit_sample is not None:
+        if crn_across_x0_xstar:
+            rng.reset_subsubstream()
+        xstar_merit_sample = _bootstrap_resample(rng, xstar_merit_sample)
+
     # Advance RNG subsubstream to prepare for inner-level bootstrapping.
     rng.advance_subsubstream()
 
-    return x0_sample, xstar_sample
+    return x0_sample, xstar_sample, xstar_merit_sample
 
 
 def _bootstrap_mrep(
@@ -102,14 +109,17 @@ def _transform_bootstrap_data(
         stochastic_constraints = np.vstack(df_mrep["stochastic_constraints"].to_numpy()).reshape(
             n_steps, n_preps, stochastic_constraint_dim
         )
-        data.append(
-            {
-                "budget": budgets,
-                "solution": solutions,
-                "objective": objectives,
-                "stochastic_constraints": stochastic_constraints,
-            }
-        )
+        mrep_data = {
+            "budget": budgets,
+            "solution": solutions,
+            "objective": objectives,
+            "stochastic_constraints": stochastic_constraints,
+        }
+        if "deterministic_violation" in df_mrep:
+            mrep_data["deterministic_violation"] = (
+                df_mrep["deterministic_violation"].to_numpy().reshape(n_steps, n_preps)[:, 0]
+            )
+        data.append(mrep_data)
     return data
 
 
@@ -125,11 +135,12 @@ def _bootstrap_sample(
     mreps = list(range(len(data)))
     bootstrap_mreps = _resample_macroreps(rng, mreps, disable_macrorep_bootstrap)
 
-    x0_sample, xstar_sample = _bootstrap_common(
+    x0_sample, xstar_sample, xstar_merit_sample = _bootstrap_common(
         rng,
         analysis_input.x0_sample,
         analysis_input.xstar_sample,
         crn_across_x0_xstar,
+        analysis_input.xstar_merit_sample,
     )
 
     objectives = []
@@ -155,6 +166,10 @@ def _bootstrap_sample(
             "mrep": np.repeat(np.arange(len(bootstrap_mreps)), n_steps),
         }
     )
+    if "deterministic_violation" in data[0]:
+        full_df["deterministic_violation"] = np.concatenate(
+            [data[mrep]["deterministic_violation"] for mrep in bootstrap_mreps]
+        )
     return AnalysisInput(
         full_df=full_df,
         x0=analysis_input.x0,
@@ -162,6 +177,8 @@ def _bootstrap_sample(
         xstar=analysis_input.xstar,
         xstar_sample=xstar_sample,
         skip_aggregation=True,
+        xstar_merit_sample=xstar_merit_sample,
+        merit_normalization=analysis_input.merit_normalization,
     )
 
 
