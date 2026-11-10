@@ -1,30 +1,20 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import pytest
 
 from simopt.analysis.terminal_progress import analyze, analyze_many, plot, plot_many
 from simopt.compat import convert
-from simopt.plot_type import PlotType
-from simopt.plots.terminal_progress import plot_terminal_progress
-from tests.utils import capture_log_data
+from tests.utils import assert_logs_match, capture_log_data
 
 
-def test_terminal_progress(experiment):
-    desired = capture_log_data(
-        plot_terminal_progress,
-        experiments=[experiment],
-        plot_type=PlotType.VIOLIN,
-        normalize=True,
-        all_in_one=False,
-        plot_title=None,
-        ext=".png",
-        save_as_pickle=False,
-        solver_set_name="SOLVER_SET",
-    )
+@pytest.mark.parametrize("plot_type", ["box", "violin"])
+@pytest.mark.parametrize("normalize", [False, True])
+def test_terminal_progress(experiment, plot_type, normalize, plot_baseline):
+    desired = plot_baseline["logs"]
 
     analysis_input = convert(experiment)
     analysis_result = analyze(
         analysis_input,
-        normalize=True,
+        normalize=normalize,
     )
 
     _, ax = plt.subplots()
@@ -32,24 +22,17 @@ def test_terminal_progress(experiment):
         plot,
         ax,
         analysis_result,
-        plot_type="violin",
+        plot_type=plot_type,
     )
 
-    np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5)
+    assert_logs_match(actual, desired)
 
 
-def test_terminal_progress_same_problem_experiments(same_problem_experiments):
-    desired = capture_log_data(
-        plot_terminal_progress,
-        experiments=same_problem_experiments,
-        plot_type=PlotType.VIOLIN,
-        normalize=True,
-        all_in_one=False,
-        plot_title=None,
-        ext=".png",
-        save_as_pickle=False,
-        solver_set_name="SOLVER_SET",
-    )
+def test_terminal_progress_same_problem_experiments(plot_experiments, plot_baseline):
+    same_problem_experiments = [
+        experiment for group in zip(*plot_experiments, strict=True) for experiment in group
+    ]
+    desired = plot_baseline["logs"]
 
     analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
@@ -64,6 +47,5 @@ def test_terminal_progress_same_problem_experiments(same_problem_experiments):
         plot_type="violin",
     )
 
-    assert len(actual) == len(desired)
-    for a, d in zip(actual, desired, strict=True):
-        np.testing.assert_allclose(a, d, rtol=1e-5, atol=1e-5)
+    assert_logs_match(actual, desired)
+    assert len(actual) == len(desired) == len(same_problem_experiments)

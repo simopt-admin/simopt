@@ -19,10 +19,9 @@ exclude = [
     "simopt/model.py",
     "simopt/models/ermexample.py",
     "simopt/plot_type.py",
-    "simopt/plots",
     "simopt/problem.py",
     "simopt/utils.py",
-    "test/test_experiments.py",
+    "tests/test_experiments.py",
 ]
 
 # See https://docs.astral.sh/ty/reference/rules/ for Rules documentation.

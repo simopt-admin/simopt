@@ -4,11 +4,11 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from simopt.experiment_base import PlotType
+from simopt.plot_type import PlotType
 
 
 class PlotProgressCurvesConfig(BaseModel):
-    """Options for experiment_base.plot_progress_curves (excluding `experiments`)."""
+    """Options for analysis progress plots."""
 
     plot_type: Annotated[
         PlotType,
@@ -122,7 +122,7 @@ class PlotProgressCurvesConfig(BaseModel):
 
 
 class PlotSolvabilityCDFConfig(BaseModel):
-    """Options for experiment_base.plot_progress_curves (excluding `experiments`)."""
+    """Options for analysis solvability CDFs."""
 
     solve_tol: Annotated[
         float,
@@ -220,7 +220,7 @@ class PlotSolvabilityCDFConfig(BaseModel):
 
 
 class PlotAreaScatterplotsConfig(BaseModel):
-    """Options for experiment_base.plot_area_scatterplots (excluding `experiments`)."""
+    """Options for analysis AUC scatterplots."""
 
     all_in_one: Annotated[
         bool,
@@ -317,7 +317,7 @@ class PlotAreaScatterplotsConfig(BaseModel):
 
 
 class PlotSolvabilityProfilesConfig(BaseModel):
-    """Options for experiment_base.plot_solvability_profiles."""
+    """Options for analysis solvability profiles."""
 
     all_in_one: Annotated[
         bool,
@@ -442,7 +442,7 @@ class PlotSolvabilityProfilesConfig(BaseModel):
 
 
 class PlotTerminalProgressCurvesConfig(BaseModel):
-    """Options for experiment_base.plot_progress_curves (excluding `experiments`)."""
+    """Options for analysis terminal progress distributions."""
 
     plot_type: Annotated[
         PlotType,
@@ -503,7 +503,7 @@ class PlotTerminalProgressCurvesConfig(BaseModel):
 
 
 class PlotTerminalScatterplotsConfig(BaseModel):
-    """Options for experiment_base.plot_progress_curves (excluding `experiments`)."""
+    """Options for analysis terminal scatterplots."""
 
     plot_type: Annotated[
         PlotType,

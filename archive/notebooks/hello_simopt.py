@@ -67,11 +67,22 @@ post_normalize(experiments=[myexperiment], n_postreps_init_opt=num_postreps_init
 
 # %%
 # Record the results and plot the mean progress curve.
-from simopt.experiment_base import PlotType, plot_progress_curves
+from simopt.experiment_base import PlotType
+from simopt.analysis.progress_curve import ProgressCurve
+from simopt.experiment.plot import save_plots
+from simopt.options import ConfidenceIntervalOptions
 
 myexperiment.log_experiment_results()
-plot_progress_curves(
-    experiments=[myexperiment],
-    plot_type=PlotType.MEAN,
-    normalize=False,
+save_plots(
+    [myexperiment],
+    ProgressCurve(
+        agg=PlotType.MEAN.value,
+        normalize=False,
+        beta=0.5,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
+    print_max_hw=True,
+    use_experiment_crn=True,
 )

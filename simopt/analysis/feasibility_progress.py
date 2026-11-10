@@ -43,6 +43,7 @@ class FeasibilityProgressResult:
 def _append_feasibility_score(
     df: pd.DataFrame, score_type: str, norm_degree: int, two_sided: bool
 ) -> pd.DataFrame:
+    df = df.copy()
     df["score"] = df["stochastic_constraints"].apply(
         lambda x: feasibility_score(x, score_type, norm_degree, two_sided)
     )
@@ -107,6 +108,9 @@ def analyze(
     if agg != "all" and two_sided:
         raise ValueError("mean and quantile plots not supported for two sided feasibility .")
 
+    if agg == "quantile" and not 0 < beta < 1:
+        raise ValueError("Beta quantile must be in (0, 1).")
+
     df_mean = analysis_input.mean_df
     df_mean = _append_feasibility_score(df_mean, score_type, norm_degree, two_sided)
 
@@ -125,6 +129,7 @@ def analyze(
     )
 
     if ci is None:
+        estimator["value"] = estimator["score"]
         return FeasibilityProgressResult(df=estimator, agg=agg)
 
     result = pd.merge(estimator, ci, on="budget", how="outer")

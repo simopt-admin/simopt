@@ -257,6 +257,9 @@ def plot_many(
     logger: Logger = null_logger,
 ) -> tuple[plt.Figure, plt.Axes]:
     """Plot multiple terminal feasibility results."""
+    if plot_type not in ("scatter", "violin"):
+        raise ValueError("plot_type must be 'scatter' or 'violin'.")
+
     if len(experiments) != len(results):
         raise ValueError("experiments must be the same length as results.")
 

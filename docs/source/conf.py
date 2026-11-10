@@ -71,8 +71,6 @@ exclude_patterns = [
     "_build",
     "Thumbs.db",
     ".DS_Store",
-    "/test/",
-    "/dev_tools/",
     "*main*",
 ]
 

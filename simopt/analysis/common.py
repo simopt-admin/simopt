@@ -131,9 +131,11 @@ def compute_ci(
     if ci_options.bias_correction and estimator is None:
         raise ValueError("bias correction estimator is required.")
 
+    estimates = None
     if estimator is not None:
-        estimator = (
-            estimator.set_index("budget")[value_column]
+        estimates = (
+            estimator.groupby("budget")[value_column]
+            .last()
             .reindex(np.sort(np.unique(np.concatenate([budget, estimator["budget"]]))))
             .ffill()
             .reindex(budget)
@@ -147,7 +149,7 @@ def compute_ci(
             row.to_list(),
             ci_options.confidence_level,
             ci_options.bias_correction,
-            estimator[i] if estimator is not None else None,
+            estimates[i] if estimates is not None else None,
         )
         lb_values.append(lb)
         ub_values.append(ub)
@@ -176,6 +178,16 @@ def _default_bootstrap_fn(
         crn_options.across_macroreps,
         crn_options.across_x0_xstar,
     )
+
+
+def validate_ci_options(ci_options: ConfidenceIntervalOptions | None) -> None:
+    """Validate confidence interval options before computing bootstrap samples."""
+    if ci_options is None:
+        return
+    if ci_options.n_bootstraps < 1:
+        raise ValueError("Number of bootstraps must be a positive integer.")
+    if not 0 < ci_options.confidence_level < 1:
+        raise ValueError("Confidence level must be in (0, 1).")
 
 
 def compute_estimator_and_ci(
@@ -220,10 +232,7 @@ def compute_estimator_and_ci(
     if ci_options is None:
         return estimator, None
 
-    if ci_options.n_bootstraps < 1:
-        raise ValueError("Number of bootstraps must be a positive integer.")
-    if not 0 < ci_options.confidence_level < 1:
-        raise ValueError("Confidence level must be in (0, 1).")
+    validate_ci_options(ci_options)
 
     bootstrap_fn = bootstrap_fn or _default_bootstrap_fn
     bootstraps = bootstrap_fn(

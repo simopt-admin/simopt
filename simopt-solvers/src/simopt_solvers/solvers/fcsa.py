@@ -20,6 +20,7 @@ from simopt_solvers.base import (
     SolverConfig,
     VariableType,
 )
+from simopt_solvers.solvers.utils import finite_diff
 
 try:
     import cvxpy as cp
@@ -122,27 +123,6 @@ class FCSA(Solver):
         mult = self.factors["step_mult"]
         return mult if self.factors["step_type"] == "const" else 1 / (mult * (k + 1))
 
-    def _objective_at(self, ctx: Context, x: np.ndarray, r: int) -> float:
-        solution = ctx.evaluate(tuple(x), r)
-        return solution.objectives_mean[0]
-
-    def _finite_difference(self, ctx: Context, x: np.ndarray, h: float, r: int) -> np.ndarray:
-        d = len(x)
-
-        grad = np.zeros(d)
-        for i in range(d):
-            x1 = x.copy()
-            x1[i] += h / 2
-            f1 = self._objective_at(ctx, x1, r)
-
-            x2 = x.copy()
-            x2[i] -= h / 2
-            f2 = self._objective_at(ctx, x2, r)
-
-            grad[i] = (f1 - f2) / h
-
-        return grad
-
     def _objective_grad(
         self,
         problem: dsl.Model,
@@ -155,7 +135,13 @@ class FCSA(Solver):
         else:
             h = self.factors["h"]
             r = self.factors["r"]
-            grad = self._finite_difference(ctx, np.array(solution.x, dtype=float), h, r)
+            x = np.array(solution.x, dtype=float)
+            # 1 stands for forward, -1 stands for backward, 0 means central diff.
+            forward = np.isclose(x, problem.lower_bounds()).astype(int)
+            backward = np.isclose(x, problem.upper_bounds()).astype(int)
+            bounds_check = forward - backward
+            # A central difference with step h / 2 spans a total width of h.
+            grad = finite_diff(ctx, solution, bounds_check, problem, h / 2, r)
         if normalize:
             norm = np.linalg.norm(grad)
             if norm == 0:

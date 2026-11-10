@@ -16,7 +16,7 @@ from simopt.options import (
     CrnOptions,
 )
 
-from .common import compute_ci, plot_ci, plot_step
+from .common import compute_ci, plot_ci, plot_step, validate_ci_options
 from .solvability import (
     cdf,
     group_by_solver,
@@ -25,6 +25,7 @@ from .solvability import (
     quantile,
     select_df,
     solver_bootstraps,
+    validate_options,
 )
 
 
@@ -127,6 +128,8 @@ def analyze_many(
     beta: float = 0.5,
 ) -> list[DiffSolvabilityResult]:
     """Analyze difference solvability profiles against a reference solver."""
+    validate_options(plot_type, solve_tolerance, beta)
+    validate_ci_options(ci_options)
     solvers, solver_to_inputs = group_by_solver(analysis_inputs, experiments)
 
     if reference_solver not in solver_to_inputs:

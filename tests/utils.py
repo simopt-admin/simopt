@@ -1,7 +1,9 @@
 import pickle
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
+import numpy as np
 import structlog
 import zstandard as zstd
 from structlog.testing import capture_logs
@@ -9,8 +11,38 @@ from structlog.testing import capture_logs
 from simopt.curve import Curve
 from simopt.experiment import ProblemSolver
 
+EXPECTED_RESULTS_DIR = Path(__file__).parent / "expected_results"
 
-def load_problem_solver(path: str) -> ProblemSolver:
+
+def assert_logs_match(actual, desired):
+    """Compare nonempty plot logs record by record, including ragged curves."""
+    assert len(actual) > 0, "actual plot logs are empty"
+    assert len(desired) > 0, "desired plot logs are empty"
+    assert len(actual) == len(desired), (
+        f"plot log record count differs: actual {len(actual)}, desired {len(desired)}"
+    )
+    for index, (a, d) in enumerate(zip(actual, desired, strict=True)):
+        _assert_log_values_match(a, d, f"record {index}")
+
+
+def _assert_log_values_match(a, d, message):
+    try:
+        actual = np.asarray(a)
+        desired = np.asarray(d)
+    except ValueError:
+        actual = desired = None
+    if actual is None or desired is None or actual.dtype == object or desired.dtype == object:
+        assert len(a) == len(d), f"{message}: component count differs: {len(a)} != {len(d)}"
+        for index, (actual_value, desired_value) in enumerate(zip(a, d, strict=True)):
+            _assert_log_values_match(actual_value, desired_value, f"{message}, component {index}")
+        return
+    assert actual.shape == desired.shape, (
+        f"{message}: shape differs: actual {actual.shape}, desired {desired.shape}"
+    )
+    np.testing.assert_allclose(actual, desired, rtol=1e-5, atol=1e-5, err_msg=message)
+
+
+def load_problem_solver(path: str | Path) -> ProblemSolver:
     with zstd.open(path, "rb") as f:
         data = pickle.load(f)
 

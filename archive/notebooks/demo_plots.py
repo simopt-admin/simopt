@@ -87,10 +87,9 @@ for problem_name in problem_names:
 # %%
 # Produce basic plots.
 
-from simopt.experiment_base import (
-    PlotType,
-    plot_terminal_progress,
-)
+from simopt.experiment_base import PlotType
+from simopt.analysis.terminal_progress import TerminalProgress
+from simopt.experiment.plot import save_plots
 
 print("Plotting results...")
 
@@ -100,29 +99,35 @@ def _print_path(plot_path: list[Path]) -> None:
 
 
 _print_path(
-    plot_terminal_progress(
-        experiments=myexperiments, plot_type=PlotType.BOX, normalize=False
+    save_plots(
+        myexperiments,
+        TerminalProgress(plot_type=PlotType.BOX.value, normalize=False),
+        use_experiment_crn=True,
     )
 )
 
 _print_path(
-    plot_terminal_progress(
-        experiments=myexperiments, plot_type=PlotType.BOX, normalize=True
+    save_plots(
+        myexperiments,
+        TerminalProgress(plot_type=PlotType.BOX.value, normalize=True),
+        use_experiment_crn=True,
     )
 )
 
 _print_path(
-    plot_terminal_progress(
-        experiments=myexperiments,
-        plot_type=PlotType.VIOLIN,
-        normalize=False,
+    save_plots(
+        myexperiments,
+        TerminalProgress(plot_type=PlotType.VIOLIN.value, normalize=False),
         all_in_one=False,
+        use_experiment_crn=True,
     )
 )
 
 _print_path(
-    plot_terminal_progress(
-        experiments=myexperiments, plot_type=PlotType.VIOLIN, normalize=True
+    save_plots(
+        myexperiments,
+        TerminalProgress(plot_type=PlotType.VIOLIN.value, normalize=True),
+        use_experiment_crn=True,
     )
 )
 

@@ -105,19 +105,20 @@ python -m pip install simoptlib
 After installing `simoptlib`, the package's main modules can be imported from the Python console (or in code):
 ```
 import simopt
-from simopt import models, solvers, experiment_base
+from simopt import models, solvers
+from simopt.experiment import ProblemSolver, post_normalize
 ```
 
 The following snippet of code will run 10 macroreplications of the Random Search solver ("RNDSRCH") on the Continuous Newsvendor problem ("CNTNEWS-1"):
 ```python
-myexperiment = simopt.experiment_base.ProblemSolver("RNDSRCH", "CNTNEWS-1")
+myexperiment = ProblemSolver("RNDSRCH", "CNTNEWS-1")
 myexperiment.run(n_macroreps=10)
 ```
 
 The results will be saved to a .pickle file in a folder called `experiments/outputs`. To post-process the results, by taking, for example 200 postreplications at each recommended solution, run the following:
 ```python
 myexperiment.post_replicate(n_postreps=200)
-simopt.experiment_base.post_normalize([myexperiment], n_postreps_init_opt=200)
+post_normalize([myexperiment], n_postreps_init_opt=200)
 ```
 
 A .txt file summarizing the progress of the solver on each macroreplication can be produced:
@@ -129,14 +130,17 @@ A .txt file called `RNDSRCH_on_CNTNEWS-1_experiment_results.txt` will be saved i
 
 One can then plot the mean progress curve of the solver (with confidence intervals) with the objective function values shown on the y-axis:
 ```python
-simopt.experiment_base.plot_progress_curves(
-    experiments=[myexperiment],
-    plot_type=simopt.experiment_base.PlotType.MEAN,
-    normalize=False,
+from simopt.analysis.progress_curve import ProgressCurve
+from simopt.experiment.plot import save_plots
+
+plot_files = save_plots(
+    [myexperiment],
+    ProgressCurve(agg="mean", normalize=False),
+    use_experiment_crn=True,
 )
 ```
 
-The Python scripts in the `notebooks` folder provide more guidance on how to run common experiments using the library.
+The Python scripts in the `archive/notebooks` folder provide more guidance on how to run common experiments using the library.
 
 One can also use the SimOpt graphical user interface by running the following from the terminal:
 ```bash

@@ -82,10 +82,15 @@ def analyze(
     Returns:
         ProgressCurveResult containing the progress curve analysis results.
     """
+    if agg == "quantile" and not 0 < beta < 1:
+        raise ValueError("Beta quantile must be in (0, 1).")
+
     df = analysis_input.mean_df
     if agg == "all":
         df = df.copy()
         column = "normalized_objective" if normalize else "objective"
+        if normalize:
+            df["budget"] = df["normalized_budget"]
         df["value"] = df[column]
         return ProgressCurveResult(df=df, agg="all")
 
@@ -101,6 +106,7 @@ def analyze(
     )
 
     if ci is None:
+        estimator["value"] = estimator["objective"]
         return ProgressCurveResult(df=estimator, agg=agg)
 
     result = pd.merge(estimator, ci, on="budget", how="outer")

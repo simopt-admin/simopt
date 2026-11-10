@@ -15,7 +15,7 @@
 
 # %% [markdown]
 # # Demo for an experiment with FCSA on the SAN problem
-# This script is intented to demonstrate an experiment with three different versions of the FCSA solver on the SAN problem. 
+# This script is intented to demonstrate an experiment with three different versions of the FCSA solver on the SAN problem.
 
 # %% [markdown]
 # ## Append SimOpt Path
@@ -30,22 +30,20 @@ import sys
 sys.path.append("..")
 
 # %%
-from simopt.experiment_base import (
-    PlotType,
-    ProblemSolver,
-    plot_feasibility_progress,
-    plot_progress_curves,
-    plot_terminal_feasibility,
-    plot_terminal_progress,
-    post_normalize,
-)
+from simopt.experiment_base import PlotType, ProblemSolver, post_normalize
+from simopt.analysis.feasibility_progress import FeasibilityProgress
+from simopt.analysis.progress_curve import ProgressCurve
+from simopt.analysis.terminal_feasibility import TerminalFeasibility
+from simopt.analysis.terminal_progress import TerminalProgress
+from simopt.experiment.plot import save_plots
+from simopt.options import ConfidenceIntervalOptions
 from simopt.models.san import SANLongestPathStochastic
 from simopt.solvers import FCSA
 
 # %% [markdown]
 # ## Experiment Configuration Parameters
 #
-# Configure 3 versions of the solver: CSA, CSA-N, and FCSA and set problem configuration. Set report_all_solutions = True meaning all incumbent solutions will be reported. 
+# Configure 3 versions of the solver: CSA, CSA-N, and FCSA and set problem configuration. Set report_all_solutions = True meaning all incumbent solutions will be reported.
 
 # %%
 fixed_factors = {
@@ -98,8 +96,7 @@ def run_experiment(solver, problem, n_macroreps, n_postreps):
 n_macroreps = 10
 n_postreps = 100
 experiments = [
-    run_experiment(solver, problem, n_macroreps, n_postreps)
-    for solver in [csa, csa_n, fcsa]
+    run_experiment(solver, problem, n_macroreps, n_postreps) for solver in [csa, csa_n, fcsa]
 ]
 experiment1, experiment2, experiment3 = experiments
 post_normalize(experiments, n_postreps)
@@ -110,35 +107,97 @@ post_normalize(experiments, n_postreps)
 # Define the plotting settings for the experiments. Plot terminal objective progress, terminal feasibility progress, objective progress curve, and feasiblity progress curve for all incumbent solutions.
 
 # %%
-plot_terminal_progress([experiment1], PlotType.VIOLIN, normalize=False)
-
-# %%
-plot_terminal_feasibility(
-    [[experiment1]], PlotType.FEASIBILITY_VIOLIN, all_in_one=True, two_sided=True
+save_plots(
+    [experiment1],
+    TerminalProgress(plot_type=PlotType.VIOLIN.value, normalize=False),
+    use_experiment_crn=True,
 )
 
 # %%
-plot_progress_curves([experiment1], PlotType.ALL, normalize=False)
-
-# %%
-plot_feasibility_progress(
-    [[experiment1]], PlotType.ALL_FEASIBILITY_PROGRESS, print_max_hw=False
+save_plots(
+    [[experiment1]],
+    TerminalFeasibility(
+        plot_type=PlotType.FEASIBILITY_VIOLIN.value.removeprefix("feasibility_"),
+        score_type="inf_norm",
+        norm_degree=1,
+        two_sided=True,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
+    all_in_one=True,
+    plot_optimal=True,
+    use_experiment_crn=True,
 )
 
 # %%
-plot_progress_curves([experiment2, experiment3], PlotType.ALL, normalize=False)
+save_plots(
+    [experiment1],
+    ProgressCurve(
+        agg=PlotType.ALL.value,
+        normalize=False,
+        beta=0.5,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
+    print_max_hw=True,
+    use_experiment_crn=True,
+)
 
 # %%
-plot_feasibility_progress(
-    [[experiment2], [experiment3]],
-    PlotType.ALL_FEASIBILITY_PROGRESS,
+save_plots(
+    [[experiment1]],
+    FeasibilityProgress(
+        agg=PlotType.ALL_FEASIBILITY_PROGRESS.value.removesuffix("_feasibility_progress"),
+        beta=0.5,
+        score_type="inf_norm",
+        norm_degree=1,
+        two_sided=True,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
     print_max_hw=False,
+    use_experiment_crn=True,
+)
+
+# %%
+save_plots(
+    [experiment2, experiment3],
+    ProgressCurve(
+        agg=PlotType.ALL.value,
+        normalize=False,
+        beta=0.5,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
+    print_max_hw=True,
+    use_experiment_crn=True,
+)
+
+# %%
+save_plots(
+    [[experiment2], [experiment3]],
+    FeasibilityProgress(
+        agg=PlotType.ALL_FEASIBILITY_PROGRESS.value.removesuffix("_feasibility_progress"),
+        beta=0.5,
+        score_type="inf_norm",
+        norm_degree=1,
+        two_sided=True,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
+    print_max_hw=False,
+    use_experiment_crn=True,
 )
 
 # %% [markdown]
 # ## Experiment Configuration Parameters
 #
-# Configure 2 versions of the solver: CSA-N, and FCSA and set problem configuration. Set report_all_solutions = False meaning only recommended solutions will be reported. 
+# Configure 2 versions of the solver: CSA-N, and FCSA and set problem configuration. Set report_all_solutions = False meaning only recommended solutions will be reported.
 
 # %%
 csa_n = FCSA(
@@ -161,16 +220,27 @@ fcsa = FCSA(
 )
 
 # %%
-experiments = [
-    run_experiment(solver, problem, n_macroreps, n_postreps) for solver in [csa_n, fcsa]
-]
+experiments = [run_experiment(solver, problem, n_macroreps, n_postreps) for solver in [csa_n, fcsa]]
 experiment2, experiment3 = experiments
 post_normalize([experiment2, experiment3], 100)
 
 # %% [markdown]
 # ## Plotting Settings
 #
-# Define the plotting settings for the experiments. Plot terminal objective vs feasibility scatter plot for recommended solutions. 
+# Define the plotting settings for the experiments. Plot terminal objective vs feasibility scatter plot for recommended solutions.
 
 # %%
-plot_terminal_feasibility([[experiment2], [experiment3]], PlotType.FEASIBILITY_SCATTER)
+save_plots(
+    [[experiment2], [experiment3]],
+    TerminalFeasibility(
+        plot_type=PlotType.FEASIBILITY_SCATTER.value.removeprefix("feasibility_"),
+        score_type="inf_norm",
+        norm_degree=1,
+        two_sided=True,
+        ci_options=ConfidenceIntervalOptions(
+            n_bootstraps=100, confidence_level=0.95, bias_correction=True
+        ),
+    ),
+    plot_optimal=True,
+    use_experiment_crn=True,
+)
