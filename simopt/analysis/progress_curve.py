@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from simopt.experiment.api import AnalysisInput, PlotConfig
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment.experiment import Experiment
 from simopt.logging import Logger, null_logger
 from simopt.options import (
     DEFAULT_CONFIDENCE_INTERVAL_OPTIONS,
@@ -178,7 +178,7 @@ def analyze_many(
 
 def plot_many(
     results: list[ProgressCurveResult],
-    experiments: list[ProblemSolver],
+    experiments: list[Experiment],
     /,
     *,
     colors: list[str] | None = None,
@@ -215,7 +215,7 @@ class ProgressCurve(PlotConfig):
     def plot(
         self,
         analysis_inputs: list[AnalysisInput],
-        experiments: list[ProblemSolver],
+        experiments: list[Experiment],
     ) -> tuple[plt.Figure, plt.Axes]:
         """Analyze and plot progress curves."""
         results = analyze_many(

@@ -2,20 +2,15 @@ import matplotlib.pyplot as plt
 import pytest
 
 from simopt.analysis.terminal_feasibility import analyze, analyze_many, plot, plot_many
-from simopt.compat import convert
-from simopt.options import ConfidenceIntervalOptions, CrnOptions
-from tests.utils import assert_logs_match, capture_log_data
+from simopt.options import ConfidenceIntervalOptions
+from tests.utils import PICKLE_CRN_OPTIONS, assert_logs_match, capture_log_data, split_pairs
 
 
-@pytest.mark.parametrize("experiment", ["SAN2_FCSA.pickle.zst"], indirect=True)
+@pytest.mark.parametrize("experiment_pair", ["SAN2_FCSA.pickle.zst"], indirect=True)
 @pytest.mark.parametrize("plot_conf_ints", [False, True])
 @pytest.mark.parametrize("bias_correction", [False, True])
-def test_terminal_feasibility(experiment, plot_conf_ints, bias_correction, plot_baseline):
-    crn_options = CrnOptions(
-        across_budget=experiment.crn_across_budget,
-        across_macroreps=experiment.crn_across_macroreps,
-        across_x0_xstar=experiment.crn_across_init_opt,
-    )
+def test_terminal_feasibility(experiment_pair, plot_conf_ints, bias_correction, plot_baseline):
+    crn_options = PICKLE_CRN_OPTIONS
     ci_options = ConfidenceIntervalOptions(
         n_bootstraps=10,
         confidence_level=0.95,
@@ -24,7 +19,7 @@ def test_terminal_feasibility(experiment, plot_conf_ints, bias_correction, plot_
 
     desired = plot_baseline["logs"]
 
-    analysis_input = convert(experiment)
+    _, analysis_input = experiment_pair
     analysis_result = analyze(
         analysis_input,
         ci_options if plot_conf_ints else None,
@@ -40,18 +35,13 @@ def test_terminal_feasibility(experiment, plot_conf_ints, bias_correction, plot_
     assert_logs_match(actual, desired)
 
 
-def test_terminal_feasibility_same_problem_experiments(stochastic_plot_experiments, plot_baseline):
-    san2_experiments = [
-        experiment
-        for group in zip(*stochastic_plot_experiments, strict=True)
-        for experiment in group
-    ]
-    reference = san2_experiments[0]
-    crn_options = CrnOptions(
-        across_budget=reference.crn_across_budget,
-        across_macroreps=reference.crn_across_macroreps,
-        across_x0_xstar=reference.crn_across_init_opt,
+def test_terminal_feasibility_same_problem_experiments(
+    stochastic_plot_experiments, run_crn_options, plot_baseline
+):
+    san2_experiments, analysis_inputs = split_pairs(
+        [pair for group in zip(*stochastic_plot_experiments, strict=True) for pair in group]
     )
+    crn_options = run_crn_options
     ci_options = ConfidenceIntervalOptions(
         n_bootstraps=10,
         confidence_level=0.95,
@@ -60,7 +50,6 @@ def test_terminal_feasibility_same_problem_experiments(stochastic_plot_experimen
 
     desired = plot_baseline["logs"]
 
-    analysis_inputs = [convert(experiment) for experiment in san2_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         ci_options,
@@ -78,14 +67,10 @@ def test_terminal_feasibility_same_problem_experiments(stochastic_plot_experimen
 
 def test_terminal_feasibility_different_problem_experiments(
     different_problem_experiments_stochastic_constraints,
+    run_crn_options,
     plot_baseline,
 ):
-    reference = different_problem_experiments_stochastic_constraints[0]
-    crn_options = CrnOptions(
-        across_budget=reference.crn_across_budget,
-        across_macroreps=reference.crn_across_macroreps,
-        across_x0_xstar=reference.crn_across_init_opt,
-    )
+    crn_options = run_crn_options
     ci_options = ConfidenceIntervalOptions(
         n_bootstraps=10,
         confidence_level=0.95,
@@ -94,9 +79,7 @@ def test_terminal_feasibility_different_problem_experiments(
 
     desired = plot_baseline["logs"]
 
-    analysis_inputs = [
-        convert(experiment) for experiment in different_problem_experiments_stochastic_constraints
-    ]
+    experiments, analysis_inputs = split_pairs(different_problem_experiments_stochastic_constraints)
     analysis_results = analyze_many(
         analysis_inputs,
         ci_options,
@@ -109,7 +92,7 @@ def test_terminal_feasibility_different_problem_experiments(
     actual = capture_log_data(
         plot_many,
         analysis_results,
-        different_problem_experiments_stochastic_constraints,
+        experiments,
     )
 
     assert_logs_match(actual, desired)

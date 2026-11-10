@@ -11,8 +11,8 @@ from simopt.analysis.feasibility_progress import FeasibilityProgress
 from simopt.analysis.progress_curve import ProgressCurve
 from simopt.analysis.terminal_feasibility import TerminalFeasibility
 from simopt.analysis.terminal_progress import TerminalProgress
+from simopt.experiment import Experiment
 from simopt.experiment.api import AnalysisInput
-from simopt.experiment.single import ProblemSolver
 
 
 def _save_figure(fig_ax: tuple[plt.Figure, plt.Axes], output: Path) -> None:
@@ -23,7 +23,7 @@ def _save_figure(fig_ax: tuple[plt.Figure, plt.Axes], output: Path) -> None:
 
 def test_terminal_progress_csa_saved(
     fcsa_all_solutions_results: list[AnalysisInput],
-    fcsa_all_solutions_experiments: list[ProblemSolver],
+    fcsa_all_solutions_experiments: list[Experiment],
     fcsa_plot_dir: Path,
 ) -> None:
     output = fcsa_plot_dir / "terminal_progress_csa.png"
@@ -38,7 +38,7 @@ def test_terminal_progress_csa_saved(
 
 def test_terminal_feasibility_csa_saved(
     fcsa_all_solutions_results: list[AnalysisInput],
-    fcsa_all_solutions_experiments: list[ProblemSolver],
+    fcsa_all_solutions_experiments: list[Experiment],
     fcsa_plot_dir: Path,
 ) -> None:
     output = fcsa_plot_dir / "terminal_feasibility_csa.png"
@@ -53,7 +53,7 @@ def test_terminal_feasibility_csa_saved(
 
 def test_progress_curve_csa_saved(
     fcsa_all_solutions_results: list[AnalysisInput],
-    fcsa_all_solutions_experiments: list[ProblemSolver],
+    fcsa_all_solutions_experiments: list[Experiment],
     fcsa_plot_dir: Path,
 ) -> None:
     output = fcsa_plot_dir / "progress_curve_csa.png"
@@ -68,7 +68,7 @@ def test_progress_curve_csa_saved(
 
 def test_feasibility_progress_csa_saved(
     fcsa_all_solutions_results: list[AnalysisInput],
-    fcsa_all_solutions_experiments: list[ProblemSolver],
+    fcsa_all_solutions_experiments: list[Experiment],
     fcsa_plot_dir: Path,
 ) -> None:
     output = fcsa_plot_dir / "feasibility_progress_csa.png"
@@ -83,7 +83,7 @@ def test_feasibility_progress_csa_saved(
 
 def test_progress_curve_csa_n_vs_fcsa_saved(
     fcsa_all_solutions_results: list[AnalysisInput],
-    fcsa_all_solutions_experiments: list[ProblemSolver],
+    fcsa_all_solutions_experiments: list[Experiment],
     fcsa_plot_dir: Path,
 ) -> None:
     output = fcsa_plot_dir / "progress_curve_csa_n_vs_fcsa.png"
@@ -98,7 +98,7 @@ def test_progress_curve_csa_n_vs_fcsa_saved(
 
 def test_feasibility_progress_csa_n_vs_fcsa_saved(
     fcsa_all_solutions_results: list[AnalysisInput],
-    fcsa_all_solutions_experiments: list[ProblemSolver],
+    fcsa_all_solutions_experiments: list[Experiment],
     fcsa_plot_dir: Path,
 ) -> None:
     output = fcsa_plot_dir / "feasibility_progress_csa_n_vs_fcsa.png"
@@ -113,7 +113,7 @@ def test_feasibility_progress_csa_n_vs_fcsa_saved(
 
 def test_terminal_feasibility_recommended_saved(
     fcsa_recommended_results: list[AnalysisInput],
-    fcsa_recommended_experiments: list[ProblemSolver],
+    fcsa_recommended_experiments: list[Experiment],
     fcsa_plot_dir: Path,
 ) -> None:
     output = fcsa_plot_dir / "terminal_feasibility_recommended.png"

@@ -31,7 +31,11 @@ from simopt.directory import (
     problem_directory,
     solver_directory,
 )
-from simopt.experiment import ProblemSolver
+from simopt.experiment import api
+from simopt.experiment.api import SimulationConfig
+from simopt.experiment.experiment import Experiment
+from simopt.experiment.experiment import check_compatibility as check_experiment_compatibility
+from simopt.options import DEFAULT_CRN_OPTIONS, CrnOptions
 from simopt.plot_type import PlotType
 from simopt.web.plots import (
     PlotAreaScatterplotsConfig,
@@ -392,8 +396,8 @@ def check_compatibility(payload: dict):
             problem = problem_cls()
 
             try:
-                exp = ProblemSolver(solver=solver, problem=problem)
-                err = exp.check_compatibility()
+                exp = Experiment(solver=solver, problem=problem)
+                err = check_experiment_compatibility(exp)
                 if err.strip() == "":
                     compatibility[display_name][prob_display_name] = {
                         "compatible": True,
@@ -422,7 +426,7 @@ def _check_rerun_logic(payload: dict) -> bool:
         return True
 
     config_path = RESULTS_DIR / last_run_id / "experiment_config.json"
-    experiments_path = RESULTS_DIR / last_run_id / "experiments.pkl"
+    experiments_path = RESULTS_DIR / last_run_id / "results.pkl"
 
     if not config_path.exists() or not experiments_path.exists():
         print(
@@ -470,6 +474,15 @@ def _check_rerun_logic(payload: dict) -> bool:
     return not (problems_match and solvers_match and params_match)
 
 
+def _apply_rename(obj, rename: str | None, kind: str) -> None:
+    """Set a user-defined name on a solver or problem; an empty name is rejected."""
+    if rename is None:
+        return
+    if rename == "":
+        raise ValueError(f"{kind} rename cannot be an empty string.")
+    obj.name = rename
+
+
 # ── Plot generation ──
 def generate_plots(
     plots_config,
@@ -481,6 +494,7 @@ def generate_plots(
     solvers_config,
     problems_config,
     folder,
+    run_crn_options=DEFAULT_CRN_OPTIONS,
 ):
     """Shared plot generation logic used by both run_experiment_async and run_plots_only."""
     from simopt.analysis.auc import Auc
@@ -493,7 +507,7 @@ def generate_plots(
     from simopt.analysis.terminal_progress import TerminalProgress
     from simopt.analysis.terminal_scatterplot import TerminalScatter
     from simopt.experiment.plot import save_plots
-    from simopt.options import ConfidenceIntervalOptions, CrnOptions
+    from simopt.options import ConfidenceIntervalOptions
 
     plot_files = []
 
@@ -547,19 +561,20 @@ def generate_plots(
         )
         for problem_group in problem_groups:
             try:
-                filtered_experiments = [
+                pairs = [
                     all_experiments[exp_prob_idx][exp_solver_idx]
                     for exp_prob_idx in problem_group
                     for exp_solver_idx in solver_exp_indices
                 ]
-                reference = filtered_experiments[0]
                 crn_options = CrnOptions(
-                    across_budget=plot_params.get("crn_across_budget", reference.crn_across_budget),
+                    across_budget=plot_params.get(
+                        "crn_across_budget", run_crn_options.across_budget
+                    ),
                     across_macroreps=plot_params.get(
-                        "crn_across_macroreps", reference.crn_across_macroreps
+                        "crn_across_macroreps", run_crn_options.across_macroreps
                     ),
                     across_x0_xstar=plot_params.get(
-                        "crn_across_init_opt", reference.crn_across_init_opt
+                        "crn_across_init_opt", run_crn_options.across_x0_xstar
                     ),
                 )
                 default_ci = (
@@ -658,7 +673,7 @@ def generate_plots(
                 else:
                     filename = f"{plot_type_name.lower()}_solvability_profile.png"
                 paths = save_plots(
-                    filtered_experiments,
+                    pairs,
                     config,
                     output_dir=folder,
                     filename=filename,
@@ -781,8 +796,6 @@ def run_experiment_async(run_id: str, payload: dict):
             prob_cfg["name"] = abbr_name
             print(f"Converted problem: '{display_name}' -> '{abbr_name}'")
 
-        from simopt.experiment_base import ProblemSolver, post_normalize
-
         # Validate solver and problem names
         for solver_cfg in solvers_config:
             if solver_cfg["name"] not in solver_directory:
@@ -834,60 +847,67 @@ def run_experiment_async(run_id: str, payload: dict):
             f"Running experiments for {len(needed_solver_indices)} solvers and {len(needed_problem_indices)} problems"
         )
 
-        # Run experiments for each problem
-        all_experiments = []
+        # Experiments for the same problem share one Problem so they normalize together
+        experiments_by_problem = []
         for prob_idx in needed_problem_indices:
             prob_cfg = problems_config[prob_idx]
-            print(f"Running problem {prob_idx + 1}: {prob_cfg['name']}...")
+            print(f"Creating problem {prob_idx + 1}: {prob_cfg['name']}")
+            print(f"  Problem factors: {prob_cfg.get('fixed_factors', {})}")
+            problem = problem_directory[prob_cfg["name"]](
+                fixed_factors=prob_cfg.get("fixed_factors", {}),
+                model_fixed_factors=prob_cfg.get("model_fixed_factors", {}),
+            )
+            _apply_rename(problem, prob_cfg.get("rename"), "Problem")
 
             experiments_same_problem = []
-
             for solver_idx in needed_solver_indices:
                 solver_cfg = solvers_config[solver_idx]
-                print(
-                    f"Creating ProblemSolver with solver={solver_cfg['name']}, problem={prob_cfg['name']}"
-                )
+                print(f"Creating Experiment with solver={solver_cfg['name']}")
                 print(f"  Solver factors: {solver_cfg.get('fixed_factors', {})}")
-                print(f"  Problem factors: {prob_cfg.get('fixed_factors', {})}")
-
-                experiment = ProblemSolver(
-                    solver_name=solver_cfg["name"],
-                    solver_rename=solver_cfg.get("rename", solver_cfg["name"]),
-                    solver_fixed_factors=solver_cfg.get("fixed_factors", {}),
-                    problem_name=prob_cfg["name"],
-                    problem_rename=prob_cfg.get("rename", prob_cfg["name"]),
-                    problem_fixed_factors=prob_cfg.get("fixed_factors", {}),
-                    model_fixed_factors=prob_cfg.get("model_fixed_factors", {}),
+                solver = solver_directory[solver_cfg["name"]](
+                    fixed_factors=solver_cfg.get("fixed_factors", {})
                 )
+                _apply_rename(solver, solver_cfg.get("rename"), "Solver")
+                experiments_same_problem.append(Experiment(solver=solver, problem=problem))
+            experiments_by_problem.append(experiments_same_problem)
 
-                print(f"Running experiment with {num_macroreps} macroreps...")
-                experiment.run(n_macroreps=num_macroreps)
-                print(f"Post-replicating with {num_postreps} postreps...")
-                experiment.post_replicate(n_postreps=num_postreps)
-                experiments_same_problem.append(experiment)
+        all_experiment_list = [e for group in experiments_by_problem for e in group]
+        run_crn_options = CrnOptions()
+        print(
+            f"Running {len(all_experiment_list)} experiments with {num_macroreps} macroreps, "
+            f"{num_postreps} postreps and {num_postnorms} postnorms..."
+        )
+        analysis_inputs = api.run(
+            all_experiment_list,
+            SimulationConfig(
+                n_mreps=num_macroreps, n_preps=num_postreps, n_preps_x0_xstar=num_postnorms
+            ),
+            run_crn_options,
+        )
+        print("Finished running experiments.")
 
-            # Post-normalize
-            print(f"Post-normalizing with {num_postnorms} postnorms...")
-            post_normalize(
-                experiments=experiments_same_problem,
-                n_postreps_init_opt=num_postnorms,
+        all_experiments = []
+        offset = 0
+        for experiments_same_problem in experiments_by_problem:
+            group_inputs = analysis_inputs[offset : offset + len(experiments_same_problem)]
+            offset += len(experiments_same_problem)
+            all_experiments.append(list(zip(experiments_same_problem, group_inputs, strict=True)))
+
+        import pickle
+
+        with (folder / "results.pkl").open("wb") as f:
+            pickle.dump(all_experiments, f)
+        with (folder / "index_maps.pkl").open("wb") as f:
+            pickle.dump(
+                {
+                    "needed_solver_indices": needed_solver_indices,
+                    "needed_problem_indices": needed_problem_indices,
+                    "solver_idx_map": solver_idx_map,
+                    "problem_idx_map": problem_idx_map,
+                    "crn_options": run_crn_options,
+                },
+                f,
             )
-
-            all_experiments.append(experiments_same_problem)
-            import pickle
-
-            with (folder / "experiments.pkl").open("wb") as f:
-                pickle.dump(all_experiments, f)
-            with (folder / "index_maps.pkl").open("wb") as f:
-                pickle.dump(
-                    {
-                        "needed_solver_indices": needed_solver_indices,
-                        "needed_problem_indices": needed_problem_indices,
-                        "solver_idx_map": solver_idx_map,
-                        "problem_idx_map": problem_idx_map,
-                    },
-                    f,
-                )
 
         print("Generating plots...")
         plot_files = generate_plots(
@@ -900,6 +920,7 @@ def run_experiment_async(run_id: str, payload: dict):
             solvers_config=solvers_config,
             problems_config=problems_config,
             folder=folder,
+            run_crn_options=run_crn_options,
         )
 
         config_to_save = {
@@ -1507,7 +1528,13 @@ def run_plots_only(run_id: str, payload: dict):
         print("Reusing existing experiment results, generating new plots only...")
         update_status(folder, "Generating plots...")
 
-        with (folder / "experiments.pkl").open("rb") as f:
+        # Defensive guard: _check_rerun_logic already re-runs legacy-only results via HTTP.
+        if not (folder / "results.pkl").exists() and (folder / "experiments.pkl").exists():
+            raise ValueError(
+                "This experiment was saved by an older version and cannot be reused "
+                "for plots. Please re-run the experiment."
+            )
+        with (folder / "results.pkl").open("rb") as f:
             all_experiments = pickle.load(f)
         with (folder / "index_maps.pkl").open("rb") as f:
             maps = pickle.load(f)
@@ -1516,6 +1543,7 @@ def run_plots_only(run_id: str, payload: dict):
         needed_problem_indices = maps["needed_problem_indices"]
         solver_idx_map = maps["solver_idx_map"]
         problem_idx_map = maps["problem_idx_map"]
+        run_crn_options = maps["crn_options"]
 
         plot_files = []
 
@@ -1539,6 +1567,7 @@ def run_plots_only(run_id: str, payload: dict):
             solvers_config=solvers_config,
             problems_config=problems_config,
             folder=folder,
+            run_crn_options=run_crn_options,
         )
 
         update_status(folder, "Complete!", plot_files)

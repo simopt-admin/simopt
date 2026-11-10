@@ -10,7 +10,7 @@ import pandas as pd
 
 from simopt.analysis.bootstrap import bootstrap
 from simopt.experiment.api import AnalysisInput
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment.experiment import Experiment
 from simopt.options import CrnOptions
 
 
@@ -125,7 +125,7 @@ def solver_bootstraps(
 
 
 def group_by_solver(
-    analysis_inputs: list[AnalysisInput], experiments: list[ProblemSolver]
+    analysis_inputs: list[AnalysisInput], experiments: list[Experiment]
 ) -> tuple[list[str], dict[str, list[AnalysisInput]]]:
     """Group analysis inputs by solver name."""
     solver_to_inputs = defaultdict(list)

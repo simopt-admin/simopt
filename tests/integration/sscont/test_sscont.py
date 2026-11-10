@@ -13,8 +13,8 @@ from simopt.analysis.progress_curve import ProgressCurve
 from simopt.analysis.solvability_profile import SolvabilityProfile
 from simopt.analysis.terminal_progress import TerminalProgress
 from simopt.analysis.terminal_scatterplot import TerminalScatter
+from simopt.experiment import Experiment
 from simopt.experiment.api import AnalysisInput
-from simopt.experiment.single import ProblemSolver
 
 
 def _save_figure(fig_ax: tuple[plt.Figure, plt.Axes], output: Path) -> None:
@@ -24,14 +24,14 @@ def _save_figure(fig_ax: tuple[plt.Figure, plt.Axes], output: Path) -> None:
 
 
 def _first_problem_slice(
-    results: list[AnalysisInput], experiments: list[ProblemSolver], n_solvers: int = 5
-) -> tuple[list[AnalysisInput], list[ProblemSolver]]:
+    results: list[AnalysisInput], experiments: list[Experiment], n_solvers: int = 5
+) -> tuple[list[AnalysisInput], list[Experiment]]:
     return results[:n_solvers], experiments[:n_solvers]
 
 
 def test_auc(
     sscont_results: list[AnalysisInput],
-    sscont_experiments: list[ProblemSolver],
+    sscont_experiments: list[Experiment],
     sscont_plot_dir: Path,
 ) -> None:
     output = sscont_plot_dir / "auc.png"
@@ -43,7 +43,7 @@ def test_auc(
 
 def test_solvability_profile_cdf(
     sscont_results: list[AnalysisInput],
-    sscont_experiments: list[ProblemSolver],
+    sscont_experiments: list[Experiment],
     sscont_plot_dir: Path,
 ) -> None:
     output = sscont_plot_dir / "solvability_profile_cdf.png"
@@ -58,7 +58,7 @@ def test_solvability_profile_cdf(
 
 def test_solvability_profile_quantile(
     sscont_results: list[AnalysisInput],
-    sscont_experiments: list[ProblemSolver],
+    sscont_experiments: list[Experiment],
     sscont_plot_dir: Path,
 ) -> None:
     output = sscont_plot_dir / "solvability_profile_quantile.png"
@@ -74,7 +74,7 @@ def test_solvability_profile_quantile(
 
 def test_diff_solvability_cdf(
     sscont_results: list[AnalysisInput],
-    sscont_experiments: list[ProblemSolver],
+    sscont_experiments: list[Experiment],
     sscont_plot_dir: Path,
 ) -> None:
     output = sscont_plot_dir / "diff_solvability_cdf.png"
@@ -90,7 +90,7 @@ def test_diff_solvability_cdf(
 
 def test_diff_solvability_quantile(
     sscont_results: list[AnalysisInput],
-    sscont_experiments: list[ProblemSolver],
+    sscont_experiments: list[Experiment],
     sscont_plot_dir: Path,
 ) -> None:
     output = sscont_plot_dir / "diff_solvability_quantile.png"
@@ -107,7 +107,7 @@ def test_diff_solvability_quantile(
 
 def test_terminal_scatter(
     sscont_results: list[AnalysisInput],
-    sscont_experiments: list[ProblemSolver],
+    sscont_experiments: list[Experiment],
     sscont_plot_dir: Path,
 ) -> None:
     output = sscont_plot_dir / "terminal_scatter.png"
@@ -119,7 +119,7 @@ def test_terminal_scatter(
 
 def test_progress_curve(
     sscont_results: list[AnalysisInput],
-    sscont_experiments: list[ProblemSolver],
+    sscont_experiments: list[Experiment],
     sscont_plot_dir: Path,
 ) -> None:
     output = sscont_plot_dir / "progress_curve.png"
@@ -132,7 +132,7 @@ def test_progress_curve(
 
 def test_terminal_progress(
     sscont_results: list[AnalysisInput],
-    sscont_experiments: list[ProblemSolver],
+    sscont_experiments: list[Experiment],
     sscont_plot_dir: Path,
 ) -> None:
     output = sscont_plot_dir / "terminal_progress.png"

@@ -1,6 +1,16 @@
 """Experiment classes."""
 
-from .post_normalize import post_normalize
-from .single import EXPERIMENT_DIR, ProblemSolver
+import time
+from pathlib import Path
 
-__all__ = ["EXPERIMENT_DIR", "ProblemSolver", "post_normalize"]
+from .experiment import Experiment, check_compatibility, from_names
+
+# The folder is not created here; each writer creates it when it writes.
+EXPERIMENT_DIR = Path.cwd() / "experiments" / time.strftime("%Y-%m-%d_%H-%M-%S")
+
+__all__ = [
+    "EXPERIMENT_DIR",
+    "Experiment",
+    "check_compatibility",
+    "from_names",
+]

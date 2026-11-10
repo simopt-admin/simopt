@@ -1,23 +1,18 @@
 from simopt.analysis.diff import analyze_many, plot_many
-from simopt.compat import convert
-from simopt.options import ConfidenceIntervalOptions, CrnOptions
-from tests.utils import assert_logs_match, capture_log_data
+from simopt.options import ConfidenceIntervalOptions
+from tests.utils import assert_logs_match, capture_log_data, split_pairs
 
 
-def test_diff_solvability_cdf(plot_experiments, plot_baseline):
-    same_problem_experiments = [experiment for row in plot_experiments for experiment in row]
-    reference_solver = plot_experiments[-1][0].solver.name
-    reference = same_problem_experiments[0]
-    ci_options = ConfidenceIntervalOptions(n_bootstraps=10, confidence_level=0.95)
-    crn_options = CrnOptions(
-        across_budget=reference.crn_across_budget,
-        across_macroreps=reference.crn_across_macroreps,
-        across_x0_xstar=reference.crn_across_init_opt,
+def test_diff_solvability_cdf(plot_experiments, run_crn_options, plot_baseline):
+    same_problem_experiments, analysis_inputs = split_pairs(
+        [pair for row in plot_experiments for pair in row]
     )
+    reference_solver = plot_experiments[-1][0][0].solver.name
+    ci_options = ConfidenceIntervalOptions(n_bootstraps=10, confidence_level=0.95)
+    crn_options = run_crn_options
 
     desired = plot_baseline["logs"]
 
-    analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         same_problem_experiments,
@@ -40,20 +35,16 @@ def test_diff_solvability_cdf(plot_experiments, plot_baseline):
     assert len(actual) == len(desired) == len(plot_experiments) - 1
 
 
-def test_diff_solvability_quantile(plot_experiments, plot_baseline):
-    same_problem_experiments = [experiment for row in plot_experiments for experiment in row]
-    reference_solver = plot_experiments[-1][0].solver.name
-    reference = same_problem_experiments[0]
-    ci_options = ConfidenceIntervalOptions(n_bootstraps=10, confidence_level=0.95)
-    crn_options = CrnOptions(
-        across_budget=reference.crn_across_budget,
-        across_macroreps=reference.crn_across_macroreps,
-        across_x0_xstar=reference.crn_across_init_opt,
+def test_diff_solvability_quantile(plot_experiments, run_crn_options, plot_baseline):
+    same_problem_experiments, analysis_inputs = split_pairs(
+        [pair for row in plot_experiments for pair in row]
     )
+    reference_solver = plot_experiments[-1][0][0].solver.name
+    ci_options = ConfidenceIntervalOptions(n_bootstraps=10, confidence_level=0.95)
+    crn_options = run_crn_options
 
     desired = plot_baseline["logs"]
 
-    analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         same_problem_experiments,

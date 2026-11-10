@@ -2,16 +2,15 @@ import matplotlib.pyplot as plt
 import pytest
 
 from simopt.analysis.terminal_progress import analyze, analyze_many, plot, plot_many
-from simopt.compat import convert
-from tests.utils import assert_logs_match, capture_log_data
+from tests.utils import assert_logs_match, capture_log_data, split_pairs
 
 
 @pytest.mark.parametrize("plot_type", ["box", "violin"])
 @pytest.mark.parametrize("normalize", [False, True])
-def test_terminal_progress(experiment, plot_type, normalize, plot_baseline):
+def test_terminal_progress(experiment_pair, plot_type, normalize, plot_baseline):
     desired = plot_baseline["logs"]
 
-    analysis_input = convert(experiment)
+    _, analysis_input = experiment_pair
     analysis_result = analyze(
         analysis_input,
         normalize=normalize,
@@ -29,12 +28,11 @@ def test_terminal_progress(experiment, plot_type, normalize, plot_baseline):
 
 
 def test_terminal_progress_same_problem_experiments(plot_experiments, plot_baseline):
-    same_problem_experiments = [
-        experiment for group in zip(*plot_experiments, strict=True) for experiment in group
-    ]
+    same_problem_experiments, analysis_inputs = split_pairs(
+        [pair for group in zip(*plot_experiments, strict=True) for pair in group]
+    )
     desired = plot_baseline["logs"]
 
-    analysis_inputs = [convert(experiment) for experiment in same_problem_experiments]
     analysis_results = analyze_many(
         analysis_inputs,
         normalize=True,

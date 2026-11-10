@@ -1,4 +1,3 @@
-from copy import deepcopy
 from itertools import product
 
 import numpy as np
@@ -9,7 +8,6 @@ from simopt.analysis import (
     diff,
     solvability_profile,
 )
-from simopt.compat import convert
 from simopt.curve_utils import (
     difference_of_curves,
 )
@@ -17,11 +15,15 @@ from simopt.options import ConfidenceIntervalOptions, CrnOptions
 from tests.analysis.options_helpers import (
     CI_CASES,
     analyze_case,
+    another_problem_pair,
     curve_reference,
+    feasibility_curves,
     interval_reference,
     mean_reference,
-    refresh_curves,
+    objective_curves,
+    reference_bootstrap_sample,
 )
+from tests.utils import split_pairs
 
 
 @pytest.mark.parametrize(("name", "mode", "normalize"), CI_CASES)
@@ -35,29 +37,21 @@ def test_analysis_ci_options(
         n_bootstraps=8, confidence_level=confidence_level, bias_correction=bias_correction
     )
     crn_options = CrnOptions(*crn_flags)
-    for experiment in option_pair:
-        (
-            experiment.crn_across_budget,
-            experiment.crn_across_macroreps,
-            experiment.crn_across_init_opt,
-        ) = crn_flags
     beta, solve_tolerance = 0.73, 0.6
     result = analyze_case(
         name, mode, option_pair, options, crn_options, normalize, beta, solve_tolerance
     )
     if name in ("auc", "terminal"):
         if name == "auc":
-            curves = (
-                option_pair[0].progress_curves if normalize else option_pair[0].objective_curves
-            )
+            curves = objective_curves(option_pair[0][1], normalize)
             areas = [curve.compute_area_under_curve() for curve in curves]
             estimator = [np.mean(areas), np.std(areas, ddof=1)]
             actual = np.array([[result.lb_mean, result.lb_std], [result.ub_mean, result.ub_std]])
             np.testing.assert_allclose([result.mean, result.std], estimator)
         else:
-            option_pair[0].feasibility_score_history("norm", 2, False)
-            estimator = [curve.y_vals[-1] for curve in option_pair[0].objective_curves] + [
-                curve.y_vals[-1] for curve in option_pair[0].feasibility_curves
+            estimator = [curve.y_vals[-1] for curve in objective_curves(option_pair[0][1])] + [
+                curve.y_vals[-1]
+                for curve in feasibility_curves(option_pair[0][1], "norm", 2, False)
             ]
             actual = np.concatenate(
                 [
@@ -74,8 +68,12 @@ def test_analysis_ci_options(
         for i in range(options.n_bootstraps):
             if name == "auc":
                 rng = MRG32k3a(s_ss_sss_index=[1, i, 0])
-            curves, feasibility_curves = option_pair[0].bootstrap_sample(
+            experiment, data = option_pair[0]
+            curves, bootstrap_feasibility_curves = reference_bootstrap_sample(
+                experiment,
+                data,
                 rng,
+                crn_options,
                 normalize=normalize,
                 feasibility_score_method="norm",
                 feasibility_norm_degree=2,
@@ -88,18 +86,22 @@ def test_analysis_ci_options(
             else:
                 observations.append(
                     [curve.y_vals[-1] for curve in curves]
-                    + [curve.y_vals[-1] for curve in feasibility_curves]
+                    + [curve.y_vals[-1] for curve in bootstrap_feasibility_curves]
                 )
     else:
         ci = result.ci if name in ("cdf", "profile", "difference") else result.df
         budgets = ci["budget"].to_numpy()
         originals = []
-        for experiment in option_pair[: 2 if name == "difference" else 1]:
-            experiment.feasibility_score_history("norm", 2, False)
-            curves = experiment.progress_curves if normalize else experiment.objective_curves
+        for _, data in option_pair[: 2 if name == "difference" else 1]:
+            curves = objective_curves(data, normalize)
             originals.append(
                 curve_reference(
-                    name, mode, curves, experiment.feasibility_curves, beta, solve_tolerance
+                    name,
+                    mode,
+                    curves,
+                    feasibility_curves(data, "norm", 2, False),
+                    beta,
+                    solve_tolerance,
                 )
             )
         original = (
@@ -111,17 +113,22 @@ def test_analysis_ci_options(
         observations = []
         for i in range(options.n_bootstraps):
             samples = []
-            for experiment in option_pair[: 2 if name == "difference" else 1]:
+            for experiment, data in option_pair[: 2 if name == "difference" else 1]:
                 rng = MRG32k3a(s_ss_sss_index=[1, i, 0])
-                curves, feasibility_curves = experiment.bootstrap_sample(
+                curves, bootstrap_feasibility_curves = reference_bootstrap_sample(
+                    experiment,
+                    data,
                     rng,
+                    crn_options,
                     normalize=normalize,
                     feasibility_score_method="norm",
                     feasibility_norm_degree=2,
                     feasibility_two_sided=False,
                 )
                 samples.append(
-                    curve_reference(name, mode, curves, feasibility_curves, beta, solve_tolerance)
+                    curve_reference(
+                        name, mode, curves, bootstrap_feasibility_curves, beta, solve_tolerance
+                    )
                 )
             sample = (
                 difference_of_curves(samples[1], samples[0]) if name == "difference" else samples[0]
@@ -141,30 +148,17 @@ def test_analysis_ci_options(
 @pytest.mark.parametrize("mode", ["cdf", "quantile"])
 @pytest.mark.parametrize("bias_correction", [None, False, True])
 def test_multiple_problem_aggregation(option_pair, module, normalize, mode, bias_correction):
-    experiments = []
-    for experiment in option_pair:
-        experiments.append(deepcopy(experiment))
-        second = deepcopy(experiment)
-        second.problem.name = "another-problem"
-        second.problem.factors["budget"] = 20
-        second.all_intermediate_budgets = [
-            [2 * budget for budget in budgets] for budgets in second.all_intermediate_budgets
-        ]
-        for samples in second.all_post_replicates:
-            samples[1] = [value - 1 for value in samples[1]]
-        refresh_curves(second)
-        experiments.append(second)
+    pairs = []
+    for pair in option_pair:
+        pairs.append(pair)
+        pairs.append(another_problem_pair(*pair))
+    experiments, inputs = split_pairs(pairs)
     options = (
         None
         if bias_correction is None
         else ConfidenceIntervalOptions(n_bootstraps=5, bias_correction=bias_correction)
     )
     crn_options = CrnOptions(False, True, False)
-    for experiment in experiments:
-        experiment.crn_across_budget = False
-        experiment.crn_across_macroreps = True
-        experiment.crn_across_init_opt = False
-    inputs = [convert(experiment) for experiment in experiments]
     beta, solve_tolerance = 0.3, 0.6
     args = [inputs, experiments, mode]
     if module == diff:
@@ -173,17 +167,17 @@ def test_multiple_problem_aggregation(option_pair, module, normalize, mode, bias
         *args, options, crn_options, normalize=normalize, beta=beta, solve_tolerance=solve_tolerance
     )
     solver_curves = []
-    for group in [experiments[:2], experiments[2:]]:
+    for group in [pairs[:2], pairs[2:]]:
         curves = [
             curve_reference(
                 "profile",
                 mode,
-                experiment.progress_curves if normalize else experiment.objective_curves,
+                objective_curves(data, normalize),
                 [],
                 beta,
                 solve_tolerance,
             )
-            for experiment in group
+            for _, data in group
         ]
         solver_curves.append(mean_reference(curves))
     expected = (
@@ -203,11 +197,13 @@ def test_multiple_problem_aggregation(option_pair, module, normalize, mode, bias
         observations = []
         for bootstrap_index in range(options.n_bootstraps):
             samples = []
-            for group in [experiments[:2], experiments[2:]]:
+            for group in [pairs[:2], pairs[2:]]:
                 curves = []
-                for experiment in group:
+                for experiment, data in group:
                     rng = MRG32k3a(s_ss_sss_index=[1, bootstrap_index, 0])
-                    bootstrap_curves, _ = experiment.bootstrap_sample(rng, normalize=normalize)
+                    bootstrap_curves, _ = reference_bootstrap_sample(
+                        experiment, data, rng, crn_options, normalize=normalize
+                    )
                     curves.append(
                         curve_reference(
                             "profile", mode, bootstrap_curves, [], beta, solve_tolerance

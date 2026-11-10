@@ -1,4 +1,3 @@
-from copy import deepcopy
 from statistics import quantiles
 
 import numpy as np
@@ -16,7 +15,6 @@ from simopt.analysis import (
     terminal_progress,
     terminal_scatterplot,
 )
-from simopt.compat import convert
 from simopt.curve import Curve
 from simopt.curve_utils import (
     cdf_of_curves_crossing_times,
@@ -24,72 +22,242 @@ from simopt.curve_utils import (
     quantile_cross_jump,
     quantile_of_curves,
 )
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment.api import AnalysisInput
+from simopt.experiment.experiment import Experiment, from_names
+from simopt.feasibility import feasibility_score_history
 from simopt.options import CrnOptions
+from tests.utils import build_analysis_input, split_pairs
 
 
-@pytest.fixture
-def option_experiment():
-    experiment = ProblemSolver(solver_name="RNDSRCH", problem_name="SAN-2")
-    experiment.problem.factors["budget"] = 10
-    experiment.n_macroreps = 4
-    experiment.n_postreps = 4
-    experiment.n_postreps_init_opt = 4
-    experiment.x0 = (0.0, 0.0)
-    experiment.xstar = (9.0, 9.0)
-    experiment.x0_postreps = [9.0, 10.0, 11.0, 12.0]
-    experiment.xstar_postreps = [0.5, 1.0, 1.5, 2.0]
-    experiment.all_intermediate_budgets = [[0, 2 + i, 10] for i in range(4)]
-    experiment.all_recommended_xs = [
-        [experiment.x0, (float(i + 1), 0.0), (float(i + 1), 1.0)] for i in range(4)
-    ]
-    experiment.all_post_replicates = [
+def option_input(has_stochastic_constraints):
+    x0 = (0.0, 0.0)
+    x0_postreps = [9.0, 10.0, 11.0, 12.0]
+    all_intermediate_budgets = [[0, 2 + i, 10] for i in range(4)]
+    all_recommended_xs = [[x0, (float(i + 1), 0.0), (float(i + 1), 1.0)] for i in range(4)]
+    all_post_replicates = [
         [
-            np.array(experiment.x0_postreps),
-            np.array([3.0 + i + j / 2 for j in range(4)]),
-            np.array([0.25 + i / 4 + j / 8 for j in range(4)]),
+            x0_postreps,
+            [3.0 + i + j / 2 for j in range(4)],
+            [0.25 + i / 4 + j / 8 for j in range(4)],
         ]
         for i in range(4)
     ]
-    experiment.all_stoch_constraints = [
+    all_stoch_constraints = [
         [
             np.array([[i - step - 1 + j / 4, i / 2 + step - 3 + j / 4] for j in range(4)])
             for step in range(3)
         ]
         for i in range(4)
     ]
-    experiment.all_est_lhs = [
-        [sample.mean(axis=0) for sample in macrorep]
-        for macrorep in experiment.all_stoch_constraints
-    ]
-    experiment.has_run = experiment.has_postreplicated = experiment.has_postnormalized = True
-    experiment.crn_across_budget = True
-    experiment.crn_across_macroreps = False
-    experiment.crn_across_init_opt = True
-    refresh_curves(experiment)
-    return experiment
+    return build_analysis_input(
+        all_intermediate_budgets,
+        all_recommended_xs,
+        all_post_replicates,
+        all_stoch_constraints,
+        has_stochastic_constraints,
+        x0,
+        (9.0, 9.0),
+        x0_postreps,
+        [0.5, 1.0, 1.5, 2.0],
+    )
 
 
-def refresh_curves(experiment):
-    df = convert(experiment).mean_df
-    experiment.objective_curves = [
-        Curve(group["budget"].tolist(), group["objective"].tolist())
-        for _, group in df.groupby("mrep")
-    ]
-    experiment.progress_curves = [
-        Curve(group["normalized_budget"].tolist(), group["normalized_objective"].tolist())
-        for _, group in df.groupby("mrep")
-    ]
+def with_full_df(data, full_df):
+    return AnalysisInput(full_df, data.x0, data.x0_sample, data.xstar, data.xstar_sample)
+
+
+@pytest.fixture
+def option_experiment():
+    experiment = from_names("RNDSRCH", "SAN-2", problem_fixed_factors={"budget": 10})
+    return experiment, option_input(experiment.problem.n_stochastic_constraints > 0)
 
 
 @pytest.fixture
 def option_pair(option_experiment):
-    second = deepcopy(option_experiment)
+    _, data = option_experiment
+    second = from_names("RNDSRCH", "SAN-2", problem_fixed_factors={"budget": 10})
     second.solver.name = "comparison"
-    for macrorep in second.all_post_replicates:
-        macrorep[1] = [value + 1.5 for value in macrorep[1]]
-    refresh_curves(second)
-    return [option_experiment, second]
+    full_df = data.full_df.copy()
+    step1 = full_df.index.get_level_values("step") == 1
+    full_df.loc[step1, "objective"] += 1.5
+    return [option_experiment, (second, with_full_df(data, full_df))]
+
+
+def another_problem_pair(experiment, data):
+    """Copy a pair onto a differently named problem with doubled budgets and lower objectives."""
+    problem = type(experiment.problem)(name="another-problem", fixed_factors={"budget": 20})
+    full_df = data.full_df.copy()
+    full_df["budget"] = full_df["budget"] * 2
+    step1 = full_df.index.get_level_values("step") == 1
+    full_df.loc[step1, "objective"] -= 1
+    return Experiment(solver=experiment.solver, problem=problem), with_full_df(data, full_df)
+
+
+def objective_curves(data, normalize=False):
+    """Per-macrorep objective (or progress) curves of an analysis input."""
+    df = data.mean_df
+    if normalize:
+        budget, objective = "normalized_budget", "normalized_objective"
+    else:
+        budget, objective = "budget", "objective"
+    return [
+        Curve(group[budget].tolist(), group[objective].tolist()) for _, group in df.groupby("mrep")
+    ]
+
+
+def _steps_by_mrep(data):
+    """Raw (step, rows) groups of `full_df` for each macrorep."""
+    return [
+        list(mrep_df.groupby(level="step")) for _, mrep_df in data.full_df.groupby(level="mrep")
+    ]
+
+
+def estimated_lhs(data):
+    """Per-macrorep, per-step mean of the stochastic constraint left-hand sides."""
+    return [
+        [
+            np.vstack(step_df["stochastic_constraints"].to_numpy()).mean(axis=0)
+            for _, step_df in steps
+        ]
+        for steps in _steps_by_mrep(data)
+    ]
+
+
+def intermediate_budgets(data):
+    return [[step_df["budget"].iloc[0] for _, step_df in steps] for steps in _steps_by_mrep(data)]
+
+
+def feasibility_curves(data, method, norm_degree, two_sided):
+    return [
+        Curve(x_vals, feasibility_score_history(lhs, method, norm_degree, two_sided))
+        for x_vals, lhs in zip(intermediate_budgets(data), estimated_lhs(data), strict=True)
+    ]
+
+
+def _raw_runs(data):
+    """Recover per-macrorep, per-step lists of budgets, solutions and post-replicates."""
+    all_intermediate_budgets = []
+    all_recommended_xs = []
+    all_post_replicates = []
+    all_stoch_constraints = []
+    for _, mrep_df in data.full_df.groupby(level="mrep"):
+        steps = [step_df for _, step_df in mrep_df.groupby(level="step")]
+        all_intermediate_budgets.append([step_df["budget"].iloc[0] for step_df in steps])
+        all_recommended_xs.append([tuple(step_df["solution"].iloc[0]) for step_df in steps])
+        all_post_replicates.append([step_df["objective"].tolist() for step_df in steps])
+        all_stoch_constraints.append(
+            [np.vstack(step_df["stochastic_constraints"].to_numpy()) for step_df in steps]
+        )
+    return all_intermediate_budgets, all_recommended_xs, all_post_replicates, all_stoch_constraints
+
+
+def reference_bootstrap_sample(
+    experiment,
+    data,
+    bootstrap_rng,
+    crn_options,
+    normalize=True,
+    feasibility_score_method="inf_norm",
+    feasibility_norm_degree=1,
+    feasibility_two_sided=False,
+    disable_macrorep_bootstrap=False,
+):
+    """Independent reference bootstrap of objective/progress and feasibility curves."""
+    (
+        all_intermediate_budgets,
+        all_recommended_xs,
+        all_post_replicates,
+        all_stoch_constraints,
+    ) = _raw_runs(data)
+    n_macroreps = len(all_intermediate_budgets)
+    n_postreps = len(all_post_replicates[0][0])
+    n_postreps_init_opt = len(data.x0_sample)
+    x0 = tuple(data.x0)
+    xstar = tuple(data.xstar)
+    x0_postreps = data.x0_sample
+    xstar_postreps = data.xstar_sample
+    bootstrap_curves = []
+    bootstrap_feasibility_curves = []
+    has_stochastic_constraints = experiment.problem.n_stochastic_constraints >= 1
+
+    # Uniformly resample M macroreplications (with replacement) from 0, 1, ..., M-1.
+    # Subsubstream 0: reserved for this outer-level bootstrapping.
+    if disable_macrorep_bootstrap:
+        bs_mrep_idxs = list(range(n_macroreps))
+    else:
+        bs_mrep_idxs = bootstrap_rng.choices(range(n_macroreps), k=n_macroreps)
+    # Advance RNG subsubstream to prepare for inner-level bootstrapping.
+    bootstrap_rng.advance_subsubstream()
+    # Subsubstream 1: reserved for bootstrapping at x0 and x*.
+    bs_postrep_idxs = bootstrap_rng.choices(range(n_postreps_init_opt), k=n_postreps_init_opt)
+    bs_initial_obj_val = np.mean([x0_postreps[postrep] for postrep in bs_postrep_idxs])
+    # Reset subsubstream if using CRN across x0 and x*.
+    if crn_options.across_x0_xstar:
+        bootstrap_rng.reset_subsubstream()
+    bs_postrep_idxs = bootstrap_rng.choices(range(n_postreps_init_opt), k=n_postreps_init_opt)
+    bs_optimal_obj_val = np.mean([xstar_postreps[postrep] for postrep in bs_postrep_idxs])
+    bs_initial_opt_gap = bs_initial_obj_val - bs_optimal_obj_val
+    # Advance RNG subsubstream to prepare for inner-level bootstrapping.
+    bootstrap_rng.advance_subsubstream()
+    use_special_indices = crn_options.across_budget and not crn_options.across_macroreps
+    for idx in range(n_macroreps):
+        mrep = bs_mrep_idxs[idx]
+        est_objectives = []
+        est_lhs = []
+        if use_special_indices:
+            # Same postreplication indices for all intermediate budgets on a macroreplication.
+            bs_postrep_idxs = bootstrap_rng.choices(range(n_postreps), k=n_postreps)
+        for budget in range(len(all_intermediate_budgets[mrep])):
+            if not use_special_indices:
+                bs_postrep_idxs = bootstrap_rng.choices(range(n_postreps), k=n_postreps)
+            if has_stochastic_constraints:
+                est_lhs.append(all_stoch_constraints[mrep][budget][bs_postrep_idxs].mean(axis=0))
+            else:
+                est_lhs.append(np.array([]))
+            if all_recommended_xs[mrep][budget] == x0:
+                est_objectives.append(bs_initial_obj_val)
+            elif all_recommended_xs[mrep][budget] == xstar:
+                est_objectives.append(bs_optimal_obj_val)
+            else:
+                est_objectives.append(
+                    np.mean(
+                        [all_post_replicates[mrep][budget][postrep] for postrep in bs_postrep_idxs]
+                    )
+                )
+            if not use_special_indices and crn_options.across_budget:
+                bootstrap_rng.reset_subsubstream()
+        if not use_special_indices:
+            if crn_options.across_macroreps:
+                bootstrap_rng.reset_subsubstream()
+            else:
+                bootstrap_rng.advance_subsubstream()
+        if normalize:
+            bootstrap_curves.append(
+                Curve(
+                    x_vals=[
+                        budget / experiment.problem.factors["budget"]
+                        for budget in all_intermediate_budgets[mrep]
+                    ],
+                    y_vals=[
+                        (est_objective - bs_optimal_obj_val) / bs_initial_opt_gap
+                        for est_objective in est_objectives
+                    ],
+                )
+            )
+        else:
+            bootstrap_curves.append(Curve(all_intermediate_budgets[mrep], est_objectives))
+        bootstrap_feasibility_curves.append(
+            Curve(
+                all_intermediate_budgets[mrep],
+                feasibility_score_history(
+                    est_lhs,
+                    feasibility_score_method,
+                    feasibility_norm_degree,
+                    feasibility_two_sided,
+                ),
+            )
+        )
+    return bootstrap_curves, bootstrap_feasibility_curves
 
 
 def interval_reference(observations, estimator, confidence_level, bias_correction):
@@ -107,9 +275,9 @@ def interval_reference(observations, estimator, confidence_level, bias_correctio
 
 
 def analyze_case(
-    name, mode, experiments, options, crn_options, normalize, beta=0.73, solve_tolerance=0.6
+    name, mode, pairs, options, crn_options, normalize, beta=0.73, solve_tolerance=0.6
 ):
-    inputs = [convert(experiment) for experiment in experiments]
+    experiments, inputs = split_pairs(pairs)
     if name == "progress":
         return progress_curve.analyze(
             inputs[0], mode, options, crn_options, normalize=normalize, beta=beta

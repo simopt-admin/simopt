@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from simopt.experiment.api import AnalysisInput, PlotConfig
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment.experiment import Experiment
 from simopt.logging import Logger, null_logger
 from simopt.options import (
     DEFAULT_CONFIDENCE_INTERVAL_OPTIONS,
@@ -116,7 +116,7 @@ def _analyze_solver(
 
 def analyze_many(
     analysis_inputs: list[AnalysisInput],
-    experiments: list[ProblemSolver],
+    experiments: list[Experiment],
     plot_type: str,
     reference_solver: str,
     ci_options: ConfidenceIntervalOptions | None,
@@ -186,7 +186,7 @@ def plot(
 
 def plot_many(
     results: list[DiffSolvabilityResult],
-    _experiments: list[ProblemSolver],
+    _experiments: list[Experiment],
     /,
     *,
     colors: list[str] | None = None,
@@ -227,7 +227,7 @@ class DiffSolvability(PlotConfig):
     def plot(
         self,
         analysis_inputs: list[AnalysisInput],
-        experiments: list[ProblemSolver],
+        experiments: list[Experiment],
     ) -> tuple[plt.Figure, plt.Axes]:
         """Analyze and plot difference solvability profiles."""
         results = analyze_many(

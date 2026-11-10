@@ -36,7 +36,7 @@ from simopt.analysis.solvability_profile import SolvabilityProfile
 from simopt.analysis.terminal_progress import TerminalProgress
 from simopt.analysis.terminal_scatterplot import TerminalScatter
 from simopt.experiment.api import SimulationConfig, run
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment import Experiment
 from simopt.models.sscont import SSContMinCost
 from simopt.options import ConfidenceIntervalOptions
 from simopt.solvers import ASTRODF, NelderMead, RandomSearch
@@ -82,7 +82,7 @@ problems = [
 ]
 
 experiments = [
-    ProblemSolver(solver=solver, problem=problem) for problem in problems for solver in solvers
+    Experiment(solver=solver, problem=problem) for problem in problems for solver in solvers
 ]
 print(f"{len(solvers)} solvers × {len(problems)} problems = {len(experiments)} experiments")
 

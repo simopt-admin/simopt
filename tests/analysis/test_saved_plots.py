@@ -15,7 +15,7 @@ from simopt.analysis.terminal_feasibility import TerminalFeasibility
 from simopt.analysis.terminal_progress import TerminalProgress
 from simopt.analysis.terminal_scatterplot import TerminalScatter
 from simopt.experiment.plot import save_plots
-from simopt.options import ConfidenceIntervalOptions
+from simopt.options import ConfidenceIntervalOptions, CrnOptions
 
 
 @pytest.mark.parametrize("all_in_one", [False, True])
@@ -36,7 +36,7 @@ from simopt.options import ConfidenceIntervalOptions
 )
 def test_saved_plot_grouping(option_pair, config, all_in_one, transpose, tmp_path):
     second_problem = deepcopy(option_pair)
-    for experiment in second_problem:
+    for experiment, _ in second_problem:
         experiment.problem.name = "second problem"
     grid = [option_pair, second_problem]
     if transpose:
@@ -162,31 +162,26 @@ def test_saved_feasibility_zero_line(option_experiment, plot_zero, tmp_path):
     )
     with paths[0].with_suffix(".pickle").open("rb") as file:
         fig = pickle.load(file)
-    assert len(fig.axes[0].lines) == option_experiment.n_macroreps + int(plot_zero)
+    assert len(fig.axes[0].lines) == option_experiment[1].full_df.index.get_level_values(
+        "mrep"
+    ).nunique() + int(plot_zero)
 
 
 @pytest.mark.parametrize("across_budget", [False, True])
 @pytest.mark.parametrize("across_macroreps", [False, True])
 @pytest.mark.parametrize("across_x0_xstar", [False, True])
-@pytest.mark.parametrize("use_experiment_crn", [False, True])
 def test_saved_experiment_crn_flags(
     option_experiment,
     across_budget,
     across_macroreps,
     across_x0_xstar,
-    use_experiment_crn,
     tmp_path,
     monkeypatch,
 ):
-    from simopt.options import CrnOptions
-
-    option_experiment.crn_across_budget = across_budget
-    option_experiment.crn_across_macroreps = across_macroreps
-    option_experiment.crn_across_init_opt = across_x0_xstar
     configured = CrnOptions(
-        across_budget=not across_budget,
-        across_macroreps=not across_macroreps,
-        across_x0_xstar=not across_x0_xstar,
+        across_budget=across_budget,
+        across_macroreps=across_macroreps,
+        across_x0_xstar=across_x0_xstar,
     )
     records = []
 
@@ -196,17 +191,6 @@ def test_saved_experiment_crn_flags(
 
     monkeypatch.setattr(ProgressCurve, "plot", record_plot)
     config = ProgressCurve(ci_options=None, crn_options=configured)
-    save_plots(
-        [option_experiment], config, output_dir=tmp_path, use_experiment_crn=use_experiment_crn
-    )
-    desired = (
-        CrnOptions(
-            across_budget=across_budget,
-            across_macroreps=across_macroreps,
-            across_x0_xstar=across_x0_xstar,
-        )
-        if use_experiment_crn
-        else configured
-    )
-    assert records == [desired]
+    save_plots([option_experiment], config, output_dir=tmp_path)
+    assert records == [configured]
     assert config.crn_options == configured

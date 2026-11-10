@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from simopt.experiment.api import AnalysisInput, PlotConfig
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment.experiment import Experiment
 from simopt.logging import Logger, null_logger
 from simopt.options import (
     DEFAULT_CONFIDENCE_INTERVAL_OPTIONS,
@@ -197,7 +197,7 @@ def _analyze_solver(
 
 def analyze_many(
     analysis_inputs: list[AnalysisInput],
-    experiments: list[ProblemSolver],
+    experiments: list[Experiment],
     plot_type: str,
     ci_options: ConfidenceIntervalOptions | None,
     crn_options: CrnOptions,
@@ -231,7 +231,7 @@ def analyze_many(
 
 def plot_many(
     results: list[SolvabilityProfileResult],
-    experiments: list[ProblemSolver],
+    experiments: list[Experiment],
     plot_type: str,
     /,
     *,
@@ -278,7 +278,7 @@ class SolvabilityProfile(PlotConfig):
     def plot(
         self,
         analysis_inputs: list[AnalysisInput],
-        experiments: list[ProblemSolver],
+        experiments: list[Experiment],
     ) -> tuple[plt.Figure, plt.Axes]:
         """Analyze and plot aggregated solvability profiles."""
         results = analyze_many(

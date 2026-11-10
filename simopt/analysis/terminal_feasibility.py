@@ -11,9 +11,8 @@ from matplotlib.collections import PathCollection
 from matplotlib.container import ErrorbarContainer
 
 from mrg32k3a.mrg32k3a import MRG32k3a
-from simopt.bootstrap import compute_bootstrap_conf_int
 from simopt.experiment.api import AnalysisInput, PlotConfig
-from simopt.experiment.single import ProblemSolver
+from simopt.experiment.experiment import Experiment
 from simopt.feasibility import feasibility_score
 from simopt.logging import Logger, null_logger
 from simopt.options import (
@@ -23,7 +22,12 @@ from simopt.options import (
     CrnOptions,
 )
 
-from .bootstrap import _bootstrap_sample, _get_n_preps, _transform_bootstrap_data
+from .bootstrap import (
+    _bootstrap_sample,
+    _get_n_preps,
+    _transform_bootstrap_data,
+    compute_bootstrap_conf_int,
+)
 from .common import compute_estimator_and_ci, plot_distribution
 
 
@@ -248,7 +252,7 @@ def analyze_many(
 
 def plot_many(
     results: list[TerminalFeasibilityResult],
-    experiments: list[ProblemSolver],
+    experiments: list[Experiment],
     /,
     *,
     plot_type: Literal["scatter", "violin"] = "scatter",
@@ -315,7 +319,7 @@ class TerminalFeasibility(PlotConfig):
     def plot(
         self,
         analysis_inputs: list[AnalysisInput],
-        experiments: list[ProblemSolver],
+        experiments: list[Experiment],
     ) -> tuple[plt.Figure, plt.Axes]:
         """Analyze and plot terminal feasibility summaries."""
         results = analyze_many(

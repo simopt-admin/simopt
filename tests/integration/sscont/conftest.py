@@ -7,8 +7,8 @@ import pytest
 import zstandard as zstd
 
 from simopt.directory import problem_directory, solver_directory
+from simopt.experiment import Experiment
 from simopt.experiment.api import AnalysisInput, SimulationConfig, run
-from simopt.experiment.single import ProblemSolver
 
 NUM_MACROREPS = 10
 NUM_POSTREPS = 100
@@ -74,7 +74,7 @@ def sscont_simulation_config() -> SimulationConfig:
 
 
 @pytest.fixture
-def sscont_experiments(dataset: str) -> list[ProblemSolver]:
+def sscont_experiments(dataset: str) -> list[Experiment]:
     solvers = []
     for solver_name, fixed_factors, name in SOLVERS:
         solver_class = solver_directory[solver_name]
@@ -92,7 +92,7 @@ def sscont_experiments(dataset: str) -> list[ProblemSolver]:
     ]
 
     experiments = [
-        ProblemSolver(solver=solver, problem=problem) for problem in problems for solver in solvers
+        Experiment(solver=solver, problem=problem) for problem in problems for solver in solvers
     ]
     if dataset == "fast":
         return experiments[:FAST_EXPERIMENT_COUNT]
@@ -103,7 +103,7 @@ def sscont_experiments(dataset: str) -> list[ProblemSolver]:
 def sscont_results(
     dataset: str,
     sscont_artifacts_dir: Path,
-    sscont_experiments: list[ProblemSolver],
+    sscont_experiments: list[Experiment],
     sscont_simulation_config: SimulationConfig,
 ) -> list[AnalysisInput]:
     cache_filename = "run_fast.pkl.zst" if dataset == "fast" else "run.pkl.zst"
