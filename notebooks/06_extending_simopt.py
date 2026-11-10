@@ -66,7 +66,7 @@ print(f"{len(demand_data)} observations, mean demand {demand_data.mean():.2f}")
 
 default_problem = CntNVMaxProfit(name="CNTNEWS-1 (Burr)", fixed_factors={"budget": 500})
 data_problem = CntNVMaxProfit(name="CNTNEWS-1 (data)", fixed_factors={"budget": 500})
-data_problem.model.demand_model = EmpiricalDemand(demand_data)  # ty: ignore[unresolved-attribute]
+data_problem.model.demand_model = EmpiricalDemand(demand_data)  # ty: ignore[missing-attribute]
 
 solver = ASTRODF()
 experiments = [Experiment(solver=solver, problem=p) for p in (default_problem, data_problem)]
