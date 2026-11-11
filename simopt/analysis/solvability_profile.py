@@ -306,7 +306,8 @@ def plot_many(
     for i, result in enumerate(results):
         color = colors[i % len(colors)]
         handles.append(plot(ax, result, color=color, logger=logger))
-    ax.legend(handles=handles, labels=solvers)
+    if handles:
+        ax.legend(handles=handles, labels=solvers)
 
     ax.set_xlabel("Budget")
     label = "Solvability CDF" if plot_type == "cdf" else "Solvability Quantile"
