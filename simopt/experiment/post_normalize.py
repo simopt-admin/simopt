@@ -22,6 +22,14 @@ class MeanReplicateSchema(pa.DataFrameModel):
     stochastic_constraints: object  # np.ndarray
 
 
+def mean_of_arrays(values: pd.Series) -> np.ndarray:
+    """Element-wise mean of a column of equal-length arrays.
+
+    pandas >= 3 no longer averages object columns holding arrays, so do it explicitly.
+    """
+    return np.mean(np.stack(values.to_list()), axis=0)
+
+
 def _set_up_rngs(problem: Problem) -> list[MRG32k3a]:
     """Set up RNGs.
 
@@ -104,7 +112,7 @@ def _best_with_feasibility(
     """
     df = (
         df.groupby(["experiment", "mrep", "step"])
-        .agg({"objective": "mean", "stochastic_constraints": "mean", "solution": "first"})
+        .agg({"objective": "mean", "stochastic_constraints": mean_of_arrays, "solution": "first"})
         .reset_index()
     )
     df = MeanReplicateSchema.validate(df)

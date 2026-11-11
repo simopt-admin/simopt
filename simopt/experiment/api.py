@@ -15,7 +15,7 @@ from simopt.experiment.data import (
     ManySolverHistorySchema,
 )
 from simopt.experiment.experiment import Experiment
-from simopt.experiment.post_normalize import normalize
+from simopt.experiment.post_normalize import mean_of_arrays, normalize
 from simopt.experiment.post_normalize_merit import (
     MeritNormalization,
     attach_deterministic_violation,
@@ -108,7 +108,7 @@ def _mean(
                     "budget": "first",
                     "solution": "first",
                     "objective": "mean",
-                    "stochastic_constraints": "mean",
+                    "stochastic_constraints": mean_of_arrays,
                     **(
                         {"deterministic_violation": "first"}
                         if "deterministic_violation" in full_df
