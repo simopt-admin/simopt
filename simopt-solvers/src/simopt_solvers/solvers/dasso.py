@@ -1120,7 +1120,8 @@ class DASSO(Solver):
         second_part = sample_mean_differences.transpose() @ np.linalg.solve(
             cov_mat_b, sample_mean_differences
         )
-        return -(first_part - second_part)  # negative likelihood (1/2 is ignored)
+        # negative likelihood (1/2 is ignored)
+        return -float(np.asarray(first_part - second_part).item())
 
     class _Group:
         """A _Group object contains group information for given hyperparameters."""
