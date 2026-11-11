@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "source_revision": "1b209ebcd623c8f0c1ce38f7fe80b1bdd3bfb64e",
+  "environment": {
+    "MRG32K3A_BACKEND": "rust",
+    "numpy": "2.3.5",
+    "pandas": "3.1.1",
+    "matplotlib": "3.11.2",
+    "seaborn": "0.13.2",
+    "mrg32k3a": "2.0.2"
+  },
+  "records": [
+    {
+      "test_id": "tests/analysis/test_auc.py::test_auc_same_problem_experiments[1p2s]",
+      "file": "64910d498e6a9336df77.json.zst",
+      "sha256": "4b898199b24f2aa0ab48a66ae86dfb3bd14a4757717b318f792474b763af7d71"
+    },
+    {
+      "test_id": "tests/analysis/test_auc.py::test_auc_same_problem_experiments[2p2s]",
+      "file": "acc59bb49b7b56ddf03f.json.zst",
+      "sha256": "f95133069524e4f7cc906acf735b306252f92d5bf279ea1c11ed230df4772161"
+    },
+    {
+      "test_id": "tests/analysis/test_diff.py::test_diff_solvability_cdf[1p2s]",
+      "file": "fb6f9514b13ab7ea13f8.json.zst",
+      "sha256": "5c5b67d41ca4c0aeeb8f3ff2fed1eff31911ddbbac15cd492464c586fd212d23"
+    },
+    {
+      "test_id": "tests/analysis/test_diff.py::test_diff_solvability_cdf[2p2s]",
+      "file": "6280c48b5435a70efc34.json.zst",
+      "sha256": "dae7dffda4109b6c9b82ca6fb76ede258eed11533b8994ff16729b2448ae1871"
+    },
+    {
+      "test_id": "tests/analysis/test_diff.py::test_diff_solvability_quantile[1p2s]",
+      "file": "2d1e37ce677388a175cf.json.zst",
+      "sha256": "9378547e0e9dc8de36bc12208f16f8bde343dc678d9a6c4ac616711356bf9741"
+    },
+    {
+      "test_id": "tests/analysis/test_diff.py::test_diff_solvability_quantile[2p2s]",
+      "file": "e2fbdc7e38723c3bbda6.json.zst",
+      "sha256": "0a5acac2cdd6b12d71b338985ed690f8e83220cfffe95b4b57e5ac7a100c18ce"
+    },
+    {
+      "test_id": "tests/analysis/test_progress_curve.py::test_progress_curve_same_problem_experiments[1p2s]",
+      "file": "0988f74c03ed0ee01017.json.zst",
+      "sha256": "db403981b46f4484b4886d7da43014cbcf5312ee822034cdb6558efc0e54c0a0"
+    },
+    {
+      "test_id": "tests/analysis/test_progress_curve.py::test_progress_curve_same_problem_experiments[2p2s]",
+      "file": "bbd4b6386c4e664cae99.json.zst",
+      "sha256": "7fa745383fc75318a845ac80f4864ce47471da033998c686aaff16a436aa3d93"
+    },
+    {
+      "test_id": "tests/analysis/test_solvability_cdf.py::test_solvability_cdf_same_problem_experiments[1p2s]",
+      "file": "d8247b7c6b3ff001b393.json.zst",
+      "sha256": "bbc979074addd90b12fe1bfcb2be1f01fd6f7e964f3d91d83aaf296df25698fa"
+    },
+    {
+      "test_id": "tests/analysis/test_solvability_cdf.py::test_solvability_cdf_same_problem_experiments[2p2s]",
+      "file": "77b48e109fdb23a8bc83.json.zst",
+      "sha256": "8cbbe89f5bf6ad4b7beb81fa5f03ecc381ea61346338ad12d081707d0354b7ba"
+    },
+    {
+      "test_id": "tests/analysis/test_solvability_profile.py::test_solvability_profile_same_problem_experiments[1p2s-cdf]",
+      "file": "bfce9134171d1f378b1a.json.zst",
+      "sha256": "83fdc71a7cb93b82e6e70ceddf230ef56fd2576e4a1def7b491dbf29239a05f2"
+    },
+    {
+      "test_id": "tests/analysis/test_solvability_profile.py::test_solvability_profile_same_problem_experiments[1p2s-quantile]",
+      "file": "835568011d6786c88f98.json.zst",
+      "sha256": "23ba446181684a501f1e340da80ba1384e199f7bae72b92781c3c186543b441d"
+    },
+    {
+      "test_id": "tests/analysis/test_solvability_profile.py::test_solvability_profile_same_problem_experiments[2p2s-cdf]",
+      "file": "4ec7369b5676b52784be.json.zst",
+      "sha256": "99e5ec60f899ed08fc0d7dbe537d6ab7aba8211b8e16124806897b0261746408"
+    },
+    {
+      "test_id": "tests/analysis/test_solvability_profile.py::test_solvability_profile_same_problem_experiments[2p2s-quantile]",
+      "file": "2924e9ac77d7338c7f5f.json.zst",
+      "sha256": "5b0f8a5021dc49f54bf9019f348f6b545608dd41929e870447f44bf12e990b52"
+    },
+    {
+      "test_id": "tests/analysis/test_terminal_progress.py::test_terminal_progress_same_problem_experiments[1p2s]",
+      "file": "0f39ef18ff9f2c5a07f8.json.zst",
+      "sha256": "c75d0c9682a4581088fa800015c87547f9f14871e6c09f6e5e3a3389420e77a3"
+    },
+    {
+      "test_id": "tests/analysis/test_terminal_progress.py::test_terminal_progress_same_problem_experiments[2p2s]",
+      "file": "457321a32700286ca73c.json.zst",
+      "sha256": "59d74b5d8312d497b3f8b10879f644a1f9d2b4f1ce14d9f54ef0c1059efde413"
+    },
+    {
+      "test_id": "tests/analysis/test_terminal_scatterplot.py::test_terminal_scatterplot_same_problem_experiments[1p2s]",
+      "file": "9b25665d8664394019c3.json.zst",
+      "sha256": "c930df2d26d1ad0314f20278482b0c0e3e2b485959ada4d04c6e4cfd7755c8c1"
+    },
+    {
+      "test_id": "tests/analysis/test_terminal_scatterplot.py::test_terminal_scatterplot_same_problem_experiments[2p2s]",
+      "file": "4c857b96dec4e8923151.json.zst",
+      "sha256": "7ab6570a47ae659739817c946d5ee1f212ef0677adb05c595734c41d18e0e0b9"
+    }
+  ]
+}
