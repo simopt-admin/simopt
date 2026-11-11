@@ -65,6 +65,7 @@ def test_problem_simulates_and_hooks(abbr):
             assert val(x) is None
             assert jac(x) is None
     hess = problem.get_deterministic_constraints_hessian(x)
+    assert hess is not None
     assert hess.shape == (n_total, problem.dim, problem.dim)
 
 
@@ -92,9 +93,9 @@ def test_san4_custom_arcs_costs_total_cost():
         },
     )
     assert problem.dim == 3
-    assert problem.get_deterministic_inequality_constraints((1.0, 2.0, 3.0))[0] == pytest.approx(
-        1.0 + 1.0 + 1.0 - 4.0
-    )
+    c_ineq = problem.get_deterministic_inequality_constraints((1.0, 2.0, 3.0))
+    assert c_ineq is not None
+    assert np.atleast_1d(np.asarray(c_ineq))[0] == pytest.approx(1.0 + 1.0 + 1.0 - 4.0)
 
 
 def test_amusementpark_constraint_hooks():

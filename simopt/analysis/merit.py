@@ -48,6 +48,8 @@ def merit_progress(analysis_input: AnalysisInput, options: MeritOptions) -> pd.D
 
     # Best merit m*, from the (possibly bootstrapped) post-replications at its solution.
     if analysis_input.xstar_merit_sample is not None:
+        if normalization.xstar_merit_violation is None:
+            raise ValueError("xstar_merit_sample is set but xstar_merit_violation is missing.")
         best_merit = merit(
             float(np.mean(analysis_input.xstar_merit_sample)),
             float(normalization.xstar_merit_violation),

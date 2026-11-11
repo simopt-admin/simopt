@@ -1,6 +1,7 @@
 """Deterministic feasibility and merit analyses on synthetic data with known answers."""
 
 from types import SimpleNamespace
+from typing import Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,9 +25,10 @@ from simopt.experiment.api import AnalysisInput
 from simopt.experiment.experiment import from_names
 from simopt.experiment.plot import save_plots
 from simopt.options import ConfidenceIntervalOptions, CrnOptions, MeritOptions
+from simopt.problem import Problem
 
 OPTIONS = MeritOptions(obj_const=10.0, feas_tol_upper=0.5, feas_tol_lower=1e-3)
-MERIT_KWARGS = {
+MERIT_KWARGS: dict[str, Any] = {
     "curve_source": "merit_progress_curves",
     "feas_obj_const": 10.0,
     "feas_tol_upper": 0.5,
@@ -50,6 +52,10 @@ class StubProblem:
         return np.array([x[0]])
 
 
+def stub_problem() -> Problem:
+    return cast(Problem, StubProblem())
+
+
 def make_full_df(n_preps=2, with_violation=False):
     rows = []
     for mrep in range(2):
@@ -69,7 +75,7 @@ def make_full_df(n_preps=2, with_violation=False):
                 )
     df = pd.DataFrame(rows).set_index(["mrep", "step", "rep"])
     if with_violation:
-        df = pnm.attach_deterministic_violation(StubProblem(), df)
+        df = pnm.attach_deterministic_violation(stub_problem(), df)
     return df
 
 
@@ -106,12 +112,12 @@ def test_violation_is_recorded_per_solution():
         df.groupby(["mrep", "step"])["deterministic_violation"].first(),
         [0.2, 0.0005, 0.0, 0.2, 0.7, 0.0002],
     )
-    assert deterministic_violation(StubProblem(), (0.7,)) == pytest.approx(0.7)
+    assert deterministic_violation(stub_problem(), (0.7,)) == pytest.approx(0.7)
     # Problems without deterministic constraints are left untouched.
     plain = make_full_df()
-    assert pnm.attach_deterministic_violation(SimpleNamespace(), plain) is plain
+    assert pnm.attach_deterministic_violation(cast(Problem, SimpleNamespace()), plain) is plain
     with pytest.raises(ValueError, match="deterministic constraints"):
-        pnm.attach_deterministic_violation(SimpleNamespace(), plain, required=True)
+        pnm.attach_deterministic_violation(cast(Problem, SimpleNamespace()), plain, required=True)
     assert "deterministic_violation" in make_input().mean_df
 
 
@@ -131,6 +137,7 @@ def test_merit_progress_known_values():
 def test_merit_progress_infinite_initial_merit():
     data = make_merit_input()
     normalization = data.merit_normalization
+    assert normalization is not None
     data.merit_normalization = pnm.MeritNormalization(
         OPTIONS,
         x0_violation=0.7,
@@ -167,7 +174,7 @@ def test_normalize_merit_matches_hand_computation(monkeypatch):
         return np.array([3.0, 3.0])
 
     monkeypatch.setattr(pnm, "_simulate", simulate)
-    experiments = [SimpleNamespace(problem=StubProblem())]
+    experiments: list[Any] = [SimpleNamespace(problem=StubProblem())]
     plain = AnalysisInput(
         make_full_df(),
         np.array([0.2]),
@@ -179,9 +186,11 @@ def test_normalize_merit_matches_hand_computation(monkeypatch):
     # Best empirical merit is 2.0 at (0.0002,) (mrep 1, last step); re-simulated at 3.0.
     assert calls == [((0.0002,), 2)]
     normalization = data.merit_normalization
+    assert normalization is not None
     assert normalization.xstar_merit == (0.0002,)
     assert normalization.best_merit == pytest.approx(3.0)
     assert normalization.x0_violation == pytest.approx(0.2)
+    assert data.xstar_merit_sample is not None
     np.testing.assert_allclose(data.xstar_merit_sample, [3.0, 3.0])
     assert "deterministic_violation" not in plain.full_df
     result = merit_progress(data, OPTIONS)
@@ -225,6 +234,7 @@ def test_solvability_profile_merit_cdf():
     with_ci = solvability_profile.analyze(
         data, "cdf", ci, CrnOptions(), solve_tolerance=0.5, **MERIT_KWARGS
     )
+    assert with_ci.ci is not None
     assert (with_ci.ci["lb"] <= with_ci.ci["ub"]).all()
 
 
@@ -238,10 +248,16 @@ def test_solvability_profile_config_merit(experiment):
         ci_options=None,
     )
     fig, ax = config.plot([make_merit_input()], [experiment])
-    np.testing.assert_allclose(ax.lines[0].get_ydata(), [0, 0.5, 1.0])
+    np.testing.assert_allclose(np.asarray(ax.lines[0].get_ydata()), [0, 0.5, 1.0])
     plt.close(fig)
     with pytest.raises(ValueError, match="curve_source"):
-        solvability_profile.analyze(make_merit_input(), "cdf", None, CrnOptions(), curve_source="x")
+        solvability_profile.analyze(
+            make_merit_input(),
+            "cdf",
+            None,
+            CrnOptions(),
+            curve_source="x",  # ty: ignore[invalid-argument-type]
+        )
 
 
 def test_deterministic_progress_norm_and_objective():
@@ -258,7 +274,10 @@ def test_deterministic_progress_norm_and_objective():
     np.testing.assert_allclose(result.df["value"], [12.0, 6.0, 2.5, 12.0, np.inf, 2.0])
 
     with pytest.raises(ValueError, match="score_type"):
-        deterministic_feasibility_progress.analyze(data, score_type="value")
+        deterministic_feasibility_progress.analyze(
+            data,
+            score_type="value",  # ty: ignore[invalid-argument-type]
+        )
 
 
 def test_deterministic_progress_plot(experiment):
@@ -271,11 +290,13 @@ def test_deterministic_progress_plot(experiment):
     )
     curves = [line for line in ax.lines if line.get_linestyle() != "--"]
     assert len(curves) == 2
-    np.testing.assert_allclose(curves[0].get_xdata(), BUDGETS)
-    np.testing.assert_allclose(curves[0].get_ydata(), [12.0, 6.0, 2.5])
+    np.testing.assert_allclose(np.asarray(curves[0].get_xdata()), BUDGETS)
+    np.testing.assert_allclose(np.asarray(curves[0].get_ydata()), [12.0, 6.0, 2.5])
     assert ax.get_yscale() == "log"
     assert ax.get_ylabel() == "Merit"
-    assert ax.get_legend().get_texts()[0].get_text() == experiment.solver.name
+    legend = ax.get_legend()
+    assert legend is not None
+    assert legend.get_texts()[0].get_text() == experiment.solver.name
     plt.close(fig)
     with pytest.raises(ValueError, match="same length"):
         deterministic_feasibility_progress.plot_many(results, [])
@@ -314,11 +335,18 @@ def test_deterministic_terminal_scores_and_ci(experiment):
 
     fig, ax = deterministic_terminal_feasibility.plot_many([result], [experiment])
     assert len(ax.collections) == 1
-    np.testing.assert_allclose(ax.collections[0].get_offsets(), [[2.5, 0.0], [2.0, 0.0002]])
+    np.testing.assert_allclose(
+        np.asarray(ax.collections[0].get_offsets()), [[2.5, 0.0], [2.0, 0.0002]]
+    )
     plt.close(fig)
 
     with pytest.raises(ValueError, match="score_type"):
-        deterministic_terminal_feasibility.analyze(data, None, CrnOptions(), score_type="inf_norm")
+        deterministic_terminal_feasibility.analyze(
+            data,
+            None,
+            CrnOptions(),
+            score_type="inf_norm",  # ty: ignore[invalid-argument-type]
+        )
 
 
 def test_save_plots_registration(experiment, tmp_path):
