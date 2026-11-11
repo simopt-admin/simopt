@@ -165,10 +165,10 @@ class AmusementParkMinDepart(Problem):
         return (sum(x) - self.model.factors["park_capacity"],)
 
     # return jacobian of deterministic inequality constraints
-    def get_deterministic_inequality_constraints_gradients(self, x: tuple) -> np.ndarray:
+    def get_deterministic_inequality_constraints_gradients(self, _x: tuple) -> np.ndarray:
         return np.ones((1, self.dim))
 
-    def get_deterministic_constraints_hessian(self, x: tuple) -> np.ndarray:
+    def get_deterministic_constraints_hessian(self, _x: tuple) -> np.ndarray:
         return np.zeros((1, self.dim, self.dim))
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:

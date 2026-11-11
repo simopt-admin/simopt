@@ -278,11 +278,13 @@ class Problem(ABC):
             for x_i, lb, ub in zip(x, self.lower_bounds, self.upper_bounds, strict=False)
         )
 
-    def get_deterministic_equality_constraints(self, x: tuple, /) -> Sequence[float] | float | None:
+    def get_deterministic_equality_constraints(
+        self, _x: tuple, /
+    ) -> Sequence[float] | float | None:
         """Return the left-hand sides of equality constraints, c(x) == 0.
 
         Args:
-            x (tuple): A vector of decision variables.
+            _x (tuple): A vector of decision variables.
 
         Returns:
             Values of the equality constraints, or None if there are none.
@@ -290,27 +292,27 @@ class Problem(ABC):
         return None
 
     def get_deterministic_inequality_constraints(
-        self, x: tuple, /
+        self, _x: tuple, /
     ) -> Sequence[float] | float | None:
         """Return the left-hand sides of inequality constraints, h(x) <= 0.
 
         Args:
-            x (tuple): A vector of decision variables.
+            _x (tuple): A vector of decision variables.
 
         Returns:
             Values of the inequality constraints, or None if there are none.
         """
         return None
 
-    def get_deterministic_equality_constraints_gradients(self, x: tuple, /) -> np.ndarray | None:
+    def get_deterministic_equality_constraints_gradients(self, _x: tuple, /) -> np.ndarray | None:
         """Return the Jacobian (n_eq, dim) of the equality constraints, or None."""
         return None
 
-    def get_deterministic_inequality_constraints_gradients(self, x: tuple, /) -> np.ndarray | None:
+    def get_deterministic_inequality_constraints_gradients(self, _x: tuple, /) -> np.ndarray | None:
         """Return the Jacobian (n_ineq, dim) of the inequality constraints, or None."""
         return None
 
-    def get_deterministic_constraints_hessian(self, x: tuple, /) -> np.ndarray | None:
+    def get_deterministic_constraints_hessian(self, _x: tuple, /) -> np.ndarray | None:
         """Return constraint Hessians, shape (n_eq + n_ineq, dim, dim).
 
         Equality constraints come first, then inequality constraints.

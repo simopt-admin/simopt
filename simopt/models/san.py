@@ -460,9 +460,9 @@ class SANLongestPathCostConst(Problem):
     def get_deterministic_constraints_hessian(self, x: tuple) -> np.ndarray:
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
-        H = np.diag(2.0 * cost_array / x_array**3)
+        hess = np.diag(2.0 * cost_array / x_array**3)
 
-        return H.reshape(1, self.dim, self.dim)
+        return hess.reshape(1, self.dim, self.dim)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         return tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])
@@ -526,9 +526,9 @@ class SANLongestPathCostConstIneq(Problem):
     def get_deterministic_constraints_hessian(self, x: tuple) -> np.ndarray:
         cost_array = np.array(self.factors["arc_costs"])
         x_array = np.array(x)
-        H = np.diag(2.0 * cost_array / x_array**3)
+        hess = np.diag(2.0 * cost_array / x_array**3)
 
-        return H.reshape(1, self.dim, self.dim)
+        return hess.reshape(1, self.dim, self.dim)
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         return tuple([rand_sol_rng.lognormalvariate(lq=0.1, uq=10) for _ in range(self.dim)])

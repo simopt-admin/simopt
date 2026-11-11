@@ -57,5 +57,7 @@ classmethod-decorators = ["simopt.utils.classproperty"]
 [lint.per-file-ignores]
 "simopt/models/*" = ["D"]
 "simopt-solvers/src/simopt_solvers/solvers/*" = ["D"]
+# Linear-algebra notation (H, A_eq, R, ...) for matrices
+"simopt-solvers/src/simopt_solvers/solvers/castrodf.py" = ["D", "N803", "N806"]
 "simopt-solvers/tests/*" = ["ANN", "ARG", "D"]
 "tests/*" = ["ANN", "ARG", "D"]
