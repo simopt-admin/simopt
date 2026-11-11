@@ -13,12 +13,12 @@ the solver can be found `here <https://simopt.readthedocs.io/en/latest/astrodf.h
 Parameter tuning warranted, default values not necessarily optimal.
 - Direct search currenly disabled
 - Caution for inequality constraints - slack initialization and barrier penalty managment still a work in progress
-- Sometimes Scipy does not do a very good job for normal/tangent step. 
+- Sometimes Scipy does not do a very good job for normal/tangent step.
     Try both easy_solve_normal and easy_solve_tangent True/False if poor results
 - Adaptive sampling may unnecessarily blow up sample size -- work in progress
-- make sure def get_deterministic_equality_constraints,  get_deterministic_inequality_constraints, 
-    get_deterministic_equality_constraints_gradients, get_deterministic_inequality_constraints_gradients, 
-    and get_deterministic_constraints_hessian have been defined in problem before running. 
+- make sure def get_deterministic_equality_constraints,  get_deterministic_inequality_constraints,
+    get_deterministic_equality_constraints_gradients, get_deterministic_inequality_constraints_gradients,
+    and get_deterministic_constraints_hessian have been defined in problem before running.
 """  # noqa: E501
 
 # TODO: check if bullet points can be indented and ignore tag removed
@@ -32,7 +32,13 @@ from typing import Annotated, ClassVar, Self
 import numpy as np
 from numpy.linalg import LinAlgError, inv, norm, pinv
 from pydantic import Field, model_validator
-from scipy.optimize import NonlinearConstraint, OptimizeResult, minimize, LinearConstraint, lsq_linear
+from scipy.optimize import (
+    NonlinearConstraint,
+    OptimizeResult,
+    minimize,
+    LinearConstraint,
+    lsq_linear,
+)
 from scipy.linalg import null_space
 
 import simopt_dsl as dsl
@@ -46,12 +52,16 @@ from simopt_solvers.base import (
     SolverConfig,
     VariableType,
 )
+
+
 class InterpolationPoint:
     """One point in the interpolation set: its position (relative to the
     InterpolationSet's base_x) and the raw Solution object simulated there."""
+
     def __init__(self, x_dist: np.ndarray, solution: Solution):
-        self.x_dist = x_dist      # position, relative to InterpolationSet.base_x
-        self.solution = solution    # raw Solution — no sign convention applied
+        self.x_dist = x_dist  # position, relative to InterpolationSet.base_x
+        self.solution = solution  # raw Solution — no sign convention applied
+
 
 class InterpolationSet:
     """
@@ -62,13 +72,14 @@ class InterpolationSet:
     Stores raw Solution objects — callers apply neg_minmax when reading
     objective values, consistent with the rest of the solver.
     """
+
     def __init__(self, dim: int, base_x: np.ndarray, base_solution: Solution):
         self.dim = dim
         self.num_pts = 2 * dim + 1
         self.base_x = base_x.copy()
         # points[0] is always the current center point at construction time
         self.points: list[InterpolationPoint] = [InterpolationPoint(np.zeros(dim), base_solution)]
-        
+
     def size(self) -> int:
         return len(self.points)
 
@@ -88,7 +99,6 @@ class InterpolationSet:
         for pt in self.points:
             pt.x_dist = pt.x_dist - shift
         self.base_x = new_base_x.copy()
-     
 
     def add_point(
         self, x_dist: np.ndarray, solution: Solution, victim_idx: int | None = None
@@ -99,26 +109,25 @@ class InterpolationSet:
         if self.size() >= self.num_pts:
             idx = victim_idx if victim_idx is not None else self._choose_exiting_by_dist()
             del self.points[idx]
-        self.points.append(InterpolationPoint(x_dist, solution))    
-        
+        self.points.append(InterpolationPoint(x_dist, solution))
+
     def _choose_exiting_by_dist(self) -> int:
-        ''' Chose exiting point by distance to centerpoint only'''
+        """Chose exiting point by distance to centerpoint only"""
         dists = [norm(pt.x_dist) for pt in self.points]
         return int(np.argmax(dists))
-    
-        
+
     def recenter(
         self,
         new_base_x: np.ndarray,
         new_incumbent_solution: Solution,
-        victim_idx: int | None = None
+        victim_idx: int | None = None,
     ) -> None:
         """Recenter the set on a new incumbent: shift coordinates, optionally
         drop out-of-radius points, insert the new incumbent."""
         self.shift_base(new_base_x)
         # New incumbent sits at displacement 0 from itself
-        self.add_point(np.zeros(self.dim), new_incumbent_solution, victim_idx = victim_idx)
-        
+        self.add_point(np.zeros(self.dim), new_incumbent_solution, victim_idx=victim_idx)
+
     def _coordinate_offset(self, slot_idx: int, delta_k: float) -> np.ndarray:
         """Generate the displacement for interpolation slot `slot_idx` using plain
         coordinate directions: slot 0 is the center (handled separately), odd slots
@@ -128,7 +137,7 @@ class InterpolationSet:
         offset = np.zeros(self.dim)
         offset[axis] = sign * delta_k
         return offset
-    
+
     def missing_index_offsets(self, delta_k: float) -> list[np.ndarray]:
         """Return displacement vectors for however many points are needed to
         reach num_pts, using fixed coordinate-axis placement at the trust
@@ -139,10 +148,10 @@ class InterpolationSet:
         offsets = []
         slot_idx = 1  # slot 0 is reserved for the center point, never generated here
         while len(offsets) < num_missing:
-            offsets.append(self._coordinate_offset( slot_idx, delta_k))
+            offsets.append(self._coordinate_offset(slot_idx, delta_k))
             slot_idx += 1
         return offsets
-    
+
     def design_matrix_inputs(self, neg_minmax: int) -> tuple[np.ndarray, np.ndarray]:
         """Return (y_var, fval) in the same shape get_model_coefficients expects:
         y_var[i] = displacement of point i from base_x, fval[i] = signed objective
@@ -154,7 +163,8 @@ class InterpolationSet:
         y_var = np.array([pt.x_dist for pt in self.points])
         fval = np.array([neg_minmax * self.raw_obj_mean(k) for k in range(self.size())])
         return y_var, fval
-        
+
+
 class CASTRODFConfig(SolverConfig):
     """Configuration for C-ASTRO-DF solver."""
 
@@ -186,12 +196,14 @@ class CASTRODFConfig(SolverConfig):
             description="trust-region radius decrease rate after failed iteration",
         ),
     ]
-    lambda_min: Annotated[
-        int, Field(default=5, gt=2, description="minimum sample size")
-    ]
+    lambda_min: Annotated[int, Field(default=5, gt=2, description="minimum sample size")]
 
     reuse_points: Annotated[
-        bool, Field(default=True, description="reuse the previously visited points (only applicable when reuse_interpolation_set = False)")
+        bool,
+        Field(
+            default=True,
+            description="reuse the previously visited points (only applicable when reuse_interpolation_set = False)",
+        ),
     ]
     mu: Annotated[
         float,
@@ -199,8 +211,6 @@ class CASTRODFConfig(SolverConfig):
             default=0.1,
             description="criticality measure weight factor",
         ),
-    
-    
     ]
     a_normal: Annotated[
         float,
@@ -208,8 +218,6 @@ class CASTRODFConfig(SolverConfig):
             default=0.5,
             description="portion of the trust-region dedicated to the normal step",
         ),
-    
-    
     ]
     easy_solve_normal: Annotated[
         bool,
@@ -217,8 +225,6 @@ class CASTRODFConfig(SolverConfig):
             default=False,
             description="Find normal step using the Cauchy point",
         ),
-    
-    
     ]
     easy_solve_tangent: Annotated[
         bool,
@@ -226,8 +232,6 @@ class CASTRODFConfig(SolverConfig):
             default=False,
             description="Find tangent step using the Cauchy point",
         ),
-    
-    
     ]
     a_tangent: Annotated[
         float,
@@ -235,8 +239,6 @@ class CASTRODFConfig(SolverConfig):
             default=0.5,
             description="portion of the trust-region dedicated to the tangent step",
         ),
-    
-    
     ]
     nu: Annotated[
         float,
@@ -244,8 +246,6 @@ class CASTRODFConfig(SolverConfig):
             default=10e-4,
             description="used to ensure model improvement when normal step results in worsening objectives",
         ),
-    
-    
     ]
     tau_1: Annotated[
         float,
@@ -253,8 +253,6 @@ class CASTRODFConfig(SolverConfig):
             default=2.0,
             description="controls increase of pentalty parameter",
         ),
-    
-    
     ]
     tau_2: Annotated[
         float,
@@ -262,8 +260,6 @@ class CASTRODFConfig(SolverConfig):
             default=1.0,
             description="also controls increase of pentalty parameter, must have (tau_1 -1)*tau_2) > 0",
         ),
-    
-    
     ]
     sigma_min: Annotated[
         float,
@@ -271,8 +267,6 @@ class CASTRODFConfig(SolverConfig):
             default=10.0,
             description="initial penalty parameter",
         ),
-    
-    
     ]
     sigma_b_max: Annotated[
         float,
@@ -280,8 +274,6 @@ class CASTRODFConfig(SolverConfig):
             default=1e8,
             description="upper bound on simga_b (used to control penalty parameter)",
         ),
-    
-    
     ]
 
     feas_tol: Annotated[
@@ -290,8 +282,6 @@ class CASTRODFConfig(SolverConfig):
             default=1e-8,
             description="Solve to specified feasibility tolerance",
         ),
-    
-    
     ]
     delta_0: Annotated[
         float,
@@ -308,9 +298,11 @@ class CASTRODFConfig(SolverConfig):
         ),
     ]
     reuse_interpolation_set: Annotated[
-    bool,
-    Field(default=False,
-          description="maintain a persistent interpolation set across iterations, reusing all valid points instead of rebuilding from scratch each time"),
+        bool,
+        Field(
+            default=False,
+            description="maintain a persistent interpolation set across iterations, reusing all valid points instead of rebuilding from scratch each time",
+        ),
     ]
     dist_threshold: Annotated[
         float,
@@ -318,7 +310,7 @@ class CASTRODFConfig(SolverConfig):
             default=10.0,
             description="trigger a Lagrange-based point replacement when max |L_k(x)| exceeds this value (py-bobyqa-style default; a well-poised set keeps this near 1)",
         ),
-    ]   
+    ]
     dogleg: Annotated[
         bool,
         Field(
@@ -326,7 +318,6 @@ class CASTRODFConfig(SolverConfig):
             description="use dogleg method to solve normal step",
         ),
     ]
-    
 
     @model_validator(mode="after")
     def _validate_eta_2_greater_than_eta_1(self) -> Self:
@@ -421,21 +412,22 @@ class CASTRODF(Solver):
             raw_x = self.interp_set.base_x + offset
             # make sure x statisfies bound constraints
             x = tuple(
-                clamp_with_epsilon(float(raw_x[i]), self.problem.lower_bounds()[i], self.problem.upper_bounds()[i])
+                clamp_with_epsilon(
+                    float(raw_x[i]), self.problem.lower_bounds()[i], self.problem.upper_bounds()[i]
+                )
                 for i in range(self.problem.dim)
             )
             # simulate solution at interpolation point
             new_solution = self.ctx.evaluate(x, 0)
             self.ctx.evaluate(new_solution, pilot_run)
             self.perform_adaptive_sampling(new_solution, pilot_run, delta_k)
-    
-            actual_dist = np.array(x) - self.interp_set.base_x  # may differ from `offset` due to clamping
-            self.interp_set.add_point(actual_dist, new_solution)
-    
 
-    def get_rotated_basis(
-        self, first_basis: np.ndarray, rotate_index: np.ndarray
-    ) -> np.ndarray:
+            actual_dist = (
+                np.array(x) - self.interp_set.base_x
+            )  # may differ from `offset` due to clamping
+            self.interp_set.add_point(actual_dist, new_solution)
+
+    def get_rotated_basis(self, first_basis: np.ndarray, rotate_index: np.ndarray) -> np.ndarray:
         """Generate the basis (rotated coordinate).
 
         The first vector comes from the visited design points (origin basis)
@@ -503,13 +495,11 @@ class CASTRODF(Solver):
 
         # compute sample size
         raw_sample_size = pilot_run * max(
-            1.0, max(sig2,1e-12) / (kappa**2 * delta**self.delta_power)
+            1.0, max(sig2, 1e-12) / (kappa**2 * delta**self.delta_power)
         )
         return ceil(raw_sample_size)
 
-    def select_interpolation_points(
-        self, delta_k: float, f_index: int
-    ) -> tuple[list, list]:
+    def select_interpolation_points(self, delta_k: float, f_index: int) -> tuple[list, list]:
         """Select interpolation points for the local model.
 
         Args:
@@ -528,10 +518,7 @@ class CASTRODF(Solver):
         # the trust region, use the coordinate basis
         if (
             not self.reuse_points
-            or norm(
-                np.array(self.incumbent_x)
-                - np.array(self.visited_pts_list[f_index].x)
-            ) == 0
+            or norm(np.array(self.incumbent_x) - np.array(self.visited_pts_list[f_index].x)) == 0
             or self.iteration_count == 1
         ):
             var_y = self.get_coordinate_basis_interpolation_points(
@@ -543,12 +530,12 @@ class CASTRODF(Solver):
             first_basis = diff_array / norm(diff_array)
             rotate_list = np.nonzero(first_basis)[0]
             rotate_matrix = self.get_rotated_basis(first_basis, rotate_list)
-        
+
             for i in range(self.problem.dim):
                 if first_basis[i] == 0:
                     coord_vector = self.get_coordinate_vector(self.problem.dim, i)
                     rotate_matrix = np.vstack((rotate_matrix, coord_vector))
-        
+
             var_y = self.get_rotated_basis_interpolation_points(
                 np.array(self.incumbent_x),
                 delta_k,
@@ -556,26 +543,27 @@ class CASTRODF(Solver):
                 np.array(rotate_matrix),
                 self.visited_pts_list[f_index].x,
             )
-        
+
         # Displacements from the incumbent at the points actually simulated
         incumbent = np.asarray(self.incumbent_x, dtype=float)
         var_z = [[np.asarray(pt[0], dtype=float) - incumbent] for pt in var_y]
-        
+
         return var_y, var_z
 
-
-    def _choose_exiting_at_step(self, matrix_inverse: np.ndarray, d: np.ndarray, delta_k: float) -> int:
+    def _choose_exiting_at_step(
+        self, matrix_inverse: np.ndarray, d: np.ndarray, delta_k: float
+    ) -> int:
         """After adding x_k, choose point to remove from interpolation set"""
         best_idx = None
-        best_scaden = None #scaled denominator
+        best_scaden = None  # scaled denominator
         for k in range(self.interp_set.size()):
             coeffs = self.lagrange_polynomial_coeffs(matrix_inverse, k)
             den = self.evaluate_model(d, coeffs)
-    
+
             point_dist = self.interp_set.points[k].x_dist
             distsq = float(norm(point_dist) ** 2)
             temp = max(1.0, (distsq / delta_k**2) ** 2)
-    
+
             scaden = temp * abs(den)
             if best_scaden is None or scaden > best_scaden:
                 best_scaden = scaden
@@ -585,23 +573,23 @@ class CASTRODF(Solver):
     def lagrange_polynomial_coeffs(self, matrix_inverse: np.ndarray, k: int) -> np.ndarray:
         """Returns kth lagrange polynomial coefficient vector of current interpolation set"""
         # slice uscaled matrix
-        return matrix_inverse[:, k]    
+        return matrix_inverse[:, k]
 
-    
-    
-    def _maximize_abs_lagrange(self, coeffs: np.ndarray, delta_k: float) -> tuple[np.ndarray, float]:
+    def _maximize_abs_lagrange(
+        self, coeffs: np.ndarray, delta_k: float
+    ) -> tuple[np.ndarray, float]:
         """Approximate maximizer of |L(x)| within the trust-region ball and box
         constraints"""
         dim = self.problem.dim
         c = coeffs[0]
         g = coeffs[1 : dim + 1]
         h = coeffs[dim + 1 :]
-    
+
         lower = self.problem.lower_bounds() - self.interp_set.base_x
         upper = self.problem.upper_bounds() - self.interp_set.base_x
         box_lo = np.maximum(lower, -delta_k)
         box_hi = np.minimum(upper, delta_k)
-    
+
         def solve_min(sign: float) -> np.ndarray:
             gs = sign * g
             hs = sign * h
@@ -617,7 +605,7 @@ class CASTRODF(Solver):
                     x[i] = lo if f_lo <= f_hi else hi
                 else:
                     x[i] = lo if gs[i] > 0 else (hi if gs[i] < 0 else 0.0)
-    
+
             # Bounding-box relaxation can violate the true ball -- project back.
             # Safe for box feasibility too: every box interval contains 0, so
             # scaling any feasible point toward 0 stays inside the (convex) box.
@@ -636,51 +624,52 @@ class CASTRODF(Solver):
                 best_x = x_candidate
 
         return best_x, best_abs_val
-    
+
     def _improve_geometry(self, matrix_inverse: np.ndarray, delta_k: float, pilot_run: int) -> bool:
         """If distance to farthest point exceeds threshold, replace with point intended to impove geometry"""
         victim_idx = self.interp_set._choose_exiting_by_dist()
         victim_dist = self.interp_set.points[victim_idx].x_dist
         distsq = float(norm(victim_dist) ** 2)
-    
+
         distsq_thresh = self.dist_threshold * delta_k**2
         if distsq <= distsq_thresh:
-            return False # farthest point still close enough -- nothing to do
-    
+            return False  # farthest point still close enough -- nothing to do
+
         coeffs = self.lagrange_polynomial_coeffs(matrix_inverse, victim_idx)
         replacement_dist, _ = self._maximize_abs_lagrange(coeffs, delta_k)
-    
+
         self._replace_worst_point(victim_idx, replacement_dist, delta_k, pilot_run)
-        
+
         return True
 
-    
     def _replace_worst_point(
-            self,
-            victim_idx: int,
-            replacement_dist: np.ndarray,
-            delta_k: float,
-            pilot_run: int,) -> None:
+        self,
+        victim_idx: int,
+        replacement_dist: np.ndarray,
+        delta_k: float,
+        pilot_run: int,
+    ) -> None:
         """Lagrange-poisedness-based geometry improvement: find the worst-poised
         point in the current set, simulate a replacement at the location that
         most improves that point's poisedness, and swap it in."""
-    
+
         raw_x = self.interp_set.base_x + replacement_dist
         x = tuple(
-            clamp_with_epsilon(float(raw_x[i]), self.problem.lower_bounds()[i], self.problem.upper_bounds()[i])
+            clamp_with_epsilon(
+                float(raw_x[i]), self.problem.lower_bounds()[i], self.problem.upper_bounds()[i]
+            )
             for i in range(self.problem.dim)
         )
-        
-        #simulate new point entering interpolationset
+
+        # simulate new point entering interpolationset
         new_solution = self.ctx.evaluate(x, 0)
         self.ctx.evaluate(new_solution, pilot_run)
         self.perform_adaptive_sampling(new_solution, pilot_run, delta_k)
-    
-        actual_dist = np.array(x) - self.interp_set.base_x  # may differ from replacement_dist due to clamping
+
+        actual_dist = (
+            np.array(x) - self.interp_set.base_x
+        )  # may differ from replacement_dist due to clamping
         self.interp_set.add_point(actual_dist, new_solution, victim_idx=victim_idx)
-        
-
-
 
     def perform_adaptive_sampling(
         self,
@@ -700,28 +689,25 @@ class CASTRODF(Solver):
         """
         sample_size = solution.n_reps if solution.n_reps > 0 else pilot_run
         lambda_max = self.ctx.budget.remaining
-        
-        
+
         # run a fixed number of replications at each interpolation point
         if self.sampling_method != "adaptive":
             if solution.n_reps < self.lambda_min:
-                more_reps = self.lambda_min - solution.n_reps 
+                more_reps = self.lambda_min - solution.n_reps
                 self.ctx.evaluate(solution, more_reps)
-        
-        else:
-            
 
+        else:
             # Initial Simulation (only if needed)
             if solution.n_reps == 0:
                 self.ctx.evaluate(solution, pilot_run)
                 sample_size = pilot_run
-    
+
             while True:
                 # Compute variance
                 sig2 = solution.objectives_var[0]
                 if self.delta_power == 0:
                     sig2 = max(sig2, np.trace(solution.objectives_gradients_var))
-    
+
                 # Compute stopping condition
                 kappa: float | None = None
                 if compute_kappa:
@@ -729,13 +715,14 @@ class CASTRODF(Solver):
                         rhs_for_kappa = norm(solution.objectives_gradients_mean[0])
                     else:
                         rhs_for_kappa = solution.objectives_mean
-                    kappa = (self.kappa_scale
-                        *rhs_for_kappa
+                    kappa = (
+                        self.kappa_scale
+                        * rhs_for_kappa
                         * np.sqrt(pilot_run)
                         / (delta_k ** (self.delta_power / 2))
                     ).item()
-    
-                # Set k to the right kappa 
+
+                # Set k to the right kappa
                 if kappa is not None:
                     k = kappa
                 elif self.kappa is not None:
@@ -745,27 +732,30 @@ class CASTRODF(Solver):
                     logging.warning("kappa is not set. Using default value of 0.")
                     k = 0
                 print(
-                    "pilot =", pilot_run,
-                    "sig2 =", sig2,
-                    "kappa =", k,
-                    "delta =", delta_k,
-                    "rhs =", solution.objectives_mean,
+                    "pilot =",
+                    pilot_run,
+                    "sig2 =",
+                    sig2,
+                    "kappa =",
+                    k,
+                    "delta =",
+                    delta_k,
+                    "rhs =",
+                    solution.objectives_mean,
                 )
-                
-                stopping = self.get_stopping_time(
-                    pilot_run, sig2, delta_k, k
-                )
-                
+
+                stopping = self.get_stopping_time(pilot_run, sig2, delta_k, k)
+
                 print("stopping =", stopping)
                 # Compute stopping time
                 stopping = self.get_stopping_time(pilot_run, sig2, delta_k, k)
-    
+
                 # Stop if conditions are met
                 if sample_size >= min(stopping, lambda_max) or self.ctx.budget.remaining <= 0:
                     if compute_kappa:
                         self.kappa = kappa  # Update kappa only if needed
                     break
-    
+
                 # Perform additional simulation
                 self.ctx.evaluate(solution, 1)
                 sample_size += 1
@@ -795,21 +785,20 @@ class CASTRODF(Solver):
             raise ValueError("incumbent_x should be initialized before use")
         if self.incumbent_solution is None:
             raise ValueError("incumbent_solution should be initialized before use")
-            
-        if self.reuse_interpolation_set: # new interpolation method that re-uses points
-            return self.construct_model_persistent() 
-        else: #old interpolation method
 
+        if self.reuse_interpolation_set:  # new interpolation method that re-uses points
+            return self.construct_model_persistent()
+        else:  # old interpolation method
             interpolation_solns = []
-    
+
             ## inner loop parameters
             w = 0.85  # self.factors["w"]
-            #mu = self.mu
+            # mu = self.mu
             beta = 10  # self.factors["beta"]
             # criticality_threshold = 0.1  # self.factors["criticality_threshold"]
             # skip_criticality = True  # self.factors["skip_criticality"]
             # Problem and solver factors
-    
+
             lambda_max = self.ctx.budget.remaining
             # lambda_max = budget / (15 * sqrt(problem.dim))
             if self.sampling_method == "adaptive":
@@ -822,13 +811,13 @@ class CASTRODF(Solver):
                 )
             else:
                 pilot_run = self.lambda_min
-    
+
             delta = self.delta_k
             model_iterations: int = 0
             while True:
                 delta_k = delta * w**model_iterations
                 model_iterations += 1
-    
+
                 # Calculate the distance between the center point and other design points
                 distance_array: list[float] = []
                 for point in self.visited_pts_list:
@@ -838,14 +827,14 @@ class CASTRODF(Solver):
                     # (distance = -big M)
                     dist_to_append = -delta_k * 10000 if distance > 0 else distance
                     distance_array.append(float(dist_to_append))
-    
+
                 # Find the index of visited design points list for reusing points
                 # The reused point will be the farthest point from the center point among
                 # the design points within the trust region
                 f_index = distance_array.index(max(distance_array))
-    
+
                 var_y, var_z = self.select_interpolation_points(delta_k, f_index)
-    
+
                 # Evaluate the function estimate for the interpolation points
                 fval = []
                 double_dim = 2 * self.problem.dim + 1
@@ -859,8 +848,7 @@ class CASTRODF(Solver):
                         i == 1
                         and self.reuse_points
                         and norm(
-                            np.array(self.incumbent_x)
-                            - np.array(self.visited_pts_list[f_index].x)
+                            np.array(self.incumbent_x) - np.array(self.visited_pts_list[f_index].x)
                         )
                         != 0
                     ):
@@ -872,25 +860,27 @@ class CASTRODF(Solver):
                         self.visited_pts_list.append(new_solution)
                         self.ctx.evaluate(new_solution, pilot_run)
                         adapt_soln = new_solution
-    
+
                     # Don't perform adaptive sampling on x_0
                     if not (i == 0 and self.iteration_count == 1):
                         self.perform_adaptive_sampling(adapt_soln, pilot_run, delta_k)
-    
+
                     # Append the function estimate to the list
                     obj_mean = float(np.asarray(adapt_soln.objectives_mean).reshape(-1)[0])
                     fval.append(1 * obj_mean)
                     interpolation_solns.append(adapt_soln)
-    
+
                 # construct the model and obtain the model coefficients
-                grad, hessian, matrix_inverse = self.get_model_coefficients(var_z, fval, self.problem)
+                grad, hessian, matrix_inverse = self.get_model_coefficients(
+                    var_z, fval, self.problem
+                )
                 # update diag hessian with lagrange and compute lagrange multipliers
-                H, self.lam = self.create_lagrange_hessian(hessian, grad) 
+                H, self.lam = self.create_lagrange_hessian(hessian, grad)
                 # build problem matrices
                 self.build_problem(grad, H)
-     
+
                 # check criticality loop, if not satisfied build model again with smaller delta
-                if self.crit_measure >= self.mu*delta_k or self.crit_measure ==0:
+                if self.crit_measure >= self.mu * delta_k or self.crit_measure == 0:
                     break
 
             # If a model gradient norm is zero, there is a possibility that the code
@@ -904,15 +894,8 @@ class CASTRODF(Solver):
         beta_n_grad = float(beta * self.crit_measure)
         self.delta_k = min(max(beta_n_grad, delta_k), delta)
 
-        return (
-            fval,
-            var_y,
-            grad,
-            hessian,
-            interpolation_solns,
-            matrix_inverse
-        )
-    
+        return (fval, var_y, grad, hessian, interpolation_solns, matrix_inverse)
+
     # used for updated interpolation method
     def construct_model_persistent(
         self,
@@ -924,11 +907,11 @@ class CASTRODF(Solver):
             raise ValueError("delta_k should be initialized before use")
         if self.incumbent_x is None:
             raise ValueError("incumbent_x should be initialized before use")
-    
-        w = 0.85 #hard coded for now
-        beta = 10 #hard coded for now
+
+        w = 0.85  # hard coded for now
+        beta = 10  # hard coded for now
         mu = self.mu
-    
+
         lambda_max = self.ctx.budget.remaining
         if self.sampling_method == "adaptive":
             pilot_run = ceil(
@@ -940,19 +923,19 @@ class CASTRODF(Solver):
             )
         else:
             pilot_run = self.lambda_min
-    
+
         delta = self.delta_k
         model_iterations = 0
         while True:
             delta_k = delta * w**model_iterations
             model_iterations += 1
-            
+
             self._simulate_missing_indexes(delta_k, pilot_run)
-            #self._simulate_surviving_points(delta_k, pilot_run)
-    
+            # self._simulate_surviving_points(delta_k, pilot_run)
+
             grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
             # update diag hessian with lagrange and compute lagrange multipliers
-            H, self.lam = self.create_lagrange_hessian(hessian, grad) 
+            H, self.lam = self.create_lagrange_hessian(hessian, grad)
             # build problem matrices
             self.build_problem(grad, H)
             # update interpolation set if threshold for max lagrage poly is reached
@@ -961,47 +944,47 @@ class CASTRODF(Solver):
                 # re-fit model coefficients if set has been updated
                 if set_updated:
                     grad, hessian, matrix_inverse = self.get_model_coefficients_persistent(delta_k)
-                    H, self.lam = self.create_lagrange_hessian(
-                        hessian, grad
-                    )
+                    H, self.lam = self.create_lagrange_hessian(hessian, grad)
                     self.build_problem(grad, H)
             # check criticality loop, if not satisfied build model again with smaller delta
-            if self.crit_measure >= self.mu*delta_k or self.crit_measure ==0:
+            if self.crit_measure >= self.mu * delta_k or self.crit_measure == 0:
                 break
 
         beta_n_grad = float(beta * self.crit_measure)
         self.delta_k = min(max(beta_n_grad, delta_k), delta)
-    
+
         # Build fval/y_var in the shapes the rest of iterate() expects
         neg_minmax = 1
         y_var, fval_arr = self.interp_set.design_matrix_inputs(neg_minmax)
         fval = list(fval_arr)
-        interpolation_solns = [self.interp_set.solution_at(k) for k in range(self.interp_set.size())]
-    
+        interpolation_solns = [
+            self.interp_set.solution_at(k) for k in range(self.interp_set.size())
+        ]
+
         return fval, list(y_var), grad, hessian, interpolation_solns, matrix_inverse
-    
+
     # this method is for old trust region interpolation construction
     def get_model_coefficients(
         self, y_var: list, fval: list, problem: dsl.Model
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Compute model coefficients using 2d+1 design points and function values.
 
-        This method fits a quadratic model with a diagonal Hessian by evaluating
-        `2 * dim + 1` points centered at the solution.
+         This method fits a quadratic model with a diagonal Hessian by evaluating
+         `2 * dim + 1` points centered at the solution.
 
-        Args:
-            y_var (list): List of sampled decision vectors (design points).
-            fval (list): Corresponding function values for each design point.
-            problem (dsl.Model): Problem instance providing dimension and structure.
+         Args:
+             y_var (list): List of sampled decision vectors (design points).
+             fval (list): Corresponding function values for each design point.
+             problem (dsl.Model): Problem instance providing dimension and structure.
 
-       Returns:
-        tuple[np.ndarray, np.ndarray, np.ndarray]:
-            - grad (np.ndarray): Model gradient g at the origin, shape (dim,).
-            - hessian (np.ndarray): Coefficients h of the squared terms, shape (dim,).
-              The model's diagonal Hessian is 2 * h.
-            - matrix_inverse (np.ndarray): Inverse (or pseudoinverse) of the design
-              matrix M. Column k holds the coefficients of the kth Lagrange
-              polynomial of the point set, used for interpolation management.
+        Returns:
+         tuple[np.ndarray, np.ndarray, np.ndarray]:
+             - grad (np.ndarray): Model gradient g at the origin, shape (dim,).
+             - hessian (np.ndarray): Coefficients h of the squared terms, shape (dim,).
+               The model's diagonal Hessian is 2 * h.
+             - matrix_inverse (np.ndarray): Inverse (or pseudoinverse) of the design
+               matrix M. Column k holds the coefficients of the kth Lagrange
+               polynomial of the point set, used for interpolation management.
         """
         num_design_points = 2 * problem.dim + 1
 
@@ -1027,9 +1010,11 @@ class CASTRODF(Solver):
         hessian = inverse_mult[decision_var_idx:num_design_points].reshape(problem.dim)
 
         return grad, hessian, matrix_inverse
-    
+
     # this method is for new interpolation handling
-    def get_model_coefficients_persistent(self, delta_k: float) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def get_model_coefficients_persistent(
+        self, delta_k: float
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Fit the diagonal-Hessian model from self.interp_set, mirroring
         get_model_coefficients's math -- but conditioned by delta_k to avoid
         the design matrix becoming ill-scaled as delta_k shrinks in the
@@ -1038,10 +1023,10 @@ class CASTRODF(Solver):
         (matrix_inverse @ e_k), needed for the future poisedness/eviction logic."""
         neg_minmax = 1
         y_var, fval = self.interp_set.design_matrix_inputs(neg_minmax)
-    
+
         num_design_points = self.interp_set.num_pts
         dim = self.problem.dim
-    
+
         # Fit in rescaled coordinates s = y_var / delta_k for numerical conditioning
         s = y_var / delta_k
         m_var = np.array(
@@ -1050,27 +1035,29 @@ class CASTRODF(Solver):
                 for i in range(num_design_points)
             ]
         )
-        #print("m_var_cond",np.linalg.cond(m_var))
+        # print("m_var_cond",np.linalg.cond(m_var))
         try:
             matrix_inverse_scaled = inv(m_var)
         except LinAlgError:
             matrix_inverse_scaled = pinv(m_var)
-    
+
         # Unscale matrix_inverse row-wise: row 0 untouched, next `dim` rows /delta_k,
         # remaining `dim` rows /delta_k**2 -- same transform Step 2 applies to `q`.
-        unscale_vec = np.concatenate((
-            [1.0],
-            np.full(dim, 1.0 / delta_k),
-            np.full(dim, 1.0 / delta_k**2),
-        ))
+        unscale_vec = np.concatenate(
+            (
+                [1.0],
+                np.full(dim, 1.0 / delta_k),
+                np.full(dim, 1.0 / delta_k**2),
+            )
+        )
         matrix_inverse = matrix_inverse_scaled * unscale_vec[:, np.newaxis]
-    
+
         inverse_mult = matrix_inverse @ fval  # equivalent to unscaling q after the scaled fit
-    
+
         decision_var_idx = dim + 1
         grad = inverse_mult[1:decision_var_idx].reshape(dim)
         hessian = inverse_mult[decision_var_idx:num_design_points].reshape(dim)
-    
+
         return grad, hessian, matrix_inverse
 
     def get_coordinate_basis_interpolation_points(
@@ -1078,7 +1065,7 @@ class CASTRODF(Solver):
     ) -> list[list[list[int | float]]]:
         """Compute the interpolation points (2d+1) using the coordinate basis."""
         y_var = [[list(x_k)]]
-        #is_block_constraint = sum(x_k) != 0
+        # is_block_constraint = sum(x_k) != 0
         num_decision_vars = problem.dim
 
         lower_bounds = problem.lower_bounds()
@@ -1113,14 +1100,14 @@ class CASTRODF(Solver):
         problem: dsl.Model,
         rotate_matrix: np.ndarray,
         reused_x: np.ndarray,
-        apply_bounds = True
+        apply_bounds=True,
     ) -> list[list[np.ndarray]]:
         """Compute the interpolation points (2d+1) using the rotated coordinate basis.
 
         One design point is reused, which is the farthest point from the center point.
         """
         y_var = [[x_k]]
-        #is_block_constraint = np.sum(x_k) != 0
+        # is_block_constraint = np.sum(x_k) != 0
         num_decision_vars = problem.dim
 
         lower_bounds = np.array(problem.lower_bounds())
@@ -1152,96 +1139,97 @@ class CASTRODF(Solver):
 
         return y_var
 
-        
-    def estimate_lagrange_mult(self, grad, A_eq = None, A_ineq =None, c_ineq = None) -> np.array():
+    def estimate_lagrange_mult(self, grad, A_eq=None, A_ineq=None, c_ineq=None) -> np.array():
         """
         Compute estimited lagrange multipliers for constraints.
-        
+
         A _eq= jacobian of equality constraints
         A_ineq = jacobian of inequality constraints
         grad = objective gradient
-        
+
         Returns: vector of Lagrange mulitpliers ordered with equality constraints first followed by inequality constraints
 
         """
-        
-        #build problem based on constraint type
+
+        # build problem based on constraint type
         if self.problem_type == "eq_only":
-            res = lsq_linear(A_eq.T, -1*grad)
+            res = lsq_linear(A_eq.T, -1 * grad)
             return res.x
-        else: #inequaltiy constraints present
+        else:  # inequaltiy constraints present
             A = []
             lb = []
             ub = []
             n_eq = 0
             # add equaltiy constraints if present
-            if self.problem_type == "both": 
+            if self.problem_type == "both":
                 A.append(A_eq.T)
                 n_eq = A_eq.shape[0]
-                lb.extend([-np.inf]*n_eq)
-                ub.extend([np.inf]*n_eq)
+                lb.extend([-np.inf] * n_eq)
+                ub.extend([np.inf] * n_eq)
 
-            #determine if constraint is active
-            active = c_ineq >= -1*self.feas_tol
+            # determine if constraint is active
+            active = c_ineq >= -1 * self.feas_tol
             A_active = A_ineq[active]
-            
-            n_active = A_active.shape[0] #get number of active inequality constraints
-            #add jacobian of active constraints and bounds to problem
+
+            n_active = A_active.shape[0]  # get number of active inequality constraints
+            # add jacobian of active constraints and bounds to problem
             if n_active > 0:
                 A.append(A_active.T)
-                lb.extend([0.0]*n_active)
-                ub.extend([np.inf]*n_active)
+                lb.extend([0.0] * n_active)
+                ub.extend([np.inf] * n_active)
             # if no constraints are active all multipliers are 0
-            if self.problem_type == "ineq_only" and n_active ==0 :
+            if self.problem_type == "ineq_only" and n_active == 0:
                 return np.zeros(A_ineq.shape[0])
-            
-            #convert A to matrix
+
+            # convert A to matrix
             A_lsq = np.hstack(A)
-            res = lsq_linear(A_lsq, -1*grad, bounds=(np.array(lb),np.array(ub)))
-            
-            #build lambda vector
-            lam = np.zeros(n_eq + A_ineq.shape[0]) #initialize lamda vector
-            lam[:n_eq] = res.x[:n_eq] # add equality result
+            res = lsq_linear(A_lsq, -1 * grad, bounds=(np.array(lb), np.array(ub)))
+
+            # build lambda vector
+            lam = np.zeros(n_eq + A_ineq.shape[0])  # initialize lamda vector
+            lam[:n_eq] = res.x[:n_eq]  # add equality result
             if n_active > 0:
-                lam[n_eq:][active] = res.x[n_eq:] # add active inequality constraints leaving inactive 0
-                
+                lam[n_eq:][active] = res.x[
+                    n_eq:
+                ]  # add active inequality constraints leaving inactive 0
+
             return lam
 
     def _cauchy_point_tangent(self, s_normal: np.ndarray, delta_hat: float) -> np.ndarray:
         """Closed-form Cauchy-point fallback for the tangent step, used when second degree curvature is negligable"""
         g = self.grad_term + self.W @ s_normal
-    
+
         # Project g onto null(R) so the step satisfies R @ t = 0 by construction
         gp = self.P @ g
-    
+
         norm_gp = norm(gp)
         if norm_gp == 0:
             return np.zeros(len(g))
-    
+
         curvature = gp @ self.W @ gp
         if curvature <= 0:
             tau = 1.0
         else:
             tau = min(1.0, norm_gp**3 / (delta_hat * curvature))
-    
+
         t_c = -tau * (delta_hat / norm_gp) * gp
-    
+
         # Respect fraction-to-boundary box on the slack block: t_s >= -eps*e - w_s.
         # Origin (t=0) always satisfies this (w_s already respects its own bound
         # from solve_normal_step), so radial scaling toward 0 stays feasible --
         # same principle as the ball projection used elsewhere in this solver.
         # maybe exlude this part (not used currently)
         if self.problem_type != "eq_only":
-            lower = -self.epsilon * np.ones(self.n_v) - s_normal[self.n_x:]
-            t_c_s = t_c[self.n_x:]
+            lower = -self.epsilon * np.ones(self.n_v) - s_normal[self.n_x :]
+            t_c_s = t_c[self.n_x :]
             alpha = 1.0
             for i in range(self.n_v):
                 if t_c_s[i] < lower[i]:
                     alpha = min(alpha, lower[i] / t_c_s[i])
             t_c = alpha * t_c
-    
+
         return t_c
-    
+
     def _cauchy_point_normal(self, delta_hat: float) -> np.ndarray:
         """Closed-form Cauchy-point step for the normal (feasibility) subproblem
         min 0.5*||R @ s + feas||^2  s.t. ||s|| <= delta_hat,
@@ -1253,21 +1241,21 @@ class CASTRODF(Solver):
         norm_g = norm(g)
         if norm_g == 0:
             return np.zeros(self.R.shape[1])
-    
+
         Rg = self.R @ g
         curvature = Rg @ Rg  # == g @ (R.T @ R) @ g, always >= 0
-    
+
         if curvature <= 0:
             tau = 1.0
         else:
             tau = min(1.0, norm_g**3 / (delta_hat * curvature))
-    
+
         s_c = -tau * (delta_hat / norm_g) * g
-    
+
         # respect fraction-to-boundary box on the slack block: s_v >= -a_normal*eps
         if self.problem_type != "eq_only":
             lower = -self.a_normal * self.epsilon * np.ones(self.n_v)
-            s_c_v = s_c[self.n_x:]
+            s_c_v = s_c[self.n_x :]
             alpha = 1.0
             for i in range(self.n_v):
                 if s_c_v[i] < lower[i]:
@@ -1275,7 +1263,7 @@ class CASTRODF(Solver):
             s_c = alpha * s_c
 
         return s_c
-    
+
     def solve_exact_normal_subproblem(self, delta_hat):
         def normal_subproblem(s_normal: np.ndarray) -> float:
             res: np.array = self.R @ s_normal + self.feas
@@ -1289,30 +1277,31 @@ class CASTRODF(Solver):
         if self.problem_type == "eq_only":
             const = [tr_normal]
         else:
-            E_v = np.hstack([
-                np.zeros((self.n_v, self.n_x)),
-                np.eye(self.n_v),
-            ])
-            ftb = LinearConstraint(E_v, -1 * self.a_normal * self.epsilon * np.ones(self.n_v), np.inf)
+            E_v = np.hstack(
+                [
+                    np.zeros((self.n_v, self.n_x)),
+                    np.eye(self.n_v),
+                ]
+            )
+            ftb = LinearConstraint(
+                E_v, -1 * self.a_normal * self.epsilon * np.ones(self.n_v), np.inf
+            )
             const = [tr_normal, ftb]
 
         solve_normal_subproblem: OptimizeResult = minimize(
-            normal_subproblem,
-            np.zeros(self.dim),
-            constraints=const,
-            tol = 1e-8
+            normal_subproblem, np.zeros(self.dim), constraints=const, tol=1e-8
         )
         s_normal_rescale = solve_normal_subproblem.x
-        
+
         return s_normal_rescale
-    
-    def _normal_dogleg(self,s1: np.ndarray, s2: np.ndarray, delta_hat: float):
-        '''
+
+    def _normal_dogleg(self, s1: np.ndarray, s2: np.ndarray, delta_hat: float):
+        """
         Find point between s1 and s2 that minimizes linearized constraint violation in the trust-region
 
-        '''
-        
-        d = s2 -s1
+        """
+
+        d = s2 - s1
         norm_d_sq = d @ d
         if norm_d_sq == 0:
             return s1.copy()  # s1 == s2, nothing to search
@@ -1320,87 +1309,92 @@ class CASTRODF(Solver):
         s1_dot_d = s1 @ d
         disc = s1_dot_d**2 + norm_d_sq * (delta_hat**2 - s1 @ s1)
         disc = max(disc, 0.0)  # guard tiny negative from floating point
-        tau_tr = (-s1_dot_d + np.sqrt(disc)) / norm_d_sq  
-        
+        tau_tr = (-s1_dot_d + np.sqrt(disc)) / norm_d_sq
+
         tau = min(tau_tr, 1.0)
-        
+
         # --- fraction-to-boundary crossing on the slack block ---
         if self.problem_type != "eq_only":
             lower = -1 * self.a_normal * self.epsilon * np.ones(self.n_v)
-            s1_v = s1[self.n_x:]
-            d_v = d[self.n_x:]
-    
+            s1_v = s1[self.n_x :]
+            d_v = d[self.n_x :]
+
             for i in range(self.n_v):
                 if d_v[i] < 0:
                     tau_i = (lower[i] - s1_v[i]) / d_v[i]
                     tau = min(tau, tau_i)
         tau = max(tau, 0.0)  # defensive: shouldn't go negative if s1 is truly feasible
-        
+
         return s1 + tau * d
-    
+
     def solve_normal_step(self):
         if norm(self.feas) <= self.feas_tol:
             s_normal = np.zeros(self.dim)
             s_normal_rescale = s_normal
         else:
             delta_hat = self.delta_k * self.a_normal
-            if self.easy_solve_normal: #solve using Cauchy step
+            if self.easy_solve_normal:  # solve using Cauchy step
                 s_normal_rescale = self._cauchy_point_normal(delta_hat)
-            elif self.dogleg: # solve using dogleg method
-                s2 = lsq_linear(self.R, -1*self.feas).x
-                norm_feasible =  norm(s2) <= delta_hat 
+            elif self.dogleg:  # solve using dogleg method
+                s2 = lsq_linear(self.R, -1 * self.feas).x
+                norm_feasible = norm(s2) <= delta_hat
                 if self.problem_type != "eq_only":
                     ftb = -1 * self.a_normal * self.epsilon * np.ones(self.n_v)
                     ftb_feasible = True
-                    if np.any(s2[self.n_x:] < ftb):
+                    if np.any(s2[self.n_x :] < ftb):
                         ftb_feasible = False
                     feasible = norm_feasible and ftb_feasible
                 else:
-                    feasible = norm_feasible   
-                if feasible: #if global minimizer in trust-region accept
+                    feasible = norm_feasible
+                if feasible:  # if global minimizer in trust-region accept
                     s_normal_rescale = s2
                 else:
                     s1 = self.solve_exact_normal_subproblem(delta_hat)
-                    s_normal_rescale = self._normal_dogleg(s1, s2, delta_hat) 
+                    s_normal_rescale = self._normal_dogleg(s1, s2, delta_hat)
 
             else:
-               s_normal_rescale =  self.solve_exact_normal_subproblem(delta_hat)
-               
+                s_normal_rescale = self.solve_exact_normal_subproblem(delta_hat)
+
             # rescale normal step if necessary (same for both branches above)
             if self.problem_type == "eq_only":
                 s_normal = s_normal_rescale
             else:
-                s_normal_v = self.V @ s_normal_rescale[self.n_x:]
-                s_normal = np.concatenate((s_normal_rescale[:self.n_x], s_normal_v))
-            
-            return s_normal, s_normal_rescale   
+                s_normal_v = self.V @ s_normal_rescale[self.n_x :]
+                s_normal = np.concatenate((s_normal_rescale[: self.n_x], s_normal_v))
+
+            return s_normal, s_normal_rescale
         return s_normal, s_normal_rescale
-               
+
     def solve_tangent_step(self, s_normal):
         # if normal step = 0, allow tangent full trust region
         if norm(s_normal) == 0:
-            a_tangent = 1.0 
+            a_tangent = 1.0
         else:
             a_tangent = self.a_tangent
-            
-        #check = curve < .01
-        if self.easy_solve_tangent: # no relevent curvature, peform Cauchy step
-            delta_hat = a_tangent*self.delta_k
+
+        # check = curve < .01
+        if self.easy_solve_tangent:  # no relevent curvature, peform Cauchy step
+            delta_hat = a_tangent * self.delta_k
             s_tangent_rescale = self._cauchy_point_tangent(s_normal, delta_hat)
         else:
-            #print(">>> ENTERED SLSQP/trust-constr BRANCH — check was False <<<")
+            # print(">>> ENTERED SLSQP/trust-constr BRANCH — check was False <<<")
             # Determine tangent step
             def tangent_subproblem(s_tangent: np.ndarray) -> float:
-                res = (self.grad_term + self.W @ s_normal).T @ s_tangent + 0.5*(s_tangent.T @ self.W @ s_tangent)
-                return float(res) 
+                res = (self.grad_term + self.W @ s_normal).T @ s_tangent + 0.5 * (
+                    s_tangent.T @ self.W @ s_tangent
+                )
+                return float(res)
+
             # get norm of tangent step
             def norm_s_tangent(s_tangent: np.ndarray) -> float:
                 return float(norm(s_tangent))
+
             def tangent_subproblem_jac(s_tangent: np.ndarray) -> np.ndarray:
                 return self.grad_term + self.W @ s_normal + self.W @ s_tangent
-            
+
             def tangent_subproblem_hess(s_tangent: np.ndarray) -> np.ndarray:
                 return self.W
+
             def norm_s_tangent_jac(s_tangent: np.ndarray) -> np.ndarray:
                 n = norm(s_tangent)
                 if n < 1e-12:
@@ -1416,39 +1410,49 @@ class CASTRODF(Solver):
                     return np.zeros((dim, dim))
                 outer = np.outer(s_tangent, s_tangent) / n**2
                 return v[0] * (np.eye(dim) - outer) / n
+
             # constrain step by trust region
-            tr_tangent = NonlinearConstraint(norm_s_tangent, 0, self.delta_k*a_tangent,
-                                             jac = norm_s_tangent_jac,
-                                             hess = norm_s_tangent_hess)
-            #Linear constraint
-            linc = LinearConstraint(self.R, np.zeros(self.R.shape[0]), np.zeros(self.R.shape[0]))    
+            tr_tangent = NonlinearConstraint(
+                norm_s_tangent,
+                0,
+                self.delta_k * a_tangent,
+                jac=norm_s_tangent_jac,
+                hess=norm_s_tangent_hess,
+            )
+            # Linear constraint
+            linc = LinearConstraint(self.R, np.zeros(self.R.shape[0]), np.zeros(self.R.shape[0]))
             if self.problem_type == "eq_only":
-                const = [tr_tangent,linc] 
-            else: # problem has inequaltiy constraints
-                E_v = np.hstack([
-                    np.zeros((self.n_v, self.n_x)),
-                    np.eye(self.n_v),
-                    ])
-                ftb = LinearConstraint(E_v, -1*self.epsilon*np.ones(self.n_v) - s_normal[self.n_x:], np.inf)
-                const = [tr_tangent,linc,ftb]
+                const = [tr_tangent, linc]
+            else:  # problem has inequaltiy constraints
+                E_v = np.hstack(
+                    [
+                        np.zeros((self.n_v, self.n_x)),
+                        np.eye(self.n_v),
+                    ]
+                )
+                ftb = LinearConstraint(
+                    E_v, -1 * self.epsilon * np.ones(self.n_v) - s_normal[self.n_x :], np.inf
+                )
+                const = [tr_tangent, linc, ftb]
             # solve for tangent step
             solve_tangent_subproblem: OptimizeResult = minimize(  # pyrefly: ignore
                 tangent_subproblem,
                 np.zeros(self.dim),
                 constraints=const,
-                hess = tangent_subproblem_hess,
-                jac = tangent_subproblem_jac
+                hess=tangent_subproblem_hess,
+                jac=tangent_subproblem_jac,
             )
-            s_tangent_rescale = solve_tangent_subproblem.x 
+            s_tangent_rescale = solve_tangent_subproblem.x
         if self.problem_type == "eq_only":
-            s_tangent = s_tangent_rescale #no rescale needed for eq only
+            s_tangent = s_tangent_rescale  # no rescale needed for eq only
         else:
-            s_tangent_v = self.V @ s_tangent_rescale[self.n_x:]
-            s_tangent = np.concatenate((s_tangent_rescale[:self.n_x], s_tangent_v))
+            s_tangent_v = self.V @ s_tangent_rescale[self.n_x :]
+            s_tangent = np.concatenate((s_tangent_rescale[: self.n_x], s_tangent_v))
         return s_tangent, s_tangent_rescale
-    
-    
-    def evaluate_point_feasibility(self, x: tuple, v: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray | None]:
+
+    def evaluate_point_feasibility(
+        self, x: tuple, v: np.ndarray | None = None
+    ) -> tuple[np.ndarray, np.ndarray | None]:
         """Actual (non-model) constraint-violation vector at design point x.
         Mirrors the feasibility half of evaluate_point_merit, split out so
         dominance checks don't need to touch sigma/barrier terms at all.
@@ -1459,7 +1463,7 @@ class CASTRODF(Solver):
         if self.problem_type == "eq_only":
             feas = np.atleast_1d(self.problem.get_deterministic_equality_constraints(x))
             return feas, None
-    
+
         c_ineq = np.atleast_1d(self.problem.get_deterministic_inequality_constraints(x))
         if v is None:
             v = np.maximum(-c_ineq, self.epsilon * np.ones(self.n_v))
@@ -1469,7 +1473,7 @@ class CASTRODF(Solver):
         else:  # ineq_only
             feas = c_ineq + v
         return feas, v
-    
+
     def _pattern_search(
         self,
         fval: list[float],
@@ -1488,40 +1492,40 @@ class CASTRODF(Solver):
         best_x, best_soln = candidate_x, candidate_solution
         best_fval, best_feas_norm = candidate_fval, candidate_feas_norm
         replaced = False
-    
+
         threshold = self.ps_sufficient_reduction * self.delta_k**2
-    
+
         for i, soln in enumerate(interpolation_solns):
             x_i = tuple(soln.x)
             if x_i == tuple(self.incumbent_x):
                 continue  # center point isn't a search candidate
-    
+
             obj_i = fval[i]
             feas_i_vec, _ = self.evaluate_point_feasibility(x_i)
             feas_i_norm = float(norm(feas_i_vec))
-    
-            obj_delta = best_fval - obj_i        # positive => point i is better
+
+            obj_delta = best_fval - obj_i  # positive => point i is better
             feas_delta = best_feas_norm - feas_i_norm  # positive => point i is better
-    
+
             obj_improves = obj_delta >= threshold
             feas_improves = feas_delta >= threshold
             obj_not_worse = obj_i <= best_fval + 1e-12
             feas_not_worse = feas_i_norm <= best_feas_norm + 1e-12
-    
+
             dominates = (obj_improves or feas_improves) and obj_not_worse and feas_not_worse
-    
+
             if dominates:
                 best_x, best_soln = x_i, soln
                 best_fval, best_feas_norm = obj_i, feas_i_norm
                 replaced = True
-    
+
         return best_x, best_soln, best_fval, best_feas_norm, replaced
-    
+
     def get_constraint_info(self, x):
         """Return lhs value of equality and inequality constraints as well as Jacobians of x (tuple of decision values)"""
         c_eq = self.problem.get_deterministic_equality_constraints(x)
         c_ineq = self.problem.get_deterministic_inequality_constraints(x)
-        
+
         # if equality constraints get gradient
         A_eq = None
         if c_eq is not None:
@@ -1529,7 +1533,7 @@ class CASTRODF(Solver):
             A_eq = np.asarray(
                 self.problem.get_deterministic_equality_constraints_gradients(x), dtype=float
             ).reshape(len(c_eq), -1)
-        
+
         # if inequality constraints get gradient
         A_ineq = None
         if c_ineq is not None:
@@ -1538,22 +1542,20 @@ class CASTRODF(Solver):
                 self.problem.get_deterministic_inequality_constraints_gradients(x), dtype=float
             ).reshape(len(c_ineq), -1)
 
-        
         return c_eq, c_ineq, A_eq, A_ineq
 
-
     def build_problem(self, grad, H):
-        '''
-        Build necessary matrices for trust region constrained subproblems 
+        """
+        Build necessary matrices for trust region constrained subproblems
 
         Returns
         -------
         None.
 
-        '''
-        
+        """
+
         self.H = H
-        
+
         if self.problem_type == "eq_only":
             self.feas = np.array(self.c_eq)
             self.R = self.A_eq
@@ -1567,66 +1569,66 @@ class CASTRODF(Solver):
             v = np.array(self.incumbent_v)
             J = self.A_ineq
             # construct objective terms
-            self.grad_term = np.concatenate((grad, -1*self.theta*np.ones(self.n_v)))
+            self.grad_term = np.concatenate((grad, -1 * self.theta * np.ones(self.n_v)))
             # save W to be used later
-            self.W = np.block([
-                [H, np.zeros((H.shape[0], self.n_v))],
-                [np.zeros((self.n_v, H.shape[1])), self.theta * np.eye(self.n_v)]
-                ])
-        
-            if self.problem_type == 'both':
+            self.W = np.block(
+                [
+                    [H, np.zeros((H.shape[0], self.n_v))],
+                    [np.zeros((self.n_v, H.shape[1])), self.theta * np.eye(self.n_v)],
+                ]
+            )
+
+            if self.problem_type == "both":
                 # if equalities present add eq jacobian
                 A = self.A_eq
                 m = A.shape[0]
                 R_top = np.hstack((A, np.zeros((m, self.n_v))))
                 R_bottom = np.hstack((J, self.V))
-                self.R = np.vstack((R_top, R_bottom)) # save R to be used in tangent step
+                self.R = np.vstack((R_top, R_bottom))  # save R to be used in tangent step
                 self.feas = np.hstack((np.array(self.c_eq), np.array(self.c_ineq) + v))
-            else: # otherwise construct without equality jacobian
+            else:  # otherwise construct without equality jacobian
                 self.R = np.hstack([J, self.V])
                 self.feas = np.array(self.c_ineq) + v
             # construct crit measure for inequality problems
-            self.P = np.eye(self.R.shape[1]) - np.linalg.pinv(self.R)@ self.R
+            self.P = np.eye(self.R.shape[1]) - np.linalg.pinv(self.R) @ self.R
             self.crit_measure = norm(self.P @ self.grad_term) + norm(self.feas)
-            
-        
-        
+
     def create_lagrange_hessian(self, hessian, grad):
-        '''
-        
+        """
+
 
         Returns
         -------
         Hessian matrix w/ corresponding Lagrange corrections based on constraint type and vector of lagrange multipliers.
 
-        '''
+        """
         # convert inf or nan t0 num
-        #np.nan_to_num(hessian, copy = False) 
+        # np.nan_to_num(hessian, copy = False)
         # create hessian diagonal matrix
-        H = 2*np.diag(hessian)
+        H = 2 * np.diag(hessian)
         c_hess = self.problem.get_deterministic_constraints_hessian(self.incumbent_x)
         if self.problem_type == "eq_only":
             # estimate hessian of the lagrangian for equality-only problem
-            lam = self.estimate_lagrange_mult (grad, A_eq = self.A_eq)
+            lam = self.estimate_lagrange_mult(grad, A_eq=self.A_eq)
             for i in range(len(lam)):
-                H += lam[i]*c_hess[i] 
-                
+                H += lam[i] * c_hess[i]
+
             return H, lam
-                
-        else: #problem has inequality constraints
+
+        else:  # problem has inequality constraints
             # add slack variables to inequality constraints
             if self.problem_type == "ineq_only":
                 # estimate hessian of the lagrangian for equality-only problem
-                lam = self.estimate_lagrange_mult(grad, A_ineq = self.A_ineq, c_ineq = self.c_ineq)
-            else: #problem has both inequality and equality constraints
-                lam = self.estimate_lagrange_mult(grad,A_eq = self.A_eq, A_ineq = self.A_ineq, c_ineq = self.c_ineq)
+                lam = self.estimate_lagrange_mult(grad, A_ineq=self.A_ineq, c_ineq=self.c_ineq)
+            else:  # problem has both inequality and equality constraints
+                lam = self.estimate_lagrange_mult(
+                    grad, A_eq=self.A_eq, A_ineq=self.A_ineq, c_ineq=self.c_ineq
+                )
             # subtract constraint component from hessian
             for i in range(len(lam)):
-                H += lam[i]*c_hess[i]
+                H += lam[i] * c_hess[i]
             return H, lam
-    
-        
-        
+
     def iterate(self) -> None:
         """Run one iteration of the ASTRO-DF algorithm.
 
@@ -1637,7 +1639,7 @@ class CASTRODF(Solver):
         neg_minmax = 1
 
         # determine power of delta in adaptive sampling rule
-        pilot_scale = .25
+        pilot_scale = 0.25
         if self.sampling_method == "adaptive":
             pilot_run = ceil(
                 max(
@@ -1646,10 +1648,9 @@ class CASTRODF(Solver):
                 )
                 - 1
             )
-        else: 
+        else:
             pilot_run = self.lambda_min
         if self.iteration_count == 1:
-            
             self.incumbent_solution = self.ctx.evaluate(self.incumbent_x, 0)
             self.visited_pts_list.append(self.incumbent_solution)
 
@@ -1660,21 +1661,21 @@ class CASTRODF(Solver):
                 compute_kappa=True,
             )
             self.ctx.log(self.incumbent_solution)
-            
-            #initialize interpolation set
+
+            # initialize interpolation set
             if self.reuse_interpolation_set:
                 self.interp_set = InterpolationSet(
                     dim=self.problem.dim,
                     base_x=np.array(self.incumbent_x, dtype=float),
                     base_solution=self.incumbent_solution,
                 )
-            
+
             # if first iteration set current sigma to min
             self.sigma = self.sigma_min
-        
+
             # set barrier parameter (only used in inequality constrained problems)
-            #self.theta = min(1e-2, self.delta_k)
-            self.theta = self.delta_k #set theta to starting delta
+            # self.theta = min(1e-2, self.delta_k)
+            self.theta = self.delta_k  # set theta to starting delta
             # determine optimization type
             if self.problem.get_deterministic_equality_constraints(self.incumbent_x) is None:
                 if self.problem.get_deterministic_inequality_constraints(self.incumbent_x) is None:
@@ -1687,34 +1688,34 @@ class CASTRODF(Solver):
                 self.problem_type = "both"
 
             if self.problem_type in ("ineq_only", "both"):
-               
                 # set problem dimensions
                 self.n_x = len(self.incumbent_x)
-                self.n_v = len(np.atleast_1d(self.problem.get_deterministic_inequality_constraints(self.incumbent_x)))
+                self.n_v = len(
+                    np.atleast_1d(
+                        self.problem.get_deterministic_inequality_constraints(self.incumbent_x)
+                    )
+                )
                 self.dim = self.n_x + self.n_v
-            else: 
+            else:
                 self.n_x = len(self.incumbent_x)
                 self.n_v = None
                 self.dim = self.n_x
 
-            
         # Since incument was only evaluated with the sample size of previous incumbent,
         # here we compute its adaptive sample size
         elif self.factors["crn_across_solns"]:
-            self.perform_adaptive_sampling(
-                self.incumbent_solution, pilot_run, self.delta_k
-            )
-        
+            self.perform_adaptive_sampling(self.incumbent_solution, pilot_run, self.delta_k)
+
         # get constraint info for current solution
         self.c_eq, self.c_ineq, self.A_eq, self.A_ineq = self.get_constraint_info(self.incumbent_x)
-        #intialize slack variables
-        if self.iteration_count == 1: 
+        # intialize slack variables
+        if self.iteration_count == 1:
             if self.problem_type in ("ineq_only", "both"):
                 # just use feas tol as small constant to avoid another parameter
                 self.incumbent_v = np.maximum(-self.c_ineq, self.epsilon * np.ones(self.n_v))
-            else: 
+            else:
                 self.incumbent_v = None
-        
+
         # use Taylor expansion if gradient available
         if self.enable_gradient:
             fval = (
@@ -1730,34 +1731,26 @@ class CASTRODF(Solver):
             interpolation_solns: list[Solution] = []
         else:
             # build the local model with interpolation (subproblem)
-            (
-                fval,
-                y_var,
-                grad,
-                hessian,
-                interpolation_solns,
-                matrix_inverse
-            ) = self.construct_model()
-        
-        
-      
-        
+            (fval, y_var, grad, hessian, interpolation_solns, matrix_inverse) = (
+                self.construct_model()
+            )
+
         # intialize slack variables for first iteration
-        if self.iteration_count == 1: 
+        if self.iteration_count == 1:
             if self.problem_type in ("ineq_only", "both"):
                 # just use feas tol as small constant to avoid another parameter
                 self.incumbent_v = np.maximum(-self.c_ineq, self.epsilon * np.ones(self.n_v))
-            else: 
+            else:
                 self.incumbent_v = None
 
         # convert any inf or -inf to numbers
-        np.nan_to_num(hessian, copy = False)      
+        np.nan_to_num(hessian, copy=False)
         # get hessian matrix w/ lagrange updates and lagrange mulitpliers
-        #H, lam = self.create_lagrange_hessian(hessian, grad) 
-        #temp remove lagrange updates to hessian
-        #H = 2*np.diag(hessian)
+        # H, lam = self.create_lagrange_hessian(hessian, grad)
+        # temp remove lagrange updates to hessian
+        # H = 2*np.diag(hessian)
         # build problem matrices
-        #self.build_problem(grad, H)
+        # self.build_problem(grad, H)
         # compute normal step
         s_normal, s_normal_rescale = self.solve_normal_step()
         # compute tangent step
@@ -1770,12 +1763,11 @@ class CASTRODF(Solver):
         if self.problem_type == "eq_only":
             s_x = s
             candidate_v = None
-        else: # problem has inequality constraints and slack variables
-            s_x = s[:self.n_x]
-            candidate_v = self.incumbent_v + s[self.n_x:]
-        # set new candidate solution 
+        else:  # problem has inequality constraints and slack variables
+            s_x = s[: self.n_x]
+            candidate_v = self.incumbent_v + s[self.n_x :]
+        # set new candidate solution
         candidate_x = np.asarray(self.incumbent_x, dtype=float) + s_x
-        
 
         # logging.debug("problem.lower_bounds() "+str(problem.lower_bounds()))
         # handle the box constraints
@@ -1789,9 +1781,11 @@ class CASTRODF(Solver):
         )
         # Reflect the clamped x-step in the composite steps. The slack block is unchanged,
         # and the x-block is identical in original and rescaled coordinates.
-        s_x_actual = np.asarray(candidate_x, dtype=float) - np.asarray(self.incumbent_x, dtype=float)
-        s[:self.n_x] = s_x_actual
-        s_rescale[:self.n_x] = s_x_actual
+        s_x_actual = np.asarray(candidate_x, dtype=float) - np.asarray(
+            self.incumbent_x, dtype=float
+        )
+        s[: self.n_x] = s_x_actual
+        s_rescale[: self.n_x] = s_x_actual
 
         # Store the solution (and function estimate at it) to the subproblem as a
         # candidate for the next iterate
@@ -1814,13 +1808,12 @@ class CASTRODF(Solver):
         # else:
         # calculate success ratio
         fval_tilde = float(neg_minmax * candidate_solution.objectives_mean[0])
-        
+
         candidate_feas_vec, _ = self.evaluate_point_feasibility(candidate_x, v=candidate_v)
         candidate_feas_norm = float(norm(candidate_feas_vec))
-        
-        
+
         # pattern search currently not supported
-        
+
         # candidate_x, candidate_solution, fval_tilde, candidate_feas_norm, ps_replaced = self._pattern_search(
         #     fval, interpolation_solns, candidate_x, candidate_solution,
         #     fval_tilde, candidate_feas_norm,
@@ -1830,98 +1823,103 @@ class CASTRODF(Solver):
         #     # slack, not this interpolation point) -- re-derive it fresh
         #     if self.problem_type != "eq_only":
         #         _, candidate_v = self.evaluate_point_feasibility(candidate_x) #updating v for inequality problems could become weird here
-            
-       
-        
+
         # reduction in normal model
-        m_n_reduction = norm(self.feas) -norm(self.R @ s_normal_rescale + self.feas)   
+        m_n_reduction = norm(self.feas) - norm(self.R @ s_normal_rescale + self.feas)
         # reduction in tangent model
         m_t_reduction = -1 * (
             (self.grad_term + self.W @ s_normal_rescale) @ s_tangent_rescale
             + 0.5 * (s_tangent_rescale @ self.W @ s_tangent_rescale)
         )
-        #reduction in objective model after normal step
-        #q_n_reduction = -1*(grad @ s_normal) - .5*(s_normal @ H @ s_normal)
-        if norm(s_normal) <= 0: # no normal step taken so normal improvment is 0
-            sig_c_ratio = 0 # can use any value of sigma
+        # reduction in objective model after normal step
+        # q_n_reduction = -1*(grad @ s_normal) - .5*(s_normal @ H @ s_normal)
+        if norm(s_normal) <= 0:  # no normal step taken so normal improvment is 0
+            sig_c_ratio = 0  # can use any value of sigma
         else:
             # objective improvement after normal step
-            s_normal_x = s_normal[:self.n_x]
-            q_n_reduction = -1*grad @ s_normal_x - 0.5* s_normal_x @ self.H @ s_normal_x
+            s_normal_x = s_normal[: self.n_x]
+            q_n_reduction = -1 * grad @ s_normal_x - 0.5 * s_normal_x @ self.H @ s_normal_x
             if self.problem_type == "eq_only":
-                barrier_reduction = 0 
+                barrier_reduction = 0
             else:
-                s_normal_v_rescale = s_normal_rescale[self.n_x:]
-                barrier_reduction = self.theta*(np.sum(s_normal_v_rescale) - 0.5* s_normal_v_rescale @ s_normal_v_rescale)
-            sig_numerator =-1* (q_n_reduction + barrier_reduction + m_t_reduction) 
-            sig_c_ratio = sig_numerator / ((1-self.nu)*m_n_reduction)
+                s_normal_v_rescale = s_normal_rescale[self.n_x :]
+                barrier_reduction = self.theta * (
+                    np.sum(s_normal_v_rescale) - 0.5 * s_normal_v_rescale @ s_normal_v_rescale
+                )
+            sig_numerator = -1 * (q_n_reduction + barrier_reduction + m_t_reduction)
+            sig_c_ratio = sig_numerator / ((1 - self.nu) * m_n_reduction)
         # set sigma b to be norm of lagrange multipliers
         sigma_b = min(norm(self.lam), self.sigma_b_max)
         sigma_c = max(sigma_b, sig_c_ratio)
-        
+
         # update penalty parameter based on solving method
         if self.sampling_method != "IBO":
             if sigma_c > self.sigma:
-                self.sigma = max(sigma_c, self.tau_1*self.sigma, self.sigma+ self.tau_2)
+                self.sigma = max(sigma_c, self.tau_1 * self.sigma, self.sigma + self.tau_2)
         else:
             self.sigma = max(self.sigma, sigma_b)
-      
-            
+
         # predicted reduction in merit model
-        pred_merit_reduction = -1*self.grad_term @ s_rescale - 0.5*s_rescale @ self.W @ s_rescale + self.sigma*(m_n_reduction)
-        # actual reduction in objective
-        incumbent_fval = float(
-            neg_minmax * self.incumbent_solution.objectives_mean[0]
+        pred_merit_reduction = (
+            -1 * self.grad_term @ s_rescale
+            - 0.5 * s_rescale @ self.W @ s_rescale
+            + self.sigma * (m_n_reduction)
         )
-        
+        # actual reduction in objective
+        incumbent_fval = float(neg_minmax * self.incumbent_solution.objectives_mean[0])
+
         obj_reduction = incumbent_fval - fval_tilde
-        #obj_reduction = fval[0] - fval_tilde
+        # obj_reduction = fval[0] - fval_tilde
         if self.problem_type == "eq_only":
-            feas_tilde = np.atleast_1d(self.problem.get_deterministic_equality_constraints(candidate_x))
+            feas_tilde = np.atleast_1d(
+                self.problem.get_deterministic_equality_constraints(candidate_x)
+            )
             actual_barrier_reduction = 0
-        else: # problem has inequality constraints
+        else:  # problem has inequality constraints
             # extract candidate slack variables
-            if norm(candidate_v) <= 1e-12: # slack variables essentially 0
+            if norm(candidate_v) <= 1e-12:  # slack variables essentially 0
                 actual_barrier_reduction = 0
             else:
-                actual_barrier_reduction = -1*self.theta* (np.sum(np.log(self.incumbent_v) - np.log(candidate_v)))          
+                actual_barrier_reduction = (
+                    -1 * self.theta * (np.sum(np.log(self.incumbent_v) - np.log(candidate_v)))
+                )
             if self.problem_type == "ineq_only":
-                c_ineq_tilde = np.array(self.problem.get_deterministic_inequality_constraints(candidate_x))
+                c_ineq_tilde = np.array(
+                    self.problem.get_deterministic_inequality_constraints(candidate_x)
+                )
                 # extract candidate slack variables
-                feas_tilde =  c_ineq_tilde + candidate_v
-            else: # problem has equality and inequality constraints
-                c_eq_tilde = np.array(self.problem.get_deterministic_equality_constraints(candidate_x))
-                c_ineq_tilde = np.array(self.problem.get_deterministic_inequality_constraints(candidate_x))
+                feas_tilde = c_ineq_tilde + candidate_v
+            else:  # problem has equality and inequality constraints
+                c_eq_tilde = np.array(
+                    self.problem.get_deterministic_equality_constraints(candidate_x)
+                )
+                c_ineq_tilde = np.array(
+                    self.problem.get_deterministic_inequality_constraints(candidate_x)
+                )
                 # extract candidate slack variables
                 feas_tilde = np.hstack((c_eq_tilde, c_ineq_tilde + candidate_v))
-        # actual reduction in feasibility 
-        feas_reduction = self.sigma*( norm(self.feas) - norm(feas_tilde))
+        # actual reduction in feasibility
+        feas_reduction = self.sigma * (norm(self.feas) - norm(feas_tilde))
         # actual merit reduction
         actual_merit_reduction = obj_reduction + actual_barrier_reduction + feas_reduction
-            
-    
-        
+
         # get trust region ratio
         rho = 0 if pred_merit_reduction <= 0 else actual_merit_reduction / pred_merit_reduction
-        
-        
-       
-        successful = rho >= self.eta_1
-     
-        if successful:
 
+        successful = rho >= self.eta_1
+
+        if successful:
             self.incumbent_x = candidate_x
             self.incumbent_v = candidate_v
-            
+
             self.incumbent_solution = candidate_solution
             self.ctx.log(candidate_solution)
             self.delta_k = min(self.delta_k, self.delta_max)
-            
 
             # very successful: expand
             if rho >= self.eta_2:
                 self.delta_k = min(self.gamma_1 * self.delta_k, self.delta_max)
-               
+
             # update interpolation set on successful iterations
             if self.reuse_interpolation_set:
                 d = np.array(candidate_x, dtype=float) - self.interp_set.base_x
@@ -1929,22 +1927,22 @@ class CASTRODF(Solver):
                 self.interp_set.recenter(
                     new_base_x=np.array(candidate_x, dtype=float),
                     new_incumbent_solution=candidate_solution,
-                    victim_idx=victim_idx
+                    victim_idx=victim_idx,
                 )
                 print("new x", self.incumbent_solution.x)
 
         elif not successful:
             self.delta_k = min(self.gamma_2 * self.delta_k, self.delta_max)
-        
-        #update theta (only used for inequaltiy constrained problem)
-        #force theta decrease for now
-        #self.theta = self.theta_decrease*self.theta
+
+        # update theta (only used for inequaltiy constrained problem)
+        # force theta decrease for now
+        # self.theta = self.theta_decrease*self.theta
 
         # have theta decrease with delta
         if self.delta_k < self.theta:
             self.theta = self.delta_k
-        #print("successful:", successful)
-        
+        # print("successful:", successful)
+
         # TODO: unified TR management
         # delta_k = min(kappa * norm(grad), self.delta_max)
         # logging.debug("norm of grad "+str(norm(grad)))
@@ -1957,38 +1955,35 @@ class CASTRODF(Solver):
         self.gamma_2: float = self.factors["gamma_2"]
         self.reuse_points: bool = self.factors["reuse_points"]
         self.lambda_min: int = self.factors["lambda_min"]
-        self.mu : int = self.factors["mu"]
-        self.a_normal : int = self.factors["a_normal"]
-        self.a_tangent : int = self.factors["a_tangent"]
-        self.nu : int = self.factors["nu"]
-        self.tau_1 : int = self.factors["tau_1"]
-        self.tau_2 : int = self.factors["tau_2"]
-        self.sigma_min : int = self.factors["sigma_min"]
-        self.sigma_b_max : int = self.factors["sigma_b_max"]
-        self.feas_tol : float = self.factors["feas_tol"]
-        self.sampling_method : str = "adaptive" #hardcoded for release
-        self.epsilon : str = 0.5 #used in ftb barrier problem, hardcoded for release
+        self.mu: int = self.factors["mu"]
+        self.a_normal: int = self.factors["a_normal"]
+        self.a_tangent: int = self.factors["a_tangent"]
+        self.nu: int = self.factors["nu"]
+        self.tau_1: int = self.factors["tau_1"]
+        self.tau_2: int = self.factors["tau_2"]
+        self.sigma_min: int = self.factors["sigma_min"]
+        self.sigma_b_max: int = self.factors["sigma_b_max"]
+        self.feas_tol: float = self.factors["feas_tol"]
+        self.sampling_method: str = "adaptive"  # hardcoded for release
+        self.epsilon: str = 0.5  # used in ftb barrier problem, hardcoded for release
         self.reuse_interpolation_set: bool = self.factors["reuse_interpolation_set"]
-        self.use_lagrange_geometry: bool = True #hardcoded for release
+        self.use_lagrange_geometry: bool = True  # hardcoded for release
         self.dist_threshold: str = self.factors["dist_threshold"]
         self.dogleg: bool = self.factors["dogleg"]
         self.easy_solve_normal: bool = self.factors["easy_solve_normal"]
         self.easy_solve_tangent: bool = self.factors["easy_solve_tangent"]
-        self.kappa_scale: float = 1.0 #hardcoded for release
+        self.kappa_scale: float = 1.0  # hardcoded for release
         if self.factors["delta_0"] is not None:
-            self.delta_k : float = self.factors["delta_0"]
+            self.delta_k: float = self.factors["delta_0"]
         if self.factors["delta_max"] is not None:
-            self.delta_max : float = self.factors["delta_max"]
+            self.delta_max: float = self.factors["delta_max"]
         # self.lambda_max = self.budget
 
         # Designate random number generator for random sampling
         rng = self.ctx.rng(1)
 
         # Generate dummy solutions to estimate a reasonable maximum radius
-        dummy_solns = [
-            self.problem.random_solution(rng)
-            for _ in range(1000 * self.problem.dim)
-        ]
+        dummy_solns = [self.problem.random_solution(rng) for _ in range(1000 * self.problem.dim)]
 
         # Range for each dimension is calculated and compared with box constraints
         # range if given
@@ -1997,19 +1992,19 @@ class CASTRODF(Solver):
         #     self.factors["delta_max"],
         #     problem.upper_bounds()[0] - problem.lower_bounds()[0]
         # )
-        if self.factors["delta_0"]is None:
+        if self.factors["delta_0"] is None:
             delta_max_candidates: list[float | int] = []
             for i in range(self.problem.dim):
                 sol_values = [sol[i] for sol in dummy_solns]
                 min_soln, max_soln = min(sol_values), max(sol_values)
                 bound_range = self.problem.upper_bounds()[i] - self.problem.lower_bounds()[i]
                 delta_max_candidates.append(min(max_soln - min_soln, bound_range))
-    
+
             # TODO: update this so that it could be used for problems with decision
             # variables at varying scales!
             self.delta_max = max(delta_max_candidates)
             # logging.debug("delta_max  " + str(self.delta_max))
-    
+
             # Initialize trust-region radius
             self.delta_k = 10 ** (ceil(log(self.delta_max * 2, 10) - 1) / self.problem.dim)
         # logging.debug("initial delta " + str(self.delta_k))
@@ -2018,7 +2013,6 @@ class CASTRODF(Solver):
 
         self.incumbent_solution = self.ctx.evaluate(self.incumbent_x, 0)
         self.h_k = np.identity(self.problem.dim)
-        
 
         self.enable_gradient = False
 

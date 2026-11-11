@@ -35,9 +35,7 @@ def analysis():
         }
     )
     experiments = [Experiment(solver=solver, problem=problem)]
-    results = run(
-        experiments, SimulationConfig(n_mreps=1, n_preps=5, n_preps_x0_xstar=5), n_jobs=1
-    )
+    results = run(experiments, SimulationConfig(n_mreps=1, n_preps=5, n_preps_x0_xstar=5), n_jobs=1)
     (result,) = post_normalize_merit(experiments, results, MERIT_OPTIONS)
     return result
 
@@ -68,7 +66,9 @@ def test_normalization_matches_reference(analysis, expected):
 
 def test_progress_and_merit_curves_match_reference(analysis, expected):
     progress = analysis.mean_df.sort_values(["mrep", "step"])
-    np.testing.assert_allclose(progress["normalized_objective"], expected["progress_y"][0], atol=1e-10)
+    np.testing.assert_allclose(
+        progress["normalized_objective"], expected["progress_y"][0], atol=1e-10
+    )
     np.testing.assert_allclose(progress["normalized_budget"], expected["progress_x"][0], atol=1e-12)
     merit = merit_progress(analysis, MERIT_OPTIONS)
     np.testing.assert_allclose(merit["objective"], expected["merit_y"][0], atol=1e-10)
