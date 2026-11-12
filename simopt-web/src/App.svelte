@@ -311,6 +311,10 @@
       alert("Please add at least one problem before running the experiment.");
       return;
     }
+    if (summaryPlots.length === 0) {
+      alert("Please add at least one plot before running the experiment.");
+      return;
+    }
 
     // Parse parameter values (handle JSON strings)
     const parseValue = (val: unknown): unknown => {
@@ -906,7 +910,7 @@
           <div class="summary-section" style="margin-top:1rem;">
             <p><strong>Plots</strong></p>
             {#if summaryPlots.length === 0}
-              <p style="color:#6b7280;">No plots added.</p>
+              <p style="color:#6b7280;">No plots added. Add at least one plot to run the experiment.</p>
             {/if}
 
             {#each summaryPlots as pl, i (`${pl.name}-${i}`)}
@@ -994,7 +998,7 @@
     </div>
 
     <div class="button-row">
-      <button class="primary" on:click={runExperiment}>Run Experiment</button>
+      <button class="primary" disabled={summaryPlots.length === 0} on:click={runExperiment}>Run Experiment</button>
     </div>
 
     <!-- === Modals (unchanged) === -->
@@ -1297,6 +1301,7 @@
   .secondary-outline:hover { background: #eff6ff; }
 
   .button-row { display: flex; justify-content: flex-start; margin: 1rem 0; }
+  .button-row .primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* === DROPDOWN SECTIONS === */
   .dropdown {
