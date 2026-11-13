@@ -259,8 +259,11 @@
   });
 </script>
 
-<div class="card">
-  <h2>Data Farming</h2>
+<div class="card page-card">
+  <header class="card-head">
+    <h2 class="card-title">Data farming</h2>
+    <p class="lede">Vary factors of a solver, problem, or model over a nearly orthogonal Latin hypercube, then add the design points to an experiment or run the model directly.</p>
+  </header>
 
   <div class="row">
     <label>
@@ -271,10 +274,10 @@
         <option value="model">Model</option>
       </select>
     </label>
-    <label>
+    <label class="grow">
       Target
       <select value={target} onchange={(e) => { target = e.currentTarget.value; loadFactors(); }}>
-        <option value="">— Select —</option>
+        <option value="">Choose a target…</option>
         {#each options[kind] as o (o.value)}
           <option value={o.value}>{o.label}</option>
         {/each}
@@ -295,14 +298,14 @@
         <tbody>
           {#each factors as f (f.source + f.name)}
             <tr>
-              <td>{f.name}</td>
-              <td>{f.type}</td>
-              {#if kind === "problem"}<td>{f.source}</td>{/if}
-              <td>{f.description}</td>
-              <td><input type="checkbox" bind:checked={vary[f.name]} disabled={!f.datafarmable} /></td>
+              <td class="mono strong">{f.name}</td>
+              <td><span class="tag">{f.type}</span></td>
+              {#if kind === "problem"}<td class="muted">{f.source}</td>{/if}
+              <td class="desc">{f.description}</td>
+              <td class="center"><input type="checkbox" aria-label={`Vary ${f.name}`} bind:checked={vary[f.name]} disabled={!f.datafarmable} /></td>
               <td>
                 {#if vary[f.name]}
-                  {f.type === "bool" ? "true, false" : ""}
+                  <span class="mono muted">{f.type === "bool" ? "true, false" : "varied"}</span>
                 {:else}
                   <input type="text" bind:value={values[f.name]} />
                 {/if}
@@ -313,7 +316,7 @@
                 <td>
                   {#if f.type === "float"}
                     <input type="number" min="0" step="1" bind:value={ranges[f.name].decimals} />
-                  {:else}0{/if}
+                  {:else}<span class="mono muted">0</span>{/if}
                 </td>
               {:else}
                 <td></td><td></td><td></td>
@@ -325,7 +328,7 @@
     </div>
 
     <div class="row">
-      <label>Number of stacks <input type="number" min="1" step="1" bind:value={nStacks} /></label>
+      <label>Stacks <input type="number" min="1" step="1" bind:value={nStacks} /></label>
       <label>Design name <input type="text" bind:value={designName} /></label>
       <button class="btn btn-primary" onclick={generate} disabled={busy}>
         {busy ? "Generating…" : "Generate"}
@@ -336,7 +339,7 @@
   {#if error}<p class="error">{error}</p>{/if}
 
   {#if design}
-    <p><strong>{design.rows.length}</strong> design points</p>
+    <h3 class="sub">Design <span class="sub-count">{design.rows.length} points</span></h3>
     <div class="scroll tall">
       <table>
         <thead>
@@ -347,7 +350,7 @@
         <tbody>
           {#each design.rows as row, i (i)}
             <tr>
-              {#each design.columns as c (c)}<td class:varied={highlighted.has(c)}>{show(row[c])}</td>{/each}
+              {#each design.columns as c (c)}<td class="mono" class:varied={highlighted.has(c)}>{show(row[c])}</td>{/each}
             </tr>
           {/each}
         </tbody>
@@ -366,18 +369,18 @@
     </div>
   {/if}
 
-  {#if running}<p>Running…</p>{/if}
+  {#if running}<p class="muted">Running the model…</p>{/if}
   {#if results}
-    <p>
-      {results.rows.length} result rows ·
-      <a href={`${API}/df/results/${results.run_id}/raw_results.csv`}>Download raw_results.csv</a>
-    </p>
+    <h3 class="sub">
+      Results <span class="sub-count">{results.rows.length} rows</span>
+      <a class="sub-link" href={`${API}/df/results/${results.run_id}/raw_results.csv`}>Download raw_results.csv</a>
+    </h3>
     <div class="scroll tall">
       <table>
         <thead><tr>{#each results.columns as c (c)}<th>{c}</th>{/each}</tr></thead>
         <tbody>
           {#each results.rows as row, i (i)}
-            <tr>{#each results.columns as c (c)}<td>{show(row[c])}</td>{/each}</tr>
+            <tr>{#each results.columns as c (c)}<td class="mono">{show(row[c])}</td>{/each}</tr>
           {/each}
         </tbody>
       </table>
@@ -385,134 +388,165 @@
   {/if}
 </div>
 
-<div class="card">
-  <h2>Saved designs</h2>
+<div class="card page-card">
+  <header class="card-head">
+    <h2 class="card-title">Saved designs</h2>
+  </header>
   {#if saved.length === 0}
-    <p class="muted">No saved designs.</p>
+    <p class="muted">No saved designs yet. Generate a design above and save it to reuse it later.</p>
   {:else}
+    <div class="scroll">
     <table>
       <thead><tr><th>Name</th><th>Kind</th><th>Target</th><th>Points</th><th></th></tr></thead>
       <tbody>
         {#each saved as d (d.name)}
           <tr>
-            <td>{d.name}</td><td>{d.kind}</td><td>{d.target}</td><td>{d.n_points}</td>
+            <td class="mono strong">{d.name}</td><td><span class="tag">{d.kind}</span></td><td>{d.target}</td><td class="num">{d.n_points}</td>
             <td class="actions">
-              <button class="btn" onclick={() => loadDesign(d.name)}>Load</button>
-              <button class="btn" onclick={() => remove(d.name)}>Delete</button>
+              <button class="btn btn-sm" onclick={() => loadDesign(d.name)}>Load</button>
+              <button class="btn btn-sm btn-danger" onclick={() => remove(d.name)}>Delete</button>
               <a href={`${API}/df/designs/${encodeURIComponent(d.name)}/design.csv`}>Export CSV</a>
             </td>
           </tr>
         {/each}
       </tbody>
     </table>
+    </div>
   {/if}
 </div>
 
 <style>
-  .card {
-    background: #ffffff;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    margin-bottom: 1.5rem;
+  .sub {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 1.75rem 0 0.6rem;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
   }
-  h2 {
-    color: #2563eb;
-    margin-top: 0;
-    margin-bottom: 0.75rem;
-  }
+  .sub-count { font-weight: 400; font-size: 13px; color: var(--muted); }
+  .sub-link { margin-left: auto; font-size: 13px; }
   .row {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
     gap: 1rem;
-    margin: 0.75rem 0;
+    margin: 1rem 0;
   }
   label {
     display: flex;
     flex-direction: column;
-    font-size: 14px;
-    gap: 0.25rem;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    gap: 0.3rem;
   }
+  label.grow { flex: 0 1 380px; }
   label.inline {
     flex-direction: row;
     align-items: center;
+    gap: 0.45rem;
+    height: 36px;
   }
   select,
   input[type="number"],
   input[type="text"] {
-    padding: 0.4rem;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
+    height: 36px;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background-color: var(--surface);
+    color: var(--ink);
+    font-size: 13.5px;
     box-sizing: border-box;
     width: 100%;
-    max-width: 300px;
+    min-width: 9rem;
+    max-width: 380px;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
+  select { cursor: pointer; }
+  select:hover, input:hover { border-color: var(--muted-2); }
+  select:focus, input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+  }
+  input[type="checkbox"] { accent-color: var(--primary); width: 15px; height: 15px; margin: 0; }
+  td input[type="text"],
   td input[type="number"] {
-    width: 6rem;
+    height: 30px;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
   }
+  td input[type="number"] { width: 6.5rem; }
   .scroll {
     overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
   }
-  .scroll.tall {
-    max-height: 350px;
-  }
+  .scroll.tall { max-height: 360px; }
   table {
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 13px;
     width: 100%;
   }
   th,
   td {
-    border: 1px solid #e5e7eb;
-    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+    padding: 0.45rem 0.75rem;
     text-align: left;
-    vertical-align: top;
+    vertical-align: middle;
   }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #f7f9fb; }
   th {
-    background: #f3f4f6;
+    background: #f4f6f9;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12.5px;
+    white-space: nowrap;
     position: sticky;
     top: 0;
+    z-index: 1;
+    box-shadow: inset 0 -1px 0 var(--border);
+    border-bottom: none;
   }
-  .varied {
-    background: #eff6ff;
+  .mono { font-family: var(--font-mono); font-size: 12.5px; }
+  .strong { color: var(--ink); font-weight: 500; }
+  .desc { color: var(--text); min-width: 16rem; }
+  .center { text-align: center; }
+  .num { font-variant-numeric: tabular-nums; }
+  .tag {
+    display: inline-block;
+    padding: 0 0.45em;
+    border-radius: 4px;
+    background: var(--chip-bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.6;
   }
-  th.varied {
-    background: #dbeafe;
-  }
+  td.varied { background: var(--primary-tint); }
+  tbody tr:hover td.varied { background: #d6e9ec; }
+  th.varied { background: var(--primary-tint); color: var(--primary); }
   .error {
-    color: #b91c1c;
+    color: var(--bad);
+    background: var(--bad-tint);
+    border-radius: var(--radius);
+    padding: 0.55rem 0.8rem;
+    margin: 1rem 0;
   }
-  .muted {
-    color: #6b7280;
-  }
+  .muted { color: var(--muted); }
   .actions {
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
   }
-  .btn {
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    color: #0f172a;
-    padding: 0.45rem 0.9rem;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-  }
-  .btn:hover {
-    background: #f8fafc;
-  }
-  .btn:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
-  .btn-primary {
-    border-color: #2563eb;
-    background: #2563eb;
-    color: #fff;
-  }
-  .btn-primary:hover {
-    background: #1e40af;
-  }
+  .actions a { margin-left: 0.4rem; font-size: 13px; }
+  .btn-sm { height: 28px; padding: 0 0.7rem; font-size: 12.5px; }
+  .btn-danger:hover { color: var(--bad); border-color: var(--bad); background: var(--bad-tint); }
 </style>

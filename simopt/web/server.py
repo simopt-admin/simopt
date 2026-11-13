@@ -8,6 +8,7 @@ import json
 import re
 import threading
 from datetime import datetime
+from html import escape as html_escape
 
 import matplotlib
 
@@ -1000,7 +1001,7 @@ def update_status(
             <div class="plot-card" id="{plot_id}">
                 <div class="plot-card-header">
                     <span class="plot-label">{label}</span>
-                    <button class="collapse-btn" onclick="collapsePlot('{plot_id}')" title="Minimize plot">-</button>
+                    <button class="collapse-btn" onclick="collapsePlot('{plot_id}')" title="Minimize plot" aria-label="Minimize plot">&minus;</button>
                 </div>
                 <img src="/results/{run_id}/{plot_file}" alt="{plot_file}">
             </div>
@@ -1013,7 +1014,7 @@ def update_status(
                 <div class="mini-thumbnail-wrapper">
                     <img src="{plot_file}" alt="{label}" class="mini-thumbnail">
                     <div class="mini-overlay">
-                        <span class="mini-restore-hint">click to restore</span>
+                        <span class="mini-restore-hint">Restore</span>
                     </div>
                 </div>
                 <span class="mini-label">{label}</span>
@@ -1023,7 +1024,9 @@ def update_status(
                 f'"{plot_id}": {{"src": "/results/{run_id}/{plot_file}", "label": "{label}"}},'
             )
 
+        plot_count = f"{len(plot_files)} plot{'' if len(plot_files) == 1 else 's'}"
         plots_html = f"""
+        <div class="section-head"><h2>Plots</h2><span>{plot_count}</span></div>
         <div id="plots-grid">{plot_cards}</div>
         <div id="minimized-tray">{minimized_icons}</div>
         <div id="global-preview" style="display:none;">
@@ -1039,286 +1042,195 @@ def update_status(
         else ("error" if status.startswith("Error:") else "running")
     )
     is_running_js = "true" if status_class == "running" else "false"
+    log_dot_class = "" if status_class == "running" else " idle"
+    safe_status = html_escape(status)
+    if status_class == "error":
+        status_html = (
+            '<span class="status error"><span class="status-dot"></span>Failed</span>'
+            f'<p class="status-detail">{safe_status}</p>'
+        )
+    else:
+        status_html = f'<span class="status {status_class}"><span class="status-dot"></span>{safe_status}</span>'
 
     html_content = f"""<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Experiment Results - {run_id}</title>
+    <title>Experiment {run_id} &ndash; SimOpt</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {{
+            --nav-bg: #17223a; --nav-ink: #b9c2d3; --brand-accent: #5ec2c9;
+            --canvas: #eef1f4; --surface: #ffffff; --ink: #17223a; --text: #3e475b;
+            --muted: #6a7387; --muted-2: #98a0b0; --border: #dde2e9; --border-strong: #c9d0da;
+            --chip-bg: #e7ebf0; --primary: #0b6477; --primary-hover: #084f5e; --primary-tint: #e3f0f2;
+            --focus: #3b9aab; --ok: #2f8a5f; --ok-tint: #e6f3ec; --bad: #c2423a; --bad-tint: #fbeceb;
+            --radius: 7px; --radius-lg: 10px;
+            --shadow-sm: 0 1px 2px rgba(23,34,58,0.05); --shadow-lg: 0 12px 32px rgba(23,34,58,0.22);
+            --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+            --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+        }}
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ font-family: 'Inter', sans-serif; background: #f9fafb; min-height: 100vh; }}
-        .header {{ background: #e5e7eb; padding: 1.5rem 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem; }}
-        .header h1 {{ color: #0f172a; font-size: 2rem; font-weight: 700; }}
-        .container {{ max-width: 1400px; margin: 0 auto; padding: 0 2rem 6rem; }}
-        .card {{ background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }}
-        .card h2 {{ color: #2563eb; font-size: 1.2rem; margin-bottom: 1rem; }}
-        .status {{ padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }}
-        .status.running {{ background: #eff6ff; border: 1px solid #93c5fd; }}
-        .status.success {{ background: #dcfce7; border: 1px solid #86efac; }}
-        .status.error   {{ background: #fee2e2; border: 1px solid #fca5a5; }}
-        .status p {{ margin: 0.5rem 0; }}
-        .status.running p {{ color: #1e40af; }}
-        .status.success p {{ color: #166534; }}
-        .status.error   p {{ color: #991b1b; }}
-        .status strong {{ font-weight: 600; }}
+        body {{
+            font-family: var(--font-sans); font-size: 14px; line-height: 1.5; color: var(--text);
+            background: var(--canvas); min-height: 100vh;
+            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        }}
+        a {{ color: var(--primary); text-decoration: none; font-weight: 500; }}
+        a:hover {{ color: var(--primary-hover); }}
+        button {{ font-family: inherit; cursor: pointer; }}
+        button:focus-visible {{ outline: 2px solid var(--focus); outline-offset: 2px; }}
+
+        /* ── Header (matches the app) ── */
+        .topbar {{
+            background: var(--nav-bg); height: 52px; padding: 0 1.5rem;
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+            position: sticky; top: 0; z-index: 200;
+        }}
+        .brand {{ display: inline-flex; align-items: center; gap: 0.55rem; color: #fff; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }}
+        .brand:hover {{ color: #fff; }}
+        .brand svg {{ width: 22px; height: 22px; color: var(--brand-accent); }}
+        .topbar-link {{ color: var(--nav-ink); font-size: 14px; }}
+        .topbar-link:hover {{ color: #fff; }}
+
+        .container {{ max-width: 1480px; margin: 0 auto; padding: 1.5rem 1.5rem 7rem; }}
+
+        /* ── Summary ── */
+        .summary {{
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
+        }}
+        .summary h1 {{ color: var(--ink); font-size: 18px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }}
+        .run-id {{ margin-top: 0.2rem; color: var(--muted); font-size: 13px; }}
+        .run-id code {{ font-family: var(--font-mono); font-size: 12.5px; color: var(--text); }}
+        .status {{
+            display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.85rem;
+            border-radius: 999px; font-weight: 600; font-size: 13px; white-space: nowrap;
+        }}
+        .status-dot {{ width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }}
+        .status.running {{ background: var(--primary-tint); color: var(--primary); }}
+        .status.running .status-dot {{ animation: pulse 1.5s infinite; }}
+        .status.success {{ background: var(--ok-tint); color: var(--ok); }}
+        .status.error   {{ background: var(--bad-tint); color: var(--bad); }}
+        .status-detail {{
+            flex-basis: 100%; color: var(--bad); background: var(--bad-tint); border-radius: var(--radius);
+            padding: 0.6rem 0.8rem; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere;
+        }}
+        @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.3; }} }}
 
         /* ── Log panel ── */
         .log-panel {{
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            margin-bottom: 1.5rem;
-            border: 1px solid #e2e8f0;
-            overflow: hidden;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; overflow: hidden;
         }}
         .log-header {{
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem 1.5rem;
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+            padding: 0.8rem 1.25rem; cursor: pointer; user-select: none;
         }}
-        .log-header-left {{
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }}
-        .log-title {{
-            color: #2563eb;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }}
-        .log-dot {{
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #22c55e;
-            flex-shrink: 0;
-            box-shadow: 0 0 5px #22c55e;
-            animation: pulse 1.5s infinite;
-        }}
-        .log-dot.idle {{
-            background: #9ca3af;
-            box-shadow: none;
-            animation: none;
-        }}
-        @keyframes pulse {{
-            0%, 100% {{ opacity: 1; }}
-            50% {{ opacity: 0.35; }}
-        }}
-        .log-controls {{
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }}
+        .log-header:hover {{ background: #f7f9fb; }}
+        .log-header-left {{ display: flex; align-items: center; gap: 0.6rem; }}
+        .log-title {{ color: var(--ink); font-size: 15px; font-weight: 600; }}
+        .log-dot {{ width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex-shrink: 0; animation: pulse 1.5s infinite; }}
+        .log-dot.idle {{ background: var(--muted-2); animation: none; }}
+        .log-chevron {{ color: var(--muted-2); font-size: 10px; transition: transform 0.2s ease; }}
+        .log-chevron.open {{ transform: rotate(180deg); }}
+        .log-controls {{ display: flex; gap: 0.4rem; align-items: center; }}
         .log-btn {{
-            background: white;
-            border: 1px solid #e2e8f0;
-            color: #64748b;
-            font-size: 0.72rem;
-            font-weight: 500;
-            padding: 0.25rem 0.65rem;
-            border-radius: 5px;
-            cursor: pointer;
+            background: var(--surface); border: 1px solid var(--border-strong); color: var(--muted);
+            font-size: 12px; font-weight: 500; height: 28px; padding: 0 0.7rem; border-radius: 6px;
             transition: background 0.15s, color 0.15s, border-color 0.15s;
         }}
-        .log-btn:hover {{ background: #f1f5f9; color: #374151; border-color: #cbd5e1; }}
-        #log-body {{
-            padding: 0.85rem 1.5rem;
-            height: 260px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.75rem;
-            line-height: 1.75;
-            background: #f1f5f9;
-        }}
-        #log-body::-webkit-scrollbar {{ width: 5px; }}
-        #log-body::-webkit-scrollbar-track {{ background: #e2e8f0; }}
-        #log-body::-webkit-scrollbar-thumb {{ background: #cbd5e1; border-radius: 3px; }}
-        .log-entry {{
-            display: flex;
-            gap: 0.75rem;
-            padding: 0.1rem 0;
-            border-bottom: 1px solid #e2e8f0;
-        }}
-        .log-entry:last-child {{ border-bottom: none; }}
-        .log-time {{ color: #9ca3af; flex-shrink: 0; min-width: 58px; }}
-        .log-msg {{ color: #374151; word-break: break-word; }}
-        .log-msg .kw-success {{ color: #16a34a; font-weight: 600; }}
-        .log-msg .kw-error   {{ color: #dc2626; font-weight: 600; }}
-        .log-msg .kw-running {{ color: #2563eb; }}
-        .log-msg .kw-saved   {{ color: #7c3aed; }}
-        .log-empty {{ color: #9ca3af; font-style: italic; padding: 0.5rem 0; }}
-
-        .log-toggle {{
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem 1.5rem;
-            cursor: pointer;
-            background: white;
-            transition: background 0.15s;
-        }}
-        .log-toggle:hover {{ background: #f8fafc; }}
-        .log-toggle-left {{
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }}
-        .log-toggle-right {{
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }}
-        .log-chevron {{
-            color: #9ca3af;
-            font-size: 0.8rem;
-            transition: transform 0.2s ease;
-        }}
-        .log-chevron.open {{ transform: rotate(180deg); }}
-        .log-body-wrapper {{ display: none; border-top: 1px solid #e2e8f0; }}
+        .log-btn:hover {{ background: var(--canvas); color: var(--ink); border-color: var(--muted-2); }}
+        .log-btn.on {{ color: var(--primary); border-color: var(--primary); background: var(--primary-tint); }}
+        .log-body-wrapper {{ display: none; border-top: 1px solid var(--border); }}
         .log-body-wrapper.open {{ display: block; }}
+        #log-body {{
+            padding: 0.75rem 1.25rem; height: 280px; overflow-y: auto;
+            font-family: var(--font-mono); font-size: 12px; line-height: 1.75; background: #f7f9fb;
+        }}
+        .log-entry {{ display: flex; gap: 1rem; padding: 0.05rem 0; }}
+        .log-time {{ color: var(--muted-2); flex-shrink: 0; min-width: 58px; font-variant-numeric: tabular-nums; }}
+        .log-msg {{ color: var(--text); word-break: break-word; }}
+        .log-msg .kw-success {{ color: var(--ok); font-weight: 500; }}
+        .log-msg .kw-error   {{ color: var(--bad); font-weight: 500; }}
+        .log-msg .kw-running {{ color: var(--primary); }}
+        .log-msg .kw-saved   {{ color: var(--ink); font-weight: 500; }}
+        .log-empty {{ color: var(--muted-2); padding: 0.5rem 0; }}
 
         /* ── Plot grid ── */
+        .section-head {{ display: flex; align-items: baseline; gap: 0.6rem; margin: 0.5rem 0 0.9rem; }}
+        .section-head h2 {{ color: var(--ink); font-size: 15px; font-weight: 600; }}
+        .section-head span {{ color: var(--muted); font-size: 13px; }}
         #plots-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 1.5rem;
         }}
         .plot-card {{
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            overflow: visible;
-            transition: box-shadow 0.2s ease;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm); overflow: hidden;
         }}
-        .plot-card:hover {{ box-shadow: 0 4px 16px rgba(0,0,0,0.12); }}
         .plot-card-header {{
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.6rem 0.9rem;
-            border-bottom: 1px solid #f1f5f9;
+            display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+            padding: 0.6rem 0.75rem 0.6rem 1.1rem; border-bottom: 1px solid var(--border);
         }}
-        .plot-label {{
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #475569;
-            text-transform: capitalize;
-            letter-spacing: 0.02em;
-        }}
+        .plot-label {{ display: inline-block; font-size: 13.5px; font-weight: 600; color: var(--ink); }}
+        .plot-label::first-letter {{ text-transform: uppercase; }}
         .collapse-btn {{
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            border: 1.5px solid #cbd5e1;
-            background: #f8fafc;
-            color: #64748b;
-            font-size: 1.1rem;
-            line-height: 1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s, border-color 0.15s, color 0.15s;
-            flex-shrink: 0;
+            width: 28px; height: 28px; border-radius: 6px; border: 1px solid transparent; background: transparent;
+            color: var(--muted); font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: background 0.15s, color 0.15s, border-color 0.15s;
         }}
-        .collapse-btn:hover {{ background: #fee2e2; border-color: #fca5a5; color: #dc2626; }}
-        .plot-card img {{ width: 100%; height: auto; border-radius: 0 0 10px 10px; display: block; }}
+        .collapse-btn:hover {{ background: var(--canvas); border-color: var(--border-strong); color: var(--ink); }}
+        .plot-card img {{ width: 100%; height: auto; display: block; padding: 0.5rem; }}
 
         /* ── Minimized tray ── */
         #minimized-tray {{
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 10px 20px;
-            background: rgba(241,245,249,0.92);
-            backdrop-filter: blur(8px);
-            border-top: 1px solid #e2e8f0;
-            z-index: 100;
+            position: fixed; bottom: 0; left: 0; right: 0; display: none; flex-wrap: wrap; gap: 12px;
+            padding: 10px 1.5rem; background: rgba(255,255,255,0.94); backdrop-filter: blur(8px);
+            border-top: 1px solid var(--border); box-shadow: 0 -4px 16px rgba(23,34,58,0.06); z-index: 100;
         }}
-        #minimized-tray:empty {{ display: none; }}
-        .mini-icon {{
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-            cursor: pointer;
-            transition: transform 0.15s ease;
-        }}
-        .mini-icon:hover {{ transform: translateY(-3px); }}
+        .mini-icon {{ position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }}
         .mini-thumbnail-wrapper {{
-            position: relative;
-            width: 64px; height: 48px;
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1.5px solid #cbd5e1;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-            opacity: 0.55;
-            transition: opacity 0.15s, border-color 0.15s, box-shadow 0.15s;
+            position: relative; width: 72px; height: 52px; border-radius: 6px; overflow: hidden;
+            border: 1px solid var(--border-strong); background: var(--surface); transition: border-color 0.15s;
         }}
-        .mini-icon:hover .mini-thumbnail-wrapper {{
-            opacity: 1;
-            border-color: #2563eb;
-            box-shadow: 0 2px 8px rgba(37,99,235,0.2);
-        }}
+        .mini-icon:hover .mini-thumbnail-wrapper {{ border-color: var(--primary); }}
         .mini-thumbnail {{ width: 100%; height: 100%; object-fit: cover; display: block; }}
         .mini-overlay {{
-            position: absolute; inset: 0;
-            background: rgba(15,23,42,0);
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s;
+            position: absolute; inset: 0; background: rgba(23,34,58,0); display: flex;
+            align-items: center; justify-content: center; transition: background 0.15s;
         }}
-        .mini-icon:hover .mini-overlay {{ background: rgba(15,23,42,0.35); }}
-        .mini-restore-hint {{
-            color: white; font-size: 0.6rem; font-weight: 600;
-            opacity: 0; transition: opacity 0.15s;
-            text-transform: uppercase; letter-spacing: 0.05em;
-        }}
+        .mini-icon:hover .mini-overlay {{ background: rgba(23,34,58,0.55); }}
+        .mini-restore-hint {{ color: #fff; font-size: 11px; font-weight: 600; opacity: 0; transition: opacity 0.15s; }}
         .mini-icon:hover .mini-restore-hint {{ opacity: 1; }}
         .mini-label {{
-            font-size: 0.6rem; color: #94a3b8;
-            text-align: center; max-width: 70px;
+            font-size: 11px; color: var(--muted); text-align: center; max-width: 76px;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-            text-transform: capitalize;
         }}
-        .mini-icon:hover .mini-label {{ color: #2563eb; }}
+        .mini-icon:hover .mini-label {{ color: var(--primary); }}
 
         /* ── Global preview ── */
         #global-preview {{
-            display: none;
-            position: fixed;
-            width: 380px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.18), 0 0 0 1px rgba(37,99,235,0.12);
-            padding: 0.75rem;
-            pointer-events: none;
-            z-index: 9999;
-            animation: previewIn 0.15s ease;
+            display: none; position: fixed; width: 380px; background: var(--surface); border-radius: var(--radius-lg);
+            border: 1px solid var(--border); box-shadow: var(--shadow-lg); padding: 0.75rem;
+            pointer-events: none; z-index: 9999;
         }}
         #global-preview::after {{
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: var(--arrow-left, 50%);
-            transform: translateX(-50%);
-            border: 7px solid transparent;
-            border-top-color: white;
+            content: ''; position: absolute; top: 100%; left: var(--arrow-left, 50%);
+            transform: translateX(-50%); border: 7px solid transparent; border-top-color: var(--surface);
         }}
         #global-preview img {{ width: 100%; height: auto; border-radius: 6px; display: block; }}
-        #global-preview p {{ font-size: 0.78rem; color: #64748b; text-align: center; margin-top: 0.5rem; font-weight: 500; text-transform: capitalize; }}
-        @keyframes previewIn {{
-            from {{ opacity: 0; transform: translateY(6px); }}
-            to   {{ opacity: 1; transform: translateY(0); }}
+        #global-preview p {{ font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 0.5rem; font-weight: 500; }}
+
+        @media (max-width: 640px) {{
+            .topbar {{ padding: 0 0.75rem; }}
+            .container {{ padding: 1rem 0.75rem 7rem; }}
+            .summary {{ padding: 1rem; }}
+            .log-header {{ padding: 0.75rem 1rem; flex-wrap: wrap; }}
+        }}
+        @media (prefers-reduced-motion: reduce) {{
+            * {{ animation: none !important; transition: none !important; }}
         }}
     </style>
     <script>
@@ -1411,7 +1323,7 @@ def update_status(
             autoScroll = !autoScroll;
             var btn = document.getElementById('autoscroll-btn');
             btn.textContent = autoScroll ? 'Auto-scroll: ON' : 'Auto-scroll: OFF';
-            btn.style.color = autoScroll ? '#22c55e' : '#64748b';
+            btn.classList.toggle('on', autoScroll);
         }}
 
         function clearDisplay() {{
@@ -1431,6 +1343,11 @@ def update_status(
             document.getElementById('mini_' + plotId).style.display = 'none';
             var card = document.getElementById(plotId);
             card.style.display = '';
+            var anyMinimized = Array.prototype.some.call(
+                document.querySelectorAll('.mini-icon'),
+                function(el) {{ return el.style.display !== 'none'; }}
+            );
+            if (!anyMinimized) document.getElementById('minimized-tray').style.display = 'none';
             card.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
         }}
 
@@ -1485,42 +1402,47 @@ def update_status(
     </script>
 </head>
 <body>
-    <div class="header"><h1>Results</h1></div>
-    <div class="container">
+    <header class="topbar">
+        <a class="brand" href="/">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4 L8 13 L12 9 L16 17 L21 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21" cy="19" r="2.2" fill="currentColor"/></svg>
+            SimOpt
+        </a>
+        <a class="topbar-link" href="/">Back to simulator</a>
+    </header>
+    <main class="container">
 
-        <div class="card">
-            <h2>Experiment Details</h2>
-            <div class="status {status_class}">
-                <p><strong>Experiment ID:</strong> {run_id}</p>
-                <p><strong>Status:</strong> {status}</p>
+        <section class="summary">
+            <div>
+                <h1>Experiment results</h1>
+                <p class="run-id">Run <code>{run_id}</code></p>
             </div>
-        </div>
+            {status_html}
+        </section>
 
-        <div class="log-panel">
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1.5rem; background:white; border-bottom:1px solid #e2e8f0; cursor:pointer;" onclick="toggleLog()">
-                <div style="display:flex; align-items:center; gap:0.6rem;">
-                    <div class="log-dot" id="log-dot"></div>
+        <section class="log-panel">
+            <div class="log-header" onclick="toggleLog()">
+                <div class="log-header-left">
+                    <div class="log-dot{log_dot_class}" id="log-dot"></div>
                     <span class="log-title">Output Log</span>
                     <span class="log-chevron" id="log-chevron">&#9660;</span>
                 </div>
-                <div style="display:flex; gap:0.5rem;">
-                    <button class="log-btn" id="autoscroll-btn"
-                        onclick="event.stopPropagation(); toggleAutoScroll();"
-                        style="color:#16a34a; border-color:#bbf7d0; background:#f0fdf4;">Auto-scroll: ON</button>
+                <div class="log-controls">
+                    <button class="log-btn on" id="autoscroll-btn"
+                        onclick="event.stopPropagation(); toggleAutoScroll();">Auto-scroll: ON</button>
                     <button class="log-btn"
                         onclick="event.stopPropagation(); clearDisplay();">Clear</button>
                 </div>
             </div>
             <div class="log-body-wrapper" id="log-body-wrapper">
                 <div id="log-body">
-                    <div class="log-empty">Waiting for output...</div>
+                    <div class="log-empty">Waiting for output…</div>
                 </div>
             </div>
-        </div>
+        </section>
 
         {plots_html}
 
-    </div>
+    </main>
     <div id="global-preview" style="display:none;">
         <img id="global-preview-img" src="" alt="">
         <p id="global-preview-label"></p>
