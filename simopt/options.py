@@ -25,3 +25,15 @@ class ConfidenceIntervalOptions:
 
 
 DEFAULT_CONFIDENCE_INTERVAL_OPTIONS = ConfidenceIntervalOptions()
+
+
+@dataclass(frozen=True)
+class MeritOptions:
+    """Options for merit = objective + obj_const * deterministic feasibility violation."""
+
+    obj_const: float = 1e6
+    feas_tol_upper: float = 1e-5
+    feas_tol_lower: float = 1e-8
+
+
+DEFAULT_MERIT_OPTIONS = MeritOptions()

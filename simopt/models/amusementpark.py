@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
+import numpy as np
 from pydantic import BaseModel, Field
 
 from mrg32k3a.mrg32k3a import MRG32k3a
@@ -158,6 +159,17 @@ class AmusementParkMinDepart(Problem):
             return False
         # Check if sum of queue capacities is less than park capacity.
         return sum(x) <= self.model.factors["park_capacity"]
+
+    # get lhs value of deterministic constraints, h(x) <= 0 form
+    def get_deterministic_inequality_constraints(self, x: tuple) -> tuple[float, ...]:
+        return (sum(x) - self.model.factors["park_capacity"],)
+
+    # return jacobian of deterministic inequality constraints
+    def get_deterministic_inequality_constraints_gradients(self, _x: tuple) -> np.ndarray:
+        return np.ones((1, self.dim))
+
+    def get_deterministic_constraints_hessian(self, _x: tuple) -> np.ndarray:
+        return np.zeros((1, self.dim, self.dim))
 
     def get_random_solution(self, rand_sol_rng: MRG32k3a) -> tuple:
         num_elements: int = self.model.factors["number_attractions"]

@@ -15,10 +15,15 @@ from simopt.experiment.data import (
     ManySolverHistorySchema,
 )
 from simopt.experiment.experiment import Experiment
-from simopt.experiment.post_normalize import normalize
+from simopt.experiment.post_normalize import mean_of_arrays, normalize
+from simopt.experiment.post_normalize_merit import (
+    MeritNormalization,
+    attach_deterministic_violation,
+    normalize_merit,
+)
 from simopt.experiment.post_replicate import _post_replicate_mrep
 from simopt.experiment.run_solver import _run_mrep
-from simopt.options import DEFAULT_CRN_OPTIONS, CrnOptions
+from simopt.options import DEFAULT_CRN_OPTIONS, DEFAULT_MERIT_OPTIONS, CrnOptions, MeritOptions
 from simopt.problem import Problem
 from simopt.utils import make_nonzero
 from simopt_solvers.solver import Solver
@@ -103,7 +108,12 @@ def _mean(
                     "budget": "first",
                     "solution": "first",
                     "objective": "mean",
-                    "stochastic_constraints": "mean",
+                    "stochastic_constraints": mean_of_arrays,
+                    **(
+                        {"deterministic_violation": "first"}
+                        if "deterministic_violation" in full_df
+                        else {}
+                    ),
                 }
             )
             .reset_index()
@@ -123,6 +133,10 @@ def _mean(
 
 
 class AnalysisInput:
+    # Class-level defaults keep AnalysisInput objects pickled before these fields existed usable.
+    xstar_merit_sample: np.ndarray | None = None
+    merit_normalization: MeritNormalization | None = None
+
     def __init__(
         self,
         full_df: pd.DataFrame,
@@ -131,13 +145,22 @@ class AnalysisInput:
         xstar: np.ndarray,
         xstar_sample: np.ndarray,
         skip_aggregation: bool = False,
+        xstar_merit_sample: np.ndarray | None = None,
+        merit_normalization: MeritNormalization | None = None,
     ) -> None:
-        """Initialize AnalysisInput with data and compute mean statistics."""
+        """Initialize AnalysisInput with data and compute mean statistics.
+
+        Optional `full_df["deterministic_violation"]` holds the deterministic constraint
+        violation of each solution. `merit_normalization` and `xstar_merit_sample` are set
+        by `post_normalize_merit` and used by merit-based analyses.
+        """
         self.full_df = full_df
         self.x0 = x0
         self.x0_sample = x0_sample
         self.xstar = xstar
         self.xstar_sample = xstar_sample
+        self.xstar_merit_sample = xstar_merit_sample
+        self.merit_normalization = merit_normalization
         self.budget, self.mean_df = _mean(
             full_df, x0, x0_sample, xstar, xstar_sample, skip_aggregation
         )
@@ -244,6 +267,9 @@ def _analyze_plan(
         plan.proxy_values.xstar,
         plan.proxy_values.optimal_objective,
     )
+
+    # Record the deterministic constraint violation of each solution if the problem has any.
+    full_df = attach_deterministic_violation(plan.problem, full_df)
 
     # Build list of AnalysisInput objects
     analysis_inputs = []
@@ -371,3 +397,70 @@ def run(
     # Sort by original index and return
     results.sort(key=lambda x: x[0])
     return [ai for _, ai in results]
+
+
+def add_deterministic_violation(
+    experiments: list[Experiment], analysis_inputs: list[AnalysisInput]
+) -> list[AnalysisInput]:
+    """Return analysis inputs whose data carry each solution's deterministic violation.
+
+    Use this on inputs that were not produced by `run` (e.g. loaded from disk). The
+    problem must provide `get_deterministic_equality_constraints` and/or
+    `get_deterministic_inequality_constraints`.
+    """
+    results = []
+    for experiment, analysis_input in zip(experiments, analysis_inputs, strict=True):
+        full_df = attach_deterministic_violation(experiment.problem, analysis_input.full_df)
+        results.append(
+            AnalysisInput(
+                full_df,
+                analysis_input.x0,
+                analysis_input.x0_sample,
+                analysis_input.xstar,
+                analysis_input.xstar_sample,
+                xstar_merit_sample=analysis_input.xstar_merit_sample,
+                merit_normalization=analysis_input.merit_normalization,
+            )
+        )
+    return results
+
+
+def post_normalize_merit(
+    experiments: list[Experiment],
+    analysis_inputs: list[AnalysisInput],
+    merit_options: MeritOptions = DEFAULT_MERIT_OPTIONS,
+    proxy_init_merit: float | None = None,
+    proxy_opt_merit: float | None = None,
+) -> list[AnalysisInput]:
+    """Add merit normalization to analysis inputs of experiments on the same problem.
+
+    Finds the empirically best merit solution over all experiments and re-simulates it
+    with as many replications as `x0_sample` has. Returns new analysis inputs; the
+    inputs passed in are unchanged.
+    """
+    if not experiments:
+        return []
+    problem = experiments[0].problem
+    analysis_inputs = add_deterministic_violation(experiments, analysis_inputs)
+    n_reps = len(analysis_inputs[0].x0_sample)
+    normalization, xstar_merit_sample = normalize_merit(
+        problem,
+        [analysis_input.full_df for analysis_input in analysis_inputs],
+        analysis_inputs[0].x0,
+        n_reps,
+        merit_options,
+        proxy_init_merit,
+        proxy_opt_merit,
+    )
+    return [
+        AnalysisInput(
+            analysis_input.full_df,
+            analysis_input.x0,
+            analysis_input.x0_sample,
+            analysis_input.xstar,
+            analysis_input.xstar_sample,
+            xstar_merit_sample=xstar_merit_sample,
+            merit_normalization=normalization,
+        )
+        for analysis_input in analysis_inputs
+    ]

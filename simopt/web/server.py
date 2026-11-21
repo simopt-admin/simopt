@@ -492,6 +492,8 @@ def generate_plots(
 ):
     """Shared plot generation logic used by both run_experiment_async and run_plots_only."""
     from simopt.analysis.auc import Auc
+    from simopt.analysis.deterministic_feasibility_progress import DeterministicFeasibilityProgress
+    from simopt.analysis.deterministic_terminal_feasibility import DeterministicTerminalFeasibility
     from simopt.analysis.diff import DiffSolvability
     from simopt.analysis.feasibility_progress import FeasibilityProgress
     from simopt.analysis.progress_curve import ProgressCurve
@@ -546,6 +548,8 @@ def generate_plots(
             "QUANTILE_FEASIBILITY_PROGRESS",
             "FEASIBILITY_SCATTER",
             "FEASIBILITY_VIOLIN",
+            "DETERMINISTIC_FEASIBILITY_PROGRESS",
+            "DETERMINISTIC_FEASIBILITY_SCATTER",
         }
         if not per_problem and len(problem_exp_indices) < 2:
             print(f"Warning: {plot_type_name} requires multiple problems. Skipping.")
@@ -613,6 +617,29 @@ def generate_plots(
                 elif plot_type_name == "SOLVE_TIME_CDF":
                     config = SolvabilityCdf(
                         normalize=normalize, solve_tolerance=solve_tol, **options
+                    )
+                elif plot_type_name == "DETERMINISTIC_FEASIBILITY_PROGRESS":
+                    config = DeterministicFeasibilityProgress(
+                        score_type=plot_params.get("score_type", "norm"),
+                        obj_const=plot_params.get("obj_const", 100.0),
+                        feas_tol_upper=plot_params.get("feas_tol_upper", 1e-5),
+                        feas_tol_lower=plot_params.get("feas_tol_lower", 1e-8),
+                        floor_feas=plot_params.get("floor_feas", False),
+                        log_scale=plot_params.get("log_scale", False),
+                        log_base=plot_params.get("log_base", 10),
+                        sym_log=plot_params.get("sym_log", False),
+                        plot_zero=plot_params.get("plot_zero", False),
+                    )
+                elif plot_type_name == "DETERMINISTIC_FEASIBILITY_SCATTER":
+                    config = DeterministicTerminalFeasibility(
+                        score_type=plot_params.get("score_type", "norm"),
+                        feas_tol=plot_params.get("feas_tol"),
+                        feas_tol_lower=plot_params.get("feas_tol_lower", 1e-8),
+                        floor_feas=plot_params.get("floor_feas", False),
+                        plot_zero=plot_params.get("plot_zero", True),
+                        log_scale=plot_params.get("log_scale", False),
+                        sym_log=plot_params.get("sym_log", False),
+                        **options,
                     )
                 elif plot_type_name in {"FEASIBILITY_SCATTER", "FEASIBILITY_VIOLIN"}:
                     config = TerminalFeasibility(

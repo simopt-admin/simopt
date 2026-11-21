@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from simopt_solvers.solvers.adam import ADAM
     from simopt_solvers.solvers.aloe import ALOE
     from simopt_solvers.solvers.astrodf import ASTRODF
+    from simopt_solvers.solvers.castrodf import CASTRODF
     from simopt_solvers.solvers.dasso import DASSO
     from simopt_solvers.solvers.fcsa import FCSA
     from simopt_solvers.solvers.neldmd import NelderMead
@@ -32,6 +33,7 @@ _SOLVER_MODULES = {
     "ADAM": "adam",
     "ALOE": "aloe",
     "ASTRODF": "astrodf",
+    "CASTRODF": "castrodf",
     "DASSO": "dasso",
     "FCSA": "fcsa",
     "NelderMead": "neldmd",
@@ -52,6 +54,7 @@ __all__ = [
     "ADAM",
     "ALOE",
     "ASTRODF",
+    "CASTRODF",
     "DASSO",
     "FCSA",
     "SPSA",

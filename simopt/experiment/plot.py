@@ -11,6 +11,8 @@ from matplotlib.collections import LineCollection, PolyCollection
 from matplotlib.container import ErrorbarContainer
 
 from simopt.analysis.auc import Auc
+from simopt.analysis.deterministic_feasibility_progress import DeterministicFeasibilityProgress
+from simopt.analysis.deterministic_terminal_feasibility import DeterministicTerminalFeasibility
 from simopt.analysis.diff import DiffSolvability
 from simopt.analysis.feasibility_progress import FeasibilityProgress
 from simopt.analysis.progress_curve import ProgressCurve
@@ -28,6 +30,8 @@ if TYPE_CHECKING:
 
 PlotConfiguration = (
     Auc
+    | DeterministicFeasibilityProgress
+    | DeterministicTerminalFeasibility
     | DiffSolvability
     | FeasibilityProgress
     | ProgressCurve
@@ -93,6 +97,8 @@ def _plot_name(config: PlotConfiguration) -> str:
         parts.append(f"beta_{beta:g}")
     if hasattr(config, "solve_tolerance"):
         parts.append(f"tol_{config.solve_tolerance:g}")
+    if getattr(config, "curve_source", "progress_curves") == "merit_progress_curves":
+        parts.append("merit")
     return "_".join(parts)
 
 
@@ -170,6 +176,7 @@ def save_plots(
         config,
         (
             Auc,
+            DeterministicTerminalFeasibility,
             DiffSolvability,
             FeasibilityProgress,
             ProgressCurve,
@@ -195,6 +202,7 @@ def save_plots(
                     config,
                     (
                         Auc,
+                        DeterministicTerminalFeasibility,
                         DiffSolvability,
                         FeasibilityProgress,
                         ProgressCurve,
@@ -212,6 +220,13 @@ def save_plots(
                         np.asarray(line.get_ydata()) == 0
                     ):
                         line.remove()
+            if isinstance(config, DeterministicTerminalFeasibility) and plot_optimal:
+                ax.axvline(
+                    float(np.mean(group[0][1].xstar_sample)),
+                    color="red",
+                    linestyle="--",
+                    linewidth=0.75,
+                )
             if isinstance(config, TerminalFeasibility):
                 if plot_zero:
                     ax.axhline(0, color="red", linestyle="--", linewidth=0.75)

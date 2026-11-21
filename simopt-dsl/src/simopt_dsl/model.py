@@ -56,6 +56,7 @@ class Model:
         self.objective_sense = "minimize"
         self.n_rngs = 1
         self._random_solution: Callable[[Any], Iterable[float]] | None = None
+        self._constraint_functions: dict[str, Callable[..., Any]] = {}
         self._declared_variables: list[DecisionVariable] = []
         self._evaluation_plan: _EvaluationPlan | None = None
 
@@ -195,6 +196,59 @@ class Model:
             for simulation in self.simulations
             if simulation.name in used_simulations
         )
+
+    def set_deterministic_constraint_functions(
+        self,
+        *,
+        equality: Callable[[tuple[float, ...]], Any] | None = None,
+        inequality: Callable[[tuple[float, ...]], Any] | None = None,
+        equality_jacobian: Callable[[tuple[float, ...]], Any] | None = None,
+        inequality_jacobian: Callable[[tuple[float, ...]], Any] | None = None,
+        hessian: Callable[[tuple[float, ...]], Any] | None = None,
+    ) -> None:
+        """Provide callables for smooth deterministic constraints.
+
+        Used by constrained solvers (e.g. C-ASTRO-DF). Equality
+        constraints are in ``c(x) == 0`` form and inequality constraints in
+        ``h(x) <= 0`` form. Each callable takes the flat solution tuple ``x``.
+        Jacobians have shape ``(n_constraints, dim)``. ``hessian`` returns an array of
+        shape ``(n_eq + n_ineq, dim, dim)``, equality constraints first.
+        """
+        self._constraint_functions = {
+            key: function
+            for key, function in {
+                "equality": equality,
+                "inequality": inequality,
+                "equality_jacobian": equality_jacobian,
+                "inequality_jacobian": inequality_jacobian,
+                "hessian": hessian,
+            }.items()
+            if function is not None
+        }
+
+    def _constraint_value(self, key: str, x: Iterable[float]) -> Any:
+        function = self._constraint_functions.get(key)
+        return None if function is None else function(tuple(x))
+
+    def get_deterministic_equality_constraints(self, x: Iterable[float]) -> Any:
+        """Return ``c(x)`` for constraints ``c(x) == 0``, or None if there are none."""
+        return self._constraint_value("equality", x)
+
+    def get_deterministic_inequality_constraints(self, x: Iterable[float]) -> Any:
+        """Return ``h(x)`` for constraints ``h(x) <= 0``, or None if there are none."""
+        return self._constraint_value("inequality", x)
+
+    def get_deterministic_equality_constraints_gradients(self, x: Iterable[float]) -> Any:
+        """Return the Jacobian of the equality constraints, or None."""
+        return self._constraint_value("equality_jacobian", x)
+
+    def get_deterministic_inequality_constraints_gradients(self, x: Iterable[float]) -> Any:
+        """Return the Jacobian of the inequality constraints, or None."""
+        return self._constraint_value("inequality_jacobian", x)
+
+    def get_deterministic_constraints_hessian(self, x: Iterable[float]) -> Any:
+        """Return constraint Hessians, shape (n_eq + n_ineq, dim, dim), eq first."""
+        return self._constraint_value("hessian", x)
 
     def set_random_solution(self, sampler: Callable[[Any], Iterable[float]] | None) -> None:
         """Set the callable that draws a random solution from an RNG.
