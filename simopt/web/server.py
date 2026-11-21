@@ -82,10 +82,10 @@ class ExperimentRequest(BaseModel):
 
 # ── Path configuration ──
 # WEB_DIR points to simopt/web; the built frontend is always served from there.
-# BASE_DIR points to the repository root for existing result-file storage.
+# Results are stored in the directory where the server is launched.
 WEB_DIR = Path(__file__).resolve().parent
 BASE_DIR = WEB_DIR.parent.parent
-RESULTS_DIR = BASE_DIR / "simopt-web" / "results"
+RESULTS_DIR = Path.cwd() / "results"
 DESIGNS_DIR = BASE_DIR / "simopt-web" / "designs"
 DIST_DIR = WEB_DIR / "dist"
 STATIC_DIR = DIST_DIR / "assets"
