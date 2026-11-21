@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
+  import AboutUs from './lib/AboutUs.svelte';
   import DataFarming from './lib/DataFarming.svelte';
+  import UserGuide from './lib/UserGuide.svelte';
   import type {
     Compatibility,
     EditMode,
@@ -41,8 +43,21 @@
   let editMode: EditMode | null = null;
 
   let macroreps = 10;
-  let showPostProcess = false;
-  let showPostNormalize = false;
+  type Tab = 'solvers' | 'problems' | 'plots' | 'settings';
+  let activeTab: Tab = 'solvers';
+  const TABS: Tab[] = ['solvers', 'problems', 'plots', 'settings'];
+  $: if (activeTab) {
+    tick().then(() => document.getElementById(`tab-${activeTab}`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
+  }
+  function onTabKeydown(e: KeyboardEvent, i: number): void {
+    if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    const n = e.key === 'Home' ? 0
+      : e.key === 'End' ? TABS.length - 1
+      : (i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length;
+    activeTab = TABS[n];
+    (document.getElementById(`tab-${TABS[n]}`) as HTMLElement | null)?.focus();
+  }
 
   let showConfirm = false;
   let confirmKind: SummaryKind | null = null;
@@ -277,6 +292,7 @@
   }
 
   async function startEdit(kind: SummaryKind, index: number): Promise<void> {
+    activeTab = kind === 'solver' ? 'solvers' : kind === 'problem' ? 'problems' : 'plots';
     if (kind === 'solver') {
       const s = summarySolvers[index];
       selectedSolverName = s.name;
@@ -309,6 +325,10 @@
     }
     if (summaryProblems.length === 0) {
       alert("Please add at least one problem before running the experiment.");
+      return;
+    }
+    if (summaryPlots.length === 0) {
+      alert("Please add at least one plot before running the experiment.");
       return;
     }
 
@@ -459,6 +479,9 @@
       Object.values(row || {}).some(cell => cell && cell.compatible === false)
     );
   
+  $: macrorepsValid = Number.isInteger(macroreps) && macroreps >= 1;
+  $: canRun = summarySolvers.length > 0 && summaryProblems.length > 0 && macrorepsValid;
+
   let totalCompatCells: number;
   let greenPct: number;
   let redPct: number;
@@ -492,512 +515,429 @@
   }
 </script>
 
+{#snippet tip(desc: string | undefined, id: string)}
+  {#if desc}
+    <span class="info-wrapper">
+      <span class="info-icon" role="button" aria-label="Description" tabindex="0" aria-describedby={id}>i</span>
+      <span class="tooltip" role="tooltip" {id}>{desc}</span>
+    </span>
+  {/if}
+{/snippet}
+
 <nav>
-  <div class="nav-left">
-    <span class="title">SimOpt Web Interface</span>
-  </div>
-  <div class="nav-right">
-    <ul>
-      <li>
-        <a
-          href="#simulator"
-          class:active={currentPage === "Simulator"}
-          on:click|preventDefault={() => navigate("Simulator")}
-        >Simulator</a>
-      </li>
-      <li>
-        <a
-          href="#data-farming"
-          class:active={currentPage === "Data Farming"}
-          on:click|preventDefault={() => navigate("Data Farming")}
-        >Data Farming</a>
-      </li>
-      <li>
-        <a
-          href="#user-guide"
-          class:active={currentPage === "User Guide"}
-          on:click|preventDefault={() => navigate("User Guide")}
-        >User Guide</a>
-      </li>
-      <li>
-        <a
-          href="#about-us"
-          class:active={currentPage === "About Us"}
-          on:click|preventDefault={() => navigate("About Us")}
-        >About Us</a>
-      </li>
-    </ul>
-  </div>
+  <a class="brand" href="#simulator" on:click|preventDefault={() => navigate("Simulator")}>
+    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4 L8 13 L12 9 L16 17 L21 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21" cy="19" r="2.2" fill="currentColor"/></svg>
+    <span class="title">SimOpt</span>
+  </a>
+  <ul>
+    <li>
+      <a
+        href="#simulator"
+        class:active={currentPage === "Simulator"}
+        on:click|preventDefault={() => navigate("Simulator")}
+      >Simulator</a>
+    </li>
+    <li>
+      <a
+        href="#data-farming"
+        class:active={currentPage === "Data Farming"}
+        on:click|preventDefault={() => navigate("Data Farming")}
+      >Data Farming</a>
+    </li>
+    <li>
+      <a
+        href="#user-guide"
+        class:active={currentPage === "User Guide"}
+        on:click|preventDefault={() => navigate("User Guide")}
+      >User Guide</a>
+    </li>
+    <li>
+      <a
+        href="#about-us"
+        class:active={currentPage === "About Us"}
+        on:click|preventDefault={() => navigate("About Us")}
+      >About Us</a>
+    </li>
+  </ul>
 </nav>
 
 <main>
   {#if currentPage === "Simulator"}
-    <div class="row-3col">
-      <!-- ===== Left column: Solver + Post-replicate + Choose Plot ===== -->
-      <div class="col-stack">
-        <!-- === Choose Solver === -->
-        <div class="card column">
-          <h2>Choose Solver</h2>
-
-          {#if selectedSolverName}
+    <div class="layout">
+      <!-- ===== Left: tabbed editor ===== -->
+      <section class="editor card">
+        <div class="tabs" role="tablist" aria-label="Experiment editor">
+          {#each TABS as tab, ti (tab)}
             <button
-              class="secondary-outline"
-              style="margin-bottom:0.75rem;"
-              on:click={addSolverToSummary}
+              type="button"
+              role="tab"
+              id={`tab-${tab}`}
+              class="tab"
+              class:active={activeTab === tab}
+              aria-selected={activeTab === tab}
+              aria-controls="tabpanel"
+              tabindex={activeTab === tab ? 0 : -1}
+              on:click={() => (activeTab = tab)}
+              on:keydown={(e) => onTabKeydown(e, ti)}
             >
-              {editMode?.kind === 'solver' ? 'Apply Changes' : '+ Add Solver'}
+              {tab === 'solvers' ? 'Solvers' : tab === 'problems' ? 'Problems' : tab === 'plots' ? 'Plots' : 'Settings'}
+              {#if tab !== 'settings'}
+                <span class="count">{tab === 'solvers' ? summarySolvers.length : tab === 'problems' ? summaryProblems.length : summaryPlots.length}</span>
+              {/if}
             </button>
-          {/if}
-
-          <div class="block-header">
-            <select bind:value={selectedSolverName} on:change={(e) => onSolverChange(inputValue(e))}>
-              <option value="">— Select a Solver —</option>
-              {#each allSolvers as option (option)}
-                <option value={option}>{option}</option>
-              {/each}
-            </select>
-          </div>
-
-          {#if selectedSolverName}
-            <div class="param-box">
-              <p class="param-title">Solver Parameters</p>
-              {#each solverParams as param, idx (param.name)}
-                <label>
-                    <div style="display:flex;align-items:center;gap:0.4rem;">
-                        <span>{param.name}</span>
-                        {#if param.description}
-                            <span class="info-wrapper" aria-hidden="true">
-                                <span class="info-icon">ℹ</span>
-                                <div class="tooltip">{param.description}</div>
-                            </span>
-                        {/if}
-                    </div>
-                    {#if typeof param.default === 'boolean'}
-                        <select
-                            value={param.value}
-                            on:change={(e) => { solverParams[idx].value = inputValue(e); solverParams = [...solverParams]; }}
-                        >
-                            <option value="true">True</option>
-                            <option value="false">False</option>
-                        </select>
-                    {:else}
-                        <input
-                            type="text"
-                            bind:value={param.value}
-                            on:input={(e) => (solverParams[idx].value = inputValue(e))}
-                        />
-                    {/if}
-                </label>
-              {/each}
-            </div>
-          {/if}
+          {/each}
         </div>
 
-        <!-- === POST-REPLICATE === -->
-        <div class="card">
-          <button class="dropdown" on:click={() => (showPostProcess = !showPostProcess)}>
-            {showPostProcess ? "▼" : "▶"} Post-replicate
-          </button>
+        <div class="tab-body" id="tabpanel" role="tabpanel" aria-labelledby={`tab-${activeTab}`}>
+          {#if activeTab === 'solvers'}
+            <div class="picker">
+              <select aria-label="Solver" bind:value={selectedSolverName} on:change={(e) => onSolverChange(inputValue(e))}>
+                <option value="">Choose a solver…</option>
+                {#each allSolvers as option (option)}
+                  <option value={option}>{option}</option>
+                {/each}
+              </select>
+              {#if selectedSolverName}
+                <button class="btn-primary-sm" on:click={addSolverToSummary}>
+                  {editMode?.kind === 'solver' ? 'Apply Changes' : '+ Add Solver'}
+                </button>
+              {/if}
+            </div>
 
-          {#if showPostProcess}
-            <div class="dropdown-content">
-              <div class="param-box">
-                <p class="param-title">Options for Post-replication</p>
-
-                {#each prSchema.params as p (p.name)}
-                  <label>
-                    <span>{p.label}</span>
-
-                    {#if p.type === "bool"}
-                      <select bind:value={prValues[p.name]}>
-                        <option value={true}>Yes</option>
-                        <option value={false}>No</option>
+            {#if selectedSolverName}
+              <h4 class="section-title">Solver parameters</h4>
+              <div class="param-grid">
+                {#each solverParams as param, idx (param.name)}
+                  <label class="param-row">
+                    <span class="param-name"><span class="param-name-text" title={param.name}>{param.name}</span>{@render tip(param.description, `tip-solver-${param.name}`)}</span>
+                    {#if typeof param.default === 'boolean'}
+                      <select
+                        value={param.value}
+                        on:change={(e) => { solverParams[idx].value = inputValue(e); solverParams = [...solverParams]; }}
+                      >
+                        <option value="true">True</option>
+                        <option value="false">False</option>
                       </select>
-                    {:else if p.type === "int"}
-                      <input type="number" bind:value={prValues[p.name]} min="0" step="1" />
-                    {:else if p.type === "float"}
-                      <input type="number" bind:value={prValues[p.name]} step="0.01" />
                     {:else}
-                      <input type="text" bind:value={prValues[p.name]} />
+                      <input
+                        type="text"
+                        bind:value={param.value}
+                        on:input={(e) => (solverParams[idx].value = inputValue(e))}
+                      />
                     {/if}
                   </label>
                 {/each}
               </div>
+            {:else}
+              <p class="muted">Pick a solver to configure its parameters, then add it to the experiment.</p>
+            {/if}
+
+          {:else if activeTab === 'problems'}
+            <div class="picker">
+              <select aria-label="Problem" bind:value={selectedProblemName} on:change={(e) => onProblemChange(inputValue(e))}>
+                <option value="">Choose a problem…</option>
+                {#each allProblems as option (option)}
+                  <option value={option}>{option}</option>
+                {/each}
+              </select>
+              {#if selectedProblemName}
+                <button class="btn-primary-sm" on:click={addProblemToSummary}>
+                  {editMode?.kind === 'problem' ? 'Apply Changes' : '+ Add Problem'}
+                </button>
+              {/if}
             </div>
-          {/if}
-        </div>
 
-        <!-- Choose Plot -->
-        <div class="card column">
-          <h2>Choose Plot</h2>
+            {#if selectedProblemName}
+              <h4 class="section-title">Problem parameters</h4>
+              <div class="param-grid">
+                {#each problemParams as param, idx (param.name)}
+                  <label class="param-row">
+                    <span class="param-name"><span class="param-name-text" title={param.name}>{param.name}</span>{@render tip(param.description, `tip-problem-${param.name}`)}</span>
+                    {#if typeof param.default === 'boolean'}
+                      <select
+                        value={param.value}
+                        on:change={(e) => { problemParams[idx].value = inputValue(e); problemParams = [...problemParams]; }}
+                      >
+                        <option value="true">True</option>
+                        <option value="false">False</option>
+                      </select>
+                    {:else}
+                      <input
+                        type="text"
+                        bind:value={param.value}
+                        on:input={(e) => (problemParams[idx].value = inputValue(e))}
+                      />
+                    {/if}
+                  </label>
+                {/each}
+              </div>
+            {:else}
+              <p class="muted">Pick a problem to configure its parameters, then add it to the experiment.</p>
+            {/if}
 
-          {#if selectedPlotName}
-            <button
-              class="secondary-outline"
-              style="margin-bottom:0.75rem;"
-              on:click={addPlotToSummary}
-            >
-              {editMode?.kind === 'plot' ? 'Apply Changes' : '+ Add Plot'}
-            </button>
-          {/if}
+          {:else if activeTab === 'plots'}
+            <div class="picker">
+              <select aria-label="Plot" bind:value={selectedPlotName} on:change={(e) => onPlotChange(inputValue(e))}>
+                <option value="">Choose a plot type…</option>
+                {#each allPlots as plot (plot)}
+                  <option value={plot}>{plot}</option>
+                {/each}
+              </select>
+              {#if selectedPlotName}
+                <button class="btn-primary-sm" on:click={addPlotToSummary}>
+                  {editMode?.kind === 'plot' ? 'Apply Changes' : '+ Add Plot'}
+                </button>
+              {/if}
+            </div>
 
-          <div class="block-header">
-            <select bind:value={selectedPlotName} on:change={(e) => onPlotChange(inputValue(e))}>
-              <option value="">— Select a Plot —</option>
-              {#each allPlots as plot (plot)}
-                <option value={plot}>{plot}</option>
-              {/each}
-            </select>
-          </div>
-
-          {#if plotParams.length}
-            <div class="param-box" style="margin-top:.5rem;">
-              <p class="param-title">Plot Parameters ({selectedPlotName})</p>
-              {#each plotParams as p, i (p.name)}
-                <label>
-                    <div style="display:flex;align-items:center;gap:0.4rem;">
-                        <span>{p.name}</span>
-                        {#if p.description}
-                            <span class="info-wrapper" aria-hidden="true">
-                                <span class="info-icon">℩</span>
-                                <div class="tooltip">{p.description}</div>
-                            </span>
-                        {/if}
-                    </div>
+            {#if plotParams.length}
+              <h4 class="section-title">Plot parameters</h4>
+              <div class="param-grid">
+                {#each plotParams as p, i (p.name)}
+                  <label class="param-row">
+                    <span class="param-name"><span class="param-name-text" title={p.name}>{p.name}</span>{@render tip(p.description, `tip-plot-${p.name}`)}</span>
                     {#if p.name === 'ref_solver'}
-                        <select
-                            value={p.value}
-                            on:change={(e) => { plotParams[i].value = inputValue(e); plotParams = [...plotParams]; }}
-                        >
-                            <option value="">— None —</option>
-                            {#each uniqueSolverNames as name (name)}
-                                <option value={name}>{name}</option>
-                            {/each}
-                        </select>
-                    {:else if typeof p.default === 'boolean'}
-                        <select
-                            value={p.value}
-                            on:change={(e) => { plotParams[i].value = inputValue(e); plotParams = [...plotParams]; }}
-                        >
-                            <option value="true">True</option>
-                            <option value="false">False</option>
-                        </select>
-                    {:else}
-                        <input
-                            type="text"
-                            bind:value={p.value}
-                            on:input={(e) => (plotParams[i].value = inputValue(e))}
-                        />
-                    {/if}
-                </label>
-              {/each}
-            </div>
-          {/if}
-
-          {#if selectedPlotName}
-            <div class="param-box" style="margin-top:.5rem;">
-              <p class="param-title">Select Solvers (leave empty for all)</p>
-              {#if summarySolvers.length === 0}
-                <p style="color:#6b7280;font-size:0.9rem;margin-top:0.25rem;">No solvers added yet</p>
-              {:else}
-                {#each uniqueSolverNames as name (name)}
-                  <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
-                    <input
-                      type="checkbox"
-                      value={name}
-                      bind:group={selectedPlotSolvers}
-                    />
-                    <span style="flex:1;">{name}</span>
-                  </label>
-                {/each}
-              {/if}
-            </div>
-
-            <div class="param-box" style="margin-top:.5rem;">
-              <p class="param-title">Select Problems (leave empty for all)</p>
-              {#if summaryProblems.length === 0}
-                <p style="color:#6b7280;font-size:0.9rem;margin-top:0.25rem;">No problems added yet</p>
-              {:else}
-                {#each uniqueProblemNames as name (name)}
-                  <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
-                    <input
-                      type="checkbox"
-                      value={name}
-                      bind:group={selectedPlotProblems}
-                    />
-                    <span style="flex:1;">{name}</span>
-                  </label>
-                {/each}
-              {/if}
-            </div>
-          {/if}
-        </div>
-      </div>
-
-      <!-- ===== Middle column: Problem + Post-normalize ===== -->
-      <div class="col-stack">
-        <!-- === Choose Problem === -->
-        <div class="card column">
-          <h2>Choose Problem</h2>
-
-          {#if selectedProblemName}
-            <button
-              class="secondary-outline"
-              style="margin-bottom:0.75rem;"
-              on:click={addProblemToSummary}
-            >
-              {editMode?.kind === 'problem' ? 'Apply Changes' : '+ Add Problem'}
-            </button>
-          {/if}
-
-          <div class="block-header">
-            <select bind:value={selectedProblemName} on:change={(e) => onProblemChange(inputValue(e))}>
-              <option value="">— Select a Problem —</option>
-              {#each allProblems as option (option)}
-                <option value={option}>{option}</option>
-              {/each}
-            </select>
-          </div>
-
-          {#if selectedProblemName}
-            <div class="param-box">
-              <p class="param-title">Problem Parameters</p>
-              {#each problemParams as param, idx (param.name)}
-                <label>
-                    <div style="display:flex;align-items:center;gap:0.4rem;">
-                        <span>{param.name}</span>
-                        {#if param.description}
-                            <span class="info-wrapper" aria-hidden="true">
-                                <span class="info-icon">ℹ</span>
-                                <div class="tooltip">{param.description}</div>
-                            </span>
-                        {/if}
-                    </div>
-                    {#if typeof param.default === 'boolean'}
-                        <select
-                            value={param.value}
-                            on:change={(e) => { problemParams[idx].value = inputValue(e); problemParams = [...problemParams]; }}
-                        >
-                            <option value="true">True</option>
-                            <option value="false">False</option>
-                        </select>
-                    {:else}
-                        <input
-                            type="text"
-                            bind:value={param.value}
-                            on:input={(e) => (problemParams[idx].value = inputValue(e))}
-                        />
-                    {/if}
-                </label>
-              {/each}
-            </div>
-          {/if}
-        </div>
-
-        <!-- === POST-NORMALIZE (moved under problem) === -->
-        <div class="card">
-          <button class="dropdown" on:click={() => (showPostNormalize = !showPostNormalize)}>
-            {showPostNormalize ? "▼" : "▶"} Post-normalize
-          </button>
-
-          {#if showPostNormalize}
-            <div class="dropdown-content">
-              <div class="param-box">
-                <p class="param-title">Options for Post-normalize</p>
-
-                {#each pnSchema.params as p (p.name)}
-                  <label>
-                    <span>{p.label}</span>
-
-                    {#if p.type === "bool"}
-                      <select bind:value={pnValues[p.name]}>
-                        <option value={true}>Yes</option>
-                        <option value={false}>No</option>
+                      <select
+                        value={p.value}
+                        on:change={(e) => { plotParams[i].value = inputValue(e); plotParams = [...plotParams]; }}
+                      >
+                        <option value="">— None —</option>
+                        {#each uniqueSolverNames as name (name)}
+                          <option value={name}>{name}</option>
+                        {/each}
                       </select>
-                    {:else if p.type === "int"}
-                      <input type="number" bind:value={pnValues[p.name]} min="0" step="1" />
-                    {:else if p.type === "float"}
-                      <input type="number" bind:value={pnValues[p.name]} step="0.01" />
+                    {:else if typeof p.default === 'boolean'}
+                      <select
+                        value={p.value}
+                        on:change={(e) => { plotParams[i].value = inputValue(e); plotParams = [...plotParams]; }}
+                      >
+                        <option value="true">True</option>
+                        <option value="false">False</option>
+                      </select>
                     {:else}
-                      <input type="text" bind:value={pnValues[p.name]} />
+                      <input
+                        type="text"
+                        bind:value={p.value}
+                        on:input={(e) => (plotParams[i].value = inputValue(e))}
+                      />
                     {/if}
                   </label>
                 {/each}
               </div>
-            </div>
-          {/if}
-        </div>
-      </div>
-
-      <!-- ===== Right column: Summary + Compatibility ===== -->
-      <div class="right-column">
-        <div class="summary card">
-          <h3>Summary</h3>
-
-          <!-- Solvers -->
-          <div class="summary-section">
-            <p><strong>Solvers</strong></p>
-            {#if summarySolvers.length === 0}
-              <p style="color:#6b7280;">No solvers added.</p>
-            {/if}
-            {#each summarySolvers as s, i (`${s.name}-${i}`)}
-              <div class="summary-item">
-                <button
-                  class="summary-toggle pill"
-                  on:click={() => { s.expanded = !s.expanded; summarySolvers = [...summarySolvers]; }}
-                  title={s.rename ?? s.name}
-                >
-                  <span class="pill-text">{s.rename ?? s.name}</span>
-                  <span class="pill-right">
-                    <span class="pill-chevron">{s.expanded ? "▼" : "▶"}</span>
-                    <a
-                      href="#remove-solver"
-                      class="pill-close"
-                      title="Remove"
-                      on:click|preventDefault|stopPropagation={() => removeSummarySolver(i)}
-                    >×</a>
-                  </span>
-                </button>
-                {#if s.expanded}
-                  <ul class="param-list" style="margin:.5rem 0;">
-                    {#each s.params as p (p.name)}<li><strong>{p.name}:</strong> {p.value ?? p.default ?? ""}</li>{/each}
-                  </ul>
-                  <button class="secondary-outline" on:click={() => requestEdit('solver', i)}>Edit</button>
-                {/if}
-              </div>
-            {/each}
-          </div>
-
-          <!-- Problems -->
-          <div class="summary-section" style="margin-top:1rem;">
-            <p><strong>Problems</strong></p>
-            {#if summaryProblems.length === 0}
-              <p style="color:#6b7280;">No problems added.</p>
-            {/if}
-            {#each summaryProblems as p, i (`${p.name}-${i}`)}
-              <div class="summary-item">
-                <button
-                  class="summary-toggle pill"
-                  on:click={() => { p.expanded = !p.expanded; summaryProblems = [...summaryProblems]; }}
-                  title={p.rename ?? p.name}
-                >
-                  <span class="pill-text">{p.rename ?? p.name}</span>
-                  <span class="pill-right">
-                    <span class="pill-chevron">{p.expanded ? "▼" : "▶"}</span>
-                    <a
-                      href="#remove-problem"
-                      class="pill-close"
-                      title="Remove"
-                      on:click|preventDefault|stopPropagation={() => removeSummaryProblem(i)}
-                    >×</a>
-                  </span>
-                </button>
-                {#if p.expanded}
-                  <ul class="param-list" style="margin:.5rem 0;">
-                    {#each p.params as q (q.name)}<li><strong>{q.name}:</strong> {q.value ?? q.default ?? ""}</li>{/each}
-                  </ul>
-                  <button class="secondary-outline" on:click={() => requestEdit('problem', i)}>Edit</button>
-                {/if}
-              </div>
-            {/each}
-          </div>
-
-          <!-- Plots -->
-          <div class="summary-section" style="margin-top:1rem;">
-            <p><strong>Plots</strong></p>
-            {#if summaryPlots.length === 0}
-              <p style="color:#6b7280;">No plots added.</p>
             {/if}
 
-            {#each summaryPlots as pl, i (`${pl.name}-${i}`)}
-              <div class="summary-item">
-                <button
-                  class="summary-toggle pill"
-                  on:click={() => {
-                    pl.expanded = !pl.expanded;
-                    summaryPlots = [...summaryPlots];
-                  }}
-                  title={pl.name}
-                >
-                  <span class="pill-text">{pl.name}</span>
-                  <span class="pill-right">
-                    <span class="pill-chevron">{pl.expanded ? "▼" : "▶"}</span>
-                    <a
-                      href="#remove-plot"
-                      class="pill-close"
-                      title="Remove"
-                      on:click|preventDefault|stopPropagation={() => removeSummaryPlot(i)}
-                    >×</a>
-                  </span>
-                </button>
-
-                {#if pl.expanded}
-                  {#if pl.params && pl.params.length}
-                      <ul class="param-list" style="margin:.5rem 0;">
-                          {#each pl.params as p (p.name)}
-                              <li><strong>{p.name}:</strong> {p.value ?? p.default ?? ""}</li>
-                          {/each}
-                      </ul>
+            {#if selectedPlotName}
+              <div class="check-cols">
+                <div>
+                  <h4 class="section-title">Solvers <span class="hint">Leave all unchecked to include every solver</span></h4>
+                  {#if summarySolvers.length === 0}
+                    <p class="muted">No solvers in the experiment yet.</p>
                   {:else}
-                      <p style="margin:.5rem 0;color:#6b7280;">No parameters.</p>
+                    {#each uniqueSolverNames as name (name)}
+                      <label class="check-row" title={name}>
+                        <input type="checkbox" value={name} bind:group={selectedPlotSolvers} />
+                        <span>{name}</span>
+                      </label>
+                    {/each}
                   {/if}
-                  <button class="secondary-outline" on:click={() => requestEdit('plot', i)}>Edit</button>
-              {/if}
-              </div>
-            {/each}
-          </div>
-        </div>
-
-        <!-- Compatibility + progress + full-width trigger -->
-        {#if summarySolvers.length && summaryProblems.length}
-          <div class="card compatibility-section compact">
-            <div class="compat-header">
-              <h3>Compatibility</h3>
-
-              {#if totalCompatCells > 0}
-                <span class="compat-header-pct">
-                  {greenPct}% compatible
-                </span>
-              {/if}
-            </div>
-
-            {#if totalCompatCells > 0}
-              <div class="compat-progress" aria-label="Compatibility summary">
-                <div
-                  class="compat-bar"
-                  role="progressbar"
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                  aria-valuenow={greenPct}
-                  aria-label={`${greenPct}% compatible, ${redPct}% incompatible`}
-                >
-                  <div class="bar-green" style="width:{greenPct}%;"></div>
-                  <div class="bar-red"   style="width:{redPct}%;"></div>
+                </div>
+                <div>
+                  <h4 class="section-title">Problems <span class="hint">Leave all unchecked to include every problem</span></h4>
+                  {#if summaryProblems.length === 0}
+                    <p class="muted">No problems in the experiment yet.</p>
+                  {:else}
+                    {#each uniqueProblemNames as name (name)}
+                      <label class="check-row" title={name}>
+                        <input type="checkbox" value={name} bind:group={selectedPlotProblems} />
+                        <span>{name}</span>
+                      </label>
+                    {/each}
+                  {/if}
                 </div>
               </div>
             {:else}
-              <p class="compat-progress-empty">Add at least one solver and one problem to see compatibility.</p>
+              <p class="muted">Pick a plot type to configure it and choose which solvers and problems it covers.</p>
             {/if}
 
-            <button
-              class="compat-trigger"
-              class:red-btn={hasIncompatibility}
-              class:green-btn={!hasIncompatibility}
-              on:click={openCompatModal}
-              style="display:block;width:100%;margin-top:.75rem;"
-            >
-              Open matrix
-            </button>
+          {:else}
+            <h4 class="section-title">Post-replicate</h4>
+            <div class="param-grid wide">
+              {#each prSchema.params as p (p.name)}
+                <label class="param-row">
+                  <span class="param-name"><span class="param-name-text" title={p.label}>{p.label}</span></span>
+                  {#if p.type === "bool"}
+                    <select bind:value={prValues[p.name]}>
+                      <option value={true}>Yes</option>
+                      <option value={false}>No</option>
+                    </select>
+                  {:else if p.type === "int"}
+                    <input type="number" bind:value={prValues[p.name]} min="0" step="1" />
+                  {:else if p.type === "float"}
+                    <input type="number" bind:value={prValues[p.name]} step="0.01" />
+                  {:else}
+                    <input type="text" bind:value={prValues[p.name]} />
+                  {/if}
+                </label>
+              {/each}
+            </div>
+
+            <h4 class="section-title">Post-normalize</h4>
+            <div class="param-grid wide">
+              {#each pnSchema.params as p (p.name)}
+                <label class="param-row">
+                  <span class="param-name"><span class="param-name-text" title={p.label}>{p.label}</span></span>
+                  {#if p.type === "bool"}
+                    <select bind:value={pnValues[p.name]}>
+                      <option value={true}>Yes</option>
+                      <option value={false}>No</option>
+                    </select>
+                  {:else if p.type === "int"}
+                    <input type="number" bind:value={pnValues[p.name]} min="0" step="1" />
+                  {:else if p.type === "float"}
+                    <input type="number" bind:value={pnValues[p.name]} step="0.01" />
+                  {:else}
+                    <input type="text" bind:value={pnValues[p.name]} />
+                  {/if}
+                </label>
+              {/each}
+            </div>
+            <p class="muted">Macroreplications are set in the experiment panel, above the run button.</p>
+          {/if}
+        </div>
+      </section>
+
+      <!-- ===== Right: sticky experiment panel ===== -->
+      <aside class="panel card">
+        <h3>Experiment</h3>
+
+        <div class="group">
+          <div class="group-head"><span>Solvers</span><span class="count">{summarySolvers.length}</span></div>
+          {#if summarySolvers.length === 0}<p class="muted empty">None yet. Add one from the Solvers tab.</p>{/if}
+          {#each summarySolvers as s, i (`${s.name}-${i}`)}
+            <div class="item">
+              <div class="chip">
+                <button type="button" class="chip-main" title={s.rename ?? s.name} aria-expanded={!!s.expanded}
+                  on:click={() => { s.expanded = !s.expanded; summarySolvers = [...summarySolvers]; }}>
+                  <span class="chev" class:open={s.expanded} aria-hidden="true"></span>
+                  <span class="chip-text">{s.rename ?? s.name}</span>
+                </button>
+                <button type="button" class="chip-x" title="Remove" aria-label="Remove solver" on:click={() => removeSummarySolver(i)}>×</button>
+              </div>
+              {#if s.expanded}
+                <ul class="param-list">
+                  {#each s.params as p (p.name)}<li title={`${p.name}: ${p.value ?? p.default ?? ""}`}><strong>{p.name}:</strong> {p.value ?? p.default ?? ""}</li>{/each}
+                </ul>
+                <button class="btn-link" on:click={() => requestEdit('solver', i)}>Edit</button>
+              {/if}
+            </div>
+          {/each}
+        </div>
+
+        <div class="group">
+          <div class="group-head"><span>Problems</span><span class="count">{summaryProblems.length}</span></div>
+          {#if summaryProblems.length === 0}<p class="muted empty">None yet. Add one from the Problems tab.</p>{/if}
+          {#each summaryProblems as p, i (`${p.name}-${i}`)}
+            <div class="item">
+              <div class="chip">
+                <button type="button" class="chip-main" title={p.rename ?? p.name} aria-expanded={!!p.expanded}
+                  on:click={() => { p.expanded = !p.expanded; summaryProblems = [...summaryProblems]; }}>
+                  <span class="chev" class:open={p.expanded} aria-hidden="true"></span>
+                  <span class="chip-text">{p.rename ?? p.name}</span>
+                </button>
+                <button type="button" class="chip-x" title="Remove" aria-label="Remove problem" on:click={() => removeSummaryProblem(i)}>×</button>
+              </div>
+              {#if p.expanded}
+                <ul class="param-list">
+                  {#each p.params as q (q.name)}<li title={`${q.name}: ${q.value ?? q.default ?? ""}`}><strong>{q.name}:</strong> {q.value ?? q.default ?? ""}</li>{/each}
+                </ul>
+                <button class="btn-link" on:click={() => requestEdit('problem', i)}>Edit</button>
+              {/if}
+            </div>
+          {/each}
+        </div>
+
+        <div class="group">
+          <div class="group-head"><span>Plots</span><span class="count">{summaryPlots.length}</span></div>
+          {#if summaryPlots.length === 0}<p class="muted empty">None yet. Add one from the Plots tab.</p>{/if}
+          {#each summaryPlots as pl, i (`${pl.name}-${i}`)}
+            <div class="item">
+              <div class="chip">
+                <button type="button" class="chip-main" title={pl.name} aria-expanded={!!pl.expanded}
+                  on:click={() => { pl.expanded = !pl.expanded; summaryPlots = [...summaryPlots]; }}>
+                  <span class="chev" class:open={pl.expanded} aria-hidden="true"></span>
+                  <span class="chip-text">{pl.name}</span>
+                </button>
+                <button type="button" class="chip-x" title="Remove" aria-label="Remove plot" on:click={() => removeSummaryPlot(i)}>×</button>
+              </div>
+              {#if pl.expanded}
+                {#if pl.params && pl.params.length}
+                  <ul class="param-list">
+                    {#each pl.params as p (p.name)}
+                      <li title={`${p.name}: ${p.value ?? p.default ?? ""}`}><strong>{p.name}:</strong> {p.value ?? p.default ?? ""}</li>
+                    {/each}
+                  </ul>
+                {:else}
+                  <p class="muted">No parameters.</p>
+                {/if}
+                <button class="btn-link" on:click={() => requestEdit('plot', i)}>Edit</button>
+              {/if}
+            </div>
+          {/each}
+        </div>
+
+        <div class="group compat">
+          <div class="group-head">
+            <span>Compatibility</span>
+            {#if totalCompatCells > 0}<span class="compat-pct" class:has-bad={hasIncompatibility}>{greenPct}% compatible</span>{/if}
           </div>
-        {/if}
-      </div>
+          {#if canRun && totalCompatCells > 0}
+            <button
+              type="button"
+              class="compat-grid"
+              style="--cols:{uniqueProblemNames.length}"
+              on:click={openCompatModal}
+              aria-label={`${greenPct}% compatible, ${redPct}% incompatible. Open the compatibility matrix.`}
+            >
+              {#each uniqueSolverNames as sn (sn)}
+                {#each uniqueProblemNames as pn (pn)}
+                  <span class="dot {compatibility[sn]?.[pn] ? (compatibility[sn][pn].compatible ? 'ok' : 'bad') : 'neutral'}"></span>
+                {/each}
+              {/each}
+            </button>
+            <p class="compat-caption">
+              {uniqueSolverNames.length} solver{uniqueSolverNames.length === 1 ? '' : 's'} × {uniqueProblemNames.length} problem{uniqueProblemNames.length === 1 ? '' : 's'}.
+              <button type="button" class="btn-link inline" on:click={openCompatModal}>Open matrix</button>
+            </p>
+          {:else}
+            <p class="muted empty">Add a solver and a problem to check which pairs can run together.</p>
+          {/if}
+        </div>
+
+        <div class="group run-group">
+          <label class="param-row macroreps">
+            <span class="param-name"><span class="param-name-text">Macroreplications</span></span>
+            <input type="number" min="1" step="1" bind:value={macroreps} class:invalid={!macrorepsValid} aria-invalid={!macrorepsValid} />
+          </label>
+          <button class="run-btn" disabled={!canRun || summaryPlots.length === 0} on:click={runExperiment}>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+            Run Experiment
+          </button>
+          {#if !macrorepsValid}
+            <p class="muted run-hint panel-invalid">Macroreps must be a whole number ≥ 1.</p>
+          {/if}
+          {#if summarySolvers.length === 0 || summaryProblems.length === 0}
+            <p class="muted run-hint">
+              Add at least one {summarySolvers.length === 0 ? 'solver' : ''}{summarySolvers.length === 0 && summaryProblems.length === 0 ? ' and one ' : ''}{summaryProblems.length === 0 ? 'problem' : ''} to run.
+            </p>
+          {/if}
+          {#if summaryPlots.length === 0}
+            <p class="muted run-hint">Add at least one plot to run.</p>
+          {/if}
+        </div>
+      </aside>
     </div>
 
-    <div class="button-row">
-      <button class="primary" on:click={runExperiment}>Run Experiment</button>
-    </div>
-
-    <!-- === Modals (unchanged) === -->
+    <!-- === Modals === -->
     {#if showConfirm}
       <div
         class="modal-backdrop"
@@ -1028,11 +968,12 @@
         on:keydown={onCompatBackdropKeydown}
       >
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="compat-dialog-title" tabindex="-1">
-          <h3 id="compat-dialog-title" style="margin-top:0">Solver–Problem Compatibility</h3>
+          <h3 id="compat-dialog-title">Solver–problem compatibility</h3>
+          <p class="modal-sub">Hover a red cell to see why the solver cannot run on that problem.</p>
           <table class="compatibility-table compact" aria-label="Solver–Problem compatibility matrix">
             <thead>
               <tr>
-                <th scope="col">S \ P</th>
+                <th scope="col" class="corner">Solver \ Problem</th>
                 {#each uniqueProblemNames as pn (pn)}
                   <th scope="col" title={pn}>{abbrev(pn)}</th>
                 {/each}
@@ -1052,7 +993,7 @@
               {/each}
             </tbody>
           </table>
-          <div class="modal-actions" style="margin-top:0.75rem;">
+          <div class="modal-actions">
             <button class="btn" on:click={closeCompatModal}>Close</button>
           </div>
         </div>
@@ -1063,531 +1004,563 @@
   <div hidden={currentPage !== "Data Farming"}>
     <DataFarming onAddToExperiment={addDesignToExperiment} />
   </div>
+  {#if currentPage === "User Guide"}
+    <UserGuide />
+  {:else if currentPage === "About Us"}
+    <AboutUs />
+  {/if}
 </main>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-  :global(body), main, input, button, select, label {
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-  }
-
-  /* === NAVBAR === */
+  /* === HEADER === */
   nav {
-    background: #e5e7eb;
+    background: var(--nav-bg);
+    color: var(--nav-ink);
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
-    padding: 0.75rem 1.5rem;
-    width: 100%;
+    gap: 1.5rem;
+    height: var(--nav-h);
+    padding: 0 1.5rem;
     box-sizing: border-box;
-    position: fixed;
+    position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
     z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
-  .nav-left { flex-shrink: 0; }
-
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: #fff;
+    font-weight: 600;
+  }
+  .brand:hover { color: #fff; }
+  .brand-mark { width: 22px; height: 22px; color: var(--brand-accent); }
   .title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #0f172a;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     white-space: nowrap;
   }
 
-  .nav-right ul {
+  nav ul {
     display: flex;
-    gap: 1.25rem;
+    gap: 0.25rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
+  nav li { display: flex; }
 
-  .nav-right a {
-    cursor: pointer;
+  nav ul a {
+    display: flex;
+    align-items: center;
+    padding: 0 0.85rem;
     font-weight: 500;
-    color: #374151;
+    font-size: 14px;
+    color: var(--nav-ink);
     white-space: nowrap;
-    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    border-top: 2px solid transparent;
+    transition: color 0.15s;
   }
-
-  .nav-right a.active {
-    color: #0f172a;
-    border-bottom: 2px solid #14b8a6;
-  }
+  nav ul a:hover { color: #fff; }
+  nav ul a.active { color: #fff; border-bottom-color: var(--brand-accent); }
 
   /* === MAIN LAYOUT === */
   main {
-    font-family: 'Inter', sans-serif;
-    margin: 100px 20px 20px;
-  }
-
-  h2 {
-    color: #2563eb;
-    margin-top: 0;
-    margin-bottom: 0.75rem;
-    font-size: 1.2em;
-    font-weight: 600;
-  }
-
-  /* Three-column layout: solvers | problems | right column (summary+compat) */
-  .row-3col {
-    display: grid;
-    grid-template-columns: 0.7fr 0.7fr 0.45fr;
-    gap: 1.75rem;
-    margin-bottom: 1.5rem;
-    align-items: start;
-  }
-
-  /* Right column stacks Summary + Compatibility */
-  .right-column {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    min-width: 0;
-  }
-
-  /* === SUMMARY PANEL === */
-  .summary {
-    max-height: 75vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    white-space: normal;
-    word-wrap: break-word;
-    background: #fafafa;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 1rem;
-  }
-
-  .summary h3 {
-    margin-top: 0;
-    color: #0f172a;
-    font-size: 1.1em;
-  }
-
-  .summary ul { padding-left: 1rem; margin: 0.25rem 0 1rem; }
-
-  .summary li {
-    font-size: 14px;
-    color: #374151;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Spacing between summary items */
-  .summary-section { margin-bottom: 1rem; }
-  .summary-item + .summary-item { margin-top: 0.75rem; }
-
-  /* Outlined toggle buttons inside summary */
-  .summary-toggle {
-    display: block;
-    width: 100%;
-    text-align: left;
-    padding: 0.65rem 0.9rem;
-    background: #ffffff;              /* white fill */
-    color: #1e3a8a;                   /* blue-ish text */
-    border: 1.5px solid #2563eb;      /* blue outline */
-    border-radius: 10px;
-    font-weight: 600;
-    line-height: 1.2;
-    cursor: pointer;
-    transition: background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
-  }
-  .summary-toggle:hover {
-    background: #eff6ff;              /* light blue hover */
-    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.15);
-  }
-  .summary-toggle:active { background: #dbeafe; }
-  .summary-toggle:focus-visible {
-    outline: 3px solid rgba(37, 99, 235, .35);
-    outline-offset: 2px;
-  }
-
-  /* === CARDS === */
-  .card {
-    background: #ffffff;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    margin-bottom: 1.5rem;
-  }
-
-  .block-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  /* === INPUTS & SELECTS === */
-  select,
-  input[type="number"],
-  input[type="text"] {
-    margin: 0.5rem 0;
-    padding: 0.5rem;
-    width: 100%;
-    max-width: 300px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 15px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 3rem;
+    max-width: 1480px;
     box-sizing: border-box;
   }
 
-  /* === PARAMETER BOX === */
-  .param-box {
-    border: 1px solid #93c5fd;
-    background: #eff6ff;
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    margin-top: 0.5rem;
-    position: relative;
-    overflow: visible !important; /* tooltips shouldn't be clipped */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 352px;
+    gap: 1.5rem;
+    align-items: start;
   }
 
-  .param-title {
-    margin: 0 0 0.5rem;
+  /* === TABS === */
+  .tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0 1rem;
+    box-shadow: inset 0 -1px 0 var(--border);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .tab {
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    padding: 0.95rem 0.8rem 0.85rem;
+    font-weight: 500;
+    font-size: 14px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .tab:hover { background: transparent; color: var(--ink); }
+  .tab.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--primary); }
+  .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -4px; border-radius: 6px; }
+
+  .count {
+    display: inline-block;
+    min-width: 1.5em;
+    padding: 0 0.4em;
+    border-radius: 999px;
+    background: var(--chip-bg);
+    color: var(--muted);
+    font-size: 12px;
     font-weight: 600;
-    color: #1d4ed8;
+    text-align: center;
+    line-height: 1.6;
+    font-variant-numeric: tabular-nums;
   }
+  .tab.active .count { background: var(--primary-tint); color: var(--primary); }
 
-  /* Label row layout */
-  .param-box label {
+  .tab-body { padding: 1.25rem 1.5rem 1.5rem; }
+
+  .picker {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .picker select { flex: 1 1 280px; height: 38px; font-size: 14px; font-weight: 500; }
+
+  .section-title {
+    margin: 1.5rem 0 0.6rem;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .tab-body > .section-title:first-child { margin-top: 0; }
+  .hint { font-weight: 400; color: var(--muted); font-size: 12px; }
+
+  .muted { color: var(--muted); font-size: 13px; margin: 0.75rem 0 0; }
+
+  /* === PARAMETER GRID === */
+  .param-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
+    gap: 0.5rem 1.75rem;
+  }
+  .param-grid.wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); }
+  .wide .param-name { flex-basis: 55%; }
+  .wide .param-name-text { font-family: var(--font-sans); font-size: 13.5px; }
+
+  .param-row {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 0.5rem; /* tight gap between name and input */
-    margin-bottom: 0.4rem;
+    gap: 0.75rem;
+    min-width: 0;
+    min-height: 34px;
   }
 
-  /* Label text column */
-  .param-box label span {
-    flex: 0 0 140px; /* tidy left column */
-    text-align: left;
+  .param-name {
+    flex: 0 1 50%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--text);
+  }
+  .param-name-text {
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
   }
 
-  /* Input */
-  .param-box input[type="text"],
-  .param-box input[type="number"] {
-    flex: 1;
-    max-width: 200px;   /* longer inputs but still align right edge */
-    text-align: right;
-    margin-left: 8px;   /* small space from label */
+  select,
+  input[type="number"],
+  input[type="text"] {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0.35rem 0.6rem;
+    height: 34px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background-color: var(--surface);
+    color: var(--ink);
+    font-size: 13.5px;
+    box-sizing: border-box;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
+  .param-row input[type="text"],
+  .param-row input[type="number"] { font-family: var(--font-mono); font-size: 13px; }
+  select { text-overflow: ellipsis; cursor: pointer; }
+  select:hover, input:hover { border-color: var(--muted-2); }
+  select:focus, input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+  }
+
+  .check-cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 0 1.75rem;
+  }
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 30px;
+    min-width: 0;
+    padding: 0 0.4rem;
+    margin: 0 -0.4rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .check-row:hover { background: var(--canvas); }
+  .check-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  input[type="checkbox"] { accent-color: var(--primary); width: 15px; height: 15px; margin: 0; flex: none; }
 
   /* === BUTTONS === */
-  button {
+  .btn-primary-sm {
+    padding: 0 1rem;
+    height: 38px;
+    box-sizing: border-box;
+    white-space: nowrap;
+  }
+
+  .btn-link {
+    background: transparent;
+    color: var(--primary);
+    border: none;
+    padding: 0.15rem 0;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0.2rem 0 0.1rem 1.6rem;
+  }
+  .btn-link:hover { background: transparent; text-decoration: underline; color: var(--primary-hover); }
+  .btn-link.inline { margin: 0 0 0 0.25rem; font-size: 12.5px; }
+
+  /* === EXPERIMENT PANEL === */
+  .panel {
+    position: sticky;
+    top: calc(var(--nav-h) + 1.5rem);
+    max-height: calc(100vh - var(--nav-h) - 3rem);
+    overflow-y: auto;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel h3 {
+    margin: 0;
+    padding: 1rem 1.25rem 0.9rem;
     font-size: 15px;
-    font-weight: 500;
-    border-radius: 6px;
-    cursor: pointer;
+    font-weight: 600;
+    color: var(--ink);
+    border-bottom: 1px solid var(--border);
   }
 
-  .secondary-outline {
-    background: white;
-    border: 1px solid #2563eb;
-    color: #2563eb;
-    padding: 0.4rem 0.8rem;
-    margin-top: 0.5rem;
+  .group { padding: 0.9rem 1.25rem; border-top: 1px solid var(--border); }
+  .panel h3 + .group { border-top: none; }
+  .group-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.45rem;
   }
-  .secondary-outline:hover { background: #eff6ff; }
+  .group .muted { margin: 0.2rem 0; }
+  .muted.empty { font-size: 12.5px; }
 
-  .button-row { display: flex; justify-content: flex-start; margin: 1rem 0; }
+  .item + .item { margin-top: 2px; }
 
-  /* === DROPDOWN SECTIONS === */
-  .dropdown {
-    background: #d0e2ff;
-    color: #1e3a8a;
-    padding: 0.6rem 1rem;
-    border-radius: 6px;
-    border: 1px solid #a6c8ff;
-    width: 100%;
-    font-weight: 500;
-    cursor: pointer;
+  .chip {
+    display: flex;
+    align-items: stretch;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .chip:hover { background: var(--canvas); }
+  .chip-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
     text-align: left;
+    background: transparent;
+    color: var(--ink);
+    border: none;
+    border-radius: 0;
+    padding: 0.4rem 0.45rem;
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.35;
   }
-  .dropdown:hover { background: #a6c8ff; }
+  .chip-main:hover { background: transparent; }
+  .chip-main:focus-visible, .chip-x:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; border-radius: 6px; }
+  .chev {
+    flex: none;
+    width: 0.9em;
+    height: 1.35em;
+    position: relative;
+  }
+  .chev::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    border-right: 1.5px solid var(--muted);
+    border-bottom: 1.5px solid var(--muted);
+    transform: translateY(-65%) rotate(-45deg);
+    transition: transform 0.15s;
+  }
+  .chev.open::before { transform: translateY(-75%) rotate(45deg); }
+  .chip-text {
+    min-width: 0;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+  }
+  .chip-x {
+    flex: none;
+    width: 30px;
+    padding: 0;
+    background: transparent;
+    color: var(--muted-2);
+    border: none;
+    border-radius: 0;
+    font-size: 17px;
+    line-height: 1;
+    opacity: 0;
+  }
+  .chip:hover .chip-x, .chip-x:focus-visible { opacity: 1; }
+  .chip-x:hover { background: var(--bad-tint); color: var(--bad); }
+  @media (hover: none) { .chip-x { opacity: 1; } }
 
-  .dropdown-content {
-    border: 1px solid #c7d2fe;
-    background: #f9fafb;
-    padding: 0.75rem;
-    margin-top: 0.5rem;
-    border-radius: 6px;
+  .param-list {
+    list-style: none;
+    margin: 0.15rem 0 0.1rem 1.6rem;
+    padding: 0.15rem 0 0.15rem 0.7rem;
+    border-left: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
   }
+  .param-list li { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.65; }
+  .param-list strong { font-weight: 500; color: var(--muted); }
+
+  /* Compatibility dot grid */
+  .compat-pct { font-weight: 500; font-size: 12.5px; color: var(--ok); font-variant-numeric: tabular-nums; }
+  .compat-pct.has-bad { color: var(--bad); }
+
+  .compat-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 18px));
+    gap: 3px;
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    max-height: 168px;
+    overflow: hidden;
+    margin: 0.35rem 0 0;
+    padding: 0.6rem;
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: inherit;
+  }
+  .compat-grid:hover { background: var(--canvas); border-color: var(--muted-2); }
+  .dot { aspect-ratio: 1; border-radius: 3px; }
+  .dot.ok { background: var(--ok); }
+  .dot.bad { background: var(--bad); }
+  .dot.neutral { background: var(--border-strong); }
+  .compat-caption { margin: 0.5rem 0 0; font-size: 12.5px; color: var(--muted); }
+
+  .run-group {
+    position: sticky;
+    bottom: 0;
+    margin-top: auto;
+    background: var(--surface);
+    padding-bottom: 1.25rem;
+    box-shadow: 0 -8px 12px -10px rgba(23, 34, 58, 0.18);
+  }
+  .macroreps .param-name-text { font-family: var(--font-sans); font-size: 13.5px; }
+  .macroreps input { flex: 0 0 96px; text-align: right; }
+  input.invalid { border-color: var(--bad); background: var(--bad-tint); }
+  .run-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.85rem;
+    height: 44px;
+    padding: 0 1rem;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: var(--radius);
+    box-shadow: 0 1px 2px rgba(11, 100, 119, 0.25);
+  }
+  .run-btn svg { width: 14px; height: 14px; }
+  .run-btn:disabled {
+    background: var(--chip-bg);
+    color: var(--muted-2);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+  .run-hint { text-align: center; font-size: 12.5px; }
+  .panel-invalid { color: var(--bad); }
 
   /* === INFO ICON + TOOLTIP === */
   .info-wrapper {
     position: relative;
-    display: inline-block;
-    margin-left: 4px;
-    vertical-align: text-top;
-    z-index: 1000;
+    display: inline-flex;
+    flex: none;
   }
 
   .info-icon {
-    font-size: 0.8rem;
-    color: #2563eb;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--muted);
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 15px;
-    height: 15px;
-    background-color: #e0f2fe;
-    border: 1px solid #93c5fd;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border-strong);
     cursor: help;
-    transform: translateY(-2px);
   }
+  .info-wrapper:hover .info-icon { color: var(--primary); border-color: var(--primary); }
 
   .tooltip {
     position: absolute;
-    bottom: 130%;
-    left: 0;
-    transform: translateX(-10%);
-    background-color: #111827;
-    color: #f9fafb;
+    bottom: calc(100% + 8px);
+    left: -6px;
+    background-color: var(--ink);
+    color: #F3F5F8;
+    font-family: var(--font-sans);
     text-align: left;
     border-radius: 6px;
-    padding: 0.4rem 0.6rem;
+    padding: 0.45rem 0.65rem;
     white-space: normal;
     width: max-content;
-    max-width: 280px;
-    font-size: 0.8rem;
-    line-height: 1.3;
+    max-width: min(300px, 70vw);
+    font-size: 12.5px;
+    font-weight: 400;
+    line-height: 1.4;
     z-index: 3000;
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+    display: none;
+    pointer-events: none;
     overflow-wrap: break-word;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-lg);
   }
-
   .tooltip::after {
     content: "";
     position: absolute;
     top: 100%;
-    left: 12px;
+    left: 9px;
     border-width: 5px;
     border-style: solid;
-    border-color: #111827 transparent transparent transparent;
+    border-color: var(--ink) transparent transparent transparent;
   }
+  .info-wrapper:hover .tooltip,
+  .info-wrapper:focus-within .tooltip { display: block; }
+  .info-icon:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 
-  .info-wrapper:hover .tooltip { visibility: visible; opacity: 1; }
-
-  /* === COMPATIBILITY MATRIX (colored cells) === */
-  .compatibility-section { padding: 1rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fafafa; }
-  .compatibility-section.compact { padding: 0.75rem; }
-
+  /* === COMPATIBILITY MATRIX === */
   .compatibility-table {
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 0.75rem;
+    border-collapse: separate;
+    border-spacing: 3px;
+    margin: 0.5rem 0 0;
     text-align: center;
     table-layout: fixed;
+    font-size: 12px;
   }
-  .compatibility-table.compact { font-size: 12px; }
-
-  .compatibility-table th,
-  .compatibility-table td {
-    border: 1px solid #d1d5db;
-    padding: 0.55rem;
-    font-size: 0.95rem;
+  .compatibility-table th {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 11.5px;
+    color: var(--muted);
+    padding: 0.25rem;
   }
-  .compatibility-table.compact th,
-  .compatibility-table.compact td { padding: 0.35rem; }
-
-  .compatibility-table thead th {
-    background: #dbeafe;
-    color: #1e3a8a;
-    font-weight: 600;
-  }
-
-  .solver-name {
-    font-weight: 600;
-    background: #eff6ff;
-    text-align: left;
-    padding-left: 0.5rem;
-    width: auto; /* shrink to acronym */
-  }
-
+  .compatibility-table th.corner { font-family: var(--font-sans); text-align: left; color: var(--muted-2); width: 7.5rem; }
+  .solver-name { text-align: left; color: var(--ink) !important; }
   .compat-cell {
-    transition: background-color 0.15s ease, color 0.15s ease;
-    font-weight: 600;
-    min-width: 28px;
-    height: 24px;
-    line-height: 1;
+    height: 26px;
+    border-radius: 4px;
+    padding: 0;
   }
+  .compat-cell.ok { background: var(--ok); }
+  .compat-cell.bad { background: var(--bad); cursor: help; }
+  .compat-cell.neutral { background: var(--chip-bg); }
 
-  .compat-cell.ok   { background: #dcfce7; color: #166534; }
-  .compat-cell.bad  { background: #fee2e2; color: #991b1b; }
-  .compat-cell.neutral { background: #f3f4f6; color: #6b7280; }
-
-  /* Modal */
+  /* === MODAL === */
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.4);
+    background: rgba(23, 34, 58, 0.45);
     display: grid;
     place-items: center;
     z-index: 2000;
+    padding: 1rem;
   }
   .modal {
-    background: #ffffff;
-    width: min(520px, 92vw);
-    border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
-    padding: 1.25rem 1.25rem 1rem;
+    background: var(--surface);
+    width: min(540px, 100%);
+    max-height: 85vh;
+    overflow: auto;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 1.4rem 1.5rem 1.25rem;
+    box-sizing: border-box;
   }
-  .modal h3 {
-    margin: 0 0 0.5rem;
-    font-size: 1.1rem;
-    color: #0f172a;
-  }
-  .modal p {
-    margin: 0 0 1rem;
-    color: #374151;
-    line-height: 1.4;
-  }
+  .modal h3 { margin: 0 0 0.4rem; font-size: 16px; font-weight: 600; color: var(--ink); }
+  .modal p { margin: 0 0 1.1rem; color: var(--text); line-height: 1.5; }
+  .modal p.modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 0.5rem; }
   .modal-actions {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
-  }
-  .btn {
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    color: #0f172a;
-    padding: 0.45rem 0.9rem;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  .btn:hover { background: #f8fafc; }
-  .btn-primary {
-    border-color: #2563eb;
-    background: #2563eb;
-    color: #fff;
-  }
-  .btn-primary:hover { background: #1e40af; }
-
-  /* Summary pill with inline close (×) */
-  .summary-toggle.pill {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: .5rem;
-    width: 100%;
-    background: #fff;
-    color: #1e3a8a;
-    border: 1.5px solid #2563eb;
-    border-radius: 10px;
-    padding: .55rem .6rem .55rem .75rem;
-    text-align: left;
-  }
-  .summary-toggle.pill:hover { background: #eff6ff; }
-  .pill-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .pill-right {
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-  }
-  .pill-chevron { font-weight: 700; font-size: .9rem; color: #1e3a8a; }
-  .pill-close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
-    color: #6b7280;
-    cursor: pointer;
-    text-decoration: none;
-  }
-  .pill-close:hover { background: #f9fafb; color: #111827; border-color: #d1d5db; }
-
-  /* space out items more */
-  .summary-item + .summary-item { margin-top: .9rem; }
-  .compat-trigger {
-    border: 1.5px solid #2563eb;
-    background: #ffffff;
-    color: #1e3a8a;
-    padding: 0.45rem 0.9rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+    margin-top: 1rem;
   }
 
-  /* Green variant (no incompatibilities) */
-  .compat-trigger.green-btn {
-    border-color: #16a34a;
-    color: #14532d;
-    background: #dcfce7;
+  @media (max-width: 960px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .panel { position: static; max-height: none; overflow: visible; }
+    .run-group { position: static; }
   }
-  .compat-trigger.green-btn:hover {
-    background: #bbf7d0;
-    box-shadow: 0 1px 4px rgba(22,163,74,.2);
-  }
-
-  /* Red variant (>=1 incompatibility) */
-  .compat-trigger.red-btn {
-    border-color: #dc2626;
-    color: #7f1d1d;
-    background: #fee2e2;
-  }
-  .compat-trigger.red-btn:hover {
-    background: #fecaca;
-    box-shadow: 0 1px 4px rgba(220,38,38,.2);
-  }
-
-  /* Keyboard focus */
-  .compat-trigger:focus-visible {
-    outline: 3px solid rgba(37,99,235,.35);
-    outline-offset: 2px;
-  }
-
-  /* --- Compatibility progress bar --- */
-  .compat-progress { margin-bottom: 0.6rem; }
-
-  .compat-bar {
-    display: flex;            /* lays green and red side-by-side */
-    width: 100%;
-    height: 10px;
-    background: #f3f4f6;      /* neutral track */
-    border-radius: 9999px;
-    overflow: hidden;
-    box-shadow: inset 0 0 0 1px #e5e7eb;
-  }
-
-  .bar-green {
-    height: 100%;
-    background: #22c55e;      /* green-500 */
-  }
-
-  .bar-red {
-    height: 100%;
-    background: #ef4444;      /* red-500 */
-  }
-
-  .compat-progress-empty {
-    margin: 0 0 0.6rem 0;
-    color: #6b7280;
-    font-size: 0.9rem;
-  }
-
-  .col-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;        /* small consistent spacing between cards */
-    min-width: 0;
+  @media (max-width: 640px) {
+    nav { padding: 0 0.75rem; gap: 0.5rem; overflow-x: auto; }
+    nav ul a { padding: 0 0.5rem; font-size: 13px; }
+    .title { display: none; }
+    main { padding: 1rem 0.75rem 2rem; }
+    .tab { gap: 0.3rem; font-size: 13px; padding: 0.85rem 0.5rem; }
+    .tabs { padding: 0 0.5rem; gap: 0; }
+    .tab-body { padding: 1rem; }
   }
 </style>
