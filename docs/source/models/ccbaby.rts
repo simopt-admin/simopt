@@ -1,0 +1,194 @@
+Call Center Staffing
+====================
+
+See the :mod:`simopt.models.callcenter` module for API details.
+
+Model: Call Center Queueing and Staffing (CALLCENTER)
+-----------------------------------------------------
+
+Description
+^^^^^^^^^^^
+
+This model simulates a call center over a 16-hour operating day. Calls arrive
+according to a non-homogeneous Poisson process with rate function
+:math:`\lambda(t)` for :math:`0 \leq t \leq 16`, where time is measured in
+hours. Each incoming call enters the system and waits in queue if there are no 
+available agents. Then, it either begins service with an available agent or abandons 
+after its patience time expires. The system has :math:`T` trunk lines, so at most 
+:math:`T` calls can be in the system at once, including both calls in service and 
+calls waiting on hold. Calls that arrive when the system is full receive a busy 
+signal and do not call back.
+
+Call handling times or service times are gamma distributed with mean :math:`\mu_h` 
+minutes and variance :math:`\sigma_h^2` minutes^2. Patience times are also gamma
+distributed with mean :math:`\mu_p` minutes and variance :math:`\sigma_p^2` minutes^2. 
+The arrival process, handle times, and patience times are mutually independent.
+
+Agents work 8-hour shifts structured as follows: they work for :math:`x`
+hours, take a 30-minute lunch break, and then work for :math:`8-x` hours,
+where :math:`x \in \{3, 3.5, 4, 4.5\}`. Agents can begin work every half hour,
+starting from :math:`t=0` through :math:`t=8`. Thus the allowed shift start
+times are :math:`0, 0.5, 1, \ldots, 8`. Agents starting at :math:`t=8` finish at 
+:math:`t=16.5`. At the end of a shift, agents finish any call they are currently 
+handling and then leave, except if an agent is working the last shift that ends at 
+:math: `t=16.5`. In that case, at the end of the day, the call center stops receiving
+calls at :math:`t=16`, but any calls still in the system, active or queued remain 
+until they are served or abandon before agents leave, even if this means the shift
+extends into overtime, ie. beyond :math: `t=16.5`. Agents are paid a flat rate of 
+$:math:`r` per hour. This holds even when agents in the last shift work past 
+:math: `t=16.5`. :math: `c_j` = :math:`8r` for all :math:`J` in :math:`j`. is the 
+cost of assigning one agent to start at time :math: `j/2`.
+
+Performance is measured separately in each hour :math:`i=1,\ldots,16`.
+Let :math:`N_i` be the number of calls received in hour :math:`i`, including
+blocked calls. Let :math:`S_i` be the number of calls answered within 20
+seconds in hour :math:`i`. Calls that abandon or are blocked do not count in
+:math:`S_i`. The service level requirement for each hour is
+
+:math:`E[S_i] \geq 0.8E[N_i], \quad i=1,\ldots,16.`
+
+The expected number of arrivals :math:`E[N_i]` can be computed analytically,
+but :math:`E[S_i]` must be estimated via simulation.
+
+Sources of Randomness
+^^^^^^^^^^^^^^^^^^^^^
+
+There are 3 main sources of randomness in this model:
+
+1. The call arrival process, modeled as a non-homogeneous Poisson process
+   with rate :math:`\lambda(t)` over :math:`0 \leq t \leq 16`.
+2. The call handling times, modeled as gamma random variables with mean
+   :math:`\mu_h` and variance :math:`\sigma_h^2`.
+3. The customer patience times, modeled as gamma random variables with mean
+   :math:`\mu_p` and variance :math:`\sigma_p^2`.
+
+The recommended arrival-rate function is
+
+:math:`\lambda(t) = 500 + 500\sin\left(\frac{3\pi t - 16\pi}{32}\right), \quad 0 \leq t \leq 16.`
+
+Model Factors
+^^^^^^^^^^^^^
+
+* arrival_rate_function:
+    * Default: :math:`500 + 500\sin\left(\frac{3\pi t - 16\pi}{32}\right)`
+* time_open:
+    * Default: 16
+* mean_handle_time:
+    * Default: 6
+* var_handle_time:
+    * Default: 2
+* mean_patience_time:
+    * Default: 2
+* var_patience_time:
+    * Default: 1
+* trunk_lines:
+    * Default: 150
+* hourly_wage:
+    * Default: 18
+* service_level_target:
+    * Default: 0.8
+* service_level_window_seconds:
+    * Default: 20
+* constraint_tolerance:
+    * Default: 0.5
+* allowed_shift_starts:
+    * Default: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8]
+* shift_break_options:
+    * Default: [3, 3.5, 4, 4.5]
+
+Responses
+^^^^^^^^^
+
+* total_cost: Total wage cost
+* arrivals_by_hour: Number of arrivals per hour
+* answered_within_20_seconds_by_hour: Calls meeting service target per hour
+* blocked_calls: Calls rejected due to capacity
+* abandoned_calls: Calls that leave queue
+* service_level_by_hour: :math:`S_i / N_i`
+* constraint_lhs_by_hour: :math:`E[S_i] - 0.8E[N_i]`
+
+References
+^^^^^^^^^^
+
+Pasupathy, R., & Henderson, S. G. (2007). Call Center Example.
+
+Optimization Problem: Minimize Staffing Cost Subject to Service Levels (CALLCENTER-1)
+--------------------------------------------------------------------------------------
+
+Decision Variables
+^^^^^^^^^^^^^^^^^^
+
+* :math:`x_{j,k}`, number of agents starting at time :math:`j/2`, 
+    and take lunch :math: `h_k` hours after their start time, where
+        
+        * :math:`j=0,\ldots,16`
+        * :math:`h_k \in \{3, 3.5, 4, 4.5\}`
+
+The staffing decision is a :math:`\times 4` integer matrix with the row determining the
+shift start time and the column determinging the lunch start time.
+
+Objective
+^^^^^^^^^^
+
+Minimize total labor cost:
+
+:math:`\sum_{j=0}^{16} c_j x_{j,k}`
+
+
+:math:`c_j` is calculated in the simulation as follows:
+    TotalCost = :math:`r * np.sum(Agents[:, 3] - Agents[:, 0])` 
+
+
+Constraints
+^^^^^^^^^^^
+
+* For each hour :math:`i=1,\ldots,16`:
+
+  :math:`E[S_i] - 0.8E[N_i] \geq 0`
+
+* With tolerance:
+
+  :math:`E[S_i] - 0.8E[N_i] \geq -0.5`
+
+* :math:`x_j \geq 0` and integer
+
+Problem Factors
+^^^^^^^^^^^^^^^
+
+* Budget:
+    * Default: 1000
+    * Suggested: 10000, 100000
+
+Fixed Model Factors
+^^^^^^^^^^^^^^^^^^^
+
+* arrival_rate_function
+* time_open = 16
+* mean_handle_time = 6
+* var_handle_time = 2
+* mean_patience_time = 2
+* var_patience_time = 1
+* trunk_lines = 150
+* hourly_wage = 18
+* service_level_target = 0.8
+* constraint_tolerance = 0.5
+
+Starting Solution
+^^^^^^^^^^^^^^^^^
+
+* :math:`x_i = 8` for all :math:`i`
+
+* :math:`x_j` is the number of agents starting their shift at a certain time,
+    not the number of agents actually working at that time.
+
+Each :math:`x_j \sim \text{Uniform}\{0,\ldots,10\}`
+
+Optimal Solution
+^^^^^^^^^^^^^^^^
+
+unknown
+
+Optimal Objective Function Value
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+unknown
